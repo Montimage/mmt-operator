@@ -1,0 +1,23 @@
+div.report-element {
+  border: 1px solid #ccc;
+  line-height: 1;
+  padding: 2em;
+  margin: 1em;
+}
+
+.report-element-top {
+  padding-bottom: 2em;
+}
+
+div .center {
+    float:center;
+	text-align: center;
+}
+
+div .report_title {
+    text-align: center;
+    font-size: 1.4em;
+    font-family: "Lucida Grande", "Lucida Sans Unicode", "Verdana", "Arial", "Helvetica", "sans-serif",
+    font-weight: bold;
+    color:#274b6d;
+}

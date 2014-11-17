@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+        <title>MMT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="dataTables.bootstrap.css">
+
+    <link rel="stylesheet" href="jquery.treetable.css" />
+    <link rel="stylesheet" href="jquery.treetable.theme.default.css" />
+
+    <script type="text/javascript" language="javascript" src="jquery.js"></script>
+    <script type="text/javascript" language="javascript" src="bootstrap.min.js"></script>
+    <script type="text/javascript" language="javascript" src="jquery.dataTables.min.js"></script>
+    <script type="text/javascript" language="javascript" src="dataTables.bootstrap.js"></script>
+    <script type="text/javascript" language="javascript" src="treetable.js"></script>
+    <script type="text/javascript" src="highcharts.js"></script>
+    <script type="text/javascript" src="highcharts-more.js"></script>
+    <script type="text/javascript" src="solid-gauge.src.js"></script>
+    <script type="text/javascript" src="funnel.js"></script>
+    <script type="text/javascript" src="mmt_drop.js"></script>
+    <script type="text/javascript" language="javascript" src="/socketio.js"></script>
+
+    <style> 
+        table.treetable {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">MMT Cloud</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="dash.html">Dashboard</a></li>
+            <li><a href="hierarchy.html">Hierarchy</a></li>
+            <li><a href="categories.html">Categories</a></li>
+            <li><a href="apps.html">Applications</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-12 col-md-12 main">
+            <div id="treport" class="content"></div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+		var chartsElemMap = {};
+		var gstats;
+Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });		
+        function createDashReport(elemid, gstats) {
+            report = new MMTDrop.Reports({
+                    'stats': gstats,
+                    'elemid': elemid,
+                    'title': "Real-time Traffic",
+                    'elements': [
+/*
+                        {'chart': [
+                            {'type':'pie',
+                            'options': {
+                                'getDataFct': MMTDrop.DataFactory.createAppsPieChart,
+                                'seriesName': "Packet Count",
+                                'ylabel': "Number of Packets"
+                            }}
+                        ],
+                        'pos': [0, 4]},
+*/
+                        {'chart': [{'type':'timeline',
+                            'options': {
+                                'getDataFct': MMTDrop.DataFactory.createDashTimeLineChart,
+                                'seriesName': "Packet Count",
+                            }}
+                        ],
+                        'pos': [0, 12]},
+                    ],
+                    //'filter': [{'type': 'metric', 'select': function(e){}}]
+                });
+            return report;
+        }
+        
+        function initCharts(tstats) {
+            for(i in tstats ) console.log(i);
+            gstats = new MMTDrop.GlobalStats();
+            gstats.meta = tstats["metadata"];
+            values = tstats.data;
+            console.log(tstats.data);
+            for (i in values) {
+                if (values[i][MMTDrop.StatsColumnId.FORMAT_ID] == MMTDrop.CsvFormat.STATS_FORMAT) {
+                    gstats.processEntry(values[i]);
+                }
+            }	
+
+            var toverviewReport = createDashReport("treport", gstats);
+
+            chartsElemMap["tview"] = [{"chart": toverviewReport}];
+            
+            toverviewReport.render();
+        }
+
+    $(document).ready(function() {
+        var socket = new io.connect('/');
+        var newDataPoints = [];
+        //var metric = $('#treport_ftr_metric').val();
+        var metric = "Data Volume";
+        socket.on('connect', function() {
+            console.log("Connected");
+        });
+        var ready = false;
+        
+        socket.on('stats', function(message){
+            if( ! message ) return;
+            series = $('#treport_elem0_chart').highcharts().series;
+
+            //If this is the root app then initialize new datapoints
+            if(message.proto == message.path && ready) {
+              console.log('new period');
+              //newDataPoints = [];
+              
+              for( s in series ) {
+                  if( newDataPoints[s] ) {
+                    series[s].addPoint(newDataPoints[s], true, true);
+                  }else {
+                    series[s].addPoint([message.ts, 0], true, true);
+                  }
+                  newDataPoints[s] = [message.ts, 0];
+              }
+            }else ready = true;
+        /*
+            if( metric === $('#treport_ftr_metric').val() ) {
+            }else {
+              newDataPoints = [];
+              metric = $('#treport_ftr_metric').val();
+            }
+   */
+            for( s in series ) {
+              if( (series[s].name).toUpperCase() === (MMTDrop.ProtocolsIDName[message.proto]).toUpperCase() ) {
+                if( metric === "Data Volume" ) newDataPoints[s] = [message.ts, message.data];
+                else if( metric === "Packet Count" ) newDataPoints[s] = [message.ts, message.packet];
+                if( metric === "Payload Volume" ) newDataPoints[s] = [message.ts, message.payload];
+                if( metric === "Active Flows" ) newDataPoints[s] = [message.ts, message.ascount];
+              }
+            }
+        }) ;
+/*
+        socket.on('period', function(message){
+          series = $('#treport_elem1_chart').highcharts().series;
+          for( s in newDataPoints ) {
+            series[s].addPoint(newDataPoints[s]);
+          }
+          newDataPoints = [];
+        });
+*/
+        socket.on('disconnect', function() {
+            console.log('disconnected');
+        });
+
+    });
+	</script>
+    <script type="text/javascript" src="/traffic/data?callback=initCharts"></script>
+
+</body>
+</html>
