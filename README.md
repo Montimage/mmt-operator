@@ -24,6 +24,7 @@ This chain of tools depends on the following packages:
     sudo add-apt-repository -y ppa:chris-lea/node.js
     sudo apt-get update
     sudo apt-get install nodejs
+    sudo apt-get install npm
 
 ### MONGO db
 
