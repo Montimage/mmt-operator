@@ -84,6 +84,9 @@ Compile the probe
     cd probe
     gcc -I/opt/mmt/include -o mmt-probe mmt-probe.c -L/opt/mmt/lib -lmmt_core -ldl -lpcap -ljson -lhiredis 
 
+    // In case libstdc++6 error is encountered while compiling (related to libjson), use the following:
+    gcc -I/opt/mmt/include -o mmt-probe mmt-probe.c -L/opt/mmt/lib -lmmt_core -ldl -lpcap -ljson -lhiredis -lstdc++
+
 Copy TCPIP plugin to "plugins" folder
 
     // Add TCPIP plugin to the "plugins" folder, make either a copy or a symbollic link!
