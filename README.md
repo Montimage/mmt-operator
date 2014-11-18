@@ -53,15 +53,16 @@ MMT SDK will install libraries and header files under: /opt/mmt
 libjson is a c/c++ json library
 install from sources (available at: sourceforge.net/projects/libjson)
 
+    //At the time of writing this file, stable version is 7.6.1. Please report if you find that a new version was released.
+    unzip libjson_7.6.1.zip
+    cd libjson
+
     // in makefile, change line 269 from:
     cp -rv $(srcdir)/Dependencies/ $(include_path)/$(libname_hdr)/$(srcdir)
     // to:
     cp -rv _internal/Dependencies/ $(include_path)/_internal
+    
 
-    //At the time of writing this file, stable version is 7.6.1. Please report if you find that a new version was released.
-    unzip libjson_7.6.1.zip
-    cd libjson
-    vi makefile
     make
     sudo make install
 
