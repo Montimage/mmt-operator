@@ -36,6 +36,7 @@ void usage(const char * prg_name) {
     fprintf(stderr, "Option:\n");
     fprintf(stderr, "\t-t <trace file>: Gives the trace file to analyse.\n");
     fprintf(stderr, "\t-i <interface> : Gives the interface name for live traffic analysis.\n");
+    fprintf(stderr, "\t-p <period>    : Gives the reporting period in seconds.\n");
     fprintf(stderr, "\t-q             : Be quiet (no output whatsoever, helps profiling).\n");
     fprintf(stderr, "\t-h             : Prints this help.\n");
     exit(1);
