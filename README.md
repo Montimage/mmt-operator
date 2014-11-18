@@ -100,7 +100,7 @@ Run the probe with
 
     // Live interface
     sudo ./mmt-probe -i eth0 -p 15
-    or: su; export LD_LIBRARY_PATH=/opt/mmt/lib:/usr/local/lib:$LD_LIBRARY_PATH; sudo ./mmt-probe -i eth0 -p 15
+    or: su; export LD_LIBRARY_PATH=/opt/mmt/lib:/usr/local/lib:$LD_LIBRARY_PATH; ./mmt-probe -c ./mmt_online.conf
 
     // Trace file (you need to provide a pre-recorded trace file) 
     ./mmt-probe -t FILE.pcap -p 5
