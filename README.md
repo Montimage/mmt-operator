@@ -87,7 +87,10 @@ Copy TCPIP plugin to "plugins" folder
 
     // Add TCPIP plugin to the "plugins" folder, make either a copy or a symbollic link!
     mkdir plugins
+
     cp /opt/mmt/lib/libmmt_tcpip.so.0.99 plugins/libmmt_tcpip.so
+    or even better:
+    ln -s /opt/mmt/lib/libmmt_tcpip.so.0.99 plugins/libmmt_tcpip.so
 
 Run the probe with
 
