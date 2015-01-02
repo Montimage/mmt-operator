@@ -10,42 +10,28 @@ var app = express();
 var io = require('socket.io');
 var moment = require('moment');
 
-var MongoClient = require('mongodb').MongoClient, format = require('util').format;
-var mdb = null;
-//connect away
-MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
-    if (err) throw err;
-    mdb = db;
-    console.log("Connected to Database");
-});
+var argv = require('optimist')
+    .usage('Run MMT Operator.\nUsage: $0')
+    .demand('d')
+    .alias('d', 'db')
+    .describe('d', 'Indicates the data base to use. Must be one of [mongo, sqlite]')
+    .argv
+;
+
+var dbconnector = null;
+if( argv.db === 'mongo' ) dbconnector = require('./mongo_connector');
+else if( argv.db === 'sqlite' ) dbconnector = require('./sqlite_connector');
+else throw(new Error('Unsopported database type. Database must be one of [sqlite, mongo]'));
 
 var redis = require("redis");
 var stats_sub = redis.createClient();
 stats_sub.psubscribe("*.stats");
 
-function insertUpdateDB(collection, key, val) {
-    //update record, insert it if not exists
-    mdb.collection(collection).update(key, val, {upsert: true}, function(err) {
-        if (err) throw err;
-        //console.log("Record updated");
-    });
-}    
-
 stats_sub.on('pmessage', function(pattern, channel, message) {
     message = JSON.parse(message);
-    //console.log(message.event);
-    mdb.collection("traffic").insert(message.event, function(err, records) {
-        //if(err) return next(bbt_err.InternalError);
-        insertUpdateDB("traffic_min", {format: message.event.format, proto: message.event.proto, path: message.event.path, ts: moment(message.event.ts).startOf('minute').valueOf()},
-          {'$set': {scount: message.event.scount, ascount: message.event.ascount}, '$inc': { data: message.event.data, payload: message.event.payload, packets: message.event.packets}});    
-        insertUpdateDB("traffic_hour", {format: message.event.format, proto: message.event.proto, path: message.event.path, ts: moment(message.event.ts).startOf('hour').valueOf()},
-          {'$set': {scount: message.event.scount, ascount: message.event.ascount}, '$inc': { data: message.event.data, payload: message.event.payload, packets: message.event.packets}});
-    });
+
+    dbconnector.addProtocolStats( message, function( err, msg ) {} );
 });
-
-
-
-// Access to the DataBase
 
 /**
  * Constants: MMT Response codes
@@ -120,15 +106,9 @@ function getStats(request, response, next){
   var period = request.query.period;
   options = getOptionsByPeriod(period);
 
-  mdb.collection(options.collection).find({format: 99, ts : {'$gte' : options.ts}}).sort( { ts: 1 }).toArray( function( err, doc ) {
-    if (err) return next('InternalError');
-    retval = [];
-    for(i in doc) {
-      record = [doc[i].format, doc[i].ts, doc[i].proto, doc[i].path, doc[i].scount, doc[i].ascount, doc[i].data, doc[i].payload, doc[i].packets];
-      retval.push(record);
-    } 
-    data = {metadata: {numberOfEntries: retval.length}, data: retval};
-
+  dbconnector.getProtocolStats( options, function ( err, data ) {
+    if (err) return next(err);
+    
     if(request.query.callback) {
       response.send(request.query.callback + '(' + JSON.stringify(data) + ')');
     }else {

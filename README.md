@@ -112,7 +112,10 @@ Run the probe with
 
     cd operator
     sudo npm install
-    node app.js
+    // To use Mongodb as persistence 
+    node app.js -d mongo
+    // To use sqlite as persistence
+    node app.js -d sqlite
 
 Once MMT Operator is up and running, open your favorite browser and goto
 
