@@ -5,10 +5,10 @@
 var express = require('express');
 var http = require('http');
 var path = require('path');
-var moment = require('moment');
 var app = express();
 var io = require('socket.io');
 var moment = require('moment');
+var mmtAdaptor = require('./dataAdaptor.js');
 
 var argv = require('optimist')
     .usage('Run MMT Operator.\nUsage: $0')
@@ -24,12 +24,17 @@ else if( argv.db === 'sqlite' ) dbconnector = require('./sqlite_connector');
 else throw(new Error('Unsopported database type. Database must be one of [sqlite, mongo]'));
 
 var redis = require("redis");
-var stats_sub = redis.createClient();
-stats_sub.psubscribe("*.stats");
+var report_client = redis.createClient();
+report_client.subscribe("protocol.stat");
+report_client.subscribe("radius.report");
+report_client.subscribe("microflows.report");
+report_client.subscribe("flow.report");
+report_client.subscribe("web.flow.report");
+report_client.subscribe("ssl.flow.report");
+report_client.subscribe("rtp.flow.report");
 
-stats_sub.on('pmessage', function(pattern, channel, message) {
-    message = JSON.parse(message);
-
+report_client.on('message', function(channel, message) {
+    message = mmtAdaptor.formatReportItem( JSON.parse( message ) );
     dbconnector.addProtocolStats( message, function( err, msg ) {} );
 });
 
@@ -86,15 +91,29 @@ io.set('log level', 1); //warning + errors
 server.listen(app.get('port'));
 
 function getOptionsByPeriod(period) {
-  var retval = {collection: 'traffic', ts: moment().valueOf() - 600*1000};
+  var retval = {collection: 'traffic', time: moment().valueOf() - 600*1000};
   if(period === '1h') {
-    retval = {collection: 'traffic_min', ts: moment().valueOf() - 3600*1000};
+    retval = {collection: 'traffic_min', time: moment().valueOf() - 3600*1000};
   }else if(period === '24h') {
-    retval = {collection: 'traffic_hour', ts: moment().valueOf() - 24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 24*3600*1000};
   }else if(period === 'week') {
-    retval = {collection: 'traffic_hour', ts: moment().valueOf() - 7*24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 7*24*3600*1000};
   }else if(period === 'month') {
-    retval = {collection: 'traffic_hour', ts: moment().valueOf() - 30*24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 30*24*3600*1000};
+  }
+  return retval;
+}
+
+function getFlowOptions( period ) {
+  var retval = {collection: 'traffic', time: moment().valueOf() - 600*1000};
+  if(period === '1h') {
+    retval = {collection: 'traffic', time: moment().valueOf() - 3600*1000};
+  }else if(period === '24h') {
+    retval = {collection: 'traffic', time: moment().valueOf() - 24*3600*1000};
+  }else if(period === 'week') {
+    retval = {collection: 'traffic', time: moment().valueOf() - 7*24*3600*1000};
+  }else if(period === 'month') {
+    retval = {collection: 'traffic', time: moment().valueOf() - 30*24*3600*1000};
   }
   return retval;
 }
@@ -107,8 +126,27 @@ function getStats(request, response, next){
   options = getOptionsByPeriod(period);
 
   dbconnector.getProtocolStats( options, function ( err, data ) {
-    if (err) return next(err);
+    if (err) {
+      console.log(' zzzzz');
+      return next(err);
+    }
     
+    if(request.query.callback) {
+      response.send(request.query.callback + '(' + JSON.stringify(data) + ')');
+    }else {
+      response.send(data);
+    }
+  });
+}
+
+app.get('/traffic/flows', getFlowStats);
+function getFlowStats(request, response, next){
+  var period = request.query.period;
+  options = getFlowOptions(period);
+
+  dbconnector.getFlowStats( options, function ( err, data ) {
+    if (err) return next(err);
+
     if(request.query.callback) {
       response.send(request.query.callback + '(' + JSON.stringify(data) + ')');
     }else {
@@ -120,12 +158,12 @@ function getStats(request, response, next){
 io.sockets.on('connection', function (client) {
   var sub = redis.createClient();
 
-  sub.psubscribe("*.stats");
+  sub.psubscribe("*.stat");
   sub.subscribe("endperiod");
 
   sub.on("pmessage", function (pattern, channel, message) {
-    message = JSON.parse(message);
-    client.emit('stats', message.event);
+    message = mmtAdaptor.formatReportItem( JSON.parse( message ) );
+    client.emit('stats', message);
   });
 
   sub.on("message", function (channel, message) {
