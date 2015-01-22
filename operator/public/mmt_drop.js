@@ -8,99 +8,283 @@
 
 MMTDrop = {
 
-	/** Constant: VERSION
-	 *  The version of the MMTDrop library.
-	 */
-	VERSION : "1.0.0",
+    /** Constant: VERSION
+     *  The version of the MMTDrop library.
+     */
+    VERSION : "1.0.0",
 
-	/**
-	 * Constants: MMTDrop defined csv format types
-	 */
-	CsvFormat : {
-		DEFAULT_APP_FORMAT : 0/**< Default application flow report format id */,
-		WEB_APP_FORMAT : 1/**< WEB flow report format id */,
-		SSL_APP_FORMAT : 2/**< SSL flow report format id */,
-		RTP_APP_FORMAT : 3/**< RTP flow report format id */,
-		MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
-		RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
-		STATS_FORMAT : 99/**< Statistics format id */,
-	},
-	
-	/**
-	 * Constants: MMTDrop defined csv format types
-	 */
-	StatsColumnId : {
-		FORMAT_ID : 0, /**< Index of the format id column */
-		TIMESTAMP : 1, /**< Index of the format id column */
-		APP_ID : 2, /**< Index of the application id column */
-		APP_PATH : 3, /**< Index of the application path column */
-		TOTAL_FLOWS : 4, /**< Index of the is_leaf column */
-		ACTIVE_FLOWS : 5, /**< Index of the active flows column */
-		DATA_VOLUME : 6, /**< Index of the data volume column */
-		PAYLOAD_VOLUME : 7, /**< Index of the payload data volume column */
-		PACKET_COUNT : 8, /**< Index of the packet count column */
-		UL_DATA_VOLUME : 9, /**< Index of the data volume column */
-		UL_PAYLOAD_VOLUME : 10, /**< Index of the payload data volume column */
-		UL_PACKET_COUNT : 11, /**< Index of the packet count column */
-		DL_DATA_VOLUME : 12, /**< Index of the data volume column */
-		DL_PAYLOAD_VOLUME : 13, /**< Index of the payload data volume column */
-		DL_PACKET_COUNT : 14, /**< Index of the packet count column */
-	},
-	
-	/**
-	 * Constants: MMTDrop defined csv format types
-	 */
-	ReportType : {
-		PROTO_TREE : 0, /**< Identifier of protocol tree table chart */
-		PROTO_LIST : 1, /**< Identifier of protocol advanced table chart */
-		PROTO_CLASS_LIST : 2, /**< Identifier protocol-in-class table chart */
-		CLASS_LIST : 3, /**< Identifier of classes of protocol table chart */
-	},
-
-	/**
-	 * Constants: MMTDrop defined traffic metrics
-	 */
-	MetricId : {
-		DATA_VOLUME : 1, /**< Identifier of data volume metric */
-		PACKET_COUNT : 2, /**< Identifier of packet count metric */
-		PAYLOAD_VOLUME : 3, /**< Identifier of payload data volume metric */
-        ACTIVE_FLOWS : 4, /**< Identifier of active flows metric */
-	},
-
-	/**
-	 * Mapping between metric IDs and metric names
-	 */
-	MetricID2Name : {
-		1 : "Data Volume",
-		2 : "Packet Count",
-		3 : "Payload Volume",
-        4 : "Active Flows"
-	},
-
-	/**
-	 * Mapping between metric IDs and metric names
-	 */
-	MetricName2ID : {
-		"Data Volume": 1,
-		"Packet Count": 2,
-		"Payload Volume": 3,
-        "Active Flows": 4
-	},
+    /**
+     * Constants: MMTDrop defined csv format types
+     */
+    CsvFormat : {
+        DEFAULT_APP_FORMAT : 0/**< Default application flow report format id */,
+        WEB_APP_FORMAT : 1/**< WEB flow report format id */,
+        SSL_APP_FORMAT : 2/**< SSL flow report format id */,
+        RTP_APP_FORMAT : 3/**< RTP flow report format id */,
+        MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
+        RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
+        STATS_FORMAT : 99/**< Statistics format id */,
+    },
     
+    isFlowStats : function ( format ) {
+        switch (format) {
+            case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
+            case MMTDrop.CsvFormat.WEB_APP_FORMAT :
+            case MMTDrop.CsvFormat.SSL_APP_FORMAT :
+            case MMTDrop.CsvFormat.RTP_APP_FORMAT :
+                return true;
+            default :
+                return false;
+        }
+    },
+    
+    /**
+     * Constants: MMTDrop defined csv format types
+     */
+    StatsColumnId : {
+        FORMAT_ID : 0, /**< Index of the format id column */
+        PROBE_ID : 1, /**< Index of the probe id column */
+        SOURCE_ID : 2, /**< Index of the data source id column */
+        TIMESTAMP : 3, /**< Index of the format id column */
+        APP_ID : 4, /**< Index of the application id column */
+        APP_PATH : 5, /**< Index of the application path column */
+        TOTAL_FLOWS : 6, /**< Index of the is_leaf column */
+        ACTIVE_FLOWS : 7, /**< Index of the active flows column */
+        DATA_VOLUME : 8, /**< Index of the data volume column */
+        PAYLOAD_VOLUME : 9, /**< Index of the payload data volume column */
+        PACKET_COUNT : 10, /**< Index of the packet count column */
+        UL_DATA_VOLUME : 11, /**< Index of the data volume column */
+        UL_PAYLOAD_VOLUME : 12, /**< Index of the payload data volume column */
+        UL_PACKET_COUNT : 13, /**< Index of the packet count column */
+        DL_DATA_VOLUME : 14, /**< Index of the data volume column */
+        DL_PAYLOAD_VOLUME : 15, /**< Index of the payload data volume column */
+        DL_PACKET_COUNT : 16, /**< Index of the packet count column */
+    },
+    
+    /**
+     * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
+     */
+    FlowStatsColumnId : {
+        FORMAT_ID : 0, /**< Index of the format id column */
+        PROBE_ID : 1, /**< Index of the probe id column */
+        SOURCE_ID : 2, /**< Index of the data source id column */
+        TIMESTAMP : 3, /**< Index of the format id column */
+        FLOW_ID : 4, /**< Index of the flow id column */
+        START_TIME : 5, /**< Index of the flow start time */
+        IP_VERSION : 6, /**< Index of the IP version number column */
+        SERVER_ADDR : 7, /**< Index of the server address column */
+        CLIENT_ADDR : 8, /**< Index of the client address column */
+        SERVER_PORT : 9, /**< Index of the server port column */
+        CLIENT_PORT : 10, /**< Index of the client port column */
+        TRANSPORT_PROTO : 11, /**< Index of the transport protocol identifier column */
+        UL_PACKET_COUNT : 12, /**< Index of the uplink packet count column */
+        DL_PACKET_COUNT : 13, /**< Index of the downlink packet count column */
+        UL_DATA_VOLUME : 14, /**< Index of the uplink data volume column */
+        DL_DATA_VOLUME : 15, /**< Index of the downlink data volume column */
+        TCP_RTT : 16, /**< Index of the TCP round trip time column */
+        RETRANSMISSION_COUNT : 17, /**< Index of the retransmissions count column */
+        APP_FAMILY : 18, /**< Index of the application family column */
+        CONTENT_CLASS : 19, /**< Index of the content class column */
+        PROTO_PATH: 20, /**< Index of the protocol path column */
+        APP_NAME : 21, /**< Index of the application name column */
+        APP_FORMAT_ID : 22, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+    },
+    
+    HttpStatsColumnId : {
+        RESPONSE_TIME : 0, /**< Index of the response time column */
+        TRANSACTIONS_COUNT : 1, /**< Index of the HTTP transactions count (req/res number) column */
+        INTERACTION_TIME : 2, /**< Index of the interaction time (between client and server) column */
+        HOSTNAME : 3, /**< Index of the hostname column */
+        MIME_TYPE : 4, /**< Index of the MIME type column */
+        REFERER : 5, /**< Index of the Referer column */
+        DEVICE_OS_ID : 6, /**< Index of the device and operating system ids column */
+        CDN_FLAG : 7, /**< Index of the is CDN delivered column */
+    },
+    
+    TlsStatsColumnId : {
+        SERVER_NAME : 0, /**< Index of the format id column */
+        CDN_FLAG : 1, /**< Index of the format id column */
+    },
+    
+    RtpStatsColumnId : {
+        PACKET_LOSS_RATE : 0, /**< Index of the format id column */
+        PACKET_LOSS_BURSTINESS : 1, /**< Index of the format id column */
+        MAX_JITTER : 2,
+    },
+    
+    /**
+     * Constants: MMTDrop defined csv format types
+     */
+    ReportType : {
+        PROTO_TREE : 0, /**< Identifier of protocol tree table chart */
+        PROTO_LIST : 1, /**< Identifier of protocol advanced table chart */
+        PROTO_CLASS_LIST : 2, /**< Identifier protocol-in-class table chart */
+        CLASS_LIST : 3, /**< Identifier of classes of protocol table chart */
+    },
+
+    /**
+     * Constants: MMTDrop defined traffic metrics
+     */
+    MetricId : {
+        DATA_VOLUME : 1, /**< Identifier of data volume metric */
+        PACKET_COUNT : 2, /**< Identifier of packet count metric */
+        PAYLOAD_VOLUME : 3, /**< Identifier of payload data volume metric */
+        ACTIVE_FLOWS : 4, /**< Identifier of active flows metric */
+    },
+
+    /**
+     * Mapping between metric IDs and metric names
+     */
+    MetricID2Name : {
+        1 : "Data Volume",
+        2 : "Packet Count",
+        3 : "Payload Volume",
+        4 : "Active Flows",
+    },
+
+    /**
+     * Mapping between metric IDs and metric names
+     */
+    MetricName2ID : {
+        "Data Volume": 1,
+        "Packet Count": 2,
+        "Payload Volume": 3,
+        "Active Flows": 4,
+    },
+
+    /**
+     * Constants: MMTDrop defined flow metrics
+     */
+    FlowMetricId : {
+        DATA_VOLUME : 1, /**< Identifier of data volume metric */
+        PACKET_COUNT : 2, /**< Identifier of packet count metric */
+        PAYLOAD_VOLUME : 3, /**< Identifier of payload data volume metric */
+        ACTIVE_FLOWS : 4, /**< Identifier of active flows metric */
+        UL_DATA_VOLUME : 5, /**< Identifier of uplink data volume metric */
+        DL_DATA_VOLUME : 6, /**< Identifier of downlink data volume metric */
+        UL_PACKET_COUNT : 7, /**< Identifier of uplink data volume metric */
+        DL_PACKET_COUNT : 8, /**< Identifier of downlink data volume metric */
+        FLOW_DURATION: 9, /**< Identifier of the flow duration metric */
+    },
+
+
+    /**
+     * Mapping between metric IDs and metric names
+     */
+    FlowMetricID2Name : {
+        1 : "Data Volume",
+        2 : "Packet Count",
+        3 : "Payload Volume",
+        4 : "Active Flows",
+        5 : "UL Data Volume",
+        6 : "DL Data Volume",
+        7 : "UL Packet Count",
+        8 : "DL Packet Count",
+        9 : "Flow Duration",
+    },
+
+    /**
+     * Mapping between metric IDs and metric names
+     */
+    FlowMetricName2ID : {
+        "Data Volume": 1,
+        "Packet Count": 2,
+        "Payload Volume": 3,
+        "Active Flows": 4,
+        "UL Data Volume": 5,
+        "DL Data Volume": 6,
+        "UL Packet Count": 7,
+        "DL Packet Count": 8,
+        "Flow Duration": 9
+    },
+    
+    /**
+     * Constants: MMTDrop defined RTP flow metrics
+     */
+    RTPMetricId : {
+        PACKET_LOSS       : "Packet Loss", /**< Identifier of packet loss rate metric */
+        PACKET_LOSS_BURST : "Loss Burstiness", /**< Identifier of packet loss burstiness metric */
+        JITTER            : "Jitter", /**< Identifier of jitter metric */
+        QUALITY_INDEX     : "Quality Index", /**< Identifier of quality index metric */
+    },
+
+    /**
+     * Mapping between RTP meric IDs and metric names
+     */
+    RTPMetricID2Name : {
+        1 : "Packet Loss",
+        2 : "Loss Burstiness",
+        3 : "Jitter",
+        4 : "Quality Index",
+    },
+
+    /**
+     * Mapping between RTP metric IDs and metric names
+     */
+    RTPMetricName2ID : {
+        "Packet Loss"     : 1,
+        "Loss Burstiness" : 2,
+        "Jitter"          : 3,
+        "Quality Index"   : 4,
+    },
+
+    /**
+     * Constants: MMTDrop defined HTTP flow metrics
+     */
+    HTTPMetricId : {
+        RESPONSE_TIME       : "Response Time", /**< Identifier of response time metric */
+        INTERACTION_TIME    : "Interaction Time", /**< Identifier of interaction time metric */
+        INTERACTIONS_COUNT  : "Transactions Nb", /**< Identifier of interaction time metric */
+    },
+
+    /**
+     * Mapping between HTTP meric IDs and metric names
+     */
+    HTTPMetricID2Name : {
+        1 : "Response Time",
+        2 : "Interaction Time",
+        3 : "Transactions Nb",
+    },
+
+    /**
+     * Mapping between HTTP metric IDs and metric names
+     */
+    HTTPMetricName2ID : {
+        "Response Time"    : 1,
+        "Interaction Time" : 2,
+        "Transactions Nb"  : 3,
+    },
+
     getYLabel: function(filter) {
-        if(filter.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DATA_VOLUME]) {
             return "data";
         }
-        if(filter.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.PACKET_COUNT]) {
             return "packets";
         }
-        if(filter.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.PAYLOAD_VOLUME]) {
             return "payload data";
         }
         if(filter.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
             return "flows";
         }
-        return "";
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.UL_DATA_VOLUME]) {
+            return "uplink data";
+        }
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.UL_PACKET_COUNT]) {
+            return "uplink packets";
+        }
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DL_DATA_VOLUME]) {
+            return "downlink data";
+        }
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DL_PACKET_COUNT]) {
+            return "downlink packets";
+        }
+        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.FLOW_DURATION]) {
+            return "flow duration";
+        }
+        return filter.metric;
+        //return "";
     },
 
     /**
@@ -109,14 +293,14 @@ MMTDrop = {
     ProtocolsIDName: {
         0: 'All', 2: '163', 3: '360', 4: '302_FOUND', 5: '360BUY', 6: '56', 7: '8021Q', 8: '888', 9: 'ABOUT', 10: 'ADCASH', 11: 'ADDTHIS', 12: 'ADF', 13: 'ADOBE', 14: 'AFP', 15: 'AH', 16: 'AIM', 17: 'AIMINI', 18: 'ALIBABA', 19: 'ALIPAY', 20: 'ALLEGRO', 21: 'AMAZON', 22: 'AMEBLO', 23: 'ANCESTRY', 24: 'ANGRYBIRDS', 25: 'ANSWERS', 26: 'AOL', 27: 'APPLE', 28: 'APPLEJUICE', 29: 'ARMAGETRON', 30: 'ARP', 31: 'ASK', 32: 'AVG', 33: 'AVI', 34: 'AWEBER', 35: 'AWS', 36: 'BABYLON', 37: 'BADOO', 38: 'BAIDU', 39: 'BANKOFAMERICA', 40: 'BARNESANDNOBLE', 41: 'BATMAN', 42: 'BATTLEFIELD', 43: 'BATTLENET', 44: 'BBB', 45: 'BBC_ONLINE', 46: 'BESTBUY', 47: 'BETFAIR', 48: 'BGP', 49: 'BIBLEGATEWAY', 50: 'BILD', 51: 'BING', 52: 'BITTORRENT', 53: 'BLEACHERREPORT', 54: 'BLOGFA', 55: 'BLOGGER', 56: 'BLOGSPOT', 57: 'BODYBUILDING', 58: 'BOOKING', 59: 'CBSSPORTS', 60: 'CENT', 61: 'CHANGE', 62: 'CHASE', 63: 'CHESS', 64: 'CHINAZ', 65: 'CITRIX', 66: 'CITRIXONLINE', 67: 'CLICKSOR', 68: 'CNN', 69: 'CNZZ', 70: 'COMCAST', 71: 'CONDUIT', 72: 'COPYSCAPE', 73: 'CORREIOS', 74: 'CRAIGSLIST', 75: 'CROSSFIRE', 76: 'DAILYMAIL', 77: 'DAILYMOTION', 78: 'DCERPC', 79: 'DIRECT_DOWNLOAD_LINK', 80: 'DEVIANTART', 81: 'DHCP', 82: 'DHCPV6', 83: 'DIGG', 84: 'DIRECTCONNECT', 85: 'DNS', 86: 'DOFUS', 87: 'DONANIMHABER', 88: 'DOUBAN', 89: 'DOUBLECLICK', 90: 'DROPBOX', 91: 'EBAY', 92: 'EDONKEY', 93: 'EGP', 94: 'EHOW', 95: 'EKSISOZLUK', 96: 'ELECTRONICSARTS', 97: 'ESP', 98: 'ESPN', 99: 'ETHERNET', 100: 'ETSY', 101: 'EUROPA', 102: 'EUROSPORT', 103: 'FACEBOOK', 104: 'FACETIME', 105: 'FASTTRACK', 106: 'FC2', 107: 'FEIDIAN', 108: 'FIESTA', 109: 'FILETOPIA', 110: 'FIVERR', 111: 'FLASH', 112: 'FLICKR', 113: 'FLORENSIA', 114: 'FOURSQUARE', 115: 'FOX', 116: 'FREE', 117: 'FTP', 118: 'GADUGADU', 119: 'GAMEFAQS', 120: 'GAMESPOT', 121: 'GAP', 122: 'GARANTI', 123: 'GAZETEVATAN', 124: 'GIGAPETA', 125: 'GITHUB', 126: 'GITTIGIDIYOR', 127: 'GLOBO', 128: 'GMAIL', 129: 'GNUTELLA', 130: 'GOOGLE_MAPS', 131: 'GO', 132: 'GODADDY', 133: 'GOO', 134: 'GOOGLE', 135: 'GOOGLE_USER_CONTENT', 136: 'GOSMS', 137: 'GRE', 138: 'GROOVESHARK', 139: 'GROUPON', 140: 'GTALK', 141: 'GTP', 142: 'GTP2', 143: 'GUARDIAN', 144: 'GUILDWARS', 145: 'HABERTURK', 146: 'HAO123', 147: 'HEPSIBURADA', 148: 'HI5', 149: 'HALFLIFE2', 150: 'HOMEDEPOT', 151: 'HOOTSUITE', 152: 'HOTMAIL', 153: 'HTTP', 154: 'HTTP_CONNECT', 155: 'HTTP_PROXY', 156: 'HTTP_APPLICATION_ACTIVESYNC', 157: 'HUFFINGTON_POST', 158: 'HURRIYET', 159: 'I23V5', 160: 'IAX', 161: 'ICECAST', 162: 'APPLE_ICLOUD', 163: 'ICMP', 164: 'ICMPV6', 165: 'IFENG', 166: 'IGMP', 167: 'IGN', 168: 'IKEA', 169: 'IMAP', 170: 'IMAPS', 171: 'INTERNET_MOVIE_DATABASE', 172: 'IMESH', 173: 'IMESSAGE', 174: 'IMGUR', 175: 'INCREDIBAR', 176: 'INDIATIMES', 177: 'INSTAGRAM', 178: 'IP', 179: 'IP_IN_IP', 180: 'IPP', 181: 'IPSEC', 182: 'IPV6', 183: 'IRC', 184: 'IRS', 185: 'APPLE_ITUNES', 186: 'UNENCRYPED_JABBER', 187: 'JAPANPOST', 188: 'KAKAO', 189: 'KAT', 190: 'KAZAA', 191: 'KERBEROS', 192: 'KING', 193: 'KOHLS', 194: 'KONGREGATE', 195: 'KONTIKI', 196: 'L2TP', 197: 'LASTFM', 198: 'LDAP', 199: 'LEAGUEOFLEGENDS', 200: 'LEGACY', 201: 'LETV', 202: 'LINKEDIN', 203: 'LIVE', 204: 'LIVEDOOR', 205: 'LIVEMAIL', 206: 'LIVEINTERNET', 207: 'LIVEJASMIN', 208: 'LIVEJOURNAL', 209: 'LIVESCORE', 210: 'LIVINGSOCIAL', 211: 'LOWES', 212: 'MACYS', 213: 'MAIL_RU', 214: 'MANET', 215: 'MANOLITO', 216: 'MAPLESTORY', 217: 'MATCH', 218: 'MDNS', 219: 'MEDIAFIRE', 220: 'MEEBO', 221: 'MGCP', 222: 'MICROSOFT', 223: 'MILLIYET', 224: 'MINECRAFT', 225: 'MINICLIP', 226: 'MLBASEBALL', 227: 'MMO_CHAMPION', 228: 'MMS', 229: 'MOVE', 230: 'MOZILLA', 231: 'MPEG', 232: 'MSN', 233: 'MSSQL', 234: 'MULTIPLY', 235: 'MYNET', 236: 'MYSPACE', 237: 'MYSQL', 238: 'MYWEBSEARCH', 239: 'NBA', 240: 'NEOBUX', 241: 'NETBIOS', 242: 'NETFLIX', 243: 'NETFLOW', 244: 'NEWEGG', 245: 'NEWSMAX', 246: 'NFL', 247: 'NFS', 248: 'NICOVIDEO', 249: 'NIH', 250: 'NORDSTROM', 251: 'NTP', 252: 'NYTIMES', 253: 'ODNOKLASSNIKI', 254: 'OFF', 255: 'OGG', 256: 'ONET', 257: 'OPENFT', 258: 'ORANGEDONKEY', 259: 'OSCAR', 260: 'OSPF', 261: 'OUTBRAIN', 262: 'OVERSTOCK', 263: 'PANDO', 264: 'PAYPAL', 265: 'PCANYWHERE', 266: 'PCH', 267: 'PCONLINE', 268: 'PHOTOBUCKET', 269: 'PINTEREST', 270: 'PLAYSTATION', 271: 'POGO', 272: 'POP', 273: 'POPS', 274: 'POPO', 275: 'PORNHUB', 276: 'POSTGRES', 277: 'PPLIVE', 278: 'PPP', 279: 'PPPOE', 280: 'PPSTREAM', 281: 'PPTP', 282: 'PREMIERLEAGUE', 283: 'QQ', 284: 'QQLIVE', 285: 'QUAKE', 286: 'QUICKTIME', 287: 'R10', 288: 'RADIUS', 289: 'RAKUTEN', 290: 'RDP', 291: 'REALMEDIA', 292: 'REDDIT', 293: 'REDTUBE', 294: 'REFERENCE', 295: 'RENREN', 296: 'ROBLOX', 297: 'ROVIO', 298: 'RTP', 299: 'RTSP', 300: 'SABAHTR', 301: 'SAHIBINDEN', 302: 'SALESFORCE', 303: 'SALON', 304: 'SCTP', 305: 'SEARCHNU', 306: 'SEARCH_RESULTS', 307: 'SEARS', 308: 'SECONDLIFE', 309: 'SECURESERVER', 310: 'SFLOW', 311: 'SHAZAM', 312: 'SHOUTCAST', 313: 'SINA', 314: 'SIP', 315: 'SITEADVISOR', 316: 'SKY', 317: 'SKYPE', 318: 'SKYROCK', 319: 'SKYSPORTS', 320: 'SLATE', 321: 'SLIDESHARE', 322: 'SMB', 323: 'SMTP', 324: 'SMTPS', 325: 'SNMP', 326: 'SOCRATES', 327: 'SOFTONIC', 328: 'SOGOU', 329: 'SOHU', 330: 'SOPCAST', 331: 'SOSO', 332: 'SOULSEEK', 333: 'SOUNDCLOUD', 334: 'SOURGEFORGE', 335: 'SPIEGEL', 336: 'SPORX', 337: 'SPOTIFY', 338: 'SQUIDOO', 339: 'SSDP', 340: 'SSH', 341: 'SSL', 342: 'STACK_OVERFLOW', 343: 'STATCOUNTER', 344: 'STEALTHNET', 345: 'STEAM', 346: 'STUMBLEUPON', 347: 'STUN', 348: 'SULEKHA', 349: 'SYSLOG', 350: 'TAGGED', 351: 'TAOBAO', 352: 'TARGET', 353: 'TCO', 354: 'TCP', 355: 'TDS', 356: 'TEAMVIEWER', 357: 'TELNET', 358: 'TFTP', 359: 'THEMEFOREST', 360: 'THE_PIRATE_BAY', 361: 'THUNDER', 362: 'TIANYA', 363: 'TLS', 364: 'TMALL', 365: 'TORRENTZ', 366: 'TRUPHONE', 367: 'TUBE8', 368: 'TUDOU', 369: 'TUENTI', 370: 'TUMBLR', 371: 'TVANTS', 372: 'TVUPLAYER', 373: 'TWITTER', 374: 'UBI', 375: 'UCOZ', 376: 'UDP', 377: 'UDPLITE', 378: 'UOL', 379: 'USDEPARTMENTOFSTATE', 380: 'USENET', 381: 'USTREAM', 382: 'HTTP_APPLICATION_VEOHTV', 383: 'VIADEO', 384: 'VIBER', 385: 'VIMEO', 386: 'VK', 387: 'VKONTAKTE', 388: 'VNC', 389: 'WALMART', 390: 'WARRIORFORUM', 391: 'WAYN', 392: 'WEATHER', 393: 'WEBEX', 394: 'WEEKLYSTANDARD', 395: 'WEIBO', 396: 'WELLSFARGO', 397: 'WHATSAPP', 398: 'WIGETMEDIA', 399: 'WIKIA', 400: 'WIKIMEDIA', 401: 'WIKIPEDIA', 402: 'WILLIAMHILL', 403: 'WINDOWSLIVE', 404: 'WINDOWSMEDIA', 405: 'WINMX', 406: 'WINUPDATE', 407: 'WORLD_OF_KUNG_FU', 408: 'WORDPRESS_ORG', 409: 'WARCRAFT3', 410: 'WORLDOFWARCRAFT', 411: 'WOWHEAD', 412: 'WWE', 413: 'XBOX', 414: 'XDMCP', 415: 'XHAMSTER', 416: 'XING', 417: 'XINHUANET', 418: 'XNXX', 419: 'XVIDEOS', 420: 'YAHOO', 421: 'YAHOOGAMES', 422: 'YAHOOMAIL', 423: 'YANDEX', 424: 'YELP', 425: 'YOUKU', 426: 'YOUPORN', 427: 'YOUTUBE', 428: 'ZAPPOS', 429: 'ZATTOO', 430: 'ZEDO', 431: 'ZOL', 432: 'ZYNGA', 433: '3PC', 434: 'ANY_0HOP', 435: 'ANY_DFS', 436: 'ANY_HIP', 437: 'ANY_LOCAL', 438: 'ANY_PES', 439: 'ARGUS', 440: 'ARIS', 441: 'AX_25', 442: 'BBN_RCC_MON', 443: 'BNA', 444: 'BR_SAT_MON', 445: 'CBT', 446: 'CFTP', 447: 'CHAOS', 448: 'COMPAQ_PEER', 449: 'CPHB', 450: 'CPNX', 451: 'CRTP', 452: 'CRUDP', 453: 'DCCP', 454: 'DCN_MEAS', 455: 'DDP', 456: 'DDX', 457: 'DGP', 458: 'EIGRP', 459: 'EMCON', 460: 'ENCAP', 461: 'ETHERIP', 462: 'FC', 463: 'FIRE', 464: 'GGP', 465: 'GMTP', 466: 'HIP', 467: 'HMP', 468: 'I_NLSP', 469: 'IATP', 470: 'IDPR', 471: 'IDPR_CMTP', 472: 'IDRP', 473: 'IFMP', 474: 'IGP', 475: 'IL', 476: 'IPCOMP', 477: 'IPCV', 478: 'IPLT', 479: 'IPPC', 480: 'IPTM', 481: 'IPX_IN_IP', 482: 'IRTP', 483: 'IS_IS', 484: 'ISO_IP', 485: 'ISO_TP4', 486: 'KRYPTOLAN', 487: 'LARP', 488: 'LEAF_1', 489: 'LEAF_2', 490: 'MERIT_INP', 491: 'MFE_NSP', 492: 'MHRP', 493: 'MICP', 494: 'MOBILE', 495: 'MOBILITY_HEADER', 496: 'MPLS_IN_IP', 497: 'MTP', 498: 'MUX', 499: 'NARP', 500: 'NETBLT', 501: 'NSFNET_IGP', 502: 'NVP_II', 503: 'PGM', 504: 'PIM', 505: 'PIPE', 506: 'PNNI', 507: 'PRM', 508: 'PTP', 509: 'PUP', 510: 'PVP', 511: 'QNX', 512: 'RSVP', 513: 'RSVP_E2E_IGNORE', 514: 'RVD', 515: 'SAT_EXPAK', 516: 'SAT_MON', 517: 'SCC_SP', 518: 'SCPS', 519: 'SDRP', 520: 'SECURE_VMTP', 521: 'SHIM6', 522: 'SKIP', 523: 'SM', 524: 'SMP', 525: 'SNP', 526: 'SPRITE_RPC', 527: 'SPS', 528: 'SRP', 529: 'SSCOPMCE', 530: 'ST', 531: 'STP', 532: 'SUN_ND', 533: 'SWIPE', 534: 'TCF', 535: 'TLSP', 536: 'TP_PP', 537: 'TRUNK_1', 538: 'TRUNK_2', 539: 'UTI', 540: 'VINES', 541: 'VISA', 542: 'VMTP', 543: 'VRRP', 544: 'WB_EXPAK', 545: 'WB_MON', 546: 'WSN', 547: 'XNET', 548: 'XNS_IDP', 549: 'XTP', 550: 'BUZZNET', 551: 'COMEDY', 552: 'RAMBLER', 553: 'SMUGMUG', 554: 'ARCHIEVE', 555: 'CITYNEWS', 556: 'SCIENCESTAGE', 557: 'ONEWORLD', 558: 'DISQUS', 559: 'BLOGCU', 560: 'EKOLEY', 561: '500PX', 562: 'FOTKI', 563: 'FOTOLOG', 564: 'JALBUM', 565: 'LOCKERZ', 566: 'PANORAMIO', 567: 'SNAPFISH', 568: 'WEBSHOTS', 569: 'MEGA', 570: 'VIDOOSH', 571: 'AFREECA', 572: 'WILDSCREEN', 573: 'BLOGTV', 574: 'HULU', 575: 'MEVIO', 576: 'LIVESTREAM', 577: 'LIVELEAK', 578: 'DEEZER', 579: 'BLIPTV', 580: 'BREAK', 581: 'CITYTV', 582: 'COMEDYCENTRAL', 583: 'ENGAGEMEDIA', 584: 'SCREENJUNKIES', 585: 'RUTUBE', 586: 'SEVENLOAD', 587: 'MUBI', 588: 'IZLESENE', 589: 'VIDEO_HOSTING', 590: 'BOX', 591: 'SKYDRIVE', 592: '7DIGITAL', 593: 'CLOUDFRONT', 594: 'TANGO', 595: 'WECHAT', 596: 'LINE', 597: 'BLOOMBERG', 598: 'MSCDN', 599: 'AKAMAI', 600: 'YAHOOMSG', 601: 'BITGRAVITY', 602: 'CACHEFLY', 603: 'CDN77', 604: 'CDNETWORKS', 605: 'CHINACACHE', 606: 'COTENDO', 607: 'EDGECAST', 608: 'FASTLY', 609: 'HIGHWINDS', 610: 'INTERNAP', 611: 'LEVEL3', 612: 'LIMELIGHT', 613: 'MAXCDN', 614: 'NETDNA', 615: 'VOXEL', 616: 'RACKSPACE', 617: 'GAMEFORGE', 618: 'METIN2', 619: 'OGAME', 620: 'BATTLEKNIGHT', 621: '4STORY', 622: 'FBMSG', 623: 'GCM',
     },
-	
+    
     /**
      * Constants: Protocol Name, Id 
      */
     ProtocolsNameID: {
         'All': 0, '163': 2, '360': 3, '302_FOUND': 4, '360BUY': 5, '56': 6, '8021Q': 7, '888': 8, 'ABOUT': 9, 'ADCASH': 10, 'ADDTHIS': 11, 'ADF': 12, 'ADOBE': 13, 'AFP': 14, 'AH': 15, 'AIM': 16, 'AIMINI': 17, 'ALIBABA': 18, 'ALIPAY': 19, 'ALLEGRO': 20, 'AMAZON': 21, 'AMEBLO': 22, 'ANCESTRY': 23, 'ANGRYBIRDS': 24, 'ANSWERS': 25, 'AOL': 26, 'APPLE': 27, 'APPLEJUICE': 28, 'ARMAGETRON': 29, 'ARP': 30, 'ASK': 31, 'AVG': 32, 'AVI': 33, 'AWEBER': 34, 'AWS': 35, 'BABYLON': 36, 'BADOO': 37, 'BAIDU': 38, 'BANKOFAMERICA': 39, 'BARNESANDNOBLE': 40, 'BATMAN': 41, 'BATTLEFIELD': 42, 'BATTLENET': 43, 'BBB': 44, 'BBC_ONLINE': 45, 'BESTBUY': 46, 'BETFAIR': 47, 'BGP': 48, 'BIBLEGATEWAY': 49, 'BILD': 50, 'BING': 51, 'BITTORRENT': 52, 'BLEACHERREPORT': 53, 'BLOGFA': 54, 'BLOGGER': 55, 'BLOGSPOT': 56, 'BODYBUILDING': 57, 'BOOKING': 58, 'CBSSPORTS': 59, 'CENT': 60, 'CHANGE': 61, 'CHASE': 62, 'CHESS': 63, 'CHINAZ': 64, 'CITRIX': 65, 'CITRIXONLINE': 66, 'CLICKSOR': 67, 'CNN': 68, 'CNZZ': 69, 'COMCAST': 70, 'CONDUIT': 71, 'COPYSCAPE': 72, 'CORREIOS': 73, 'CRAIGSLIST': 74, 'CROSSFIRE': 75, 'DAILYMAIL': 76, 'DAILYMOTION': 77, 'DCERPC': 78, 'DIRECT_DOWNLOAD_LINK': 79, 'DEVIANTART': 80, 'DHCP': 81, 'DHCPV6': 82, 'DIGG': 83, 'DIRECTCONNECT': 84, 'DNS': 85, 'DOFUS': 86, 'DONANIMHABER': 87, 'DOUBAN': 88, 'DOUBLECLICK': 89, 'DROPBOX': 90, 'EBAY': 91, 'EDONKEY': 92, 'EGP': 93, 'EHOW': 94, 'EKSISOZLUK': 95, 'ELECTRONICSARTS': 96, 'ESP': 97, 'ESPN': 98, 'ETHERNET': 99, 'ETSY': 100, 'EUROPA': 101, 'EUROSPORT': 102, 'FACEBOOK': 103, 'FACETIME': 104, 'FASTTRACK': 105, 'FC2': 106, 'FEIDIAN': 107, 'FIESTA': 108, 'FILETOPIA': 109, 'FIVERR': 110, 'FLASH': 111, 'FLICKR': 112, 'FLORENSIA': 113, 'FOURSQUARE': 114, 'FOX': 115, 'FREE': 116, 'FTP': 117, 'GADUGADU': 118, 'GAMEFAQS': 119, 'GAMESPOT': 120, 'GAP': 121, 'GARANTI': 122, 'GAZETEVATAN': 123, 'GIGAPETA': 124, 'GITHUB': 125, 'GITTIGIDIYOR': 126, 'GLOBO': 127, 'GMAIL': 128, 'GNUTELLA': 129, 'GOOGLE_MAPS': 130, 'GO': 131, 'GODADDY': 132, 'GOO': 133, 'GOOGLE': 134, 'GOOGLE_USER_CONTENT': 135, 'GOSMS': 136, 'GRE': 137, 'GROOVESHARK': 138, 'GROUPON': 139, 'GTALK': 140, 'GTP': 141, 'GTP2': 142, 'GUARDIAN': 143, 'GUILDWARS': 144, 'HABERTURK': 145, 'HAO123': 146, 'HEPSIBURADA': 147, 'HI5': 148, 'HALFLIFE2': 149, 'HOMEDEPOT': 150, 'HOOTSUITE': 151, 'HOTMAIL': 152, 'HTTP': 153, 'HTTP_CONNECT': 154, 'HTTP_PROXY': 155, 'HTTP_APPLICATION_ACTIVESYNC': 156, 'HUFFINGTON_POST': 157, 'HURRIYET': 158, 'I23V5': 159, 'IAX': 160, 'ICECAST': 161, 'APPLE_ICLOUD': 162, 'ICMP': 163, 'ICMPV6': 164, 'IFENG': 165, 'IGMP': 166, 'IGN': 167, 'IKEA': 168, 'IMAP': 169, 'IMAPS': 170, 'INTERNET_MOVIE_DATABASE': 171, 'IMESH': 172, 'IMESSAGE': 173, 'IMGUR': 174, 'INCREDIBAR': 175, 'INDIATIMES': 176, 'INSTAGRAM': 177, 'IP': 178, 'IP_IN_IP': 179, 'IPP': 180, 'IPSEC': 181, 'IPV6': 182, 'IRC': 183, 'IRS': 184, 'APPLE_ITUNES': 185, 'UNENCRYPED_JABBER': 186, 'JAPANPOST': 187, 'KAKAO': 188, 'KAT': 189, 'KAZAA': 190, 'KERBEROS': 191, 'KING': 192, 'KOHLS': 193, 'KONGREGATE': 194, 'KONTIKI': 195, 'L2TP': 196, 'LASTFM': 197, 'LDAP': 198, 'LEAGUEOFLEGENDS': 199, 'LEGACY': 200, 'LETV': 201, 'LINKEDIN': 202, 'LIVE': 203, 'LIVEDOOR': 204, 'LIVEMAIL': 205, 'LIVEINTERNET': 206, 'LIVEJASMIN': 207, 'LIVEJOURNAL': 208, 'LIVESCORE': 209, 'LIVINGSOCIAL': 210, 'LOWES': 211, 'MACYS': 212, 'MAIL_RU': 213, 'MANET': 214, 'MANOLITO': 215, 'MAPLESTORY': 216, 'MATCH': 217, 'MDNS': 218, 'MEDIAFIRE': 219, 'MEEBO': 220, 'MGCP': 221, 'MICROSOFT': 222, 'MILLIYET': 223, 'MINECRAFT': 224, 'MINICLIP': 225, 'MLBASEBALL': 226, 'MMO_CHAMPION': 227, 'MMS': 228, 'MOVE': 229, 'MOZILLA': 230, 'MPEG': 231, 'MSN': 232, 'MSSQL': 233, 'MULTIPLY': 234, 'MYNET': 235, 'MYSPACE': 236, 'MYSQL': 237, 'MYWEBSEARCH': 238, 'NBA': 239, 'NEOBUX': 240, 'NETBIOS': 241, 'NETFLIX': 242, 'NETFLOW': 243, 'NEWEGG': 244, 'NEWSMAX': 245, 'NFL': 246, 'NFS': 247, 'NICOVIDEO': 248, 'NIH': 249, 'NORDSTROM': 250, 'NTP': 251, 'NYTIMES': 252, 'ODNOKLASSNIKI': 253, 'OFF': 254, 'OGG': 255, 'ONET': 256, 'OPENFT': 257, 'ORANGEDONKEY': 258, 'OSCAR': 259, 'OSPF': 260, 'OUTBRAIN': 261, 'OVERSTOCK': 262, 'PANDO': 263, 'PAYPAL': 264, 'PCANYWHERE': 265, 'PCH': 266, 'PCONLINE': 267, 'PHOTOBUCKET': 268, 'PINTEREST': 269, 'PLAYSTATION': 270, 'POGO': 271, 'POP': 272, 'POPS': 273, 'POPO': 274, 'PORNHUB': 275, 'POSTGRES': 276, 'PPLIVE': 277, 'PPP': 278, 'PPPOE': 279, 'PPSTREAM': 280, 'PPTP': 281, 'PREMIERLEAGUE': 282, 'QQ': 283, 'QQLIVE': 284, 'QUAKE': 285, 'QUICKTIME': 286, 'R10': 287, 'RADIUS': 288, 'RAKUTEN': 289, 'RDP': 290, 'REALMEDIA': 291, 'REDDIT': 292, 'REDTUBE': 293, 'REFERENCE': 294, 'RENREN': 295, 'ROBLOX': 296, 'ROVIO': 297, 'RTP': 298, 'RTSP': 299, 'SABAHTR': 300, 'SAHIBINDEN': 301, 'SALESFORCE': 302, 'SALON': 303, 'SCTP': 304, 'SEARCHNU': 305, 'SEARCH_RESULTS': 306, 'SEARS': 307, 'SECONDLIFE': 308, 'SECURESERVER': 309, 'SFLOW': 310, 'SHAZAM': 311, 'SHOUTCAST': 312, 'SINA': 313, 'SIP': 314, 'SITEADVISOR': 315, 'SKY': 316, 'SKYPE': 317, 'SKYROCK': 318, 'SKYSPORTS': 319, 'SLATE': 320, 'SLIDESHARE': 321, 'SMB': 322, 'SMTP': 323, 'SMTPS': 324, 'SNMP': 325, 'SOCRATES': 326, 'SOFTONIC': 327, 'SOGOU': 328, 'SOHU': 329, 'SOPCAST': 330, 'SOSO': 331, 'SOULSEEK': 332, 'SOUNDCLOUD': 333, 'SOURGEFORGE': 334, 'SPIEGEL': 335, 'SPORX': 336, 'SPOTIFY': 337, 'SQUIDOO': 338, 'SSDP': 339, 'SSH': 340, 'SSL': 341, 'STACK_OVERFLOW': 342, 'STATCOUNTER': 343, 'STEALTHNET': 344, 'STEAM': 345, 'STUMBLEUPON': 346, 'STUN': 347, 'SULEKHA': 348, 'SYSLOG': 349, 'TAGGED': 350, 'TAOBAO': 351, 'TARGET': 352, 'TCO': 353, 'TCP': 354, 'TDS': 355, 'TEAMVIEWER': 356, 'TELNET': 357, 'TFTP': 358, 'THEMEFOREST': 359, 'THE_PIRATE_BAY': 360, 'THUNDER': 361, 'TIANYA': 362, 'TLS': 363, 'TMALL': 364, 'TORRENTZ': 365, 'TRUPHONE': 366, 'TUBE8': 367, 'TUDOU': 368, 'TUENTI': 369, 'TUMBLR': 370, 'TVANTS': 371, 'TVUPLAYER': 372, 'TWITTER': 373, 'UBI': 374, 'UCOZ': 375, 'UDP': 376, 'UDPLITE': 377, 'UOL': 378, 'USDEPARTMENTOFSTATE': 379, 'USENET': 380, 'USTREAM': 381, 'HTTP_APPLICATION_VEOHTV': 382, 'VIADEO': 383, 'VIBER': 384, 'VIMEO': 385, 'VK': 386, 'VKONTAKTE': 387, 'VNC': 388, 'WALMART': 389, 'WARRIORFORUM': 390, 'WAYN': 391, 'WEATHER': 392, 'WEBEX': 393, 'WEEKLYSTANDARD': 394, 'WEIBO': 395, 'WELLSFARGO': 396, 'WHATSAPP': 397, 'WIGETMEDIA': 398, 'WIKIA': 399, 'WIKIMEDIA': 400, 'WIKIPEDIA': 401, 'WILLIAMHILL': 402, 'WINDOWSLIVE': 403, 'WINDOWSMEDIA': 404, 'WINMX': 405, 'WINUPDATE': 406, 'WORLD_OF_KUNG_FU': 407, 'WORDPRESS_ORG': 408, 'WARCRAFT3': 409, 'WORLDOFWARCRAFT': 410, 'WOWHEAD': 411, 'WWE': 412, 'XBOX': 413, 'XDMCP': 414, 'XHAMSTER': 415, 'XING': 416, 'XINHUANET': 417, 'XNXX': 418, 'XVIDEOS': 419, 'YAHOO': 420, 'YAHOOGAMES': 421, 'YAHOOMAIL': 422, 'YANDEX': 423, 'YELP': 424, 'YOUKU': 425, 'YOUPORN': 426, 'YOUTUBE': 427, 'ZAPPOS': 428, 'ZATTOO': 429, 'ZEDO': 430, 'ZOL': 431, 'ZYNGA': 432, '3PC': 433, 'ANY_0HOP': 434, 'ANY_DFS': 435, 'ANY_HIP': 436, 'ANY_LOCAL': 437, 'ANY_PES': 438, 'ARGUS': 439, 'ARIS': 440, 'AX_25': 441, 'BBN_RCC_MON': 442, 'BNA': 443, 'BR_SAT_MON': 444, 'CBT': 445, 'CFTP': 446, 'CHAOS': 447, 'COMPAQ_PEER': 448, 'CPHB': 449, 'CPNX': 450, 'CRTP': 451, 'CRUDP': 452, 'DCCP': 453, 'DCN_MEAS': 454, 'DDP': 455, 'DDX': 456, 'DGP': 457, 'EIGRP': 458, 'EMCON': 459, 'ENCAP': 460, 'ETHERIP': 461, 'FC': 462, 'FIRE': 463, 'GGP': 464, 'GMTP': 465, 'HIP': 466, 'HMP': 467, 'I_NLSP': 468, 'IATP': 469, 'IDPR': 470, 'IDPR_CMTP': 471, 'IDRP': 472, 'IFMP': 473, 'IGP': 474, 'IL': 475, 'IPCOMP': 476, 'IPCV': 477, 'IPLT': 478, 'IPPC': 479, 'IPTM': 480, 'IPX_IN_IP': 481, 'IRTP': 482, 'IS_IS': 483, 'ISO_IP': 484, 'ISO_TP4': 485, 'KRYPTOLAN': 486, 'LARP': 487, 'LEAF_1': 488, 'LEAF_2': 489, 'MERIT_INP': 490, 'MFE_NSP': 491, 'MHRP': 492, 'MICP': 493, 'MOBILE': 494, 'MOBILITY_HEADER': 495, 'MPLS_IN_IP': 496, 'MTP': 497, 'MUX': 498, 'NARP': 499, 'NETBLT': 500, 'NSFNET_IGP': 501, 'NVP_II': 502, 'PGM': 503, 'PIM': 504, 'PIPE': 505, 'PNNI': 506, 'PRM': 507, 'PTP': 508, 'PUP': 509, 'PVP': 510, 'QNX': 511, 'RSVP': 512, 'RSVP_E2E_IGNORE': 513, 'RVD': 514, 'SAT_EXPAK': 515, 'SAT_MON': 516, 'SCC_SP': 517, 'SCPS': 518, 'SDRP': 519, 'SECURE_VMTP': 520, 'SHIM6': 521, 'SKIP': 522, 'SM': 523, 'SMP': 524, 'SNP': 525, 'SPRITE_RPC': 526, 'SPS': 527, 'SRP': 528, 'SSCOPMCE': 529, 'ST': 530, 'STP': 531, 'SUN_ND': 532, 'SWIPE': 533, 'TCF': 534, 'TLSP': 535, 'TP_PP': 536, 'TRUNK_1': 537, 'TRUNK_2': 538, 'UTI': 539, 'VINES': 540, 'VISA': 541, 'VMTP': 542, 'VRRP': 543, 'WB_EXPAK': 544, 'WB_MON': 545, 'WSN': 546, 'XNET': 547, 'XNS_IDP': 548, 'XTP': 549, 'BUZZNET': 550, 'COMEDY': 551, 'RAMBLER': 552, 'SMUGMUG': 553, 'ARCHIEVE': 554, 'CITYNEWS': 555, 'SCIENCESTAGE': 556, 'ONEWORLD': 557, 'DISQUS': 558, 'BLOGCU': 559, 'EKOLEY': 560, '500PX': 561, 'FOTKI': 562, 'FOTOLOG': 563, 'JALBUM': 564, 'LOCKERZ': 565, 'PANORAMIO': 566, 'SNAPFISH': 567, 'WEBSHOTS': 568, 'MEGA': 569, 'VIDOOSH': 570, 'AFREECA': 571, 'WILDSCREEN': 572, 'BLOGTV': 573, 'HULU': 574, 'MEVIO': 575, 'LIVESTREAM': 576, 'LIVELEAK': 577, 'DEEZER': 578, 'BLIPTV': 579, 'BREAK': 580, 'CITYTV': 581, 'COMEDYCENTRAL': 582, 'ENGAGEMEDIA': 583, 'SCREENJUNKIES': 584, 'RUTUBE': 585, 'SEVENLOAD': 586, 'MUBI': 587, 'IZLESENE': 588, 'VIDEO_HOSTING': 589, 'BOX': 590, 'SKYDRIVE': 591, '7DIGITAL': 592, 'CLOUDFRONT': 593, 'TANGO': 594, 'WECHAT': 595, 'LINE': 596, 'BLOOMBERG': 597, 'MSCDN': 598, 'AKAMAI': 599, 'YAHOOMSG': 600, 'BITGRAVITY': 601, 'CACHEFLY': 602, 'CDN77': 603, 'CDNETWORKS': 604, 'CHINACACHE': 605, 'COTENDO': 606, 'EDGECAST': 607, 'FASTLY': 608, 'HIGHWINDS': 609, 'INTERNAP': 610, 'LEVEL3': 611, 'LIMELIGHT': 612, 'MAXCDN': 613, 'NETDNA': 614, 'VOXEL': 615, 'RACKSPACE': 616, 'GAMEFORGE': 617, 'METIN2': 618, 'OGAME': 619, 'BATTLEKNIGHT': 620, '4STORY': 621, 'FBMSG': 622, 'GCM': 623,
     },
-	
+    
     CategoriesIdsMap: {
         0:'All', 1:'Web', 2:'P2P', 3:'Gaming', 4:'Streaming', 5:'Conversational', 6:'Mail', 7:'FileTransfer', 8:'CloudStorage', 9:'DirectDownloadLink', 10:'Network', 11:'Tunnelling', 12:'DataBase', 13:'Remote', 14:'Misc', 15:'CDN'
     },
@@ -162,20 +346,20 @@ MMTDrop = {
         15: ['CLOUDFRONT', 'AKAMAI', 'BITGRAVITY', 'CACHEFLY', 'CDN77', 'CDNETWORKS', 'CHINACACHE', 'COTENDO', 'EDGECAST', 'FASTLY', 'HIGHWINDS', 'INTERNAP', 'LEVEL3', 'LIMELIGHT', 'MAXCDN', 'NETDNA', 'VOXEL', 'RACKSPACE'],
     },
     
-	/**
-	 * Return the parent of the given protocol path. <br>
-	 * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
-	 * @param path application protocol path
-	 */
-	getParentPath : function(path) {
-		var n = path.lastIndexOf(".");
-		if (n == -1) {
-			return ".";
-		} else {
-			var p = path.substring(0, n);
-			return p;
-		}
-	},
+    /**
+     * Return the parent of the given protocol path. <br>
+     * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
+     * @param path application protocol path
+     */
+    getParentPath : function(path) {
+        var n = path.lastIndexOf(".");
+        if (n == -1) {
+            return ".";
+        } else {
+            var p = path.substring(0, n);
+            return p;
+        }
+    },
 
     /**
      * Return the child of the given protocol path. <br>
@@ -191,7 +375,7 @@ MMTDrop = {
             return child;
         }
     },
-	
+    
     /**
      * Returns the root application id given the application path.
      * @param {Object} path application protocol path
@@ -221,136 +405,136 @@ MMTDrop = {
         return friendlyName;
     },
 
-	/**
-	 * Returns the application id given the application path.
-	 * @param {Object} path application protocol path
-	 */
-	getAppId : function(path) {
-		var n = path.toString().lastIndexOf(".");
-		return path.toString().substring(n + 1, path.toString().length);
-	},
+    /**
+     * Returns the application id given the application path.
+     * @param {Object} path application protocol path
+     */
+    getAppId : function(path) {
+        var n = path.toString().lastIndexOf(".");
+        return path.toString().substring(n + 1, path.toString().length);
+    },
 
-	/**
-	 * Returns the application name given the application path.
-	 * @param {Object} path application protocol path
-	 */
-	getAppName : function(path) {
-		var n = path.toString().lastIndexOf(".");
-		return MMTDrop.ProtocolsIDName[path.toString().substring(n + 1, path.toString().length)];
-	},
-	
-	/**
-	 * Returns the parent application name given the application path. <br>
-	 * If the application parent does not exist (path equal to root application), -1 is returned.
-	 * @param {Object} path
-	 */
-	getParentApp : function(path) {
-		var parent = this.getParentPath(path);
-		if (parent == ".")
-			return -1;
-		return this.getAppId(parent);
-	},
-	
-	/**
-	 * Returns the protocol path from the given statistics report entry
-	 * @param {Object} entry statistics report entry
-	 */
-	getEntryPath : function(entry) {
-		return entry[MMTDrop.StatsColumnId.APP_PATH];
-	},
-	
-	/** This will parse a delimited string into an array of
-	 arrays. The default delimiter is the comma, but this
-	 can be overriden in the second argument.
-	 Code provided by Ben Nadel
-	 **/
-	CSVToArray : function(strData, strDelimiter) {
-		// Check to see if the delimiter is defined. If not,
-		// then default to comma.
-		strDelimiter = (strDelimiter || ",");
-		// Create a regular expression to parse the CSV values.
-		var objPattern = new RegExp((
-			// Delimiters.
-			"(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
-			// Quoted fields.
-			"(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
-			// Standard fields.
-			"([^\"\\" + strDelimiter + "\\r\\n]*))"
-		), "gi");
-		// Create an array to hold our data. Give the array
-		// a default empty first row.
-		var arrData = [[]];
-		// Create an array to hold our individual pattern
-		// matching groups.
-		var arrMatches = null;
-		// Keep looping over the regular expression matches
-		// until we can no longer find a match.
-		while ( arrMatches = objPattern.exec(strData)) {
-			// Get the delimiter that was found.
-			var strMatchedDelimiter = arrMatches[1];
-			// Check to see if the given delimiter has a length
-			// (is not the start of string) and if it matches
-			// field delimiter. If id does not, then we know
-			// that this delimiter is a row delimiter.
-			if (strMatchedDelimiter.length && (strMatchedDelimiter != strDelimiter)) {
+    /**
+     * Returns the application name given the application path.
+     * @param {Object} path application protocol path
+     */
+    getAppName : function(path) {
+        var n = path.toString().lastIndexOf(".");
+        return MMTDrop.ProtocolsIDName[path.toString().substring(n + 1, path.toString().length)];
+    },
+    
+    /**
+     * Returns the parent application name given the application path. <br>
+     * If the application parent does not exist (path equal to root application), -1 is returned.
+     * @param {Object} path
+     */
+    getParentApp : function(path) {
+        var parent = this.getParentPath(path);
+        if (parent == ".")
+            return -1;
+        return this.getAppId(parent);
+    },
+    
+    /**
+     * Returns the protocol path from the given statistics report entry
+     * @param {Object} entry statistics report entry
+     */
+    getEntryPath : function(entry) {
+        return entry[MMTDrop.StatsColumnId.APP_PATH];
+    },
+    
+    /** This will parse a delimited string into an array of
+     arrays. The default delimiter is the comma, but this
+     can be overriden in the second argument.
+     Code provided by Ben Nadel
+     **/
+    CSVToArray : function(strData, strDelimiter) {
+        // Check to see if the delimiter is defined. If not,
+        // then default to comma.
+        strDelimiter = (strDelimiter || ",");
+        // Create a regular expression to parse the CSV values.
+        var objPattern = new RegExp((
+            // Delimiters.
+            "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+            // Quoted fields.
+            "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+            // Standard fields.
+            "([^\"\\" + strDelimiter + "\\r\\n]*))"
+        ), "gi");
+        // Create an array to hold our data. Give the array
+        // a default empty first row.
+        var arrData = [[]];
+        // Create an array to hold our individual pattern
+        // matching groups.
+        var arrMatches = null;
+        // Keep looping over the regular expression matches
+        // until we can no longer find a match.
+        while ( arrMatches = objPattern.exec(strData)) {
+            // Get the delimiter that was found.
+            var strMatchedDelimiter = arrMatches[1];
+            // Check to see if the given delimiter has a length
+            // (is not the start of string) and if it matches
+            // field delimiter. If id does not, then we know
+            // that this delimiter is a row delimiter.
+            if (strMatchedDelimiter.length && (strMatchedDelimiter != strDelimiter)) {
 
-				// Since we have reached a new row of data,
-				// add an empty row to our data array.
-				arrData.push([]);
-			}
+                // Since we have reached a new row of data,
+                // add an empty row to our data array.
+                arrData.push([]);
+            }
 
-			// Now that we have our delimiter out of the way,
-			// let's check to see which kind of value we
-			// captured (quoted or unquoted).
-			if (arrMatches[2]) {
+            // Now that we have our delimiter out of the way,
+            // let's check to see which kind of value we
+            // captured (quoted or unquoted).
+            if (arrMatches[2]) {
 
-				// We found a quoted value. When we capture
-				// this value, unescape any double quotes.
-				var strMatchedValue = arrMatches[2].replace(new RegExp("\"\"", "g"), "\"");
-			} else {
-				// We found a non-quoted value.
-				var strMatchedValue = arrMatches[3];
-			}
+                // We found a quoted value. When we capture
+                // this value, unescape any double quotes.
+                var strMatchedValue = arrMatches[2].replace(new RegExp("\"\"", "g"), "\"");
+            } else {
+                // We found a non-quoted value.
+                var strMatchedValue = arrMatches[3];
+            }
 
-			// Now that we have our value string, let's add
-			// it to the data array.
-			arrData[arrData.length - 1].push(strMatchedValue);
-		}
+            // Now that we have our value string, let's add
+            // it to the data array.
+            arrData[arrData.length - 1].push(strMatchedValue);
+        }
 
-		// Return the parsed data.
-		return (arrData);
-	},
-	
-	/**
-	 * Maps the Protocol ID to a Protocol Name
-	 * @param {number} id
-	 * @returns {string} Protocol Name
-	 */
-	getProtocolNameFromID : function(id) {
-		var protocolName;
-		protocolName = ( id in MMTDrop.ProtocolsIDName) ? MMTDrop.ProtocolsIDName[id] : 'NaP';
-		return protocolName;
-	},
-	
-	/**
-	 * Maps the Protocol Name to a Protocol ID
-	 * @param {string} protocolName
-	 * @returns {number} id
-	 */
-	getProtocolIDFromName : function(protocolName) {
-		var protocolID;
-		protocolID = ( protocolName in MMTDrop.ProtocolsNameID) ? MMTDrop.ProtocolsNameID[protocolName] : 'NaP';
-		return protocolID;
-	},
-	
-	/**
-	 * Returns the first element that was inserted in the given array
-	 */
-	get1stElem : function(data) {
-		for (var prop in data)
-			if (data.propertyIsEnumerable(prop))
-				return prop;
-	},
+        // Return the parsed data.
+        return (arrData);
+    },
+    
+    /**
+     * Maps the Protocol ID to a Protocol Name
+     * @param {number} id
+     * @returns {string} Protocol Name
+     */
+    getProtocolNameFromID : function(id) {
+        var protocolName;
+        protocolName = ( id in MMTDrop.ProtocolsIDName) ? MMTDrop.ProtocolsIDName[id] : 'NaP';
+        return protocolName;
+    },
+    
+    /**
+     * Maps the Protocol Name to a Protocol ID
+     * @param {string} protocolName
+     * @returns {number} id
+     */
+    getProtocolIDFromName : function(protocolName) {
+        var protocolID;
+        protocolID = ( protocolName in MMTDrop.ProtocolsNameID) ? MMTDrop.ProtocolsNameID[protocolName] : 'NaP';
+        return protocolID;
+    },
+    
+    /**
+     * Returns the first element that was inserted in the given array
+     */
+    get1stElem : function(data) {
+        for (var prop in data)
+            if (data.propertyIsEnumerable(prop))
+                return prop;
+    },
 };
 
 /**
@@ -647,11 +831,15 @@ MMTDrop.Reports.prototype = {
 				}
 				if (e.data.fid === 'appname') {
 					e.data.report.filter.appname = $(this).find('option:selected').val();
-				} else if (e.data.fid === 'metric') {
-					e.data.report.filter.metric = $(this).find('option:selected').val();
+                                } else if (e.data.fid === 'metric') {
+                                        e.data.report.filter.metric = $(this).find('option:selected').val();
+				} else if (e.data.fid === 'flowmetric') {
+					e.data.report.filter.flowmetric = $(this).find('option:selected').val();
 				} else if (e.data.fid === 'appclass') {
 					e.data.report.filter.appclass = $(this).find('option:selected').val();
-				}
+				} else {
+					e.data.report.filter[ e.data.fid ] = $(this).find('option:selected').val();
+                                }
 				e.data.report.updateElements();
 			});
 		}
@@ -701,7 +889,7 @@ MMTDrop.Reports.prototype = {
 		} else if (options.type == "table") {
 			elem.charts.push(new MMTDrop.Reports.Chart(options));
 			elem.buttons.push(options.type);
-		} else if (options.type == "timeline") {
+		} else if (options.type == "timeline" || options.type == "scatter") {
 			elem.charts.push(new MMTDrop.Reports.Chart(options));
 			elem.buttons.push(options.type);
 		}
@@ -735,11 +923,16 @@ MMTDrop.Reports.prototype = {
 		if (options.type) {
 			this.filters[options.type] = {
 				type : options.type,
-				label : options.label || options.type
+				label : options.label || options.type,
+                                data : options.data || null,
 			};
 			if (options.select) {
 				this.filters[options.type].select = options.select;
 			}
+                        if ( options.data ) {
+                          this.filter[options.type] = options.data[1];
+                          console.log('init filter', this.filter[options.type]);
+                        }
 			if (options.type == "appname") {
 				data = [];
 				data[0] = 'All';
@@ -753,9 +946,12 @@ MMTDrop.Reports.prototype = {
 				//this.filter.appclass = this.filters[options.type].data[0]; 
                 this.filter.appclass = 'All';
                 this.filter.appclassid = MMTDrop.CategoriesNamesMap[this.filter.appclass]; 
-			} else if (options.type == "metric") {
-				this.filters[options.type].data = MMTDrop.MetricID2Name;
-				this.filter.metric = MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME];
+                        } else if (options.type == "metric") {
+                                this.filters[options.type].data = MMTDrop.MetricID2Name;
+                                this.filter.metric = MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME];
+                        }else if (options.type == "flowmetric") {
+				this.filters[options.type].data = MMTDrop.FlowMetricID2Name;
+				this.filter.flowmetric = MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DATA_VOLUME];
 			} else if (options.type == "period") {
                                 this.filters[options.type].data = ['1 Hour', '1 Day', '1 Week', '1 Month'];
                                 this.filter.period = '1 Hour';
@@ -775,16 +971,21 @@ MMTDrop.Reports.prototype = {
 				    //Update the filter if it exists
 				    $('#' + this.elemid + '_ftr_appname').val(filter.appname);
                 } else if ((f === "metric") && (this.filter.metric != filter.metric)) {
-				    this.filter.metric = filter.metric;
-				    this.filter.metricid = MMTDrop.MetricName2ID[filter.metric];
+                                    this.filter.metric = filter.metric;
+                                    this.filter.metricid = MMTDrop.MetricName2ID[filter.metric];
+                                    //Update the filter if it exists
+                                    $('#' + this.elemid + '_ftr_metric').val(filter.metric);
+                } else if ((f === "flowmetric") && (this.filter.flowmetric != filter.flowmetric)) {
+				    this.filter.flowmetric = filter.flowmetric;
+				    this.filter.flowmetricid = MMTDrop.FlowMetricName2ID[filter.flowmetric];
 				    //Update the filter if it exists
-				    $('#' + this.elemid + '_ftr_metric').val(filter.metric);
+				    $('#' + this.elemid + '_ftr_flowmetric').val(filter.flowmetric);
                 } else if ((f === "appclass") && (this.filter.appclass != filter.appclass)) {
 				    this.filter.appclass = filter.appclass;
 				    this.filter.appclassid = MMTDrop.CategoriesNamesMap[filter.appclass];
 				    //Update the filter if it exists
 				    $('#' + this.elemid + '_ftr_appclass').val(filter.appclass);
-                } else if(!(f === "appclassid" || f === "metricid" || f === "appid") &&  this.filter[f] != filter[f]) {
+                } else if(!(f === "appclassid" || f === "metricid" || f === "flowmetricid" || f === "appid") &&  this.filter[f] != filter[f]) {
                     this.filter[f] = filter[f];
                 }
             }
@@ -794,7 +995,7 @@ MMTDrop.Reports.prototype = {
         getChartTypeIconByName: function(name) {
         if(name === 'pie') return $('<i>', {'class': 'glyphicons-pie'});
         if(name === 'bar') return $('<i>', {'class': 'glyphicons-bar'});
-        if(name === 'timeline') return $('<i>', {'class': 'glyphicons-chart'});
+        if(name === 'timeline' || name === 'scatter') return $('<i>', {'class': 'glyphicons-chart'});
         if(name === 'tree') return $('<i>', {'class': 'glyphicons-table'});
         if(name === 'table') return $('<i>', {'class': 'glyphicons-table'});
     },
@@ -888,7 +1089,9 @@ MMTDrop.Reports.Chart.prototype = {
 		} else if (this.type == "table") {
 			this.render_table(this.filter);
 		} else if (this.type == "timeline") {
-			this.render_timeline(this.filter);
+			this.render_timeline(this.filter); //default rendering to spline
+		} else if (this.type == "scatter") {
+			this.render_timeline(this.filter, this.type);
 		}
 	},
 
@@ -1242,13 +1445,13 @@ MMTDrop.Reports.Chart.prototype = {
 	/**
 	 * Renders a timeline chart 
 	 */
-	render_timeline : function(filter) {
+	render_timeline : function(filter, type) {
 		this.chart = new Highcharts.Chart({
 			chart : {
 				renderTo : this.elemid,
                                 borderColor: '#ccc',
                                 borderWidth: 1,
-                                type : 'spline',
+                                type : type || 'spline',
 				zoomType : 'xy',
                                 spacingTop:30,
                                 spacingRight:30                                     
@@ -1288,6 +1491,28 @@ MMTDrop.Reports.Chart.prototype = {
                 shared: true
             },
             plotOptions: {
+                scatter: {
+                    marker: {
+                        radius: 3,
+                        states: {
+                            hover: {
+                                enabled: true,
+                                lineColor: 'rgb(100,100,100)'
+                            }
+                        }
+                    },
+                    states: {
+                        hover: {
+                            marker: {
+                                enabled: false
+                            }
+                        }
+                    },
+                    tooltip: {
+                        headerFormat: '<b>{series.name}</b><br>',
+                        pointFormat: '{point.y}'
+                    }
+                },
                 areaspline: {
                     lineWidth: 2,
                     marker: {
@@ -1353,15 +1578,19 @@ MMTDrop.Reports.Chart.prototype = {
 				    this.filter.appname = filter.appname;
 				    this.filter.appid = MMTDrop.ProtocolsNameID[filter.appname];
 				    this.resetInit();
-			    } else if ((f === "metric") && (this.filter.metric != filter.metric)) {
-				    this.filter.metric = filter.metric;
-				    this.filter.metricid = MMTDrop.MetricName2ID[filter.metric];
+                            } else if ((f === "metric") && (this.filter.metric != filter.metric)) {
+                                    this.filter.metric = filter.metric;
+                                    this.filter.metricid = MMTDrop.MetricName2ID[filter.metric];
+                                    this.resetInit();
+			    } else if ((f === "flowmetric") && (this.filter.flowmetric != filter.flowmetric)) {
+				    this.filter.flowmetric = filter.flowmetric;
+				    this.filter.flowmetricid = MMTDrop.FlowMetricName2ID[filter.flowmetric];
 				    this.resetInit();
 			    } else if ((f === "appclass") && (this.filter.appclass != filter.appclass)) {
 				    this.filter.appclass = filter.appclass;
 				    this.filter.appclassid = MMTDrop.CategoriesNamesMap[filter.appclass];
 				    this.resetInit();
-                } else if(!(f === "appclassid" || f === "metricid" || f === "appid") &&  this.filter[f] != filter[f]) {
+                } else if(!(f === "appclassid" || f === "metricid" || f === "flowmetricid" || f === "appid") &&  this.filter[f] != filter[f]) {
                     this.filter[f] = filter[f];
                     this.resetInit();
                 }
@@ -1397,7 +1626,7 @@ MMTDrop.Reports.Chart.prototype = {
 		} else if (this.type == "tree") {
 		} else if (this.type == "table") {
 			$('#' + this.elemid + '_datatable').dataTable().fnDestroy();
-		} else if (this.type == "timeline") {
+		} else if (this.type == "timeline" || this.type == "scatter") {
 			this.chart.destroy();
 			this.chart = null;
 		}
@@ -1410,19 +1639,19 @@ MMTDrop.Reports.Chart.prototype = {
  * An object container for all the data creation functions.
  */
 MMTDrop.DataFactory = {
-	createTreeTableData : function(appstats, options, args) {
-		var arrData = [[]];
-		for (i in appstats.rootapps) {
-			for (j in appstats.rootapps[i].stats) {
-				appstats.rootapps[i].stats[j].getGlobalStats(arrData, args);
-			}
-		}
-		arrData.splice(0, 1);
-		for (i in arrData) {
-			arrData[i][2] = MMTDrop.getProtocolNameFromID(arrData[i][2]);
-		}
-		return arrData;
-	},
+    createTreeTableData : function(appstats, options, args) {
+        var arrData = [[]];
+        for (i in appstats.rootapps) {
+            for (j in appstats.rootapps[i].stats) {
+                appstats.rootapps[i].stats[j].getGlobalStats(arrData, args);
+            }
+        }
+        arrData.splice(0, 1);
+        for (i in arrData) {
+            arrData[i][2] = MMTDrop.getProtocolNameFromID(arrData[i][2]);
+        }
+        return arrData;
+    },
 
     createApplicationTableData : function(appstats, options, args) {
         var data = [];
@@ -1454,136 +1683,136 @@ MMTDrop.DataFactory = {
         data.sort(function(a, b) {return b[1] - a[1];});
         return data;
     },
-	
-	createAppsGlobalStatistics : function(appstats, options) {
-		var data = [];
-		for (id in appstats.appstats) {
-			var rowdata = [];
-			rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT));
-			rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME));
-			rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME));
-			data.push({
-				"name" : appstats.appstats[id].getAppId(),
-				"data" : rowdata
-			});
-		}
-		return data;
+    
+    createAppsGlobalStatistics : function(appstats, options) {
+        var data = [];
+        for (id in appstats.appstats) {
+            var rowdata = [];
+            rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT));
+            rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME));
+            rowdata.push(appstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME));
+            data.push({
+                "name" : appstats.appstats[id].getAppId(),
+                "data" : rowdata
+            });
+        }
+        return data;
     },
 
-	createAppsPacketCountForPieChart : function(appstats, options) {
-		var data = [];
-		var packetCount;
-		var name;
-		for (id in appstats.appstats) {
-			name = MMTDrop.getProtocolNameFromID(appstats.appstats[id].getAppId());
-			packetCount = appstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
-			data.push({
-				"name" : name,
-				"y" : packetCount
-			});
-		}
-		return data;
-	},
-	
-	createAppsTimeLineChart : function(gstats, options) {
-		var data = [];
-		var name;
-		var packets = [];
-		id = options.appid;
-		total = 0;
-		if (id && id != '') {
-			if (gstats.appstats[id].hasTraffic()) {
-				if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-					packets = gstats.appstats[id].getDataTimePoints(gstats.timepoints);
-					total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-				}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-					packets = gstats.appstats[id].getPacketTimePoints(gstats.timepoints);
+    createAppsPacketCountForPieChart : function(appstats, options) {
+        var data = [];
+        var packetCount;
+        var name;
+        for (id in appstats.appstats) {
+            name = MMTDrop.getProtocolNameFromID(appstats.appstats[id].getAppId());
+            packetCount = appstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+            data.push({
+                "name" : name,
+                "y" : packetCount
+            });
+        }
+        return data;
+    },
+    
+    createAppsTimeLineChart : function(gstats, options) {
+        var data = [];
+        var name;
+        var packets = [];
+        id = options.appid;
+        total = 0;
+        if (id && id != '') {
+            if (gstats.appstats[id].hasTraffic()) {
+                if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                    packets = gstats.appstats[id].getDataTimePoints(gstats.timepoints);
+                    total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+                }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                    packets = gstats.appstats[id].getPacketTimePoints(gstats.timepoints);
                     total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
                 }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                     packets = gstats.appstats[id].getPayloadTimePoints(gstats.timepoints);
                     total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-				}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-					packets = gstats.appstats[id].getActiveFlowsTimePoints(gstats.timepoints);
+                }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                    packets = gstats.appstats[id].getActiveFlowsTimePoints(gstats.timepoints);
                     total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-				}
+                }
 
-				name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
+                name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
 
-				data.push({
-					"name" : name,
-					"data" : packets,
-					"total": total
-				});
-			}
-			for(i in gstats.appstats[id].stats) {
-				for(j in gstats.appstats[id].stats[i].children) {
-					if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
-						childstats = gstats.appstats[id].stats[i].children[j];
-						child_packets = [];
-						if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-							child_packets = childstats.getDataTimePoints(gstats.timepoints);
+                data.push({
+                    "name" : name,
+                    "data" : packets,
+                    "total": total
+                });
+            }
+            for(i in gstats.appstats[id].stats) {
+                for(j in gstats.appstats[id].stats[i].children) {
+                    if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
+                        childstats = gstats.appstats[id].stats[i].children[j];
+                        child_packets = [];
+                        if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                            child_packets = childstats.getDataTimePoints(gstats.timepoints);
                             total =  childstats.getMetric(MMTDrop.MetricId.DATA_VOLUME);
-						}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-							child_packets = childstats.getPacketTimePoints(gstats.timepoints);
+                        }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                            child_packets = childstats.getPacketTimePoints(gstats.timepoints);
                             total =  childstats.getMetric(MMTDrop.MetricId.PACKET_COUNT);
                         }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                             child_packets = childstats.getPayloadTimePoints(gstats.timepoints);
                             total =  childstats.getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-						}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-							child_packets = childstats.getActiveFlowsTimePoints(gstats.timepoints);
+                        }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                            child_packets = childstats.getActiveFlowsTimePoints(gstats.timepoints);
                             total =  childstats.getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-						}
+                        }
 
-						child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
+                        child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
 
-						data.push({
-							"name" : child_name+'/'+name,
-							"type" : "areaspline",
-							"data" : child_packets,
-							"total": total
-						});
-					}					
-				}
-			}
-		} else {
-			for (id in gstats.appstats) {
-				if (gstats.appstats[id].hasTraffic()) {
-					if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-						packets = gstats.appstats[id].getDataTimePoints(gstats.timepoints);
+                        data.push({
+                            "name" : child_name+'/'+name,
+                            "type" : "areaspline",
+                            "data" : child_packets,
+                            "total": total
+                        });
+                    }                    
+                }
+            }
+        } else {
+            for (id in gstats.appstats) {
+                if (gstats.appstats[id].hasTraffic()) {
+                    if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                        packets = gstats.appstats[id].getDataTimePoints(gstats.timepoints);
                         total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-						packets = gstats.appstats[id].getPacketTimePoints(gstats.timepoints);
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                        packets = gstats.appstats[id].getPacketTimePoints(gstats.timepoints);
                         total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
                     }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                         packets = gstats.appstats[id].getPayloadTimePoints(gstats.timepoints);
                         total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-						packets = gstats.appstats[id].getActiveFlowsTimePoints(gstats.timepoints);
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                        packets = gstats.appstats[id].getActiveFlowsTimePoints(gstats.timepoints);
                         total =  gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-					}
+                    }
 
-					name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
+                    name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
 
-					data.push({
-						"name" : name,
-						"data" : packets,
-						"total": total
-					});
-				}
-			}
-		}
-		data.sort(function(a, b){return b.total - a.total;});
+                    data.push({
+                        "name" : name,
+                        "data" : packets,
+                        "total": total
+                    });
+                }
+            }
+        }
+        data.sort(function(a, b){return b.total - a.total;});
         if(data.length > 10) {
             data.splice(10, data.length - 10);
         }
-		return data;	
-	},
+        return data;    
+    },
 
-	createTOverviewTimeLineChart : function(gstats, options) {
-		var data = [];
-		var name;
-		var packets = [];
-		id = options.appid;
+    createTOverviewTimeLineChart : function(gstats, options) {
+        var data = [];
+        var name;
+        var packets = [];
+        id = options.appid;
         for (id in gstats.rootapps) {
             if (gstats.rootapps[id].hasTraffic()) {
                 if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
@@ -1605,15 +1834,15 @@ MMTDrop.DataFactory = {
             }
         }
 
-		return data;	
-	},
+        return data;    
+    },
 
-	createDashTimeLineChart : function(gstats, options) {
-                if (!options.metric) options.metric = MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME];
-		var data = [];
-		var name;
-		var packets = [];
-		id = options.appid;
+    createDashTimeLineChart : function(gstats, options) {
+        if (!options.metric) options.metric = MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME];
+        var data = [];
+        var name;
+        var packets = [];
+        id = options.appid;
         for (id in gstats.rootapps) {
             if (gstats.rootapps[id].hasTraffic()) {
                 if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
@@ -1660,19 +1889,19 @@ MMTDrop.DataFactory = {
 
                 data.push({
                     "name" : name,
-					"type" : "areaspline",
+                    "type" : "areaspline",
                     "data" : packets,
                     "total": total
                 });
             }
         }
             
-		data.sort(function(a, b){return b.total - a.total;});
+        data.sort(function(a, b){return b.total - a.total;});
         if(data.length > 6) {
             data.splice(6, data.length - 6);
         }
-		return data;	
-	},
+        return data;    
+    },
     
     createAppTimeLineChart : function(gstats, options) {
         var data = [];
@@ -1745,80 +1974,80 @@ MMTDrop.DataFactory = {
         return data;
     },
 
-	
-	createAppsPieChart : function(appstats, options) {
-		var data = [];
-		id = options.appid;
-		if (id && id != '') {
-			if(gstats.appstats[id].hasChildren()) {
-				for(i in gstats.appstats[id].stats) {
-					for(j in gstats.appstats[id].stats[i].children) {
-						if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
-							childstats = gstats.appstats[id].stats[i].children[j];
-							metric = 0;
-							if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-								metric = childstats.bytecount;
-							}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-								metric = childstats.packetcount;
+    
+    createAppsPieChart : function(appstats, options) {
+        var data = [];
+        id = options.appid;
+        if (id && id != '') {
+            if(gstats.appstats[id].hasChildren()) {
+                for(i in gstats.appstats[id].stats) {
+                    for(j in gstats.appstats[id].stats[i].children) {
+                        if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
+                            childstats = gstats.appstats[id].stats[i].children[j];
+                            metric = 0;
+                            if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                                metric = childstats.bytecount;
+                            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                                metric = childstats.packetcount;
                             }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                                 metric = childstats.payloadcount;
-							}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-								metric = childstats.flowcount;
-							}
+                            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                                metric = childstats.flowcount;
+                            }
 
-							child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
+                            child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
 
-							data.push({
-								"name" : MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
-									MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()),
-								"y" : metric
-							});
-						}					
-					}
-				}
-			} else {
-				metric = 0;
-				if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-					metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-				}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-					metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+                            data.push({
+                                "name" : MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
+                                    MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()),
+                                "y" : metric
+                            });
+                        }                    
+                    }
+                }
+            } else {
+                metric = 0;
+                if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                    metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+                }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                    metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
                 }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                     metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-				}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-					metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-				}
+                }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                    metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
+                }
 
-				data.push({
-					"name" : MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()),
-					"y" : metric
-				});
-			}
-		} else {
-			for (id in gstats.appstats) {
-				if (gstats.appstats[id].hasTraffic()) {
-					if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-						packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-						packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+                data.push({
+                    "name" : MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()),
+                    "y" : metric
+                });
+            }
+        } else {
+            for (id in gstats.appstats) {
+                if (gstats.appstats[id].hasTraffic()) {
+                    if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                        packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                        packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
                     }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                         packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-						packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-					}
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                        packets = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
+                    }
 
-					name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
+                    name = MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId());
 
-					data.push({
-						"name" : name,
-						"y" : packets
-					});
-				}
-			}
-		}
-		data.sort(function(a, b) {return b.y - a.y;});
+                    data.push({
+                        "name" : name,
+                        "y" : packets
+                    });
+                }
+            }
+        }
+        data.sort(function(a, b) {return b.y - a.y;});
         MMTDrop.DataFactory.getTopItemsPie(data);
-		return data;	
-	},
+        return data;    
+    },
 
     getTopItemsPie : function(data, options) {
         index = data.length;
@@ -1878,89 +2107,89 @@ MMTDrop.DataFactory = {
         }
         return data;
     },
-	
-	createAppsBarChart : function(appstats, options) {
-		var retval = [];
-		var categories = [];
-		var data = [];
-		var unsorted = [];
-		id = options.appid;
-		if (id && id != '') {
-			metric = 0;
-			if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-				metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-			}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-				metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+    
+    createAppsBarChart : function(appstats, options) {
+        var retval = [];
+        var categories = [];
+        var data = [];
+        var unsorted = [];
+        id = options.appid;
+        if (id && id != '') {
+            metric = 0;
+            if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
             }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                 metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-			}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-				metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-			}
+            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
+            }
 
             unsorted.push({"cat": MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()), "y": metric});
 
-			//categories.push(MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
-			//data.push({"y" : metric});
+            //categories.push(MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
+            //data.push({"y" : metric});
 
-			if(gstats.appstats[id].hasChildren()) {
-				for(i in gstats.appstats[id].stats) {
-					for(j in gstats.appstats[id].stats[i].children) {
-						if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
-							childstats = gstats.appstats[id].stats[i].children[j];
-							metric = 0;
-							if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-								metric = childstats.bytecount;
-							}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-								metric = childstats.packetcount;
+            if(gstats.appstats[id].hasChildren()) {
+                for(i in gstats.appstats[id].stats) {
+                    for(j in gstats.appstats[id].stats[i].children) {
+                        if (gstats.appstats[id].stats[i].children[j].packetcount > 0) {
+                            childstats = gstats.appstats[id].stats[i].children[j];
+                            metric = 0;
+                            if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                                metric = childstats.bytecount;
+                            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                                metric = childstats.packetcount;
                             }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                                 metric = childstats.payloadcount;
-							}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-								metric = childstats.flowcount;
-							}
+                            }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                                metric = childstats.flowcount;
+                            }
 
-							child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
-	                        unsorted.push({"cat": MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
+                            child_name = MMTDrop.getProtocolNameFromID(childstats.getAppId());
+                            unsorted.push({"cat": MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
                             MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()), "y": metric});
-							
-							//categories.push(MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
-							//		MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
-							
-							//data.push({"y" : metric});
-						}					
-					}
-				}
-			} 
-		} else {
-			for (id in gstats.appstats) {
-				if (gstats.appstats[id].hasTraffic()) {
-					if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
-						metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
-						metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+                            
+                            //categories.push(MMTDrop.getProtocolNameFromID(childstats.getAppId()) + '/' +
+                            //        MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
+                            
+                            //data.push({"y" : metric});
+                        }                    
+                    }
+                }
+            } 
+        } else {
+            for (id in gstats.appstats) {
+                if (gstats.appstats[id].hasTraffic()) {
+                    if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.DATA_VOLUME]) {
+                        metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PACKET_COUNT]) {
+                        metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
                     }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.PAYLOAD_VOLUME]) {
                         metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-					}else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
-						metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
-					}
+                    }else if(options.metric === MMTDrop.MetricID2Name[MMTDrop.MetricId.ACTIVE_FLOWS]) {
+                        metric = gstats.appstats[id].getMetric(MMTDrop.MetricId.ACTIVE_FLOWS);
+                    }
 
                     unsorted.push({"cat": MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()), "y": metric});
-					//categories.push(MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
-					//data.push({"y" : metric});
-				}
-			}
-		}
-		
-	    unsorted.sort(function(a, b){return b.y - a.y;});
+                    //categories.push(MMTDrop.getProtocolNameFromID(gstats.appstats[id].getAppId()));
+                    //data.push({"y" : metric});
+                }
+            }
+        }
+        
+        unsorted.sort(function(a, b){return b.y - a.y;});
 
         MMTDrop.DataFactory.getTopItemsBar(unsorted, {isParentFirst: true});
 
-       	for(i in unsorted) {
-           	categories.push(unsorted[i].cat);
-           	data.push({"y": unsorted[i].y});
-       	}
-       	retval= {categories: categories, series: [{data: data}]};
-		return retval;	
-	},
+           for(i in unsorted) {
+               categories.push(unsorted[i].cat);
+               data.push({"y": unsorted[i].y});
+           }
+           retval= {categories: categories, series: [{data: data}]};
+        return retval;    
+    },
 
     createAppCategoryMetricPie : function(gstats, options) {
         var data = [];
@@ -1995,16 +2224,16 @@ MMTDrop.DataFactory = {
                 }
             }
         }
-	data.sort(function(a, b){return b.y - a.y;});
+    data.sort(function(a, b){return b.y - a.y;});
         MMTDrop.DataFactory.getTopItemsPie(data);
         return data;
     },
 
     createAppCategoryMetricBar : function(gstats, options) {
-		var retval = [];
-		var categories = [];
-		var data = [];
-		var unsorted = [];
+        var retval = [];
+        var categories = [];
+        var data = [];
+        var unsorted = [];
         id = options.appclassid;
         metricid = MMTDrop.MetricName2ID[options.metric];
         if (id && id != '') {
@@ -2013,7 +2242,7 @@ MMTDrop.DataFactory = {
                     name = gstats.appstats[MMTDrop.CategoriesAppIdsMap[id][i]].getAppName();
                     metric = gstats.appstats[MMTDrop.CategoriesAppIdsMap[id][i]].getExclusiveMetric(metricid);
                     if(metric) {
-			unsorted.push({"cat": name, "y": metric});
+            unsorted.push({"cat": name, "y": metric});
                         //categories.push(name);
                         //data.push({"y" : metric});
                     }
@@ -2034,34 +2263,34 @@ MMTDrop.DataFactory = {
                 }
             }
         }
-	unsorted.sort(function(a, b){return b.y - a.y;});
+    unsorted.sort(function(a, b){return b.y - a.y;});
     MMTDrop.DataFactory.getTopItemsBar(unsorted, {isParentFirst: false});
-	for(i in unsorted) {
-		categories.push(unsorted[i].cat);
-		data.push({"y": unsorted[i].y});
-	}
-	retval= {categories: categories, series: [{data: data}]};
-	return retval;	
+    for(i in unsorted) {
+        categories.push(unsorted[i].cat);
+        data.push({"y": unsorted[i].y});
+    }
+    retval= {categories: categories, series: [{data: data}]};
+    return retval;    
     },
 };
 
 MMTDrop.GlobalStats = function() {
     this.meta = {};
-	this.appstats = [];
-	this.rootapps = [];
+    this.appstats = [];
+    this.rootapps = [];
     this.timepoints = [];
     this.highest_timepoint = 0;
 };
 
 MMTDrop.GlobalStats.prototype = {
-	getAppStats : function(id) {
-		if (!this.appstats[id]) {
-			this.appstats[id] = new MMTDrop.APPStats(id);
-		}
-		return this.appstats[id];
-	},
+    getAppStats : function(id) {
+        if (!this.appstats[id]) {
+            this.appstats[id] = new MMTDrop.APPStats(id);
+        }
+        return this.appstats[id];
+    },
 
-	processEntry : function(entry) {
+    processEntry : function(entry) {
         if(entry[MMTDrop.StatsColumnId.FORMAT_ID] == MMTDrop.CsvFormat.STATS_FORMAT) {
             timepoint = entry[MMTDrop.StatsColumnId.TIMESTAMP];
             if(timepoint > this.highest_timepoint) {
@@ -2069,52 +2298,52 @@ MMTDrop.GlobalStats.prototype = {
                 this.timepoints.push(timepoint);
             }
 
-		    var appid = entry[MMTDrop.StatsColumnId.APP_ID];
-		    if (!this.appstats[appid]) {
-			    this.appstats[appid] = new MMTDrop.APPStats(appid);
-		    }
-		    this.appstats[appid].addUpdateStats(this, entry);
+            var appid = entry[MMTDrop.StatsColumnId.APP_ID];
+            if (!this.appstats[appid]) {
+                this.appstats[appid] = new MMTDrop.APPStats(appid);
+            }
+            this.appstats[appid].addUpdateStats(this, entry);
         }
-	},
+    },
 
-	getAppsPacketCountStatistics : function() {
-		var data = [[]];
-		for (id in this.appstats) {
-			data[data.length - 1][0] = this.appstats[id].getAppId();
-			data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
-			data.push([]);
-		}
-		return data;
-	},
+    getAppsPacketCountStatistics : function() {
+        var data = [[]];
+        for (id in this.appstats) {
+            data[data.length - 1][0] = this.appstats[id].getAppId();
+            data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.PACKET_COUNT);
+            data.push([]);
+        }
+        return data;
+    },
 
-	getAppsDataVolumeStatistics : function() {
-		var data = [[]];
-		for (id in this.appstats) {
-			data[data.length - 1][0] = this.appstats[id].getAppId();
-			data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
-			data.push([]);
-		}
-		return data;
-	},
-	
-	getAppsPayloadVolumeStatistics : function() {
-		var data = [[]];
-		for (id in this.appstats) {
-			data[data.length - 1][0] = this.appstats[id].getAppId();
-			data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
-			data.push([]);
-		}
-		return data;
-	},
+    getAppsDataVolumeStatistics : function() {
+        var data = [[]];
+        for (id in this.appstats) {
+            data[data.length - 1][0] = this.appstats[id].getAppId();
+            data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.DATA_VOLUME);
+            data.push([]);
+        }
+        return data;
+    },
+    
+    getAppsPayloadVolumeStatistics : function() {
+        var data = [[]];
+        for (id in this.appstats) {
+            data[data.length - 1][0] = this.appstats[id].getAppId();
+            data[data.length - 1][1] = this.appstats[id].getMetric(MMTDrop.MetricId.PAYLOAD_VOLUME);
+            data.push([]);
+        }
+        return data;
+    },
 
-	getActiveAppNames : function() {
-		var data = [];
-		for (id in this.appstats) {
-			data.push(this.appstats[id].getAppName());
-		}
+    getActiveAppNames : function() {
+        var data = [];
+        for (id in this.appstats) {
+            data.push(this.appstats[id].getAppName());
+        }
         data.sort();
-		return data;
-	},
+        return data;
+    },
 
     getActiveAppCategoriesNames : function() {
         var data = [];
@@ -2131,104 +2360,104 @@ MMTDrop.GlobalStats.prototype = {
         return data;
     },
 
-	getActiveAppIds : function() {
-		var data = [];
-		for (id in this.appstats) {
-			data.push(this.appstats[id].getAppId());
-		}
-		return data;
-	},
+    getActiveAppIds : function() {
+        var data = [];
+        for (id in this.appstats) {
+            data.push(this.appstats[id].getAppId());
+        }
+        return data;
+    },
 
 };
 
 MMTDrop.APPStats = function(id) {
-	this.id = id;
-	this.stats = {};
+    this.id = id;
+    this.stats = {};
 };
 
 MMTDrop.APPStats.prototype = {
-	addUpdateStats : function(appstats, entry) {
-		var path = MMTDrop.getEntryPath(entry);
-		if (!this.stats[path]) {
-			this.stats[path] = new MMTDrop.Stats(this.id, path);
-			parentapp_id = MMTDrop.getParentApp(path);
-			if (parentapp_id != -1) {
-				parentapp = appstats.getAppStats(MMTDrop.getParentApp(path));
-				parentapp.updateOnChildEntry(appstats, this.stats[path], path);
-			} else {
-				if (!appstats.rootapps[path]) {
-					appstats.rootapps[path] = this;
-				}
-			}
-		}
-		this.stats[path].update(entry);
-	},
+    addUpdateStats : function(appstats, entry) {
+        var path = MMTDrop.getEntryPath(entry);
+        if (!this.stats[path]) {
+            this.stats[path] = new MMTDrop.Stats(this.id, path);
+            parentapp_id = MMTDrop.getParentApp(path);
+            if (parentapp_id != -1) {
+                parentapp = appstats.getAppStats(MMTDrop.getParentApp(path));
+                parentapp.updateOnChildEntry(appstats, this.stats[path], path);
+            } else {
+                if (!appstats.rootapps[path]) {
+                    appstats.rootapps[path] = this;
+                }
+            }
+        }
+        this.stats[path].update(entry);
+    },
 
-	updateOnChildEntry : function(appstats, child_stats, child_path) {
-		var path = MMTDrop.getParentPath(child_path);
-		if (!this.stats[path]) {
-			this.stats[path] = new MMTDrop.Stats(this.id, path);
-			this.stats[path].addChild(child_path, child_stats);
-			child_stats.setParent(this.stats[path]);
-			parent_path = MMTDrop.getParentPath(path);
-			if (parent_path == ".") {
-				if (!appstats.rootapps[path]) {
-					appstats.rootapps[path] = this;
-				}
-				return;
-			} else {
-				parentapp = appstats.getAppStats(MMTDrop.getParentApp(path));
-				parentapp.updateOnChildEntry(appstats, this.stats[path], path);
-				return;
-			}
-		} else {
-			this.stats[path].addChild(child_path, child_stats);
-			child_stats.setParent(this.stats[path]);
-		}
-	},
+    updateOnChildEntry : function(appstats, child_stats, child_path) {
+        var path = MMTDrop.getParentPath(child_path);
+        if (!this.stats[path]) {
+            this.stats[path] = new MMTDrop.Stats(this.id, path);
+            this.stats[path].addChild(child_path, child_stats);
+            child_stats.setParent(this.stats[path]);
+            parent_path = MMTDrop.getParentPath(path);
+            if (parent_path == ".") {
+                if (!appstats.rootapps[path]) {
+                    appstats.rootapps[path] = this;
+                }
+                return;
+            } else {
+                parentapp = appstats.getAppStats(MMTDrop.getParentApp(path));
+                parentapp.updateOnChildEntry(appstats, this.stats[path], path);
+                return;
+            }
+        } else {
+            this.stats[path].addChild(child_path, child_stats);
+            child_stats.setParent(this.stats[path]);
+        }
+    },
 
-	getAppId : function() {
-		return this.id;
-	},
+    getAppId : function() {
+        return this.id;
+    },
 
-	getAppName : function() {
-		return MMTDrop.ProtocolsIDName[this.id];
-	},
+    getAppName : function() {
+        return MMTDrop.ProtocolsIDName[this.id];
+    },
 
     hasTraffic: function() {
-		for (i in this.stats) {
-			if(this.stats[i].packetcount) return true;
-		}
+        for (i in this.stats) {
+            if(this.stats[i].packetcount) return true;
+        }
         return false;
     },
     
-	getMetric : function(metric) {
-		data = 0;
-		for (i in this.stats) {
-			data += this.stats[i].getMetric(metric);
-		}
-		return data;
-	},
+    getMetric : function(metric) {
+        data = 0;
+        for (i in this.stats) {
+            data += this.stats[i].getMetric(metric);
+        }
+        return data;
+    },
 
-	getChildrenMetric : function(metric) {
-		data = 0;
-		for (i in this.stats) {
-			for(j in this.stats[i].children) {
-				data += this.stats[i].children[j].getMetric(metric);
-			}
-		}
-		return data;
-	},
+    getChildrenMetric : function(metric) {
+        data = 0;
+        for (i in this.stats) {
+            for(j in this.stats[i].children) {
+                data += this.stats[i].children[j].getMetric(metric);
+            }
+        }
+        return data;
+    },
 
-	getExclusiveMetric : function(metric) {
+    getExclusiveMetric : function(metric) {
         //Exclusive metrics can't be negative.
         //The simple difference between this metric and children metric might be negative however
         //this is the case for the active flows of Ethernet,
         //Ethernet does not maitain flows, so its active flows is 0, its children (IP, IPv6) will have!!!
         var exclusive_metric = this.getMetric(metric) - this.getChildrenMetric(metric);
         if(exclusive_metric < 0) return 0;
-		return exclusive_metric;
-	},
+        return exclusive_metric;
+    },
 
     getApplicationStatsArray : function(args) {
         var data = [];
@@ -2255,7 +2484,7 @@ MMTDrop.APPStats.prototype = {
         return data;
     },
 
-	getPacketTimePoints : function(timepoints) {
+    getPacketTimePoints : function(timepoints) {
         data = [];
         for(i in timepoints) data[timepoints[i]] = [timepoints[i], 0];
         temp = [];
@@ -2275,29 +2504,29 @@ MMTDrop.APPStats.prototype = {
         }
         temp.sort(function(a, b){return a[0] - b[0]});
         return temp;
-	},
+    },
 
-	getDataTimePoints : function(timepoints) {
-		data = [];
+    getDataTimePoints : function(timepoints) {
+        data = [];
         for(i in timepoints) data[timepoints[i]] = [timepoints[i], 0];
-		temp = [];
-		for (i in this.stats) {
-			for (j in this.stats[i].timepoints) {
-				if (data[this.stats[i].timepoints[j].time][1]) {
-					data[this.stats[i].timepoints[j].time][1] += this.stats[i].timepoints[j].bytecount;
-				} else {
-					data[this.stats[i].timepoints[j].time][1] = this.stats[i].timepoints[j].bytecount;
-				}
-			}
-		}
-		count = 0;
-		for (i in data) {
-			temp[count] = data[i];
-			count++;
-		}
+        temp = [];
+        for (i in this.stats) {
+            for (j in this.stats[i].timepoints) {
+                if (data[this.stats[i].timepoints[j].time][1]) {
+                    data[this.stats[i].timepoints[j].time][1] += this.stats[i].timepoints[j].bytecount;
+                } else {
+                    data[this.stats[i].timepoints[j].time][1] = this.stats[i].timepoints[j].bytecount;
+                }
+            }
+        }
+        count = 0;
+        for (i in data) {
+            temp[count] = data[i];
+            count++;
+        }
         temp.sort(function(a, b){return a[0] - b[0]});
-		return temp;
-	},
+        return temp;
+    },
 
     getPayloadTimePoints : function(timepoints) {
         data = [];
@@ -2345,15 +2574,15 @@ MMTDrop.APPStats.prototype = {
         return temp;
     },
 
-	hasChildren: function() {
-		retval = false;
-		for(i in this.stats) {
-			for(j in this.stats[i].children) {
-				return true;
-			}
-		}
-		return retval;
-	},
+    hasChildren: function() {
+        retval = false;
+        for(i in this.stats) {
+            for(j in this.stats[i].children) {
+                return true;
+            }
+        }
+        return retval;
+    },
 
     getStatsByPath : function(path) {
         for(s in this.stats) {
@@ -2364,119 +2593,119 @@ MMTDrop.APPStats.prototype = {
 };
 
 MMTDrop.Stats = function(app_id, path) {
-	this.appid = app_id;
-	this.path = path;
+    this.appid = app_id;
+    this.path = path;
     this.flowcount = 0; /**< flows count */
-	this.packetcount = 0; /**> packet count */
-	this.bytecount = 0; /**> data volume */
-	this.payloadcount = 0; /**< payload data volume */
-	
-	this.ul_packetcount = 0; /**> uplink packet count */
-	this.ul_bytecount = 0; /**> uplink data volume */
-	this.ul_payloadcount = 0; /**< uplink payload data volume */
+    this.packetcount = 0; /**> packet count */
+    this.bytecount = 0; /**> data volume */
+    this.payloadcount = 0; /**< payload data volume */
+    
+    this.ul_packetcount = 0; /**> uplink packet count */
+    this.ul_bytecount = 0; /**> uplink data volume */
+    this.ul_payloadcount = 0; /**< uplink payload data volume */
 
-	this.dl_packetcount = 0; /**> downlink packet count */
-	this.dl_bytecount = 0; /**> downlink data volume */
-	this.dl_payloadcount = 0; /**< downlink payload data volume */
+    this.dl_packetcount = 0; /**> downlink packet count */
+    this.dl_bytecount = 0; /**> downlink data volume */
+    this.dl_payloadcount = 0; /**< downlink payload data volume */
 
-	this.parent = null;
-	this.children = {};
-	this.timepoints = {};
+    this.parent = null;
+    this.children = {};
+    this.timepoints = {};
 };
 
 MMTDrop.Stats.prototype = {
-	addChild : function(path, child_stats) {
-		if (!this.children[path]) {
-			this.children[path] = child_stats;
-		}
-	},
+    addChild : function(path, child_stats) {
+        if (!this.children[path]) {
+            this.children[path] = child_stats;
+        }
+    },
 
-	setParent : function(parent) {
-		this.parent = parent;
-	},
-	
-	getAppId : function() {
-		return this.appid;
-	},
+    setParent : function(parent) {
+        this.parent = parent;
+    },
+    
+    getAppId : function() {
+        return this.appid;
+    },
 
     getAppName : function() {
         return MMTDrop.ProtocolsIDName[this.appid];
     },
 
-	update : function(entry) {
+    update : function(entry) {
         this.flowcount = entry[MMTDrop.StatsColumnId.TOTAL_FLOWS];
-		this.packetcount += entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-		this.bytecount += entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-		this.payloadcount += entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-		
-		if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
-			this.ul_packetcount += entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-		} 
+        this.packetcount += entry[MMTDrop.StatsColumnId.PACKET_COUNT];
+        this.bytecount += entry[MMTDrop.StatsColumnId.DATA_VOLUME];
+        this.payloadcount += entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
+        
+        if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
+            this.ul_packetcount += entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
-			this.ul_bytecount += entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-		} 
-		
-		if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
-			this.ul_payloadcount += entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-		} 
+        if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
+            this.ul_bytecount += entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
+        } 
+        
+        if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
+            this.ul_payloadcount += entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
-			this.dl_packetcount += entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
-		} 
+        if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
+            this.dl_packetcount += entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
-			this.dl_bytecount += entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-		} 
+        if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
+            this.dl_bytecount += entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
-			this.dl_payloadcount += entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
-		} 
-		
-		if (this.timepoints[entry[MMTDrop.StatsColumnId.TIMESTAMP]]) {
-		} else {
-			this.timepoints[entry[MMTDrop.StatsColumnId.TIMESTAMP]] = new MMTDrop.StatsTimePoint(entry);
-		}
-	},
+        if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
+            this.dl_payloadcount += entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
+        } 
+        
+        if (this.timepoints[entry[MMTDrop.StatsColumnId.TIMESTAMP]]) {
+        } else {
+            this.timepoints[entry[MMTDrop.StatsColumnId.TIMESTAMP]] = new MMTDrop.StatsTimePoint(entry);
+        }
+    },
 
-	/**
-	 * Returns an array with the following structure:
-	 * [path, parent_path, appname, ul packets, dl packets, total packets, 
-	 * ul volume, dl volume, total volume, ul pauload, dl payload, total payload]
-	 */
-	getGlobalStats : function(arrData, args) {
-		arrData.push([]);
-		arrData[arrData.length - 1].push(this.path);
-		if (this.parent) {
-			arrData[arrData.length - 1].push(this.parent.path);
-		} else {
-			arrData[arrData.length - 1].push(this.path);
-		}
-		arrData[arrData.length - 1].push(this.appid);
-	    if(args) {
+    /**
+     * Returns an array with the following structure:
+     * [path, parent_path, appname, ul packets, dl packets, total packets, 
+     * ul volume, dl volume, total volume, ul pauload, dl payload, total payload]
+     */
+    getGlobalStats : function(arrData, args) {
+        arrData.push([]);
+        arrData[arrData.length - 1].push(this.path);
+        if (this.parent) {
+            arrData[arrData.length - 1].push(this.parent.path);
+        } else {
+            arrData[arrData.length - 1].push(this.path);
+        }
+        arrData[arrData.length - 1].push(this.appid);
+        if(args) {
             for(m in args) {
                 arrData[arrData.length - 1].push(this.getMetric(args[m]));
             }
         }else {
             arrData[arrData.length - 1].push(this.flowcount);
 
-		    arrData[arrData.length - 1].push(this.ul_packetcount);
-		    arrData[arrData.length - 1].push(this.dl_packetcount);
-		    arrData[arrData.length - 1].push(this.packetcount);
-		
-		    arrData[arrData.length - 1].push(this.ul_bytecount);
-		    arrData[arrData.length - 1].push(this.dl_bytecount);
-		    arrData[arrData.length - 1].push(this.bytecount);
-		
-		    arrData[arrData.length - 1].push(this.ul_payloadcount);
-		    arrData[arrData.length - 1].push(this.dl_payloadcount);
-		    arrData[arrData.length - 1].push(this.payloadcount);
+            arrData[arrData.length - 1].push(this.ul_packetcount);
+            arrData[arrData.length - 1].push(this.dl_packetcount);
+            arrData[arrData.length - 1].push(this.packetcount);
+        
+            arrData[arrData.length - 1].push(this.ul_bytecount);
+            arrData[arrData.length - 1].push(this.dl_bytecount);
+            arrData[arrData.length - 1].push(this.bytecount);
+        
+            arrData[arrData.length - 1].push(this.ul_payloadcount);
+            arrData[arrData.length - 1].push(this.dl_payloadcount);
+            arrData[arrData.length - 1].push(this.payloadcount);
         }
-		for (i in this.children) {
-			if (i)
-				this.children[i].getGlobalStats(arrData, args);
-		}
-	},
+        for (i in this.children) {
+            if (i)
+                this.children[i].getGlobalStats(arrData, args);
+        }
+    },
 
     getStatsArray : function(args) {
         data = [];
@@ -2503,7 +2732,7 @@ MMTDrop.Stats.prototype = {
         return data;
     },
 
-	getPacketTimePoints : function(timepoints) {
+    getPacketTimePoints : function(timepoints) {
         data = [];
         for(t in timepoints){
              data[timepoints[t]] = [timepoints[t], 0];
@@ -2518,20 +2747,20 @@ MMTDrop.Stats.prototype = {
             temp.push(data[j]);
         }
         return temp;
-	},
+    },
 
 
-	//getDataTimePoints : function(timepoints) {
-	//	data = [];
+    //getDataTimePoints : function(timepoints) {
+    //    data = [];
     //    for (j in this.timepoints) {
     //        data.push([this.timepoints[j].time, this.timepoints[j].bytecount]);
     //    }
-	//	return data;
-	//},
+    //    return data;
+    //},
 
-	getDataTimePoints : function(timepoints) {
+    getDataTimePoints : function(timepoints) {
           console.log(timepoints);
-		data = [];
+        data = [];
         for(t in timepoints){
              data[timepoints[t]] = [timepoints[t], 0];
         }
@@ -2544,8 +2773,8 @@ MMTDrop.Stats.prototype = {
         for(j in data) {
             temp.push(data[j]);
         }
-		return temp;
-	},
+        return temp;
+    },
 
     getPayloadTimePoints : function(timepoints) {
         data = [];
@@ -2564,7 +2793,7 @@ MMTDrop.Stats.prototype = {
         return temp;
     },
 
-	getActiveFlowsTimePoints : function(timepoints) {
+    getActiveFlowsTimePoints : function(timepoints) {
         data = [];
         aflows = 0;
         for(t in timepoints){
@@ -2578,7 +2807,7 @@ MMTDrop.Stats.prototype = {
         }
 
         return temp;
-	},
+    },
 
     getMetric: function(metric) {
         if(metric === MMTDrop.MetricId.DATA_VOLUME)
@@ -2594,92 +2823,96 @@ MMTDrop.Stats.prototype = {
 };
 
 MMTDrop.StatsTimePoint = function(entry) {
-	this.time = entry[MMTDrop.StatsColumnId.TIMESTAMP];
+    this.format = entry[MMTDrop.StatsColumnId.FORMAT_ID];
+    this.probe = entry[MMTDrop.StatsColumnId.PROBE_ID];
+    this.source = entry[MMTDrop.StatsColumnId.SOURCE_ID];
+
+    this.time = entry[MMTDrop.StatsColumnId.TIMESTAMP];
 
     this.flowcount = entry[MMTDrop.StatsColumnId.TOTAL_FLOWS];
 
-	if(entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS] > 0) this.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
+    if(entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS] > 0) this.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
     else this.active_flowcount = 0;
 
-	this.packetcount = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-	this.bytecount = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-	this.payloadcount = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-	
-	if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
-		this.ul_packetcount = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-	} else {
-		this.ul_packetcount = 0;
-	}
+    this.packetcount = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
+    this.bytecount = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
+    this.payloadcount = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
+    
+    if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
+        this.ul_packetcount = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
+    } else {
+        this.ul_packetcount = 0;
+    }
 
-	if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
-		this.ul_bytecount = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-	} else {
-		this.ul_bytecount = 0;
-	}
-	
-	if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
-		this.ul_payloadcount = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-	} else {
-		this.ul_payloadcount = 0;
-	}
+    if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
+        this.ul_bytecount = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
+    } else {
+        this.ul_bytecount = 0;
+    }
+    
+    if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
+        this.ul_payloadcount = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
+    } else {
+        this.ul_payloadcount = 0;
+    }
 
-	if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
-		this.dl_packetcount = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
-	} else {
-		this.dl_packetcount = 0;
-	}
+    if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
+        this.dl_packetcount = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
+    } else {
+        this.dl_packetcount = 0;
+    }
 
-	if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
-		this.dl_bytecount = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-	} else {
-		this.dl_bytecount = 0;
-	}
+    if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
+        this.dl_bytecount = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
+    } else {
+        this.dl_bytecount = 0;
+    }
 
-	if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
-		this.dl_payloadcount = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
-	} else {
-		this.dl_payloadcount = 0;
-	}
+    if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
+        this.dl_payloadcount = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
+    } else {
+        this.dl_payloadcount = 0;
+    }
 };
 
 MMTDrop.StatsTimePoint.prototype = {
-	update : function(entry) {
-		if (this.time === entry[MMTDrop.StatsColumnId.TIMESTAMP]) {
-			return;
-			//Cannot update stats of different periods. Time should be the same for the update
-		}
+    update : function(entry) {
+        if (this.time === entry[MMTDrop.StatsColumnId.TIMESTAMP]) {
+            return;
+            //Cannot update stats of different periods. Time should be the same for the update
+        }
         this.flowcount += entry[MMTDrop.StatsColumnId.TOTAL_FLOWS];
 
         if(entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS] > 0) this.active_flowcount += entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
 
-		this.packetcount += entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-		this.bytecount += entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-		this.payloadcount += entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-		
-		if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
-			this.ul_packetcount += entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-		} 
+        this.packetcount += entry[MMTDrop.StatsColumnId.PACKET_COUNT];
+        this.bytecount += entry[MMTDrop.StatsColumnId.DATA_VOLUME];
+        this.payloadcount += entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
+        
+        if(entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT]) {
+            this.ul_packetcount += entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
-			this.ul_bytecount += entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-		} 
-		
-		if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
-			this.ul_payloadcount += entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-		} 
+        if(entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME]) {
+            this.ul_bytecount += entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
+        } 
+        
+        if(entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME]) {
+            this.ul_payloadcount += entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
-			this.dl_packetcount += entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
-		} 
+        if(entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT]) {
+            this.dl_packetcount += entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
-			this.dl_bytecount += entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-		} 
+        if(entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME]) {
+            this.dl_bytecount += entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
+        } 
 
-		if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
-			this.dl_payloadcount += entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
-		} 
-	},
+        if(entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME]) {
+            this.dl_payloadcount += entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
+        } 
+    },
     
     getMetric: function(metric) {
         if(metric === MMTDrop.MetricId.DATA_VOLUME)
@@ -2693,3 +2926,230 @@ MMTDrop.StatsTimePoint.prototype = {
         return 0;
     },
 };
+
+
+MMTDrop.FlowStats = function(items) {
+    this.flowcount = 0; /**< flows count */
+    
+    this.ul_packets = 0; /**> uplink packet count */
+    this.ul_data = 0; /**> uplink data volume */
+    this.dl_packets = 0; /**> downlink packet count */
+    this.dl_data = 0; /**> downlink data volume */
+
+    this.flowitems = [];
+   
+    this.createItem = function( item ) {
+        switch ( item[MMTDrop.StatsColumnId.FORMAT_ID] ) {
+            case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
+                return new MMTDrop.FlowStatsItem( item );
+            case MMTDrop.CsvFormat.WEB_APP_FORMAT :
+                return new MMTDrop.HttpFlowStatsItem( item );
+            case MMTDrop.CsvFormat.SSL_APP_FORMAT :
+                return new MMTDrop.TlsFlowStatsItem( item );
+            case MMTDrop.CsvFormat.RTP_APP_FORMAT :
+                return new MMTDrop.RtpFlowStatsItem( item );
+            default :
+                return null;
+        }
+    };
+ 
+    if( items ) {
+        for( var i = 0; i < items.length; i ++ ) {
+            if( MMTDrop.isFlowStats( items[i][MMTDrop.StatsColumnId.FORMAT_ID] ) ) {
+                var item = this.createItem( items[ i ] );
+                this.flowitems[item.fid] = item;
+                this.flowcount += 1;
+                this.ul_packets += item.ul_packets;
+                this.dl_packets += item.dl_packets;
+                this.ul_data += item.ul_data;
+                this.dl_data += item.dl_data;
+            }
+        }
+    }
+
+    //this.sort(); // sort with respect to flow end time
+};
+
+MMTDrop.FlowStats.prototype = {
+
+    getMetric: function(metric) {
+        if(metric === MMTDrop.FlowMetricId.DATA_VOLUME)
+            return this.ul_data + this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.PACKET_COUNT)
+            return this.ul_packets + this.dl_packets;
+        if(metric === MMTDrop.FlowMetricId.PAYLOAD_VOLUME)
+            return this.ul_data + this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.ACTIVE_FLOWS)
+            //TODO: this metric may be misleading as there are no active flows in flows statistics 
+            //All flows reported here are already expired (this is the case as of 12/01/2015)
+            return this.flowcount; 
+        if(metric === MMTDrop.FlowMetricId.UL_DATA_VOLUME)
+            return this.ul_data;
+        if(metric === MMTDrop.FlowMetricId.UL_PACKET_COUNT)
+            return this.ul_packets;
+        if(metric === MMTDrop.FlowMetricId.DL_DATA_VOLUME)
+            return this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.DL_PACKET_COUNT)
+            return this.dl_packets;
+        return 0;
+    },
+
+    sort: function ( metric ) {
+        if( metric ) {
+          // sort with respect to the given metric! make sure the metric is a valid one :)
+          this.flowitems.sort( function(a, b) { return b.getMetric( metric ) - a.getMetric( metric ); } );
+        } else {
+          // sort with respect to flow end time
+          this.flowitems.sort( function(a, b) { return b.time - a.time; } );
+        }
+    },
+
+    getTimePoints: function ( metric, sorted ) {
+      //var retval = {name: MMTDrop.FlowMetricID2Name[metric], type: 'scatter', data: []};
+      var retval = {name: MMTDrop.FlowMetricID2Name[metric], data: []};
+      sorted = (sorted === true) ? true : false; //do not sort by default
+      
+      if( sorted ) this.sort( metric );
+       
+      for ( i in this.flowitems ) {
+        retval.data.push([this.flowitems[i].time, this.flowitems[i].getMetric(metric)]);
+      }
+      return retval;
+    },
+};
+
+
+/**
+  * Flow statistics data entry
+  */
+MMTDrop.FlowStatsItem = function(entry) {
+    this.format = entry[MMTDrop.FlowStatsColumnId.FORMAT_ID];
+    this.probe = entry[MMTDrop.FlowStatsColumnId.PROBE_ID];
+    this.source = entry[MMTDrop.FlowStatsColumnId.SOURCE_ID];
+    this.time = Math.floor(entry[MMTDrop.FlowStatsColumnId.TIMESTAMP]);
+    this.fid = entry[MMTDrop.FlowStatsColumnId.FLOW_ID];
+    this.start_time = Math.floor(entry[MMTDrop.FlowStatsColumnId.START_TIME]);
+    this.ip_version = entry[MMTDrop.FlowStatsColumnId.IP_VERSION];
+    this.server_addr = entry[MMTDrop.FlowStatsColumnId.SERVER_ADDR];
+    this.client_addr = entry[MMTDrop.FlowStatsColumnId.CLIENT_ADDR];
+    this.server_port = entry[MMTDrop.FlowStatsColumnId.SERVER_PORT];
+    this.client_port = entry[MMTDrop.FlowStatsColumnId.CLIENT_PORT];
+    this.transport_proto = entry[MMTDrop.FlowStatsColumnId.TRANSPORT_PROTO];
+    this.ul_data = entry[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME];
+    this.dl_data = entry[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME];
+    this.ul_packets = entry[MMTDrop.FlowStatsColumnId.UL_PACKET_COUNT];
+    this.dl_packets = entry[MMTDrop.FlowStatsColumnId.DL_PACKET_COUNT];
+    this.tcp_rtt = entry[MMTDrop.FlowStatsColumnId.TCP_RTT];
+    this.retransmission = entry[MMTDrop.FlowStatsColumnId.RETRANSMISSION_COUNT];
+    this.family = entry[MMTDrop.FlowStatsColumnId.APP_FAMILY];
+    this.content_class = entry[MMTDrop.FlowStatsColumnId.CONTENT_CLASS];
+    this.path = entry[MMTDrop.FlowStatsColumnId.PROTO_PATH];
+    this.app_name = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
+    this.duration = this.start_time - this.time;
+};
+
+MMTDrop.FlowStatsItem.prototype = {
+    /** updates a flow statistics. If append is set: increment the existing stats, otherwise replace them */
+    update : function(entry, append) {
+        if( append ) {
+            this.time = entry[MMTDrop.FlowStatsColumnId.TIMESTAMP];
+            this.ul_data += entry[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME];
+            this.dl_data += entry[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME];
+            this.ul_packets += entry[MMTDrop.FlowStatsColumnId.UL_PACKET_COUNT];
+            this.dl_packets += entry[MMTDrop.FlowStatsColumnId.DL_PACKET_COUNT];
+            this.retransmission += entry[MMTDrop.FlowStatsColumnId.RETRANSMISSION_COUNT];
+            this.duration = this.start_time - this.time;
+        }else {
+            this.time = entry[MMTDrop.FlowStatsColumnId.TIMESTAMP];
+            this.ul_data = entry[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME];
+            this.dl_data = entry[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME];
+            this.ul_packets = entry[MMTDrop.FlowStatsColumnId.UL_PACKET_COUNT];
+            this.dl_packets = entry[MMTDrop.FlowStatsColumnId.DL_PACKET_COUNT];
+            this.tcp_rtt = entry[MMTDrop.FlowStatsColumnId.TCP_RTT];
+            this.retransmission = entry[MMTDrop.FlowStatsColumnId.RETRANSMISSION_COUNT];
+            this.duration = this.start_time - this.time;
+        }
+    },
+    
+    getMetric: function(metric) {
+        if(metric === MMTDrop.FlowMetricId.DATA_VOLUME)
+            return this.ul_data + this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.PACKET_COUNT)
+            return this.ul_packets + this.dl_packets;
+        if(metric === MMTDrop.FlowMetricId.PAYLOAD_VOLUME)
+            return this.ul_data + this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.UL_DATA_VOLUME)
+            return this.ul_data;
+        if(metric === MMTDrop.FlowMetricId.UL_PACKET_COUNT)
+            return this.ul_packets;
+        if(metric === MMTDrop.FlowMetricId.DL_DATA_VOLUME)
+            return this.dl_data;
+        if(metric === MMTDrop.FlowMetricId.DL_PACKET_COUNT)
+            return this.dl_packets;
+        if(metric === MMTDrop.FlowMetricId.FLOW_DURATION)
+            return this.duration;
+        return 0;
+    },
+
+};
+
+MMTDrop.HttpFlowStatsItem = function(entry) {
+    MMTDrop.FlowStatsItem.call(this, entry);
+    this.response_time = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.RESPONSE_TIME];
+    this.transactions_count = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.TRANSACTIONS_COUNT];
+    this.interaction_time = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.INTERACTION_TIME];
+    this.hostname = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.HOSTNAME];
+    this.mime = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.MIME_TYPE];
+    this.referer = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.REFERER];
+    this.device_os_id = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.DEVICE_OS_ID];
+    this.cdn = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.CDN_FLAG];
+};
+
+MMTDrop.HttpFlowStatsItem.prototype = Object.create(MMTDrop.FlowStatsItem.prototype);
+MMTDrop.HttpFlowStatsItem.constructor = MMTDrop.HttpFlowStatsItem;
+
+MMTDrop.HttpFlowStatsItem.prototype = {
+    getMetric: function(metric) {
+        if(metric === MMTDrop.HTTPMetricId.RESPONSE_TIME)
+            return this.response_time;
+        if(metric === MMTDrop.HTTPMetricId.INTERACTION_TIME)
+            return this.interaction_time;
+        if(metric === MMTDrop.HTTPMetricId.INTERACTIONS_COUNT)
+            return this.transactions_count;
+        return MMTDrop.FlowStatsItem.prototype.getMetric.call(this, metric);
+    },
+};
+
+MMTDrop.TlsFlowStatsItem = function(entry) {
+    MMTDrop.FlowStatsItem.call(this, entry);
+    this.server_name = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.SERVER_NAME];
+    this.cdn = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.CDN_FLAG];
+};
+
+MMTDrop.TlsFlowStatsItem.prototype = Object.create(MMTDrop.FlowStatsItem.prototype);
+MMTDrop.TlsFlowStatsItem.constructor = MMTDrop.TlsFlowStatsItem;
+
+MMTDrop.RtpFlowStatsItem = function(entry) {
+    MMTDrop.FlowStatsItem.call(this, entry);
+    this.packet_loss = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_RATE];
+    this.packet_loss_burstiness = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_BURSTINESS];
+    this.jitter = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.MAX_JITTER];
+};
+
+MMTDrop.RtpFlowStatsItem.prototype = {
+    getMetric: function(metric) {
+        if(metric === MMTDrop.RTPMetricId.PACKET_LOSS)
+            return this.packet_loss;
+        if(metric === MMTDrop.RTPMetricId.PACKET_LOSS_BURST)
+            return this.packet_loss_burstiness;
+        if(metric === MMTDrop.RTPMetricId.JITTER)
+            return this.jitter;
+        if(metric === MMTDrop.RTPMetricId.QUALITY_INDEX)
+            return this.qindex;
+        return MMTDrop.FlowStatsItem.prototype.getMetric.call(this, metric);
+    },
+};
+
+MMTDrop.RtpFlowStatsItem.prototype = Object.create(MMTDrop.FlowStatsItem.prototype);
+MMTDrop.RtpFlowStatsItem.constructor = MMTDrop.RtpFlowStatsItem;
+
