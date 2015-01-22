@@ -2,6 +2,13 @@ var sqlite3 = require('sqlite3').verbose();
 var moment = require('moment');
 var db = new sqlite3.Database('./mmt.db');
 
+/**  TODO:
+ * - Table for flow stats
+ * - Table for Web stats
+ * - Table for SSL stats
+ * - Table for RTP stats
+ **/
+  
 var createTrafficStatsTable = "CREATE TABLE IF NOT EXISTS traffic (format INTEGER, ts INTEGER, proto INTEGER, path TEXT, scount INTEGER, ascount INTEGER, data INTEGER, payload INTEGER, packets INTEGER)";
 var createTrafficMinStatsTable = "CREATE TABLE IF NOT EXISTS traffic_min (format INTEGER, ts INTEGER, proto INTEGER, path TEXT, scount INTEGER, ascount INTEGER, data INTEGER, payload INTEGER, packets INTEGER)";
 var createTrafficHourStatsTable = "CREATE TABLE IF NOT EXISTS traffic_hour (format INTEGER, ts INTEGER, proto INTEGER, path TEXT, scount INTEGER, ascount INTEGER, data INTEGER, payload INTEGER, packets INTEGER)";
@@ -16,6 +23,12 @@ function prepareDB ( options ) {
   db.run( createUniqueIndexHourStats );
 };
 
+/**  TODO:
+ * - Update flow stats history
+ * - Update Web stats history
+ * - Update SSL stats history
+ * - Update RTP stats history
+ **/
 function updateInsertHistory(msg, table, period) {
   var stmt = db.prepare("INSERT OR REPLACE INTO " + table + " (format, ts, proto, path, scount, ascount, data, payload, packets) "
     + " VALUES (?1, ?2, ?3, ?4, ?5, ?6 "
@@ -26,6 +39,13 @@ function updateInsertHistory(msg, table, period) {
   stmt.finalize();
 }
 
+/**  TODO:
+ * - Insert flow stats
+ * - Insert Web stats
+ * - Insert SSL stats
+ * - Insert RTP stats
+ **/
+
 function addProtocolStats( msg ) {
   var stmt = db.prepare("INSERT INTO traffic VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
   stmt.run( msg.event.format, msg.event.ts, msg.event.proto, msg.event.path, msg.event.scount, msg.event.ascount, msg.event.data, msg.event.payload, msg.event.packets);
@@ -35,6 +55,12 @@ function addProtocolStats( msg ) {
   updateInsertHistory( msg, "traffic_hour", "hour" );
 };
 
+/**  TODO:
+ * - Retrieve flow stats
+ * - Retreive Web stats
+ * - Retrieve SSL stats
+ * - Retreive RTP stats
+ **/
 function getProtocolStats( options, callback ){
   db.all("SELECT * from " + options.collection + " WHERE (format == 99 AND ts >= " + options.ts + ") ", function( err, doc ) {
     if (err) callback ( 'InternalError' );

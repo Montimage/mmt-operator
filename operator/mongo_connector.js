@@ -1,4 +1,5 @@
 var moment = require('moment');
+var dataAdaptor = require('./dataAdaptor.js');
 
 var MongoClient = require('mongodb').MongoClient, format = require('util').format;
 var mdb = null;
@@ -19,25 +20,41 @@ function insertUpdateDB(collection, key, val) {
 };    
 
 function addProtocolStats( message ) {
-    mdb.collection("traffic").insert(message.event, function(err, records) {
+    mdb.collection("traffic").insert(message, function(err, records) {
         //if(err) return next(bbt_err.InternalError);
-        insertUpdateDB("traffic_min", {format: message.event.format, proto: message.event.proto, path: message.event.path, ts: moment(message.event.ts).startOf('minute').valueOf()},
-          {'$set': {scount: message.event.scount, ascount: message.event.ascount}, '$inc': { data: message.event.data, payload: message.event.payload, packets: message.event.packets}});    
-        insertUpdateDB("traffic_hour", {format: message.event.format, proto: message.event.proto, path: message.event.path, ts: moment(message.event.ts).startOf('hour').valueOf()},
-          {'$set': {scount: message.event.scount, ascount: message.event.ascount}, '$inc': { data: message.event.data, payload: message.event.payload, packets: message.event.packets}});
+      if( message.format === 99 ) { //TODO: replace with definition
+        insertUpdateDB("traffic_min", {format: message.format, proto: message.probe, source: message.source, path: message.path, time: moment(message.time).startOf('minute').valueOf()},
+          {'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount}});    
+
+        insertUpdateDB("traffic_hour", {format: message.format, proto: message.probe, source: message.source, path: message.path, time: moment(message.time).startOf('hour').valueOf()},
+          {'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount}});    
+      }
     });
 };
 
 function getProtocolStats( options, callback ){
-  mdb.collection(options.collection).find({format: 99, ts : {'$gte' : options.ts}}).sort( { ts: 1 }).toArray( function( err, doc ) {
+  mdb.collection(options.collection).find({format: 99, time : {'$gte' : options.time}}).sort( { time: 1 }).toArray( function( err, doc ) {
     if (err) callback ( 'InternalError' );
     var data = [];
     for(i in doc) {
-      var record = [doc[i].format, doc[i].ts, doc[i].proto, doc[i].path, doc[i].scount, doc[i].ascount, doc[i].data, doc[i].payload, doc[i].packets];
+      var record = dataAdaptor.reverseFormatReportItem( doc[i] );
       data.push(record);
     } 
     callback (null, { metadata: {numberOfEntries: data.length}, data: data } );
   });
 }
 
-module.exports = { addProtocolStats: addProtocolStats, getProtocolStats: getProtocolStats };
+function getFlowStats( options, callback ){
+  mdb.collection(options.collection).find({format: {'$lte': 3}, time : {'$gte' : options.time}}).sort( { time: 1 }).toArray( function( err, doc ) {
+    if (err) callback ( 'InternalError' );
+    var data = [];
+    for(i in doc) {
+      var record = dataAdaptor.reverseFormatReportItem( doc[i] );
+      data.push(record);
+    }
+    callback ( null, data );
+  });
+}
+
+
+module.exports = { addProtocolStats: addProtocolStats, getProtocolStats: getProtocolStats, getFlowStats: getFlowStats };
