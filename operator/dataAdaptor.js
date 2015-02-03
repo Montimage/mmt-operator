@@ -475,7 +475,7 @@ MMTDrop.FlowStatsItem = function(entry) {
     retval.family = entry[MMTDrop.FlowStatsColumnId.APP_FAMILY];
     retval.content_class = entry[MMTDrop.FlowStatsColumnId.CONTENT_CLASS];
     retval.path = entry[MMTDrop.FlowStatsColumnId.PROTO_PATH];
-    retval.app_name = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
+    retval.app = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
     return retval;
 };
 
@@ -502,7 +502,7 @@ MMTDrop.reverseFlowStatsItem = function(item) {
     retval[MMTDrop.FlowStatsColumnId.APP_FAMILY] = item.family;
     retval[MMTDrop.FlowStatsColumnId.CONTENT_CLASS] = item.content_class;
     retval[MMTDrop.FlowStatsColumnId.PROTO_PATH] = item.path;
-    retval[MMTDrop.FlowStatsColumnId.APP_NAME] = item.app_name;
+    retval[MMTDrop.FlowStatsColumnId.APP_NAME] = item.app;
     return retval;
 };
 

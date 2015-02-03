@@ -889,7 +889,7 @@ MMTDrop.Reports.prototype = {
 		} else if (options.type == "table") {
 			elem.charts.push(new MMTDrop.Reports.Chart(options));
 			elem.buttons.push(options.type);
-		} else if (options.type == "timeline" || options.type == "scatter") {
+		} else if (options.type == "timeline" || options.type == "scatter" || options.type == "xy") {
 			elem.charts.push(new MMTDrop.Reports.Chart(options));
 			elem.buttons.push(options.type);
 		}
@@ -995,7 +995,7 @@ MMTDrop.Reports.prototype = {
         getChartTypeIconByName: function(name) {
         if(name === 'pie') return $('<i>', {'class': 'glyphicons-pie'});
         if(name === 'bar') return $('<i>', {'class': 'glyphicons-bar'});
-        if(name === 'timeline' || name === 'scatter') return $('<i>', {'class': 'glyphicons-chart'});
+        if(name === 'timeline' || name === 'scatter' || name === 'xy' ) return $('<i>', {'class': 'glyphicons-chart'});
         if(name === 'tree') return $('<i>', {'class': 'glyphicons-table'});
         if(name === 'table') return $('<i>', {'class': 'glyphicons-table'});
     },
@@ -1070,6 +1070,12 @@ MMTDrop.Reports.Chart = function(options) {
 };
 
 MMTDrop.Reports.Chart.prototype = {
+
+        isTimelineChart : function ( ) {
+          if( this.type === "timeline" || this.type === "scatter" ) return true;
+          return false;
+        },
+
 	/**
 	 * Renders the chart 
 	 */
@@ -1092,6 +1098,8 @@ MMTDrop.Reports.Chart.prototype = {
 			this.render_timeline(this.filter); //default rendering to spline
 		} else if (this.type == "scatter") {
 			this.render_timeline(this.filter, this.type);
+		} else if (this.type == "xy") {
+			this.render_timeline(this.filter);
 		}
 	},
 
@@ -1474,9 +1482,9 @@ MMTDrop.Reports.Chart.prototype = {
                             }       
                         },
 			xAxis : {
-                            maxZoom: 15000, // 15seconds
+                            maxZoom: this.isTimelineChart() ? 15000 : 1, // 15seconds
                             gridLineWidth: 1,
-				type : 'datetime'
+				type : this.isTimelineChart() ? 'datetime' : '',
 			},
 			yAxis : {
 				title : {
@@ -1626,7 +1634,7 @@ MMTDrop.Reports.Chart.prototype = {
 		} else if (this.type == "tree") {
 		} else if (this.type == "table") {
 			$('#' + this.elemid + '_datatable').dataTable().fnDestroy();
-		} else if (this.type == "timeline" || this.type == "scatter") {
+		} else if (this.type == "timeline" || this.type == "scatter" || this.type == "xy") {
 			this.chart.destroy();
 			this.chart = null;
 		}
@@ -2927,6 +2935,9 @@ MMTDrop.StatsTimePoint.prototype = {
     },
 };
 
+/////////////////////////////////////////////////////////////////
+/////////////////////// Flow Stats //////////////////////////////
+/////////////////////////////////////////////////////////////////
 
 MMTDrop.FlowStats = function(items) {
     this.flowcount = 0; /**< flows count */
@@ -2994,10 +3005,15 @@ MMTDrop.FlowStats.prototype = {
         return 0;
     },
 
-    sort: function ( metric ) {
+    sort: function ( metric, asc ) {
+        asc = asc || false;
         if( metric ) {
           // sort with respect to the given metric! make sure the metric is a valid one :)
-          this.flowitems.sort( function(a, b) { return b.getMetric( metric ) - a.getMetric( metric ); } );
+          if( asc ) {
+            this.flowitems.sort( function(a, b) { return a.getMetric( metric ) - b.getMetric( metric ); } );
+          } else {
+            this.flowitems.sort( function(a, b) { return b.getMetric( metric ) - a.getMetric( metric ); } );
+          }
         } else {
           // sort with respect to flow end time
           this.flowitems.sort( function(a, b) { return b.time - a.time; } );
@@ -3016,6 +3032,22 @@ MMTDrop.FlowStats.prototype = {
       }
       return retval;
     },
+
+    getDistribution: function ( metric ) {
+      //var retval = {name: MMTDrop.FlowMetricID2Name[metric], type: 'scatter', data: []};
+      var retval = {name: MMTDrop.FlowMetricID2Name[metric], data: []};
+
+      this.sort( metric, true );
+
+      var count = 0;
+      for ( i in this.flowitems ) {
+        count ++;
+        //retval.data.push([count/this.flowcount, this.flowitems[i].getMetric(metric)]);
+        retval.data.push([this.flowitems[i].getMetric(metric), 100 * count/this.flowcount]);
+      }
+      return retval;
+    },
+
 };
 
 
@@ -3044,7 +3076,7 @@ MMTDrop.FlowStatsItem = function(entry) {
     this.family = entry[MMTDrop.FlowStatsColumnId.APP_FAMILY];
     this.content_class = entry[MMTDrop.FlowStatsColumnId.CONTENT_CLASS];
     this.path = entry[MMTDrop.FlowStatsColumnId.PROTO_PATH];
-    this.app_name = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
+    this.app = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
     this.duration = this.start_time - this.time;
 };
 
@@ -3152,4 +3184,149 @@ MMTDrop.RtpFlowStatsItem.prototype = {
 
 MMTDrop.RtpFlowStatsItem.prototype = Object.create(MMTDrop.FlowStatsItem.prototype);
 MMTDrop.RtpFlowStatsItem.constructor = MMTDrop.RtpFlowStatsItem;
+
+/////////////////////////////////////////////////////////////////
+///////////////////// Flow Stats History ////////////////////////
+/////////////////////////////////////////////////////////////////
+
+MMTDrop.FlowStatsHistory = function(items) {
+    this.flowitems = [];
+   
+    this.createItem = function( item ) {
+        switch ( item.format ) {
+            case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
+                return new MMTDrop.FlowStatsHistoryItem( item );
+            case MMTDrop.CsvFormat.WEB_APP_FORMAT :
+                return new MMTDrop.HttpFlowStatsHistoryItem( item );
+            case MMTDrop.CsvFormat.SSL_APP_FORMAT :
+                return new MMTDrop.TlsFlowStatsHistoryItem( item );
+            case MMTDrop.CsvFormat.RTP_APP_FORMAT :
+                return new MMTDrop.RtpFlowStatsHistoryItem( item );
+            default :
+                return null;
+        }
+    };
+ 
+    if( items ) {
+        for( var i = 0; i < items.length; i ++ ) {
+            if( MMTDrop.isFlowStats( items[i].format ) ) {
+                var item = this.createItem( items[ i ] );
+                if ( !this.flowitems[ item.time ] ) {
+                  this.flowitems[ item.time ] = item;
+                } else {
+                  this.flowitems[ item.time ].update(item );
+                }
+            }
+        }
+    }
+};
+
+MMTDrop.FlowStatsHistory.prototype = {
+
+    getMetric: function(metric) {
+        return 0;
+    },
+
+    getTimePoints: function ( metric ) {
+      //var retval = {name: MMTDrop.FlowMetricID2Name[metric], type: 'scatter', data: []};
+      var retval = {name: MMTDrop.FlowMetricID2Name[metric], data: []};
+      
+      for ( i in this.flowitems ) {
+        retval.data.push([this.flowitems[i].time, this.flowitems[i].getMetric(metric)]);
+      }
+      return retval;
+    },
+
+};
+
+
+/**
+  * Flow statistics data entry
+  */
+MMTDrop.FlowStatsHistoryItem = function(entry) {
+    this.format = entry.format;
+    this.probe = entry.probe; 
+    this.source = entry.source;
+    this.time = entry.time;
+    this.path = entry.path;
+    this.app = entry.app;
+    this.count = entry.count;
+};
+
+MMTDrop.FlowStatsHistoryItem.prototype = {
+    getMetric: function(metric) {
+        return 0;
+    },
+
+    update: function ( item ) {
+      this.count += item.count;
+    }
+};
+
+MMTDrop.HttpFlowStatsHistoryItem = function(entry) {
+    MMTDrop.FlowStatsHistoryItem.call(this, entry);
+    this.response_time = entry.response_time;
+    this.transactions_count = entry.transactions_count;
+    this.interaction_time = entry.interaction_time; 
+};
+
+MMTDrop.HttpFlowStatsHistoryItem.prototype = Object.create(MMTDrop.FlowStatsHistoryItem.prototype);
+MMTDrop.HttpFlowStatsHistoryItem.constructor = MMTDrop.HttpFlowStatsHistoryItem;
+
+MMTDrop.HttpFlowStatsHistoryItem.prototype = {
+    getMetric: function(metric) {
+        if(metric === MMTDrop.HTTPMetricId.RESPONSE_TIME)
+            return this.response_time/this.count;
+        if(metric === MMTDrop.HTTPMetricId.INTERACTION_TIME)
+            return this.interaction_time/this.count;
+        if(metric === MMTDrop.HTTPMetricId.INTERACTIONS_COUNT)
+            return this.transactions_count/this.count;
+        return MMTDrop.FlowStatsHistoryItem.prototype.getMetric.call(this, metric);
+    },
+
+    update: function ( item ) {
+      MMTDrop.FlowStatsHistoryItem.prototype.update.call(this, item);
+      this.response_time += item.response_time;
+      this.transactions_count += item.transactions_count;
+      this.interaction_time += item.interaction_time; 
+    }
+};
+
+MMTDrop.TlsFlowStatsHistoryItem = function(entry) {
+    MMTDrop.FlowStatsHistoryItem.call(this, entry);
+};
+
+MMTDrop.TlsFlowStatsHistoryItem.prototype = Object.create(MMTDrop.FlowStatsHistoryItem.prototype);
+MMTDrop.TlsFlowStatsHistoryItem.constructor = MMTDrop.TlsFlowStatsHistoryItem;
+
+MMTDrop.RtpFlowStatsHistoryItem = function(entry) {
+    MMTDrop.FlowStatsHistoryItem.call(this, entry);
+    this.packet_loss = entry.packet_loss; 
+    this.packet_loss_burstiness = entry.packet_loss_burstiness;
+    this.jitter = entry.jitter;
+};
+
+MMTDrop.RtpFlowStatsHistoryItem.prototype = {
+    getMetric: function(metric) {
+        if(metric === MMTDrop.RTPMetricId.PACKET_LOSS)
+            return this.packet_loss/this.count;
+        if(metric === MMTDrop.RTPMetricId.PACKET_LOSS_BURST)
+            return this.packet_loss_burstiness/this.count;
+        if(metric === MMTDrop.RTPMetricId.JITTER)
+            return this.jitter/this.count;
+        if(metric === MMTDrop.RTPMetricId.QUALITY_INDEX)
+            return this.qindex/this.count;
+        return MMTDrop.FlowStatsHistoryItem.prototype.getMetric.call(this, metric);
+    },
+
+    update: function ( item ) {
+      MMTDrop.FlowStatsHistoryItem.prototype.update.call(this, item);
+      this.packet_loss += item.packet_loss; 
+      this.packet_loss_burstiness += item.packet_loss_burstiness;
+      this.jitter += item.jitter;
+    }
+};
+
+MMTDrop.RtpFlowStatsHistoryItem.prototype = Object.create(MMTDrop.FlowStatsHistoryItem.prototype);
+MMTDrop.RtpFlowStatsHistoryItem.constructor = MMTDrop.RtpFlowStatsHistoryItem;
 
