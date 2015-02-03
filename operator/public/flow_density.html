@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="utf-8">
+        <title>MMT</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link rel="stylesheet" href="bootstrap.min.css">
+        <link rel="stylesheet" href="dashboard.css">
+        <link rel="stylesheet" href="dataTables.bootstrap.css">
+        <link rel="stylesheet" href="jquery.treetable.css" />
+        <link rel="stylesheet" href="jquery.treetable.theme.default.css" />
+        <script type="text/javascript" language="javascript" src="jquery.js"></script>
+        <script type="text/javascript" language="javascript" src="bootstrap.min.js"></script>
+        <script type="text/javascript" language="javascript" src="jquery.dataTables.min.js"></script>
+        <script type="text/javascript" language="javascript" src="dataTables.bootstrap.js"></script>
+        <script type="text/javascript" language="javascript" src="treetable.js"></script>
+        <script type="text/javascript" src="highcharts.js"></script>
+        <script type="text/javascript" src="highcharts-more.js"></script>
+        <script type="text/javascript" src="solid-gauge.src.js"></script>
+        <script type="text/javascript" src="funnel.js"></script>
+        <script type="text/javascript" src="mmt_drop.js"></script>
+        <script type="text/javascript" language="javascript" src="/socketio.js"></script>
+        <style>
+            table.treetable {
+                margin: 0;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse"> <span class="sr-only">Toggle navigation</span>
+ <span class="icon-bar"></span>
+ <span class="icon-bar"></span>
+ <span class="icon-bar"></span>
+
+                    </button> <a class="navbar-brand" href="#">MMT Cloud</a>
+
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="dash.html">Dashboard</a>
+                        </li>
+                        <li><a href="hierarchy.html">Hierarchy</a>
+                        </li>
+                        <li><a href="categories.html">Categories</a>
+                        </li>
+                        <li><a href="apps.html">Applications</a>
+                        </li>
+                        <li><a href="flow_cloud.html">Flow cloud</a>
+                        </li>
+                        <li><a href="flow_avg.html">Flow avg</a>
+                        </li>
+                        <li><a href="flow_density.html">Flow density</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12 col-md-12 main">
+                    <div id="flowreport" class="content"></div>
+                </div>
+            </div>
+        </div>
+        <script>
+            var chartsElemMap = {};
+            var gstats;
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+
+            function createFlowTimeLineChart(gstats, options) {
+                var metric = options.flowmetricid;// || MMTDrop.FlowMetricId.DATA_VOLUME;
+                var retval = gstats.getDistribution(metric);
+                return [retval];
+            };
+
+
+            function createFlowReport(elemid, gstats) {
+                report = new MMTDrop.Reports({
+                    'stats': gstats,
+                    'elemid': elemid,
+                    'title': "HTTP Flows Metrics Probability Density Distribution",
+                    'elements': [{
+                        'chart': [{
+                            'type': 'xy',
+                                'options': {
+                                'getDataFct': createFlowTimeLineChart,
+                                'seriesName': "RTP QoS test",
+                            }
+                        }],
+                        'pos': [0, 12]
+                    }],
+                    'filter': [{'type': 'flowmetric', 'label': 'Metric', 'select': function(e){}}]
+                });
+                return report;
+            }
+
+            function initCharts( flows ) {
+                gstats = new MMTDrop.FlowStats( flows );
+
+                var flowReport = createFlowReport("flowreport", gstats);
+
+                chartsElemMap["flowview"] = [{
+                    "chart": flowReport
+                }];
+
+                flowReport.render();
+            }
+
+            $(document).ready(function() {
+                //initCharts();
+            });
+        </script>
+        <script type="text/javascript" src="/traffic/flows?format=1&callback=initCharts"></script>
+    </body>
+</html>
