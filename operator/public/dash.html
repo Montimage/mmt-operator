@@ -51,6 +51,9 @@
             <li><a href="hierarchy.html">Hierarchy</a></li>
             <li><a href="categories.html">Categories</a></li>
             <li><a href="apps.html">Applications</a></li>
+            <li><a href="flow_cloud.html">Flow cloud</a></li>
+            <li><a href="flow_avg.html">Flow avg</a></li>
+            <li><a href="flow_density.html">Flow density</a></li>
           </ul>
         </div>
       </div>
@@ -136,7 +139,7 @@ Highcharts.setOptions({
             series = $('#treport_elem0_chart').highcharts().series;
 
             //If this is the root app then initialize new datapoints
-            if(message.proto == message.path && ready) {
+            if(message.app == message.path && ready) {
               console.log('new period');
               //newDataPoints = [];
               
@@ -144,24 +147,18 @@ Highcharts.setOptions({
                   if( newDataPoints[s] ) {
                     series[s].addPoint(newDataPoints[s], true, true);
                   }else {
-                    series[s].addPoint([message.ts, 0], true, true);
+                    series[s].addPoint([message.time, 0], true, true);
                   }
-                  newDataPoints[s] = [message.ts, 0];
+                  newDataPoints[s] = [message.time, 0];
               }
             }else ready = true;
-        /*
-            if( metric === $('#treport_ftr_metric').val() ) {
-            }else {
-              newDataPoints = [];
-              metric = $('#treport_ftr_metric').val();
-            }
-   */
+            
             for( s in series ) {
-              if( (series[s].name).toUpperCase() === (MMTDrop.ProtocolsIDName[message.proto]).toUpperCase() ) {
-                if( metric === "Data Volume" ) newDataPoints[s] = [message.ts, message.data];
-                else if( metric === "Packet Count" ) newDataPoints[s] = [message.ts, message.packet];
-                if( metric === "Payload Volume" ) newDataPoints[s] = [message.ts, message.payload];
-                if( metric === "Active Flows" ) newDataPoints[s] = [message.ts, message.ascount];
+              if( (series[s].name).toUpperCase() === (MMTDrop.ProtocolsIDName[message.app]).toUpperCase() ) {
+                if( metric === "Data Volume" ) newDataPoints[s] = [message.time, message.bytecount];
+                else if( metric === "Packet Count" ) newDataPoints[s] = [message.time, message.packetcount];
+                if( metric === "Payload Volume" ) newDataPoints[s] = [message.time, message.payloadcount];
+                if( metric === "Active Flows" ) newDataPoints[s] = [message.time, message.ative_flowcount];
               }
             }
         }) ;
