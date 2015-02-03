@@ -19,8 +19,10 @@ var argv = require('optimist')
 ;
 
 var dbconnector = null;
-if( argv.db === 'mongo' ) dbconnector = require('./mongo_connector');
-else if( argv.db === 'sqlite' ) dbconnector = require('./sqlite_connector');
+if( argv.db === 'mongo' ) {
+  var dbc = require('./mongo_connector');
+  dbconnector = new dbc();
+} else if( argv.db === 'sqlite' ) dbconnector = require('./sqlite_connector');
 else throw(new Error('Unsopported database type. Database must be one of [sqlite, mongo]'));
 
 var redis = require("redis");
@@ -107,13 +109,13 @@ function getOptionsByPeriod(period) {
 function getFlowOptions( period ) {
   var retval = {collection: 'traffic', time: moment().valueOf() - 600*1000};
   if(period === '1h') {
-    retval = {collection: 'traffic', time: moment().valueOf() - 3600*1000};
+    retval = {collection: 'traffic_min', time: moment().valueOf() - 3600*1000, raw: true};
   }else if(period === '24h') {
-    retval = {collection: 'traffic', time: moment().valueOf() - 24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 24*3600*1000, raw: true};
   }else if(period === 'week') {
-    retval = {collection: 'traffic', time: moment().valueOf() - 7*24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 7*24*3600*1000, raw: true};
   }else if(period === 'month') {
-    retval = {collection: 'traffic', time: moment().valueOf() - 30*24*3600*1000};
+    retval = {collection: 'traffic_hour', time: moment().valueOf() - 30*24*3600*1000, raw: true};
   }
   return retval;
 }
@@ -124,10 +126,8 @@ app.get('/traffic/data', getStats);
 function getStats(request, response, next){
   var period = request.query.period;
   options = getOptionsByPeriod(period);
-
   dbconnector.getProtocolStats( options, function ( err, data ) {
     if (err) {
-      console.log(' zzzzz');
       return next(err);
     }
     
@@ -143,6 +143,9 @@ app.get('/traffic/flows', getFlowStats);
 function getFlowStats(request, response, next){
   var period = request.query.period;
   options = getFlowOptions(period);
+  if( request.query.format ) options.format = request.query.format;
+
+  console.log( options );
 
   dbconnector.getFlowStats( options, function ( err, data ) {
     if (err) return next(err);
