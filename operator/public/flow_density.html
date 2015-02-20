@@ -71,7 +71,7 @@
         </div>
         <script>
             var chartsElemMap = {};
-            var gstats;
+            var gstats1 = null, gstats2 = null;
             Highcharts.setOptions({
                 global: {
                     useUTC: false
@@ -87,6 +87,7 @@
 
             function createFlowReport(elemid, gstats) {
                 report = new MMTDrop.Reports({
+                    'sources': 'zifit',
                     'stats': gstats,
                     'elemid': elemid,
                     'title': "HTTP Flows Metrics Probability Density Distribution",
@@ -105,10 +106,18 @@
                 return report;
             }
 
-            function initCharts( flows ) {
-                gstats = new MMTDrop.FlowStats( flows );
+            function initStats1( flows ) {
+                gstats1 = new MMTDrop.FlowStats( flows );
+                if( gstats1 && gstats2 ) initCharts();
+            }
 
-                var flowReport = createFlowReport("flowreport", gstats);
+            function initStats2( flows ) {
+                gstats2 = new MMTDrop.FlowStats( flows );
+                if( gstats1 && gstats2 ) initCharts();
+            }
+
+            function initCharts( ) {
+                var flowReport = createFlowReport("flowreport", [gstats1, gstats2]);
 
                 chartsElemMap["flowview"] = [{
                     "chart": flowReport
@@ -121,6 +130,7 @@
                 //initCharts();
             });
         </script>
-        <script type="text/javascript" src="/traffic/flows?format=1&callback=initCharts"></script>
+        <script type="text/javascript" src="/traffic/flows?format=1&callback=initStats1"></script>
+        <script type="text/javascript" src="/traffic/flows?format=0&callback=initStats2"></script>
     </body>
 </html>

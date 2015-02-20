@@ -64,10 +64,13 @@ var MongoConnector = function ( opts ) {
     });
   };
 
-  self.getFlowStats = function ( options, callback ){
-    var format = options.format || {'$lte': 3};
-     
-    self.mdb.collection(options.collection).find({format: {'$lte': 3}, time : {'$gte' : options.time}}).sort( { time: 1 }).toArray( function( err, doc ) {
+  self.getFlowStats = function ( options, callback ) {
+    var query = { time : { '$gte' : options.time } };
+    query.format = options.format || {'$lte': 3};
+    if( options.probe ) query.probe = options.probe;
+    if( options.source ) query.source = options.source;
+
+    self.mdb.collection(options.collection).find( query ).sort( { time: 1 }).toArray( function( err, doc ) {
       if (err) callback ( 'InternalError' );
       var data = [];
       for(i in doc) {

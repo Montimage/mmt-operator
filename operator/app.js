@@ -125,7 +125,14 @@ app.get('/', function(req, res, next) { res.redirect('/dash.html'); });
 app.get('/traffic/data', getStats);
 function getStats(request, response, next){
   var period = request.query.period;
-  options = getOptionsByPeriod(period);
+  options = getFlowOptions(period);
+  options.format = 99;
+
+  if( request.query.probe ) options.probe = request.query.probe;
+  if( request.query.source ) options.source = request.query.source;
+
+  console.log( options );
+
   dbconnector.getProtocolStats( options, function ( err, data ) {
     if (err) {
       return next(err);
@@ -143,7 +150,9 @@ app.get('/traffic/flows', getFlowStats);
 function getFlowStats(request, response, next){
   var period = request.query.period;
   options = getFlowOptions(period);
-  if( request.query.format ) options.format = request.query.format;
+  if( request.query.format ) options.format = parseInt(request.query.format);
+  if( request.query.probe ) options.probe = request.query.probe;
+  if( request.query.source ) options.source = request.query.source;
 
   console.log( options );
 

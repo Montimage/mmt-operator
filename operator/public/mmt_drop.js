@@ -1071,6 +1071,20 @@ MMTDrop.Reports.Chart = function(options) {
 
 MMTDrop.Reports.Chart.prototype = {
 
+        prepareData : function( ) {
+          if( this.appstats instanceof Array ) {
+            var retval = [];
+            for( var i in this.appstats ) {
+              var res = this.getdata(this.appstats[i], this.filter, this.getdatargs);
+              for( var j in res ) retval.push( res[j] );
+            }
+            console.log( retval );
+            return retval;
+          } else {
+            return this.getdata(this.appstats, this.filter, this.getdatargs);
+          }
+        },
+
         isTimelineChart : function ( ) {
           if( this.type === "timeline" || this.type === "scatter" ) return true;
           return false;
@@ -1454,6 +1468,7 @@ MMTDrop.Reports.Chart.prototype = {
 	 * Renders a timeline chart 
 	 */
 	render_timeline : function(filter, type) {
+                var data = this.prepareData();
 		this.chart = new Highcharts.Chart({
 			chart : {
 				renderTo : this.elemid,
@@ -1572,7 +1587,7 @@ MMTDrop.Reports.Chart.prototype = {
                     },                    
                 },
             },
-			series : this.getdata(this.appstats, this.filter, this.getdatargs)
+			series : data 
 		});
 	},
 
