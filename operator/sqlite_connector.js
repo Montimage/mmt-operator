@@ -12,9 +12,8 @@ var dataAdaptor = require("./dataAdaptor.js");
 
 
 //List of columns and their data type in database for each table
-var tables = {
-//traffic : MMTDrop.CsvFormat.STATS_FORMAT
-99 : {
+var tables = {};
+tables[dataAdaptor.CsvFormat.STATS_FORMAT] = {
 	name : "traffic",
     columns : { 
 		format 			: "INTEGER", 
@@ -22,7 +21,7 @@ var tables = {
 		source 			: "TEXT", 
 		time 			: "INTEGER",
 		
-		app 			: "TEXT",
+		app 			: "INTEGER",
 		path			: "TEXT",
 		flowcount 		: "INTEGER", 
 		active_flowcount: "INTEGER", 
@@ -30,9 +29,8 @@ var tables = {
 		payloadcount 	: "INTEGER", 
 		packetcount 	: "INTEGER"
     }
-},
-//flow : MMTDrop.CsvFormat.DEFAULT_APP_FORMAT
-0 : {
+};
+tables[dataAdaptor.CsvFormat.DEFAULT_APP_FORMAT] = {
 	name : "flow",
 	columns : {
 		format			: "INTEGER",
@@ -59,9 +57,8 @@ var tables = {
 		path			: "TEXT",
 		app				: "INTEGER"
 	}
-},
-//http : MMTDrop.CsvFormat.WEB_APP_FORMAT
-1 : {
+};
+tables[dataAdaptor.CsvFormat.WEB_APP_FORMAT] = {
  	name : "flow_http",
 	columns : {
 	  response_time		: "INTEGER",
@@ -73,77 +70,63 @@ var tables = {
 	  device_os_id		: "TEXT",
 	  cdn				: "INTEGER"
 	}
-},
-//ssl : MMTDrop.CsvFormat.SSL_APP_FORMAT 
-2 : {
+};
+tables[dataAdaptor.CsvFormat.SSL_APP_FORMAT] = {
  	name : "flow_ssl",
 	columns :{
 	  server_name		: "TEXT",
 	  cdn				: "INTEGER"
 	}
-},
-//rtp : MMTDrop.CsvFormat.RTP_APP_FORMAT 
-3 : {
+};
+tables[dataAdaptor.CsvFormat.RTP_APP_FORMAT] = {
  	name : "flow_rtp",
 	columns : {
 	  packet_loss			: "INTEGER",
 	  packet_loss_burstiness: "INTEGER",
 	  jitter				: "TEXT"
 	}
-}};
+};
 
 //this function joint columns information in "flowColumns" to "http", "ssl" and "rtp"
 function _jointColumns(){
-	var flowColumns = tables[0].columns;
+	var flowColumns = tables[dataAdaptor.CsvFormat.DEFAULT_APP_FORMAT].columns;
 	
-	for (var i=1; i<=3; i++)
+	for (var i in [ dataAdaptor.CsvFormat.WEB_APP_FORMAT,
+					dataAdaptor.CsvFormat.SSL_APP_FORMAT,
+					dataAdaptor.CsvFormat.RTP_APP_FORMAT])
 		for (var key in flowColumns)
 			tables[i].columns[key] = flowColumns[key];
 }
 
 _jointColumns();
 
+
 //create tables
-function prepareDB ( options ) {
-	for (var i in tables){
-		var name = tables[i].name;
-		var columns = tables[i].columns;
-		
-		//get array of column name - data type
-		var arr = [];
-		for (var key in columns)
-			arr.push( key + " " + columns[key] );
-		
-		//create SQL string
-		sqlstr = "CREATE TABLE IF NOT EXISTS " + name + " (" + arr.join() + ")";
-		db.run(sqlstr);
-	}
-	
+function _prepareDB () {
+	//run commands in sequence
+	db.serialize(function(){
+		for (var i in tables){
+			var name = tables[i].name;
+			var columns = tables[i].columns;
+			
+			//get array of column name - data type
+			var arr = [];
+			for (var key in columns)
+				arr.push( key + " " + columns[key] );
+			
+			//create SQL string
+			sqlstr = "CREATE TABLE IF NOT EXISTS " + name + " (" + arr.join() + ")";
+			db.run(sqlstr);
+		}
+	});
 };
 
-/**  TODO:
- * - Update flow stats history
- * - Update Web stats history
- * - Update SSL stats history
- * - Update RTP stats history
- **/
-function updateInsertHistory(msg, table, period) {
-  var stmt = db.prepare("INSERT OR REPLACE INTO " + table 
-    + " VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8" //" , ?9, ?10, ?11 "
-    + ", COALESCE( (SELECT bytecount    FROM " + table + " WHERE (format = ?1 AND proto = ?2 AND path = ?4 AND time = ?5) ) + ?9, ?9) "
-    + ", COALESCE( (SELECT payloadcount FROM " + table + " WHERE (format = ?1 AND proto = ?2 AND path = ?4 AND time = ?5) ) + ?10, ?10) "
-    + ", COALESCE( (SELECT packetcount  FROM " + table + " WHERE (format = ?1 AND proto = ?2 AND path = ?4 AND time = ?5) ) + ?11, ?11) ) ");
-  
-  stmt.run( msg.format, msg.probe, msg.source, msg.path, moment(msg.time).startOf('minute').valueOf(),
-		  msg.flowcount, msg.active_flowcount, msg.app, msg.bytecount, msg.payloadcount, msg.packetcount);
-  stmt.finalize();
-}
+_prepareDB();
 
-/**  TODO: OK
- * - Insert flow stas
- * - Insert Web stats
- * - Insert SSL stats
- * - Insert RTP stats
+
+/**
+ * Insert captured message into DB
+ * Depending on msg.format, the message can be inserted into corresponding table, eg, traffic, flow_http, ...
  **/
 
 function addProtocolStats( msg ) {
@@ -167,23 +150,76 @@ function addProtocolStats( msg ) {
 	//SQL string
 	var sqlstr = "INSERT INTO " + tbl.name + " (" + cols.join() + ") VALUES (" + vals.join() + ")";
 	
-	console.log("\n\n Running sql:  " + sqlstr);
+	//console.log("\n\n Running sql:  " + sqlstr);
 	db.run(sqlstr);
 };
 
-/**  TODO:
- * - Retrieve flow stats
- * - Retreive Web stats
- * - Retrieve SSL stats
- * - Retreive RTP stats
+function _createSQL(options){
+	var tblName = tables[options.format].name;
+	if (tblName == undefined){
+		throw new Error("Table for 'options.format = " + options.format + "' does not exist");
+	}
+	
+	var sqlStr = "SELECT * from " + tblName + " WHERE (time >= " + options.time + ")";
+	
+	var time = "time";
+	if (options.collection == "traffic_min"){
+		time = "(strftime('%s', strftime('%Y-%m-%d %H:%M:00', datetime(time/1000, 'unixepoch'))) * 1000)";
+	}else if (options.collection == "traffic_hour"){
+		time = "(strftime('%s', strftime('%Y-%m-%d %H:00:00', datetime(time/1000, 'unixepoch'))) * 1000)";
+	}else	//traffic
+		return sqlStr;
+	
+	switch (options.format){
+	case dataAdaptor.CsvFormat.STATS_FORMAT:
+		sqlStr = "SELECT format, probe, source, path, " + 
+					  time + "              AS time," +
+					" MAX(flowcount)        AS flowcount," +
+					" MAX(active_flowcount) AS active_flowcount," +
+					" app," +
+					" SUM(bytecount)        AS bytecount," +
+					" SUM(payloadcount)     AS pyaloadcount," +
+					" SUM(packetcount)      AS packetcount" +
+					" FROM " + tblName +
+					" WHERE time >= " + options.time +
+					" GROUP BY format, probe, source, path," + time;
+		break;
+	case dataAdaptor.CsvFormat.WEB_APP_FORMAT:		//http
+		sqlStr = "SELECT format, probe, source, " +
+					time + 				"    AS time, " +
+					" SUM(response_time)     AS response_time," +
+					" SUM(transactions_count) AS transactions_count," +
+					" SUM(interaction_time)  AS interaction_time" +
+					" FROM " + tblName +
+					" GROUP BY format, probe, source," + time;
+		break;
+	case dataAdaptor.CsvFormat.SSL_APP_FORMAT:		//ssl
+		break;
+	case dataAdaptor.CsvFormat.RTP_APP_FORMAT:		//rtp
+		sqlStr = "SELECT format, probe, source, " +
+					time + 				"         AS time, " +
+					" SUM(packet_loss)            AS packet_loss," +
+					" SUM(packet_loss_burstiness) AS packet_loss_burstiness," +
+					" SUM(jitter)  				  AS jitter" +
+					" FROM " + tblName +
+					" GROUP BY format, probe, source," + time;
+		break;
+	}	
+	
+	return sqlStr;
+}
+
+/** 
+ * Get statistic of traffic (data from traffic table)
  **/
 function getProtocolStats(options, callback) {
-	// why I cannot use : dataAdaptor.CvsFormat.STATS_FORMAT
-	var sqlStr = "SELECT * from " + tables[99].name + " WHERE (time >= "
-			+ options.time + ") ";
+	var sqlStr = _createSQL(options);
+	//console.log("\n Executing SQL: " + sqlStr);
 	db.all(sqlStr, function(err, doc) {
-		if (err)
-			callback('InternalError' + err + ": " + sqlStr);
+		if (err){
+			callback('InternalError: ' + err );
+			return;
+		}
 		var data = [];
 		for (i in doc) {
 			var record = dataAdaptor.reverseFormatReportItem(doc[i]);
@@ -199,22 +235,30 @@ function getProtocolStats(options, callback) {
 }
 
 
+/**
+ * get statistic of flow (data from flow_http, flow_ssl or flow_rtp)
+ * @param options
+ * @param callback will be called when data are available
+ */
 function getFlowStats( options, callback ){
-	var sqlStr = "SELECT * from " + tables[options.format].name + " WHERE (time >= " + options.time + ")";
-	console.log("\nExecuting SQL : " + sqlStr);
+
+	var sqlStr = _createSQL(options);
+	//console.log("\nExecuting SQL : " + sqlStr);
 	db.all(sqlStr, function( err, doc ) {
-		if (err) callback ( 'InternalError' + err + ": " + sqlStr);
+		if (err) {
+			callback ( 'InternalError' + err );
+			return;
+		}
 		var data = [];
 		for(i in doc) {
 			if (options.raw)
 				data.push (doc[i]);
 			else
 				data.push(dataAdaptor.reverseFormatReportItem( doc[i] ));
-		} 
+		}
+		//console.log(data.length);
 		callback (null, data);
 	});
 }
-
-prepareDB();
 
 module.exports = { addProtocolStats: addProtocolStats, getProtocolStats: getProtocolStats, getFlowStats: getFlowStats };

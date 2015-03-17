@@ -602,5 +602,6 @@ MMTDrop.reverseFormatReportItem = function(entry) {
     }
 };
 
-module.exports = MMTDrop;
 
+module.exports = MMTDrop;
+module.exports.CsvFormat = MMTDrop.CsvFormat;
