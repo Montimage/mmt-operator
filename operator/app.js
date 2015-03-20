@@ -18,6 +18,11 @@ var argv = require('optimist')
     .argv
 ;
 
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// Receive real-time data from MMT-Probe and insert them into database
+////////////////////////////////////////////////////////////////////////////////////////////
+
 var dbconnector = null;
 if( argv.db === 'mongo' ) {
   var dbc = require('./mongo_connector');
@@ -37,14 +42,18 @@ report_client.subscribe("rtp.flow.report");
 
 report_client.on('message', function(channel, message) {
     message = mmtAdaptor.formatReportItem( JSON.parse( message ) );
+    //this is for test purpose only: to create two different probeID
+    message.probe = Math.round(Math.random()) + 10;	//==> either 10 or 11
     dbconnector.addProtocolStats( message, function( err, msg ) {} );
 });
+
+////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Constants: MMT Response codes
  */
 var mmtCode = {
-    OK : 1000,
+    OK 				 : 1000,
     ResourceNotFound : 1101,
     ParameterError   : 1102,
     InternalError    : 1103,
@@ -53,10 +62,12 @@ var mmtCode = {
 var mmtErrMsg = {
     ResourceNotFoundMsg : "Resource not found",
     ParameterErrorMsg   : "Parameter error",
-    InternalErrorMsg   : "Internal error",
+    InternalErrorMsg    : "Internal error",
 };
 
-// all environments
+////////////////////////////////////////////////////////////////////////////////////////////
+// Setup an HTTP server
+////////////////////////////////////////////////////////////////////////////////////////////
 app.set('port', process.env.PORT || 8088);
 app.use(express.favicon());
 //To use our own favicon instead of Express's default one
@@ -67,11 +78,6 @@ app.use(express.methodOverride());
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-// development only
-//if ('development' == app.get('env')) {
-//  app.use(express.errorHandler());
-//}
 
 app.use(function(err, req, res, next) {
   console.log(err);
@@ -87,49 +93,57 @@ function mmtError(http_code, err_code, err_message) {
     return err;
 }
 
-var server = http.createServer(app);
-io = io.listen(server);
-io.set('log level', 1); //warning + errors
-server.listen(app.get('port'));
+//Default page
+app.get('/', function(req, res, next) { res.redirect('/index.html'); });
+
+//info
+console.log("\nMMT-Operator is listening at port " + app.get('port') + " ....");
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+//Response to requests of MMT-Drop
+////////////////////////////////////////////////////////////////////////////////////////////
+var PERIOD = {
+		MINUTE 	: "minute",
+		HOUR	: "hour",
+		DAY		: "day",
+		WEEK	: "week",
+		MONTH	: "month"
+	};
 
 function getOptionsByPeriod(period) {
   var retval = {collection: 'traffic', time: moment().valueOf() - 600*1000};
-  if(period === '1h') {
+  if(period === PERIOD.HOUR) {
     retval = {collection: 'traffic_min', time: moment().valueOf() - 3600*1000};
-  }else if(period === '24h') {
+  }else if(period === PERIOD.DAY) {
     retval = {collection: 'traffic_hour', time: moment().valueOf() - 24*3600*1000};
-  }else if(period === 'week') {
+  }else if(period === PERIOD.WEEK) {
     retval = {collection: 'traffic_hour', time: moment().valueOf() - 7*24*3600*1000};
-  }else if(period === 'month') {
+  }else if(period === PERIOD.MONTH) {
     retval = {collection: 'traffic_hour', time: moment().valueOf() - 30*24*3600*1000};
   }
   return retval;
 }
 
-function getFlowOptions( period ) {
-  var retval = {collection: 'traffic', time: moment().valueOf() - 600*1000};
-  if(period === '1h') {
-    retval = {collection: 'traffic_min', time: moment().valueOf() - 3600*1000, raw: true};
-  }else if(period === '24h') {
-    retval = {collection: 'traffic_hour', time: moment().valueOf() - 24*3600*1000, raw: true};
-  }else if(period === 'week') {
-    retval = {collection: 'traffic_hour', time: moment().valueOf() - 7*24*3600*1000, raw: true};
-  }else if(period === 'month') {
-    retval = {collection: 'traffic_hour', time: moment().valueOf() - 30*24*3600*1000, raw: true};
-  }
-  return retval;
-}
 
-app.get('/', function(req, res, next) { res.redirect('/dash.html'); });
-
-app.get('/traffic/data', getStats);
-function getStats(request, response, next){
+/**
+ * API for responding requests of MMT-Drop
+ */
+app.get('/traffic/data', function (request, response, next){
   var period = request.query.period;
-  options = getFlowOptions(period);
-  options.format = 99;
+  options = getOptionsByPeriod(period);
+  
+  //default values
+  options.format = request.query.format || 99;
+  options.raw	 = true;
+  if (request.query.raw  != undefined)
+	  options.raw = request.query.raw;
 
-  if( request.query.probe ) options.probe = request.query.probe;
-  if( request.query.source ) options.source = request.query.source;
+  options.probe = request.query.probe	|| "*";
+  options.source = request.query.source || "*";
 
   console.log( options );
 
@@ -137,35 +151,21 @@ function getStats(request, response, next){
     if (err) {
       return next(err);
     }
-    
-    if(request.query.callback) {
-      response.send(request.query.callback + '(' + JSON.stringify(data) + ')');
-    }else {
-      response.send(data);
-    }
+    response.setHeader("Content-Type", "application/json"); 
+    response.send(data);
   });
-}
+});
+////////////////////////////////////////////////////////////////////////////////////////////
 
-app.get('/traffic/flows', getFlowStats);
-function getFlowStats(request, response, next){
-  var period = request.query.period;
-  options = getFlowOptions(period);
-  if( request.query.format ) options.format = parseInt(request.query.format);
-  if( request.query.probe ) options.probe = request.query.probe;
-  if( request.query.source ) options.source = request.query.source;
 
-  console.log( options );
 
-  dbconnector.getFlowStats( options, function ( err, data ) {
-    if (err) return next(err);
-
-    if(request.query.callback) {
-      response.send(request.query.callback + '(' + JSON.stringify(data) + ')');
-    }else {
-      response.send(data);
-    }
-  });
-}
+////////////////////////////////////////////////////////////////////////////////////////////
+//API for real-time emitting data to MMT-Drop
+////////////////////////////////////////////////////////////////////////////////////////////
+var server = http.createServer(app);
+io = io.listen(server);
+io.set('log level', 1); //warning + errors
+server.listen(app.get('port'));
 
 io.sockets.on('connection', function (client) {
   var sub = redis.createClient();
@@ -194,5 +194,4 @@ io.sockets.on('connection', function (client) {
   });
 
 });
-
-       
+////////////////////////////////////////////////////////////////////////////////////////////

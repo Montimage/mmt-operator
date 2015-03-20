@@ -3,13 +3,6 @@ var moment = require('moment');
 var db = new sqlite3.Database('./mmt.sqlite');
 var dataAdaptor = require("./dataAdaptor.js");
 
-/**  TODO:
- * - Table for flow stats
- * - Table for Web stats
- * - Table for SSL stats
- * - Table for RTP stats
- **/
-
 
 //List of columns and their data type in database for each table
 var tables = {};
@@ -167,9 +160,10 @@ function _createSQL(options){
 		time = "(strftime('%s', strftime('%Y-%m-%d %H:%M:00', datetime(time/1000, 'unixepoch'))) * 1000)";
 	}else if (options.collection == "traffic_hour"){
 		time = "(strftime('%s', strftime('%Y-%m-%d %H:00:00', datetime(time/1000, 'unixepoch'))) * 1000)";
-	}else	//traffic
+	}else{	//traffic
+		console.log("\n" + sqlStr + "\n");
 		return sqlStr;
-	
+	}
 	switch (options.format){
 	case dataAdaptor.CsvFormat.STATS_FORMAT:
 		sqlStr = "SELECT format, probe, source, path, " + 
@@ -178,7 +172,7 @@ function _createSQL(options){
 					" MAX(active_flowcount) AS active_flowcount," +
 					" app," +
 					" SUM(bytecount)        AS bytecount," +
-					" SUM(payloadcount)     AS pyaloadcount," +
+					" SUM(payloadcount)     AS payloadcount," +
 					" SUM(packetcount)      AS packetcount" +
 					" FROM " + tblName +
 					" WHERE time >= " + options.time +
@@ -188,7 +182,7 @@ function _createSQL(options){
 		sqlStr = "SELECT format, probe, source, " +
 					time + 				"    AS time, " +
 					" SUM(response_time)     AS response_time," +
-					" SUM(transactions_count) AS transactions_count," +
+					" SUM(transactions_count)AS transactions_count," +
 					" SUM(interaction_time)  AS interaction_time" +
 					" FROM " + tblName +
 					" GROUP BY format, probe, source," + time;
@@ -206,6 +200,7 @@ function _createSQL(options){
 		break;
 	}	
 	
+	console.log("\n" + sqlStr + "\n");
 	return sqlStr;
 }
 
@@ -220,45 +215,42 @@ function getProtocolStats(options, callback) {
 			callback('InternalError: ' + err );
 			return;
 		}
-		var data = [];
-		for (i in doc) {
-			var record = dataAdaptor.reverseFormatReportItem(doc[i]);
-			data.push(record);
-		}
 		callback(null, {
 			metadata : {
-				numberOfEntries : data.length
+				numberOfEntries : doc.length
 			},
-			data : data
+			data : doc
 		});
 	});
 }
 
 
 /**
- * get statistic of flow (data from flow_http, flow_ssl or flow_rtp)
- * @param options
+ * get statistic data from database 
+ * @param options is an object {format: , time:, collection:, source: , probe: } 
  * @param callback will be called when data are available
  */
-function getFlowStats( options, callback ){
+function getData( options, callback ){
 
 	var sqlStr = _createSQL(options);
 	//console.log("\nExecuting SQL : " + sqlStr);
 	db.all(sqlStr, function( err, doc ) {
 		if (err) {
-			callback ( 'InternalError' + err );
+			callback ( 'InternalError: ' + err );
 			return;
 		}
-		var data = [];
-		for(i in doc) {
-			if (options.raw)
-				data.push (doc[i]);
-			else
-				data.push(dataAdaptor.reverseFormatReportItem( doc[i] ));
-		}
-		//console.log(data.length);
-		callback (null, data);
+		
+		if (options.raw){
+			var data = [];
+			for (var i in doc){
+				data.push( dataAdaptor.reverseFormatReportItem( doc[i] ) );
+			}
+			//console.log(data.length);
+			callback (null, data);
+		}else
+			callback (null, doc);
+		
 	});
 }
 
-module.exports = { addProtocolStats: addProtocolStats, getProtocolStats: getProtocolStats, getFlowStats: getFlowStats };
+module.exports = { addProtocolStats: addProtocolStats, getProtocolStats : getData, getFlowStats: getData };

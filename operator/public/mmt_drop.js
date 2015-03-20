@@ -538,6 +538,41 @@ MMTDrop = {
 };
 
 /**
+ * Split data to n arrays arr1, arr2, ..., arrn. Each array contains data elements having the same "probe"
+ * @param data: is an array of messages
+ * @return an Object whose elements key-value are <br/>
+ * 	- key  : is ID of probe<br/>
+ *  - value: is an array of messages captured by this probe
+ */
+MMTDrop.splitDataByProbe = function( data ){
+	var obj = {};
+	for (var i=0; i<data.length; i++){
+		var msg = data[i];
+		var probeID = msg[1];  //msg[0] = format, msg[2] = source, msg[3] = time
+		if (obj[probeID] == undefined)
+			//create a new array for this probeID
+			obj[probeID] = [];
+		
+		obj[probeID].push(msg);
+	}
+	return obj;
+}
+
+/**
+ * Set of tools divers
+ */
+MMTDrop.tools = {
+	/**
+	 * Convert an object to an array
+	 */
+	object2Array : function ( obj ){
+		return Object.keys(obj).map(function(key){
+			return obj[key];
+		});
+	}
+}
+
+/**
  * Class: MMTDrop.DataFactory
  * An object container for all the data creation functions.
  */
@@ -1640,18 +1675,15 @@ MMTDrop.Reports.Chart.prototype = {
 	 */
 	destroy : function() {
 		this.isInit = 0;
-		if (this.type == "bar") {
-			this.chart.destroy();
-			this.chart = null;
-		} else if (this.type == "pie") {
-			this.chart.destroy();
-			this.chart = null;
-		} else if (this.type == "tree") {
+		if (this.type == "tree") {
 		} else if (this.type == "table") {
 			$('#' + this.elemid + '_datatable').dataTable().fnDestroy();
-		} else if (this.type == "timeline" || this.type == "scatter" || this.type == "xy") {
-			this.chart.destroy();
-			this.chart = null;
+		} else if (this.type == "bar" || this.type == "pie" ||
+				this.type == "timeline" || this.type == "scatter" || this.type == "xy") {
+			if (this.chart){
+				this.chart.destroy();
+				this.chart = null;
+			}
 		}
 		$('#' + this.elemid).empty();
 	},
@@ -1676,7 +1708,7 @@ MMTDrop.DataFactory = {
         return arrData;
     },
 
-    createApplicationTableData : function(appstats, options, args) {
+    createApplicationTableData : function(gstats, options, args) {
         var data = [];
         id = options.appid;
         if (id && id != '') {
@@ -1998,7 +2030,7 @@ MMTDrop.DataFactory = {
     },
 
     
-    createAppsPieChart : function(appstats, options) {
+    createAppsPieChart : function(gstats, options) {
         var data = [];
         id = options.appid;
         if (id && id != '') {
@@ -2131,7 +2163,7 @@ MMTDrop.DataFactory = {
         return data;
     },
     
-    createAppsBarChart : function(appstats, options) {
+    createAppsBarChart : function(gstats, options) {
         var retval = [];
         var categories = [];
         var data = [];
@@ -2507,78 +2539,13 @@ MMTDrop.APPStats.prototype = {
         return data;
     },
 
-    getPacketTimePoints : function(timepoints) {
-        data = [];
-        for(i in timepoints) data[timepoints[i]] = [timepoints[i], 0];
-        temp = [];
+    getTimePoints : function(timepoints, attr) {
+    	var data = {};
         for (i in this.stats) {
-            for (j in this.stats[i].timepoints) {
-                if (data[this.stats[i].timepoints[j].time][1]) {
-                    data[this.stats[i].timepoints[j].time][1] += this.stats[i].timepoints[j].packetcount;
-                } else {
-                    data[this.stats[i].timepoints[j].time][1] = this.stats[i].timepoints[j].packetcount;
-                }
-            }
-        }
-        count = 0;
-        for (i in data) {
-            temp[count] = data[i];
-            count++;
-        }
-        temp.sort(function(a, b){return a[0] - b[0]});
-        return temp;
-    },
-
-    getDataTimePoints : function(timepoints) {
-        data = [];
-        for(i in timepoints) data[timepoints[i]] = [timepoints[i], 0];
-        temp = [];
-        for (i in this.stats) {
-            for (j in this.stats[i].timepoints) {
-                if (data[this.stats[i].timepoints[j].time][1]) {
-                    data[this.stats[i].timepoints[j].time][1] += this.stats[i].timepoints[j].bytecount;
-                } else {
-                    data[this.stats[i].timepoints[j].time][1] = this.stats[i].timepoints[j].bytecount;
-                }
-            }
-        }
-        count = 0;
-        for (i in data) {
-            temp[count] = data[i];
-            count++;
-        }
-        temp.sort(function(a, b){return a[0] - b[0]});
-        return temp;
-    },
-
-    getPayloadTimePoints : function(timepoints) {
-        data = [];
-        for(i in timepoints) data[timepoints[i]] = [timepoints[i], 0];
-        temp = [];
-        for (i in this.stats) {
-            for (j in this.stats[i].timepoints) {
-                if (data[this.stats[i].timepoints[j].time][1]) {
-                    data[this.stats[i].timepoints[j].time][1] += this.stats[i].timepoints[j].payloadcount;
-                } else {
-                    data[this.stats[i].timepoints[j].time][1] = this.stats[i].timepoints[j].payloadcount;
-                }
-            }
-        }
-        count = 0;
-        for (i in data) {
-            temp[count] = data[i];
-            count++;
-        }
-        temp.sort(function(a, b){return a[0] - b[0]});
-        return temp;
-    },
-
-    getActiveFlowsTimePoints : function(timepoints) {
-        data = [];
-        for (i in this.stats) {
-            aflows = 0;
+            var aflows = 0;
             for(t in timepoints){
-                if(this.stats[i].timepoints[timepoints[t]]) aflows = this.stats[i].timepoints[timepoints[t]].active_flowcount;
+                if(this.stats[i].timepoints[timepoints[t]]) 
+                	aflows = this.stats[i].timepoints[timepoints[t]][attr];
                 
                 if(data[timepoints[t]]) {
                     data[timepoints[t]][1] += aflows;
@@ -2587,14 +2554,26 @@ MMTDrop.APPStats.prototype = {
                 }
             }
         }
-        temp = [];
-        count = 0;
-        for (i in data) {
-            temp[count] = data[i];
-            count++;
-        }
+       
+        var temp = MMTDrop.tools.object2Array(data);
         temp.sort(function(a, b){return a[0] - b[0]});
         return temp;
+    },
+    
+    getDataTimePoints : function(timepoints) {
+    	return this.getTimePoints(timepoints, 'bytecount');
+    },
+    
+    getPacketTimePoints : function(timepoints) {
+    	return this.getTimePoints(timepoints, 'packetcount');
+    },
+
+    getPayloadTimePoints : function(timepoints) {
+    	return this.getTimePoints(timepoints, 'payloadcount');
+    },
+
+    getActiveFlowsTimePoints : function(timepoints) {
+    	return this.getTimePoints(timepoints, 'active_flowcount');
     },
 
     hasChildren: function() {
@@ -2755,81 +2734,43 @@ MMTDrop.Stats.prototype = {
         return data;
     },
 
-    getPacketTimePoints : function(timepoints) {
-        data = [];
-        for(t in timepoints){
-             data[timepoints[t]] = [timepoints[t], 0];
-        }
 
-        for (j in this.timepoints) {
-            data[this.timepoints[j].time][1] += this.timepoints[j].packetcount;
-        }
-
-        temp = [];
-        for(j in data) {
-            temp.push(data[j]);
-        }
-        return temp;
-    },
-
-
-    //getDataTimePoints : function(timepoints) {
-    //    data = [];
-    //    for (j in this.timepoints) {
-    //        data.push([this.timepoints[j].time, this.timepoints[j].bytecount]);
-    //    }
-    //    return data;
-    //},
-
-    getDataTimePoints : function(timepoints) {
+    getTimePoints : function(timepoints, attr) {
+    	attr = attr || "bytecount";
+    	
           console.log(timepoints);
-        data = [];
+          console.log(this.timepoints);
+          
+        var data = {};
         for(t in timepoints){
              data[timepoints[t]] = [timepoints[t], 0];
         }
 
         for (j in this.timepoints) {
-            data[this.timepoints[j].time][1] += this.timepoints[j].bytecount;
+        	//since using two different sets as keys
+        	// ==> maybe data does not contains a key [this.timepoints[j].time] 
+            //why using two different times (timepoints vs. this.timepoints) ???
+        	if (data[this.timepoints[j].time])
+        		data[this.timepoints[j].time][1] += this.timepoints[j][attr];
         }
 
-        temp = [];
-        for(j in data) {
-            temp.push(data[j]);
-        }
-        return temp;
+        return MMTDrop.tools.object2Array(data);
     },
-
+    
+    getPacketTimePoints : function(timepoints) {
+        return this.getTimePoints(timepoints, 'packetcount');
+    },
+    
+    getDataTimePoints : function(timepoints) {
+        return this.getTimePoints(timepoints, 'bytecount');
+    },
+    
     getPayloadTimePoints : function(timepoints) {
-        data = [];
-        for(t in timepoints){
-             data[timepoints[t]] = [timepoints[t], 0];
-        }
-
-        for (j in this.timepoints) {
-            data[this.timepoints[j].time][1] += this.timepoints[j].payloadcount;
-        }
-
-        temp = [];
-        for(j in data) {
-            temp.push(data[j]);
-        }
-        return temp;
+        return this.getTimePoints(timepoints, 'payloadcount');
     },
 
     getActiveFlowsTimePoints : function(timepoints) {
-        data = [];
-        aflows = 0;
-        for(t in timepoints){
-            if(this.timepoints[timepoints[t]]) aflows = this.timepoints[timepoints[t]].active_flowcount;
-            data[timepoints[t]] = [timepoints[t], aflows];
-        }
-
-        temp = [];
-        for(j in data) {
-            temp.push(data[j]);
-        }
-
-        return temp;
+    	return this.getTimePoints(timepoints, 'active_flowcount');
     },
 
     getMetric: function(metric) {
@@ -3344,4 +3285,3 @@ MMTDrop.RtpFlowStatsHistoryItem.prototype = {
 
 MMTDrop.RtpFlowStatsHistoryItem.prototype = Object.create(MMTDrop.FlowStatsHistoryItem.prototype);
 MMTDrop.RtpFlowStatsHistoryItem.constructor = MMTDrop.RtpFlowStatsHistoryItem;
-

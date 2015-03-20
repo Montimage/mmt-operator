@@ -54,13 +54,21 @@ var MongoConnector = function ( opts ) {
 
   self.getProtocolStats = function ( options, callback ){
     self.mdb.collection(options.collection).find({format: 99, time : {'$gte' : options.time}}).sort( { time: 1 }).toArray( function( err, doc ) {
-      if (err) callback ( 'InternalError' );
-      var data = [];
-      for(i in doc) {
-        var record = dataAdaptor.reverseFormatReportItem( doc[i] );
-        data.push(record);
-      } 
-      callback (null, { metadata: {numberOfEntries: data.length}, data: data } );
+    	  if (err) {
+        	  callback ( 'InternalError' );
+        	  return;
+          }
+          if (options.raw){
+        	  var data = [];
+        	  for(i in doc) {
+        		  var record = dataAdaptor.reverseFormatReportItem( doc[i] );
+        		  data.push(record);
+        	  }
+        	  callback ( null, data );
+          }else{
+        	  callback ( null, doc );
+          }
+          
     });
   };
 
@@ -71,17 +79,21 @@ var MongoConnector = function ( opts ) {
     if( options.source ) query.source = options.source;
 
     self.mdb.collection(options.collection).find( query ).sort( { time: 1 }).toArray( function( err, doc ) {
-      if (err) callback ( 'InternalError' );
-      var data = [];
-      for(i in doc) {
-        if( options.raw ) {
-          data.push( doc[i] );
-        } else {
-          var record = dataAdaptor.reverseFormatReportItem( doc[i] );
-          data.push(record);
-        }
+      if (err) {
+    	  callback ( 'InternalError' );
+    	  return;
       }
-      callback ( null, data );
+      if (options.raw){
+    	  var data = [];
+    	  for(i in doc) {
+    		  var record = dataAdaptor.reverseFormatReportItem( doc[i] );
+    		  data.push(record);
+    	  }
+    	  callback ( null, data );
+      }else{
+    	  callback ( null, doc );
+      }
+      
     });
   };
 }
