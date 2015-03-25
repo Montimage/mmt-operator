@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MMT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="mmt_drop.js"></script>
+<style>
+        table.treetable {
+            margin: 0;
+            font-size: .95em;
+        }
+        table.treetable thead {
+          font-size: 1.1em;
+          font-weight: bold;
+        }
+        tr.selected a {
+          color: #fff;
+        }
+</style>
+</head>
+
+<body>
+    <script>
+      MMTDrop.config = {
+           probeURL : "http://192.168.56.101:8088" 
+       };
+       
+       var db = new MMTDrop.Database.Traffic({period:"hour"});
+       console.log(db.data);
+    </script>
+
+</body>
+</html>

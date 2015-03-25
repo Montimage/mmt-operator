@@ -147,14 +147,27 @@ function addProtocolStats( msg ) {
 	db.run(sqlstr);
 };
 
+/**
+ * Create a SQL string based on options
+ */
 function _createSQL(options){
 	var tblName = tables[options.format].name;
 	if (tblName == undefined){
 		throw new Error("Table for 'options.format = " + options.format + "' does not exist");
 	}
 	
-	var sqlStr = "SELECT * from " + tblName + " WHERE (time >= " + options.time + ")";
+	var where_clause = "time >= " + options.time;
 	
+	if ((options.probe instanceof Array) && options.probe.length > 0){
+		where_clause += " AND probe IN (" + options.probe.join() + ")";
+	}
+	
+	if ((options.source instanceof Array) && options.source.length > 0){
+		where_clause += " AND source IN ("+ options.source.join(",") +")";
+	}
+	
+	var sqlStr = "SELECT * from " + tblName + " WHERE " + where_clause ;
+
 	var time = "time";
 	if (options.collection == "traffic_min"){
 		time = "(strftime('%s', strftime('%Y-%m-%d %H:%M:00', datetime(time/1000, 'unixepoch'))) * 1000)";
@@ -164,6 +177,8 @@ function _createSQL(options){
 		console.log("\n" + sqlStr + "\n");
 		return sqlStr;
 	}
+	
+	
 	switch (options.format){
 	case dataAdaptor.CsvFormat.STATS_FORMAT:
 		sqlStr = "SELECT format, probe, source, path, " + 
@@ -175,7 +190,7 @@ function _createSQL(options){
 					" SUM(payloadcount)     AS payloadcount," +
 					" SUM(packetcount)      AS packetcount" +
 					" FROM " + tblName +
-					" WHERE time >= " + options.time +
+					" WHERE " + where_clause +
 					" GROUP BY format, probe, source, path," + time;
 		break;
 	case dataAdaptor.CsvFormat.WEB_APP_FORMAT:		//http
@@ -185,6 +200,7 @@ function _createSQL(options){
 					" SUM(transactions_count)AS transactions_count," +
 					" SUM(interaction_time)  AS interaction_time" +
 					" FROM " + tblName +
+					" WHERE " + where_clause +
 					" GROUP BY format, probe, source," + time;
 		break;
 	case dataAdaptor.CsvFormat.SSL_APP_FORMAT:		//ssl
@@ -196,6 +212,7 @@ function _createSQL(options){
 					" SUM(packet_loss_burstiness) AS packet_loss_burstiness," +
 					" SUM(jitter)  				  AS jitter" +
 					" FROM " + tblName +
+					" WHERE " + where_clause +
 					" GROUP BY format, probe, source," + time;
 		break;
 	}	

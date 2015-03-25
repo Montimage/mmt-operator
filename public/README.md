@@ -10,7 +10,5 @@ an item consists of 3 elements:
 
 2. a function to load the report.
 
-You can use **showLoadingMessage** when loading the report and hide the message by calling **hideLoadingMessage**
 
-See examples in **mmt_reports.js**
 

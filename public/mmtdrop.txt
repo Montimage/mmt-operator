@@ -1,0 +1,61 @@
+MMTDrop - CONST
+        - Report (general report)
+        - Chart ()
+        - ReportFactory
+          |--- RealtimeReport
+          |--- ProtocolHierarchyReport
+          |--- ApplicationCategoryReport
+          |--- CategoryReport
+          |--- FlowCloudReport
+          |--- .... (for each kind of report)
+        - Database
+        - _Parameters
+        - Tools
+        
+
+usage:
+
+var drop = new MMTDrop("http://localhost:8088/traffic/data");
+var param = {probe:{101, 102}, format: 99, source:{"eth0"}, period: "minute"};
+drop.createAppReport(param, elem);
+
+
+MMTDrop.Report
+
+One report consits of:
+  - a title
+  - one or many filter(s)
+  - one or many chart(s). 
+    There are also a small icon bar representing the kinds of charts 
+    if the charts have different kinds (pie, bar, table, ...)
+
+To create a report, using new MMTDrop.Report(options) 
+with options is an object taking the following form:
+
+  - stats   : object, describes which data to get, eg, {period: [MINUTE / HOUR / DAY / WEEK / MONTH], probe:[], source:[], raw: true/false}
+  - elemid  : string, is id of an HTML element to which to show report
+  - title   : string, is title of report
+  - elements: array,  is a configuration of a list of charts.
+        Each element of the list is an object in form:
+      |-- chart: array, is a configuration of a list of charts
+      |   |-- type    : string, [timeline, xy, scatter, bar, pie, tree, table]
+      |   |-- options : object,
+      |     |-- getDataFct: callback(data, options, args), is called when rendering the chart to get data from @{stats}.
+      |     |                   This function must return an array. Each element of the array is an object taking the following form:
+      |     |                     -- name : string
+      |     |                     -- y    :
+      |     |                     -- data :
+      |     |                     -- total:
+      |     |                     -- type :
+      |     |-- seriesName: string,
+      |     |-- ylabel    :
+      |     |-- colnames  : array,
+      |     |-- click     : callback,
+      |     |-- link      : array,
+      |     |-- dblclick  :
+      | -- pos  : array, eg, [x,y], is the left-top ??? position of the charts
+  - filters : array,  is a configuration of a list of filters.
+        Each element of filters is an object
+      |-- type  : string,  is kind of filter: [appname, appclass, metric, period, probe]
+      |-- label : string,  is label of the filter
+      |-- select: callback(e), is called when the value of the filter has been changed 

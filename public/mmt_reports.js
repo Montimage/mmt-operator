@@ -2,6 +2,16 @@
  * mmt_reports.js
  * created 19 Mar 2015 by HuuNghia (huunghia.nguyen@montimage.com)
  * 
+ * This file defines a list of reports will be display into the page index.html.
+ * Each report is defined by one item of repportsList.
+ * One item consists of:
+ *   - an unique ID
+ *   - a label to display
+ *   - a function drawFct to load the report.
+ *   
+ * When a new item is add to @{repportsList}, it will be add automatically into the page 
+ *   and shown its label. 
+ *   When user clicks on its label, the function drawFct will be called.
  */
 
 /**
@@ -111,8 +121,9 @@ function displayReport(elemID) {
  * @param callbackSuccess(data)			 : callback when getting data successfully
  */
 function getData(param, callbackErr, callbackSuccess){
+	var url = "http://192.168.56.101:8088/traffic/data" 
 	$.ajax({
-		url		: (operatorURL || "/traffic/data"),
+		url		: url,
 		type	: "get",
 		dataType: "json",
 		data	: param,
@@ -128,7 +139,25 @@ var PERIOD = {
 	HOUR	: "hour",
 	DAY		: "day",
 	WEEK	: "week",
-	MONTH	: "month"
+	MONTH	: "month",
+	
+	/**
+	 * This is to compatible with mmt_drop.
+	 * mmt_drop uses a dropbox Period {1 Hour, 1 Day, 1 Week, 1 Month}
+	 */
+	getPeriod : function( txt ){
+		var p = PERIOD.MINUTE;
+		if (txt === '1 Hour')
+			p = PERIOD.HOUR;
+		else if (txt === '1 Day')
+			p = PERIOD.DAY;
+		else if (txt === '1 Week')
+			p = PERIOD.WEEK;
+		else if (txt === '1 Month')
+			p = PERIOD.MONTH;
+		return p;
+	}
+		
 };
 
 
@@ -172,7 +201,7 @@ function initDashReport(elem){
 			});
 	
 	//append real-time data to the report==============================================
-	var socket = new io.connect('/');
+	var socket = new io.connect("http://192.168.56.101:8088/");
     var newDataPoints = [];
     //var metric = $('#treport_ftr_metric').val();
     var metric = "Data Volume";
@@ -306,13 +335,7 @@ function initAppReport(elem, period){
  */
 function redraw(period){
 	
-	var p = PERIOD.HOUR;
-	if (period === '1 Day')
-		p = PERIOD.DAY;
-	else if (period === '1 Week')
-		p = PERIOD.WEEK;
-	else if (period === '1 Month')
-		p = PERIOD.MONTH;
+	var p = PERIOD.getPeriod (period);
 	
 	var elem = $('#appreport_ftr_period').data("elem");
 	showLoadingMessage(elem);
@@ -337,16 +360,26 @@ function _splitFlowData ( data ){
 	return gstats;
 }
 
-function initFlowReport(elem){
-	var param = {period: PERIOD.HOUR, format: 0};
-	getData(param,
-			function (xhr, status, error){
-			},
-			function (data){
-            	var gstats = _splitFlowData (data);
+function initFlowReport(elem, period){
+	var param = {period: PERIOD.DAY, format: 0, probe : [], source:['eth0'], raw: true};
+	
+	var db = new MMTDrop.Database("http://192.168.56.101:8088/traffic/data");
+	var data = db.get(param);
+	data = MMTDrop.Tools.object2Array(data);
+	
+	var gstats = [];
+	for (var i=0; i<data.length; i++)
+		gstats.push( new MMTDrop.FlowStats( data[i] ));
+	
+	//if there exists only data from one probe
+	if (gstats.length == 1)
+		gstats = gstats[0];
+	
+	if (gstats.length == 1)
+		gstats = gstats[0];
             	
             	var report = new MMTDrop.Reports({
-                    'sources': 'zifit',
+                    'sources': 'zifit',	//???
                     'stats': gstats,
                     'elemid': elem,
                     'title': "Flow Metrics Cloud",
@@ -357,6 +390,12 @@ function initFlowReport(elem){
                                 'getDataFct': function (gstats, options) {
                                     var metric = options.flowmetricid;
                                     var retval = gstats.getTimePoints(metric);
+                                    
+                                    //change serial name to ProbeID
+                                    for (var t in gstats.flowitems){
+                                    	retval.name = "Probe " + gstats.flowitems[t].probe;
+                                    	break;
+                                    }
                                     return [retval];
                                 },
                                 'seriesName': "RTP QoS test",
@@ -364,15 +403,20 @@ function initFlowReport(elem){
                         }],
                         'pos': [0, 12]
                     }],
-                    'filter': [{'type': 'flowmetric', 'label': 'Metric', 'select': function(e){}}]
+                    'filter': [{'type': 'period', 'label': 'Period', 'select': function(e){
+                    				showLoadingMessage(elem);
+                    				initFlowReport(elem, PERIOD.getPeriod(e));
+                    				hideLoadingMessage();
+                    			}},
+                               {'type': 'flowmetric', 'label': 'Metric', 'select': function(e){}}]
                 });
             	
             	chartsElemMap["flowview"] = [{
                     "chart": report
                 }];
 
-                report.render()
-			});
+                report.render()	
+	
 }
 
 function initFlowAVGReport(elem){
@@ -413,16 +457,28 @@ function initFlowAVGReport(elem){
 }
 
 function initFlowDensityReport(elem){
-	var param = {period: PERIOD.HOUR, format: 0};
-	getData(param,
-			function (xhr, status, error){
-			},
-			function (data){
-				var gstats = _splitFlowData (data);
+	var param = {period: PERIOD.DAY, format: 0, probe : [], source:['eth0'], raw: true};
+	
+	var db = new MMTDrop.Database("http://192.168.56.101:8088/traffic/data");
+	var data = db.get(param);
+	data = MMTDrop.Tools.object2Array(data);
+	
+	var gstats = [];
+	for (var i=0; i<data.length; i++)
+		gstats.push( new MMTDrop.FlowStats( data[i] ));
+	
+	//if there exists only data from one probe
+	if (gstats.length == 1)
+		gstats = gstats[0];
+	
+	if (gstats.length == 1)
+		gstats = gstats[0];
+	
+				//var gstats = _splitFlowData (data);
 				
             	//create report
             	var report = new MMTDrop.Reports({
-                     'sources': 'zifit',
+                     'sources': 'zifit', //???
                      'stats': gstats,
                      'elemid': elem,
                      'title': "HTTP Flows Metrics Probability Density Distribution",
@@ -433,6 +489,11 @@ function initFlowDensityReport(elem){
                                  'getDataFct': function(gstats, options){
                                 	 var metric = options.flowmetricid;// || MMTDrop.FlowMetricId.DATA_VOLUME;
                                      var retval = gstats.getDistribution(metric);
+                                     //change serial name to ProbeID
+                                     for (var t in gstats.flowitems){
+                                     	retval.name = "Probe " + gstats.flowitems[t].probe;
+                                     	break;
+                                     }
                                      return [retval];
                                  },
                                  'seriesName': "RTP QoS test",
@@ -448,5 +509,4 @@ function initFlowDensityReport(elem){
                 }];
 
                 report.render();
-			});
 }
