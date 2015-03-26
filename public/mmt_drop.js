@@ -476,149 +476,13 @@ MMTDrop = {
 
 		 period : {
 			 MINUTE : "minute",
-			 HOUR	: "hour",
-			 DAY	: "day",
-			 WEEK: "week",
-			 MONTH	: "month",
-		 }
+			 HOUR   : "hour",
+			 DAY    : "day",
+			 WEEK   : "week",
+			 MONTH  : "month",
+		 },
+		 
 };
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
-//class MMTDrop.Parameters
-//get or set parameters from/to local storage
-///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.Parameters = function (){
-	var support = true;
-	//check if browser supports localStorage
-	var storage = window.localStorage;
-	try {
-		storage.setItem("test", "1");
-		storage.removeItem("test");
-	} catch (error) {
-		storage = window.fakeStorage;	//TODO add code for fakeStorage
-	}
-	
-	this.get = function (key){
-		return JSON.parse(storage.getItem(key));
-	};
-
-	this.set = function(key, value){
-		storage.setItem(key, JSON.stringify(value));
-	};
-
-	this.remove = function (key){
-		storage.removeItem(key);
-	}
-}();
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
-//class MMTDrop.Database
-//get data from database via MMT-Operator
-///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.tools = {
-		/**
-		 * Convert an object to an array
-		 */
-		object2Array : function ( obj ){
-			return Object.keys(obj).map(function(key){
-				return obj[key];
-			});
-		},
-
-		/**
-		 * Get the first element of an Object or Array
-		 * @param obj
-		 * @returns
-		 */
-		getFirstElement : function( obj ){
-			for (var key in obj)
-				return obj[key];
-		}
-
-};
-
-
-///////////////////////////////////////////////////////////////////////////////////////////
-//class MMTDrop.Database
-//get data from database via MMT-Operator
-///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.Database = {
-
-		/**
-		 * Get data from MMT-Operator
-		 * @param param = { format: {99, 0, 1, 2, 3},			//default:  99     <br/>
-	   			probe : number								//			any    <br/>
-	   			source: text								//			any    <br/>
-	   			period: {minute, hour, day, week, month}	//			minute <br/>
-	   			raw	  : {true, false}						//			true   <br/>
-		 * @param callback is an object containing callback functions.
-		 *  It has form {error: callback1, success: callback2}: 
-		 *  	callback1 and callback2 are called when getting data fail or success, respectively.<br/>
-		 *  They take the form: @{callback1(xhr, status, error)} and @{callback2(data)} 
-		 *  @return null if the parameter @{callback} presents. 
-		 *  Otherwise, the function is call synchronously and returns data after getting them from database.
-		 */
-		get : function(param, callback){
-
-			//if operatorURL is not defined, we take local
-			var url = (operatorURL || "/traffic/data");
-
-			//asyn
-			if (callback){
-				$.ajax({
-					url		: url,
-					type	: "GET",
-					dataType: "json",
-					data	: param,
-					cache	: false,
-
-					error 	: callback.error, //(xhr, status, error),
-					success	: callback.sucess, // (data)
-				});
-				return;
-			}
-
-			$.ajax({
-				url		: url,
-				type	: "GET",
-				dataType: "json",
-				data	: param,
-				cache	: false,
-				async	: false,
-				error 	: function(xhr, status, error){
-					return null;
-				},
-				success	: function(data){
-					return data;
-				}
-			});
-		},
-
-		/**
-		 * Split data to n arrays arr1, arr2, ..., arrn. Each array contains data elements having the same "probe"
-		 * @param data: is an array of messages
-		 * @return an Object whose elements key-value are <br/>
-		 * 	- key  : is ID of probe<br/>
-		 *  - value: is an array of messages captured by this probe
-		 */
-		splitDataByProbe : function( data ){
-			var obj = {};
-			for (var i=0; i<data.length; i++){
-				var msg = data[i];
-				var probeID = msg[1];  //msg[0] = format, msg[2] = source, msg[3] = time
-				if (obj[probeID] == undefined)
-					//create a new array for this probeID
-					obj[probeID] = [];
-
-				obj[probeID].push(msg);
-			}
-			return obj;
-		}
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -3358,40 +3222,59 @@ MMTDrop.RtpFlowStatsHistoryItem.constructor = MMTDrop.RtpFlowStatsHistoryItem;
 //class MMTDrop.Parameters
 //get or set parameters from/to local storage
 ///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.Parameters = function() {
-	var support = true;
-	// check if browser supports localStorage
-	var storage = window.localStorage;
+MMTDrop.parameters = function (){
+	var _prefix = "mmtdrop.";	//TODO each page has a separated parameter 
+	var _storage = window.localStorage;
+
+	//	check if browser supports localStorage
 	try {
-		storage.setItem("test", "1");
-		storage.removeItem("test");
+		_storage.setItem("test", "1");
+		_storage.removeItem("test");
 	} catch (error) {
-		storage = window.fakeStorage; // TODO add code for fakeStorage
+		//		parameters will be stocked into global variable @{fakeStorage}
+		//		==> this variable will remove when the page reloaded
+		//		TODO set code for permanent storage
+		window.fakeStorage = {};
+		_storage = window.fakeStorage;
 	}
 
-	this.get = function(key) {
-		return JSON.parse(storage.getItem(key));
+	this.get = function (key){
+		return JSON.parse(_storage.getItem(_prefix + key));
 	};
 
-	this.set = function(key, value) {
-		storage.setItem(key, JSON.stringify(value));
+	this.set = function(key, value){
+		_storage.setItem(_prefix + key, JSON.stringify(value));
 	};
 
-	this.remove = function(key) {
-		storage.removeItem(key);
+	this.remove = function (key){
+		_storage.removeItem(_prefix + key);
 	}
-}
+
+	return {
+		get   : this.get,
+		set   : this.set,
+		remove: this.remove
+	};
+}();
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //class MMTDrop.Database
 //get data from database via MMT-Operator
 ///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.Database = function(param, dataProcessingCallback) {
+
+/**
+ * A class representing data getting from MMT-Operator
+ * @param param: an object, taking the form : {period: PERIOD, format: FORMAT, probe: [PROBE], source: [SOURCE], raw: BOOL}
+ *  <br/> Default value: {period: minute, format: 99, probe: [], source:[], raw: false} 
+ * @param dataProcessingFn: a function, taking the form : function(data) 
+ */
+MMTDrop.Database = function(param, dataProcessingFn) {
 	//this an abstract class
-	if (this.constructor === MMTDrop.Database){
-		throw new Error("Cannot instantiate abstract class MMTDrop.Database\n" +
-				"Try with MMTDrop.Database.Traffic/Flow/Raw or create a new one!");
-	}
+	//if (this.constructor === MMTDrop.Database){
+	//	throw new Error("Cannot instantiate abstract class MMTDrop.Database\n" +
+	//			"Try with MMTDrop.Database.Traffic/Flow/Raw or create a new one!");
+	//}
 	
 	var _serverURL = MMTDrop.config.probeURL || "http://localhost:8088";
 	if (_serverURL.substring(_serverURL.length - 1, 1) === "/")
@@ -3405,6 +3288,17 @@ MMTDrop.Database = function(param, dataProcessingCallback) {
 	
 	var _this = this;		  //pointer using in private methods
 	
+	var _onchange = null;	 //a callback, it is fired when changing _data
+	
+	/**
+	 * This is fired when there exists some modification in data
+	 * @param callback is a function taking the form: function(db) with @{db} is the current database 
+	 */
+	this.onchange = function (callback){
+		if (typeof(callback) == "function")
+			_onchange = callback;
+	}
+	
 	/**
 	 * data property
 	 */
@@ -3416,6 +3310,9 @@ MMTDrop.Database = function(param, dataProcessingCallback) {
 		},
 		set: function(obj){
 			_data = obj;
+			
+			if (_onchange)
+				_onchange(_this);
 		}
 	});
 	
@@ -3429,8 +3326,8 @@ MMTDrop.Database = function(param, dataProcessingCallback) {
 			_param = _param.mmt_merge(param);
 		
 		_originalData = _get (_param);
-		if (dataProcessingCallback){
-			_originalData = dataProcessingCallback(_originalData);
+		if (typeof(dataProcessingFn) == "function"){
+			_originalData = dataProcessingFn(_originalData);
 		}
 		this.reset();
 	}
@@ -3439,8 +3336,12 @@ MMTDrop.Database = function(param, dataProcessingCallback) {
 	 * This resets any changes of data.
 	 */
 	this.reset = function(){
-		if (_originalData)
-			_data = MMTDrop.Tools.clone_originalData.mmt_cloneData();
+		if (_originalData){
+			_data = MMTDrop.Tools.cloneData(_originalData);
+			
+			if (_onchange)
+				_onchange(_this);
+		}
 	}
 	
 	
@@ -3533,125 +3434,901 @@ MMTDrop.Database = function(param, dataProcessingCallback) {
 		return data;
 	};
 }
-
-MMTDrop.Database.Raw = function (param){
-	/**
-	 * Donot need any processing.
-	 */
-	function _processData( data ){
-		return data;
-	}
-	
-	//inherite from MMTDrop.Database
-	MMTDrop.Database.call(this, param, _processData);
-}
-
 /**
  * Database for statistic of traffic (format = 99)
  */
-MMTDrop.Database.Traffic = function(param){
-	//overwrite format to 99
-	param.format = 99;
+MMTDrop.databaseFactory = {
+		createStatDB : function(param){
+			//overwrite format to 99
+			param.format = 99;
+	
+			return new MMTDrop.Database(param, function (data){
+				//how data is processed for stat
+				return data;
+			});
+		},
+
+		/**
+		 * Database for statistic of flow (format = 0)
+		 */
+		createFlowDB : function (param){
+			//overwrite format to 0
+			param.format = 0;
+			
+			
+			return new MMTDrop.Database(param, function( data ){
+				//how data is process for flow
+				return data;
+			});
+		},
+		
+
+		/**
+		 * Get data from MMT-Operator in realtime.
+		 * @param param
+		 * @param callback is called each time data beeing available
+		 */
+		createRealtimeDB : function(param, callback){
+			//TODO
+		}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+//end MMTDrop.Database
+///////////////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+//MMTDrop.Filter
+///////////////////////////////////////////////////////////////////////////////////////////
+/**
+ * @param = {id: unique, label: string, options : [{value: string, text: string}, {}], onchange: callback}
+ * @filterFn = callback(db)
+ */
+MMTDrop.Filter = function (param, filterFn){
 	
 	/**
-	 * How data is processed for traffic stat.
+	 * create and show an HTML element
+	 * @param elemID : id of an HTML element parent containing the filter
 	 */
-	function _processData( data ){
-		return data;
+	this.renderTo = function (elemID){
+		//remove older if exist
+		$("#" + param.id + "_container").remove();
+		
+        var options = param.options;
+        var fcontainer = $('<div>',  {class: 'col-xs-6 col-sm-4 col-md-3 col-lg-2  pull-right', id: param.id + "_container"});
+		var fdiv =       $('<div>',  {class: 'input-group pull-right'});
+		var span =       $('<span>', {class: 'input-group-addon', text: param.label});
+		
+        var filter =     $('<select>',{class: "form-control",     id  : param.id});
+        
+        //create list of options
+        for (var i in options){
+            var opt = $('<option>', {
+                text : options[i].text,
+                value: options[i].value
+            });
+            opt.appendTo(filter);
+        }
+        span.appendTo(fdiv);
+		filter.appendTo(fdiv);
+		fdiv.appendTo(fcontainer);
+		fcontainer.appendTo($('#' + elemID));
+		
+        //select the option that was selected before
+        var sel = MMTDrop.parameters.get(param.id);
+        if (sel)
+        	filter.val(sel);
+        
+        //handle when the filter changing
+        filter.change({text:"test"}, function(e){
+        	if (param.onchange && (typeof (param.onchange) == "functions"))
+        		param.onchange(e.data);
+            
+            //store the current index
+            var val = this.value; 	//value of the selected option of the filter
+            MMTDrop.parameters.set(param.id, val);
+        });
 	}
 	
-	//inherite from MMTDrop.Database
-	MMTDrop.Database.call(this, param, _processData);
+	this.filter = function (database){
+		if (typeof(filterFn) == "function")
+			return filterFn(database);
+		
+		throw new Error ("You need to implement how it filters data");
+	}
 }
 
-/**
- * Database for statistic of flow (format = 0)
- */
-MMTDrop.Database.Flow = function (param){
-	//overwrite format to 0
-	param.format = 0;
+
+MMTDrop.filterFactory = {
+	createFlowMetricFilter : function(){
+		var filter =  new MMTDrop.Filter({
+			id      : "flow_metric_filter_" + MMTDrop.tools.getUniqueNumber(),
+			label   : "Metric",
+			options : [{value:1, text:"Data volume"},    {value:2, text:"Packet count"},
+			           {value:3, text:"Payload volume"}, {value:4, text:"Active flow"},
+			           {value:5, text:"UL Data volume"}, {value:6, text:"DL Data volume"},
+			           {value:7, text:"UL Packet count"},{value:8, text:"DL Packet count"},
+			           {value:9, text:"Flow duration"}],
+			onchange: function (e){console.log(e)}
+		}, function (db){
+			return db;
+		});
+		return filter;
+	},
+	
+	createMetricFilter : function(elemID){
+		var filter =  new MMTDrop.Filter({
+			id      : "metric_filter_" + MMTDrop.tools.getUniqueNumber(),
+			label   : "Metric",
+			options : [{value:1, text:"Data volume"},    {value:2, text:"Packet count"},
+			          {value:3,  text:"Payload volume"}, {value:4, text:"Active flow"}],
+			onchange: function (e){console.log(e)}
+		}, function (data){
+			return data;
+		});
+		filter.renderTo (elemID);
+		return filter;
+	},
+	
+	createPeriodFilter : function(elemID){
+		//create a list of options from predefined MMTDrop.period
+		var options = [];
+		for (var k in MMTDrop.period){
+			var key = MMTDrop.period[k];
+			options.push({value: key, text: MMTDrop.tools.capitalizeFirstLetter(key)})
+		}
+		var filter =  new MMTDrop.Filter({
+			id      : "period_filter_" + MMTDrop.tools.getUniqueNumber(),
+			label   : "Period",
+			options : options,
+			onchange: function (e){console.log(e)}
+		}, function (data){
+			return data;
+		});
+		filter.renderTo (elemID);
+		return filter;
+	},
+	
+	createProbeFilter : function(elemID){
+		//create a list of options from predefined MMTDrop.period
+		var options = [{value:0, text: "All"}];
+		for (var k in MMTDrop.period){
+			var key = MMTDrop.period[k];
+			options.push({value: key, text: MMTDrop.tools.capitalizeFirstLetter(key)})
+		}
+		var filter =  new MMTDrop.Filter({
+			id      : "probe_filter_" + MMTDrop.tools.getUniqueNumber(),
+			label   : "Probe",
+			options : options,
+			onchange: function (e){console.log(e)}
+		}, function (data){
+			return data;
+		});
+		filter.renderTo (elemID);
+		return filter;
+	},
+}
+///////////////////////////////////////////////////////////////////////////////////////////
+//end MMTDrop.Filter
+///////////////////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+//MMTDrop.Chart
+///////////////////////////////////////////////////////////////////////////////////////////
+MMTDrop.Chart = function(options) {
+	var _options = options;
+	var _type = options.type;
+	this.appstats = options.gstats;
+	var _elemid = options.elemid;
+	var _colnames = options.colnames;
+	var _title = options.title;
+	this.getdata = options.getDataFct;
+	this.getdatargs = null;
+	var _multiselect = false;
+	if(options.multiSelect)  {
+		_multiselect = options.multiSelect;
+	}
+	if(options.getDataArgs) {
+		this.getdatargs = options.getDataArgs;
+	}
+	var _ylabel = options.ylabel;
+	var _seriesName = options.seriesName;
+	var _report = null;
+	if(options.report) {
+		_report = options.report;
+	}
+
+	_click = null;
+	_dblclick = null;
+	_link = null;
+
+	if (options.click) {
+		_click = options.click;
+	}
+	if (options.dblclick) {
+		_dblclick = options.dblclick;
+	}
+	if (options.link) {
+		_link = options.link;
+	}
+	this.filter = {};
+	var _isInit = false;
+
+	var _chart = null;	//contains HightChart
+	var _data  = null;
+	
+	var _this = this;
+	var _getData = function () {
+		if( _this.appstats instanceof Array ) {
+			var retval = [];
+			for( var i in _this.appstats ) {
+				var res = _this.getdata(_this.appstats[i], _this.filter, _this.getdatargs);
+				for( var j in res ) retval.push( res[j] );
+			}
+			_data = retval;
+			return retval;
+		} else {
+			_data = _this.getdata(_this.appstats, _this.filter, _this.getdatargs);
+			return _data;
+		}
+	};
+	
+	isTimelineChart = function ( ) {
+		return ( _type === "timeline" || _type === "scatter" );
+	};
+
+
+	/**
+	 * Renders tree table chart
+	 */
+	_render_tree = function(filter) {
+
+		var treeWrapper = $('<div>', {
+			'class' : 'report-element-tree'                                         
+		});         
+
+		var treetable = $('<table>', {
+			'id' : _elemid + '_treetable',
+			'cellpadding' : 0,
+			'cellspacing' : 0,
+			'border' : 0
+		});
+
+		/*
+		var caption = $('<caption>');
+		var expand = $('<a>', {
+			'href' : '#',
+			'class' : 'btn',
+			'onclick' : 'jQuery("#' + _elemid + '_treetable").treetable("expandAll"); return false;',
+			'text' : 'Expand All'
+		});
+		var collapse = $('<a>', {
+			'href' : '#',
+			'class' : 'btn',
+			'onclick' : 'jQuery("#' + _elemid + '_treetable").treetable("collapseAll"); return false;',
+			'text' : 'Collapse All'
+		});
+		expand.appendTo(caption);
+		collapse.appendTo(caption);
+		 */
+
+		var thead = $('<thead>');
+		var tr = $('<tr>');
+		for ( i = 0; i < _colnames.length; i++) {
+			var th = $('<th>', {
+				'text' : _colnames[i]
+			});
+			th.appendTo(tr);
+		}
+
+		tr.appendTo(thead);
+		var tbody = $('<tbody>');
+		var arrData = _getData();
+		for (i in arrData) {
+			if (arrData[i].length > 3) {
+				var row_tr;
+				if (arrData[i][0] == arrData[i][1]) {
+					row_tr = $('<tr>', {
+						'data-tt-id' : arrData[i][0].replace(/\./g,"-")
+					});
+				} else {
+					row_tr = $('<tr>', {
+						'data-tt-id' : arrData[i][0].replace(/\./g,"-"),
+						'data-tt-parent-id' : arrData[i][1].replace(/\./g,"-")
+					});
+				}
+				if(_link == null) {
+					var row_name = $('<td>', {
+						'text' : arrData[i][2]
+					});
+				}else {
+					var row_name = $('<td>');
+					var row_name_link = $('<a>', {
+						'text' : arrData[i][2],
+						'href' : _link(arrData[i])
+					});
+					row_name_link.appendTo(row_name);
+				}
+				row_name.appendTo(row_tr);
+
+				for ( j = 3; j < Math.min(arrData[i].length, _colnames.length + 2); j++) {
+					var cell = $('<td>', {
+						'text' : arrData[i][j]
+					});
+					cell.appendTo(row_tr);
+				}
+				row_tr.appendTo(tbody);
+			}
+		}
+
+		thead.appendTo(treetable);
+		tbody.appendTo(treetable);
+		//caption.appendTo(treetable);
+		//append tretable to wrapper
+		treetable.appendTo(treeWrapper);
+		treeWrapper.appendTo($('#' + _elemid));
+
+		$("#" + _elemid + "_treetable").treetable({
+			expandable : true
+		});
+		$("#" + _elemid + "_treetable").treetable("expandAll");
+
+		if(_multiselect) {
+			$("#" + _elemid + "_treetable tbody tr").click({
+				chart : this
+			}, function(e) {
+				// Highlight selected row
+				if ( $(this).hasClass('selected') ) {
+					$(this).removeClass('selected');
+				}else {
+					$(this).addClass('selected');
+				}
+				var selection = [];
+				$(".selected").each(function(){selection.push(String($(this).data("ttId")).replace(/\-/g,"."));});
+
+				if (e.data.chart.click) {
+					ev = {data: {chart: e.data.chart, path: selection}};
+					e.data.chart.click(ev);
+				}
+			});
+		}else {
+			$("#" + _elemid + "_treetable tbody tr").click({
+				chart : this
+			}, function(e) {
+				// Highlight selected row
+				$(".selected").not(this).removeClass("selected");
+				$(this).addClass("selected");
+				if (e.data.chart.click) {
+					ev = {data: {chart: e.data.chart, path: String($(this).data("ttId")).replace(/\-/g,".")}};
+					e.data.chart.click(ev);
+				}
+			});
+		}
+
+		$("#" + _elemid + "_treetable tbody tr").dblclick({
+			chart : this
+		}, function(e) {
+			if (e.data.chart.dblclick) {
+				ev = {data: {chart: e.data.chart, path: String($(this).data("ttId")).replace(/\-/g,".")}};
+				e.data.chart.dblclick(ev);
+			}
+		});
+		/*check if no path is selected, then to click in the first 'tr'
+           of the tree element
+		 */
+		apppaths = filter.apppaths;
+		//Sets the first tr as the default view
+		if(typeof apppaths  === 'undefined'){                   
+			$("#" + _elemid + "_treetable tbody tr:first").addClass("selected");
+			selection = [];
+			$("#" + _elemid + "_treetable tbody tr:first").each(function(){selection.push(String($(this).data("ttId")).replace(/\-/g,"."));});
+			if(_report) _report.filter.apppaths = selection;
+		}else {
+			for(p in apppaths) {
+				$("#" + _elemid + "_treetable tbody tr").each(function(){if(String($(this).data("ttId")).replace(/\-/g,".") == apppaths[p]) $(this).addClass("selected");});
+			}
+		}
+
+	};
+
+	/**
+	 * Renders data table chart
+	 */
+	_render_table = function() {
+		var arrData = _getData();
+		var cnames = [];
+		for ( i = 0; i < _colnames.length; i++) {
+			if (i == 0) {
+				cnames.push({
+					"sTitle" : _colnames[i]
+				});
+			} else {
+				cnames.push({
+					"sTitle" : _colnames[i],
+					//"fnRender" : function(obj) {
+					//	var sReturn = obj.aData[obj.iDataColumn];
+					//	var returnButton = "<div class='progress'><div class='bar' style='width: 60%;'></div></div>";
+					//	return returnButton;
+					//}
+				});
+			}
+		}
+
+		$('#' + _elemid).html('<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="' + _elemid + '_datatable"></table>');
+		_oTable = $('#' + _elemid + '_datatable').dataTable({
+			//"sDom" : "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+			//"sDom": 'T<"clear">lfrtip',
+			"sDom": "<'row'<'span6'T><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+			//"sPaginationType" : "bootstrap",
+			"oLanguage" : {
+				"sLengthMenu" : "_MENU_ records per page"
+			},
+			"aaData" : arrData,
+			"aoColumns" : cnames,
+			"oTableTools": {
+				"aButtons": [
+				             //"copy",
+				             "print",
+				             {
+				            	 "sExtends":    "collection",
+				            	 "sButtonText": "Save",
+				            	 "aButtons":    [ "csv", "pdf" ]
+				             }
+				             ]
+			}
+		});
+
+		$('#' + _elemid + ' tbody tr').dblclick({
+			chart : this,
+			eid : $('#' + _elemid + '_datatable').dataTable()
+		}, function(e) {
+			if (e.data.chart.dblclick) {
+				e.data.chart.dblclick($('td:eq(0)', this).html());
+			}
+		});
+		$('#' + _elemid + ' tbody tr').click({
+			chart : this,
+			eid : $('#' + _elemid + '_datatable').dataTable()
+		}, function(e) {
+			if ($(this).hasClass('row_selected')) {
+				$(this).removeClass('row_selected');
+			} else {
+				e.data.eid.$('tr.row_selected').removeClass('row_selected');
+				$(this).addClass('row_selected');
+			}
+			if (e.data.chart.click) {
+				e.data.chart.click($('td:eq(0)', this).html());
+			}
+		});
+	};
+
+	/**
+	 * Renders a bar chart 
+	 */
+	_render_bar = function() {
+		var arrData = _getData();
+		if(arrData.series) {
+			series = arrData.series;
+		}else {
+			series = arrData;
+		}
+		if(arrData.categories) {
+			_colnames = arrData.categories;
+		}
+		_chart = new Highcharts.Chart({
+			chart : {
+				renderTo : _elemid,
+				borderColor: '#ccc',
+				borderWidth: 1,
+				defaultSeriesType : 'column',
+				zoomType : 'xy',
+				spacingTop:30,
+				spacingRight:30 
+			},
+			navigation:{
+				buttonOptions: {
+					verticalAlign: 'top',
+					y: -25,
+					x: 20
+				}
+			},
+			title : {
+				text : _title
+			},
+			credits: {
+				text: 'Montimage',
+				href: 'http://www.montimage.com',
+				position: {
+					align: 'right',
+					x: -40,
+					verticalAlign: 'top',
+					y: 20                              
+				}    
+			},
+			legend: {
+				enabled: false
+			},            
+			xAxis : {
+				categories : _colnames
+			},
+			yAxis : {
+				title : {
+					text : MMTDrop.getYLabel(_filter)
+				}
+			},
+			series : series
+		});
+	};
+
+	/**
+	 * Renders a pie chart 
+	 */
+	_render_pie = function() {
+		_chart = new Highcharts.Chart({
+			chart : {
+				renderTo : _elemid,
+				borderColor: '#ccc',
+				borderWidth: 1,
+				type : 'pie',
+				spacingTop:30,
+				spacingRight:30 
+			},
+			navigation:{
+				buttonOptions: {
+					verticalAlign: 'top',
+					y: -25,
+					x: 20
+				}
+			},
+			credits: {
+				text: 'Montimage',
+				href: 'http://www.montimage.com',
+				position: {
+					align: 'right',
+					x: -40,
+					verticalAlign: 'top',
+					y: 20                              
+				}    
+			},
+			tooltip : {
+				formatter : function() {
+					return '<b>' + _point.name + '</b>: ' + _y;
+				}
+			},
+			plotOptions : {
+				pie : {
+					//startAngle : 270,
+					allowPointSelect : true,
+					cursor : 'pointer',
+					dataLabels : {
+						enabled : true,
+						formatter : function() {
+							return '<b>' + _point.name + '</b>: ' + Highcharts.numberFormat(_percentage, 2) + ' %';
+						}
+					},
+					showInLegend : true,
+					events : {
+						click : function(event) {
+						}
+					},
+					showInLegend : true
+				}
+			},
+			title : {
+				text : _title
+			},
+			series : [{
+				type : 'pie',
+				name : _seriesName,
+				data : _getData()
+			}]
+		});
+	};
+
+	/**
+	 * Renders a timeline chart 
+	 */
+	_render_timeline = function(type) {
+		var opt = {
+			chart : {
+				renderTo : options.elemid,
+				borderColor: '#ccc',
+				borderWidth: 1,
+				type : type || 'spline',
+				zoomType : 'xy',
+				spacingTop  :30,
+				spacingRight:30                                     
+			},
+			navigation:{
+				buttonOptions: {
+					verticalAlign: 'top',
+					y: -25,
+					x: 20
+				}
+			},
+			credits: {
+				text: 'Montimage',
+				href: 'http://www.montimage.com',
+				position: {
+					align: 'right',
+					x: -40,
+					verticalAlign: 'top',
+					y: 20                              
+				}       
+			},
+			xAxis : {
+				maxZoom: isTimelineChart() ? 15000 : 1, // 15seconds
+						gridLineWidth: 1,
+						type : isTimelineChart() ? 'datetime' : '',
+			},
+			yAxis : {
+				title : {
+					text : MMTDrop.getYLabel(_this.filter)
+				},
+				min : 0
+			},
+			title : {
+				text : _title?_title:""
+			},
+			tooltip: {
+				shared: true
+			},
+			plotOptions: {
+				scatter: {
+					marker: {
+						radius: 3,
+						states: {
+							hover: {
+								enabled: true,
+								lineColor: 'rgb(100,100,100)'
+							}
+						}
+					},
+					states: {
+						hover: {
+							marker: {
+								enabled: false
+							}
+						}
+					},
+					tooltip: {
+						headerFormat: '<b>{series.name}</b><br>',
+						pointFormat: '{point.y}'
+					}
+				},
+				areaspline: {
+					lineWidth: 2,
+					marker: {
+						enabled: false
+					},
+					shadow: false,
+					states: {
+						hover: {
+							lineWidth: 2
+						}
+					},
+					stacking: 'normal',
+				},
+				area: {
+					lineWidth: 2,
+					marker: {
+						enabled: false
+					},
+					shadow: false,
+					states: {
+						hover: {
+							lineWidth: 2
+						}
+					},
+					stacking: 'normal',
+				},
+				spline: {
+					lineWidth: 2,
+					marker: {
+						enabled: false
+					},
+					shadow: false,
+					states: {
+						hover: {
+							lineWidth: 2 
+						}
+					},
+				},
+				line: {
+					lineWidth: 2,
+					marker: {
+						enabled: false
+					},
+					shadow: false,
+					states: {
+						hover: {
+							lineWidth: 2
+						}
+					},                    
+				},
+			},
+			series : _getData(),
+		};
+		_chart = new Highcharts.Chart(opt);
+	};
 	
 	/**
-	 * How data is processed for flow stat.
+	 * Renders the chart 
 	 */
-	function _processData( data ){
-		return data;
-	}
+	this.render = function(filter) {
+		//try{
+		this.setFilter(filter);
+
+		if (_isInit)
+			return;
+		_setInit();
+
+		if (_type == "bar") {
+			_render_bar();
+		} else if (_type == "pie") {
+			_render_pie();
+		} else if (_type == "tree") {
+			_render_tree();
+		} else if (_type == "table") {
+			_render_table();
+		} else if (_type == "timeline") {
+			_render_timeline(); //default rendering to spline
+		} else if (_type == "scatter") {
+			_render_timeline("scatter");
+		} else if (_type == "xy") {
+			_render_timeline();
+		}
+		//}catch (err){
+		//	console.log("Error : " + err + ", line: " + err.lineNumber + ", file: " + err.fileName);
+		//}
+	};
 	
-	//inherite from MMTDrop.Database
-	MMTDrop.Database.call(this, param, _processData);
-}
+	/**
+	 *Sets the chart to initialized state 
+	 */
+	_setInit = function() {
+		_isInit = true;
+	};
+
+	/**
+	 * Sets the chart to non initialized state
+	 */
+	_resetInit = function() {
+		_isInit = false;
+	};
+
+	
+	/**
+	 * Sets a filter options 
+	 */
+	this.setFilter = function(filter) {
+		if (filter) {
+			_filter = _this.filter;
+			for(f in filter) {
+				if ((f === "appname") && (_filter.appname != filter.appname)) {
+					_filter.appname = filter.appname;
+					_filter.appid = MMTDrop.ProtocolsNameID[filter.appname];
+					_resetInit();
+				} else if ((f === "metric") && (_filter.metric != filter.metric)) {
+					_filter.metric = filter.metric;
+					_filter.metricid = MMTDrop.MetricName2ID[filter.metric];
+					_resetInit();
+				} else if ((f === "flowmetric") && (_filter.flowmetric != filter.flowmetric)) {
+					_filter.flowmetric = filter.flowmetric;
+					_filter.flowmetricid = MMTDrop.FlowMetricName2ID[filter.flowmetric];
+					_resetInit();
+				} else if ((f === "appclass") && (_filter.appclass != filter.appclass)) {
+					_filter.appclass = filter.appclass;
+					_filter.appclassid = MMTDrop.CategoriesNamesMap[filter.appclass];
+					_resetInit();
+				} else if(!(f === "appclassid" || f === "metricid" || f === "flowmetricid" || f === "appid") &&  _filter[f] != filter[f]) {
+					_filter[f] = filter[f];
+					_resetInit();
+				}
+			}
+		}
+	};
+
+	/**
+	 * Destroys the chart 
+	 */
+	this.destroy = function() {
+		_isInit = false;
+		if (_type == "tree") {
+		} else if (_type == "table") {
+			$('#' + _elemid + '_datatable').dataTable().fnDestroy();
+		} else if (_type == "bar" || _type == "pie" ||
+				_type == "timeline" || _type == "scatter" || _type == "xy") {
+			if (_chart){
+				_chart.destroy();
+				_chart = null;
+			}
+		}
+		$('#' + _elemid).empty();
+	};
+};
 
 
-/**
- * Get data from MMT-Operator in realtime.
- * @param param
- * @param callback is called each time data beeing available
- */
-MMTDrop.Database.Realtime = function(param, callback){
-	
-}
+///////////////////////////////////////////////////////////////////////////////////////////
+//End MMTDrop.Chart
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 //Add some methods to general object 
-//get data from database via MMT-Operator
 //
 //Do not add this prototype to Object.prototype. They may be called incidentally.
 // These methodes can be fired automatically in some object (e.g., by: for var k in obj)
 // e.g. $.ajax will try to fire all all methods (before submitting and after getting data to/from server)
 ///////////////////////////////////////////////////////////////////////////////////////////
-MMTDrop.Tools = {
+MMTDrop.tools = function() {
 		/**
 		 * Convert an object to an array
 		 */
-		object2Array : function ( obj ){
+		this.object2Array = function ( obj ){
 			return Object.keys(obj).map(function(key){
 				return obj[key];
 			});
-		},
+		};
 
 		/**
 		 * Get the first element of an Object or Array
 		 * @param obj
 		 * @returns
 		 */
-		getFirstElement : function( obj ){
+		this.getFirstElement = function( obj ){
 			for (var key in obj)
 				return obj[key];
-		},
-		
-		
+		};
+
+
 		/**
 		 * Overwrites obj1's values with obj2's and adds obj2's if non existent in obj1
 		 * @param obj1
 		 * @param obj2
 		 * @returns obj3 a new object based on obj1 and obj2
 		 */
-		mergeObject : function (obj1,obj2){
-		    var obj3 = {};
-		    for (var attrname in obj1) { obj3[attrname] = obj1[attrname]; }
-		    for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
-		    return obj3;
-		},
-		
+		this.mergeObject = function (obj1,obj2){
+			var obj3 = {};
+			for (var attrname in obj1) { obj3[attrname] = obj1[attrname]; }
+			for (var attrname in obj2) { obj3[attrname] = obj2[attrname]; }
+			return obj3;
+		};
+
 		/**
 		 * Clone a data object
 		 * @returns a new object having the same data<br/>
 		 * This cannot clone object's functions
 		 */
-		cloneData : function (obj){
+		this.cloneData = function (obj){
 			var seen = [];
-		    //return JSON.parse( JSON.stringify (this));
-		    var obj = JSON.stringify(this, function(key, val) {
-		        if (typeof val == "object") {
-		            if (seen.indexOf(val) >= 0)
-		                return
-		                seen.push(val)
-		        }
-		        return val
-		    })
+			//return JSON.parse( JSON.stringify (this));
+			var obj = JSON.stringify(this, function(key, val) {
+				if (typeof val == "object") {
+					if (seen.indexOf(val) >= 0)
+						return
+						seen.push(val)
+				}
+				return val
+			})
 
-		    return JSON.parse(obj);
+			return JSON.parse(obj);
+		};
+		
+		/***
+		 * Get an unique number.
+		 * This counter will be reseted when the page loaded. It starts from 1.
+		 */
+		var _uniqueNumber = 0;
+		this.getUniqueNumber = function(){
+			return (++ _uniqueNumber);
 		}
-};
+		
+		
+		this.capitalizeFirstLetter = function(str) {
+		    return str.charAt(0).toUpperCase() + str.slice(1);
+		}
+		
+		return this;
+}();
