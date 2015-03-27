@@ -191,13 +191,13 @@ app.get('/traffic/data', function(request, response, next) {
 	if (request.query.probe instanceof Array){
 		request.query.probe.forEach( function (e){
 			options.probe.push (parseInt(e));
-		})
+		});
 	}
 	
 	if (request.query.source instanceof Array){
 		request.query.source.forEach( function (e){
 			options.source.push ("'" + e  + "'") ; //TODO avoid sql injection here
-		})
+		});
 	}
 	
 	console.log(options);
@@ -207,6 +207,8 @@ app.get('/traffic/data', function(request, response, next) {
 		if (err) {
 			return next(err);
 		}
+		//this allow a request coming from a different domain
+		response.setHeader("Access-Control-Allow-Origin", "*");
 		response.setHeader("Content-Type", "application/json");
 		response.send(data);
 	});
