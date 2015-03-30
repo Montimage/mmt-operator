@@ -12,7 +12,9 @@ MMTDrop = {
 		 *  The version of the MMTDrop library.
 		 */
 		VERSION : "1.0.0",
+}
 
+MMTDrop.const ={
 		/**
 		 * Constants: MMTDrop defined csv format types
 		 */
@@ -3367,46 +3369,11 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 		_serverURL += "/traffic/data";
 	
 	var _param = param || {};
-	var _data = null;		  //it is data getting from MMT-Operator and it can    be modified during using of this object
-	var _originalData = null; //it is data getting from MMT-Operator and it cannot be modified
+	var _data = [];		  //it is data getting from MMT-Operator and it can    be modified during using of this object
+	var _originalData = []; //it is data getting from MMT-Operator and it cannot be modified
+	var _isLoaded = false;
 	
 	var _this = this;		  //pointer using in private methods
-	
-	var _onchanges = [];	     //a set of callback, they are fired when changing _data
-	var _onreloads = [];		 //a set of callback, they are fired when reloading data
-	
-	
-	function _fireChange(){
-		console.log("database changed");
-		
-		for (var i in _onchanges)
-			_onchanges[i](_this);
-	}
-	
-	function _fireLoad(){
-		console.log("database loaded");
-		
-		for (var i in _onreloads)
-			_onreloads[i](_this);
-	}
-	
-	/**
-	 * This is fired after some modification in data happening
-	 * @param callback is a function taking the form: function(db) with @{db} is the current database 
-	 */
-	this.onchange = function (callback){
-		if (typeof(callback) == "function")
-			_onchanges.push(callback);
-	}
-	
-	/**
-	 * This is fired after database reloading
-	 * @param callback is a function taking the form: function(db) with @{db} is the current database
-	 */
-	this.onload = function (callback){
-		if (typeof(callback) == "function")
-			_onreloads.push(callback);
-	}
 	
 	
 	/**
@@ -3414,17 +3381,24 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 	 */
 	Object.defineProperty(this, "data", {
 		get: function(){
-			if (_data == null)
+			if (! _isLoaded)
 				_this.reload();
 			return _data;
 		},
 		set: function(obj){
 			_data = obj;
-			
-			//fire all registed callbacks
-			_fireChange();
 		}
 	});
+	
+	
+	/**
+	 * Get the original data getting from MMT-Operator
+	 */
+	this.getOriginalData = function(){
+		if (! _isLoaded)
+			_this.reload();
+		return MMTDrop.tools.cloneData(_originalData);
+	}
 	
 	/**
 	 * Reload data from MMT-Operator.
@@ -3432,6 +3406,7 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 	 * @param param
 	 */
 	this.reload = function(new_param){
+		_isLoaded = true;
 		
 		if (new_param)
 			_param = MMTDrop.tools.mergeObjects(_param, new_param);
@@ -3442,10 +3417,7 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 		if (typeof(dataProcessingFn) == "function"){
 			_originalData = dataProcessingFn(_originalData);
 		}
-		
 		this.reset();
-		
-		_fireLoad();
 	}
 	
 	/**
@@ -3454,38 +3426,56 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 	this.reset = function(){
 		if (_originalData){
 			_data = MMTDrop.tools.cloneData(_originalData);
-			
-			_fireChange();
 		}
 	}
 	
-	
-	/**
-	 * Split data to n arrays arr1, arr2, ..., arrn. Each array contains data
-	 * elements having the same "probe"
-	 * 
-	 * @param data:
-	 *            is an array of messages
-	 * @return an Object whose elements key-value are <br/> - key : is ID of
-	 *         probe<br/> - value: is an array of messages captured by this
-	 *         probe
-	 */
-	 function _splitDataByProbe(data) {
-		 if (!data)
-			 return {};
-		var obj = {};
-		for (var i = 0; i < data.length; i++) {
-			var msg = data[i];
-			var probeID = msg[1]; // msg[0] = format, msg[2] = source, msg[3]
-									// = time
-			if (obj[probeID] == undefined)
-				// create a new array for this probeID
-				obj[probeID] = [];
-
-			obj[probeID].push(msg);
+	this.stat = function(){
+		var stat = {};
+		
+		/**
+		 * Get probes existing in database
+		 * @return array of probeID
+		 */
+		stat.getProbes = function(){
+			
+			if (_this.data.length === 0)
+				return [];
+			
+			var probes = {};
+			for (var i=0; i<_data.length; i++){
+				var msg = _data[i];
+				if (msg)
+					probes[msg[1]] = 0; //msg[0]=format, msg[2]=source, msg[3]=time
+			}
+			
+			return Object.keys(probes);
 		}
-		return obj;
-	};
+		
+		/**
+		 * Get applications in database
+		 * @return array of application ID
+		 */
+		stat.getApps = function(){
+			if (_this.data.length === 0)
+				return [];
+			
+			var probes = {};
+			var id = 4;
+			for (var i=0; i<_data.length; i++){
+				var msg = _data[i];
+				if (msg)
+					probes[msg[id]] = 0; //msg[0]=format, msg[2]=source, msg[3]=time
+			}
+			
+			for (var k in probes)
+				probes[k] = MMTDrop.const.ProtocolsIDName[k];
+			return probes;
+		}
+		
+		return stat;
+	}();
+	
+	
 
 	/**
 	 * Get data from MMT-Operator
@@ -3521,7 +3511,6 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 
 				error : callback.error, // (xhr, status, error),
 				success : function(data) {
-					data = _splitDataByProbe(data);
 					callback.sucess(data);
 				}
 			});
@@ -3529,7 +3518,7 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 		}
 		
 		
-		var data;
+		var data = {};
 		$.ajax({
 			url : _serverURL,
 			type : "GET",
@@ -3542,7 +3531,7 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 				return null;
 			},
 			success : function(d) {
-				data = _splitDataByProbe(d);
+				data = d;
 				
 			}
 		});
@@ -3612,11 +3601,11 @@ MMTDrop.databaseFactory = {
  */
 MMTDrop.Filter = function (param, filterFn){
 
-///////////////////////////////////////////////////////////////////////////////////////////
-//	get or set parameters from/to local storage
-///////////////////////////////////////////////////////////////////////////////////////////
-	var _localStorage = MMTDrop.tools.localStorage;
 	var _currentSelectedValue = null;
+	var _onFilterCallbacks = [];
+	//database attached to this filter
+	var _database = null;
+	
 	/**
 	 * create and show an HTML element
 	 * @param elemID : id of an HTML element parent containing the filter
@@ -3639,25 +3628,14 @@ MMTDrop.Filter = function (param, filterFn){
 		this.reload(param.options)
 		
         //handle when the filter changing
-        filter.change({text:"test"}, function(e){
+        filter.change(function(e){
         	
-        	//giva all control to user when he want to handle this event
-        	//otherwise, filter the attached database if it exists
+        	console.log(param.label + " - selection index change");
         	
-        	var _needToHandle = true;
-        	if (MMTDrop.tools.isFunction(param.onchange))
-        		_needToHandle = param.onchange(e);
-        	
-        	if (_needToHandle === true){
-        		//store the current index
-        		var val = this.value; 	//value of the selected option of the filter
-        		_currentSelectedValue = val;
-        		_localStorage.set(param.id, val);
+        	_currentSelectedValue = this.value; 	//value of the selected option of the filter
         		
-        		//applying the filter to the current selection
-        		_filter();
-        	}else
-        		_localStorage.remove(param.id);
+        	//applying the filter to the current selection
+        	_filter();
         });
 	}
 	
@@ -3682,41 +3660,38 @@ MMTDrop.Filter = function (param, filterFn){
             	defaultValue = options[i].value;
         }
         
-        //select the option that was selected before
-        var sel = _localStorage.get(param.id);
-        if (sel != null){
-        	//check if this value is one of new values
-        	for (var i in options)
-        		if (sel === options[i].value){
-        			defaultValue = sel;
-        			break;
-        		}
-        }
+        
         
         //set selection to defaultValue (that is either the first option or the former selection)
     	filter.val(defaultValue);
     	_currentSelectedValue = defaultValue;
-    	_localStorage.set(param.id, _currentSelectedValue);
-        //_filter();
 	}
-	
-	//database attached to this filter
-	var _database = null;
 	
 	/**
 	 * Bind the filter to a database
 	 */
-	this.bindTo = function (database){
+	this.filter = function (database){
 		_database = database;
-		
 		_filter();
 	}
 	
+	this.onFilter = function (callback, obj){
+		if (MMTDrop.tools.isFunction(callback))
+			_onFilterCallbacks.push ([callback, obj]);
+	}
 	
 	function _filter(){
 		if (MMTDrop.tools.isFunction(filterFn)){
-			if (_database != null && _currentSelectedValue != null)
+			if (_database != null && _currentSelectedValue != null){
+				console.log("  filtering " + param.label + "[" + _currentSelectedValue + "] on database ");
 				filterFn(_currentSelectedValue, _database);
+				
+				//annonce to its callback registors
+				for (var i in _onFilterCallbacks){
+	        		var callback = _onFilterCallbacks[i];
+	        		callback[0](_currentSelectedValue, _database, callback[1]);
+	        	}
+			}
 		}
 		else 
 			throw new Error ("You need to implement how it filters data");
@@ -3728,15 +3703,15 @@ MMTDrop.filterFactory = {
 	createFlowMetricFilter : function(){
 		var filter =  new MMTDrop.Filter({
 			id      : "flow_metric_filter_" + MMTDrop.tools.getUniqueNumber(),
-			label   : "Metric",
+			label   : "Flows",
 			options : [{value:1, text:"Data volume"},    {value:2, text:"Packet count"},
 			           {value:3, text:"Payload volume"}, {value:4, text:"Active flow"},
 			           {value:5, text:"UL Data volume"}, {value:6, text:"DL Data volume"},
 			           {value:7, text:"UL Packet count"},{value:8, text:"DL Packet count"},
 			           {value:9, text:"Flow duration"}],
-			onchange: function (e){console.log(e)}
 		}, function (val, db){
-			//how it filters database when the current selected option is @{val}	
+			//how it filters database when the current selected option is @{val}
+			
 		});
 		return filter;
 	},
@@ -3747,30 +3722,26 @@ MMTDrop.filterFactory = {
 			label   : "Metric",
 			options : [{value:1, text:"Data volume"},    {value:2, text:"Packet count"},
 			          {value:3,  text:"Payload volume"}, {value:4, text:"Active flow"}],
-			onchange: function (e){console.log(e)}
 		}, 
 		function (val, db){
-			//how it filters database when the current selected option is @{val}	
-			});
+			//how it filters database when the current selected option is @{val}
+			
+			}
+		);
 		return filter;
 	},
 	
 	createPeriodFilter : function(){
 		//create a list of options from predefined MMTDrop.period
 		var options = [];
-		for (var k in MMTDrop.period){
-			var key = MMTDrop.period[k];
+		for (var k in MMTDrop.const.period){
+			var key = MMTDrop.const.period[k];
 			options.push({value: key, text: MMTDrop.tools.capitalizeFirstLetter(key)})
 		}
 		var filter =  new MMTDrop.Filter({
 			id      : "period_filter_" + MMTDrop.tools.getUniqueNumber(),
 			label   : "Period",
 			options : options,
-			onchange: function (e){
-				//console.log(e)
-				
-				return true;
-				}
 		}, 
 		
 		function (val, db){
@@ -3778,6 +3749,8 @@ MMTDrop.filterFactory = {
 			//It reloads data from MMT-Operator
 			var param = {period:val};
 			db.reload(param);
+			
+			console.log("Got " + db.data.length + " from DB");
 		});
 		return filter;
 	},
@@ -3786,47 +3759,58 @@ MMTDrop.filterFactory = {
 		var probeID = "probe_filter_" + MMTDrop.tools.getUniqueNumber();
 
 		//create a list of options 
-		var isInit = false;
 		var options = [{value:0, text: "All"}];
+		var data = {};
 		var filter =  new MMTDrop.Filter({
 			id      : probeID,
 			label   : "Probe",
 			options : options,
-			onchange: function (e){
-				console.log(e); 
-				return true;
-			}
 		}, function (val, db){
-			//update the list of probes when database changing
-			if (!isInit){
-				isInit = true;
-				db.onload( function (e){
-					console.log("Update list of probes");
-					//update a list of probe IDs when database beeing available
-					//get a list of probe IDs
-					var probes = Object.keys(db.data);
-
-					//create list of options
-					var opts = MMTDrop.tools.cloneData(options);
-					for (var i in probes){
-						opts.push({value: probes[i], text: probes[i]});
-					}
-					filter.reload(opts);
-				});
-				
-			}
-
-			//how filtering data on probeID
-			db.reset();
-			
-			if (probeID !== 0){
-				//remove all data from the others probes
-				var data = {};
-				data[val] = db.data[val];
-				
-				db.data = data;
-			}
+			//show data from probeID = val (val=0 ==> any)
+			if (data[val] != null)
+				db.data = data[val];
 		});
+		
+		//backup old filter function
+		var filt = filter.filter;
+		
+		//redefine filter function
+		filter.filter = function (db){
+			//update the list of probes when database changing
+			console.log("update list of probes when DB loaded");
+			//update a list of probe IDs when database beeing available
+			//get a list of probe IDs
+			var probes = db.stat.getProbes();
+
+			//create list of options
+			var opts = MMTDrop.tools.cloneData(options);
+			for (var i in probes){
+				opts.push({value: probes[i], text: probes[i]});
+			}
+			filter.reload(opts);
+
+			//to speedup, data are splited into groupes having the same probeID
+			//reset data
+			data = {};
+			//prepare data
+			var arr = db.data;
+			data[0] = arr;
+			var msg;
+			//group data by probeID
+			for (var i=0; i<arr.length; i++){
+				msg = arr[i];
+				if (msg){
+					var id = msg[1];	//probe id
+					if (data[id] == undefined)
+						data[id] = [];
+
+					data[id].push (msg);
+				}
+			}
+			
+			filt(db);
+		}
+		
 		return filter;
 	},
 	
@@ -3834,36 +3818,57 @@ MMTDrop.filterFactory = {
 		var filterID = "app_filter_" + MMTDrop.tools.getUniqueNumber();
 		
 		//create a list of options 
-		var isInit = false;
+		var data = {};
 		var options = [{value:0, text: "All"}];
 		var filter =  new MMTDrop.Filter({
 			id      : filterID,
 			label   : "App",
 			options : options,
-			onchange: function (e){
-				console.log(e); 
-				return true;
-			}
 		}, function (val, db){
-			//update the list of probes when database changing
-			if (!isInit){
-				isInit = true;
-				db.onchange( function (e){
-					//update a list of probe IDs when database beeing available
-					//get a list of probe IDs
-					var objs = db.getApplicationList();
-
-					//create list of options
-					var opts = MMTDrop.tools.cloneData(options);
-					for (var i in objs){
-						opts.push({value: objs[i], text: objs[i]});
-					}
-					filter.updateOptions(opts);
-				})
-			}
-			
+			if (data[val] != null)
+				db.data = data[val];
 			//how filtering data
 		});
+		
+		//backup old filter function
+		var filt = filter.filter;
+		
+		//redefine filter function
+		filter.filter = function (db){
+			//update the list of probes when database changing
+			console.log("update list of probes when DB loaded");
+			//update a list of probe IDs when database beeing available
+			//get a list of probe IDs
+			var probes = db.stat.getApps();
+
+			//create list of options
+			var opts = MMTDrop.tools.cloneData(options);
+			for (var i in probes){
+				opts.push({value: i, text: probes[i]});
+			}
+			filter.reload(opts);
+
+			//to speedup, data are splited into groupes having the same probeID
+			//reset data
+			data = {};
+			//prepare data
+			var arr = db.data;
+			data[0] = arr;
+			var msg;
+			//group data by probeID
+			for (var i=0; i<arr.length; i++){
+				msg = arr[i];
+				if (msg){
+					var id = msg[4];	//probe id
+					if (data[id] == undefined)
+						data[id] = [];
+
+					data[id].push (msg);
+				}
+			}
+			
+			filt(db);
+		}
 		return filter;
 	},
 }
@@ -3896,19 +3901,15 @@ MMTDrop.Report = function(title, database, filters, charts){
 		var control_row = $('<div>', {'class': 'row', 'style': 'margin-bottom: 10px;', id: filterID});
 		control_row.appendTo(report_header);
 		
-		//render before registing some callbacks of data changing/loading 
-		for (i in filters) {
-			filters[i].renderTo (filterID);
-		}
+		//registing some callbacks of data changing/loading
+		for (var i=1; i<filters.length; i++){
+			filters[i-1].onFilter (function (val, db, flt){
+				flt.filter(db);
+			}, filters[i]);
+		};
 		
-		for (i in filters) {
-			filters[i].bindTo (database);
-		}
-
-		
-		//charts
-		for (var i in charts)
-			charts[i].bindTo (database);
+		for (var i=0; i<filters.length; i++)
+			filters[i].renderTo(elemID);
 		
 		//charts groups
 		var line = $('<div>', {
@@ -3954,7 +3955,12 @@ MMTDrop.Report = function(title, database, filters, charts){
 		}).appendTo($('#' + elemID));
 		
 		var chart = charts[0];
-		chart.renderTo(chartID);
+
+		filters[filters.length - 1].onFilter( function (val, db){
+			chart.renderTo(chartID, db.data);
+		});
+		
+		filters[0].filter(database);
 	}
 }
 
@@ -3965,16 +3971,17 @@ MMTDrop.reportFactory = {
 				"Application Categories Report",
 				
 				//database
-				MMTDrop.databaseFactory.createFlowDB({}),
+				MMTDrop.databaseFactory.createStatDB({}),
 				
 				//filers
 				[
+				   MMTDrop.filterFactory.createPeriodFilter(),
+				   MMTDrop.filterFactory.createProbeFilter(),
+				   MMTDrop.filterFactory.createAppFilter(),
 				   MMTDrop.filterFactory.createMetricFilter(),
-			       MMTDrop.filterFactory.createFlowMetricFilter(),
-			       MMTDrop.filterFactory.createProbeFilter(),
-			       MMTDrop.filterFactory.createPeriodFilter(),			       
-			       //MMTDrop.filterFactory.createAppFilter(),
-				 ],
+			       MMTDrop.filterFactory.createFlowMetricFilter()
+			    ]
+				 ,
 				 
 				//charts
 				[
@@ -3995,24 +4002,25 @@ MMTDrop.reportFactory = {
 /**
  * A template to create a new chart.
  * @param renderFn: function(elemID, database) is a callback using to render the chart to an HTML element
+ * @param autoReload: auto reload the chart when database changing
  */
 MMTDrop.Chart = function(renderFn){
 	
-	var _database = null;
-	this.bindTo = function (database){
-		_database = database;
-	}
+	var _this = this;
 	
 	/**
 	 * Render the chart to an HTML element
 	 * @param elemID : id of the HTML element
 	 */
-	this.renderTo = function (elemID){
-		if (_database == null)
-			throw Error ("The chart need tobe bind into one database");
+	this.renderTo = function (elemID, data){
+		if (elemID == null){
+			console.log("render chart to nothing");
+			return;
+		}
 		
+		console.log("rendering chart ...");
 		if (MMTDrop.tools.isFunction(renderFn))
-			renderFn(elemID, _database);
+			renderFn(elemID, data);
 		else
 			throw new Error ("No render function is defined");
 	}
@@ -4035,19 +4043,16 @@ MMTDrop.Chart = function(renderFn){
 
 
 MMTDrop.chartFactory = {
-	createBar : function (option, autoReload){
+	createBar : function (option){
 		
 		var chart = new MMTDrop.Chart( 
-				function (elemID, database){
+				function (elemID, data){
 					//
-					if (autoReload === true)
-						database.onchange(function(db){
-							chart.renderTo(elemID, db);
-						});
+					
 					//render to elemID
 					var elem = $('#' + elemID);
-					elem.html(JSON.stringify(database.data));
-		});
+					elem.html(JSON.stringify(data));
+		}, true);
 		
 		chart.getIcon = function(){
 			return $('<i>', {'class': 'glyphicons-bar'});

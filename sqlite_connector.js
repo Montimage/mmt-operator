@@ -256,7 +256,7 @@ function getData( options, callback ){
 			callback ( 'InternalError: ' + err );
 			return;
 		}
-		
+		console.log (doc.length + " records");
 		if (options.raw){
 			var data = [];
 			for (var i in doc){
