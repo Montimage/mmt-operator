@@ -42,25 +42,43 @@ MMTDrop = {
 		 * Constants: MMTDrop defined csv format types
 		 */
 		 StatsColumnId : {
-			 FORMAT_ID : 0, /**< Index of the format id column */
-			 PROBE_ID : 1, /**< Index of the probe id column */
-			 SOURCE_ID : 2, /**< Index of the data source id column */
-			 TIMESTAMP : 3, /**< Index of the format id column */
-			 APP_ID : 4, /**< Index of the application id column */
-			 APP_PATH : 5, /**< Index of the application path column */
-			 TOTAL_FLOWS : 6, /**< Index of the is_leaf column */
-			 ACTIVE_FLOWS : 7, /**< Index of the active flows column */
-			 DATA_VOLUME : 8, /**< Index of the data volume column */
-			 PAYLOAD_VOLUME : 9, /**< Index of the payload data volume column */
-			 PACKET_COUNT : 10, /**< Index of the packet count column */
-			 UL_DATA_VOLUME : 11, /**< Index of the data volume column */
+			 FORMAT_ID         : 0, /**< Index of the format id column */
+			 PROBE_ID          : 1, /**< Index of the probe id column */
+			 SOURCE_ID         : 2, /**< Index of the data source id column */
+			 TIMESTAMP         : 3, /**< Index of the format id column */
+			 APP_ID            : 4, /**< Index of the application id column */
+			 APP_PATH          : 5, /**< Index of the application path column */
+			 TOTAL_FLOWS       : 6, /**< Index of the is_leaf column */
+			 ACTIVE_FLOWS      : 7, /**< Index of the active flows column */
+			 DATA_VOLUME       : 8, /**< Index of the data volume column */
+			 PAYLOAD_VOLUME    : 9, /**< Index of the payload data volume column */
+			 PACKET_COUNT      : 10, /**< Index of the packet count column */
+			 UL_DATA_VOLUME    : 11, /**< Index of the data volume column */
 			 UL_PAYLOAD_VOLUME : 12, /**< Index of the payload data volume column */
-			 UL_PACKET_COUNT : 13, /**< Index of the packet count column */
-			 DL_DATA_VOLUME : 14, /**< Index of the data volume column */
+			 UL_PACKET_COUNT   : 13, /**< Index of the packet count column */
+			 DL_DATA_VOLUME    : 14, /**< Index of the data volume column */
 			 DL_PAYLOAD_VOLUME : 15, /**< Index of the payload data volume column */
-			 DL_PACKET_COUNT : 16, /**< Index of the packet count column */
+			 DL_PACKET_COUNT   : 16, /**< Index of the packet count column */
 		 },
-
+		 StatsColumnName : {
+			 FORMAT_ID         : 0, 
+			 PROBE_ID          : "Probe ID",
+			 SOURCE_ID         : "Source ID", 
+			 TIMESTAMP         : "Timestamp",
+			 APP_ID            : "App", 
+			 APP_PATH          : "App Path", 
+			 TOTAL_FLOWS       : "Flows", 
+			 ACTIVE_FLOWS      : "Active Flows",
+			 DATA_VOLUME       : "Data Volume", 
+			 PAYLOAD_VOLUME    : "Payload Volume",
+			 PACKET_COUNT      : "Packet Count", 
+			 UL_DATA_VOLUME    : "UL Data Volume",
+			 UL_PAYLOAD_VOLUME : "UL Payload Volume",
+			 UL_PACKET_COUNT   : "UL Packet Count",
+			 DL_DATA_VOLUME    : "DL Data Volume",
+			 DL_PAYLOAD_VOLUME : "DL Payload Volume",
+			 DL_PACKET_COUNT   : "DL Packet Count",
+		 },
 		 /**
 		  * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
 		  */
