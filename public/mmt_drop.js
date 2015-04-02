@@ -281,7 +281,7 @@ MMTDrop.constances ={
 
 		 /**
 		  * Returns the application id given the application path.
-		  * @param {Object} path application protocol path
+		  * @param {string} path application protocol path
 		  */
 		 getAppId : function(path) {
 			 var n = path.toString().lastIndexOf(".");
@@ -290,7 +290,7 @@ MMTDrop.constances ={
 
 		 /**
 		  * Returns the application name given the application path.
-		  * @param {Object} path application protocol path
+		  * @param {String} path application protocol path
 		  */
 		 getAppName : function(path) {
 			 var n = path.toString().lastIndexOf(".");
@@ -307,14 +307,6 @@ MMTDrop.constances ={
 			 if (parent == ".")
 				 return -1;
 			 return this.getAppId(parent);
-		 },
-
-		 /**
-		  * Returns the protocol path from the given statistics report entry
-		  * @param {Object} entry statistics report entry
-		  */
-		 getEntryPath : function(entry) {
-			 return entry[MMTDrop.StatsColumnId.APP_PATH];
 		 },
 
 		 /**
@@ -476,7 +468,14 @@ MMTDrop.tools = function() {
 		return (typeof(callback) === "function");
 	};
 	
-	
+	/**
+	 * Check whether a vlue is a number
+	 * @param n - data to check
+	 * @returns true if yes, false if no
+	 */
+	_this.isNumber = function isNumber(n) {
+		  return !isNaN(parseFloat(n)) && isFinite(n);
+	};
 	
 	/**
 	 * Split data into n array, each array contains only element having the same value of the @{col}th column
@@ -524,17 +523,29 @@ MMTDrop.tools = function() {
 			throw new Error("Need data tobe an array");
 		
 		var obj = {};
-		for (var i in colSums)
-			obj[ colSums[i]  ] = 0;
 		
 		for (var i=0; i<data.length; i++){
 			var msg = data[i];
 			
-			for (var j in colSums){
-				var key = colSums[j];
+			for (var key=0; key<msg.length; key++){
+				if (colSums.indexOf(key) == -1)
+					continue;
 				
-				if (key in msg)
-					obj[key] += parseInt(msg[key]);
+				if (msg[key] == null)
+					continue;
+				
+				var isNumber = MMTDrop.tools.isNumber(msg[key]);
+				if (obj[key] == null){
+					if (isNumber)
+						obj[key] = 0;
+					else
+						obj[key] = new Set();
+				}
+				
+				if (isNumber)
+					obj[key] += parseInt(msg[key]); //store only the total of values
+				else
+					obj[key].add( msg[key] );       //store all distinguished values
 			}
 		}
 		
@@ -553,8 +564,12 @@ MMTDrop.tools = function() {
 		
 		var obj2 = {};
 		for (var i in obj){
-			obj2[i] = _this.sumUp(obj[i], colSums);
-			obj2[i][colGroup] = i;
+			//supUp 
+			if (obj[i].length > 0){
+				obj2[i] = _this.sumUp(obj[i], colSums);
+				
+			    obj2[i][colGroup] = i;
+			}
 		}
 		
 		return obj2;
@@ -1260,33 +1275,32 @@ MMTDrop.reportFactory = {
 		var cLine = MMTDrop.chartFactory.createTimeline({});
 		var cTree = MMTDrop.chartFactory.createTree({
 			data: {
-			    getDataFn: function (data){
-			        return MMTDrop.tools.sumByGroup(data, 
-                         [MMTDrop.constances.StatsColumnId.PACKET_COUNT.id,
+				getDataFn: function (data){
+					return MMTDrop.tools.sumByGroup(data,
+							[MMTDrop.constances.StatsColumnId.PACKET_COUNT.id,
 				          MMTDrop.constances.StatsColumnId.DATA_VOLUME.id,
-				          MMTDrop.constances.StatsColumnId.PAYLOAD_VOLUME.id,
-				          MMTDrop.constances.StatsColumnId.ACTIVE_FLOWS.id],
-                         MMTDrop.constances.StatsColumnId.APP_PATH.id);
-			    },
-				columns: [MMTDrop.constances.StatsColumnId.APP_PATH, 
-				          MMTDrop.constances.StatsColumnId.PACKET_COUNT,
-				          MMTDrop.constances.StatsColumnId.DATA_VOLUME,
-				          MMTDrop.constances.StatsColumnId.PAYLOAD_VOLUME,
-				          MMTDrop.constances.StatsColumnId.ACTIVE_FLOWS
+				          MMTDrop.constances.StatsColumnId.PAYLOAD_VOLUME.id],
+				          MMTDrop.constances.StatsColumnId.APP_PATH.id
+							);
+				} ,
+				columns: [{id: MMTDrop.constances.StatsColumnId.APP_PATH.id,     label: "Name"},
+				          {id: MMTDrop.constances.StatsColumnId.PACKET_COUNT.id, label: "Packets"},
+				          {id: MMTDrop.constances.StatsColumnId.DATA_VOLUME.id,  label: "Data"}
 				          ],
 			}
 		});
 		var cTable= MMTDrop.chartFactory.createTable({
 			data: {
-			    getDataFn: function (data){
-			        return MMTDrop.tools.sumByGroup(data, 
-                         [MMTDrop.constances.StatsColumnId.PACKET_COUNT.id,
+				getDataFn: function (data){
+					return MMTDrop.tools.sumByGroup(data,
+							[MMTDrop.constances.StatsColumnId.PACKET_COUNT.id,
 				          MMTDrop.constances.StatsColumnId.DATA_VOLUME.id,
 				          MMTDrop.constances.StatsColumnId.PAYLOAD_VOLUME.id,
 				          MMTDrop.constances.StatsColumnId.ACTIVE_FLOWS.id],
-                         MMTDrop.constances.StatsColumnId.APP_ID.id);
-			    },
-				columns: [MMTDrop.constances.StatsColumnId.APP_ID, 
+				          MMTDrop.constances.StatsColumnId.APP_ID.id
+							);
+				} ,
+				columns  : [MMTDrop.constances.StatsColumnId.APP_ID, 
 				          MMTDrop.constances.StatsColumnId.PACKET_COUNT,
 				          MMTDrop.constances.StatsColumnId.DATA_VOLUME,
 				          MMTDrop.constances.StatsColumnId.PAYLOAD_VOLUME,
@@ -1573,16 +1587,21 @@ MMTDrop.chartFactory = {
 					treetable.appendTo(treeWrapper);
 					
 					
+					//header of table
 					var thead = $('<thead>');
 					var tr = $('<tr>');
+					var th;
 					for (var i = 0; i < option.data.columns.length; i++) {
-						var th = $('<th>', {
+						th = $('<th>', {
 							'text' : option.data.columns[i].label
 						});
 						th.appendTo(tr);
 					}
 
 					tr.appendTo(thead);
+					thead.appendTo(treetable);
+					
+					//body of table
 					var tbody = $('<tbody>');
 					
 					if (option.data &&  MMTDrop.tools.isFunction(option.data.getDataFn))
@@ -1594,96 +1613,100 @@ MMTDrop.chartFactory = {
 						for (var j=0; j<option.data.columns.length; j++)
 							a.push(data[i][option.data.columns[j].id]);
 						
+						//separate path
+						var path = a[0];
+						var d = path.lastIndexOf(".");
+						
+						var name = path;
+						var parent = null;
+						if (d >= 0){
+							name   = path.substring(d + 1);
+							parent = path.substring(0, d);
+						}
+						name = MMTDrop.constances.getProtocolNameFromID(name);
+						
+						a[0] = {path: path, parent: parent, name: name};
+						
 						arrData.push(a);
 					}
 					
+					//sort by path, then by name
+					arrData.sort(function (a, b){
+						if (a[0].parent == b[0].parent )
+							return a[0].name > b[0].name ? 1: -1;
+							
+						return a[0].path > b[0].path ? 1 : -1;
+					});
 					
+					//add each element to a row
 					for (i in arrData) {
-						if (arrData[i].length > 3) {
-							var row_tr;
-							if (arrData[i][0] == arrData[i][1]) {
-								row_tr = $('<tr>', {
-									'data-tt-id' : arrData[i][0].replace(/\./g,"-")
-								});
-							} else {
-								row_tr = $('<tr>', {
-									'data-tt-id' : arrData[i][0].replace(/\./g,"-"),
-									//'data-tt-parent-id' : arrData[i][1].replace(/\./g,"-")
-								});
-							}
-							var row_name;
-							if(option.link == null) {
-								row_name = $('<td>', {
-									'text' : arrData[i][2]
-								});
-							}else {
-								row_name = $('<td>');
-								
-								var row_name_link = $('<a>', {
-									'text' : arrData[i][2],
-									'href' : option.link(arrData[i])
-								});
-								row_name_link.appendTo(row_name);
-							}
-							row_name.appendTo(row_tr);
+						var msg = arrData[i];
+						
+						var path   = msg[0].path;
+						var name   = msg[0].name;
+						var parent = msg[0].parent;
+					
+						//root
+						var row_tr = $('<tr>', {
+							'data-tt-id'        : path,
+						});
+						
+						if (parent != null)
+							row_tr = $('<tr>', {
+								'data-tt-id'        : path,
+								'data-tt-parent-id' : parent
+							});
+						
+						var row_name = $('<td>');
 
-							for ( j = 3; j < Math.min(arrData[i].length, option.data.columns.length + 2); j++) {
-								var cell = $('<td>', {
-									'text' : arrData[i][j]
-								});
-								cell.appendTo(row_tr);
-							}
-							row_tr.appendTo(tbody);
+						var row_name_link = $('<a>', {
+							'text' : name
+						});
+						row_name_link.appendTo(row_name);
+
+						row_name.appendTo(row_tr);
+
+						for (var j = 1; j < msg.length; j++) {
+							var cell = $('<td>', {
+								text : msg[j],
+								align: "right"
+							});
+							cell.appendTo(row_tr);
 						}
+						row_tr.appendTo(tbody);
 					}
 
-					thead.appendTo(treetable);
 					tbody.appendTo(treetable);
 					
-
+					//convert table to tree
 					treetable.treetable({
-						expandable : true
+						expandable        : true, 
+						initialState      : "expanded",
+						clickableNodeNames: true
 					});
-					//treetables.treetable("expandAll");
-
-						$("#" + elemID + "_treetable tbody tr").click({
-							chart : this
-						}, function(e) {
-							// Highlight selected row
-							if ( $(this).hasClass('selected') ) {
-								$(this).removeClass('selected');
-							}else {
-								$(this).addClass('selected');
-							}
-							var selection = [];
-							$(".selected").each(function(){selection.push(String($(this).data("ttId")).replace(/\-/g,"."));});
-
-							if (e.data.chart.click) {
-								ev = {data: {chart: e.data.chart, path: selection}};
-								e.data.chart.click(ev);
-							}
-						});
-
-					$("#" + elemID + "_treetable tbody tr").dblclick({
+					
+					//when user click on a row
+					$("#" + elemID + "_treetable tbody tr").click({
 						chart : this
 					}, function(e) {
-						if (e.data.chart.dblclick) {
-							ev = {data: {chart: e.data.chart, path: String($(this).data("ttId")).replace(/\-/g,".")}};
-							e.data.chart.dblclick(ev);
+						//note:  this = selected row
+						// Highlight selected row, if it was hightlight => un hightlight it
+						$(this).toggleClass("selected");
+						
+						var selection = [];
+						$(".selected").each(function(){
+							selection.push( String( $(this).data("ttId")) );
+						});
+						
+						//if user regist to handle click event ==> give him the control
+						if (option.data.click) {
+							ev = {data: {chart: e.data.chart, path: selection}};
+							e.data.click(ev);
 						}
 					});
-					/*check if no path is selected, then to click in the first 'tr'
-		           of the tree element
-					 */
-					var apppaths ;
-					//Sets the first tr as the default view
-					if(typeof apppaths  === 'undefined'){                   
-						$("#" + elemID + "_treetable tbody tr:first").addClass("selected");
-						selection = [];
-						$("#" + elemID + "_treetable tbody tr:first").each(function(){selection.push(String($(this).data("ttId")).replace(/\-/g,"."));});
-						
-						//if(this.report) this.report.filter.apppaths = selection;
-					}
+					
+					//click in the first 'tr' of the tree element
+					$("#" + elemID + "_treetable tbody tr:first").trigger("click");
 		});
 		
 		chart.getIcon = function(){
