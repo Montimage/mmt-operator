@@ -68,7 +68,7 @@ To fix this problem, install **libxml** library and do "make -j 4" again.
 ```
 #!python
 
-sudo apt-install libxml2 libxml2-dev
+sudo apt-get install libxml2 libxml2-dev
 make -j 4
 
 ```
