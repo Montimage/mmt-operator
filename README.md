@@ -49,7 +49,7 @@ Follow the procedure described on the following link to install the latest versi
 
 MMT SDK will install libraries and header files under: /opt/mmt
 
-**### Note ###**
+### **Note** ###
 
 If you do not install ***libxml*** yet, you probably have the following error while compiling the mmt-sdk:
 
