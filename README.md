@@ -49,6 +49,30 @@ Follow the procedure described on the following link to install the latest versi
 
 MMT SDK will install libraries and header files under: /opt/mmt
 
+### libxml
+
+If you do not install ***libxml*** yet, you probably have the following error while compiling the mmt-sdk:
+
+
+```
+#!python
+
+mmt-sdk/src/mmt_security/tips.c:74:38: fatal error: libxml2/libxml/xmlreader.h: No such file or directory
+ #include <libxml2/libxml/xmlreader.h>
+
+```
+
+To fix this problem, install **libxml** library and do "make -j 4" again.
+
+
+```
+#!python
+
+sudo apt-get install libxml2 libxml2-dev
+make -j 4
+
+```
+
 ### libjson
 
 libjson is a c/c++ json library
