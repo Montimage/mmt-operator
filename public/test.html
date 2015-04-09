@@ -56,7 +56,11 @@
         </div>
     </div>
     <script>
-       
+       Highcharts.setOptions({
+            global : {
+                useUTC : false
+            }
+        });
       MMTDrop.config.probeURL = "http://192.168.56.101:8088";
        
        var report = MMTDrop.reportFactory.createCategoryReport();
