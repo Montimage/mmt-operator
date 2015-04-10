@@ -513,7 +513,7 @@ MMTDrop.tools = function() {
 	_this.sumByGroupAndSubgroup = function( data, colSums, colGroup, colSubgroup){
 		if (colGroup == null)
 			throw new Error("Need one column tobe grouped");
-		if (colSubroup == null)
+		if (colSubgroup == null)
 			throw new Error("Need one column tobe sub grouped");
 
 		var obj = _this.splitData(data, colGroup);
@@ -524,7 +524,7 @@ MMTDrop.tools = function() {
 			if (obj[i].length > 0){
 				obj2[i] = _this.sumByGroup(obj[i], colSums, colSubgroup);
 
-				obj2[i][colGroup] = i;
+				//obj2[i][colGroup] = i;
 			}
 		}
 
@@ -545,7 +545,7 @@ MMTDrop.tools = function() {
  * @class MMTDrop.Database
  * A class representing data getting from MMT-Operator
  * @param {DatabaseOption} param  
- * @param dataProcessingFn - a function, taking the form : function(data) 
+ * @param {DatabaseProcessFn} [dataProcessingFn=null] - processing data  
  * @constructor
  */
 MMTDrop.Database = function(param, dataProcessingFn) {
@@ -790,7 +790,7 @@ MMTDrop.databaseFactory = {
 ///////////////////////////////////////////////////////////////////////////////////////////
 /**
  * @class MMTDrop.Filter
- * @param {FilterOption} param - {id: unique, label: string, options : [{value: string, text: string}, {}], onchange: callback}
+ * @param {FilterOption} param - {id: unique, label: string, options : [{id:  string, label: string}, {}], onchange: callback}
  * <br/> If {param.onchange} function is defined, it will handle the changing. 
  * <br/> If the function return {true}, the default actions 
  * <br/>   (store the change to localStorage, apply the change to its attached database) 
@@ -836,17 +836,23 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		//handle when the filter changing
 		filter.change(function(e){
 
-			console.log(param.label + " - selection index change");
-
-			var opt = _option[this.selectedIndex]; 	//the selected option of the filter
-			_currentSelectedOption = {value: opt.value, text: opt.text};
-
+			_currentSelectedOption = _option[this.selectedIndex]; 	//the selected option of the filter
+			
+			console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
 			//applying the filter to the current selection
 			_filter();
 		});
 	};
 
 
+	this.selectedOption = function( opt ){
+		if( opt == undefined ){
+			return _currentSelectedOption;
+		}
+		
+		return this;
+	};
+	
 	/**
 	 * Get option property
 	 * @returns {SelectOption}
@@ -880,8 +886,8 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		//create list of options
 		for (var i in _option){
 			var opt = $('<option>', {
-				text : _option[i].text,
-				value: _option[i].value
+				text : _option[i].label,
+				value: _option[i].id
 			});
 			opt.appendTo(filter);
 
@@ -891,7 +897,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		}
 
 		//set selection to defaultValue (that is either the first option or the former selection)
-		filter.val(defaultOption.value);
+		filter.val(defaultOption.id);
 		_currentSelectedOption = defaultOption;
 	};
 
@@ -962,11 +968,11 @@ MMTDrop.filterFactory = {
         for (var i in cols)
            options.push({value: cols[i].id, text: cols[i].label});
 			 */   
-			var options = [{value:1, text:"Data volume"},    {value:2, text:"Packet count"},
-			               {value:3, text:"Payload volume"}, {value:4, text:"Active flow"},
-			               {value:5, text:"UL Data volume"}, {value:6, text:"DL Data volume"},
-			               {value:7, text:"UL Packet count"},{value:8, text:"DL Packet count"},
-			               {value:9, text:"Flow duration"}];              
+			var options = [{id: 1, label:"Data volume"},    {id: 2, label:"Packet count"},
+			               {id: 3, label:"Payload volume"}, {id: 4, label:"Active flow"},
+			               {id: 5, label:"UL Data volume"}, {id: 6, label:"DL Data volume"},
+			               {id: 7, label:"UL Packet count"},{id: 8, label:"DL Packet count"},
+			               {id: 9, label:"Flow duration"}];              
 
 
 			var filter =  new MMTDrop.Filter({
@@ -990,7 +996,7 @@ MMTDrop.filterFactory = {
 
 			var options = [];
 			for (var i in cols)
-				options.push({value: cols[i].id, text: cols[i].label});
+				options.push({id:  cols[i].id, label: cols[i].label});
 
 
 			var filter =  new MMTDrop.Filter({
@@ -1011,7 +1017,7 @@ MMTDrop.filterFactory = {
 			var options = [];
 			for (var k in MMTDrop.constants.period){
 				var key = MMTDrop.constants.period[k];
-				options.push({value: key, text: MMTDrop.tools.capitalizeFirstLetter(key)});
+				options.push({id:  key, label: MMTDrop.tools.capitalizeFirstLetter(key)});
 			}
 			var filter =  new MMTDrop.Filter({
 				id      : "period_filter_" + MMTDrop.tools.getUniqueNumber(),
@@ -1022,7 +1028,7 @@ MMTDrop.filterFactory = {
 			function (val, db){
 				//how it filters database when the current selected option is @{val}	
 				//It reloads data from MMT-Operator
-				var param = {period:val.value};
+				var param = {period:val.id};
 				db.reload(param);
 
 				console.log("Got " + db.data().length + " from DB");
@@ -1034,7 +1040,7 @@ MMTDrop.filterFactory = {
 			var probeID = "probe_filter_" + MMTDrop.tools.getUniqueNumber();
 
 			//create a list of options 
-			var options = [{value:0, text: "All"}];
+			var options = [{id: 0, label: "All"}];
 			var data = {};
 
 			var filter =  new MMTDrop.Filter({
@@ -1043,7 +1049,7 @@ MMTDrop.filterFactory = {
 				options : options,
 			}, function (val, db){
 				//show data from probeID = val (val.value=0 ==> any)
-				db.data( data[val.value] );
+				db.data( data[val.id] );
 			}, 
 			//cache data
 			function (db){
@@ -1063,7 +1069,7 @@ MMTDrop.filterFactory = {
 				//create list of options
 				var opts = [];
 				for (var i in keys){
-					opts.push({value: keys[i], text: keys[i]});
+					opts.push({id:  keys[i], label: keys[i]});
 				}
 				//if there are more than one option or no option ==> add "All" to top
 				if (opts.length != 1)
@@ -1081,7 +1087,7 @@ MMTDrop.filterFactory = {
 
 			//create a list of options 
 			var data = {};
-			var options = [{value:0, text: "All"}];
+			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
 				label   : "App",
@@ -1089,8 +1095,8 @@ MMTDrop.filterFactory = {
 			}, 
 			function (val, db){
 				//how filtering data
-				if (data[val.value] != null)
-					db.data( data[val.value] );
+				if (data[val.id] != null)
+					db.data( data[val.id] );
 			}, 
 			function (db){
 				//update the list of probes when database changing
@@ -1106,7 +1112,7 @@ MMTDrop.filterFactory = {
 				//create list of options
 				var opts = [];
 				for (var i in keys){
-					opts.push({value: keys[i], text: MMTDrop.constants.getProtocolNameFromID( keys[i] ) });
+					opts.push({id:  keys[i], label: MMTDrop.constants.getProtocolNameFromID( keys[i] ) });
 				}
 
 				//if there are more than one option or no option ==> add "All" to top
@@ -1125,7 +1131,7 @@ MMTDrop.filterFactory = {
 
 			//create a list of options 
 			var data = {};
-			var options = [{value:0, text: "All"}];
+			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
 				label   : "Class",
@@ -1133,8 +1139,8 @@ MMTDrop.filterFactory = {
 			}, 
 			function (val, db){
 				//how filtering data
-				if (data[val.value] != null)
-					db.data( data[val.value] );
+				if (data[val.id] != null)
+					db.data( data[val.id] );
 			}, 
 			function (db){
 				//update the list of probes when database changing
@@ -1149,7 +1155,7 @@ MMTDrop.filterFactory = {
 				//create list of options
 				var opts = [];
 				for (var i in keys){
-					opts.push({value: keys[i], text: MMTDrop.constants.getCategoryNameFromID( keys[i] ) });
+					opts.push({id:  keys[i], label: MMTDrop.constants.getCategoryNameFromID( keys[i] ) });
 				}
 
 				//if there are more than one option or no option ==> add "All" to top
@@ -1205,8 +1211,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			for (var k=0; k<obj.length; k++){
 				var o = obj[k].object;
 
-				o.attachTo(db);
-
+				o.attachTo( db );
 				//o is either a filter or a chart
 				if (o instanceof MMTDrop.Filter){
 					o.filter();
@@ -1359,29 +1364,36 @@ MMTDrop.reportFactory = {
 				//probe : [10]
 			});
 
-			var cBar  = MMTDrop.chartFactory.createBar({});
-			var cPie  = MMTDrop.chartFactory.createPie({});
-			var cLine = MMTDrop.chartFactory.createTimeline();
-			var cTree = MMTDrop.chartFactory.createTree({});
-			var cTable= MMTDrop.chartFactory.createTable({});
-
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fApp    = MMTDrop.filterFactory.createAppFilter();
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
 			var fFlow   = MMTDrop.filterFactory.createFlowMetricFilter();
 			var fClass  = MMTDrop.filterFactory.createClassFilter();
-
-			var getDataFn = cLine.option().data.getDataFn;
-			cLine.attachTo( database );
-			fMetric.onFilter(function (val, db){
-
-				cLine.option().data.getDataFn = function( db, col ){
-					return getDataFn(db, val.value);
-				};
-				cLine.redraw();
+			
+			
+			var cBar  = MMTDrop.chartFactory.createBar({
+				getData: {
+					getDataArgs : function(){
+						return [fMetric.selectedOption()];
+					}
+				}
 			});
-
+			var cPie  = MMTDrop.chartFactory.createPie({
+				getData: {
+					getDataArgs : function(){
+						return [fMetric.selectedOption()];
+					}
+				}});
+			
+			var cLine = MMTDrop.chartFactory.createTimeline({
+				getData: {
+					getDataArgs : function(){
+						return [fMetric.selectedOption()];
+					}
+				}});
+			var cTree = MMTDrop.chartFactory.createTree({});
+			var cTable= MMTDrop.chartFactory.createTable({});
 
 			var dataFlow = [{
 				object: fPeriod,
@@ -1392,7 +1404,11 @@ MMTDrop.reportFactory = {
 				        	          {object: fApp,  effect:[
 				        	                                  {object: cBar,  effect: []},
 				        	                                  {object: cPie,  effect: []},
-				        	                                  {object: fMetric, effect: []},
+				        	                                  {object: fMetric, effect: [
+				        	                                                           {object: cPie, effect: []},
+				        	                                                           {object: cBar, effect: []},
+				        	                                                           {object: cLine, effect:[]}
+				        	                                                             ]},
 				        	                                  ]},
 				        	                                  {object: cTable, effect: []},
 				        	                                  {object: fClass, effect: [
@@ -1444,7 +1460,7 @@ MMTDrop.reportFactory = {
 			fMetric.onFilter(function (val, db){
 
 				cLine.option().data.getDataFn = function( db, col ){
-					return getDataFn(db, val.value);
+					return getDataFn(db, val.id);
 				};
 
 				cLine.attachTo( db );
@@ -1504,10 +1520,11 @@ MMTDrop.Chart = function(option, renderFn){
 
 	var _option = {
 			title : "",
-			data  : {
-				getDataFn : null,
-				columns   : []
-			}
+			getData  : {
+				getDataFn  : null,
+				getDataArgs: [MMTDrop.constants.StatsColumn.DATA_VOLUME],
+			},
+			columns : [],	//columns to show and its header labels
 	};
 
 	var _elemID = null;
@@ -1537,22 +1554,28 @@ MMTDrop.Chart = function(option, renderFn){
 		$('#' + _elemID).html('');
 	};
 
-	this.attachTo = function ( db, isCopyData ){
+	/**
+	 * Attach the chart to a database.
+	 * @param {MMTDrop.Database} db
+	 * @param {boolean} [isCloneData=true] - clone data of database. 
+	 * <br/> The <code>redraw</code> method will display database on the chart. 
+	 * Database can be changed before <code>redraw</code> beeing called.
+	 * If this parameter is <code>true</code>, the chart will show data of <code>db</code> at 
+	 * the moment of this method beeing called by preserving a copy of data.
+	 * Otherwise, the chart will show data of database ah the moment of <code>redraw</code> method beeing called. 
+	 */
+	this.attachTo = function ( db, isCloneData){
 		if (db == null)
 			return;
 
 		_database = db;
 		_data = db.data();
 		
-		if ( isCopyData == undefined )
-			isCopyData = false;
-		
-		_isCopyData = isCopyData;
-		if( _isCopyData ){	
+		_isCopyData = isCloneData == undefined ? true: false;
+		if( _isCopyData )
 			_data = MMTDrop.tools.cloneData( _data );
-		}
 	};
-
+	
 	/**
 	 * Set option property of the chart
 	 * @param {ChartOption} val - a new option will merge with the current option 
@@ -1592,27 +1615,34 @@ MMTDrop.Chart = function(option, renderFn){
 		if (! _isVisible)
 			return;
 
+		console.log("rendering chart ..."  + _option.title);
+		
 		if (_elemID == null){
-			console.log("render chart to nothing");
+			console.log("   no HTML element");
 			return;
 		}
 
-		console.log("rendering chart ...");
+		
 		_this.clean();
 
 		if (MMTDrop.tools.isFunction(renderFn)){
 
-			var b = false;
-			if (! _option.data || _option.data.columns.length == 0)
-				b = true;
-
-			var data = _prepareData( _option.data);
-			renderFn(_elemID, _option, data);
-
-			//reset data.columns to [] since it can be changed in _prepareData
-			//that is: if there are no data.columns, all columns in database will be shown
-			if ( b )
-				_option.data.columns = [];
+			//clone option
+			var opt = MMTDrop.tools.mergeObjects( {}, _option );
+			
+			//opt can be changed in this function
+			var data = _prepareData( opt, _data, _database );
+			
+			if( opt.columns.length == 0){
+				console.log("   no columns to render" );
+				return;
+			}
+			
+			if( data.length == 0){
+				console.log( "   no data");
+			}
+			
+			renderFn(_elemID, opt, data);
 
 		}else
 			throw new Error ("No render function is defined");
@@ -1628,55 +1658,49 @@ MMTDrop.Chart = function(option, renderFn){
 	};
 
 
-	function _prepareData (getDataOption){
-		//if (_database.stat != null)
-		//	_database.stat.updateFriendlyValue( data );
-		if ( ! _database)
+	function _prepareData ( opt, data, db){
+		if ( ! db)
 			return [];
 
-		var data = _data;
-		if (option != null && MMTDrop.tools.isFunction(getDataOption.getDataFn)){
+		if (opt && opt.getData && MMTDrop.tools.isFunction(opt.getData.getDataFn)){
+
+			//arguments
+			var arg = opt.getData.getDataArgs;
+			if (MMTDrop.tools.isFunction( arg ))
+				arg =  arg();
+			
+			var obj; 
 			if( _isCopyData ){
 				//as _database.data() can be changed its content
 				// but we want to draw the chart with the data got at the moment of executing this.attachTo
-				var oldData = _database.data();	//a copy of current data of _database
-				_database.data( _data );		//set database to the moment this.attachTo
+				var oldData = db.data();	//a copy of current data of _database
+				db.data( _data );		//set database to the moment this.attachTo
+			
+				obj = opt.getData.getDataFn( db, arg );
+			
+				db.data( oldData );		//reset to its data
+			}
+			else
+				obj = opt.getData.getDataFn( db, arg );
+			
+			data = obj.data;
+			
+			//override _option.columns
+			if( Array.isArray(obj.columns) && obj.columns.length > 0){
+				opt.columns = obj.columns;
 			}
 			
-			data = getDataOption.getDataFn(_database);
-			
-			if( _isCopyData )
-				_database.data( oldData );		//reset to its data
+			if( obj.ylabel )
+				opt.ylabel = obj.ylabel;
 		}
 
-		//if user does not define which columns to show ==> show all
-		if (getDataOption.columns == undefined || getDataOption.columns.length == 0){
-			var keys = {};
-			//get list of keys from data
-			for ( var i in data ){
-				var msg = data[i];
-				for (j in msg){
-					if (j in keys == false){
-						keys[j] = 0;
-					}
-				}
-			}
-
-			var arr = [];
-			for ( var i in keys )
-				arr.push( {id: i, label: i} );
-			getDataOption.columns = arr;
-		}
-
-
-
-		//copy data to an array of array
+		//copy data to an array of array containing only data to show
 		var arrData = [];
 		for (var i in data){
 			var msg = data[ i ];
 			var a = [];
-			for (var j=0; j<getDataOption.columns.length; j++){
-				var id = getDataOption.columns[j].id;
+			for (var j=0; j<opt.columns.length; j++){
+				var id = opt.columns[j].id;
 				var val = 0;
 				if (id in msg)
 					val = msg[id];
@@ -1704,20 +1728,44 @@ MMTDrop.chartFactory = {
 		createBar : function (param){
 			var _param = {
 					title: "",
-					data : {
-						getDataFn: function (db){
+					getData : {
+						getDataFn: function (db, cols){
+							if( Array.isArray( cols ) == false){
+								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" );
+								cols = [ MMTDrop.constants.StatsColumn.DATA_VOLUME ];
+							}
 							var data = db.data();
-
-							data = MMTDrop.tools.sumByGroup(data,
-									[MMTDrop.constants.StatsColumn.PACKET_COUNT.id,
-									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id,
-									 MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME.id],
-									 MMTDrop.constants.StatsColumn.APP_ID.id
+							var col = cols[0];
+							
+							var obj = MMTDrop.tools.sumByGroupAndSubgroup(data,
+									 [col.id],
+									 MMTDrop.constants.StatsColumn.APP_ID.id,
+									 MMTDrop.constants.StatsColumn.PROBE_ID.id
 							);
-							data = db.stat.updateFriendlyAppName( data );
-							return data;
+							var arr     = [];
+							var header  = [];
+							var columns = [MMTDrop.constants.StatsColumn.APP_ID];
+							
+							for( var app in obj){
+								var oo = {};
+								oo[MMTDrop.constants.StatsColumn.APP_ID.id] = MMTDrop.constants.getProtocolNameFromID( app );
+								
+								for( var probe in obj[app] ){
+									oo[probe] = obj[app][probe][col.id];
+									
+									if( header.indexOf( probe )  == -1 ){
+										header.push( probe );
+										
+										columns.push( {id: probe, label: "Probe " + probe} );
+									}
+								}
+								arr.push( oo );
+							}
+							
+							
+							return {data: arr, columns: columns, ylabel: col.label};
 						} ,
-						columns: [{id: MMTDrop.constants.StatsColumn.APP_ID.id,       label: "Name"},
+						getDataArgs: [
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
 						          ],
 					}
@@ -1725,6 +1773,7 @@ MMTDrop.chartFactory = {
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart( _param,
+					
 					function (elemID, option, data){
 				//render to elemID
 				//elem.html(JSON.stringify(data));
@@ -1732,13 +1781,13 @@ MMTDrop.chartFactory = {
 				var arrData = data;
 
 
-				var ylabel = "";
+				var ylabel = (option.columns.length == 2) ? option.columns[1].label : option.ylabel;
 				var categories = [];
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<option.data.columns.length; j++)
-					series.push( {name:option.data.columns[j].label, data : [] } );
+				for (var j=1; j<option.columns.length; j++)
+					series.push( {name:option.columns[j].label, data : [] } );
 
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
@@ -1810,22 +1859,31 @@ MMTDrop.chartFactory = {
 		createPie : function ( param ){
 			//default parameter
 			var _param = {
-					title: "",
-					data : {
-						getDataFn: function (db){
+					getData : {
+						getDataFn: function (db, cols){
+							if( Array.isArray( cols ) == false){
+								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" )
+								cols = [ MMTDrop.constants.StatsColumn.DATA_VOLUME ];
+							}
 							var data = db.data();
+							var arr = [];
+							
+							for( var i=0; i<cols.length; i++)
+								arr.push( cols[i].id );
+							
 							data = MMTDrop.tools.sumByGroup(data,
-									[MMTDrop.constants.StatsColumn.PACKET_COUNT.id,
-									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id,
-									 MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME.id],
+									 arr,
 									 MMTDrop.constants.StatsColumn.APP_ID.id
 							);
 							data = db.stat.updateFriendlyAppName( data );
-							return data;
+
+							var columns = [MMTDrop.constants.StatsColumn.APP_ID];
+							columns = columns.concat( cols );
+							
+							return {data: data, columns: columns};
 						} ,
-						columns: [{id: MMTDrop.constants.StatsColumn.APP_ID.id,       label: "Name"},
+						getDataArgs: [
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
-						          //{id: MMTDrop.constants.StatsColumn.DATA_VOLUME.id,  label: "Data"}
 						          ],
 					}
 			};
@@ -1838,8 +1896,8 @@ MMTDrop.chartFactory = {
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<option.data.columns.length; j++)
-					series.push( {name: option.data.columns[j].label, data : [] } );
+				for (var j=1; j<option.columns.length; j++)
+					series.push( {name: option.columns[j].label, data : [] } );
 
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
@@ -1922,10 +1980,16 @@ MMTDrop.chartFactory = {
 		 */
 		createTimeline : function (param, type){
 			var _param = {
-					data: {
+					getData: {
+						//prepare data
 						getDataFn: function (db, col){
-							col = col || MMTDrop.constants.StatsColumn.PACKET_COUNT.id;
-
+							if( Array.isArray( col ))
+								col = col[ 0 ];
+							else
+								col = MMTDrop.constants.StatsColumn.PACKET_COUNT;
+							
+							var label = col.label;
+							col       = col.id;
 
 							var data =  MMTDrop.tools.splitDataByGroupAndSubgroup(db.data(),
 									MMTDrop.constants.StatsColumn.APP_ID.id,
@@ -1946,66 +2010,79 @@ MMTDrop.chartFactory = {
 									noProbe = n;
 							}
 
+							var obj = MMTDrop.tools.splitDataByGroupAndSubgroup(
+									db.data(),
+									MMTDrop.constants.StatsColumn.TIMESTAMP.id,
+									MMTDrop.constants.StatsColumn.PROBE_ID.id
+							);
+							var header = [];
+							var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
+						    var arr    = [];
+						    
 							//If there are more than 5 apps 
 							// ==> show a line of total for each probe
 							//       install of showing a line for each app of each probe
-							if( noApp > 5){
-								var obj = MMTDrop.tools.splitDataByGroupAndSubgroup(
-										db.data(),
-										MMTDrop.constants.StatsColumn.PROBE_ID.id,
-										MMTDrop.constants.StatsColumn.TIMESTAMP.id
-								);
-								arr = [];
-								for( var probe in obj){
-									for( var time in obj[probe] ){
+							if( noApp * noProbe > 15){
+								//the next columns are probes
+								for( var time in obj){
+									var oo = {};
+									//the first column is timestamp
+									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt( time );
+									
+									for( var probe in obj[time] ){
+										
 										var o = MMTDrop.tools.sumUp(
-												obj[probe][time],
+												obj[time][probe],
 												[col]
 										);
-										var oo = {};
-										oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt(time);
-										oo[ "Probe " + probe ] = o[col];
-										arr.push( oo );
+										
+										var key = probe;
+										if( header.indexOf( key ) == -1){
+											header.push( key );
+											
+											columns.push( {id: key, label: "Probe " + key});											
+										}
+										
+										oo[ key ] = o[col];
 									}
-								}
-
-								return arr;
-							}
-
-							var arr = [];
-							for( var i in data ){
-								var app     = data[ i ];
-								var appName = MMTDrop.constants.getProtocolNameFromID( i );
-								for (var j in app){
-									var probe = app[ j ];
-
-									var o = MMTDrop.tools.sumByGroup( probe, 
-											[col],
-											MMTDrop.constants.StatsColumn.TIMESTAMP.id
-									);
-
-									for (var k in o){
-										//if( o[k][col] == 0)
-										//	 continue;
-
-										var obj = {};
-										obj[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt(k);
-
-										//if there are more than one probe ==> add its Id to category name
-										if( noProbe>1 )
-											obj[appName + "-" + j] = o[k][col];
-										else
-											obj[appName] = o[k][col];
-
-										arr.push( obj );
-									}
+									arr.push( oo );
 								}
 							}
+							else{
+								for( var time in obj ){
+									var oo = {};
+									//the first column is timestamp
+									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt( time );
+									
+									for ( var probe in obj[time] ){
+										
+										var o = MMTDrop.tools.sumByGroup( 
+												obj[time][probe], 
+												[col],
+												MMTDrop.constants.StatsColumn.APP_ID.id
+										);
+										
+										for( var app in o){
+											var key = app + "-" + probe;
+											
+											if( header.indexOf( key ) == -1){
+												header.push( key );
+												
+												var appName = MMTDrop.constants.getProtocolNameFromID( app );
+												if( noProbe > 1 )
+													appName = appName + "-" + probe;
+												columns.push( {id: key, label: appName});
+											}
+											
+											oo[key] = o[ app ][ col ];
+										}
+									}
+									arr.push( oo );
+								}
+							}
 
-
-							return arr;
+							return {data: arr, columns: columns, ylabel: label};
 						} ,
-						columns: [],
 					}
 			};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
@@ -2024,12 +2101,12 @@ MMTDrop.chartFactory = {
 					return a[0] - b[0];
 				});
 
-				var ylabel = "";
+				var ylabel = option.ylabel;
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<option.data.columns.length; j++)
-					series.push( {name:option.data.columns[j].label, data : [] } );
+				for (var j=1; j<option.columns.length; j++)
+					series.push( {name:option.columns[j].label, data : [] } );
 
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
@@ -2200,20 +2277,20 @@ MMTDrop.chartFactory = {
 			//default parameter
 			var _param = {
 					title: "",
-					data : {
+					getData : {
 						getDataFn: function (db){
-							return MMTDrop.tools.sumByGroup(db.data(),
+							var data = MMTDrop.tools.sumByGroup(db.data(),
 									[MMTDrop.constants.StatsColumn.PACKET_COUNT.id,
-									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id,
-									 MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME.id],
+									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id],
 									 MMTDrop.constants.StatsColumn.APP_PATH.id
 							);
+							return {data: data};
 						} ,
-						columns: [{id: MMTDrop.constants.StatsColumn.APP_PATH.id,     label: "Name"},
+					},
+					columns: [{id: MMTDrop.constants.StatsColumn.APP_PATH.id,     label: "Name"},
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
 						          {id: MMTDrop.constants.StatsColumn.DATA_VOLUME.id,  label: "Data"}
 						          ],
-					}
 			};
 
 			_param = MMTDrop.tools.mergeObjects( _param, param );
@@ -2243,9 +2320,9 @@ MMTDrop.chartFactory = {
 				var thead = $('<thead>');
 				var tr = $('<tr>');
 				var th;
-				for (var i = 0; i < option.data.columns.length; i++) {
+				for (var i = 0; i < option.columns.length; i++) {
 					th = $('<th>', {
-						'text' : option.data.columns[i].label
+						'text' : option.columns[i].label
 					});
 					th.appendTo(tr);
 				}
@@ -2344,7 +2421,7 @@ MMTDrop.chartFactory = {
 					});
 
 					//if user regist to handle click event ==> give him the control
-					if (option.data.click) {
+					if (option.click) {
 						ev = {data: {chart: e.data.chart, path: selection}};
 						e.data.click(ev);
 					}
@@ -2370,7 +2447,7 @@ MMTDrop.chartFactory = {
 			//default parameter
 			var _param = {
 					title: "",
-					data : {
+					getData : {
 						getDataFn: function (db){
 							var data = db.data();
 							data = MMTDrop.tools.sumByGroup(data,
@@ -2381,15 +2458,15 @@ MMTDrop.chartFactory = {
 									 MMTDrop.constants.StatsColumn.APP_ID.id
 							);
 							data = db.stat.updateFriendlyAppName( data );
-							return data;
-						} ,
-						columns  : [MMTDrop.constants.StatsColumn.APP_ID, 
+							return {data: data};
+						}
+					},
+					columns  : [MMTDrop.constants.StatsColumn.APP_ID, 
 						            MMTDrop.constants.StatsColumn.PACKET_COUNT,
 						            MMTDrop.constants.StatsColumn.DATA_VOLUME,
 						            MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME,
 						            MMTDrop.constants.StatsColumn.ACTIVE_FLOWS
 						            ],
-					}
 			};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
@@ -2403,9 +2480,9 @@ MMTDrop.chartFactory = {
 				var arr = data;
 
 				var cnames = [];
-				for (var i = 0; i < option.data.columns.length; i++) {
+				for (var i = 0; i < option.columns.length; i++) {
 					cnames.push(
-							"<td>" + option.data.columns[i].label + "</td>");
+							"<td>" + option.columns[i].label + "</td>");
 				}
 
 				if (cnames.length == 0)
@@ -2454,45 +2531,38 @@ MMTDrop.chartFactory = {
 };
 
 
-MMTDrop.dataFactory = {
-		createAppLine : function( col ){
-			return{
-				getDataFn: function( db ){
-
-				},
-
-				columns : function(){
-
-				},
-			};
-		},
-};
-
 /**
- * List of options of a filter
- * @typedef {Array.<{value: Object, text: string}>} SelectOption
+ * 
+ * @typedef {Object} Index
+ * @property {(number|string)} id
+ * @property {string} label
  */
 
 /**
  * The parameter when creating a chart.
  * @typedef {Object} ChartOption
  * @property {string} title - title of the chart
- * @property {Object} data - how data is treated
- * @property {ChartPrepreData} data.getDataFn - a 
- * @property {Array.<{id: number, label: string}>} data.columns - columns tobe shown
+ * @property {string} ylabel
+ * @property click -
+ * @property {ChartPrepreData} getData.getDataFn - a
+ * @property {Object} getData.getDataArgs - an argument to be passed to getData.getDataFn
+ * @property {Index[]} columns - columns tobe shown. 
+
  */
 
 /**
  * Processing data before displaying them into charts
  * @callback ChartPrepreData
  * @param {MMTDrop.Database} db
- * @returns {Data}
+ * @param {Object} val - user data
+ * @returns {{data: Array, columns: Index[], ylabel:string}}
  */
 
 /**
  * Render a chart
  * @callback ChartRenderFn
  * @param {string} elemID - id of HTML element on which the chart is rendered
+ * @param {ChartOption} option - option 
  * @param {Array} data - data to show
  */
 
@@ -2518,7 +2588,13 @@ MMTDrop.dataFactory = {
  * @property {MMTDrop.constants.CsvFormat} [format=99] - kind of data
  * @property {Array.<string>} [source=[]] - source
  * @property {Array.<number>} [probe=[]] - probe Id
- * @property {boolean} [raw=false] - getting data in raw format
+ */
+
+/**
+ * Processing database
+ * @callback DatabaseProcessFn
+ * @param {Data} data - data tobe processed
+ * @return {Data}
  */
 
 
