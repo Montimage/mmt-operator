@@ -427,13 +427,13 @@ MMTDrop.tools = function() {
 
 	/**
 	 * Split data
+	 * @returns {Object}
 	 */
 	_this.splitDataByGroupAndSubgroup = function( data, colGroup, colSubgroup){
 		var obj = _this.splitData( data, colGroup );
 
 		var obj2 = {};
 		for (var i in obj){
-			//supUp 
 			if (obj[i].length > 0){
 				obj2[i] = _this.splitData(obj[i], colSubgroup);
 			}
@@ -487,48 +487,41 @@ MMTDrop.tools = function() {
 	/**
 	 * @return {{string: Array.<Array>}}
 	 */
-	_this.sumByGroup = function(data, colSums, colGroup){
-
-		if (colGroup == null)
-			throw new Error("Need one column tobe grouped");
-
-		var obj = _this.splitData(data, colGroup);
-
-		var obj2 = {};
+	_this.sumByGroup = function(data, colsSum, colGroup){
+		_this.sumByGroups( data, colsSum, [colGroup]);
+	};
+	
+	_this.sumByGroups = function( data, colsToSum, colsToGroup){
+		if (colsToSum == null)
+			throw new Error("Need one column tobe sumUp");
+		
+		if( Array.isArray( colsToGroup ) == false || colsToGroup.length == 0 )
+			return _this.sumUp( data, colsToSum );
+		
+		colsToGroup = colsToGroup.slice(0);	//clone colsToGroup
+		var col = colsToGroup.shift();	    //remove the first elem
+		
+		var obj = _this.splitData( data, col );
 		for (var i in obj){
-			//supUp 
-			if (obj[i].length > 0){
-				obj2[i] = _this.sumUp(obj[i], colSums);
-
-				obj2[i][colGroup] = i;
-			}
+			var o = obj[i];
+			
+			obj[i] = _this.sumByGroups(o, colsToSum, colsToGroup);
 		}
 
-		return obj2;
+		return obj;
 	};
+	
 
 	/**
 	 * @returns {{string : Array<{string: Array}>}}
 	 */
-	_this.sumByGroupAndSubgroup = function( data, colSums, colGroup, colSubgroup){
+	_this.sumByGroupAndSubgroup = function( data, colsSum, colGroup, colSubgroup){
 		if (colGroup == null)
 			throw new Error("Need one column tobe grouped");
 		if (colSubgroup == null)
 			throw new Error("Need one column tobe sub grouped");
 
-		var obj = _this.splitData(data, colGroup);
-
-		var obj2 = {};
-		for (var i in obj){
-			//supUp 
-			if (obj[i].length > 0){
-				obj2[i] = _this.sumByGroup(obj[i], colSums, colSubgroup);
-
-				//obj2[i][colGroup] = i;
-			}
-		}
-
-		return obj2;
+		_this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
 	}
 
 	return _this;
@@ -616,12 +609,21 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 		/**
 		 *Group data by probeID 
 		 */
-		stat.getProbes = function(){
+		stat.splitDataByProbe = function(){
 			return MMTDrop.tools.splitData( _this.data(), 
 					MMTDrop.constants.StatsColumn.PROBE_ID.id);
 		};
 
 
+		/**
+		 * Get set of probe
+		 */
+		stat.getProbes = function(){
+			var obj = MMTDrop.tools.splitData( _this.data(), 
+					MMTDrop.constants.StatsColumn.PROBE_ID.id);
+			return Object.keys( obj );
+		};
+		
 		return stat;
 	}();
 
@@ -727,15 +729,24 @@ MMTDrop.databaseFactory = {
 			 * Get applications in database
 			 * @return {Object} of application ID
 			 */
-			db.stat.getApps = function(){
+			db.stat.splitDataByApp = function(){
 				return MMTDrop.tools.splitData(db.data(), MMTDrop.constants.StatsColumn.APP_ID.id);
 			};
 
+			
+			/**
+			 * Get set of AppID
+			 */
+			db.stat.getAppIDs = function(){
+				var obj = db.stat.splitDataByApp();
+				var keys = Object.key( obj );
+				return keys;
+			};
 
 			/**
 			 * Get categories in database
 			 */
-			db.stat.getClass = function(){
+			db.stat.splitDataByClass = function(){
 				var data = db.data();
 				var obj = {};
 				var appId = 0;
@@ -751,7 +762,77 @@ MMTDrop.databaseFactory = {
 
 				return obj;
 			};
+			
+			
+			db.stat.getDataTableForChart = function( args, isAppPath ){
+				//pre-trait args
+				if( Array.isArray( args) == false || args.length == 0 ){
+					args = [{id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"}];
+					console.log( "  use default arguments: " + JSON.stringify( args ) );
+				}
 
+				var group = {id: MMTDrop.constants.StatsColumn.APP_ID.id, label: "Name"};
+				
+				if( isAppPath == null || isAppPath ){
+					group = {id: MMTDrop.constants.StatsColumn.APP_PATH.id, label: "Name"};
+					isAppPath = true;
+				}
+				else
+					isAppPath = false;
+					
+				//id of columns tobe sumUp 
+				var cols = [];
+				for( var i in args )
+					cols.push( args[i].id );
+				
+				var obj = MMTDrop.tools.sumByGroups( db.data(), 
+						cols,
+						[group.id,
+						 MMTDrop.constants.StatsColumn.PROBE_ID.id]);
+				
+				//splite data by probes
+				//probes is an object each key is a probeId and value of key is msg containing this probeId
+				var probes = db.stat.getProbes();
+				var nProbe = probes.length;
+				
+				var data = [];
+				for( var app in obj){
+					var o = {};
+					if( isAppPath)
+						o[group.id] = app;
+					else
+						o[group.id] = MMTDrop.constants.getProtocolNameFromID( app );
+					
+					for( var i in args){
+						var oo = {};
+						var temp = 0;
+						for( var prob in obj[app] ){
+							temp = obj[app][prob][ args[i].id ];
+							oo[prob] = temp;
+						}
+						//asign to value if there is only one probe
+						if( nProbe == 1)
+							o[ args[i].id ] = temp;
+						else
+							o[ args[i].id ] = oo;
+					}
+					
+					data.push( o );
+				}
+				//columns to show. The first column is APP_PATH
+				var columns = [ group ];
+				
+				for( var i in args ){
+					if( nProbe == 1)
+						columns.push( args[i] );
+					else{
+						columns.push( {id: args[i].id, label: args[i].label, probes: probes } );
+					}
+				}
+				
+				return {data: data, columns: columns};
+			};
+			
 			return db;
 		},
 
@@ -1058,7 +1139,7 @@ MMTDrop.filterFactory = {
 				//update a list of probe IDs when database beeing available
 				//to speedup, data are splited into groupes having the same probeID
 
-				data       = db.stat.getProbes();
+				data       = db.stat.splitDataByProbe();
 
 				//get a list of probe IDs
 				var keys = Object.keys(data);
@@ -1104,7 +1185,7 @@ MMTDrop.filterFactory = {
 				//update a list of probe IDs when database beeing available
 				//get a list of probe IDs
 				//to speedup, data are splited into groupes having the same AppID
-				data = db.stat.getApps();
+				data = db.stat.splitDataByApp();
 				var keys = Object.keys(data);
 
 				data[0] = db.data();
@@ -1147,7 +1228,7 @@ MMTDrop.filterFactory = {
 				console.log("update list of Class when DB loaded");
 				//update a list of Category IDs when database beeing available
 				//to speedup, data are splited into groupes having the same ClasssID
-				data = db.stat.getClass();
+				data = db.stat.splitDataByClass();
 				var keys = Object.keys(data);
 
 				data[0] = db.data();
@@ -1737,33 +1818,10 @@ MMTDrop.chartFactory = {
 							var data = db.data();
 							var col = cols[0];
 							
-							var obj = MMTDrop.tools.sumByGroupAndSubgroup(data,
-									 [col.id],
-									 MMTDrop.constants.StatsColumn.APP_ID.id,
-									 MMTDrop.constants.StatsColumn.PROBE_ID.id
-							);
-							var arr     = [];
-							var header  = [];
-							var columns = [MMTDrop.constants.StatsColumn.APP_ID];
-							
-							for( var app in obj){
-								var oo = {};
-								oo[MMTDrop.constants.StatsColumn.APP_ID.id] = MMTDrop.constants.getProtocolNameFromID( app );
+							var obj = db.stat.getDataTableForChart( [col], false);
 								
-								for( var probe in obj[app] ){
-									oo[probe] = obj[app][probe][col.id];
-									
-									if( header.indexOf( probe )  == -1 ){
-										header.push( probe );
-										
-										columns.push( {id: probe, label: "Probe " + probe} );
-									}
-								}
-								arr.push( oo );
-							}
-							
-							
-							return {data: arr, columns: columns, ylabel: col.label};
+							obj.ylabel = col.label;
+							return obj;
 						} ,
 						getDataArgs: [
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
@@ -1862,25 +1920,16 @@ MMTDrop.chartFactory = {
 					getData : {
 						getDataFn: function (db, cols){
 							if( Array.isArray( cols ) == false){
-								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" )
+								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" );
 								cols = [ MMTDrop.constants.StatsColumn.DATA_VOLUME ];
 							}
 							var data = db.data();
-							var arr = [];
+							var col = cols[0];
 							
-							for( var i=0; i<cols.length; i++)
-								arr.push( cols[i].id );
-							
-							data = MMTDrop.tools.sumByGroup(data,
-									 arr,
-									 MMTDrop.constants.StatsColumn.APP_ID.id
-							);
-							data = db.stat.updateFriendlyAppName( data );
-
-							var columns = [MMTDrop.constants.StatsColumn.APP_ID];
-							columns = columns.concat( cols );
-							
-							return {data: data, columns: columns};
+							var obj = db.stat.getDataTableForChart( [col], false);
+								
+							obj.ylabel = col.label;
+							return obj;
 						} ,
 						getDataArgs: [
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
@@ -1894,18 +1943,41 @@ MMTDrop.chartFactory = {
 				//
 				var arrData = data;
 				var series = [];
-
+				
+				if( option.columns.length < 2 )
+					throw new Error( "  no columns to show in pie chart" );
+				
 				//init series from 1th column
-				for (var j=1; j<option.columns.length; j++)
-					series.push( {name: option.columns[j].label, data : [] } );
-
+				var nSeries = option.columns.length - 1;
+				
+				for (var j=1; j<option.columns.length; j++){
+					var x    = "50%";
+					var y    = "50%";
+					var size = "100%"
+					if( nSeries > 1){
+						size = "50%";
+						if( j % 2 == 1)
+							x = "20%";
+						else
+							x = "80%";
+					} 
+					series.push( {
+						name  : option.columns[j].label, 
+						data  : [],
+						center: [ x, y],
+						size  : size,
+						showInLegend: nSeries > 1 ? false : true
+					} );
+				}
+				
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
 
 					var name = msg[0];
 					//the first column is categorie, the next ones are series
-					for (var j=1; j<msg.length; j++)
+					for (var j=1; j<msg.length; j++){
 						series[j-1].data.push( {name: name, y: msg[j]} );
+					}
 				}
 
 				var chartOption = {
@@ -1936,7 +2008,7 @@ MMTDrop.chartFactory = {
 						},
 						tooltip : {
 							formatter : function() {
-								return '<b>' + this.point.name + '</b>: ' + this.y;
+								return '<b>' + this.series.name + '</b><br/> '+ this.point.name +' : ' + this.y + ' ('+ Highcharts.numberFormat(this.percentage, 2) + '%)';
 							}
 						},
 						plotOptions : {
@@ -1947,12 +2019,18 @@ MMTDrop.chartFactory = {
 								dataLabels : {
 									enabled : true,
 									formatter : function() {
-										return '<b>' + this.point.name + '</b>: ' + Highcharts.numberFormat(this.percentage, 2) + ' %';
+										//display only if larger than 1%
+										if( this.percentage > 1)
+											return '<b>' + this.point.name + '</b>: ' + Highcharts.numberFormat(this.percentage, 2) + ' %';
+										else 
+											return null;
 									}
 								},
-								showInLegend : true,
+								showInLegend : false,
 								events : {
 									click : function(event) {
+										console.log( this );
+										this.userOptions.showInLegend = true;
 									}
 								},
 							}
@@ -2052,7 +2130,7 @@ MMTDrop.chartFactory = {
 								for( var time in obj ){
 									var oo = {};
 									//the first column is timestamp
-									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt( time );
+									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = time ;
 									
 									for ( var probe in obj[time] ){
 										
@@ -2093,6 +2171,8 @@ MMTDrop.chartFactory = {
 				//render to elemID
 				//render to elemID
 				var arrData = data;
+				
+				//the first column is timestamp
 				for (var i=0; i<arrData.length; i++)
 					arrData[i][0] = parseInt(arrData[i][0]);
 
@@ -2113,7 +2193,7 @@ MMTDrop.chartFactory = {
 
 					//the first column is categorie, the next ones are series
 					for (var j=1; j<msg.length; j++){
-						series[j-1].data.push([ parseInt(msg[0]), msg[j] ]);
+						series[j-1].data.push([ msg[0], msg[j] ]);
 					}
 				}
 
@@ -2278,19 +2358,14 @@ MMTDrop.chartFactory = {
 			var _param = {
 					title: "",
 					getData : {
-						getDataFn: function (db){
-							var data = MMTDrop.tools.sumByGroup(db.data(),
-									[MMTDrop.constants.StatsColumn.PACKET_COUNT.id,
-									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id],
-									 MMTDrop.constants.StatsColumn.APP_PATH.id
-							);
-							return {data: data};
+						getDataFn: function (db, args){
+							if( Array.isArray( args) == false || args.length == 0 ){
+								args = [{id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"}];
+								console.log( "  use default arguments: " + JSON.stringify( args ) );
+							}
+							return db.stat.getDataTableForChart( args );
 						} ,
 					},
-					columns: [{id: MMTDrop.constants.StatsColumn.APP_PATH.id,     label: "Name"},
-						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
-						          {id: MMTDrop.constants.StatsColumn.DATA_VOLUME.id,  label: "Data"}
-						          ],
 			};
 
 			_param = MMTDrop.tools.mergeObjects( _param, param );
@@ -2320,15 +2395,50 @@ MMTDrop.chartFactory = {
 				var thead = $('<thead>');
 				var tr = $('<tr>');
 				var th;
+				
+				var isProbes = [];
+				
+				var th0 = null;
 				for (var i = 0; i < option.columns.length; i++) {
 					th = $('<th>', {
 						'text' : option.columns[i].label
 					});
+					if( i== 0 )
+						th0 = th;
+					
+					if( Array.isArray(option.columns[i].probes) ){
+						isProbes[i] = true;
+						th.attr('colspan',  option.columns[i].probes.length);
+					}else
+						isProbes[i] = false;
 					th.appendTo(tr);
 				}
-
+				
+				if( isProbes.length > 0 && th0 != null)
+					th0.attr("rowspan", 2);
+				
 				tr.appendTo(thead);
 				thead.appendTo(treetable);
+				
+				//sub header
+				if( isProbes.length > 0){
+					tr = $('<tr>');
+					
+					for (var i = 0; i < option.columns.length; i++) {
+						if( isProbes[i] ){
+							for( var j=0; j<option.columns[i].probes.length; j++ ){
+								th = $('<th>', {
+								'text' : "Probe " + option.columns[i].probes[j]
+								});
+							th.appendTo(tr);
+							}
+						}
+					}
+
+					tr.appendTo(thead);
+					thead.appendTo(treetable);
+				}
+				
 
 				//body of table
 				var tbody = $('<tbody>');
@@ -2379,7 +2489,8 @@ MMTDrop.chartFactory = {
 							'data-tt-parent-id' : parent
 						});
 
-					var row_name = $('<td>');
+					//first column
+					var row_name = $('<td style="cursor:pointer">');
 
 					var row_name_link = $('<a>', {
 						'text' : name
@@ -2389,11 +2500,27 @@ MMTDrop.chartFactory = {
 					row_name.appendTo(row_tr);
 
 					for (var j = 1; j < msg.length; j++) {
-						var cell = $('<td>', {
-							text : msg[j],
-							align: "right"
-						});
-						cell.appendTo(row_tr);
+						if( isProbes[j] == false){
+							var cell = $('<td>', {
+								text : msg[j],
+								align: "right"
+							});
+							cell.appendTo(row_tr);
+						}else{
+							for( var k=0; k<option.columns[j].probes.length; k++){
+								var prob = option.columns[j].probes[k];
+								var val  = msg[j][ prob ];
+								if( val == undefined )
+									val = 0;
+								
+								var cell = $('<td>', {
+									text : val,
+									align: "right"
+								});
+								cell.appendTo(row_tr);
+							}
+						}
+							
 					}
 					row_tr.appendTo(tbody);
 				}
@@ -2449,24 +2576,16 @@ MMTDrop.chartFactory = {
 					title: "",
 					getData : {
 						getDataFn: function (db){
-							var data = db.data();
-							data = MMTDrop.tools.sumByGroup(data,
-									[MMTDrop.constants.StatsColumn.PACKET_COUNT.id,
-									 MMTDrop.constants.StatsColumn.DATA_VOLUME.id,
-									 MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME.id,
-									 MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id],
-									 MMTDrop.constants.StatsColumn.APP_ID.id
-							);
-							data = db.stat.updateFriendlyAppName( data );
-							return {data: data};
-						}
-					},
-					columns  : [MMTDrop.constants.StatsColumn.APP_ID, 
-						            MMTDrop.constants.StatsColumn.PACKET_COUNT,
+							var args = [MMTDrop.constants.StatsColumn.PACKET_COUNT,
 						            MMTDrop.constants.StatsColumn.DATA_VOLUME,
 						            MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME,
-						            MMTDrop.constants.StatsColumn.ACTIVE_FLOWS
-						            ],
+						            MMTDrop.constants.StatsColumn.ACTIVE_FLOWS];
+							
+							var obj = db.stat.getDataTableForChart( args, false );
+
+							return obj;
+						}
+					},
 			};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
@@ -2474,53 +2593,135 @@ MMTDrop.chartFactory = {
 					//render function
 					function (elemID, option, data){
 				//render to elemID
-				var elem = $('#' + elemID);
 
 				//elem.html(JSON.stringify(data));
 				var arr = data;
 
-				var cnames = [];
-				for (var i = 0; i < option.columns.length; i++) {
-					cnames.push(
-							"<td>" + option.columns[i].label + "</td>");
-				}
+				//render to elemID
 
-				if (cnames.length == 0)
-					return;
-
-				var tblID = elemID + "_table_" + MMTDrop.tools.getUniqueNumber(); 
-
-				elem.html('<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="' + tblID + '"><thead><tr>' + cnames.join("") + '</tr></thead><tbody></tbody></table>');
-				$('#' + tblID).dataTable({
-					"data"      : arr,
+				var treetable = $('<table>', {
+					'id' : elemID + '_table',
+					'cellpadding' : 0,
+					'cellspacing' : 0,
+					'border'      : 0,
+					'class'       : "table table-striped table-bordered"
 				});
 
-				if (MMTDrop.tools.isFunction(option.dblclick)){
-					$('#' + elem + ' tbody tr').dblclick({
-						chart : this,
-						eid : $('#' + this.elemid + '_datatable').dataTable()
-					}, function(e) {
-						if (e.data.chart.dblclick) {
-							e.data.chart.dblclick($('td:eq(0)', this).html());
-						}
+				treetable.appendTo($('#' + elemID));
+
+
+				//header of table
+				var thead = $('<thead>');
+				var tr = $('<tr>');
+				var th;
+				
+				var isProbes = [];
+				
+				var th0 = null;
+				for (var i = 0; i < option.columns.length; i++) {
+					th = $('<th>', {
+						'text' : option.columns[i].label
 					});
+					if( i== 0 )
+						th0 = th;
+					
+					if( Array.isArray(option.columns[i].probes) ){
+						isProbes[i] = true;
+						th.attr('colspan',  option.columns[i].probes.length);
+					}else
+						isProbes[i] = false;
+					
+					th.appendTo(tr);
 				}
-				if (MMTDrop.tools.isFunction(option.click)){
-					$('#' + elem + ' tbody tr').click({
-						chart : this,
-						eid : $('#' + elem + '_datatable').dataTable()
-					}, function(e) {
-						if ($(this).hasClass('row_selected')) {
-							$(this).removeClass('row_selected');
-						} else {
-							e.data.eid.$('tr.row_selected').removeClass('row_selected');
-							$(this).addClass('row_selected');
+				
+				if( isProbes.length > 0 && th0 != null)
+					th0.attr("rowspan", 2);
+				
+				tr.appendTo(thead);
+				thead.appendTo(treetable);
+				
+				//sub header
+				if( isProbes.length > 0){
+					tr = $('<tr>');
+					
+					for (var i = 0; i < option.columns.length; i++) {
+						if( isProbes[i] ){
+							for( var j=0; j<option.columns[i].probes.length; j++ ){
+								th = $('<th>', {
+								'text' : "Probe " + option.columns[i].probes[j]
+								});
+							th.appendTo(tr);
+							}
 						}
-						if (e.data.chart.click) {
-							e.data.chart.click($('td:eq(0)', this).html());
-						}
+					}
+
+					tr.appendTo(thead);
+					thead.appendTo(treetable);
+				}
+				
+
+				//body of table
+				var tbody = $('<tbody>');
+
+				//copy data to an array of array
+				var arrData = data;
+
+				//sort by path, then by name
+				arrData.sort(function (a, b){
+					if (a[0].parent == b[0].parent )
+						return a[0].name > b[0].name ? 1: -1;
+
+						return a[0].path > b[0].path ? 1 : -1;
+				});
+
+				//add each element to a row
+				for (i in arrData) {
+					var msg = arrData[i];
+
+
+					//root
+					var row_tr = $('<tr>', {
 					});
+
+
+					//first column
+					var row_name = $('<td style="cursor:pointer">');
+
+					var row_name_link = $('<a>', {
+						'text' : msg[0]
+					});
+					row_name_link.appendTo(row_name);
+
+					row_name.appendTo(row_tr);
+
+					for (var j = 1; j < msg.length; j++) {
+						if( isProbes[j] == false){
+							var cell = $('<td>', {
+								text : msg[j],
+								align: "right"
+							});
+							cell.appendTo(row_tr);
+						}else{
+							for( var k=0; k<option.columns[j].probes.length; k++){
+								var prob = option.columns[j].probes[k];
+								var val  = msg[j][ prob ];
+								if( val == undefined )
+									val = 0;
+								
+								var cell = $('<td>', {
+									text : val,
+									align: "right"
+								});
+								cell.appendTo(row_tr);
+							}
+						}
+					}
+					row_tr.appendTo(tbody);
 				}
+
+				tbody.appendTo(treetable);
+				treetable.dataTable();
+				
 			});
 
 			chart.getIcon = function(){
