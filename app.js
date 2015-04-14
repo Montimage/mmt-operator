@@ -59,7 +59,7 @@ report_client.subscribe("rtp.flow.report");
 report_client.on('message', function(channel, message) {
 	message = mmtAdaptor.formatReportItem(JSON.parse(message));
 	//this is for test purpose only: to create two different probeID
-	message.probe = Math.round(Math.random()) + 10; //==> either 10 or 11
+	message.probe += Math.round(Math.random()); //==> either 0 or 1
 	dbconnector.addProtocolStats(message, function(err, msg) {
 	});
 });
@@ -232,14 +232,20 @@ io.sockets.on('connection', function(client) {
 	sub.subscribe("endperiod");
 
 	sub.on("pmessage", function(pattern, channel, message) {
-		message = mmtAdaptor.formatReportItem(JSON.parse(message));
-		client.emit('stats', message);
+		message = JSON.parse(message);
+		var msg = mmtAdaptor.formatReportItem(message);
+		client.emit('stats', msg);
+		
+		message[3] = message[3] * 1000;
+		client.emit('stats_raw', message );
 	});
 
 	sub.on("message", function(channel, message) {
 		if (channel === "endperiod") {
 			message = JSON.parse(message);
 			client.emit('period', message);
+			
+			
 		}
 	});
 

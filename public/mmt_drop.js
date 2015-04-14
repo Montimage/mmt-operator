@@ -488,7 +488,7 @@ MMTDrop.tools = function() {
 	 * @return {{string: Array.<Array>}}
 	 */
 	_this.sumByGroup = function(data, colsSum, colGroup){
-		_this.sumByGroups( data, colsSum, [colGroup]);
+		return _this.sumByGroups( data, colsSum, [colGroup]);
 	};
 	
 	_this.sumByGroups = function( data, colsToSum, colsToGroup){
@@ -521,7 +521,7 @@ MMTDrop.tools = function() {
 		if (colSubgroup == null)
 			throw new Error("Need one column tobe sub grouped");
 
-		_this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
+		return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
 	}
 
 	return _this;
@@ -541,13 +541,15 @@ MMTDrop.tools = function() {
  * @param {DatabaseProcessFn} [dataProcessingFn=null] - processing data  
  * @constructor
  */
-MMTDrop.Database = function(param, dataProcessingFn) {
+MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	//this an abstract class
 	//if (this.constructor === MMTDrop.Database){
 	//	throw new Error("Cannot instantiate abstract class MMTDrop.Database\n" +
 	//			"Try with MMTDrop.Database.Traffic/Flow/Raw or create a new one!");
 	//}
-
+	if( isAutoLoad ==undefined )
+		isAutoLoad = false;
+	
 	var _serverURL = MMTDrop.config.probeURL || "http://localhost:8088";
 	if (_serverURL.substring(_serverURL.length - 1, 1) === "/")
 		_serverURL += "traffic/data";
@@ -569,6 +571,9 @@ MMTDrop.Database = function(param, dataProcessingFn) {
 	 */
 	this.data = function( val ){
 		if (val == undefined){
+			if(isAutoLoad && _data.length == 0)
+				this.reload();
+			
 			return _data ;
 		}else{
 			//do something here
@@ -698,7 +703,7 @@ MMTDrop.databaseFactory = {
 		/**
 		 * Database for statistic of traffic (format = 99)
 		 */
-		createStatDB : function(param){
+		createStatDB : function(param, isAutoLoad){
 			//overwrite format to 99
 			param.format = 99;
 
@@ -712,7 +717,8 @@ MMTDrop.databaseFactory = {
 					arr[k] = MMTDrop.constants.getProtocolNameFromID(arr[k]);
 				}*/
 				return data;
-			});
+			}, 
+			isAutoLoad);
 
 			db.stat.updateFriendlyAppName = function( data ){
 				data = MMTDrop.tools.cloneData( data );
@@ -742,7 +748,16 @@ MMTDrop.databaseFactory = {
 				var keys = Object.key( obj );
 				return keys;
 			};
-
+			
+			/**
+			 * 
+			 */
+			db.stat.getAppClasses = function(){
+				var obj = db.stat.splitDataByClass();
+				var keys = Object.key( obj );
+				return keys;
+			};
+			
 			/**
 			 * Get categories in database
 			 */
@@ -830,7 +845,7 @@ MMTDrop.databaseFactory = {
 					}
 				}
 				
-				return {data: data, columns: columns};
+				return {data: data, columns: columns, probes: probes};
 			};
 			
 			return db;
@@ -856,8 +871,38 @@ MMTDrop.databaseFactory = {
 		 * @param param
 		 * @param callback is called each time data beeing available
 		 */
-		createRealtimeDB : function(param, callback){
-			//TODO
+		createRealtimeStatDB : function(param, isAutoLoad){
+			param.period = MMTDrop.constants.period.MINUTE;
+			
+			var db = MMTDrop.databaseFactory.createStatDB( param, isAutoLoad );
+			
+			var _callbacks = [];
+			var _socket    = null;
+			
+			db.onMessage = function( callback, userData ){
+				if(MMTDrop.tools.isFunction( callback ))
+					_callbacks.push( {callback: callback, data: userData} );
+				
+				if( _socket == null){
+					_socket = new io.connect(MMTDrop.config.probeURL);
+					
+					_socket.on("stats_raw", function( msg ){
+						//update database with new message
+						var data = db.data();
+						data.shift();
+						data.push( msg );
+						
+						//fire callbacks
+						for( var i=0; i<_callbacks.length; i++){
+							var fn = _callbacks[i];
+							fn.callback( msg, fn.data );
+						}
+							
+					});
+				}
+			};
+			
+		    return db;
 		}
 };
 
@@ -1439,6 +1484,79 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
  * @namespace
  */
 MMTDrop.reportFactory = {
+		createRealtimeReport : function(){
+			var db = MMTDrop.databaseFactory.createRealtimeStatDB({
+				//probe : [10]
+			}, true);
+			
+			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
+			
+			var cLine = MMTDrop.chartFactory.createTimeline({
+				getData: {
+					getDataArgs : function(){
+						return [fMetric.selectedOption()];
+					}
+				}});
+			
+			db.onMessage( function( msg ){
+				console.log( msg );
+				var chart = cLine.chart;
+				if( chart == undefined )
+					return;
+				var series = chart.series;
+				
+				console.log( chart.series[0].name );
+				var prob = msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
+				prob = "Probe " + prob;
+				
+				var app  = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ];
+				app = MMTDrop.constants.getProtocolNameFromID( app );
+				
+				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
+				
+				var val  = msg[ fMetric.selectedOption().id ];
+				
+				
+				for( var i in series ){
+					var serie = series[i];
+					
+					//list of app
+					if( serie.name === app){
+						serie.addPoint([time, val], true, true);
+						console.log( "add to app ");
+					}
+					else //list of prob 
+						if( serie.name === prob){
+							console.log( "add to probe ");
+							serie.addPoint([time, val], true, true);
+						}
+				}
+			});
+			
+			var report = new MMTDrop.Report(
+					//title
+					"Dashboard",
+
+					//database
+					db,
+
+					//filers
+					[fProbe, fMetric],
+
+					//charts
+					[
+					 {charts: [cLine], width: 12},
+					 ],
+
+					 //order of data flux
+					 [{object: fProbe, 
+						         effect:[ {object: fMetric, effect: [{object: cLine, effect:[]} ]}]}]
+					   
+			);
+			return report;
+		},
+		
 		createCategoryReport : function(){
 
 			var database = MMTDrop.databaseFactory.createStatDB({
@@ -1657,6 +1775,7 @@ MMTDrop.Chart = function(option, renderFn){
 			_data = MMTDrop.tools.cloneData( _data );
 	};
 	
+	
 	/**
 	 * Set option property of the chart
 	 * @param {ChartOption} val - a new option will merge with the current option 
@@ -1723,7 +1842,7 @@ MMTDrop.Chart = function(option, renderFn){
 				console.log( "   no data");
 			}
 			
-			renderFn(_elemID, opt, data);
+			this.chart = renderFn(_elemID, opt, data);
 
 		}else
 			throw new Error ("No render function is defined");
@@ -1819,9 +1938,10 @@ MMTDrop.chartFactory = {
 							var col = cols[0];
 							
 							var obj = db.stat.getDataTableForChart( [col], false);
-								
+							
 							obj.ylabel = col.label;
 							return obj;
+							
 						} ,
 						getDataArgs: [
 						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
@@ -1833,25 +1953,63 @@ MMTDrop.chartFactory = {
 			var chart = new MMTDrop.Chart( _param,
 					
 					function (elemID, option, data){
-				//render to elemID
-				//elem.html(JSON.stringify(data));
-				//prepare & copy data to an array of array
-				var arrData = data;
+				//flat data: retain the first columns
+				//the next ones are of each probe
+				//get list of probes
+				var probes = [];
+				for( var i in option.columns){
+					if( Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 1)
+						for( var j=0; j<option.columns[i].probes.length; j++){
+							var prob = option.columns[i].probes[j];
+							if( probes.indexOf( prob ) == -1)
+								probes.push( prob );
+						}
+				}
+				
+				var columns = option.columns;
+				var arrData     = data;
+				
+				if( probes.length > 1){
+					columns = [];
+					columns.push( option.columns[0]  );
+					for( var i in probes)
+						columns.push( {label: "Probe " + probes[i]} );
 
+					arrData = [];
+					for( var i in data){
+						var msg = data[i];
+						var arr = [];
+						arr.push( msg[ 0 ] );
 
-				var ylabel = (option.columns.length == 2) ? option.columns[1].label : option.ylabel;
+						var oo = msg[ 1 ];
+						for( var j in probes){
+							var probe = probes[j];
+							if( probe in oo)
+								arr.push( oo[probe] );
+							else
+								arr.push( 0 );
+						}
+
+						arrData.push( arr );
+					}
+				}
+				
+				
+				
+				var ylabel = (columns.length == 2) ? columns[1].label : option.ylabel;
 				var categories = [];
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<option.columns.length; j++)
-					series.push( {name:option.columns[j].label, data : [] } );
+				for (var j=1; j<columns.length; j++)
+					series.push( {name:columns[j].label, data : [] } );
 
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
 
 					//the first column is categorie, the next ones are series
 					categories.push( msg[0] );
+					
 					for (var j=1; j<msg.length; j++)
 						series[j-1].data.push( msg[j] );
 				}
@@ -1888,7 +2046,12 @@ MMTDrop.chartFactory = {
 						},
 						legend: {
 							enabled: (series.length > 1)
-						},            
+						},
+						tooltip : {
+							formatter : function() {
+								return '<span style="font-size: 10px">' +this.series.name + '</span><br/> \u25CF '+ this.key +' : ' + this.y ;
+							},
+						},
 						xAxis : {
 							categories : categories
 						},
@@ -1897,10 +2060,18 @@ MMTDrop.chartFactory = {
 								text : ylabel
 							}
 						},
+						plotOptions:{
+							bar:{
+								events : {
+									click : option.click,
+								},
+							},
+						},
 						series : series
 				};
 
 				var hightchart = new Highcharts.Chart(chartOption);
+				return hightchart;
 			});
 
 			chart.getIcon = function(){
@@ -1941,19 +2112,61 @@ MMTDrop.chartFactory = {
 			var chart = new MMTDrop.Chart( _param, 
 					function (elemID, option, data){
 				//
-				var arrData = data;
+
+				//flat data: retain the first columns
+				//the next ones are of each probe
+				//get list of probes
+				var probes = [];
+				for( var i in option.columns){
+					if( Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 1)
+						for( var j=0; j<option.columns[i].probes.length; j++){
+							var prob = option.columns[i].probes[j];
+							if( probes.indexOf( prob ) == -1)
+								probes.push( prob );
+						}
+				}
+				
+				var columns = option.columns;
+				var arrData     = data;
+				
+				if( probes.length > 1){
+					columns = [];
+					columns.push( option.columns[0]  );
+					for( var i in probes)
+						columns.push( {label: "Probe " + probes[i]} );
+
+					arrData = [];
+					for( var i in data){
+						var msg = data[i];
+						var arr = [];
+						arr.push( msg[ 0 ] );
+
+						var oo = msg[ 1 ];
+						for( var j in probes){
+							var probe = probes[j];
+							if( probe in oo)
+								arr.push( oo[probe] );
+							else
+								arr.push( 0 );
+						}
+
+						arrData.push( arr );
+					}
+				}
+				
 				var series = [];
 				
-				if( option.columns.length < 2 )
+				if( columns.length < 2 )
 					throw new Error( "  no columns to show in pie chart" );
 				
 				//init series from 1th column
-				var nSeries = option.columns.length - 1;
+				var nSeries = columns.length - 1;
 				
-				for (var j=1; j<option.columns.length; j++){
+				for (var j=1; j<columns.length; j++){
 					var x    = "50%";
 					var y    = "50%";
-					var size = "100%"
+					var size = "100%";
+					
 					if( nSeries > 1){
 						size = "50%";
 						if( j % 2 == 1)
@@ -1962,13 +2175,19 @@ MMTDrop.chartFactory = {
 							x = "80%";
 					} 
 					series.push( {
-						name  : option.columns[j].label, 
+						name  : columns[j].label, 
 						data  : [],
 						center: [ x, y],
 						size  : size,
 						showInLegend: nSeries > 1 ? false : true
 					} );
 				}
+				var colors = Highcharts.getOptions().colors;
+				for(var i=0; i<colors.length; i++)
+					if( colors[i] == "#fff"){
+						colors.slice(i);
+						break;
+					}
 				
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
@@ -1976,7 +2195,7 @@ MMTDrop.chartFactory = {
 					var name = msg[0];
 					//the first column is categorie, the next ones are series
 					for (var j=1; j<msg.length; j++){
-						series[j-1].data.push( {name: name, y: msg[j]} );
+						series[j-1].data.push( {name: name, y: msg[j],  seriesSize: nSeries} );
 					}
 				}
 
@@ -2007,20 +2226,19 @@ MMTDrop.chartFactory = {
 							}    
 						},
 						tooltip : {
-							formatter : function() {
-								return '<b>' + this.series.name + '</b><br/> '+ this.point.name +' : ' + this.y + ' ('+ Highcharts.numberFormat(this.percentage, 2) + '%)';
-							}
+							headerFormat: '<span style="font-size: 10px">{series.name}</span><br/>',
+							pointFormat:  '\u25CF {point.name}: {point.y}',
 						},
 						plotOptions : {
 							pie : {
 								//startAngle : 270,
 								allowPointSelect : true,
-								cursor : 'pointer',
-								dataLabels : {
-									enabled : true,
+								cursor           : 'pointer',
+								dataLabels       : {
+									enabled   : true,
 									formatter : function() {
-										//display only if larger than 1%
-										if( this.percentage > 1)
+										//display only if larger than 1% or there is only one serie
+										if( this.percentage > 1 || this.point.seriesSize == 1)
 											return '<b>' + this.point.name + '</b>: ' + Highcharts.numberFormat(this.percentage, 2) + ' %';
 										else 
 											return null;
@@ -2028,20 +2246,18 @@ MMTDrop.chartFactory = {
 								},
 								showInLegend : false,
 								events : {
-									click : function(event) {
-										console.log( this );
-										this.userOptions.showInLegend = true;
-									}
+									click : option.click,
 								},
 							}
 						},
 						title : {
-							text : ""
+							text : null
 						},
 						series : series
 				};
 
 				var hightChart = new Highcharts.Chart(chartOption);
+				return hightChart;
 			});
 
 			chart.getIcon = function(){
@@ -2100,12 +2316,12 @@ MMTDrop.chartFactory = {
 							//If there are more than 5 apps 
 							// ==> show a line of total for each probe
 							//       install of showing a line for each app of each probe
-							if( noApp * noProbe > 15){
+							if( noApp * noProbe > 15 && noProbe > 1){
 								//the next columns are probes
 								for( var time in obj){
 									var oo = {};
 									//the first column is timestamp
-									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt( time );
+									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = time;
 									
 									for( var probe in obj[time] ){
 										
@@ -2168,9 +2384,47 @@ MMTDrop.chartFactory = {
 			var chart = new MMTDrop.Chart( _param,
 					function (elemID, option, data){
 
-				//render to elemID
-				//render to elemID
-				var arrData = data;
+				//flat data: retain the first columns
+				//the next ones are of each probe
+				//get list of probes
+				var probes = [];
+				for( var i in option.columns){
+					if( Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 1)
+						for( var j=0; j<option.columns[i].probes.length; j++){
+							var prob = option.columns[i].probes[j];
+							if( probes.indexOf( prob ) == -1)
+								probes.push( prob );
+						}
+				}
+				
+				var columns = option.columns;
+				var arrData     = data;
+				
+				if( probes.length > 1){
+					columns = [];
+					columns.push( option.columns[0]  );
+					for( var i in probes)
+						columns.push( {label: "Probe " + probes[i]} );
+
+					arrData = [];
+					for( var i in data){
+						var msg = data[i];
+						var arr = [];
+						arr.push( msg[ 0 ] );
+
+						var oo = msg[ 1 ];
+						for( var j in probes){
+							var probe = probes[j];
+							if( probe in oo)
+								arr.push( oo[probe] );
+							else
+								arr.push( 0 );
+						}
+
+						arrData.push( arr );
+					}
+				}
+				
 				
 				//the first column is timestamp
 				for (var i=0; i<arrData.length; i++)
@@ -2185,8 +2439,8 @@ MMTDrop.chartFactory = {
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<option.columns.length; j++)
-					series.push( {name:option.columns[j].label, data : [] } );
+				for (var j=1; j<columns.length; j++)
+					series.push( {name:columns[j].label, data : [] } );
 
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
@@ -2231,12 +2485,12 @@ MMTDrop.chartFactory = {
 						},
 						yAxis : {
 							title : {
-								text : ylabel
+								text : ylabel,
 							},
-							min : 0
+							min : 0,
 						},
 						title : {
-							text : ""
+							text : "",
 						},
 						tooltip: {
 							shared: true,
@@ -2248,14 +2502,14 @@ MMTDrop.chartFactory = {
 									states: {
 										hover: {
 											enabled: true,
-											lineColor: 'rgb(100,100,100)'
+											lineColor: 'rgb(100,100,100)',
 										}
 									}
 								},
 								states: {
 									hover: {
 										marker: {
-											enabled: false
+											enabled: false,
 										}
 									}
 								},
@@ -2263,7 +2517,10 @@ MMTDrop.chartFactory = {
 									headerFormat: '<b>{series.name}</b><br>',
 									pointFormat: '{point.y}',
 									crosshairs: [false, true],
-								}
+								},
+								events : {
+									click : option.click,
+								},
 							},
 							areaspline: {
 								lineWidth: 2,
@@ -2277,6 +2534,9 @@ MMTDrop.chartFactory = {
 									}
 								},
 								stacking: 'normal',
+								events : {
+									click : option.click,
+								},
 							},
 							area: {
 								lineWidth: 2,
@@ -2290,6 +2550,9 @@ MMTDrop.chartFactory = {
 									}
 								},
 								stacking: 'normal',
+								events : {
+									click : option.click,
+								},
 							},
 							spline: {
 								lineWidth: 2,
@@ -2302,6 +2565,9 @@ MMTDrop.chartFactory = {
 										lineWidth: 2 
 									}
 								},
+								events : {
+									click : option.click,
+								},
 							},
 							line: {
 								lineWidth: 2,
@@ -2313,13 +2579,17 @@ MMTDrop.chartFactory = {
 									hover: {
 										lineWidth: 2
 									}
-								},                    
+								},
+								events : {
+									click : option.click,
+								},      
 							},
 						},
 						series : series 
 				};
 
-				var highChart = new Highcharts.Chart(chartOption);
+				var hightChart = new Highcharts.Chart(chartOption);
+				return hightChart;
 			});
 
 			chart.getIcon = function(){
@@ -2381,14 +2651,14 @@ MMTDrop.chartFactory = {
 
 				treeWrapper.appendTo($('#' + elemID));
 
-				var treetable = $('<table>', {
+				var table = $('<table>', {
 					'id' : elemID + '_treetable',
 					'cellpadding' : 0,
 					'cellspacing' : 0,
 					'border'      : 0
 				});
 
-				treetable.appendTo(treeWrapper);
+				table.appendTo(treeWrapper);
 
 
 				//header of table
@@ -2396,7 +2666,7 @@ MMTDrop.chartFactory = {
 				var tr = $('<tr>');
 				var th;
 				
-				var isProbes = [];
+				var isMultiProbes = false;
 				
 				var th0 = null;
 				for (var i = 0; i < option.columns.length; i++) {
@@ -2406,26 +2676,28 @@ MMTDrop.chartFactory = {
 					if( i== 0 )
 						th0 = th;
 					
-					if( Array.isArray(option.columns[i].probes) ){
-						isProbes[i] = true;
+					option.columns[i].isMultiProbes = Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 0
+					
+					if( option.columns[i].isMultiProbes ){
 						th.attr('colspan',  option.columns[i].probes.length);
-					}else
-						isProbes[i] = false;
+						isMultiProbes = true;
+					}
+					
 					th.appendTo(tr);
 				}
 				
-				if( isProbes.length > 0 && th0 != null)
+				if( isMultiProbes > 0 && th0 != null)
 					th0.attr("rowspan", 2);
 				
 				tr.appendTo(thead);
-				thead.appendTo(treetable);
+				thead.appendTo(table);
 				
 				//sub header
-				if( isProbes.length > 0){
+				if( isMultiProbes > 0){
 					tr = $('<tr>');
 					
 					for (var i = 0; i < option.columns.length; i++) {
-						if( isProbes[i] ){
+						if( option.columns[i].isMultiProbes ){
 							for( var j=0; j<option.columns[i].probes.length; j++ ){
 								th = $('<th>', {
 								'text' : "Probe " + option.columns[i].probes[j]
@@ -2436,7 +2708,7 @@ MMTDrop.chartFactory = {
 					}
 
 					tr.appendTo(thead);
-					thead.appendTo(treetable);
+					thead.appendTo(table);
 				}
 				
 
@@ -2500,7 +2772,7 @@ MMTDrop.chartFactory = {
 					row_name.appendTo(row_tr);
 
 					for (var j = 1; j < msg.length; j++) {
-						if( isProbes[j] == false){
+						if( option.columns[j].isMultiProbes == false){
 							var cell = $('<td>', {
 								text : msg[j],
 								align: "right"
@@ -2525,10 +2797,10 @@ MMTDrop.chartFactory = {
 					row_tr.appendTo(tbody);
 				}
 
-				tbody.appendTo(treetable);
+				tbody.appendTo(table);
 
 				//convert table to tree
-				treetable.treetable({
+				table.treetable({
 					expandable        : true, 
 					initialState      : "expanded",
 					clickableNodeNames: true
@@ -2542,20 +2814,17 @@ MMTDrop.chartFactory = {
 					// Highlight selected row, if it was hightlight => un hightlight it
 					$(this).toggleClass("selected");
 
-					var selection = [];
-					$(".selected").each(function(){
-						selection.push( String( $(this).data("ttId")) );
-					});
 
 					//if user regist to handle click event ==> give him the control
 					if (option.click) {
-						ev = {data: {chart: e.data.chart, path: selection}};
-						e.data.click(ev);
+						option.click( this );
 					}
 				});
 
 				//click in the first 'tr' of the tree element
 				$("#" + elemID + "_treetable tbody tr:first").trigger("click");
+				
+				return table;
 			});
 
 			chart.getIcon = function(){
@@ -2599,7 +2868,7 @@ MMTDrop.chartFactory = {
 
 				//render to elemID
 
-				var treetable = $('<table>', {
+				var table = $('<table>', {
 					'id' : elemID + '_table',
 					'cellpadding' : 0,
 					'cellspacing' : 0,
@@ -2607,7 +2876,7 @@ MMTDrop.chartFactory = {
 					'class'       : "table table-striped table-bordered"
 				});
 
-				treetable.appendTo($('#' + elemID));
+				table.appendTo($('#' + elemID));
 
 
 				//header of table
@@ -2615,7 +2884,7 @@ MMTDrop.chartFactory = {
 				var tr = $('<tr>');
 				var th;
 				
-				var isProbes = [];
+				var isMultiProbes = false;
 				
 				var th0 = null;
 				for (var i = 0; i < option.columns.length; i++) {
@@ -2624,28 +2893,28 @@ MMTDrop.chartFactory = {
 					});
 					if( i== 0 )
 						th0 = th;
-					
-					if( Array.isArray(option.columns[i].probes) ){
-						isProbes[i] = true;
+					option.columns[i].isMultiProbes = Array.isArray(option.columns[i].probes) &&
+														option.columns[i].probes.length > 0;
+					if( option.columns[i].isMultiProbes ){
+						isMultiProbes = true;
 						th.attr('colspan',  option.columns[i].probes.length);
-					}else
-						isProbes[i] = false;
+					}
 					
 					th.appendTo(tr);
 				}
 				
-				if( isProbes.length > 0 && th0 != null)
+				if( isMultiProbes > 0 && th0 != null)
 					th0.attr("rowspan", 2);
 				
 				tr.appendTo(thead);
-				thead.appendTo(treetable);
+				thead.appendTo(table);
 				
 				//sub header
-				if( isProbes.length > 0){
+				if( isMultiProbes > 0){
 					tr = $('<tr>');
 					
 					for (var i = 0; i < option.columns.length; i++) {
-						if( isProbes[i] ){
+						if( option.columns[i].isMultiProbes ){
 							for( var j=0; j<option.columns[i].probes.length; j++ ){
 								th = $('<th>', {
 								'text' : "Probe " + option.columns[i].probes[j]
@@ -2656,7 +2925,7 @@ MMTDrop.chartFactory = {
 					}
 
 					tr.appendTo(thead);
-					thead.appendTo(treetable);
+					thead.appendTo(table);
 				}
 				
 
@@ -2675,7 +2944,7 @@ MMTDrop.chartFactory = {
 				});
 
 				//add each element to a row
-				for (i in arrData) {
+				for (var i in arrData) {
 					var msg = arrData[i];
 
 
@@ -2695,7 +2964,7 @@ MMTDrop.chartFactory = {
 					row_name.appendTo(row_tr);
 
 					for (var j = 1; j < msg.length; j++) {
-						if( isProbes[j] == false){
+						if( option.columns[j].isMultiProbes == false){
 							var cell = $('<td>', {
 								text : msg[j],
 								align: "right"
@@ -2719,9 +2988,25 @@ MMTDrop.chartFactory = {
 					row_tr.appendTo(tbody);
 				}
 
-				tbody.appendTo(treetable);
-				treetable.dataTable();
+				tbody.appendTo(table);
+				table.dataTable();
 				
+				
+				//when user click on a row
+				$("#" + elemID + "_table tbody tr").click({
+					chart : this
+				}, function(e) {
+					//note:  this = selected row
+					// Highlight selected row, if it was hightlight => un hightlight it
+					$(this).toggleClass("active");
+					
+					//if user regist to handle click event ==> give him the control
+					if (option.click) {
+						option.click( this );
+					}
+				});
+				
+				return table;
 			});
 
 			chart.getIcon = function(){
@@ -2731,9 +3016,8 @@ MMTDrop.chartFactory = {
 		},
 };
 
-
 /**
- * 
+ * An object with id and label
  * @typedef {Object} Index
  * @property {(number|string)} id
  * @property {string} label
