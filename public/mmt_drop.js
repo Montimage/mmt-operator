@@ -1499,7 +1499,14 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
-			db.onMessage( function( msg ){
+			var timer = null;
+			var _initTimer = function(){
+				timer = setTimeout( function(){
+					
+				})
+			}
+			
+			var _appendMsg = function( msg ){
 				console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
@@ -1543,6 +1550,20 @@ MMTDrop.reportFactory = {
 				if( isInSerie == false){
 					
 				}
+			};
+			
+			
+			var dumMsg = function(){
+				var arr = [];
+				var stat= MMTDrop.constants.StatsColumn;
+				for( var i in stat)
+					arr.push(0);
+			}();
+			
+			
+			
+			db.onMessage( function( msg ){
+				_appendMsg( msg );
 			});
 			
 			var report = new MMTDrop.Report(
