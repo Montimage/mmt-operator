@@ -1508,15 +1508,17 @@ MMTDrop.reportFactory = {
 				
 				console.log( chart.series[0].name );
 				var prob = msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
-				prob = "Probe " + prob;
 				
 				var app  = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ];
 				app = MMTDrop.constants.getProtocolNameFromID( app );
+				
+				
 				
 				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
 				
 				var val  = msg[ fMetric.selectedOption().id ];
 				
+				var isInSerie = false;
 				
 				for( var i in series ){
 					var serie = series[i];
@@ -1524,13 +1526,22 @@ MMTDrop.reportFactory = {
 					//list of app
 					if( serie.name === app){
 						serie.addPoint([time, val], true, true);
+						isInSerie = true;
 						console.log( "add to app ");
 					}
 					else //list of prob 
 						if( serie.name === prob){
 							console.log( "add to probe ");
 							serie.addPoint([time, val], true, true);
+							isInSerie = true;
 						}
+						else
+							serie.addPoint([time, 0], true, true);
+				}
+				
+				//new serie will be added
+				if( isInSerie == false){
+					
 				}
 			});
 			
@@ -1630,7 +1641,7 @@ MMTDrop.reportFactory = {
 					//charts
 					[
 					 {charts: [cTree], width: 4},
-					 {charts: [cTable, cBar, cLine, cPie], width: 8},
+					 {charts: [cPie, cTable, cBar, cLine, cPie], width: 8},
 					 ],
 
 					 //order of data flux
@@ -1690,7 +1701,7 @@ MMTDrop.reportFactory = {
 
 					//charts
 					[
-					 {charts: [ cLine, cTable, cBar, cPie], width: 12},
+					 {charts: [cPie, cLine, cTable, cBar], width: 12},
 					 ],
 
 					 //order of data flux
@@ -1729,7 +1740,7 @@ MMTDrop.Chart = function(option, renderFn){
 	var _elemID = null;
 	var _this   = this;
 	var _database  = null;
-	var _data      = null; 	//that is a copy of _database.data() at the moment of executing this.attachTo
+	var _data      = []; 	//that is a copy of _database.data() at the moment of executing this.attachTo
 	var _isCopyData= false; //whether _database.data() is copied to _data
 	var _isVisible = true;
 
@@ -1768,7 +1779,7 @@ MMTDrop.Chart = function(option, renderFn){
 			return;
 
 		_database = db;
-		_data = db.data();
+		_data     = db.data();
 		
 		_isCopyData = isCloneData == undefined ? true: false;
 		if( _isCopyData )
@@ -1827,22 +1838,18 @@ MMTDrop.Chart = function(option, renderFn){
 
 		if (MMTDrop.tools.isFunction(renderFn)){
 
-			//clone option
-			var opt = MMTDrop.tools.mergeObjects( {}, _option );
-			
 			//opt can be changed in this function
-			var data = _prepareData( opt, _data, _database );
+			var data = _prepareData( _option, _data, _database );
 			
-			if( opt.columns.length == 0){
-				console.log("   no columns to render" );
-				return;
+			if( _option.columns.length == 0){
+				throw new Error("   no columns to render" );
 			}
 			
 			if( data.length == 0){
 				console.log( "   no data");
 			}
 			
-			this.chart = renderFn(_elemID, opt, data);
+			this.chart = renderFn(_elemID, _option, data);
 
 		}else
 			throw new Error ("No render function is defined");
@@ -2162,38 +2169,42 @@ MMTDrop.chartFactory = {
 				//init series from 1th column
 				var nSeries = columns.length - 1;
 				
+				var nRow   =  Math.ceil(nSeries / 2);//two columns
+				var height = 90 / nRow;
+				var space  = 10 / nRow;
+				
 				for (var j=1; j<columns.length; j++){
 					var x    = "50%";
 					var y    = "50%";
-					var size = "100%";
+					var size = height/2 + "%";
+					var row  = Math.ceil(j/2);
+					y = row*(height + space) - height/2 + "%";
 					
 					if( nSeries > 1){
-						size = "50%";
 						if( j % 2 == 1)
 							x = "20%";
 						else
 							x = "80%";
-					} 
-					series.push( {
-						name  : columns[j].label, 
-						data  : [],
-						center: [ x, y],
-						size  : size,
-						showInLegend: nSeries > 1 ? false : true
-					} );
-				}
-				var colors = Highcharts.getOptions().colors;
-				for(var i=0; i<colors.length; i++)
-					if( colors[i] == "#fff"){
-						colors.slice(i);
-						break;
 					}
+					
+					
+					var serie = {
+							name  : columns[j].label, 
+							data  : [],
+							center: [ x, y],
+							size  : size,
+							showInLegend: j > 1 ? false : true,
+						} ;
+					
+					series.push( serie );
+				}
 				
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
 
 					var name = msg[0];
 					//the first column is categorie, the next ones are series
+					//seriesSize is used in plotOptions
 					for (var j=1; j<msg.length; j++){
 						series[j-1].data.push( {name: name, y: msg[j],  seriesSize: nSeries} );
 					}
@@ -2206,7 +2217,7 @@ MMTDrop.chartFactory = {
 							borderWidth : 1,
 							type        : 'pie',
 							spacingTop  : 30,
-							spacingRight: 30 
+							spacingRight: 30,
 						},
 						navigation:{
 							buttonOptions: {
@@ -2223,7 +2234,7 @@ MMTDrop.chartFactory = {
 								x    : -40,
 								verticalAlign: 'top',
 								y    : 20                              
-							}    
+							}
 						},
 						tooltip : {
 							headerFormat: '<span style="font-size: 10px">{series.name}</span><br/>',
@@ -2231,23 +2242,42 @@ MMTDrop.chartFactory = {
 						},
 						plotOptions : {
 							pie : {
-								//startAngle : 270,
+								startAngle : 0,
 								allowPointSelect : true,
 								cursor           : 'pointer',
+								slicedOffset     : 20,
 								dataLabels       : {
 									enabled   : true,
 									formatter : function() {
 										//display only if larger than 1% or there is only one serie
-										if( this.percentage > 1 || this.point.seriesSize == 1)
+										if( this.percentage > 1  || this.point.seriesSize == 1 || this.series.data.length <= 10)
 											return '<b>' + this.point.name + '</b>: ' + Highcharts.numberFormat(this.percentage, 2) + ' %';
 										else 
 											return null;
 									}
 								},
-								showInLegend : false,
 								events : {
 									click : option.click,
 								},
+								point: {
+									events:{
+										//click on legend item ==> hide pies of all series
+										legendItemClick : function( e ){
+											var isVisible = !this.visible;
+											var name      = this.name;
+											var series    = this.series.chart.series;
+											
+											for( var i=0; i<series.length; i++){
+												var data = series[i].data;
+												for( var j=0; j<data.length; j++)
+													if( data[j].name === name){
+														data[j].setVisible( isVisible );
+													}
+											}
+											return false;
+										}
+									}
+								}
 							}
 						},
 						title : {
@@ -2255,8 +2285,47 @@ MMTDrop.chartFactory = {
 						},
 						series : series
 				};
-
+				
+				/**
+			     * Highcharts plugin for raising up the pies corresponding the one that is hovered in the legend
+			     */
+			        Highcharts.wrap(Highcharts.Legend.prototype, 'renderItem', function (proceed, item) {
+			            
+			            proceed.call(this, item);
+			            
+			            var element = item.legendGroup.element;
+			            var series = this.chart.series;
+			            
+			            //raise up
+			            element.onmouseover = function () {
+							for( var i=0; i<series.length; i++){
+								var data = series[i].data;
+								for( var j=0; j<data.length; j++)
+									if( data[j].name === item.name){
+										data[j].sliced = true;
+										data[j].graphic.animate(data[j].slicedTranslation);
+									}
+							}
+			            };
+			            
+			            element.onmouseout = function () {
+							for( var i=0; i<series.length; i++){
+								var data = series[i].data;
+								for( var j=0; j<data.length; j++)
+									if( data[j].name === item.name){
+										data[j].sliced = false;
+										data[j].graphic.animate({
+							                translateX: 0,
+							                translateY: 0
+							            });
+									}
+							}
+			            } ; 
+			        });
+			    
+			    
 				var hightChart = new Highcharts.Chart(chartOption);
+		        		
 				return hightChart;
 			});
 
