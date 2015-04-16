@@ -608,6 +608,37 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		}
 	};
 
+	
+	var _callbacks = [];
+	var _socket    = null;
+	
+	/**
+	 * When receiving a new message in realtime
+	 * @param callback
+	 * @param userData
+	 */
+	this.onMessage = function( callback, userData ){
+		if(MMTDrop.tools.isFunction( callback ))
+			_callbacks.push( {callback: callback, data: userData} );
+		
+		if( _socket == null){
+			_socket = new io.connect(MMTDrop.config.probeURL);
+			
+			_socket.on("stats_raw", function( msg ){
+				//update database with new message
+				//_originalData.shift();
+				_originalData.push( msg );
+				
+				//fire callbacks
+				for( var i=0; i<_callbacks.length; i++){
+					var fn = _callbacks[i];
+					fn.callback( msg, fn.data );
+				}
+					
+			});
+		}
+	};
+	
 	this.stat = function(){
 		var stat = {};
 
@@ -627,6 +658,26 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 			var obj = MMTDrop.tools.splitData( _this.data(), 
 					MMTDrop.constants.StatsColumn.PROBE_ID.id);
 			return Object.keys( obj );
+		};
+		
+		stat.filter = function( criteria ){
+			var arr = [];
+			var data = _this.data();
+			for( var i in data){
+				var msg = data[i];
+				var satisfy = true;
+				for( var j in criteria){
+					var c = criteria[j];
+					var val = msg[c.id];
+					if( c.data.indexOf( val ) == -1){
+						satisfy = false;
+						break;
+					}
+				}
+				if( satisfy )
+					arr.push( msg );
+			}
+			return arr;
 		};
 		
 		return stat;
@@ -706,8 +757,9 @@ MMTDrop.databaseFactory = {
 		createStatDB : function(param, isAutoLoad){
 			//overwrite format to 99
 			param.format = 99;
-
+			
 			var db = new MMTDrop.Database(param, function (data){
+				
 				//how data is processed for stat
 				/*
 				var k = MMTDrop.constants.StatsColumn.APP_ID.id;
@@ -864,46 +916,6 @@ MMTDrop.databaseFactory = {
 				return data;
 			});
 		},
-
-
-		/**
-		 * Get data from MMT-Operator in realtime.
-		 * @param param
-		 * @param callback is called each time data beeing available
-		 */
-		createRealtimeStatDB : function(param, isAutoLoad){
-			param.period = MMTDrop.constants.period.MINUTE;
-			
-			var db = MMTDrop.databaseFactory.createStatDB( param, isAutoLoad );
-			
-			var _callbacks = [];
-			var _socket    = null;
-			
-			db.onMessage = function( callback, userData ){
-				if(MMTDrop.tools.isFunction( callback ))
-					_callbacks.push( {callback: callback, data: userData} );
-				
-				if( _socket == null){
-					_socket = new io.connect(MMTDrop.config.probeURL);
-					
-					_socket.on("stats_raw", function( msg ){
-						//update database with new message
-						var data = db.data();
-						data.shift();
-						data.push( msg );
-						
-						//fire callbacks
-						for( var i=0; i<_callbacks.length; i++){
-							var fn = _callbacks[i];
-							fn.callback( msg, fn.data );
-						}
-							
-					});
-				}
-			};
-			
-		    return db;
-		}
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -1427,6 +1439,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 					btn.appendTo(btngroup);
 
 					btn.click({chart: j, group: i}, function (e){
+						event.preventDefault();
 						var charts = groupCharts[e.data.group].charts;
 						//inactive the older chart in the group
 						for (var k in charts){
@@ -1480,12 +1493,19 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	};
 };
 
+
+/**
+
 /**
  * @namespace
  */
 MMTDrop.reportFactory = {
+		/**
+		 * Dashboard using a timeline chart to show traffic in realtime
+		 * @returns {MMTDrop.Report}
+		 */
 		createRealtimeReport : function(){
-			var db = MMTDrop.databaseFactory.createRealtimeStatDB({
+			var db = MMTDrop.databaseFactory.createStatDB({
 				//probe : [10]
 			}, true);
 			
@@ -1499,71 +1519,129 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
-			var timer = null;
-			var _initTimer = function(){
-				timer = setTimeout( function(){
-					
-				})
-			}
+			//a dump message
+			var dummyMsg = function(){
+				var arr = [];
+				var stat= MMTDrop.constants.StatsColumn;
+				for( var i in stat){
+					var col = stat[i];
+					if (col.id == MMTDrop.constants.StatsColumn.TIMESTAMP.id)
+						arr[col.id] = (new Date()).getTime();
+					else
+						arr[col.id] = 0;
+				}
+				return arr;
+			}();
 			
-			var _appendMsg = function( msg ){
+			
+			var appendMsg = function( msg ){
 				console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
 					return;
+				
 				var series = chart.series;
 				
-				console.log( chart.series[0].name );
-				var prob = msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
+				//the chart cLine in 
+				//- probeMode if it shows total data of each probe
+				//- appMode   if it shows data of each app in a probe
+				var probeId = fProbe.selectedOption().id;
+				var isInProbeMode = probeId == 0;
 				
-				var app  = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ];
-				app = MMTDrop.constants.getProtocolNameFromID( app );
+				//receive msg of a probe different with the one beeing showing
+				if( ! isInProbeMode && 
+						probeId != msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ]){
+					console.log( " donot concern");
+					return;
+				}
 				
+				var serieName  = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ];
+				serieName = MMTDrop.constants.getProtocolNameFromID( serieName );
+				
+				if( isInProbeMode )
+					serieName = "Probe " + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
 				
 				
 				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
-				
 				var val  = msg[ fMetric.selectedOption().id ];
 				
+				var isRootMsg = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ] == msg[ MMTDrop.constants.StatsColumn.APP_PATH.id ];
+				
+				//whether the msg belong to one serie existing in the chart
 				var isInSerie = false;
 				
 				for( var i in series ){
 					var serie = series[i];
 					
-					//list of app
-					if( serie.name === app){
-						serie.addPoint([time, val], true, true);
-						isInSerie = true;
-						console.log( "add to app ");
-					}
-					else //list of prob 
-						if( serie.name === prob){
-							console.log( "add to probe ");
-							serie.addPoint([time, val], true, true);
-							isInSerie = true;
+					//add point to serie
+					if( serie.name === serieName){
+						/*
+						var x = serie.xAxis.getExtremes().dataMax;
+						//do not add a msg in the past
+						if( time < x ){
+							console.log( "  in the past: " + x + " > " + time);
+							return;
 						}
-						else
-							serie.addPoint([time, 0], true, true);
+						*/
+						
+						serie.addPoint([time, val],	//x,y 
+								true, 	//redraw
+								true	//shift chart data
+								);
+						isInSerie = true;
+						console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
+					}
+					//else
+					//	if( isRootMsg && !isInProbeMode ) 
+					//		serie.addPoint([time, 0], true, true);
 				}
 				
 				//new serie will be added
 				if( isInSerie == false){
-					
+					console.log( "add new serie: " + serieName);
+					chart.addSeries({
+						name: serieName,
+						data: [ [time, val] ],
+					});
 				}
 			};
 			
-			
-			var dumMsg = function(){
-				var arr = [];
-				var stat= MMTDrop.constants.StatsColumn;
-				for( var i in stat)
-					arr.push(0);
-			}();
-			
-			
+			/**
+			 * A timer that will insert a dump message in order to move forward the chart when no traffic.
+			 */
+			var timer = null;
+			var resetTimer = function(){
+				
+				if( timer ){
+					clearTimeout( timer );
+					timer = null;
+				}
+				
+				timer = setTimeout( function(){
+					var time = (new Date()).getTime() - 5000;
+					
+					for( var i in cLine.chart.series ){
+						var serie = cLine.chart.series[i];
+						
+						//add point to serie
+						//var x = serie.xAxis.getExtremes().max;
+						var x = serie.data[serie.data.length - 1].x;
+						
+						//do not add a msg in the past
+						if( time - x <= 5000)
+							continue;
+						
+						serie.addPoint( [time, 0] );
+					}	
+					
+					resetTimer();
+				}, 
+				4000	//timer interval
+				);
+			};
 			
 			db.onMessage( function( msg ){
-				_appendMsg( msg );
+				appendMsg( msg );
 			});
 			
 			var report = new MMTDrop.Report(
@@ -1585,6 +1663,76 @@ MMTDrop.reportFactory = {
 					 [{object: fProbe, 
 						         effect:[ {object: fMetric, effect: [{object: cLine, effect:[]} ]}]}]
 					   
+			);
+			
+			resetTimer();
+			
+			return report;
+		},
+		
+		
+		
+		createHierarchy : function(){
+			var database = MMTDrop.databaseFactory.createStatDB({
+				//probe : [10]
+			});
+
+			var cTree  = MMTDrop.chartFactory.createTree({
+				click: function( e ){
+					if( Array.isArray( e ) == false)
+						return;
+					
+					var data = database.stat.filter([{id: MMTDrop.constants.StatsColumn.APP_PATH.id, data: e}]);
+					var oldData = database.data();
+					
+					database.data( data );
+					cLine.attachTo( database );
+					cLine.redraw();
+					
+					database.data( oldData );
+				}
+			});
+			var cLine = MMTDrop.chartFactory.createTimeline();
+
+			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
+
+			var dataFlow = [ {
+				object : fPeriod,
+				effect : [ {
+					object : fProbe,
+					effect : [ {
+						object : cTree,
+						effect : []
+					}, ]
+				}, ]
+			}, {
+				object : fMetric,
+				effect : [ {
+					object : cLine,
+					effect : []
+				} ]
+			}, ];
+
+			var report = new MMTDrop.Report(
+					// title
+					"Protocol Report",
+
+					// database
+					database,
+
+					// filers
+					[fPeriod, fProbe, fMetric],
+
+					//charts
+					[
+					 {charts: [cTree], width: 4},
+					 {charts: [cLine], width: 8},
+					 ],
+
+					 //order of data flux
+					 dataFlow
 			);
 			return report;
 		},
@@ -2403,10 +2551,10 @@ MMTDrop.chartFactory = {
 							var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
 						    var arr    = [];
 						    
-							//If there are more than 5 apps 
+							//If there are more than 1 apps && 1 probes 
 							// ==> show a line of total for each probe
 							//       install of showing a line for each app of each probe
-							if( noApp * noProbe > 15 && noProbe > 1){
+							if( noApp > 1 && noProbe > 1){
 								//the next columns are probes
 								for( var time in obj){
 									var oo = {};
@@ -2532,6 +2680,7 @@ MMTDrop.chartFactory = {
 				for (var j=1; j<columns.length; j++)
 					series.push( {name:columns[j].label, data : [] } );
 
+				//set data for each serie
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
 
@@ -2540,7 +2689,9 @@ MMTDrop.chartFactory = {
 						series[j-1].data.push([ msg[0], msg[j] ]);
 					}
 				}
-
+				
+				var isTimeLine = (type == null || type === "timeline" || type === "scatter");
+				
 				var chartOption = {
 						chart : {
 							renderTo    : elemID,
@@ -2569,9 +2720,9 @@ MMTDrop.chartFactory = {
 							}       
 						},
 						xAxis : {
-							maxZoom: 15000, // 15seconds
+							maxZoom:isTimeLine? 15000 : 1, // 15seconds
 							gridLineWidth: 1,
-							type : (type == null || type === "timeline" || type === "scatter")? 'datetime' : '',
+							type : isTimeLine? 'datetime' : '',
 						},
 						yAxis : {
 							title : {
@@ -2766,7 +2917,8 @@ MMTDrop.chartFactory = {
 					if( i== 0 )
 						th0 = th;
 					
-					option.columns[i].isMultiProbes = Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 0
+					option.columns[i].isMultiProbes = Array.isArray(option.columns[i].probes) 
+										&& (option.columns[i].probes.length > 0) ;
 					
 					if( option.columns[i].isMultiProbes ){
 						th.attr('colspan',  option.columns[i].probes.length);
@@ -2892,7 +3044,7 @@ MMTDrop.chartFactory = {
 				//convert table to tree
 				table.treetable({
 					expandable        : true, 
-					initialState      : "expanded",
+					initialState      : "expanded",	//expand all nodes
 					clickableNodeNames: true
 				});
 
@@ -2907,7 +3059,14 @@ MMTDrop.chartFactory = {
 
 					//if user regist to handle click event ==> give him the control
 					if (option.click) {
-						option.click( this );
+						//get all selected rows
+						var arr = [];
+						var selectedRows = $('#' + elemID + "_treetable tbody tr").filter(".selected");
+						selectedRows.each( function(){;
+							var id = this.dataset["ttId"];
+							arr.push( id );
+						});
+						option.click( arr, this );
 					}
 				});
 
