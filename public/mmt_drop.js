@@ -85,53 +85,52 @@ MMTDrop.constants ={
 		 * @constant: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
 		 */
 		FlowStatsColumn : {
-			FORMAT_ID : 0, /**< Index of the format id column */
-			PROBE_ID : 1, /**< Index of the probe id column */
-			SOURCE_ID : 2, /**< Index of the data source id column */
-			TIMESTAMP : 3, /**< Index of the format id column */
-			FLOW_ID : 4, /**< Index of the flow id column */
-			START_TIME : 5, /**< Index of the flow start time */
-			IP_VERSION : 6, /**< Index of the IP version number column */
-			SERVER_ADDR : 7, /**< Index of the server address column */
-			CLIENT_ADDR : 8, /**< Index of the client address column */
-			SERVER_PORT : 9, /**< Index of the server port column */
-			CLIENT_PORT : 10, /**< Index of the client port column */
-			TRANSPORT_PROTO : 11, /**< Index of the transport protocol identifier column */
-			UL_PACKET_COUNT : 12, /**< Index of the uplink packet count column */
-			DL_PACKET_COUNT : 13, /**< Index of the downlink packet count column */
-			UL_DATA_VOLUME : 14, /**< Index of the uplink data volume column */
-			DL_DATA_VOLUME : 15, /**< Index of the downlink data volume column */
-			TCP_RTT : 16, /**< Index of the TCP round trip time column */
-			RETRANSMISSION_COUNT : 17, /**< Index of the retransmissions count column */
-			APP_FAMILY : 18, /**< Index of the application family column */
-			CONTENT_CLASS : 19, /**< Index of the content class column */
-			PROTO_PATH: 20, /**< Index of the protocol path column */
-			APP_NAME : 21, /**< Index of the application name column */
-			APP_FORMAT_ID : 22, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+			FORMAT_ID : {id: 0, label:""} , /**< Index of the format id column */
+			PROBE_ID  : {id: 1, label:""}, /**< Index of the probe id column */
+			SOURCE_ID : {id: 2, label:""}, /**< Index of the data source id column */
+			TIMESTAMP : {id: 3, label:""}, /**< Index of the format id column */
+			FLOW_ID   : {id: 4, label:""}, /**< Index of the flow id column */
+			START_TIME  : {id: 5, label:""}, /**< Index of the flow start time */
+			IP_VERSION  : {id: 6, label:""}, /**< Index of the IP version number column */
+			SERVER_ADDR : {id: 7, label:""}, /**< Index of the server address column */
+			CLIENT_ADDR : {id: 8, label:""}, /**< Index of the client address column */
+			SERVER_PORT : {id: 9, label:""}, /**< Index of the server port column */
+			CLIENT_PORT : {id: 10, label:""}, /**< Index of the client port column */
+			TRANSPORT_PROTO : {id: 11, label:""}, /**< Index of the transport protocol identifier column */
+			UL_PACKET_COUNT : {id: 12, label:""}, /**< Index of the uplink packet count column */
+			DL_PACKET_COUNT : {id: 13, label:""}, /**< Index of the downlink packet count column */
+			UL_DATA_VOLUME  : {id: 14, label:""}, /**< Index of the uplink data volume column */
+			DL_DATA_VOLUME  : {id: 15, label:""}, /**< Index of the downlink data volume column */
+			TCP_RTT         : {id: 16, label:""}, /**< Index of the TCP round trip time column */
+			RETRANSMISSION_COUNT : {id: 17, label:""}, /**< Index of the retransmissions count column */
+			APP_FAMILY    : {id: 18, label:""}, /**< Index of the application family column */
+			CONTENT_CLASS : {id: 19, label:""}, /**< Index of the content class column */
+			PROTO_PATH    : {id: 20, label:""}, /**< Index of the protocol path column */
+			APP_NAME      : {id: 21, label:""}, /**< Index of the application name column */
+			APP_FORMAT_ID : {id: 22, label:""}, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
 		},
 
 		HttpStatsColumn : {
-			RESPONSE_TIME : 0, /**< Index of the response time column */
-			TRANSACTIONS_COUNT : 1, /**< Index of the HTTP transactions count (req/res number) column */
-			INTERACTION_TIME : 2, /**< Index of the interaction time (between client and server) column */
-			HOSTNAME : 3, /**< Index of the hostname column */
-			MIME_TYPE : 4, /**< Index of the MIME type column */
-			REFERER : 5, /**< Index of the Referer column */
-			DEVICE_OS_ID : 6, /**< Index of the device and operating system ids column */
-			CDN_FLAG : 7, /**< Index of the is CDN delivered column */
+			RESPONSE_TIME      : {id: 0, label:""}, /**< Index of the response time column */
+			TRANSACTIONS_COUNT : {id: 1, label:""}, /**< Index of the HTTP transactions count (req/res number) column */
+			INTERACTION_TIME   : {id: 2, label:""}, /**< Index of the interaction time (between client and server) column */
+			HOSTNAME     : {id: 3, label:""}, /**< Index of the hostname column */
+			MIME_TYPE    : {id: 4, label:""}, /**< Index of the MIME type column */
+			REFERER      : {id: 5, label:""}, /**< Index of the Referer column */
+			DEVICE_OS_ID : {id: 6, label:""}, /**< Index of the device and operating system ids column */
+			CDN_FLAG     : {id: 7, label:""}, /**< Index of the is CDN delivered column */
 		},
 
 		TlsStatsColumn : {
-			SERVER_NAME : 0, /**< Index of the format id column */
-			CDN_FLAG : 1, /**< Index of the format id column */
+			SERVER_NAME : {id: 0, label:""}, /**< Index of the format id column */
+			CDN_FLAG    : {id: 1, label:""}, /**< Index of the format id column */
 		},
 
 		RtpStatsColumn : {
-			PACKET_LOSS_RATE : 0, /**< Index of the format id column */
-			PACKET_LOSS_BURSTINESS : 1, /**< Index of the format id column */
-			MAX_JITTER : 2,
+			PACKET_LOSS_RATE       : {id: 0, label:""}, /**< Index of the format id column */
+			PACKET_LOSS_BURSTINESS : {id: 1, label:""}, /**< Index of the format id column */
+			MAX_JITTER             : {id: 2, label:""},
 		},
-
 
 		/**
 		 * Constants: MMTDrop defined RTP flow metrics
@@ -162,6 +161,18 @@ MMTDrop.constants ={
 			3 : "Transactions Nb",
 		},
 
+		FlowMetricFilter : {
+			DATA_VOLUME    : {id: 101, label:"Data volume"},    //this column must be created (id not in FlowStatsColum)
+			PACKET_COUNT   : {id: 102, label:"Packet count"},
+			PAYLOAD_VOLUME : {id: 103, label:"Payload volume"}, 
+			ACTIVE_FLOWS   : {id: 104, label:"Active flow"},
+			UL_PACKET_COUNT: {id: 12, label:"UL Packet count"},	//this column is the one from FlowStatsColumn (id in FlowStatsColumn)
+			DL_PACKET_COUNT: {id: 13, label:"DL Packet count"},
+			UL_DATA_VOLUME : {id: 14, label:"UL Data volume"}, 
+			DL_DATA_VOLUME : {id: 15, label:"DL Data volume"},
+			FLOW_DURATION  : {id: 105, label:"Flow duration"}
+		},
+		
 
 		/**
 		 * Constants: Protocol Id,Name 
@@ -249,7 +260,8 @@ MMTDrop.constants ={
 		 
 		 /**
 		  * Returns the application id given the application path.
-		  * @param {number} 
+		  * @param {string} path - application protocol path
+		  * @returns {number} 
 		  */
 		 getAppIdFromPath : function(path) {
 			 var n  = path.toString().lastIndexOf(".");
@@ -259,7 +271,8 @@ MMTDrop.constants ={
 
 		 /**
 		  * Returns the root application id given the application path.
-		  * @param {Object} path application protocol path
+		  * @param {Object} path - application protocol path
+		  * @returns {number}
 		  */
 		 getRootAppId : function(path) {
 			 var n = path.toString().indexOf(".");
@@ -967,7 +980,7 @@ MMTDrop.databaseFactory = {
 			 */
 			db.stat.getAppIDs = function(){
 				var obj = db.stat.splitDataByApp();
-				var keys = Object.key( obj );
+				var keys = Object.keys( obj );
 				return keys;
 			};
 			
@@ -976,7 +989,7 @@ MMTDrop.databaseFactory = {
 			 */
 			db.stat.getAppClasses = function(){
 				var obj = db.stat.splitDataByClass();
-				var keys = Object.key( obj );
+				var keys = Object.keys( obj );
 				return keys;
 			};
 			
@@ -1000,7 +1013,130 @@ MMTDrop.databaseFactory = {
 				return obj;
 			};
 			
+			/**
+			 * Create data for Timeline chart
+			 * @param {Index} col - column to be calculated
+			 * @param {boolean} [isAppPath=true]   - labeling of series by app name or path name
+			 * @param {boolean} [isInAppMode=true] - a threshold to decide show a serie for each probe of total data or
+			 * a serie for each app (or path) of each probe
+			 * @return {ChartData} 
+			 */
+			db.stat.getDataTimeForChart = function( col, isAppPath, isInAppMode){
+				
+				col = col || MMTDrop.constants.StatsColumn.PACKET_COUNT;
+
+				var label = col.label;
+				col       = col.id;
+
+				var group = {id: MMTDrop.constants.StatsColumn.APP_ID.id, label: "Name"};
+				
+				if( isAppPath == null || isAppPath ){
+					group = {id: MMTDrop.constants.StatsColumn.APP_PATH.id, label: "Name"};
+					isAppPath = true;
+				}
+				else
+					isAppPath = false;
+
+				if( isInAppMode == null)
+					isInAppMode = true;
+				
+				
+				//splite data by probes
+				//probes is an object each key is a probeId and value of key is msg containing this probeId
+				var probes = db.stat.getProbes();
+				var noProbe = probes.length;              //numbere of Probe
+				
+				var header = [];
+				var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
+				var arr    = [];
+
+				//If there are more than 1 apps && 1 probes 
+				// ==> show a line of total for each probe
+				//       install of showing a line for each app of each probe
+				if( isInAppMode == false ){
+					
+					var obj = MMTDrop.tools.sumByGroups(
+							db.data(),
+							[col],
+							[MMTDrop.constants.StatsColumn.TIMESTAMP.id,
+							MMTDrop.constants.StatsColumn.PROBE_ID.id]
+					);
+					
+					if( noProbe == 1)
+						columns.push( {id: col, label: "Probe"});
+					else
+						columns.push( {id: col, label: "Probe", probes: probes} );
+					//the first column is timestamp
+					//the next column are probes
+					for( var time in obj){
+						var oo = {};
+
+						oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = time;
+						oo[ col ] = {};
+						for(var probe in obj[time])
+							if( noProbe > 1)
+								oo[ col ][ probe ] = obj[time][probe][col];
+							else
+								oo[ col ] = obj[time][probe][col];
+						
+						arr.push( oo );
+					}
+				}
+				else{
+					
+					var obj = MMTDrop.tools.sumByGroups(
+							db.data(),
+							[col],
+							[
+							 MMTDrop.constants.StatsColumn.TIMESTAMP.id,
+							 group.id,
+							 MMTDrop.constants.StatsColumn.PROBE_ID.id]
+					);
+					
+					
+					for( var time in obj ){
+						var oo = {};
+						//the first column is timestamp
+						oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = parseInt( time );
+
+						for ( var app in obj[time] ){
+							var key = app;
+
+							if( header.indexOf( key ) == -1){
+								header.push( key );
+
+								var appName;
+								if( isAppPath )
+									appName = MMTDrop.constants.getPathFriendlyName( app );
+								else
+									appName = MMTDrop.constants.getProtocolNameFromID( app );
+
+								if( noProbe > 1 )
+									columns.push( {id: key, label: appName, probes: probes});	
+								else
+									columns.push( {id: key, label: appName});
+							}
+							
+							oo[key] = {};
+							for( var probe in obj[ time ][ app ])
+								if( noProbe == 1)
+									oo[key] = obj[time][app][probe][col];
+								else
+									oo[key][probe] = obj[time][app][probe][col];
+						}
+						arr.push( oo );
+					}
+				}
+
+				return {data: arr, columns: columns, ylabel: label, probes: probes};
+			};
 			
+			/**
+			 * Create data for Table/Tree/Pie/Bar/ charts
+			 * @param {Index[]} cols - columns tobe calculated
+			 * @param {boolean} [isAppPath = true] - labeling series by APP_ID name or APP_PATH name
+			 * @return {ChartData}
+			 */
 			db.stat.getDataTableForChart = function( args, isAppPath ){
 				//pre-trait args
 				if( Array.isArray( args) == false || args.length == 0 ){
@@ -1016,7 +1152,11 @@ MMTDrop.databaseFactory = {
 				}
 				else
 					isAppPath = false;
-					
+				
+				var label = "";
+				if( args.length == 1)
+					label = args[0].label;
+				
 				//id of columns tobe sumUp 
 				var cols = [];
 				for( var i in args )
@@ -1067,7 +1207,7 @@ MMTDrop.databaseFactory = {
 					}
 				}
 				
-				return {data: data, columns: columns, probes: probes};
+				return {data: data, columns: columns, probes: probes, ylabel: label};
 			};
 			
 			return db;
@@ -1080,11 +1220,69 @@ MMTDrop.databaseFactory = {
 			//overwrite format to 0
 			param.format = 0;
 
-
-			return new MMTDrop.Database(param, function( data ){
+			var db = new MMTDrop.Database(param, function( data ){
 				//how data is process for flow
-				return data;
+				var COL  = MMTDrop.constants.FlowMetricFilter;
+				var FLOW = MMTDrop.constants.FlowStatsColumn;
+				var arr = [];
+				for(var i=0; i<data.length; i++){
+					var msg = {};
+					for( var j in data[i])
+						msg[j] = data[i][j];
+					
+					//add some other properties
+					msg[ COL.PAYLOAD_VOLUME.id ] =
+						msg[ COL.DATA_VOLUME.id ]    = msg[ FLOW.UL_DATA_VOLUME.id ]  + msg[ FLOW.DL_DATA_VOLUME.id ];
+					msg[ COL.PACKET_COUNT.id ]   = msg[ FLOW.UL_PACKET_COUNT.id ] + msg[ FLOW.DL_PACKET_COUNT.id ];
+					
+					msg[ COL.FLOW_DURATION.id ]= msg[ FLOW.START_TIME.id ] - msg[ FLOW.TIMESTAMP.id ];
+					
+					//TODO
+					//msg[ COL.ACTIVE_FLOWS.id ] = ?
+					arr.push( msg );
+				}
+				return arr;
 			});
+			
+			db.stat.getTimePoints = function( col, sorted ){
+				var COL = MMTDrop.constants.FlowStatsColumn;
+				
+				sorted = (sorted === true) ? true : false; //do not sort by default
+
+				var label = col.label;
+				col = col.id;
+				
+				var probes  = db.stat.getProbes();
+				var noProbes= probes.length;
+				
+				var obj = MMTDrop.tools.sumByGroups( db.data(), 
+								[col], 
+								[COL.TIMESTAMP.id, COL.PROBE_ID.id] );
+				var arr = [];
+				for( var time in obj){
+					var oo = {};
+					oo[COL.TIMESTAMP.id] = parseInt( time );
+					
+					oo[col] = {};
+					for( var probe in obj[time] )
+						if( noProbes == 1 )
+							oo[col] =  obj[time][probe][col]; 
+						else
+							oo[col][probe] =  obj[time][probe][col];
+					
+					arr.push( oo );
+				}
+				
+				var columns = [COL.TIMESTAMP];
+				if( noProbes == 1)
+					columns.push( {id: col, label: "Probe"} );
+				else
+					columns.push( {id: col, label: "Probe", probes: probes} );
+				
+				return {data: arr, columns: columns, ylabel: label, probes: probes};
+			};
+			
+			return db;
 		},
 };
 
@@ -1259,30 +1457,11 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
  */
 MMTDrop.filterFactory = {
 		createFlowMetricFilter : function(){
-			/*
-	    var cols = [
-	       MMTDrop.constants.StatsColumn.DATA_VOLUME,
-	       MMTDrop.constants.StatsColumn.PACKET_COUNT,
-	       MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME,
-	       MMTDrop.constants.StatsColumn.ACTIVE_FLOWS,
-	       MMTDrop.constants.StatsColumn.UL_DATA_VOLUME,
-	       MMTDrop.constants.StatsColumn.DL_DATA_VOLUME,
-	       MMTDrop.constants.StatsColumn.UL_PACKET_COUNT,
-	       MMTDrop.constants.StatsColumn.DL_PACKET_COUNT,
-        ];
-
-
-        var options = [];
-        for (var i in cols)
-           options.push({value: cols[i].id, text: cols[i].label});
-			 */   
-			var options = [{id: 1, label:"Data volume"},    {id: 2, label:"Packet count"},
-			               {id: 3, label:"Payload volume"}, {id: 4, label:"Active flow"},
-			               {id: 5, label:"UL Data volume"}, {id: 6, label:"DL Data volume"},
-			               {id: 7, label:"UL Packet count"},{id: 8, label:"DL Packet count"},
-			               {id: 9, label:"Flow duration"}];              
-
-
+			var cols    = MMTDrop.constants.FlowMetricFilter;
+			var options = [];
+			for (var i in cols)
+				options.push({id: cols[i].id, label: cols[i].label});
+			 
 			var filter =  new MMTDrop.Filter({
 				id      : "flow_metric_filter_" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Flows",
@@ -1423,14 +1602,15 @@ MMTDrop.filterFactory = {
 					
 					for( var path in obj){
 						var parentKey = MMTDrop.constants.getParentPath( path );
-						var app       = MMTDrop.constants.getAppIdFromPath( parentKey );
-						//keys[j] is a children of key
-						if(  app in data ){
-							data[ app ] = data[app].concat( obj[path] );
+						var parentApp       = MMTDrop.constants.getAppIdFromPath( parentKey );
+						//keys[j] is a children of parentApp
+						if(  parentApp in data ){
+							data[ parentApp ] = data[parentApp].concat( obj[path] );
 						}
 					}
 				}
 
+				//All
 				data[0] = db.data();
 
 				//create list of options
@@ -1511,7 +1691,14 @@ MMTDrop.filterFactory = {
  * @constructor
  */
 MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
-
+	
+	/**
+	 * The charts beeing showing
+	 */
+	this.activeCharts = [];
+	
+	var _this = this;
+	
 	/**
 	 * Register triggers
 	 * @param {DataFlow} filter - object tobe registed. {object: obj, effect: [o1, o2]}
@@ -1564,6 +1751,8 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	 * @param {string} elemID - id of the HTML element
 	 */
 	this.renderTo = function(elemID){
+		_this.activeCharts = [];
+		
 		var rootDiv = $('#' + elemID);
 		
 		//draw header
@@ -1594,6 +1783,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 		});
 		rowDiv.appendTo(rootDiv);
 
+		//list of chart buttons
 		for (var i=0; i<groupCharts.length; i++){
 
 			//width of each group is maximal 12 (cols) 
@@ -1613,7 +1803,8 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			//draw icons of the charts in the group
 			if (charts.length > 1){
 				var btngroup = $('<div>', {
-					'class' : 'report-element-top btn-group center'
+					'class' : 'report-element-top btn-group center',
+					'id'    : 'btn_group_' + i,
 				});
 
 				for (var j=0; j<charts.length; j++) {
@@ -1628,21 +1819,33 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 
 					btn.appendTo(btngroup);
 
-					btn.click({chart: j, group: i}, function (e){
+					if( j==0 )
+						btn.addClass("active");
+					
+					btn.click({chart: j, group: i, report: _this}, function (e){
 						event.preventDefault();
+						
+						var lastBtn = $('#btn_group_' + e.data.group + " .active");
+						lastBtn.each( function(){
+							$(this).removeClass("active");
+						});
+						
+						$(this).addClass("active");
+						
 						var charts = groupCharts[e.data.group].charts;
 						//inactive the older chart in the group
-						for (var k in charts){
-							if ( charts[k].isVisible() ){
-								charts[k].isVisible( false );
-								charts[k].clean();
-								break;
-							}
+						var oldChart = e.data.report.activeCharts[e.data.group];
+					    if ( oldChart.isVisible() ){
+							oldChart.isVisible( false );
+							oldChart.clean();
 						}
+					    
 						//set active and render it
 						var chart = charts[e.data.chart];
 						chart.isVisible( true );
 						chart.redraw();
+						
+						e.data.report.activeCharts[e.data.group] = chart;
 						//chart.data is a copy of database.data at the moment its filter filters out 
 						//chart.data is assigned to database.data in _registTrigger function
 					});
@@ -1661,6 +1864,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 				charts[j].renderTo( chartID );
 			}
 			charts[0].isVisible( true );
+			_this.activeCharts.push( charts[0] );
 		}
 
 		//registing some callbacks of data changing/loading
@@ -1703,8 +1907,9 @@ MMTDrop.reportFactory = {
 			
 			var cLine = MMTDrop.chartFactory.createTimeline({
 				getData: {
-					getDataArgs : function(){
-						return [fMetric.selectedOption()];
+					getDataFn : function( db ){
+						var col = [fMetric.selectedOption()];
+						return db.stat.getDataTimeForChart(col, false, fProbe.selectedOption().id != 0);
 					}
 				}});
 			
@@ -1748,7 +1953,7 @@ MMTDrop.reportFactory = {
 				serieName = MMTDrop.constants.getProtocolNameFromID( serieName );
 				
 				if( isInProbeMode )
-					serieName = "Probe " + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
+					serieName = "Probe-" + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
 				
 				
 				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
@@ -1861,17 +2066,26 @@ MMTDrop.reportFactory = {
 		
 		
 		
-		createHierarchy : function(){
+		createHierarchyReport : function(){
+			var COL = MMTDrop.constants.StatsColumn;
 			var database = MMTDrop.databaseFactory.createStatDB({
 				//probe : [10]
 			});
 
 			var cTree  = MMTDrop.chartFactory.createTree({
+				getData:{
+					getDataFn: function( db ){
+						var cols = [{id: COL.PACKET_COUNT.id,   label: "Packets"}];
+				        if( fProbe.selectedOption().id != 0 )
+				        	cols.push( {id: COL.DATA_VOLUME.id,    label: "Data"} );
+						return db.stat.getDataTableForChart( cols, true );
+					}
+				},
 				click: function( e ){
 					if( Array.isArray( e ) == false)
 						return;
 					
-					var data = database.stat.filter([{id: MMTDrop.constants.StatsColumn.APP_PATH.id, data: e}]);
+					var data = database.stat.filter([{id: COL.APP_PATH.id, data: e}]);
 					var oldData = database.data();
 				
 					//set new data for cLine
@@ -1942,7 +2156,7 @@ MMTDrop.reportFactory = {
 
 			var report = new MMTDrop.Report(
 					// title
-					"Protocol Report",
+					"Protocol Hierarchy Report",
 
 					// database
 					database,
@@ -1962,7 +2176,7 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 		
-		createCategory : function(){
+		createCategoryReport : function(){
 
 			var database = MMTDrop.databaseFactory.createStatDB({
 				//probe : [10]
@@ -1973,20 +2187,17 @@ MMTDrop.reportFactory = {
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
 			var fClass  = MMTDrop.filterFactory.createClassFilter();
 			
+			var chartOption = {
+					getData: {
+						getDataFn : function( db ){
+							var col = [fMetric.selectedOption()];
+							return db.stat.getDataTableForChart( col, false );
+						}
+					}
+			}
 			
-			var cBar  = MMTDrop.chartFactory.createBar({
-				getData: {
-					getDataArgs : function(){
-						return [fMetric.selectedOption()];
-					}
-				}
-			});
-			var cPie  = MMTDrop.chartFactory.createPie({
-				getData: {
-					getDataArgs : function(){
-						return [fMetric.selectedOption()];
-					}
-				}});
+			var cBar  = MMTDrop.chartFactory.createBar(chartOption);
+			var cPie  = MMTDrop.chartFactory.createPie(chartOption);
 
 			var dataFlow = [ {
 				object : fPeriod,
@@ -2029,63 +2240,95 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 		
-		createAppReport : function(){
-
+		createApplicationReport : function(){
+			var COL = MMTDrop.constants.StatsColumn;
+			
 			var database = MMTDrop.databaseFactory.createStatDB({
 				//probe : [10]
 			});
 			
-			var COL = MMTDrop.constants.StatsColumn;
-			
-			var cBar  = MMTDrop.chartFactory.createBar({});
-			var cPie  = MMTDrop.chartFactory.createPie({});
-			var cLine = MMTDrop.chartFactory.createTimeline();
-			var cTable= MMTDrop.chartFactory.createTable({
-				getData: { 
-					getDataFn: function( db, args ){
-						var appID = args.id;
-						var cols = [{id: COL.PACKET_COUNT.id,   label: "Packets"},
-				                    {id: COL.DATA_VOLUME.id,    label: "Data"},
-				                    {id: COL.PAYLOAD_VOLUME.id, label: "Payload"},
-				                    {id: COL.ACTIVE_FLOWS.id,   label: "Flows"}];
-						if( appID == 0 )
-							return db.stat.getDataTableForChart( cols, false );
-						
-						
-						var obj = db.stat.getDataTableForChart( cols, true );
-						for( var i in obj.data){
-							var msg  = obj.data[i];
-							var path = msg[COL.APP_PATH.id];
-							var arr  = path.split(".");
-							path = "";
-							for( var j=arr.length-1; j>=0; j--)
-								if( path == "")
-									path = MMTDrop.constants.getProtocolNameFromID(arr[j]);
-								else
-									path += "/" + MMTDrop.constants.getProtocolNameFromID(arr[j]);
-							
-							msg[COL.APP_PATH.id] = path;
-						}
-						return obj;
-					},
-					getDataArgs : function(){
-						return fApp.selectedOption();
-					}
-				}
-			});
-
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fApp    = MMTDrop.filterFactory.createAppFilter();
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
+			
+			
+			var chartOption = {
+					getData: {
+						getDataFn: function( db, cols ){
+							cols = cols || fMetric.selectedOption();
+							var app = fApp.selectedOption();
+							//all app
+							if( app.id == 0 || db.stat.getAppIDs().length == 1)
+								return db.stat.getDataTableForChart( cols, false);
+							
+							var obj = db.stat.getDataTableForChart( cols, true);
+							for( var i in obj.data){
+								var msg  = obj.data[i];
+								var path = msg[COL.APP_PATH.id];
+								var arr  = path.split(".");
+								path = "";
+								for( var j=arr.length-1; j>=0; j--){
+									if( path == "")
+										path = MMTDrop.constants.getProtocolNameFromID(arr[j]);
+									else
+										path += "/" + MMTDrop.constants.getProtocolNameFromID(arr[j]);
+									if( arr[j] == app.id)
+										break;
+								}
+								msg[COL.APP_PATH.id] = path;	//donot need add its grand parent name
+							}
+							return obj;
+						}
+					}
+				};
+			
+			var cBar  = MMTDrop.chartFactory.createBar(chartOption);
+			var cPie  = MMTDrop.chartFactory.createPie(chartOption);
+			var cTable= MMTDrop.chartFactory.createTable({
+				getData: { 
+					getDataFn: function( db ){
+						var cols = [{id: COL.PACKET_COUNT.id,   label: "Packets"},
+				                    {id: COL.DATA_VOLUME.id,    label: "Data"},
+				                    {id: COL.PAYLOAD_VOLUME.id, label: "Payload"},
+				                    {id: COL.ACTIVE_FLOWS.id,   label: "Flows"}];
+						return chartOption.getData.getDataFn( db, cols );
+					},
+				}
+			});
 
-			cBar.option().getData.getDataArgs =
-				cPie.option().getData.getDataArgs = 
-					cLine.option().getData.getDataArgs = function(){
-						return [fMetric.selectedOption()];
-					};
-
-
+			var cLine = MMTDrop.chartFactory.createTimeline({
+				getData: {
+					getDataFn: function( db ){
+						var noApp = db.stat.getAppIDs().length;
+						var col = fMetric.selectedOption();
+						var app = fApp.selectedOption();
+						
+						if( noApp == 1 || app.id == 0)
+							return db.stat.getDataTimeForChart( col, false, false );
+						
+						var obj = db.stat.getDataTimeForChart( col, true, true );
+						
+						for( var i=1; i<obj.columns.length; i++){
+							var msg  = obj.columns[i];
+							var path = msg.label;
+							var arr  = path.split(".");
+							path = "";
+							for( var j=arr.length-1; j>=0; j--){
+								if( path == "")
+									path = arr[j];
+								else
+									path += "/" + arr[j];
+								if( arr[j] == app.label)
+									break;
+							}
+							msg.label = path;	//donot need add its grand father name
+						}
+						return obj;
+					}
+				}
+			});
+			
 			var dataFlow = [ {
 						object : fPeriod,
 						effect : [ {
@@ -2104,7 +2347,7 @@ MMTDrop.reportFactory = {
 
 			var report = new MMTDrop.Report(
 					// title
-					"Application Categories Report",
+					"Application Report",
 
 					// database
 					database,
@@ -2115,6 +2358,59 @@ MMTDrop.reportFactory = {
 					// charts
 					[
 					 {charts: [cLine, cPie, cBar, cTable], width: 12},
+					 ],
+
+					 //order of data flux
+					 dataFlow
+			);
+			return report;
+		},
+
+		createFlowCloudReport : function(){
+			var COL = MMTDrop.constants.FlowStatsColumn;
+			
+			var database = MMTDrop.databaseFactory.createFlowDB({
+				//probe : [10]
+			});
+			
+			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+			var fMetric	 = MMTDrop.filterFactory.createFlowMetricFilter();
+			
+			var cLine = MMTDrop.chartFactory.createScatter({
+				getData: {
+					getDataFn: function( db ){
+						var col = fMetric.selectedOption();
+						
+						return db.stat.getTimePoints(col);
+					}
+				}
+			});
+			
+			var dataFlow = [ {
+						object : fPeriod,
+						effect : [ {
+							object : fProbe,
+							effect : [ {
+								object : fMetric,
+								effect : [ {object: cLine}]
+							}, ]
+						}, ],
+					} ];
+
+			var report = new MMTDrop.Report(
+					// title
+					"Flow Cloud Report",
+
+					// database
+					database,
+
+					// filers
+					[fPeriod, fProbe, fMetric],
+
+					// charts
+					[
+					 {charts: [cLine], width: 12},
 					 ],
 
 					 //order of data flux
@@ -2349,28 +2645,7 @@ MMTDrop.chartFactory = {
 		 * @returns {MMTDrop.Chart}
 		 */
 		createBar : function (param){
-			var _param = {
-					title: "",
-					getData : {
-						getDataFn: function (db, cols){
-							if( Array.isArray( cols ) == false){
-								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" );
-								cols = [ MMTDrop.constants.StatsColumn.DATA_VOLUME ];
-							}
-							var data = db.data();
-							var col = cols[0];
-							
-							var obj = db.stat.getDataTableForChart( [col], false);
-							
-							obj.ylabel = col.label;
-							return obj;
-							
-						} ,
-						getDataArgs: [
-						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
-						          ],
-					}
-			};
+			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart( _param,
@@ -2510,26 +2785,7 @@ MMTDrop.chartFactory = {
 		 */
 		createPie : function ( param ){
 			//default parameter
-			var _param = {
-					getData : {
-						getDataFn: function (db, cols){
-							if( Array.isArray( cols ) == false){
-								console.log( "using default columns:  MMTDrop.constants.StatsColumn.DATA_VOLUME" );
-								cols = [ MMTDrop.constants.StatsColumn.DATA_VOLUME ];
-							}
-							var data = db.data();
-							var col = cols[0];
-							
-							var obj = db.stat.getDataTableForChart( [col], false);
-								
-							obj.ylabel = col.label;
-							return obj;
-						} ,
-						getDataArgs: [
-						          {id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"},
-						          ],
-					}
-			};
+			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart( _param, 
@@ -2758,112 +3014,7 @@ MMTDrop.chartFactory = {
 		 * @returns {MMTDrop.Chart}
 		 */
 		createTimeline : function (param, type){
-			var _param = {
-					getData: {
-						//prepare data
-						getDataFn: function (db, col){
-							if( Array.isArray( col ))
-								col = col[ 0 ];
-							else
-								col = MMTDrop.constants.StatsColumn.PACKET_COUNT;
-							
-							var label = col.label;
-							col       = col.id;
-
-							var data =  MMTDrop.tools.splitDataByGroupAndSubgroup(db.data(),
-									MMTDrop.constants.StatsColumn.APP_ID.id,
-									MMTDrop.constants.StatsColumn.PROBE_ID.id
-							);
-
-							var noApp   = 0; //number of App
-							var noProbe = 0; //numbere of Probe
-							for( var i in data ){
-								noApp ++;
-
-								//find number of probes
-								var n = 0;
-								for( var j in data[i] )
-									n++;
-
-								if( n > noProbe )
-									noProbe = n;
-							}
-
-							var obj = MMTDrop.tools.splitDataByGroupAndSubgroup(
-									db.data(),
-									MMTDrop.constants.StatsColumn.TIMESTAMP.id,
-									MMTDrop.constants.StatsColumn.PROBE_ID.id
-							);
-							var header = [];
-							var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
-						    var arr    = [];
-						    
-							//If there are more than 1 apps && 1 probes 
-							// ==> show a line of total for each probe
-							//       install of showing a line for each app of each probe
-							if( noApp > 1 && noProbe > 1){
-								//the next columns are probes
-								for( var time in obj){
-									var oo = {};
-									//the first column is timestamp
-									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = time;
-									
-									for( var probe in obj[time] ){
-										
-										var o = MMTDrop.tools.sumUp(
-												obj[time][probe],
-												[col]
-										);
-										
-										var key = probe;
-										if( header.indexOf( key ) == -1){
-											header.push( key );
-											
-											columns.push( {id: key, label: "Probe " + key});											
-										}
-										
-										oo[ key ] = o[col];
-									}
-									arr.push( oo );
-								}
-							}
-							else{
-								for( var time in obj ){
-									var oo = {};
-									//the first column is timestamp
-									oo[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] = time ;
-									
-									for ( var probe in obj[time] ){
-										
-										var o = MMTDrop.tools.sumByGroup( 
-												obj[time][probe], 
-												[col],
-												MMTDrop.constants.StatsColumn.APP_ID.id
-										);
-										
-										for( var app in o){
-											var key = app + "-" + probe;
-											
-											if( header.indexOf( key ) == -1){
-												header.push( key );
-												
-												var appName = MMTDrop.constants.getProtocolNameFromID( app );
-												if( noProbe > 1 )
-													appName = appName + "-" + probe;
-												columns.push( {id: key, label: appName});
-											}
-											
-											oo[key] = o[ app ][ col ];
-										}
-									}
-									arr.push( oo );
-								}
-							}
-
-							return {data: arr, columns: columns, ylabel: label};
-						} ,
-					}
-			};
+			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart( _param,
@@ -2888,8 +3039,9 @@ MMTDrop.chartFactory = {
 				if( probes.length > 1){
 					columns = [];
 					columns.push( option.columns[0]  );
-					for( var i in probes)
-						columns.push( {label: "Probe " + probes[i]} );
+					for( var i=1; i<option.columns.length; i++)
+						for( var k=0; k<probes.length; k++)
+							columns.push( {label: option.columns[i].label + "-" + probes[k]} );
 
 					arrData = [];
 					for( var i in data){
@@ -2897,13 +3049,15 @@ MMTDrop.chartFactory = {
 						var arr = [];
 						arr.push( msg[ 0 ] );
 
-						var oo = msg[ 1 ];
-						for( var j in probes){
-							var probe = probes[j];
-							if( probe in oo)
-								arr.push( oo[probe] );
-							else
-								arr.push( 0 );
+						for( var j=1; j<msg.length; j++){
+							var oo = msg[j];
+							for( var k=0; k<probes.length; k++)	{
+								var probe = probes[k];
+								if( typeof(oo) == "object" && probe in oo)
+									arr.push( oo[probe] );
+								else
+									arr.push( 0 );
+							}
 						}
 
 						arrData.push( arr );
@@ -3113,18 +3267,7 @@ MMTDrop.chartFactory = {
 		 */
 		createTree : function ( param ){
 			//default parameter
-			var _param = {
-					title: "",
-					getData : {
-						getDataFn: function (db, args){
-							if( Array.isArray( args) == false || args.length == 0 ){
-								args = [{id: MMTDrop.constants.StatsColumn.PACKET_COUNT.id, label: "Packets"}];
-								console.log( "  use default arguments: " + JSON.stringify( args ) );
-							}
-							return db.stat.getDataTableForChart( args );
-						} ,
-					},
-			};
+			var _param = {};
 
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
@@ -3337,33 +3480,12 @@ MMTDrop.chartFactory = {
 		 */
 		createTable : function (param){
 			//default parameter
-			var _param = {
-					title: "",
-					getData : {
-						getDataFn: function (db, args){
-							
-							var arr = [MMTDrop.constants.StatsColumn.PACKET_COUNT,
-						            MMTDrop.constants.StatsColumn.DATA_VOLUME,
-						            MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME,
-						            MMTDrop.constants.StatsColumn.ACTIVE_FLOWS];
-							
-							args = args || arr;
-							var obj = db.stat.getDataTableForChart( args, false );
-
-							return obj;
-						}
-					},
-			};
+			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart(_param, 
 					//render function
 					function (elemID, option, data){
-				//render to elemID
-
-				//elem.html(JSON.stringify(data));
-				var arr = data;
-
 				//render to elemID
 
 				var table = $('<table>', {
