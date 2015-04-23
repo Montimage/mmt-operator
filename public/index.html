@@ -7,41 +7,27 @@
 <meta name="description" content="">
 <meta name="author" content="">
 
-<link rel="stylesheet" href="bootstrap.min.css">
-<link rel="stylesheet" href="dashboard.css">
-<link rel="stylesheet" href="dataTables.bootstrap.css">
+<link rel="stylesheet" href="lib/bootstrap/css/bootstrap.css">
+<link rel="stylesheet" href="lib/datatable/css/dataTables.bootstrap.css">
 
-<link rel="stylesheet" href="jquery.treetable.css" />
-<link rel="stylesheet" href="jquery.treetable.theme.default.css" />
-<link rel="stylesheet" href="resource/css/batch.css" />
+<link rel="stylesheet" href="lib/jquery/jquery.treetable.css" />
+<link rel="stylesheet" href="lib/jquery/jquery.treetable.theme.default.css" />
 
-<script type="text/javascript" src="jquery.js"></script>
-<script type="text/javascript" 
-	src="bootstrap.min.js"></script>
-<script type="text/javascript" 
-	src="jquery.dataTables.min.js"></script>
-<script type="text/javascript" 
-	src="dataTables.bootstrap.js"></script>
-<script type="text/javascript" src="treetable.js"></script>
-<script type="text/javascript" src="highcharts.js"></script>
-<script type="text/javascript" src="highcharts-more.js"></script>
-<script type="text/javascript" src="solid-gauge.src.js"></script>
-<script type="text/javascript" src="funnel.js"></script>
-<script type="text/javascript" src="mmt_drop.js"></script>
-<script type="text/javascript" src="socketio.js"></script>
-<style>
-        table.treetable {
-            margin: 0;
-            font-size: .95em;
-        }
-        table.treetable thead {
-          font-size: 1.1em;
-          font-weight: bold;
-        }
-        tr.selected a {
-          color: #fff;
-        }
-</style>
+<link rel="stylesheet" href="lib/mmt/css/mmt_drop.css" />
+
+<script type="text/javascript" src="lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="lib/jquery/treetable.js"></script>
+
+<script type="text/javascript" src="lib/bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" src="lib/datatable/js/jquery.dataTables.js"></script>
+<script type="text/javascript" src="lib/datatable/js/dataTables.bootstrap.js"></script>
+
+
+<script type="text/javascript" src="lib/highcharts/highcharts.js"></script>
+<script type="text/javascript" src="lib/highcharts/highcharts-exporting.js"></script>
+<script type="text/javascript" src="lib/mmt/js/mmt_drop.js"></script>
+<script type="text/javascript" src="lib/socketio.js"></script>
+
 </head>
 
 <body>
@@ -82,20 +68,10 @@
 	</div>
 
 	<script>
-	    //Chart setting
-		Highcharts.setOptions({
-			global : {
-				useUTC : false
-			}
-		});
-		/*
-	    MMTDrop.setConfig({
-	       probeURL: "http://192.168.56.101:8088/" 
-	    });
-	    */
-	   MMTDrop.config = {
-	       probeURL : "http://192.168.56.101:8088" 
-	   };
+	   
+	   MMTDrop.setOptions({
+	       //serverURL : "http://192.168.56.101:8088" 
+	   });
 	   
 	   var q = window.location.search;
 	   var report;
@@ -112,7 +88,7 @@
        }else if (q == "?flow_avg"){
            
        }else if (q == "?flow_density"){
-           
+           report = MMTDrop.reportFactory.createFlowDensityReport(); 
        }
 	   
 	   if( report )

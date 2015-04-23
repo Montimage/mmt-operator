@@ -15,7 +15,7 @@ var path = require('path');
 var app = express();
 var io = require('socket.io');
 var moment = require('moment');
-var mmtAdaptor = require('./dataAdaptor.js');
+var mmtAdaptor = require('./js/dataAdaptor.js');
 
 //The process object is a global object and can be accessed from anywhere.
 process.on('uncaughtException', function(err) {
@@ -38,10 +38,10 @@ var argv = require('optimist')
 
 var dbconnector = null;
 if (argv.db === 'mongo') {
-	var dbc = require('./mongo_connector');
+	var dbc = require('./js/mongo_connector');
 	dbconnector = new dbc();
 } else if (argv.db === 'sqlite')
-	dbconnector = require('./sqlite_connector');
+	dbconnector = require('./js/sqlite_connector');
 else
 	throw (new Error(
 			'Unsopported database type. Database must be one of [sqlite, mongo]'));
