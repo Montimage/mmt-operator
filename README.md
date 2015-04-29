@@ -31,6 +31,10 @@ Follow the procedure described on the following link to install the latest versi
 
     http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
+### Sqlite
+
+    sudo apt-get install sqlite3
+
 ## Usage
 
 ### MMT Operator
