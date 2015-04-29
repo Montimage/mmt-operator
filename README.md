@@ -16,7 +16,7 @@ This chain of tools depends on the following packages:
     sudo apt-get update
     sudo apt-get install -y redis-server
 
-## Nodejs 
+### Nodejs 
 
     sudo apt-get update
     sudo apt-get install -y python-software-properties python g++ make
@@ -30,6 +30,10 @@ This chain of tools depends on the following packages:
 Follow the procedure described on the following link to install the latest version of Mongodb
 
     http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+
+### Sqlite
+
+    sudo apt-get install sqlite3
 
 ## Usage
 
@@ -47,7 +51,6 @@ Once MMT-Operator is up and running, open your favorite browser and goto
 
 ## Contributors
 
-Bachar Wehbi, bachar.wehbi@montimage.com
-Huu Nghia Nguyen
-Luong Nguyen
-
+    Bachar Wehbi, bachar.wehbi@montimage.com
+    Huu Nghia Nguyen
+    Luong Nguyen
