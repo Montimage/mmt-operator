@@ -42,7 +42,7 @@ MMTDrop.config = {
 		serverURL : "/",
 
 		/**
-		 * Global option of highChart
+		 * Global options of highChart
 		 */
 		highChart: {
 			global : {
@@ -59,112 +59,191 @@ MMTDrop.config = {
  */
 MMTDrop.constants = {
 		/**
-		 * @constant: MMTDrop defined csv format types
+		 *  MMTDrop defined csv format types
 		 */
 		CsvFormat : {
-			DEFAULT_APP_FORMAT : 0/**< Default application flow report format id */,
-			WEB_APP_FORMAT : 1/**< WEB flow report format id */,
-			SSL_APP_FORMAT : 2/**< SSL flow report format id */,
-			RTP_APP_FORMAT : 3/**< RTP flow report format id */,
-			MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
-			RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
-			STATS_FORMAT : 99/**< Statistics format id */,
-		},
-
-		isFlowStats : function ( format ) {
-			switch (format) {
-			case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
-			case MMTDrop.CsvFormat.WEB_APP_FORMAT :
-			case MMTDrop.CsvFormat.SSL_APP_FORMAT :
-			case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-				return true;
-			default :
-				return false;
-			}
+			/** Default application flow report format id */
+			DEFAULT_APP_FORMAT : 0,
+			/** WEB flow report format id */
+			WEB_APP_FORMAT : 1,
+			/** SSL flow report format id */
+			SSL_APP_FORMAT : 2,
+			/** RTP flow report format id */
+			RTP_APP_FORMAT : 3,
+			/** Micro flows statistics format id */
+			MICROFLOWS_STATS_FORMAT : 8,
+			/** RADIUS protocol control format id */
+			RADIUS_REPORT_FORMAT : 9,
+			/** Statistics format id */
+			STATS_FORMAT : 99,
 		},
 
 		/**
-		 * @constant: MMTDrop defined csv format types
+		 *  Data format description for statistic reports.
+		 *   
+		 *  The flow data columns contain common columns (id from 0 to 3) for the different applications, and, 
+		 *  specific per application columns (it is not necessary to report Host name, 
+		 *  or Response time, etc. if they are not available for that application
 		 */
 		StatsColumn : {
-			FORMAT_ID         : {id: 0,  label: "Format"}, /**< Index of the format id column */
-			PROBE_ID          : {id: 1,  label: "Probe"}, /**< Index of the probe id column */
-			SOURCE_ID         : {id: 2,  label: "Source"}, /**< Index of the data source id column */
-			TIMESTAMP         : {id: 3,  label: "Timestamp"}, /**< Index of the format id column */
-			APP_ID            : {id: 4,  label: "App"}, /**< Index of the application id column */
-			APP_PATH          : {id: 5,  label: "App Path"}, /**< Index of the application path column */
-			TOTAL_FLOWS       : {id: 6,  label: "Flows"}, /**< Index of the is_leaf column */
-			ACTIVE_FLOWS      : {id: 7,  label: "Active Flows"}, /**< Index of the active flows column */
-			DATA_VOLUME       : {id: 8,  label: "Data Volume"}, /**< Index of the data volume column */
-			PAYLOAD_VOLUME    : {id: 9,  label: "Payload Volume"}, /**< Index of the payload data volume column */
-			PACKET_COUNT      : {id: 10, label: "Packet Count"}, /**< Index of the packet count column */
-			UL_DATA_VOLUME    : {id: 11, label: "UL Data Volume"}, /**< Index of the data volume column */
-			UL_PAYLOAD_VOLUME : {id: 12, label: "UL Packet Count"}, /**< Index of the payload data volume column */
-			UL_PACKET_COUNT   : {id: 13, label: "UL Packet Count"}, /**< Index of the packet count column */
-			DL_DATA_VOLUME    : {id: 14, label: "DL Data Volume"}, /**< Index of the data volume column */
-			DL_PAYLOAD_VOLUME : {id: 15, label: "DL Payload Volume"}, /**< Index of the payload data volume column */
-			DL_PACKET_COUNT   : {id: 16, label: "DL Packet Count"}, /**< Index of the packet count column */
+			/** Index of the format id column */
+			FORMAT_ID         : {id: 0,  label: "Format"}, 
+			/** Index of the probe id column */
+			PROBE_ID          : {id: 1,  label: "Probe"},
+			/** Index of the data source id column */
+			SOURCE_ID         : {id: 2,  label: "Source"},
+			/** Index of the format id column */
+			TIMESTAMP         : {id: 3,  label: "Timestamp"},
+			/** Index of the application id column */
+			APP_ID            : {id: 4,  label: "App"},
+			/** 
+			 * Index of the application path column
+			 * 
+			 * An application might have different statistics entries. 
+			 * Example: Facebook might have two entries one with path eth.ip.tcp.http.fb 
+			 * while the second with path eth.ip.tcp.ssl.fb. 
+			 * This is completely normal. 
+			 * It allows to build a hierarchical view on the protocol statistics. 
+			 * 
+			 */
+			APP_PATH          : {id: 5,  label: "App Path"},
+			/** Index of the is_leaf column */
+			TOTAL_FLOWS       : {id: 6,  label: "Flows"},
+			/** Index of the active flows column */
+			ACTIVE_FLOWS      : {id: 7,  label: "Active Flows"},
+			/** Index of the data volume column */
+			DATA_VOLUME       : {id: 8,  label: "Data Volume"},
+			/** Index of the payload data volume column */
+			PAYLOAD_VOLUME    : {id: 9,  label: "Payload Volume"},
+			/** Index of the packet count column */
+			PACKET_COUNT      : {id: 10, label: "Packet Count"},
+			/** Index of the data volume column */
+			UL_DATA_VOLUME    : {id: 11, label: "UL Data Volume"},
+			/** Index of the payload data volume column */
+			UL_PAYLOAD_VOLUME : {id: 12, label: "UL Packet Count"},
+			/** Index of the packet count column */
+			UL_PACKET_COUNT   : {id: 13, label: "UL Packet Count"},
+			/** Index of the data volume column */
+			DL_DATA_VOLUME    : {id: 14, label: "DL Data Volume"},
+			/** Index of the payload data volume column */
+			DL_PAYLOAD_VOLUME : {id: 15, label: "DL Payload Volume"},
+			/** Index of the packet count column */
+			DL_PACKET_COUNT   : {id: 16, label: "DL Packet Count"},
 		},
     
 		/**
-		 * @constant: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
+		 *  Data format description for flow statistic reports
 		 */
 		FlowStatsColumn : {
-			FORMAT_ID : {id: 0, label:""} , /**< Index of the format id column */
-			PROBE_ID  : {id: 1, label:""}, /**< Index of the probe id column */
-			SOURCE_ID : {id: 2, label:""}, /**< Index of the data source id column */
-			TIMESTAMP : {id: 3, label:""}, /**< Index of the format id column */
-			FLOW_ID   : {id: 4, label:""}, /**< Index of the flow id column */
-			START_TIME  : {id: 5, label:""}, /**< Index of the flow start time */
-			IP_VERSION  : {id: 6, label:""}, /**< Index of the IP version number column */
-			SERVER_ADDR : {id: 7, label:""}, /**< Index of the server address column */
-			CLIENT_ADDR : {id: 8, label:""}, /**< Index of the client address column */
-			SERVER_PORT : {id: 9, label:""}, /**< Index of the server port column */
-			CLIENT_PORT : {id: 10, label:""}, /**< Index of the client port column */
-			TRANSPORT_PROTO : {id: 11, label:""}, /**< Index of the transport protocol identifier column */
-			UL_PACKET_COUNT : {id: 12, label:""}, /**< Index of the uplink packet count column */
-			DL_PACKET_COUNT : {id: 13, label:""}, /**< Index of the downlink packet count column */
-			UL_DATA_VOLUME  : {id: 14, label:""}, /**< Index of the uplink data volume column */
-			DL_DATA_VOLUME  : {id: 15, label:""}, /**< Index of the downlink data volume column */
-			TCP_RTT         : {id: 16, label:""}, /**< Index of the TCP round trip time column */
-			RETRANSMISSION_COUNT : {id: 17, label:""}, /**< Index of the retransmissions count column */
-			APP_FAMILY    : {id: 18, label:""}, /**< Index of the application family column */
-			CONTENT_CLASS : {id: 19, label:""}, /**< Index of the content class column */
-			PROTO_PATH    : {id: 20, label:""}, /**< Index of the protocol path column */
-			APP_NAME      : {id: 21, label:""}, /**< Index of the application name column */
-			APP_FORMAT_ID : {id: 22, label:""}, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+			/** Index of the format id column */
+			FORMAT_ID : {id: 0, label:""} ,
+			/** Index of the probe id column */
+			PROBE_ID  : {id: 1, label:""},
+			/** Index of the data source id column */
+			SOURCE_ID : {id: 2, label:""},
+			/** Index of the format id column */
+			TIMESTAMP : {id: 3, label:""},
+			/** Index of the flow id column */
+			FLOW_ID   : {id: 4, label:""},
+			/** Index of the flow start time */
+			START_TIME  : {id: 5, label:""},
+			/** Index of the IP version number column */
+			IP_VERSION  : {id: 6, label:""},
+			/** Index of the server address column */
+			SERVER_ADDR : {id: 7, label:""},
+			/** Index of the client address column */
+			CLIENT_ADDR : {id: 8, label:""},
+			/** Index of the server port column */
+			SERVER_PORT : {id: 9, label:""},
+			/** Index of the client port column */
+			CLIENT_PORT : {id: 10, label:""},
+			/** Index of the transport protocol identifier column */
+			TRANSPORT_PROTO : {id: 11, label:""},
+			/** Index of the uplink packet count column */
+			UL_PACKET_COUNT : {id: 12, label:""},
+			/** Index of the downlink packet count column */
+			DL_PACKET_COUNT : {id: 13, label:""},
+			/** Index of the uplink data volume column */
+			UL_DATA_VOLUME  : {id: 14, label:""},
+			/** Index of the downlink data volume column */
+			DL_DATA_VOLUME  : {id: 15, label:""},
+			/** Index of the TCP round trip time column.
+			 * 
+			 *  For UDP traffic this will be set to zero.
+			 */
+			TCP_RTT         : {id: 16, label:""},
+			/** Index of the retransmissions count column
+			 *
+			 * For UDP traffic this will be set to zero
+			 */
+			RETRANSMISSION_COUNT : {id: 17, label:""},
+			/** Index of the application family column */
+			APP_FAMILY    : {id: 18, label:""},
+			/** Index of the content class column */
+			CONTENT_CLASS : {id: 19, label:""},
+			/** Index of the protocol path column */
+			PROTO_PATH    : {id: 20, label:""},
+			/** Index of the application name column */
+			APP_NAME      : {id: 21, label:""},
+			/** Index of the start of the application specific statistics (this is not a real column, rather an index) */
+			APP_FORMAT_ID : {id: 22, label:""},
 		},
 
+		/**
+		 * Data format description for statistic reports of HTTP protocol
+		 */
 		HttpStatsColumn : {
-			RESPONSE_TIME      : {id: 0, label:""}, /**< Index of the response time column */
-			TRANSACTIONS_COUNT : {id: 1, label:""}, /**< Index of the HTTP transactions count (req/res number) column */
-			INTERACTION_TIME   : {id: 2, label:""}, /**< Index of the interaction time (between client and server) column */
-			HOSTNAME     : {id: 3, label:""}, /**< Index of the hostname column */
-			MIME_TYPE    : {id: 4, label:""}, /**< Index of the MIME type column */
-			REFERER      : {id: 5, label:""}, /**< Index of the Referer column */
-			DEVICE_OS_ID : {id: 6, label:""}, /**< Index of the device and operating system ids column */
-			CDN_FLAG     : {id: 7, label:""}, /**< Index of the is CDN delivered column */
+			/** Index of the response time column */
+			RESPONSE_TIME      : {id: 0, label:""},
+			/** Index of the HTTP transactions count (req/res number) column */
+			TRANSACTIONS_COUNT : {id: 1, label:""},
+			/** Index of the interaction time (between client and server) column */
+			INTERACTION_TIME   : {id: 2, label:""},
+			/** Index of the hostname column */
+			HOSTNAME     : {id: 3, label:""},
+			/** Index of the MIME type column */
+			MIME_TYPE    : {id: 4, label:""},
+			/** Index of the Referer column */
+			REFERER      : {id: 5, label:""},
+			/** Index of the device and operating system ids column */
+			DEVICE_OS_ID : {id: 6, label:""},
+			/** Index of the is CDN delivered column */
+			CDN_FLAG     : {id: 7, label:""},
 		},
 
+		/**
+		 * Data format description for statistic reports of TLS protocol
+		 */
 		TlsStatsColumn : {
-			SERVER_NAME : {id: 0, label:""}, /**< Index of the format id column */
-			CDN_FLAG    : {id: 1, label:""}, /**< Index of the format id column */
+			/** Index of the format id column */
+			SERVER_NAME : {id: 0, label:""},
+			/** Index of the format id column */
+			CDN_FLAG    : {id: 1, label:""},
 		},
 
+		/**
+		 * Data format description for statistic reports of RTP protocol
+		 */
 		RtpStatsColumn : {
-			PACKET_LOSS_RATE       : {id: 0, label:""}, /**< Index of the format id column */
-			PACKET_LOSS_BURSTINESS : {id: 1, label:""}, /**< Index of the format id column */
+			/** Index of the format id column */
+			PACKET_LOSS_RATE       : {id: 0, label:""},
+			/** Index of the format id column */
+			PACKET_LOSS_BURSTINESS : {id: 1, label:""},
 			MAX_JITTER             : {id: 2, label:""},
 		},
 
 		/**
-		 * Constants: MMTDrop defined RTP flow metrics
+		 * RTP flow metrics
 		 */
 		RTPMetricId : {
-			PACKET_LOSS       : "Packet Loss", /**< Identifier of packet loss rate metric */
-			PACKET_LOSS_BURST : "Loss Burstiness", /**< Identifier of packet loss burstiness metric */
-			JITTER            : "Jitter", /**< Identifier of jitter metric */
-			QUALITY_INDEX     : "Quality Index", /**< Identifier of quality index metric */
+			/** Identifier of packet loss rate metric */
+			PACKET_LOSS       : "Packet Loss",
+			/** Identifier of packet loss burstiness metric */
+			PACKET_LOSS_BURST : "Loss Burstiness",
+			/** Identifier of jitter metric */
+			JITTER            : "Jitter",
+			/** Identifier of quality index metric */
+			QUALITY_INDEX     : "Quality Index",
 		},
 
 		/**
@@ -186,30 +265,79 @@ MMTDrop.constants = {
 			3 : "Transactions Nb",
 		},
 
+		/**
+		 * Flow metric
+		 * 
+		 * This will be represented as options of flow metric filters created by {@link MMTDrop.filterFactory.createFlowMetricFilter}
+		 * 
+		 */
 		FlowMetricFilter : {
-			DATA_VOLUME    : {id: 101, label:"Data volume"},    //this column must be created (id not in FlowStatsColum)
+			/** Data volume.
+			 * 
+			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
+			 */
+			DATA_VOLUME    : {id: 101, label:"Data volume"},
+			/** Number of packets.
+			 * 
+			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
+			 */
 			PACKET_COUNT   : {id: 102, label:"Packet count"},
-			PAYLOAD_VOLUME : {id: 103, label:"Payload volume"}, 
+			/** Payload volume.
+			 * 
+			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
+			 */
+			PAYLOAD_VOLUME : {id: 103, label:"Payload volume"},
+			/** Number of active flows
+			 * 
+			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
+			 */
 			ACTIVE_FLOWS   : {id: 104, label:"Active flow"},
-			UL_PACKET_COUNT: {id: 12, label:"UL Packet count"},	//this column is the one from FlowStatsColumn (id in FlowStatsColumn)
+			
+			/** Number of upload packets
+			 * 
+			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
+			 */
+			UL_PACKET_COUNT: {id: 12, label:"UL Packet count"},
+			/** Number of download packets
+			 * 
+			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
+			 */
 			DL_PACKET_COUNT: {id: 13, label:"DL Packet count"},
-			UL_DATA_VOLUME : {id: 14, label:"UL Data volume"}, 
+			/** Upload data volume
+			 * 
+			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
+			 */
+			UL_DATA_VOLUME : {id: 14, label:"UL Data volume"},
+			/** Download data volume
+			 * 
+			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
+			 */
 			DL_DATA_VOLUME : {id: 15, label:"DL Data volume"},
+			/** Duration of flow
+			 * 
+			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
+			 */
 			FLOW_DURATION  : {id: 105, label:"Flow duration"}
 		},
 		
 
 		/**
-		 * Constants: Protocol Id,Name 
+		 * A table of Protocol-Id : Name 
 		 */
 		ProtocolsIDName: {
 			0: 'All', 2: '163', 3: '360', 4: '302_FOUND', 5: '360BUY', 6: '56', 7: '8021Q', 8: '888', 9: 'ABOUT', 10: 'ADCASH', 11: 'ADDTHIS', 12: 'ADF', 13: 'ADOBE', 14: 'AFP', 15: 'AH', 16: 'AIM', 17: 'AIMINI', 18: 'ALIBABA', 19: 'ALIPAY', 20: 'ALLEGRO', 21: 'AMAZON', 22: 'AMEBLO', 23: 'ANCESTRY', 24: 'ANGRYBIRDS', 25: 'ANSWERS', 26: 'AOL', 27: 'APPLE', 28: 'APPLEJUICE', 29: 'ARMAGETRON', 30: 'ARP', 31: 'ASK', 32: 'AVG', 33: 'AVI', 34: 'AWEBER', 35: 'AWS', 36: 'BABYLON', 37: 'BADOO', 38: 'BAIDU', 39: 'BANKOFAMERICA', 40: 'BARNESANDNOBLE', 41: 'BATMAN', 42: 'BATTLEFIELD', 43: 'BATTLENET', 44: 'BBB', 45: 'BBC_ONLINE', 46: 'BESTBUY', 47: 'BETFAIR', 48: 'BGP', 49: 'BIBLEGATEWAY', 50: 'BILD', 51: 'BING', 52: 'BITTORRENT', 53: 'BLEACHERREPORT', 54: 'BLOGFA', 55: 'BLOGGER', 56: 'BLOGSPOT', 57: 'BODYBUILDING', 58: 'BOOKING', 59: 'CBSSPORTS', 60: 'CENT', 61: 'CHANGE', 62: 'CHASE', 63: 'CHESS', 64: 'CHINAZ', 65: 'CITRIX', 66: 'CITRIXONLINE', 67: 'CLICKSOR', 68: 'CNN', 69: 'CNZZ', 70: 'COMCAST', 71: 'CONDUIT', 72: 'COPYSCAPE', 73: 'CORREIOS', 74: 'CRAIGSLIST', 75: 'CROSSFIRE', 76: 'DAILYMAIL', 77: 'DAILYMOTION', 78: 'DCERPC', 79: 'DIRECT_DOWNLOAD_LINK', 80: 'DEVIANTART', 81: 'DHCP', 82: 'DHCPV6', 83: 'DIGG', 84: 'DIRECTCONNECT', 85: 'DNS', 86: 'DOFUS', 87: 'DONANIMHABER', 88: 'DOUBAN', 89: 'DOUBLECLICK', 90: 'DROPBOX', 91: 'EBAY', 92: 'EDONKEY', 93: 'EGP', 94: 'EHOW', 95: 'EKSISOZLUK', 96: 'ELECTRONICSARTS', 97: 'ESP', 98: 'ESPN', 99: 'ETHERNET', 100: 'ETSY', 101: 'EUROPA', 102: 'EUROSPORT', 103: 'FACEBOOK', 104: 'FACETIME', 105: 'FASTTRACK', 106: 'FC2', 107: 'FEIDIAN', 108: 'FIESTA', 109: 'FILETOPIA', 110: 'FIVERR', 111: 'FLASH', 112: 'FLICKR', 113: 'FLORENSIA', 114: 'FOURSQUARE', 115: 'FOX', 116: 'FREE', 117: 'FTP', 118: 'GADUGADU', 119: 'GAMEFAQS', 120: 'GAMESPOT', 121: 'GAP', 122: 'GARANTI', 123: 'GAZETEVATAN', 124: 'GIGAPETA', 125: 'GITHUB', 126: 'GITTIGIDIYOR', 127: 'GLOBO', 128: 'GMAIL', 129: 'GNUTELLA', 130: 'GOOGLE_MAPS', 131: 'GO', 132: 'GODADDY', 133: 'GOO', 134: 'GOOGLE', 135: 'GOOGLE_USER_CONTENT', 136: 'GOSMS', 137: 'GRE', 138: 'GROOVESHARK', 139: 'GROUPON', 140: 'GTALK', 141: 'GTP', 142: 'GTP2', 143: 'GUARDIAN', 144: 'GUILDWARS', 145: 'HABERTURK', 146: 'HAO123', 147: 'HEPSIBURADA', 148: 'HI5', 149: 'HALFLIFE2', 150: 'HOMEDEPOT', 151: 'HOOTSUITE', 152: 'HOTMAIL', 153: 'HTTP', 154: 'HTTP_CONNECT', 155: 'HTTP_PROXY', 156: 'HTTP_APPLICATION_ACTIVESYNC', 157: 'HUFFINGTON_POST', 158: 'HURRIYET', 159: 'I23V5', 160: 'IAX', 161: 'ICECAST', 162: 'APPLE_ICLOUD', 163: 'ICMP', 164: 'ICMPV6', 165: 'IFENG', 166: 'IGMP', 167: 'IGN', 168: 'IKEA', 169: 'IMAP', 170: 'IMAPS', 171: 'INTERNET_MOVIE_DATABASE', 172: 'IMESH', 173: 'IMESSAGE', 174: 'IMGUR', 175: 'INCREDIBAR', 176: 'INDIATIMES', 177: 'INSTAGRAM', 178: 'IP', 179: 'IP_IN_IP', 180: 'IPP', 181: 'IPSEC', 182: 'IPV6', 183: 'IRC', 184: 'IRS', 185: 'APPLE_ITUNES', 186: 'UNENCRYPED_JABBER', 187: 'JAPANPOST', 188: 'KAKAO', 189: 'KAT', 190: 'KAZAA', 191: 'KERBEROS', 192: 'KING', 193: 'KOHLS', 194: 'KONGREGATE', 195: 'KONTIKI', 196: 'L2TP', 197: 'LASTFM', 198: 'LDAP', 199: 'LEAGUEOFLEGENDS', 200: 'LEGACY', 201: 'LETV', 202: 'LINKEDIN', 203: 'LIVE', 204: 'LIVEDOOR', 205: 'LIVEMAIL', 206: 'LIVEINTERNET', 207: 'LIVEJASMIN', 208: 'LIVEJOURNAL', 209: 'LIVESCORE', 210: 'LIVINGSOCIAL', 211: 'LOWES', 212: 'MACYS', 213: 'MAIL_RU', 214: 'MANET', 215: 'MANOLITO', 216: 'MAPLESTORY', 217: 'MATCH', 218: 'MDNS', 219: 'MEDIAFIRE', 220: 'MEEBO', 221: 'MGCP', 222: 'MICROSOFT', 223: 'MILLIYET', 224: 'MINECRAFT', 225: 'MINICLIP', 226: 'MLBASEBALL', 227: 'MMO_CHAMPION', 228: 'MMS', 229: 'MOVE', 230: 'MOZILLA', 231: 'MPEG', 232: 'MSN', 233: 'MSSQL', 234: 'MULTIPLY', 235: 'MYNET', 236: 'MYSPACE', 237: 'MYSQL', 238: 'MYWEBSEARCH', 239: 'NBA', 240: 'NEOBUX', 241: 'NETBIOS', 242: 'NETFLIX', 243: 'NETFLOW', 244: 'NEWEGG', 245: 'NEWSMAX', 246: 'NFL', 247: 'NFS', 248: 'NICOVIDEO', 249: 'NIH', 250: 'NORDSTROM', 251: 'NTP', 252: 'NYTIMES', 253: 'ODNOKLASSNIKI', 254: 'OFF', 255: 'OGG', 256: 'ONET', 257: 'OPENFT', 258: 'ORANGEDONKEY', 259: 'OSCAR', 260: 'OSPF', 261: 'OUTBRAIN', 262: 'OVERSTOCK', 263: 'PANDO', 264: 'PAYPAL', 265: 'PCANYWHERE', 266: 'PCH', 267: 'PCONLINE', 268: 'PHOTOBUCKET', 269: 'PINTEREST', 270: 'PLAYSTATION', 271: 'POGO', 272: 'POP', 273: 'POPS', 274: 'POPO', 275: 'PORNHUB', 276: 'POSTGRES', 277: 'PPLIVE', 278: 'PPP', 279: 'PPPOE', 280: 'PPSTREAM', 281: 'PPTP', 282: 'PREMIERLEAGUE', 283: 'QQ', 284: 'QQLIVE', 285: 'QUAKE', 286: 'QUICKTIME', 287: 'R10', 288: 'RADIUS', 289: 'RAKUTEN', 290: 'RDP', 291: 'REALMEDIA', 292: 'REDDIT', 293: 'REDTUBE', 294: 'REFERENCE', 295: 'RENREN', 296: 'ROBLOX', 297: 'ROVIO', 298: 'RTP', 299: 'RTSP', 300: 'SABAHTR', 301: 'SAHIBINDEN', 302: 'SALESFORCE', 303: 'SALON', 304: 'SCTP', 305: 'SEARCHNU', 306: 'SEARCH_RESULTS', 307: 'SEARS', 308: 'SECONDLIFE', 309: 'SECURESERVER', 310: 'SFLOW', 311: 'SHAZAM', 312: 'SHOUTCAST', 313: 'SINA', 314: 'SIP', 315: 'SITEADVISOR', 316: 'SKY', 317: 'SKYPE', 318: 'SKYROCK', 319: 'SKYSPORTS', 320: 'SLATE', 321: 'SLIDESHARE', 322: 'SMB', 323: 'SMTP', 324: 'SMTPS', 325: 'SNMP', 326: 'SOCRATES', 327: 'SOFTONIC', 328: 'SOGOU', 329: 'SOHU', 330: 'SOPCAST', 331: 'SOSO', 332: 'SOULSEEK', 333: 'SOUNDCLOUD', 334: 'SOURGEFORGE', 335: 'SPIEGEL', 336: 'SPORX', 337: 'SPOTIFY', 338: 'SQUIDOO', 339: 'SSDP', 340: 'SSH', 341: 'SSL', 342: 'STACK_OVERFLOW', 343: 'STATCOUNTER', 344: 'STEALTHNET', 345: 'STEAM', 346: 'STUMBLEUPON', 347: 'STUN', 348: 'SULEKHA', 349: 'SYSLOG', 350: 'TAGGED', 351: 'TAOBAO', 352: 'TARGET', 353: 'TCO', 354: 'TCP', 355: 'TDS', 356: 'TEAMVIEWER', 357: 'TELNET', 358: 'TFTP', 359: 'THEMEFOREST', 360: 'THE_PIRATE_BAY', 361: 'THUNDER', 362: 'TIANYA', 363: 'TLS', 364: 'TMALL', 365: 'TORRENTZ', 366: 'TRUPHONE', 367: 'TUBE8', 368: 'TUDOU', 369: 'TUENTI', 370: 'TUMBLR', 371: 'TVANTS', 372: 'TVUPLAYER', 373: 'TWITTER', 374: 'UBI', 375: 'UCOZ', 376: 'UDP', 377: 'UDPLITE', 378: 'UOL', 379: 'USDEPARTMENTOFSTATE', 380: 'USENET', 381: 'USTREAM', 382: 'HTTP_APPLICATION_VEOHTV', 383: 'VIADEO', 384: 'VIBER', 385: 'VIMEO', 386: 'VK', 387: 'VKONTAKTE', 388: 'VNC', 389: 'WALMART', 390: 'WARRIORFORUM', 391: 'WAYN', 392: 'WEATHER', 393: 'WEBEX', 394: 'WEEKLYSTANDARD', 395: 'WEIBO', 396: 'WELLSFARGO', 397: 'WHATSAPP', 398: 'WIGETMEDIA', 399: 'WIKIA', 400: 'WIKIMEDIA', 401: 'WIKIPEDIA', 402: 'WILLIAMHILL', 403: 'WINDOWSLIVE', 404: 'WINDOWSMEDIA', 405: 'WINMX', 406: 'WINUPDATE', 407: 'WORLD_OF_KUNG_FU', 408: 'WORDPRESS_ORG', 409: 'WARCRAFT3', 410: 'WORLDOFWARCRAFT', 411: 'WOWHEAD', 412: 'WWE', 413: 'XBOX', 414: 'XDMCP', 415: 'XHAMSTER', 416: 'XING', 417: 'XINHUANET', 418: 'XNXX', 419: 'XVIDEOS', 420: 'YAHOO', 421: 'YAHOOGAMES', 422: 'YAHOOMAIL', 423: 'YANDEX', 424: 'YELP', 425: 'YOUKU', 426: 'YOUPORN', 427: 'YOUTUBE', 428: 'ZAPPOS', 429: 'ZATTOO', 430: 'ZEDO', 431: 'ZOL', 432: 'ZYNGA', 433: '3PC', 434: 'ANY_0HOP', 435: 'ANY_DFS', 436: 'ANY_HIP', 437: 'ANY_LOCAL', 438: 'ANY_PES', 439: 'ARGUS', 440: 'ARIS', 441: 'AX_25', 442: 'BBN_RCC_MON', 443: 'BNA', 444: 'BR_SAT_MON', 445: 'CBT', 446: 'CFTP', 447: 'CHAOS', 448: 'COMPAQ_PEER', 449: 'CPHB', 450: 'CPNX', 451: 'CRTP', 452: 'CRUDP', 453: 'DCCP', 454: 'DCN_MEAS', 455: 'DDP', 456: 'DDX', 457: 'DGP', 458: 'EIGRP', 459: 'EMCON', 460: 'ENCAP', 461: 'ETHERIP', 462: 'FC', 463: 'FIRE', 464: 'GGP', 465: 'GMTP', 466: 'HIP', 467: 'HMP', 468: 'I_NLSP', 469: 'IATP', 470: 'IDPR', 471: 'IDPR_CMTP', 472: 'IDRP', 473: 'IFMP', 474: 'IGP', 475: 'IL', 476: 'IPCOMP', 477: 'IPCV', 478: 'IPLT', 479: 'IPPC', 480: 'IPTM', 481: 'IPX_IN_IP', 482: 'IRTP', 483: 'IS_IS', 484: 'ISO_IP', 485: 'ISO_TP4', 486: 'KRYPTOLAN', 487: 'LARP', 488: 'LEAF_1', 489: 'LEAF_2', 490: 'MERIT_INP', 491: 'MFE_NSP', 492: 'MHRP', 493: 'MICP', 494: 'MOBILE', 495: 'MOBILITY_HEADER', 496: 'MPLS_IN_IP', 497: 'MTP', 498: 'MUX', 499: 'NARP', 500: 'NETBLT', 501: 'NSFNET_IGP', 502: 'NVP_II', 503: 'PGM', 504: 'PIM', 505: 'PIPE', 506: 'PNNI', 507: 'PRM', 508: 'PTP', 509: 'PUP', 510: 'PVP', 511: 'QNX', 512: 'RSVP', 513: 'RSVP_E2E_IGNORE', 514: 'RVD', 515: 'SAT_EXPAK', 516: 'SAT_MON', 517: 'SCC_SP', 518: 'SCPS', 519: 'SDRP', 520: 'SECURE_VMTP', 521: 'SHIM6', 522: 'SKIP', 523: 'SM', 524: 'SMP', 525: 'SNP', 526: 'SPRITE_RPC', 527: 'SPS', 528: 'SRP', 529: 'SSCOPMCE', 530: 'ST', 531: 'STP', 532: 'SUN_ND', 533: 'SWIPE', 534: 'TCF', 535: 'TLSP', 536: 'TP_PP', 537: 'TRUNK_1', 538: 'TRUNK_2', 539: 'UTI', 540: 'VINES', 541: 'VISA', 542: 'VMTP', 543: 'VRRP', 544: 'WB_EXPAK', 545: 'WB_MON', 546: 'WSN', 547: 'XNET', 548: 'XNS_IDP', 549: 'XTP', 550: 'BUZZNET', 551: 'COMEDY', 552: 'RAMBLER', 553: 'SMUGMUG', 554: 'ARCHIEVE', 555: 'CITYNEWS', 556: 'SCIENCESTAGE', 557: 'ONEWORLD', 558: 'DISQUS', 559: 'BLOGCU', 560: 'EKOLEY', 561: '500PX', 562: 'FOTKI', 563: 'FOTOLOG', 564: 'JALBUM', 565: 'LOCKERZ', 566: 'PANORAMIO', 567: 'SNAPFISH', 568: 'WEBSHOTS', 569: 'MEGA', 570: 'VIDOOSH', 571: 'AFREECA', 572: 'WILDSCREEN', 573: 'BLOGTV', 574: 'HULU', 575: 'MEVIO', 576: 'LIVESTREAM', 577: 'LIVELEAK', 578: 'DEEZER', 579: 'BLIPTV', 580: 'BREAK', 581: 'CITYTV', 582: 'COMEDYCENTRAL', 583: 'ENGAGEMEDIA', 584: 'SCREENJUNKIES', 585: 'RUTUBE', 586: 'SEVENLOAD', 587: 'MUBI', 588: 'IZLESENE', 589: 'VIDEO_HOSTING', 590: 'BOX', 591: 'SKYDRIVE', 592: '7DIGITAL', 593: 'CLOUDFRONT', 594: 'TANGO', 595: 'WECHAT', 596: 'LINE', 597: 'BLOOMBERG', 598: 'MSCDN', 599: 'AKAMAI', 600: 'YAHOOMSG', 601: 'BITGRAVITY', 602: 'CACHEFLY', 603: 'CDN77', 604: 'CDNETWORKS', 605: 'CHINACACHE', 606: 'COTENDO', 607: 'EDGECAST', 608: 'FASTLY', 609: 'HIGHWINDS', 610: 'INTERNAP', 611: 'LEVEL3', 612: 'LIMELIGHT', 613: 'MAXCDN', 614: 'NETDNA', 615: 'VOXEL', 616: 'RACKSPACE', 617: 'GAMEFORGE', 618: 'METIN2', 619: 'OGAME', 620: 'BATTLEKNIGHT', 621: '4STORY', 622: 'FBMSG', 623: 'GCM',
 		},
 
+		/**
+		 * A table of Category-Id : Name
+		 */
 		CategoriesIdsMap: {
 			0:'All', 1:'Web', 2:'P2P', 3:'Gaming', 4:'Streaming', 5:'Conversational', 6:'Mail', 7:'FileTransfer', 8:'CloudStorage', 9:'DirectDownloadLink', 10:'Network', 11:'Tunnelling', 12:'DataBase', 13:'Remote', 14:'Misc', 15:'CDN'
 		},
 
+		/**
+		 * A table of Category-Id: Application-Id[]
+		 */
 		CategoriesAppIdsMap: {
 			1: [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 26, 27, 31, 32, 33, 34, 35, 36, 38, 39, 40, 44, 45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 64, 67, 68, 69, 70, 71, 72, 73, 74, 76, 80, 83, 87, 88, 89, 91, 94, 95, 98, 100, 101, 102, 103, 106, 110, 111, 112, 114, 115, 116, 121, 122, 123, 124, 125, 126, 127, 130, 131, 132, 133, 134, 135, 139, 143, 145, 146, 147, 148, 150, 151, 153, 154, 155, 157, 158, 159, 165, 168, 171, 174, 175, 176, 177, 184, 187, 189, 193, 200, 201, 202, 203, 204, 206, 207, 208, 209, 210, 211, 212, 217, 222, 223, 226, 230, 234, 235, 236, 238, 239, 240, 244, 245, 246, 248, 249, 250, 252, 253, 256, 258, 261, 262, 264, 267, 268, 269, 274, 275, 282, 283, 286, 287, 289, 292, 293, 294, 295, 300, 301, 302, 303, 305, 306, 307, 309, 313, 315, 316, 318, 319, 320, 321, 326, 327, 328, 329, 331, 333, 334, 335, 336, 338, 342, 343, 346, 348, 350, 351, 352, 353, 359, 360, 362, 364, 367, 368, 369, 370, 373, 375, 378, 379, 380, 383, 386, 387, 389, 390, 391, 392, 394, 395, 396, 398, 399, 400, 401, 402, 403, 404, 406, 408, 412, 415, 416, 417, 418, 419, 420, 423, 424, 425, 426, 428, 430, 431, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 580, 583, 597, 598, 623],
 			2: [17, 28, 52, 84, 92, 105, 109, 129, 172, 190, 215, 257, 263, 332, 344, 361, 365, 405],
@@ -232,7 +360,7 @@ MMTDrop.constants = {
 		/**
 		 * Maps the Protocol ID to a Protocol Name
 		 * @param {number} id
-		 * @returns {string} Protocol Name
+		 * @returns {string} Protocol name
 		 */
 		getProtocolNameFromID : function(id) {
 			var protocolName;
@@ -241,8 +369,8 @@ MMTDrop.constants = {
 		},
 		
 		/**
-		  * Return the path friendly name. <br>
-		  * @param path application protocol path (given by application IDs)
+		  * Return the path friendly name.
+		  * @param {string} path application protocol path (given by application IDs)
 		  */
 		 getPathFriendlyName : function(path) {
 			 var id = path.split(".");
@@ -256,37 +384,37 @@ MMTDrop.constants = {
 		 /**
 		  * Return the parent of the given protocol path. <br>
 		  * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
-		  * @param path application protocol path
+		  * @param {string} path application protocol path
+		  * @returns {string} parent path
 		  */
 		 getParentPath : function(path) {
 			 var n = path.lastIndexOf(".");
 			 if (n == -1) {
 				 return ".";
-			 } else {
-				 var p = path.substring(0, n);
-				 return p;
-			 }
+			 } 
+			var p = path.substring(0, n);
+			return p;
 		 },
 
 		 /**
 		  * Return the child of the given protocol path. <br>
 		  * ("2.3" is the child of "1.2.3"; "." is the child of "1")
-		  * @param path application protocol path
+		  * @param {string} path application protocol path
+		  * @returns {string} child path
 		  */
 		 getChildPath : function(path) {
 			 var n = path.indexOf(".");
 			 if (n == -1) {
 				 return ".";
-			 } else {
-				 var child = path.substring(n + 1);
-				 return child;
 			 }
+			 var child = path.substring(n + 1);
+			 return child;
 		 },
 		 
 		 /**
 		  * Returns the application id given the application path.
 		  * @param {string} path - application protocol path
-		  * @returns {number} 
+		  * @returns {number} application ID
 		  */
 		 getAppIdFromPath : function(path) {
 			 var n  = path.toString().lastIndexOf(".");
@@ -296,16 +424,14 @@ MMTDrop.constants = {
 
 		 /**
 		  * Returns the root application id given the application path.
-		  * @param {Object} path - application protocol path
-		  * @returns {number}
+		  * @param {string} path - application protocol path
+		  * @returns {string} root 
 		  */
 		 getRootAppId : function(path) {
 			 var n = path.toString().indexOf(".");
-			 if (n == -1) {
+			 if (n == -1) 
 				 return path;
-			 } else {
-				 return path.toString().substring(0, n);
-			 }
+			 return path.toString().substring(0, n);
 		 },
 		/**
 		 * Get Category ID of an application
@@ -332,6 +458,15 @@ MMTDrop.constants = {
 			return protocolName;
 		},
 
+		/**
+		 * List of period Id.
+		 * 
+		 * This will be used as:
+		 * 
+		 * * options of period filters created by {@link MMTDrop.filterFactory.createPeriodFilter}.
+		 * * period parameter of {@link MMTDrop.Database}
+		 *   
+		 */
 		period : {
 			MINUTE : "minute",
 			HOUR   : "hour",
@@ -360,6 +495,8 @@ MMTDrop.tools = function() {
 	 * Convert an object to an array
 	 * @param {Object} obj - object tobe converted
 	 * @returns {Array}
+	 * @alias object2Array
+	 * @memberof! MMTDrop.tools
 	 */
 	_this.object2Array = function ( obj ){
 		return Object.keys(obj).map(function(key){
@@ -367,6 +504,12 @@ MMTDrop.tools = function() {
 		});
 	};
 
+	/**
+	 * Check whether a value existing in an array
+	 * @param {object} val 
+	 * @param {Array} arr
+	 * @returns <code>true</code> if <code>val</code> existing in <code>arr</code>, otherwise <code>false</code>
+	 */
 	_this.inArray = function( val, arr){
 		for( var i in arr){
 			if( arr[i] == val )
@@ -377,22 +520,26 @@ MMTDrop.tools = function() {
 	
 	/**
 	 * Get the first element of an Object or Array
-	 * @param {Object} obj
-	 * @returns {Object} the first elemen
+	 * @param {object} obj
+	 * @returns {object} the first elemen
+	 * @alias getFirstElement
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.getFirstElement = function( obj ){
+	 _this.getFirstElement = function( obj ){
 		for (var key in obj)
 			if (obj.propertyIsEnumerable(key))
 				return obj[key];
 	};
 
 	/**
-	 * Overwrites recursively obj1's values with obj2's and adds obj2's if non existent in obj1
-	 * @param obj1
-	 * @param obj2
-	 * @returns obj3 a new object based on obj1 and obj2
+	 * Overwrites recursively obj1's values with obj2's and adds obj2's if non existent in <code>obj1</code>
+	 * @param {object} obj1
+	 * @param {object} obj2
+	 * @returns {object} obj1
+	 * @alias mergeObjects
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.mergeObjects = function( obj1, obj2 ){
+	 _this.mergeObjects = function( obj1, obj2 ){
 		//obj1 = MMTDrop.tools.cloneData( obj1 );
 		for (var p in obj2) {
 			try {
@@ -417,11 +564,13 @@ MMTDrop.tools = function() {
 
 	/**
 	 * Clone a data object
-	 * @param obj - object tobe cloned
-	 * @returns a new object having the same data<br/>
+	 * @param {object} obj - object tobe cloned
+	 * @returns {object} a new object having the same data<br/>
 	 * This cannot clone object's functions
+	 * @alias cloneData
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.cloneData = function (obj){
+	 _this.cloneData = function (obj){
 		var seen = [];
 //		return JSON.parse( JSON.stringify (obj));
 		var str = JSON.stringify(obj, function(key, val) {
@@ -436,17 +585,27 @@ MMTDrop.tools = function() {
 	};
 
 	var _uniqueNumber = 0;
+	
 	/**
 	 * Get an unique number.
 	 * This counter will be reseted when the page loaded. It starts from 1.
 	 * @returns {number}
+	 * @alias getUniqueNumber
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.getUniqueNumber = function(){
+	 _this.getUniqueNumber = function(){
 		return (++ _uniqueNumber);
 	};
 
 
-	_this.capitalizeFirstLetter = function(str) {
+	/**
+	 * Capitalize the first letter of a string
+	 * @param {string} str
+	 * @returns {string} s
+	 * @alias capitalizeFirstLetter
+	 * @memberof! MMTDrop.tools
+	 */
+	 _this.capitalizeFirstLetter = function(str) {
 		return str.charAt(0).toUpperCase() + str.slice(1);
 	};
 
@@ -491,18 +650,22 @@ MMTDrop.tools = function() {
 	/**
 	 * Check if an object is a function
 	 * @param {Object} callback - object tobe checked
-	 * @returns true if yes
+	 * @returns {boolean} true if yes
+	 * @alias isFunction
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.isFunction = function (callback){
+	 _this.isFunction = function (callback){
 		return (typeof(callback) === "function");
 	};
 
 	/**
-	 * Check whether a vlue is a number
-	 * @param n - data to check
-	 * @returns true if yes, false if no
+	 * Check whether a value is a number
+	 * @param {object} n - data to check
+	 * @returns {boolean} true if yes, false if no
+	 * @alias isNumber
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.isNumber = function isNumber(n) {
+	 _this.isNumber = function isNumber(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
 	};
 
@@ -512,8 +675,10 @@ MMTDrop.tools = function() {
 	 * @param {Array} data - is an array of array
 	 * @param {number} col - is a key of an element of @{data}
 	 * @returns {{string : Array}}
+	 * @alias splitData
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.splitData = function(data, col){
+	 _this.splitData = function(data, col){
 		if (col == null)
 			throw new Error("Need to define an id");
 		if (Array.isArray (data) == false)
@@ -542,9 +707,11 @@ MMTDrop.tools = function() {
 
 	/**
 	 * Split data
-	 * @returns {Object}
+	 * @returns {Object} data
+	 * @alias splitDataByGroupAndSubgroup
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.splitDataByGroupAndSubgroup = function( data, colGroup, colSubgroup){
+	 _this.splitDataByGroupAndSubgroup = function( data, colGroup, colSubgroup){
 		var obj = _this.splitData( data, colGroup );
 
 		var obj2 = {};
@@ -562,8 +729,10 @@ MMTDrop.tools = function() {
 	 * @param {Data} data - array of array
 	 * @param {Array.<number>} colSums - array of numbers
 	 * @returns {Object}
+	 * @alias sumUp
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.sumUp = function(data, colSums){
+	 _this.sumUp = function(data, colSums){
 		if (colSums == null)
 			throw new Error("Need to define an id");
 		if (Array.isArray (data) == false)
@@ -601,13 +770,26 @@ MMTDrop.tools = function() {
 	};
 
 	/**
+	 * Sum data by group
 	 * @return {{string: Array.<Array>}}
+	 * @see {@link MMTDrop.tools#sumByGroups}
+	 * @alias sumByGroup
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.sumByGroup = function(data, colsSum, colGroup){
+	 _this.sumByGroup = function(data, colsSum, colGroup){
 		return _this.sumByGroups( data, colsSum, [colGroup]);
 	};
 	
-	_this.sumByGroups = function( data, colsToSum, colsToGroup){
+	/**
+	 * Sum up element of {@link Data} by group, sub group, ... and so more
+	 * @param {Data} data
+	 * @param {Index[]} colsToSum list of column Ids to sumup
+	 * @param {Index[]} colsToGroup list of column Ids to group by
+	 * @return {Data} data 
+	 * @alias sumByGroups
+	 * @memberof! MMTDrop.tools
+	 */
+	 _this.sumByGroups = function( data, colsToSum, colsToGroup){
 		if (colsToSum == null)
 			throw new Error("Need one column tobe sumUp");
 		
@@ -629,16 +811,20 @@ MMTDrop.tools = function() {
 	
 
 	/**
+	 * Sum data by group and subgroup
 	 * @returns {{string : Array<{string: Array}>}}
+	 * @see {@link MMTDrop.tools#sumByGroups}
+	 * @alias sumByGroupAndSubgroup
+	 * @memberof! MMTDrop.tools
 	 */
-	_this.sumByGroupAndSubgroup = function( data, colsSum, colGroup, colSubgroup){
+	 _this.sumByGroupAndSubgroup = function( data, colsSum, colGroup, colSubgroup){
 		if (colGroup == null)
 			throw new Error("Need one column tobe grouped");
 		if (colSubgroup == null)
 			throw new Error("Need one column tobe sub grouped");
 
 		return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
-	}
+	};
 
 	return _this;
 }();
@@ -651,10 +837,11 @@ MMTDrop.tools = function() {
 
 
 /**
- * @class MMTDrop.Database
- * A class representing data getting from MMT-Operator
- * @param {DatabaseOption} param  
+ * @class
+ * A class representing data getting from server
+ * @param {DatabaseParam} param  
  * @param {DatabaseProcessFn} [dataProcessingFn=null] - processing data  
+ * @param {boolean} [isAutoLoad=false] auto load data for the first call of <code>data()</code> 
  * @constructor
  */
 MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
@@ -679,11 +866,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 	/**
 	 * Get data of database
-	 * @returns {Data}
+	 * @returns {Data} data
 	 *//**
 	 * Set data
 	 * @param {Data} val
-	 * @returns this
+	 * @returns {MMTDrop.Database} this
 	 */
 	this.data = function( val ){
 		if (val == undefined){
@@ -691,17 +878,16 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 				this.reload();
 			
 			return _data ;
-		}else{
-			//do something here
-			_data = val;
-			return this;
 		}
+		//do something here
+		_data = val;
+		return this;
 	};
 
 	/**
 	 * Reload data from MMT-Operator.
-	 * @param {DatabaseOption} [new_param=null] - a new parameter of database. 
-	 * If the new parameter will merge with the current one of the database.
+	 * @param {DatabaseParam} [new_param=null] - a new parameter of database. 
+	 * The new parameter will merge with the current one of the database.
 	 * @see {@link MMTDrop.tools#mergeObjects} 
 	 */
 	this.reload = function(new_param){
@@ -731,11 +917,10 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	var _socket    = null;
 	
 	/**
-	 * Register a callback when receiving a new message in realtime.
-	 * The callback will be passed two paramenters: the received message and the <code>userData</code>
+	 * Register a callback when receiving a new message in realtime from MMT-Operator.
 	 * 
-	 * @param callback
-	 * @param userData
+	 * @param {function} callback The callback will be passed two paramenters: the received message and the <code>userData</code> 
+	 * @param {object} userData
 	 */
 	this.onMessage = function( callback, userData ){
 		if(MMTDrop.tools.isFunction( callback ))
@@ -762,7 +947,6 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	/**
 	 * Statistic
 	 * @type {object}
-	 * @property {number} getProbes
 	 */
 	this.stat = function(){
 		var stat = {};
@@ -770,7 +954,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		/**
 		 * Group data by probeID
 		 * @alias stat.splitDataByProbe 
-		 * @memeberof! MMTDrop.Database#
+		 * @memberof! MMTDrop.Database#
 		 */
 		stat.splitDataByProbe = function(){
 			return MMTDrop.tools.splitData( _this.data(), 
@@ -780,6 +964,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 		/**
 		 * Get set of probe
+		 * @returns {string[]} list of probe Ids existing in data
+		 * @alias stat.getProbes
+		 * @memberof! MMTDrop.Database#
 		 */
 		stat.getProbes = function(){
 			var obj = MMTDrop.tools.splitData( _this.data(), 
@@ -788,7 +975,14 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		};
 		
 		/**
-		 * 
+		 * Filter out data that do not satisfy some criteria.
+		 * This function does not change data <code>Database.data()</code>
+		 * @param {Array.<{id: Value, data: object[]}>} criteria List of criteria to retain data. 
+		 * It states that each element <code>msg</code> of <code>Database.data()</code> having <code>msg[id]</code> equals to
+		 * one of element in <code>data</code>.
+		 * @return {Data} data after filtering out.
+		 * @alias stat.filter
+		 * @memberof! MMTDrop.Database#
 		 */
 		stat.filter = function( criteria ){
 			var arr = [];
@@ -878,14 +1072,18 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 };
 
 /**
+ * Create new instances of {@link MMTDrop.Database}.
+ * 
+ * Add some special processing depending on kinds of data format, see {@link MMTDrop.constants.CsvFormat}.
  * @namespace
  */
 MMTDrop.databaseFactory = {
 		/**
-		 * Database for statistic of traffic (format = 99)
-		 * @param {DataBaseOption} param - 
-		 * @param {boolean} [isAutoLoad = false] - if it is true, database will load automatically when its data property is call for the first time
-		 * @returns {MMTDrop.Database} 
+		 * Create database for statistic of traffic (format = 99)
+		 * @param {DatabaseParam} param option to get data from server.
+		 * It will be overridden <code>format</code> property, e.g., <code>param.format=99</code>
+		 * @param {boolean} [isAutoLoad=false] - if it is true, database will load automatically when its data property is call for the first time
+		 * @returns {MMTDrop.DatabaseStat} database
 		 */
 		createStatDB : function(param, isAutoLoad){
 			param = param || {};
@@ -1004,7 +1202,11 @@ MMTDrop.databaseFactory = {
 			isAutoLoad);
 
 			/**
-			 * Change path id to name
+			 * Change path of application Ids to path of application names
+			 * @param {Data} data
+			 * @return {Data} data after update path Ids
+			 * @alias stat.updateFriendlyAppName
+			 * @memberof! MMTDrop.dataFactory.createStatDB
 			 */
 			db.stat.updateFriendlyAppName = function( data ){
 				data = MMTDrop.tools.cloneData( data );
@@ -1036,7 +1238,7 @@ MMTDrop.databaseFactory = {
 			};
 			
 			/**
-			 * 
+			 * Get set of class Ids  
 			 */
 			db.stat.getAppClasses = function(){
 				var obj = db.stat.splitDataByClass();
@@ -1265,9 +1467,11 @@ MMTDrop.databaseFactory = {
 		},
 
 		/**
-		 * Database for statistic of flow (format = 0)
+		 * Create database for statistic of flow (format = 0)
+		 * @param {DatabaseParam} param It will be overridden with <code>param.format = 0 </code>
+		 * @returns {MMTDrop.Database}
 		 */
-		createFlowDB : function (param){
+		createFlowDB : function (param, isAutoLoad){
 			param = param || {};
 			//overwrite format to 0
 			param.format = 0;
@@ -1295,7 +1499,7 @@ MMTDrop.databaseFactory = {
 					arr.push( msg );
 				}
 				return arr;
-			});
+			}, isAutoLoad);
 			
 			db.stat.getTimePointsForChart = function( col, sorted ){
 				var COL = MMTDrop.constants.FlowStatsColumn;
@@ -1375,16 +1579,19 @@ MMTDrop.databaseFactory = {
 //MMTDrop.Filter
 ///////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @class MMTDrop.Filter
- * @param {FilterOption} param - {id: unique, label: string, options : [{id:  string, label: string}, {}], onchange: callback}
- * <br/> If {param.onchange} function is defined, it will handle the changing. 
- * <br/> If the function return {true}, the default actions 
- * <br/>   (store the change to localStorage, apply the change to its attached database) 
- * <br/>   are then executed. 
+ * @class
+ * Filter data before visualizing them by {@link MMTDrop.Chart} 
  * 
- * @param filterFn = callback(value, db): this defines how database @{db} is filtered 
- * <br/>  when the option having @{value} was selected.
- * @param prepareDataFn = callback(db) : this is called before this.attachTo
+ * @param {FilterParam} param  
+ * @param {function} filterFn  This function defines how database is filtered. 
+ * It takes the form <code>callback(sel, db)</code>: 
+ * with <code>sel</code> typed of {@link Index} is current selected option and
+ * <code>db</code> typed of {@link MMTDrop.Database} is a database the filter attached to.
+ * 
+ * @param {function} [prepareDataFn=null] This function may be usedful for caching data
+ * when an option being selected again. That is, instead of re-calculate/filter database 
+ * we cache data that were filtered at the first time of selecting the option and reuse for next times.  
+ * This is called when calling <code>.filter()</code>.
  * @constructor
  */
 MMTDrop.Filter = function (param, filterFn, prepareDataFn){
@@ -1399,7 +1606,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 	/**
 	 * Render the filter into an HTML element
-	 * @param {string} elemID - id of the HTML element
+	 * @param {string} elemID Id of the HTML element
 	 */
 	this.renderTo = function (elemID){
 		//remove older if exist
@@ -1431,6 +1638,14 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 	};
 
 
+	/**
+	 * Get the current selected option
+	 * @returns {Index} the current selected option
+	 *//**
+	 * Set the current selected option
+	 * @param {Index} sel
+	 * @returns {MMTDrop.Filter} this
+	 */
 	this.selectedOption = function( opt ){
 		if( opt == undefined ){
 			return _currentSelectedOption;
@@ -1440,12 +1655,12 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 	};
 	
 	/**
-	 * Get option property
-	 * @returns {SelectOption}
+	 * Get list of options of the filter
+	 * @returns {Index[]} lst
 	 *//**
-	 * Set option property
-	 * @param {SelectOption} val
-	 * @returns this
+	 * Set a new list of options of the filter
+	 * @param {Index[]} lst 
+	 * @returns [MMTDrop.Filter] this
 	 */
 	this.option = function( val ){
 		if ( val == undefined ){
@@ -1456,6 +1671,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		return this;
 	};
 
+	/**
+	 * Redraw the filter.
+	 * This should be called after updating new option by <code>.option(lst)</code>
+	 */
 	this.redraw = function(){
 		var filter = $('#' + param.id);
 
@@ -1496,11 +1715,22 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 	};
 
+	/**
+	 * Register a callback after the filter filters out data.
+	 * User can register more than one callback.
+	 * @param {function} callback It takes the form 
+	 * <code>callback(sel, db, userData)</code> where: <code>sel</code> is the current selected option,
+	 * <code>db</code> is database after filtering.
+	 * @param {object} userData It will be passed as the last parameter of <code>callback</code>.
+	 */
 	this.onFilter = function (callback, obj){
 		if (MMTDrop.tools.isFunction(callback))
 			_onFilterCallbacks.push ([callback, obj]);
 	};
 
+	/**
+	 * Filter out database with the current selected option
+	 */
 	this.filter = function(){
 		if (MMTDrop.tools.isFunction(prepareDataFn))
 			prepareDataFn(_database);
@@ -1533,9 +1763,17 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 };
 
 /**
+ * A namespace to create some instances of {@link MMTDrop.Filter}
  * @namespace
  */
 MMTDrop.filterFactory = {
+		
+		/**
+		 * Create a filter metric for flow statistic.
+		 * The list of options is defined by {@link MMTDrop.constants.FlowMetricFilter}.
+		 * This filter does not filter out its database.
+		 * @returns {MMTDrop.Filter} filter
+		 */
 		createFlowMetricFilter : function(){
 			var cols    = MMTDrop.constants.FlowMetricFilter;
 			var options = [];
@@ -1553,6 +1791,11 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
+		/**
+		 * Create a filter matric for general statistic.
+		 * This filter does not filter out its database.
+		 * @returns {MMTDrop.Filter} filter
+		 */
 		createMetricFilter : function(){
 			var cols = [
 			            MMTDrop.constants.StatsColumn.DATA_VOLUME,
@@ -1579,6 +1822,13 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
+		
+		/**
+		 * Create a period filter for any database.
+		 * This filter will <code>reload</code> its database with a new <code>period</code> parameter, see {@link MMTDrop.Database#reload}.
+		 * The list of options is defined by {@link MMTDrop.constants.period}
+		 * @returns {MMTDrop.Filter} filter
+		 */
 		createPeriodFilter : function(){
 			//create a list of options from predefined MMTDrop.period
 			var options = [];
@@ -1603,6 +1853,12 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
+		/**
+		 * Create a probe filter.
+		 * This filter retains in database only element having <code>PROBE_ID.id</code> equals to <code>id</code> of the current selected option.
+		 * The list of options is automatically updated by probe Ids existing in <code>database</code> its attached to. 
+		 * @returns {MMTDrop.Filter} filter
+		 */
 		createProbeFilter : function(){
 			var probeID = "probe_filter_" + MMTDrop.tools.getUniqueNumber();
 
@@ -1649,6 +1905,12 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
+		/**
+		 * Create an application filter.
+		 * This filter retains only in database the element having <code>APP_ID.id</code> equals to <code>id</code> of the current selected option.
+		 * Its lits of options is automatically updated by application Ids existing in the <code>database</code> the filter attached to.
+		 * @returns {MMTDrop.Filter} filter
+		 */
 		createAppFilter : function(){
 			var filterID = "app_filter_" + MMTDrop.tools.getUniqueNumber();
 
@@ -1710,6 +1972,13 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
+		
+		/**
+		 * Create an application filter.
+		 * This filters retains only in database the element having <code>APP_ID.id</code> in the current selected class, see {@link MMTDrop.constants.CategoriesAppIdsMap}.
+		 * The list of options is automatically updated by classes existing in <code>database</code> its attached to.
+		 * @returns {MMTDrop.Filter}
+		 */
 		createClassFilter : function(){
 			var filterID = "class_filter_" + MMTDrop.tools.getUniqueNumber();
 
@@ -1762,9 +2031,11 @@ MMTDrop.filterFactory = {
 //MMTDrop.Report
 ///////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @class MMTDrop.Report
+ * @class
+ * Report
+ * 
  * @param {string} title - title of report
- * @param {MMDrop.Database} database -
+ * @param {MMTDrop.Database} database 
  * @param {MMTDrop.Filter[]} filters - list of filters
  * @param {Array.<{charts: MMTDrop.Chart[], width: number}>} groupCharts - groups of charts
  * @param {DataFlow} dataFlow - flow of data
@@ -1773,7 +2044,8 @@ MMTDrop.filterFactory = {
 MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	
 	/**
-	 * The charts beeing showing
+	 * The charts being showing
+	 * @type {MMTDrop.Chart[]}
 	 */
 	this.activeCharts = [];
 	
@@ -1933,7 +2205,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 				btngroup.appendTo(elemDiv);
 			}
 
-			var chartID = "charts_group_" + i;
+			var chartID = "charts_group_" + i + MMTDrop.tools.getUniqueNumber();
 			$('<div>', {
 				'id' : chartID,
 			}).appendTo(elemDiv);
@@ -1968,14 +2240,13 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 
 
 /**
-
-/**
+ * A namespace to create several kinds of reports. 
  * @namespace
  */
 MMTDrop.reportFactory = {
 		/**
 		 * Dashboard using a timeline chart to show traffic in realtime
-		 * @returns {MMTDrop.Report}
+		 * @returns {MMTDrop.Report} report
 		 */
 		createRealtimeReport : function(){
 			var database = MMTDrop.databaseFactory.createStatDB({
@@ -2063,6 +2334,7 @@ MMTDrop.reportFactory = {
 				}
 			};
 			
+			
 			/**
 			 * A timer that will insert a dump message in order to move forward the chart when no traffic.
 			 */
@@ -2098,6 +2370,8 @@ MMTDrop.reportFactory = {
 			};
 			
 			database.onMessage( function( msg ){
+				if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
+					return;
 				appendMsg( msg );
 			});
 			
@@ -2125,8 +2399,134 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 		
+		createActiveConnectionReport : function(){
+			var COL = MMTDrop.constants.FlowStatsColumn;
+			
+			var database = new MMTDrop.Database({
+				//probe : [10],
+				format: MMTDrop.constants.CsvFormat.DEFAULT_APP_FORMAT,
+				period: MMTDrop.constants.MINUTE
+			}, function (data) {
+				return data;
+			}, true);
+			
+			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+			var actApps = {};
+			
+			var cTable= MMTDrop.chartFactory.createTable({
+				getData: { 
+					getDataFn: function( db ){
+						var data = MMTDrop.tools.splitData(db.data(), COL.APP_NAME.id);
+						var arr = [];
+						for( var i in data){
+							var flows = data[i];
+							var flow = flows[0];
+							var app  = MMTDrop.constants.getProtocolNameFromID( i );
+							arr.push([ 
+							           app,
+							           flow[COL.CLIENT_ADDR.id],
+							           flow[COL.SERVER_ADDR.id],
+							           new Date(flow[COL.START_TIME.id])
+							        ]);
+							
+							actApps[ "<a>" + app + "</a>" ] = flow[COL.TIMESTAMP.id];
+						}
+						return {data: arr, 
+							columns: [{id: 0, label:"Name"}, {id: 1, label: "Source"}, 
+							          {id: 2, label: "Destination"}, {id: 3, label: "Start time"}]};
+					},
+				}
+			});
+			
+			var dataFlow = [ {
+							object : fProbe,
+							effect : [ {
+								object : cTable,
+								effect : []
+							}, ]
+					} ];
+
+			var report = new MMTDrop.Report(
+					// title
+					"Active Connections",
+
+					// database
+					database,
+
+					// filers
+					[fProbe],
+
+					// charts
+					[
+					 {charts: [cTable], width: 12},
+					 ],
+
+					 //order of data flux
+					 dataFlow
+			);
+			
+			
+			database.onMessage( function( msg ){
+				if( msg[COL.FORMAT_ID.id ] == MMTDrop.constants.CsvFormat.STATS_FORMAT )
+					return;
+				var app = msg[ COL.APP_NAME.id ];
+				app = MMTDrop.constants.getProtocolNameFromID( app );
+				app = "<a>" + app + "</a>";
+				
+		        var src = msg[COL.CLIENT_ADDR.id];
+				var dst = msg[COL.SERVER_ADDR.id];
+				var ts  = msg[COL.START_TIME.id] * 1000;
+				ts = new Date(ts);
+				var arr = [app, src, dst, ts];
+				
+				actApps[app] = msg[COL.TIMESTAMP.id];
+				console.log( actApps[ app ] );
+				
+				var isExist = false;
+				var tbl = cTable.chart.dataTable();
+				var data = tbl.fnGetData();
+				for( var i=0; i<data.length; i++){
+					if( data[i][0] === app ){
+						isExist = true;
+						tbl.fnUpdate(arr, i);
+						console.log( "Update " + arr );
+						break;
+					}
+				}
+				
+				if( !isExist ){
+					tbl.fnAddData( arr );
+					console.log( "Add " + arr );
+				}
+			});
+			
+			//remove old app
+			setInterval(function(){
+				var ts = (new Date()).getTime();
+				for( var i in actApps ){
+					if( actApps[i] != null && ts - actApps[i] > 15000 ){
+						actApps[i] = null;
+					}
+				}
+				
+				var tbl = cTable.chart.dataTable();
+				var data = tbl.fnGetData();
+				for( var i=0; i<data.length; i++){
+					var app = data[i][0] ;
+					if ( actApps[ app ] == null ){
+						console.log( "remove row "+ i + "=" + app);
+						tbl.fnDeleteRow( i );
+					}
+				}
+			}, 10000);
+			
+			return report;
+		},
 		
-		
+		/**
+		 * Create a report representing the hierarchy of protocols
+		 * @returns {MMTDrop.Report} report
+		 */
 		createHierarchyReport : function(){
 			var COL = MMTDrop.constants.StatsColumn;
 			var database = MMTDrop.databaseFactory.createStatDB({
@@ -2237,6 +2637,10 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 		
+		/**
+		 * Create a report representing the cateogries of protocols
+		 * @returns {MMTDrop.Report} report
+		 */
 		createCategoryReport : function(){
 
 			var database = MMTDrop.databaseFactory.createStatDB({
@@ -2301,6 +2705,10 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 		
+		/**
+		 * Create a deail report of protocols 
+		 * @returns {MMTDrop.Report} report
+		 */
 		createApplicationReport : function(){
 			var COL = MMTDrop.constants.StatsColumn;
 			
@@ -2427,6 +2835,11 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 
+		
+		/**
+		 * Create a report represeting a cloud of traffic
+		 * @returns {MMTDrop.Report} report
+		 */
 		createFlowCloudReport : function(){
 			var database = MMTDrop.databaseFactory.createFlowDB({
 				//probe : [10]
@@ -2479,6 +2892,10 @@ MMTDrop.reportFactory = {
 		},
 		
 		
+		/**
+		 * Create a report representing the density of traffic
+		 * @returns {MMTDrop.Report} report
+		 */
 		createFlowDensityReport : function(){
 			var database = MMTDrop.databaseFactory.createFlowDB({
 				//probe : [10]
@@ -2540,10 +2957,10 @@ MMTDrop.reportFactory = {
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * @class MMTDrop.Chart
+ * @class
  * A template to create a new chart.
  * @param {ChartRenderFn} renderFn -  is a callback using to render the chart to an HTML element
- * @param {ChartOption} [option={title:"", data: {getDataFn: null, columns: []}}]
+ * @param {ChartParam} [option={title:"", data: {getDataFn: null, columns: []}}]
  * @constructor
  */
 MMTDrop.Chart = function(option, renderFn){
@@ -2609,11 +3026,11 @@ MMTDrop.Chart = function(option, renderFn){
 	
 	/**
 	 * Set option property of the chart
-	 * @param {ChartOption} val - a new option will merge with the current option 
-	 * @see {@link MMTDrop.tools.mergeObject}
+	 * @param {ChartParam} val - a new option will merge with the current option 
+	 * @see {@link MMTDrop.tools#mergeObject}
 	 *//**
-	 * Gete option property
-	 * @returns {ChartOption}
+	 * Get option property
+	 * @returns {ChartParam} opt
 	 */
 	this.option = function( val ){
 		if ( val == undefined ){
@@ -2641,6 +3058,11 @@ MMTDrop.Chart = function(option, renderFn){
 
 	/**
 	 * Redraw the chart.
+	 * This should be called to redraw the chart when:
+	 * 
+	 * * a new option is updated by <code>.option(opt)</code>
+	 * * attaching to a new database by <code>.attachedTo(db)</code>
+	 * * its database being changed by a filter
 	 */
 	this.redraw = function(){
 		if (! _isVisible)
@@ -2677,8 +3099,9 @@ MMTDrop.Chart = function(option, renderFn){
 
 
 	/**
-	 * Icon reprenting for this chart
-	 * @returns a DOM element
+	 * Icon reprenting for this chart.
+	 * This method must be implemented when createing a chart.
+	 * @returns {JQueryObject} a DOM element
 	 */
 	this.getIcon = function(){
 		throw new Error ("No icon is defined");
@@ -2742,14 +3165,14 @@ MMTDrop.Chart = function(option, renderFn){
 
 
 /**
- * Create several kinds of charts
+ * Create several kinds of charts.
  * @namespace
  */
 MMTDrop.chartFactory = {
 		/**
 		 * Create Bar Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createBar : function (param){
 			var _param = {};
@@ -2887,8 +3310,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create Pie Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createPie : function ( param ){
 			//default parameter
@@ -3117,8 +3540,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create Timeline Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createTimeline : function (param, type){
 			var _param = {};
@@ -3352,8 +3775,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create Scatter Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createScatter : function ( param ){
 			return MMTDrop.chartFactory.createTimeline( param, 'scatter');
@@ -3362,8 +3785,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create XY Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createXY : function ( param ){
 			return MMTDrop.chartFactory.createTimeline( param, 'line' );
@@ -3371,8 +3794,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create Tree Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createTree : function ( param ){
 			//default parameter
@@ -3584,8 +4007,8 @@ MMTDrop.chartFactory = {
 
 		/**
 		 * Create Table Chart
-		 * @param {ChartOption} param
-		 * @returns {MMTDrop.Chart}
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
 		 */
 		createTable : function (param){
 			//default parameter
@@ -3738,6 +4161,9 @@ MMTDrop.chartFactory = {
 				return table;
 			});
 
+            chart.update = function( msg ){
+                    
+            };
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'glyphicons-table'});
 			};
@@ -3746,15 +4172,33 @@ MMTDrop.chartFactory = {
 };
 
 /**
+ * Data value that is either a string or a number
+ * typedef {(number|string)} Value
+ */
+
+/**
  * An object with id and label
  * @typedef {Object} Index
- * @property {(number|string)} id
+ * @property {Value} id
  * @property {string} label
  */
 
 /**
+ * The parameter when creating a new filter
+ * @typedef {Object} FilterParam
+ * @property {id} id
+ * @property {string} label
+ * @property {Index[]} options List of options
+ * @property {function} [onchange=null]
+ * <br/> If {param.onchange} function is defined, it will handle the changing. 
+ * <br/> If the function return <code>true</code>, the default actions 
+ * <br/>   (store the change to localStorage, apply the change to its attached database) 
+ * <br/>   are then executed. 
+ */
+
+/**
  * The parameter when creating a chart.
- * @typedef {Object} ChartOption
+ * @typedef {Object} ChartParam
  * @property {string} title - title of the chart
  * @property {string} ylabel
  * @property click -
@@ -3776,7 +4220,7 @@ MMTDrop.chartFactory = {
  * Render a chart
  * @callback ChartRenderFn
  * @param {string} elemID - id of HTML element on which the chart is rendered
- * @param {ChartOption} option - option 
+ * @param {ChartParam} option - option 
  * @param {Array} data - data to show
  */
 
@@ -3797,7 +4241,7 @@ MMTDrop.chartFactory = {
  * @example
  * {period: "minute", format: 99, source: ["eth0"], probe: [1,2], raw: true}
  * 
- * @typedef {Object} DatabaseOption
+ * @typedef {Object} DatabaseParam
  * @property {MMTDrop.constants.period} [period=MINUTE] - 
  * @property {MMTDrop.constants.CsvFormat} [format=99] - kind of data
  * @property {Array.<string>} [source=[]] - source
