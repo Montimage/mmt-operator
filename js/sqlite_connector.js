@@ -132,11 +132,15 @@ function addProtocolStats( msg ) {
 	
 	var cols = [], vals = [];
 	for (var key in msg){
+		
+		if( tbl.columns[key] == undefined)
+			break;
+		
 		cols.push(key);
 		
 		if (tbl.columns[key] == "INTEGER")
 			vals.push(msg[key]);
-		else
+		else if (tbl.columns[key] == "TEXT")
 			vals.push("'" + msg[key] + "'");
 	}
 	
@@ -145,6 +149,13 @@ function addProtocolStats( msg ) {
 	
 	//console.log("\n\n Running sql:  " + sqlstr);
 	db.run(sqlstr);
+	
+	if(  [ dataAdaptor.CsvFormat.WEB_APP_FORMAT,
+					dataAdaptor.CsvFormat.SSL_APP_FORMAT,
+					dataAdaptor.CsvFormat.RTP_APP_FORMAT].indexOf(msg.format) !== -1){
+		msg.format = dataAdaptor.CsvFormat.DEFAULT_APP_FORMAT;
+		addProtocolStats( msg );
+	}
 };
 
 /**
