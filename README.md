@@ -16,7 +16,7 @@ This chain of tools depends on the following packages:
     sudo apt-get update
     sudo apt-get install -y redis-server
 
-## Nodejs 
+### Nodejs 
 
     sudo apt-get update
     sudo apt-get install -y python-software-properties python g++ make
@@ -47,7 +47,6 @@ Once MMT-Operator is up and running, open your favorite browser and goto
 
 ## Contributors
 
-Bachar Wehbi, bachar.wehbi@montimage.com
-Huu Nghia Nguyen
-Luong Nguyen
-
+    Bachar Wehbi, bachar.wehbi@montimage.com
+    Huu Nghia Nguyen
+    Luong Nguyen
