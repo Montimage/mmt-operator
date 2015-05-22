@@ -228,6 +228,8 @@ server.listen(app.get('port'));
 io.sockets.on('connection', function(client) {
 	var sub = redis.createClient();
 
+	sub.psubscribe("*flow.report");
+	
 	sub.psubscribe("*.stat");
 	sub.subscribe("endperiod");
 

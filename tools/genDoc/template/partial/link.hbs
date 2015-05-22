@@ -1,0 +1,24 @@
+{{! usage: link to="namepath" html=true/false caption="optional caption"~}}
+
+
+{{~#if html~}}
+
+{{#link to~}}
+{{#if url~}}
+<a href="{{{url}}}">{{#if ../../caption}}{{../../../caption}}{{else}}{{name}}{{/if}}</a>
+{{~else~}}
+{{#if ../../caption}}{{../../../caption}}{{else}}{{name}}{{/if~}}
+{{/if~}}
+{{/link~}}
+
+{{else~}}
+
+{{#link to~}}
+{{#if url~}}
+[`{{#if ../../caption}}{{escape ../../../caption}}{{else}}{{{formatDescription name}}}{{/if}}`]({{{gotoTypedef url}}})
+{{~else~}}
+{{#if ../../caption}}{{formatDescription ( escape ../../../caption )}}{{else}}`{{{formatDescription name}}}`{{/if~}}
+{{/if~}}
+{{/link~}}
+
+{{/if~}}

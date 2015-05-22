@@ -65,6 +65,13 @@
 				</div>
 			</div>
 		</div>
+		<div class="row">
+            <div class="col-sm-12 col-md-12 main">
+                <div id="report2" class="content">
+                <!-- Report here! -->
+                </div>
+            </div>
+        </div>
 	</div>
 
 	<script>
@@ -77,6 +84,10 @@
 	   var report;
 	   if( q == "?dash"){
 	       report = MMTDrop.reportFactory.createRealtimeReport();
+	       
+	       var rep = MMTDrop.reportFactory.createActiveConnectionReport();
+	       rep.renderTo( "report2" );
+	       
 	   }else if (q == "?hierarchy"){
 	       report = MMTDrop.reportFactory.createHierarchyReport();
 	   }else if (q == "?categories"){
