@@ -2253,9 +2253,9 @@ MMTDrop.reportFactory = {
 			}, true);
 			
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
-			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
+			var fMetric	= MMTDrop.filterFactory.createMetricFilter();
 			
-			var cLine = MMTDrop.chartFactory.createTimeline({
+			var cLine   = MMTDrop.chartFactory.createTimeline({
 				getData: {
 					getDataFn : function( db ){
 						var col = fMetric.selectedOption();
@@ -2314,7 +2314,7 @@ MMTDrop.reportFactory = {
 						
 						serie.addPoint([time, val],	//x,y 
 								true, 	//redraw
-								true	//shift chart data
+								false//true	//shift chart data
 								);
 						isInSerie = true;
 						console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
@@ -2390,11 +2390,11 @@ MMTDrop.reportFactory = {
 
 					 //order of data flux
 					 [{object: fProbe, 
-						         effect:[ {object: fMetric, effect: [{object: cLine, effect:[]} ]}]}]
+						       effect:[ {object: fMetric, effect: [{object: cLine, effect:[]} ]}]}]
 					   
 			);
 			
-			resetTimer();
+			//resetTimer();
 			
 			return report;
 		},
