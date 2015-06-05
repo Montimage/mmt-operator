@@ -59,7 +59,7 @@ report_client.subscribe("rtp.flow.report");
 report_client.on('message', function(channel, message) {
 	message = mmtAdaptor.formatReportItem(JSON.parse(message));
 	//this is for test purpose only: to create two different probeID
-	message.probe += Math.round(Math.random()); //==> either 0 or 1
+	//message.probe += Math.round(Math.random()); //==> either 0 or 1
 	dbconnector.addProtocolStats(message, function(err, msg) {
 	});
 });
