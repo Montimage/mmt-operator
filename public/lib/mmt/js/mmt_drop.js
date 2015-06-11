@@ -1433,11 +1433,17 @@ MMTDrop.databaseFactory = {
 					else
 						o[group.id] = MMTDrop.constants.getProtocolNameFromID( app );
 					
+					var isZero = true;
+					
 					for( var i in args){
 						var oo = {};
 						var temp = 0;
 						for( var prob in obj[app] ){
 							temp = obj[app][prob][ args[i].id ];
+							
+							if( !isNaN(temp) && parseInt(temp) != 0 )
+								isZero = false;
+							
 							oo[prob] = temp;
 						}
 						//asign to value if there is only one probe
@@ -1447,7 +1453,9 @@ MMTDrop.databaseFactory = {
 							o[ args[i].id ] = oo;
 					}
 					
-					data.push( o );
+					//only add the item o if there data number != 0
+					if( isZero == false)
+						data.push( o );
 				}
 				//columns to show. The first column is APP_PATH
 				var columns = [ group ];
