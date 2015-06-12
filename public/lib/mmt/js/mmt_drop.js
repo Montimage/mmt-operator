@@ -2663,8 +2663,41 @@ MMTDrop.reportFactory = {
 			var chartOption = {
 					getData: {
 						getDataFn : function( db ){
-							var col = [fMetric.selectedOption()];
-							return db.stat.getDataTableForChart( col, false );
+							var col = fMetric.selectedOption();
+							var obj = db.stat.getDataTableForChart( [col], false );
+							if( fClass.selectedOption().id != 0){
+								return obj;
+							}
+							
+							//if the selected option of fClass is all classes
+							//do not show details, but total of each class
+							//obj = {data: data, columns: columns, probes: probes, ylabel: label};
+							var arr = [];
+							
+							var data = db.stat.splitDataByClass();
+							for (var cls in data){
+								var ar = data[cls];
+								var name = MMTDrop.constants.getCategoryNameFromID( cls );
+								
+								var oo = {};
+								if( obj.probes.length > 1){
+									var o = MMTDrop.tools.splitData(ar, MMTDrop.constants.StatsColumn.PROBE_ID.id);
+									for( var probe in o){
+										var result = MMTDrop.tools.sumUp(o[probe], [col.id]);
+										oo[probe] = result[col.id];
+									}
+								}else{
+									oo = MMTDrop.tools.sumUp(ar, [col.id]);
+									oo = oo[col.id];
+								}
+								arr.push( [name, oo] );
+							}
+							
+							return {
+								data   : arr, 
+								columns: [{id:0, label:"Class"}, {id:1, label:col.label, probes: obj.probes}], 
+								probes : obj.probes, 
+								ylabel :obj.ylabel};
 						}
 					}
 			};
@@ -3406,6 +3439,16 @@ MMTDrop.chartFactory = {
 							showInLegend: j > 1 ? false : true,
 						} ;
 					
+					if (nSeries > 1)
+						serie.title = {
+				            align: 'center',
+				            //x: -20,
+				            // style: { color: XXX, fontStyle: etc }
+				            text: '<b>'+ columns[j].label +'</b>',
+				            verticalAlign: 'top',
+				            y: -80
+				        };
+					
 					series.push( serie );
 				}
 				
@@ -3460,9 +3503,19 @@ MMTDrop.chartFactory = {
 									enabled   : true,
 									formatter : function() {
 										//display only if larger than 1% or there is only one serie
-										if( this.percentage > 1  || this.point.seriesSize == 1 || this.series.data.length <= 10)
-											return '<b>' + this.point.name + '</b>: ' + Highcharts.numberFormat(this.percentage, 2) + ' %';
-										else 
+										if( this.percentage > 1  || this.point.seriesSize == 1 || this.series.data.length <= 10){
+											//round 2 digits after point, eg, 1.235 --> 1.26
+											var percent = Math.round(this.percentage * 100) / 100;
+											
+											//if 0.001 --> 0, get more digits after the point
+											var i = 1000;
+											while( percent == 0 ){
+												percent = Math.round(this.percentage * i) / i;
+												i = i * 10;
+											}
+											
+											return '<b>' + this.point.name + '</b>: ' + percent + ' %';
+										}else 
 											return null;
 									}
 								},
@@ -3533,7 +3586,36 @@ MMTDrop.chartFactory = {
 			            } ; 
 			        });
 			    
-			    
+			        /**
+			         * Plugin Highcharts for multip titles of pies
+			         */
+			        Highcharts.wrap(Highcharts.seriesTypes.pie.prototype, 'render', function (proceed) {
+			            
+			            var chart = this.chart,
+			                center = this.center || (this.yAxis && this.yAxis.center), 
+			                titleOption = this.options.title,
+			                box;
+
+			            proceed.call(this);
+			            
+			            if (center && titleOption) {
+			                box = {
+			                    x: chart.plotLeft + center[0] - 0.5 * center[2],
+			                    y: chart.plotTop + center[1] - 0.5 * center[2],
+			                    width: center[2],
+			                    height: center[2]
+			                };
+			                if (!this.title) {
+			                    this.title = this.chart.renderer.label(titleOption.text)
+			                        .css(titleOption.style)
+			                        .add()
+			                        .align(titleOption, null, box);
+			                } else {
+			                    this.title.align(titleOption, null, box);
+			                }
+			            }
+			        });
+
 				var hightChart = new Highcharts.Chart(chartOption);
 		        		
 				return hightChart;
