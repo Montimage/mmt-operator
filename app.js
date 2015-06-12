@@ -162,7 +162,7 @@ function getOptionsByPeriod(period) {
 		};
 	} else if (period === PERIOD.MONTH) {
 		retval = {
-			collection : 'traffic_hour',
+			collection : 'traffic_day',
 			time : moment().valueOf() - 30 * 24 * 3600 * 1000
 		};
 	}

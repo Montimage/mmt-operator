@@ -184,7 +184,10 @@ function _createSQL(options){
 		time = "(strftime('%s', strftime('%Y-%m-%d %H:%M:00', datetime(time/1000, 'unixepoch'))) * 1000)";
 	}else if (options.collection == "traffic_hour"){
 		time = "(strftime('%s', strftime('%Y-%m-%d %H:00:00', datetime(time/1000, 'unixepoch'))) * 1000)";
-	}else{	//traffic
+	}else if (options.collection == "traffic_day"){
+		time = "(strftime('%s', strftime('%Y-%m-%d 00:00:00', datetime(time/1000, 'unixepoch'))) * 1000)";
+	}
+	else{	//traffic
 		console.log("\n" + sqlStr + "\n");
 		return sqlStr;
 	}
