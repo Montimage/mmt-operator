@@ -2271,9 +2271,10 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
+			var maxDataX = 0;	//max value of data on Ox
 			
 			var appendMsg = function( msg ){
-				console.log( msg );
+				//console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
 					return;
@@ -2305,41 +2306,67 @@ MMTDrop.reportFactory = {
 				
 				//whether the msg belong to one serie existing in the chart
 				var isInSerie = false;
-				
 				for( var i in series ){
 					var serie = series[i];
 					
 					//add point to serie
 					if( serie.name === serieName){
-						/*
-						var x = serie.xAxis.getExtremes().dataMax;
-						//do not add a msg in the past
-						if( time < x ){
-							console.log( "  in the past: " + x + " > " + time);
-							return;
-						}
-						*/
 						
-						serie.addPoint([time, val],	//x,y 
-								true, 	//redraw
-								false//true	//shift chart data
+						if (maxDataX < time )
+							maxDataX = time;
+						
+						
+						var lastPoint = serie.data[ serie.data.length - 1];
+						//do not add a msg in the past
+						if( lastPoint && time < lastPoint.x ){
+							console.log( "  in the past:  > " + time);
+							return;
+						}else if (lastPoint && time <= lastPoint.x + 200){
+							lastPoint.y = val;
+							console.log(" update the last point");
+						}
+						else{
+							serie.addPoint([time, val],	//x,y 
+								false, //true, 	//redraw
+								false, //true	//shift chart data
+								false //animation
 								);
+						}
 						isInSerie = true;
-						console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
+						//console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
 					}
 					//else
 					//	if( isRootMsg && !isInProbeMode ) 
 					//		serie.addPoint([time, 0], true, true);
 				}
 				
+				//shift the chart ahead
+				var period = 10*60*1000;	//10 minute
+				var minX = maxDataX - period;
+				
+				for( var i in series ){
+					var serie = series[i];
+					//remove the points that older than minX;
+					var data = serie.data;
+					for( var i=0; i<data.length; i++)
+						if( data[i].x < minX ){
+							serie.removePoint(i, false, false);
+							if( i == data.length - 1 ){
+								serie.remove(false);
+								console.log(" remove serie " + serie.name );
+							}
+						}
+				}
+				
 				//new serie will be added
 				if( isInSerie == false){
 					console.log( "add new serie: " + serieName);
-					chart.addSeries({
+					var serie = chart.addSeries({
 						name: serieName,
 						data: [ [time, val] ],
-					});
+					}, false, false);
 				}
+				chart.redraw();
 			};
 			
 			
