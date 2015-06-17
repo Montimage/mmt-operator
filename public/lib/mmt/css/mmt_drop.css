@@ -105,6 +105,31 @@ table.treetable {
 table.treetable thead {
 	font-size: 1.1em;
 	font-weight: bold;
+	width: 100%;
+    display: table;
+}
+
+table.treetable  tbody{
+    width: 100%;
+	height: 375px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	display: block;
+}
+
+table.treetable >tbody>tr>td:first-child {
+	width: 100%;
+}
+table.treetable>tbody>tr>th:nth-child(1n+2) {
+    min-width: 100px;
+    text-align: center;
+}
+table.treetable>thead>tr>th:first-child {
+	width: 100%;
+}
+table.treetable>thead>tr>th:nth-child(1n+2) {
+    min-width: 100px;
+    text-align: center;
 }
 
 tr.selected a {
@@ -151,4 +176,8 @@ tr.selected a {
 	display: inline-block;
 	width: 20px;
 	height: 25px;
+}
+
+.brillance{
+	
 }

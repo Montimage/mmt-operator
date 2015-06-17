@@ -77,7 +77,7 @@
 	<script>
 	   
 	   MMTDrop.setOptions({
-	       serverURL : "http://192.168.0.41:8088" 
+	       serverURL : "http://192.168.0.38:8088" 
 	   });
 	   
 	   var q = window.location.search;
@@ -85,8 +85,8 @@
 	   if( q == "?dash"){
 	       report = MMTDrop.reportFactory.createRealtimeReport();
 	       
-	       var rep = MMTDrop.reportFactory.createActiveConnectionReport();
-	       rep.renderTo( "report2" );
+	       //var rep = MMTDrop.reportFactory.createActiveConnectionReport();
+	       //rep.renderTo( "report2" );
 	       
 	   }else if (q == "?hierarchy"){
 	       report = MMTDrop.reportFactory.createHierarchyReport();
