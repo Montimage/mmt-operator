@@ -228,10 +228,9 @@ server.listen(app.get('port'));
 io.sockets.on('connection', function(client) {
 	var sub = redis.createClient();
 
-	sub.psubscribe("*flow.report");
+	//sub.psubscribe("*flow.report");
 	
 	sub.psubscribe("*.stat");
-	sub.subscribe("endperiod");
 
 	sub.on("pmessage", function(pattern, channel, message) {
 		message = JSON.parse(message);
@@ -240,15 +239,6 @@ io.sockets.on('connection', function(client) {
 		
 		message[3] = message[3] * 1000;
 		client.emit('stats_raw', message );
-	});
-
-	sub.on("message", function(channel, message) {
-		if (channel === "endperiod") {
-			message = JSON.parse(message);
-			client.emit('period', message);
-			
-			
-		}
 	});
 
 	client.on("message", function(msg) {

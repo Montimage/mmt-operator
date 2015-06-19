@@ -111,7 +111,7 @@ table.treetable thead {
 
 table.treetable  tbody{
     width: 100%;
-	height: 375px;
+	max-height: 375px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	display: block;
