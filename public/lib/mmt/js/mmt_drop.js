@@ -193,21 +193,33 @@ MMTDrop.constants = {
 		 * Data format description for statistic reports of HTTP protocol
 		 */
 		HttpStatsColumn : {
-			/** Index of the response time column */
+			/** Response time of the last Request/Reply of the flow */
 			RESPONSE_TIME      : {id: 0, label:"Response Time"},
 			/** Index of the HTTP transactions count (req/res number) column */
 			TRANSACTIONS_COUNT : {id: 1, label:"Transaction Count"},
-			/** Index of the interaction time (between client and server) column */
+			/** 
+			 * Index of the interaction time (between client and server) column.
+			 * This is the time between the first request and the lest response. 
+			 * If this is zero then the flow has one request reply.
+			 */
 			INTERACTION_TIME   : {id: 2, label:"Interaction Time"},
 			/** Index of the hostname column */
 			HOSTNAME     : {id: 3, label:"Hostname"},
 			/** Index of the MIME type column */
 			MIME_TYPE    : {id: 4, label:"MIME Type"},
-			/** Index of the Referer column */
+			/** Index of the Referer column. Referrer as reported in the HTTP header */
 			REFERER      : {id: 5, label:"Referer"},
-			/** Index of the device and operating system ids column */
+			/** Index of the device and operating system ids column.
+			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.). 
+			 * These are derived from the user agent.
+			 */
 			DEVICE_OS_ID : {id: 6, label:"Device OS ID"},
-			/** Index of the is CDN delivered column */
+			/** Index of the is CDN delivered column 
+			 * 0: CDN not detected (This does not mean it is not used :)). 
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
+			 * Will not be present in HTTPS flows. 
+			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
+			 */
 			CDN_FLAG     : {id: 7, label:"CDN Flag"},
 		},
 
@@ -215,9 +227,17 @@ MMTDrop.constants = {
 		 * Data format description for statistic reports of TLS protocol
 		 */
 		TlsStatsColumn : {
-			/** Index of the format id column */
+			/** Servername as reported in the SSL/TLS negotiation. 
+			 * It is not always possible to extract this field. will be empty in that case. 
+			 */
 			SERVER_NAME : {id: 0, label:"Server Name"},
-			/** Index of the format id column */
+			/**
+			 * 0: CDN not detected (This does not mean it is not used :)). 
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
+			 * Will not be present in HTTPS flows. 
+			 * 2: CDN delivery, the application name should identify the application. 
+			 * However, we might see Akamai as application. In this case, skip it.
+			 */
 			CDN_FLAG    : {id: 1, label:"CDN Flag"},
 		},
 
@@ -225,13 +245,51 @@ MMTDrop.constants = {
 		 * Data format description for statistic reports of RTP protocol
 		 */
 		RtpStatsColumn : {
-			/** Index of the format id column */
+			/** Global packet loss rate of the flow */
 			PACKET_LOSS_RATE       : {id: 0, label:"Packet Loss Rate"},
-			/** Index of the format id column */
+			/** Average packet loss burstiness of the flow */
 			PACKET_LOSS_BURSTINESS : {id: 1, label:"Packet Loss Burstiness"},
+			/** Maximum jitter value for the flow */
 			MAX_JITTER             : {id: 2, label:"Max Jitter"},
 		},
 
+		/**
+		 * Data format description for Radius reports
+		 */
+		RadiusStatsColumn: {
+			
+		},
+		
+		/**
+		 * Micro-flows statistics reports
+		 */
+		MicroflowStatsColumn: {
+			/**
+			 * Identifier of the MMT protocol or application
+			 */
+			APP_ID : {id: 0, label: "Application ID"},
+			/**
+			 * Number of reported flows
+			 */
+			FLOW_COUNT : {id: 1, label: "Number of Flows"},
+			/**
+			 * Number of downlink packets
+			 */
+			DL_PACKET_COUNT: {id: 2, label: "DL Packet Count"},
+			/**
+			 * Number of uplink packets
+			 */
+			UL_PACKET_COUNT: {id: 3, label: "UL Packet Count"},
+			/**
+			 * Downlink data volume in Bytes
+			 */
+			DL_VOLUME_COUNT: {id: 4, label: "DL Volume Count"},
+			/**
+			 * Uplink data volume in Byte
+			 */
+			UL_VOLUME_COUNT: {id: 5, label: "UL Volume Count"}
+		},
+		
 		/**
 		 * RTP flow metrics
 		 */
@@ -3084,7 +3142,7 @@ MMTDrop.reportFactory = {
 			});
 			
 			var con = MMTDrop.constants;
-			//update list of matrix when fType change
+			//update list of matrix of X and Y when fType change
 			fType.onFilter( function( sel, db ){
 				var format = fType.selectedOption().id;
 				var matrix = [];
@@ -3099,14 +3157,29 @@ MMTDrop.reportFactory = {
 				}else if ( format == con.CsvFormat.RTP_APP_FORMAT ){
 					matrix = MMTDrop.tools.object2Array( con.RtpStatsColumn );
 				}else if ( format == con.CsvFormat.RADIUS_REPORT_FORMAT ){
-					//matrix = con.
+					matrix = con.RadiusStatsColumn;
 				}else if( format == con.CsvFormat.MICROFLOWS_STATS_FORMAT ){
-					//matrix = con
+					matrix = con.MicroflowStatsColumn;
+				}
+				
+				//add radical of sub-reports
+				if( format == con.CsvFormat.SSL_APP_FORMAT || 
+						format == con.CsvFormat.WEB_APP_FORMAT ||
+						format == con.CsvFormat.RTP_APP_FORMAT){
+					var arr = MMTDrop.tools.object2Array( con.FlowStatsColumn );
+					
+					var n = arr.length;
+					for( var i in matrix ){
+						var o = matrix[i];
+						arr.push( {id: n + o.id, label: o.label} );
+					}
+					matrix = arr;
 				}
 				
 				//remove the first option: Format
 				matrix = matrix.slice(1);
 				fMatrixX.option( matrix );
+				
 				//remove the first option: Probe
 				matrix = matrix.slice(1);
 				fMatrixY.option( matrix );
