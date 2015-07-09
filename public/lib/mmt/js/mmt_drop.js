@@ -1377,7 +1377,7 @@ MMTDrop.databaseFactory = {
 					);
 					
 					if( noProbe == 1)
-						columns.push( {id: col, label: "Probe"});
+						columns.push( {id: col, label: "Probe " + probes[0]});
 					else
 						columns.push( {id: col, label: "Probe", probes: probes} );
 					//the first column is timestamp
@@ -1601,7 +1601,7 @@ MMTDrop.databaseFactory = {
 				
 				var columns = [COL.TIMESTAMP];
 				if( noProbes == 1)
-					columns.push( {id: col, label: "Probe"} );
+					columns.push( {id: col, label: "Probe " + probes[0]} );
 				else
 					columns.push( {id: col, label: "Probe", probes: probes} );
 				
@@ -2433,6 +2433,8 @@ MMTDrop.reportFactory = {
 						}
 						isInSerie = true;
 						//console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
+						
+						break;
 					}
 					//else
 					//	if( isRootMsg && !isInProbeMode ) 
@@ -2465,6 +2467,7 @@ MMTDrop.reportFactory = {
 						data: [ [time, val] ],
 					}, false, false);
 				}
+				
 				chart.redraw();
 			};
 			
@@ -2949,6 +2952,7 @@ MMTDrop.reportFactory = {
 							var msg  = obj.columns[i];
 							var path = msg.label;
 							var arr  = path.split(".");
+							
 							path = "";
 							for( var j=arr.length-1; j>=0; j--){
 								if( path == "")
@@ -2959,7 +2963,56 @@ MMTDrop.reportFactory = {
 									break;
 							}
 							msg.label = path;	//donot need add its grand father name
+							
+							//not root
+							if (path.indexOf("/") > 1){
+								obj.columns[i].type = "areaspline";
+							}
 						}
+						
+						//app UDP may come from IP.UDP or IPv6.UDP
+						var colsToRemove = {};
+						
+						for( var i=1; i<obj.columns.length; i++){
+							if( colsToRemove[i] )
+								continue;
+							
+							var id_i = obj.columns[i].id;
+							
+							for(var j=i+1; j<obj.columns.length; j++)
+								if( obj.columns[i].label === obj.columns[j].label){
+									colsToRemove[j] = true;
+									
+									var id_j = obj.columns[j].id;
+									
+									for( var k in obj.data ){
+										var arr = obj.data[k];
+										
+										if( arr[ id_i ] != undefined && arr[id_j] != undefined)
+											arr[id_i] += arr[id_j];
+										else if( arr[id_j] != undefined )
+											arr[id_i] = arr[id_j];
+									}
+								}
+						}
+						
+						//the first column is Timestamp
+						var cols = [ obj.columns[0] ];
+						
+						for( var i=1; i<obj.columns.length; i++)
+							if( colsToRemove[i] == undefined)
+								cols.push( obj.columns[i] );
+						
+						obj.columns = cols;
+						
+						//
+						for( var k in obj.data ){
+							var arr = obj.data[k];
+							for( var i=1; i<cols.length; i++)
+								if( cols[i].type === "areaspline" && arr[ cols[i].id ] == undefined)
+									arr[ cols[i].id ] = 0;
+						}
+						
 						return obj;
 					}
 				}
@@ -3958,9 +4011,16 @@ MMTDrop.chartFactory = {
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<columns.length; j++)
-					series.push( {name:columns[j].label, data : [] } );
+				//type: areaspline, line
+				for (var j=1; j<columns.length; j++){
+					var obj =  {name:columns[j].label, data : [] };
+					
+					if( columns[j].type )
+						obj.type = columns[j].type;
 
+					series.push( obj );
+				}
+				
 				//set data for each serie
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
