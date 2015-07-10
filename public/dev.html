@@ -52,6 +52,7 @@
             <li><a href="?flow_cloud">Flow cloud</a></li>
             <li><a href="?flow_avg">Flow avg</a></li>
             <li><a href="?flow_density">Flow density</a></li>
+            <li><a href="?custom">Customization</a></li>
           </ul>
         </div>
       </div>
@@ -100,6 +101,8 @@
            
        }else if (q == "?flow_density"){
            report = MMTDrop.reportFactory.createFlowDensityReport(); 
+       }else if (q == "?custom"){
+           report = MMTDrop.reportFactory.createCustomReport(); 
        }
 	   
 	   if( report )

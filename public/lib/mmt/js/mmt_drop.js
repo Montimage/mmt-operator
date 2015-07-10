@@ -136,102 +136,160 @@ MMTDrop.constants = {
 		 */
 		FlowStatsColumn : {
 			/** Index of the format id column */
-			FORMAT_ID : {id: 0, label:""} ,
+			FORMAT_ID : {id: 0, label:"Format"} ,
 			/** Index of the probe id column */
-			PROBE_ID  : {id: 1, label:""},
+			PROBE_ID  : {id: 1, label:"Probe"},
 			/** Index of the data source id column */
-			SOURCE_ID : {id: 2, label:""},
+			SOURCE_ID : {id: 2, label:"Source"},
 			/** Index of the format id column */
-			TIMESTAMP : {id: 3, label:""},
+			TIMESTAMP : {id: 3, label:"Timestamp"},
 			/** Index of the flow id column */
-			FLOW_ID   : {id: 4, label:""},
+			FLOW_ID   : {id: 4, label:"Flow ID"},
 			/** Index of the flow start time */
-			START_TIME  : {id: 5, label:""},
+			START_TIME  : {id: 5, label:"Start Time"},
 			/** Index of the IP version number column */
-			IP_VERSION  : {id: 6, label:""},
+			IP_VERSION  : {id: 6, label:"IP Version"},
 			/** Index of the server address column */
-			SERVER_ADDR : {id: 7, label:""},
+			SERVER_ADDR : {id: 7, label:"Server Address"},
 			/** Index of the client address column */
-			CLIENT_ADDR : {id: 8, label:""},
+			CLIENT_ADDR : {id: 8, label:"Client Address"},
 			/** Index of the server port column */
-			SERVER_PORT : {id: 9, label:""},
+			SERVER_PORT : {id: 9, label:"Server Port"},
 			/** Index of the client port column */
-			CLIENT_PORT : {id: 10, label:""},
+			CLIENT_PORT : {id: 10, label:"Client Port"},
 			/** Index of the transport protocol identifier column */
-			TRANSPORT_PROTO : {id: 11, label:""},
+			TRANSPORT_PROTO : {id: 11, label:"Transport Protocol"},
 			/** Index of the uplink packet count column */
-			UL_PACKET_COUNT : {id: 12, label:""},
+			UL_PACKET_COUNT : {id: 12, label:"UP Packet Count"},
 			/** Index of the downlink packet count column */
-			DL_PACKET_COUNT : {id: 13, label:""},
+			DL_PACKET_COUNT : {id: 13, label:"DL Packet Count"},
 			/** Index of the uplink data volume column */
-			UL_DATA_VOLUME  : {id: 14, label:""},
+			UL_DATA_VOLUME  : {id: 14, label:"UL Data Volume"},
 			/** Index of the downlink data volume column */
-			DL_DATA_VOLUME  : {id: 15, label:""},
+			DL_DATA_VOLUME  : {id: 15, label:"DL Data Volume"},
 			/** Index of the TCP round trip time column.
 			 * 
 			 *  For UDP traffic this will be set to zero.
 			 */
-			TCP_RTT         : {id: 16, label:""},
+			TCP_RTT         : {id: 16, label:"TCP RTT"},
 			/** Index of the retransmissions count column
 			 *
 			 * For UDP traffic this will be set to zero
 			 */
-			RETRANSMISSION_COUNT : {id: 17, label:""},
+			RETRANSMISSION_COUNT : {id: 17, label:"Retransmission Count"},
 			/** Index of the application family column */
-			APP_FAMILY    : {id: 18, label:""},
+			APP_FAMILY    : {id: 18, label:"App Family"},
 			/** Index of the content class column */
-			CONTENT_CLASS : {id: 19, label:""},
+			CONTENT_CLASS : {id: 19, label:"Content Class"},
 			/** Index of the protocol path column */
-			PROTO_PATH    : {id: 20, label:""},
+			PROTO_PATH    : {id: 20, label:"Protocol Path"},
 			/** Index of the application name column */
-			APP_NAME      : {id: 21, label:""},
+			APP_NAME      : {id: 21, label:"App Name"},
 			/** Index of the start of the application specific statistics (this is not a real column, rather an index) */
-			APP_FORMAT_ID : {id: 22, label:""},
+			APP_FORMAT_ID : {id: 22, label:"App Format ID"},
 		},
 
 		/**
 		 * Data format description for statistic reports of HTTP protocol
 		 */
 		HttpStatsColumn : {
-			/** Index of the response time column */
-			RESPONSE_TIME      : {id: 0, label:""},
+			/** Response time of the last Request/Reply of the flow */
+			RESPONSE_TIME      : {id: 0, label:"Response Time"},
 			/** Index of the HTTP transactions count (req/res number) column */
-			TRANSACTIONS_COUNT : {id: 1, label:""},
-			/** Index of the interaction time (between client and server) column */
-			INTERACTION_TIME   : {id: 2, label:""},
+			TRANSACTIONS_COUNT : {id: 1, label:"Transaction Count"},
+			/** 
+			 * Index of the interaction time (between client and server) column.
+			 * This is the time between the first request and the lest response. 
+			 * If this is zero then the flow has one request reply.
+			 */
+			INTERACTION_TIME   : {id: 2, label:"Interaction Time"},
 			/** Index of the hostname column */
-			HOSTNAME     : {id: 3, label:""},
+			HOSTNAME     : {id: 3, label:"Hostname"},
 			/** Index of the MIME type column */
-			MIME_TYPE    : {id: 4, label:""},
-			/** Index of the Referer column */
-			REFERER      : {id: 5, label:""},
-			/** Index of the device and operating system ids column */
-			DEVICE_OS_ID : {id: 6, label:""},
-			/** Index of the is CDN delivered column */
-			CDN_FLAG     : {id: 7, label:""},
+			MIME_TYPE    : {id: 4, label:"MIME Type"},
+			/** Index of the Referer column. Referrer as reported in the HTTP header */
+			REFERER      : {id: 5, label:"Referer"},
+			/** Index of the device and operating system ids column.
+			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.). 
+			 * These are derived from the user agent.
+			 */
+			DEVICE_OS_ID : {id: 6, label:"Device OS ID"},
+			/** Index of the is CDN delivered column 
+			 * 0: CDN not detected (This does not mean it is not used :)). 
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
+			 * Will not be present in HTTPS flows. 
+			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
+			 */
+			CDN_FLAG     : {id: 7, label:"CDN Flag"},
 		},
 
 		/**
 		 * Data format description for statistic reports of TLS protocol
 		 */
 		TlsStatsColumn : {
-			/** Index of the format id column */
-			SERVER_NAME : {id: 0, label:""},
-			/** Index of the format id column */
-			CDN_FLAG    : {id: 1, label:""},
+			/** Servername as reported in the SSL/TLS negotiation. 
+			 * It is not always possible to extract this field. will be empty in that case. 
+			 */
+			SERVER_NAME : {id: 0, label:"Server Name"},
+			/**
+			 * 0: CDN not detected (This does not mean it is not used :)). 
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
+			 * Will not be present in HTTPS flows. 
+			 * 2: CDN delivery, the application name should identify the application. 
+			 * However, we might see Akamai as application. In this case, skip it.
+			 */
+			CDN_FLAG    : {id: 1, label:"CDN Flag"},
 		},
 
 		/**
 		 * Data format description for statistic reports of RTP protocol
 		 */
 		RtpStatsColumn : {
-			/** Index of the format id column */
-			PACKET_LOSS_RATE       : {id: 0, label:""},
-			/** Index of the format id column */
-			PACKET_LOSS_BURSTINESS : {id: 1, label:""},
-			MAX_JITTER             : {id: 2, label:""},
+			/** Global packet loss rate of the flow */
+			PACKET_LOSS_RATE       : {id: 0, label:"Packet Loss Rate"},
+			/** Average packet loss burstiness of the flow */
+			PACKET_LOSS_BURSTINESS : {id: 1, label:"Packet Loss Burstiness"},
+			/** Maximum jitter value for the flow */
+			MAX_JITTER             : {id: 2, label:"Max Jitter"},
 		},
 
+		/**
+		 * Data format description for Radius reports
+		 */
+		RadiusStatsColumn: {
+			
+		},
+		
+		/**
+		 * Micro-flows statistics reports
+		 */
+		MicroflowStatsColumn: {
+			/**
+			 * Identifier of the MMT protocol or application
+			 */
+			APP_ID : {id: 0, label: "Application ID"},
+			/**
+			 * Number of reported flows
+			 */
+			FLOW_COUNT : {id: 1, label: "Number of Flows"},
+			/**
+			 * Number of downlink packets
+			 */
+			DL_PACKET_COUNT: {id: 2, label: "DL Packet Count"},
+			/**
+			 * Number of uplink packets
+			 */
+			UL_PACKET_COUNT: {id: 3, label: "UL Packet Count"},
+			/**
+			 * Downlink data volume in Bytes
+			 */
+			DL_VOLUME_COUNT: {id: 4, label: "DL Volume Count"},
+			/**
+			 * Uplink data volume in Byte
+			 */
+			UL_VOLUME_COUNT: {id: 5, label: "UL Volume Count"}
+		},
+		
 		/**
 		 * RTP flow metrics
 		 */
@@ -747,22 +805,25 @@ MMTDrop.tools = function() {
 				//check if key existing in colSums
 				if (MMTDrop.tools.inArray(key, colSums) == -1)
 					continue;
-
-				if (msg[key] == null)
+				var val = msg[key];
+				
+				if ( val == null)
 					continue;
 
-				var isNumber = MMTDrop.tools.isNumber(msg[key]);
+				var isNumber = typeof( val ) === "number";//MMTDrop.tools.isNumber(msg[key]);
 				if (obj[key] == null){
 					if (isNumber)
 						obj[key] = 0;
 					else
-						obj[key] = new Set();
+						obj[key] = [];
 				}
 
+				
 				if (isNumber)
-					obj[key] += parseInt(msg[key]); //store only the total of values
+					obj[key] += parseInt( val ); //store only the total of values
 				else
-					obj[key].add( msg[key] );       //store all distinguished values
+					if( obj[key].indexOf( val ) == -1 )
+						obj[key].push( val );    //store all distinguished values
 			}
 		}
 
@@ -1316,7 +1377,7 @@ MMTDrop.databaseFactory = {
 					);
 					
 					if( noProbe == 1)
-						columns.push( {id: col, label: "Probe"});
+						columns.push( {id: col, label: "Probe " + probes[0]});
 					else
 						columns.push( {id: col, label: "Probe", probes: probes} );
 					//the first column is timestamp
@@ -1540,7 +1601,7 @@ MMTDrop.databaseFactory = {
 				
 				var columns = [COL.TIMESTAMP];
 				if( noProbes == 1)
-					columns.push( {id: col, label: "Probe"} );
+					columns.push( {id: col, label: "Probe " + probes[0]} );
 				else
 					columns.push( {id: col, label: "Probe", probes: probes} );
 				
@@ -1789,7 +1850,7 @@ MMTDrop.filterFactory = {
 				options.push({id: cols[i].id, label: cols[i].label});
 			 
 			var filter =  new MMTDrop.Filter({
-				id      : "flow_metric_filter_" + MMTDrop.tools.getUniqueNumber(),
+				id      : "flow_metric_filter",
 				label   : "Flows",
 				options : options,
 			}, function (val, db){
@@ -1818,7 +1879,7 @@ MMTDrop.filterFactory = {
 
 
 			var filter =  new MMTDrop.Filter({
-				id      : "metric_filter_" + MMTDrop.tools.getUniqueNumber(),
+				id      : "metric_filter",
 				label   : "Metric",
 				options : options,
 			}, 
@@ -1845,7 +1906,7 @@ MMTDrop.filterFactory = {
 				options.push({id:  key, label: MMTDrop.tools.capitalizeFirstLetter(key)});
 			}
 			var filter =  new MMTDrop.Filter({
-				id      : "period_filter_" + MMTDrop.tools.getUniqueNumber(),
+				id      : "period_filter",
 				label   : "Period",
 				options : options,
 			}, 
@@ -1868,7 +1929,7 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createProbeFilter : function(){
-			var probeID = "probe_filter_" + MMTDrop.tools.getUniqueNumber();
+			var probeID = "probe_filter";
 
 			//create a list of options 
 			var options = [{id: 0, label: "All"}];
@@ -1920,7 +1981,7 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createAppFilter : function(){
-			var filterID = "app_filter_" + MMTDrop.tools.getUniqueNumber();
+			var filterID = "app_filter";
 
 			//create a list of options 
 			var data = {};
@@ -1988,7 +2049,7 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter}
 		 */
 		createClassFilter : function(){
-			var filterID = "class_filter_" + MMTDrop.tools.getUniqueNumber();
+			var filterID = "class_filter";
 
 			//create a list of options 
 			var data = {};
@@ -2025,6 +2086,40 @@ MMTDrop.filterFactory = {
 
 				filter.option( opts );
 				filter.redraw();
+			});
+
+			return filter;
+		},
+		/**
+		 * Create a filter representing types of reports (data format).
+		 * The list of options is fixed by the data types defined in <code>MMTDrop.constants.CsvFormat</code>.
+		 * When the selected option is changed, the database will reload the corresponding data from the server.
+		 * @returns {MMTDrop.Filter}
+		 */
+		createDataTypeFilter : function(){
+			var csv = MMTDrop.constants.CsvFormat;
+			//create a list of options 
+			var data = {};
+			var options = [{id: csv.STATS_FORMAT,            label: "Protocol"},
+			               {id: csv.DEFAULT_APP_FORMAT,      label: "Flow"},
+			               {id: csv.WEB_APP_FORMAT,          label: "Web"},
+			               {id: csv.SSL_APP_FORMAT,          label: "SSL"},
+			               {id: csv.RTP_APP_FORMAT,          label: "RTP"},
+			               {id: csv.RADIUS_REPORT_FORMAT,    label: "Radius"},
+			               {id: csv.MICROFLOWS_STATS_FORMAT, label: "Microflow"}
+			               ];
+			var filter =  new MMTDrop.Filter({
+				id      : "data_type_filter",
+				label   : "Format",
+				options : options,
+			}, 
+			function (val, db){
+				//how it filters database when the current selected option is @{val}	
+				//It reloads data from MMT-Operator
+				var param = {format:val.id};
+				db.reload(param);
+
+				console.log("Got " + db.data().length + " from DB");
 			});
 
 			return filter;
@@ -2238,10 +2333,14 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			filters[i].attachTo(database);
 
 		//filter for the first element that is either a filter or a chart
-		var filter = MMTDrop.tools.getFirstElement(dataFlow).object;
+		var filter = MMTDrop.tools.getFirstElement(dataFlow);
+		if(!filter)
+			return;
+		
+		filter = filter.object;
 		if (filter instanceof MMTDrop.Filter)
 			filter.filter();
-		else
+		else if(filter)
 			filter.renderTo( filter.htmlID, database.data() );
 	};
 };
@@ -2334,6 +2433,8 @@ MMTDrop.reportFactory = {
 						}
 						isInSerie = true;
 						//console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
+						
+						break;
 					}
 					//else
 					//	if( isRootMsg && !isInProbeMode ) 
@@ -2366,6 +2467,7 @@ MMTDrop.reportFactory = {
 						data: [ [time, val] ],
 					}, false, false);
 				}
+				
 				chart.redraw();
 			};
 			
@@ -2850,6 +2952,7 @@ MMTDrop.reportFactory = {
 							var msg  = obj.columns[i];
 							var path = msg.label;
 							var arr  = path.split(".");
+							
 							path = "";
 							for( var j=arr.length-1; j>=0; j--){
 								if( path == "")
@@ -2860,7 +2963,56 @@ MMTDrop.reportFactory = {
 									break;
 							}
 							msg.label = path;	//donot need add its grand father name
+							
+							//not root
+							if (path.indexOf("/") > 1){
+								obj.columns[i].type = "areaspline";
+							}
 						}
+						
+						//app UDP may come from IP.UDP or IPv6.UDP
+						var colsToRemove = {};
+						
+						for( var i=1; i<obj.columns.length; i++){
+							if( colsToRemove[i] )
+								continue;
+							
+							var id_i = obj.columns[i].id;
+							
+							for(var j=i+1; j<obj.columns.length; j++)
+								if( obj.columns[i].label === obj.columns[j].label){
+									colsToRemove[j] = true;
+									
+									var id_j = obj.columns[j].id;
+									
+									for( var k in obj.data ){
+										var arr = obj.data[k];
+										
+										if( arr[ id_i ] != undefined && arr[id_j] != undefined)
+											arr[id_i] += arr[id_j];
+										else if( arr[id_j] != undefined )
+											arr[id_i] = arr[id_j];
+									}
+								}
+						}
+						
+						//the first column is Timestamp
+						var cols = [ obj.columns[0] ];
+						
+						for( var i=1; i<obj.columns.length; i++)
+							if( colsToRemove[i] == undefined)
+								cols.push( obj.columns[i] );
+						
+						obj.columns = cols;
+						
+						//
+						for( var k in obj.data ){
+							var arr = obj.data[k];
+							for( var i=1; i<cols.length; i++)
+								if( cols[i].type === "areaspline" && arr[ cols[i].id ] == undefined)
+									arr[ cols[i].id ] = 0;
+						}
+						
 						return obj;
 					}
 				}
@@ -3007,6 +3159,140 @@ MMTDrop.reportFactory = {
 					// charts
 					[
 					 {charts: [cLine], width: 12},
+					 ],
+
+					 //order of data flux
+					 dataFlow
+			);
+			return report;
+		},
+		
+		/**
+		 * Create a report representing the density of traffic
+		 * @returns {MMTDrop.Report} report
+		 */
+		createCustomReport : function(){
+			var database = new MMTDrop.Database({}, function( data ){
+				return data;
+			}, false);
+			
+			var fType   = MMTDrop.filterFactory.createDataTypeFilter();
+			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+
+			var fMatrixX = new MMTDrop.Filter({
+				id     : "filter_matrix_x",
+				label  : "Matrix X",
+				options: []
+			}, function( sel, db){
+			});
+			var fMatrixY = new MMTDrop.Filter({
+				id     : "filter_matrix_y",
+				label  : "Matrix Y",
+				options: []
+			}, function( sel, db ){
+				console.log( "filltered");
+			});
+			
+			var con = MMTDrop.constants;
+			//update list of matrix of X and Y when fType change
+			fType.onFilter( function( sel, db ){
+				var format = fType.selectedOption().id;
+				var matrix = [];
+				if( format == con.CsvFormat.STATS_FORMAT ){
+					matrix = MMTDrop.tools.object2Array( con.StatsColumn );
+				}else if ( format == con.CsvFormat.DEFAULT_APP_FORMAT ){
+					matrix = MMTDrop.tools.object2Array( con.FlowStatsColumn );
+				}else if ( format == con.CsvFormat.WEB_APP_FORMAT ){
+					matrix = MMTDrop.tools.object2Array( con.HttpStatsColumn );
+				}else if ( format == con.CsvFormat.SSL_APP_FORMAT ){
+					matrix = MMTDrop.tools.object2Array( con.TlsStatsColumn );
+				}else if ( format == con.CsvFormat.RTP_APP_FORMAT ){
+					matrix = MMTDrop.tools.object2Array( con.RtpStatsColumn );
+				}else if ( format == con.CsvFormat.RADIUS_REPORT_FORMAT ){
+					matrix = con.RadiusStatsColumn;
+				}else if( format == con.CsvFormat.MICROFLOWS_STATS_FORMAT ){
+					matrix = con.MicroflowStatsColumn;
+				}
+				
+				//add radical of sub-reports
+				if( format == con.CsvFormat.SSL_APP_FORMAT || 
+						format == con.CsvFormat.WEB_APP_FORMAT ||
+						format == con.CsvFormat.RTP_APP_FORMAT){
+					var arr = MMTDrop.tools.object2Array( con.FlowStatsColumn );
+					
+					var n = arr.length;
+					for( var i in matrix ){
+						var o = matrix[i];
+						arr.push( {id: n + o.id, label: o.label} );
+					}
+					matrix = arr;
+				}
+				
+				//remove the first option: Format
+				matrix = matrix.slice(1);
+				fMatrixX.option( matrix );
+				
+				//remove the first option: Probe
+				matrix = matrix.slice(1);
+				fMatrixY.option( matrix );
+				
+				fMatrixX.redraw();
+				fMatrixY.redraw();
+				
+				fMatrixX.filter();
+				fMatrixY.filter();
+			} );
+			
+			//paramter of charts
+			var chartParam = {
+					getData: {
+						getDataFn: function( db ){
+							var colX = fMatrixX.selectedOption();
+							var colY = fMatrixY.selectedOption();
+							
+							var obj = MMTDrop.tools.splitData( db.data(), colX.id );
+							var arr = [];
+							for( var x in obj ){
+								var o = obj[x];
+								o = MMTDrop.tools.sumUp( o, [colY.id] );
+								var y = o[colY.id];
+								if( typeof(y) == "object" )
+									y = JSON.stringify( y );
+								
+								arr.push( [x, y] );
+							}
+							return {data: arr, 
+								columns: [{id: 0, label: colX.label}, {id: 1, label: colY.label}],
+								ylabel : colY.label};
+						}
+					}
+			};
+			
+			var cLine  = MMTDrop.chartFactory.createXY(chartParam);
+			var cTable = MMTDrop.chartFactory.createTable( chartParam );
+			var cBar   = MMTDrop.chartFactory.createBar(chartParam);
+			var cPie   = MMTDrop.chartFactory.createPie(chartParam);
+			
+			var dataFlow = [ { object: fType,    effect: [{object: fProbe}]},
+			                 { object: fPeriod,  effect: [{object: fProbe}]},
+			                 { object: fMatrixX, effect: [{object: cLine}, {object: cTable}, {object: cBar}, {object: cPie}]}, 
+			                 { object: fMatrixY, effect: [{object: cLine}, {object: cTable}, {object: cBar}, {object: cPie}]}];
+
+			
+			var report = new MMTDrop.Report(
+					// title
+					"Customization Report",
+
+					// database
+					database,
+
+					// filers
+					[fType, fPeriod, fProbe, fMatrixX, fMatrixY],
+
+					// charts
+					[
+					 {charts: [cTable, cLine, cBar, cPie], width: 12},
 					 ],
 
 					 //order of data flux
@@ -3725,9 +4011,16 @@ MMTDrop.chartFactory = {
 				var series = [];
 
 				//init series from 1th column
-				for (var j=1; j<columns.length; j++)
-					series.push( {name:columns[j].label, data : [] } );
+				//type: areaspline, line
+				for (var j=1; j<columns.length; j++){
+					var obj =  {name:columns[j].label, data : [] };
+					
+					if( columns[j].type )
+						obj.type = columns[j].type;
 
+					series.push( obj );
+				}
+				
 				//set data for each serie
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
