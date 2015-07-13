@@ -669,7 +669,14 @@ MMTDrop.tools = function() {
 
 
 	_this.localStorage = function (){
-		var _prefix = "mmtdrop.";	//TODO each page has a separated parameter 
+		var _prefix = function(){
+			//each page has a separated parameter
+			var pre = window.location.pathname;
+			pre += window.location.search;
+			
+			return "mmtdrop." + pre + ".";
+		};
+		
 		var _storage = window.localStorage;
 
 //		check if browser supports localStorage
@@ -678,7 +685,7 @@ MMTDrop.tools = function() {
 			_storage.removeItem("test");
 		} catch (error) {
 //			parameters will be stocked into global variable @{fakeStorage}
-//			==> this variable will remove when the page reloaded
+//			==> this variable will remove when the page being reloaded
 //			TODO set code for permanent storage
 			window.fakeStorage = {};
 			_storage = window.fakeStorage;
@@ -686,15 +693,15 @@ MMTDrop.tools = function() {
 
 		var _get = function (key){;
 
-		return JSON.parse(_storage.getItem(_prefix + key));
+			return JSON.parse(_storage.getItem(_prefix() + key));
 		};
 
 		var _set = function(key, value){
-			_storage.setItem(_prefix + key, JSON.stringify(value));
+			_storage.setItem(_prefix() + key, JSON.stringify(value));
 		};
 
 		var _remove = function (key){
-			_storage.removeItem(_prefix + key);
+			_storage.removeItem(_prefix() + key);
 		};
 
 		return {
@@ -1701,6 +1708,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			_currentSelectedOption = _option[this.selectedIndex]; 	//the selected option of the filter
 			
 			console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
+			
+			//save the current selected index
+			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption);
+			
 			//applying the filter to the current selection
 			_filter();
 		});
@@ -1756,7 +1767,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		}
 
 
-		var defaultOption = null;
+		var defaultOption = MMTDrop.tools.localStorage.get(param.id);
 		//create list of options
 		for (var i in _option){
 			var opt = $('<option>', {
