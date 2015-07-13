@@ -1766,8 +1766,6 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			return;
 		}
 
-
-		var defaultOption = MMTDrop.tools.localStorage.get(param.id);
 		//create list of options
 		for (var i in _option){
 			var opt = $('<option>', {
@@ -1775,12 +1773,25 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 				value: _option[i].id
 			});
 			opt.appendTo(filter);
-
-			//set default value to the first option
-			if (defaultOption == null)
-				defaultOption = _option[i];
 		}
-
+		
+		var defaultOption = MMTDrop.tools.localStorage.get(param.id);
+		var isExist = false;
+		
+		//check if the defaultOption is in the current option list
+		for (var i in _option){
+			if (defaultOption != null && defaultOption.id == _option[i].id){
+				isExist = true;
+				break;
+			}
+		}
+		//if not, set default is the first option in the list
+		if( isExist == false )
+			for (var i in _option){
+				defaultOption = _option[i];
+				break;
+			}
+		
 		//set selection to defaultValue (that is either the first option or the former selection)
 		filter.val(defaultOption.id);
 		_currentSelectedOption = defaultOption;
