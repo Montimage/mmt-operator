@@ -40,9 +40,10 @@ var dbconnector = null;
 if (argv.db === 'mongo') {
 	var dbc = require('./js/mongo_connector');
 	dbconnector = new dbc();
-} else if (argv.db === 'sqlite')
-	dbconnector = require('./js/sqlite_connector');
-else
+} else if (argv.db === 'sqlite'){
+	var dbc = require('./js/sqlite_connector');
+	dbconnector = new dbc("mmt");
+}else
 	throw (new Error(
 			'Unsopported database type. Database must be one of [sqlite, mongo]'));
 
@@ -143,27 +144,27 @@ var PERIOD = {
 function getOptionsByPeriod(period) {
 	var retval = {
 		collection : 'traffic',
-		time : moment().valueOf() - 600 * 1000
+		time :  60 * 1000
 	};
 	if (period === PERIOD.HOUR) {
 		retval = {
 			collection : 'traffic_min',
-			time : moment().valueOf() - 3600 * 1000
+			time : 3600 * 1000
 		};
 	} else if (period === PERIOD.DAY) {
 		retval = {
 			collection : 'traffic_hour',
-			time : moment().valueOf() - 24 * 3600 * 1000
+			time : 24 * 3600 * 1000
 		};
 	} else if (period === PERIOD.WEEK) {
 		retval = {
 			collection : 'traffic_hour',
-			time : moment().valueOf() - 7 * 24 * 3600 * 1000
+			time : 7 * 24 * 3600 * 1000
 		};
 	} else if (period === PERIOD.MONTH) {
 		retval = {
 			collection : 'traffic_day',
-			time : moment().valueOf() - 30 * 24 * 3600 * 1000
+			time : 30 * 24 * 3600 * 1000
 		};
 	}
 	return retval;
@@ -202,15 +203,22 @@ app.get('/traffic/data', function(request, response, next) {
 	
 	console.log(options);
 	
-
-	dbconnector.getProtocolStats(options, function(err, data) {
-		if (err) {
+	dbconnector.getLastTime(function(err, time){
+		if( err )
 			return next(err);
-		}
-		//this allow a request coming from a different domain
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Content-Type", "application/json");
-		response.send(data);
+		
+		console.log("lastime: %d %s", time, new Date(time));
+		options.time = time - options.time;
+		dbconnector.getProtocolStats(options, function(err, data) {
+			if (err) {
+				return next(err);
+			}
+			//this allow a request coming from a different domain
+			response.setHeader("Access-Control-Allow-Origin", "*");
+			response.setHeader("Content-Type", "application/json");
+			response.send(data);
+		});
+
 	});
 });
 ////////////////////////////////////////////////////////////////////////////////////////////

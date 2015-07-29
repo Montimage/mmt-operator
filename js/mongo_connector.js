@@ -90,6 +90,18 @@ var MongoConnector = function ( opts ) {
 
 		});
 	};
+	
+	self.getLastTime = function(cb, err_cb){
+		self.mdb.collection("traffic").find().sort({"time": -1}).limit(1).toArray(function(err, doc){
+			if( err ){
+				cb( err );
+				return;
+			}
+			
+			cb( null, doc[0].time );
+			
+		});
+	};
 };
 
 module.exports = MongoConnector;
