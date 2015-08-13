@@ -2966,7 +2966,7 @@ MMTDrop.reportFactory = {
 							
 							//not root
 							if (path.indexOf("/") > 1){
-								obj.columns[i].type = "areaspline";
+								obj.columns[i].type = "area-spline";
 							}
 						}
 						
@@ -3652,8 +3652,18 @@ MMTDrop.chartFactory = {
 						series : series
 				};
 
-				var hightchart = new Highcharts.Chart(chartOption);
-				return hightchart;
+				//var hightchart = new Highcharts.Chart(chartOption);
+				//return hightchart;
+				
+				var chart_opt = {
+					bindto: "#" + elemID,
+					data: {
+						type: 'bar',
+						columns: arrData
+					}
+				};
+				var chart = c3.generate( chart_opt );
+				return chart;
 			});
 
 			chart.getIcon = function(){
@@ -3929,9 +3939,20 @@ MMTDrop.chartFactory = {
 			            }
 			        });
 
-				var hightChart = new Highcharts.Chart(chartOption);
+				//var hightChart = new Highcharts.Chart(chartOption);
 		        		
-				return hightChart;
+				//return hightChart;
+			        console.log( arrData );
+			        var chart_opt = {
+			        		bindto : "#" + elemID,
+			        		data : {
+			        			columns: arrData,
+			        			type: "pie"
+			        		},
+			        		
+			        };
+			        var chart = c3.generate( chart_opt );
+			        return chart;
 			});
 
 			chart.getIcon = function(){
@@ -4000,180 +4021,60 @@ MMTDrop.chartFactory = {
 				
 				//the first column is timestamp
 				for (var i=0; i<arrData.length; i++)
-					arrData[i][0] = parseInt(arrData[i][0]);
-
+					arrData[i][0] = new Date( parseInt(arrData[i][0]) );
+				
 				//sort by the first column
 				//arrData.sort( function (a, b){
 				//	return a[0] - b[0];
 				//});
 
 				var ylabel = option.ylabel;
-				var series = [];
+				
+				var labels = ['x'];
+				for (var j=1; j<columns.length; j++){
+					labels.push( columns[j].label );
+				}
 
+				var types = {};
 				//init series from 1th column
 				//type: areaspline, line
 				for (var j=1; j<columns.length; j++){
-					var obj =  {name:columns[j].label, data : [] };
-					
 					if( columns[j].type )
-						obj.type = columns[j].type;
-
-					series.push( obj );
+						types[ columns[j].label ] = columns[j].type;
 				}
 				
-				//set data for each serie
-				for (var i=0; i<arrData.length; i++){
-					var msg = arrData[i];
-					
-					//the first column is categorie, the next ones are series
-					for (var j=1; j<msg.length; j++){
-						if( msg[j] == undefined)
-							continue;
-						series[j-1].data.push([ msg[0], msg[j] ]);
-					}
-				}
+				arrData.unshift( labels );
 				
 				var isTimeLine = (type == undefined || type === "timeline" || type === "scatter");
 				
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							type        : type || 'spline',
-							zoomType    : 'xy',
-							spacingTop  :30,
-							spacingRight:30,                                  
-						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
-							}
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x: -40,
-								verticalAlign: 'top',
-								y: 20                              
-							}       
-						},
-						xAxis : {
-							maxZoom:isTimeLine? 15000 : 1, // 15seconds
-							gridLineWidth: 1,
-							type : isTimeLine? 'datetime' : '',
-						},
-						yAxis : {
-							title : {
-								text : ylabel,
-							},
-							min : 0,
-						},
-						title : {
-							text : "",
-						},
-						tooltip: {
-							shared: true,
-						},
-						plotOptions: {
-							scatter: {
-								marker: {
-									radius: 3,
-									states: {
-										hover: {
-											enabled: true,
-											lineColor: 'rgb(100,100,100)',
-										}
-									}
-								},
-								states: {
-									hover: {
-										marker: {
-											enabled: false,
-										}
-									}
-								},
-								tooltip: {
-									headerFormat: '<b>{series.name}</b><br>',
-									pointFormat: '{point.y}',
-									crosshairs: [false, true],
-								},
-								events : {
-									click : option.click,
-								},
-							},
-							areaspline: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								stacking: 'normal',
-								events : {
-									click : option.click,
-								},
-							},
-							area: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								stacking: 'normal',
-								events : {
-									click : option.click,
-								},
-							},
-							spline: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2 
-									}
-								},
-								events : {
-									click : option.click,
-								},
-							},
-							line: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								events : {
-									click : option.click,
-								},      
-							},
-						},
-						series : series 
-				};
-
-				var hightChart = new Highcharts.Chart(chartOption);
-				return hightChart;
+				
+				
+		        var chart_opt = {
+		        		bindto : "#" + elemID,
+		        		data : {
+		        			x: 'x',
+		        			rows: arrData,
+		        			type: "spline",
+		        			types: types,
+		        			groups: [ labels ],
+		        		},
+		        		axis: {
+		        			x: {
+		        				type: 'timeseries',
+		        				tick: {
+		        	                format: '%H:%M:%S'
+		        	            }
+		        			}
+		        		},
+		        		tooltip:{
+		        			format: {
+		        				//title: function( x ){ return "data " + x; }
+		        			}
+		        		}
+		        };
+		        console.log( chart_opt );
+		        var chart = c3.generate( chart_opt );
+		        return chart;
 			});
 
 			chart.getIcon = function(){
