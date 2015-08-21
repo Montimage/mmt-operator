@@ -1686,8 +1686,8 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		var span =       $('<span>', {class: 'input-group-addon', text: param.label});
 		var filter =     $('<select>',{class: "form-control",     id  : param.id});
 
-		span.appendTo(fdiv);
-		filter.appendTo(fdiv);
+		span.appendTo( fdiv );
+		filter.appendTo( fdiv );
 		fdiv.appendTo(fcontainer);
 		fcontainer.appendTo($('#' + elemID));
 
@@ -2370,15 +2370,11 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
-			var maxDataX = 0;	//max value of data on Ox
-			
 			var appendMsg = function( msg ){
 				//console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
 					return;
-				
-				var series = chart.series;
 				
 				//the chart cLine in 
 				//- probeMode if it shows total data of each probe
@@ -2401,74 +2397,22 @@ MMTDrop.reportFactory = {
 				
 				
 				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
+				time = new Date( time );
 				var val  = msg[ fMetric.selectedOption().id ];
 				
-				//whether the msg belong to one serie existing in the chart
-				var isInSerie = false;
-				for( var i in series ){
-					var serie = series[i];
-					
-					//add point to serie
-					if( serie.name === serieName){
-						
-						if (maxDataX < time )
-							maxDataX = time;
-						
-						
-						var lastPoint = serie.data[ serie.data.length - 1];
-						//do not add a msg in the past
-						if( lastPoint && time < lastPoint.x ){
-							console.log( "  in the past:  > " + time);
-							return;
-						}else if (lastPoint && time <= lastPoint.x + 200){
-							lastPoint.y = val;
-							console.log(" update the last point");
-						}
-						else{
-							serie.addPoint([time, val],	//x,y 
-								false, //true, 	//redraw
-								false, //true	//shift chart data
-								false //animation
-								);
-						}
-						isInSerie = true;
-						//console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
-						
-						break;
-					}
-					//else
-					//	if( isRootMsg && !isInProbeMode ) 
-					//		serie.addPoint([time, 0], true, true);
+				var obj = {
+						columns:[
+						         ["x-" + serieName, time],
+						         [serieName, val],
+						]
+					};
+				console.log( JSON.stringify(obj) );
+				try{
+					chart.flow(obj);
+				}catch( err ){
+					console.log( err );
 				}
 				
-				//shift the chart ahead
-				var period = 10*60*1000;	//10 minute
-				var minX = maxDataX - period;
-				
-				for( var i in series ){
-					var serie = series[i];
-					//remove the points that older than minX;
-					var data = serie.data;
-					for( var i=0; i<data.length; i++)
-						if( data[i].x < minX ){
-							serie.removePoint(i, false, false);
-							if( i == data.length - 1 ){
-								serie.remove(false);
-								console.log(" remove serie " + serie.name );
-							}
-						}
-				}
-				
-				//new serie will be added
-				if( isInSerie == false){
-					console.log( "add new serie: " + serieName);
-					var serie = chart.addSeries({
-						name: serieName,
-						data: [ [time, val] ],
-					}, false, false);
-				}
-				
-				chart.redraw();
 			};
 			
 			
@@ -3596,70 +3540,25 @@ MMTDrop.chartFactory = {
 						series[j-1].data.push( msg[j] );
 				}
 
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							defaultSeriesType : 'column',
-							zoomType    : 'xy',
-							spacingTop  :30,
-							spacingRight:30 
-						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
-							}
-						},
-						title : {
-							text : null
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x: -40,
-								verticalAlign: 'top',
-								y: 20                              
-							}    
-						},
-						legend: {
-							enabled: (series.length > 1)
-						},
-						tooltip : {
-							formatter : function() {
-								return '<span style="font-size: 10px">' +this.series.name + '</span><br/> \u25CF '+ this.key +' : ' + this.y ;
-							},
-						},
-						xAxis : {
-							categories : categories
-						},
-						yAxis : {
-							title : {
-								text : ylabel
-							}
-						},
-						plotOptions:{
-							bar:{
-								events : {
-									click : option.click,
-								},
-							},
-						},
-						series : series
-				};
-
-				//var hightchart = new Highcharts.Chart(chartOption);
-				//return hightchart;
-				
 				var chart_opt = {
 					bindto: "#" + elemID,
 					data: {
 						type: 'bar',
 						columns: arrData
+					},
+					axis : {
+						x : {
+							type: 'category',
+							categories: [""]
+						},
+						y: {
+							label: ylabel,
+							tick: {
+								format: function( val ){
+									return val; 
+								}
+							}
+						}
 					}
 				};
 				var chart = c3.generate( chart_opt );
@@ -3786,162 +3685,6 @@ MMTDrop.chartFactory = {
 					}
 				}
 
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							type        : 'pie',
-							spacingTop  : 30,
-							spacingRight: 30,
-						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
-							}
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x    : -40,
-								verticalAlign: 'top',
-								y    : 20                              
-							}
-						},
-						tooltip : {
-							headerFormat: '<span style="font-size: 10px">{series.name}</span><br/>',
-							pointFormat:  '\u25CF {point.name}: {point.y}',
-						},
-						plotOptions : {
-							pie : {
-								startAngle : 0,
-								allowPointSelect : true,
-								cursor           : 'pointer',
-								slicedOffset     : 20,
-								dataLabels       : {
-									enabled   : true,
-									formatter : function() {
-										//display only if larger than 1% or there is only one serie
-										if( this.percentage > 1  || this.point.seriesSize == 1 || this.series.data.length <= 10){
-											//round 2 digits after point, eg, 1.235 --> 1.26
-											var percent = Math.round(this.percentage * 100) / 100;
-											
-											//if 0.001 --> 0, get more digits after the point
-											var i = 1000;
-											while( percent == 0 ){
-												percent = Math.round(this.percentage * i) / i;
-												i = i * 10;
-											}
-											
-											return '<b>' + this.point.name + '</b>: ' + percent + ' %';
-										}else 
-											return null;
-									}
-								},
-								events : {
-									click : option.click,
-								},
-								point: {
-									events:{
-										//click on legend item ==> hide pies of all series
-										legendItemClick : function( e ){
-											var isVisible = !this.visible;
-											var name      = this.name;
-											var series    = this.series.chart.series;
-											
-											for( var i=0; i<series.length; i++){
-												var data = series[i].data;
-												for( var j=0; j<data.length; j++)
-													if( data[j].name === name){
-														data[j].setVisible( isVisible );
-													}
-											}
-											return false;
-										}
-									}
-								}
-							}
-						},
-						title : {
-							text : null
-						},
-						series : series
-				};
-				
-				/**
-			     * Highcharts plugin for raising up the pies corresponding the one that is hovered in the legend
-			     */
-			        Highcharts.wrap(Highcharts.Legend.prototype, 'renderItem', function (proceed, item) {
-			            
-			            proceed.call(this, item);
-			            
-			            var element = item.legendGroup.element;
-			            var series = this.chart.series;
-			            
-			            //raise up
-			            element.onmouseover = function () {
-							for( var i=0; i<series.length; i++){
-								var data = series[i].data;
-								for( var j=0; j<data.length; j++)
-									if( data[j].name === item.name){
-										data[j].sliced = true;
-										data[j].graphic.animate(data[j].slicedTranslation);
-									}
-							}
-			            };
-			            
-			            element.onmouseout = function () {
-							for( var i=0; i<series.length; i++){
-								var data = series[i].data;
-								for( var j=0; j<data.length; j++)
-									if( data[j].name === item.name){
-										data[j].sliced = false;
-										data[j].graphic.animate({
-							                translateX: 0,
-							                translateY: 0
-							            });
-									}
-							}
-			            } ; 
-			        });
-			    
-			        /**
-			         * Plugin Highcharts for multip titles of pies
-			         */
-			        Highcharts.wrap(Highcharts.seriesTypes.pie.prototype, 'render', function (proceed) {
-			            
-			            var chart = this.chart,
-			                center = this.center || (this.yAxis && this.yAxis.center), 
-			                titleOption = this.options.title,
-			                box;
-
-			            proceed.call(this);
-			            
-			            if (center && titleOption) {
-			                box = {
-			                    x: chart.plotLeft + center[0] - 0.5 * center[2],
-			                    y: chart.plotTop + center[1] - 0.5 * center[2],
-			                    width: center[2],
-			                    height: center[2]
-			                };
-			                if (!this.title) {
-			                    this.title = this.chart.renderer.label(titleOption.text)
-			                        .css(titleOption.style)
-			                        .add()
-			                        .align(titleOption, null, box);
-			                } else {
-			                    this.title.align(titleOption, null, box);
-			                }
-			            }
-			        });
-
-				//var hightChart = new Highcharts.Chart(chartOption);
-		        		
-				//return hightChart;
 			        console.log( arrData );
 			        var chart_opt = {
 			        		bindto : "#" + elemID,
@@ -3988,7 +3731,7 @@ MMTDrop.chartFactory = {
 				}
 				
 				var columns = option.columns;
-				var arrData     = data;
+				var arrData = data;
 				
 				if( probes.length > 1){
 					columns = [];
@@ -4010,7 +3753,7 @@ MMTDrop.chartFactory = {
 								if( typeof(oo) == "object" && probe in oo)
 									arr.push( oo[probe] );
 								else
-									arr.push( 0 );
+									arr.push( null );
 							}
 						}
 
@@ -4018,21 +3761,50 @@ MMTDrop.chartFactory = {
 					}
 				}
 				
-				
-				//the first column is timestamp
-				for (var i=0; i<arrData.length; i++)
-					arrData[i][0] = new Date( parseInt(arrData[i][0]) );
-				
 				//sort by the first column
-				//arrData.sort( function (a, b){
-				//	return a[0] - b[0];
-				//});
-
+				arrData.sort( function (a, b){
+					return a[0] - b[0];
+				});
+				
+				var obj = [];
+				var n   = columns.length;
+				//the first column is timestamp
+				for (var i=0; i<arrData.length; i++){
+					var x = new Date( parseInt(arrData[i][0]) );
+					
+					for( var j=1; j<n; j++){
+						
+						var val = arrData[i][j];
+						if( val === undefined )
+							continue;
+						
+						if( obj[j] === undefined ){
+							obj[j]   = ["x-" + columns[j].label];
+							obj[j+n-1] = [ columns[j].label];
+						}
+						
+						obj[j].push( x );
+						obj[j+n-1].push( val );
+							
+					}
+				}
+				//as j starts from 1 ==> obj starts from 1
+				// I will remove the first index of obj
+				obj.shift();
+				
 				var ylabel = option.ylabel;
 				
-				var labels = ['x'];
+				//pair y==>x
+				var xs = {};
 				for (var j=1; j<columns.length; j++){
-					labels.push( columns[j].label );
+					xs[columns[j].label] = "x-" + columns[j].label;
+				}
+				
+				var groups = [];
+				for (var j=1; j<columns.length; j++){
+					//not root
+					if( columns[j].label.indexOf("/") > 0 )
+						groups.push( columns[j].label );
 				}
 
 				var types = {};
@@ -4043,32 +3815,52 @@ MMTDrop.chartFactory = {
 						types[ columns[j].label ] = columns[j].type;
 				}
 				
-				arrData.unshift( labels );
 				
-				var isTimeLine = (type == undefined || type === "timeline" || type === "scatter");
-				
-				
+				var isTimeLine = (type == undefined || type === "timeseries" || type === "scatter");
 				
 		        var chart_opt = {
 		        		bindto : "#" + elemID,
 		        		data : {
-		        			x: 'x',
-		        			rows: arrData,
-		        			type: "spline",
+		        			xs: xs,
+		        			columns: obj,
+		        			type: (type === "scatter")? type:  "",
 		        			types: types,
-		        			groups: [ labels ],
+		        			groups: [ groups ],
 		        		},
 		        		axis: {
 		        			x: {
-		        				type: 'timeseries',
+		        				type: "timeseries",
 		        				tick: {
-		        	                format: '%H:%M:%S'
+		        	                format: '%H:%M:%S',
+		        	                count : 10,
 		        	            }
+		        			},
+		        			y: {
+		        				label: ylabel,
+		        				tick: {
+		        				}
 		        			}
 		        		},
 		        		tooltip:{
 		        			format: {
 		        				//title: function( x ){ return "data " + x; }
+		        			}
+		        		},
+		        		grid: {
+		        			x: {
+		        			    show: true
+		        			},
+		        			y:{
+		        				show: true
+		        			}
+		        		},
+		        		point: {
+		        			//show: false,
+		        			r: (type === "scatter")? 2 : 0,
+		        			focus: {
+		        			    expand: {
+		        			    	r: 5
+		        			    }
 		        			}
 		        		}
 		        };
