@@ -2370,6 +2370,13 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
+			
+			//add data to chart each second (rather than add immediatlly after receiving data)
+			//this will avoid that two data are added very closely each
+			
+			var newData = {};
+			var lastAddMoment = 0;
+			
 			var appendMsg = function( msg ){
 				//console.log( msg );
 				var chart = cLine.chart;
@@ -2394,62 +2401,64 @@ MMTDrop.reportFactory = {
 				
 				if( isInProbeMode )
 					serieName = "Probe-" + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
+			
 				
-				
-				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
-				time = new Date( time );
+				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] + 0;
 				var val  = msg[ fMetric.selectedOption().id ];
 				
-				var obj = {
-						columns:[
-						         ["x-" + serieName, time],
-						         [serieName, val],
-						]
-					};
-				console.log( JSON.stringify(obj) );
-				try{
-					chart.flow(obj);
-				}catch( err ){
-					console.log( err );
-				}
+				if( newData[serieName] === undefined )
+					newData[serieName] = 0;
 				
+				newData[serieName] += val;
+				
+				//update to chart each .5 seconds
+				if( time - lastAddMoment > 500 ){
+					
+					var date = new Date( time );
+					var xs = chart.xs();
+					
+					var cols = [];
+					
+					var newXS = {};
+					var needLoad = false;
+					//convert newData to columns format of C3js
+					for( var s in newData ){
+						cols.push( [s, newData[s]] );
+						cols.push( ["x-"+s, date] );
+						
+						if( xs[ s ] == undefined){
+							newXS[ s ] = "x-" + s;
+							needLoad = true;
+						}
+					}
+					
+					//load new pair nameY: nameX
+					if( needLoad )
+						chart.load({
+							xs: newXS
+						});
+					
+					var obj = {
+							columns: cols,
+							length: 1,
+							done: function(){
+								//console.log( chart.xs()["nghia"] );
+							}};
+					
+					
+					//console.log( JSON.stringify( obj ) );
+					
+					//reset newData
+					newData = {};
+					lastAddMoment = time;
+					
+					chart.flow( obj );
+					
+					
+				}
 			};
 			
-			
-			/**
-			 * A timer that will insert a dump message in order to move forward the chart when no traffic.
-			 */
-			var timer = null;
-			var resetTimer = function(){
-				
-				if( timer ){
-					clearTimeout( timer );
-					timer = null;
-				}
-				
-				timer = setTimeout( function(){
-					var time = (new Date()).getTime() - 5000;
-					
-					for( var i in cLine.chart.series ){
-						var serie = cLine.chart.series[i];
-						
-						//add point to serie
-						//var x = serie.xAxis.getExtremes().max;
-						var x = serie.data[serie.data.length - 1].x;
-						
-						//do not add a msg in the past
-						if( time - x <= 5000)
-							continue;
-						
-						serie.addPoint( [time, 0], true, false );
-					}	
-					
-					resetTimer();
-				}, 
-				4000	//timer interval
-				);
-			};
-			
+		
 			database.onMessage( function( msg ){
 				if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
 					return;
@@ -2910,7 +2919,7 @@ MMTDrop.reportFactory = {
 							
 							//not root
 							if (path.indexOf("/") > 1){
-								obj.columns[i].type = "area-spline";
+								obj.columns[i].type = "area";	//area-spline
 							}
 						}
 						
@@ -2953,7 +2962,7 @@ MMTDrop.reportFactory = {
 						for( var k in obj.data ){
 							var arr = obj.data[k];
 							for( var i=1; i<cols.length; i++)
-								if( cols[i].type === "areaspline" && arr[ cols[i].id ] == undefined)
+								if( cols[i].type === "area" && arr[ cols[i].id ] == undefined)
 									arr[ cols[i].id ] = 0;
 						}
 						
@@ -3524,21 +3533,10 @@ MMTDrop.chartFactory = {
 				
 				var ylabel = (columns.length == 2) ? columns[1].label : option.ylabel;
 				var categories = [];
-				var series = [];
 
 				//init series from 1th column
 				for (var j=1; j<columns.length; j++)
-					series.push( {name:columns[j].label, data : [] } );
-
-				for (var i=0; i<arrData.length; i++){
-					var msg = arrData[i];
-
-					//the first column is categorie, the next ones are series
-					categories.push( msg[0] );
-					
-					for (var j=1; j<msg.length; j++)
-						series[j-1].data.push( msg[j] );
-				}
+					categories.push( columns[j].label );
 
 				var chart_opt = {
 					bindto: "#" + elemID,
@@ -3831,19 +3829,26 @@ MMTDrop.chartFactory = {
 		        			x: {
 		        				type: "timeseries",
 		        				tick: {
-		        	                format: '%H:%M:%S',
+		        					format: function( v ){
+		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds();
+		        					},
 		        	                count : 10,
 		        	            }
 		        			},
 		        			y: {
 		        				label: ylabel,
+		        				min: 0,
+		        				padding: 0,
 		        				tick: {
 		        				}
 		        			}
 		        		},
 		        		tooltip:{
 		        			format: {
-		        				//title: function( x ){ return "data " + x; }
+		        				title: function( v ){ 
+		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDay() + " " + 
+	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds(); 
+		        					}
 		        			}
 		        		},
 		        		grid: {
@@ -3862,7 +3867,10 @@ MMTDrop.chartFactory = {
 		        			    	r: 5
 		        			    }
 		        			}
-		        		}
+		        		},
+		        		line: {
+		      	    	  connectNull: true
+		      	    	}
 		        };
 		        console.log( chart_opt );
 		        var chart = c3.generate( chart_opt );
