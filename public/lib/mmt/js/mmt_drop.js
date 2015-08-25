@@ -2411,8 +2411,8 @@ MMTDrop.reportFactory = {
 				
 				newData[serieName] += val;
 				
-				//update to chart each .5 seconds
-				if( time - lastAddMoment > 500 ){
+				//update to chart each x seconds
+				if( time - lastAddMoment > 2000 ){
 					
 					var date = new Date( time );
 					var xs = chart.xs();
@@ -2421,8 +2421,10 @@ MMTDrop.reportFactory = {
 					
 					var newXS = {};
 					var needLoad = false;
+					var keys = [];
 					//convert newData to columns format of C3js
 					for( var s in newData ){
+						keys.push( s );	//list of apps will be appended data
 						cols.push( [s, newData[s]] );
 						cols.push( ["x-"+s, date] );
 						
@@ -2438,23 +2440,61 @@ MMTDrop.reportFactory = {
 							xs: newXS
 						});
 					
-					var obj = {
-							columns: cols,
-							length: 1,
-							done: function(){
-								//console.log( chart.xs()["nghia"] );
-							}};
+					
+					chart.flow( {
+						columns: cols,
+						//length: 1,
+						done: function(){
+							//console.log( chart.xs()["nghia"] );
+						}} );
+					
+					//highlight the update
+					chart.focus( keys );
+
+					
+					var minX = date.getTime() - 1000*60*10;   //10 min
+					
+					var data = chart.data.shown();
+					
+					//set null to all points outside the chart
+					for( var i in data ){
+			            var obj = data[i];
+			            
+			            for( var j in obj.values ){
+			            	var p = obj.values[j];
+			            	
+			            	if( p.x && p.x.getTime() < minX ){
+			            		p.value = null;
+			            		p.x = null;
+			            	}
+			            }
+			        }
+					
+					//remove a target when all its data are null
+					var idsToRemove = [];
+					for( var i in data ){
+						var id = data[i].id ;
+						var arr = chart.data.values( id);
+						
+						var isNull = true;
+						for( var j=0; j< arr.length; j++ )
+							if( arr[j] !== null ){
+								isNull = false;
+								break;
+							}
+						if( isNull  )
+							idsToRemove.push( id );
+					}
 					
 					
-					//console.log( JSON.stringify( obj ) );
+					if( idsToRemove.length > 0){
+						  chart.unload( idsToRemove );
+						  console.log( "To remove: " + JSON.stringify( idsToRemove ) );
+					}
 					
 					//reset newData
 					newData = {};
 					lastAddMoment = time;
-					
-					chart.flow( obj );
-					
-					
 				}
 			};
 			
@@ -3840,6 +3880,15 @@ MMTDrop.chartFactory = {
 		        				min: 0,
 		        				padding: 0,
 		        				tick: {
+		        					format: function( v ){
+		        						if( v >= 1000000000 )
+		        							return (v/1000000000).toPrecision(2) + "G";
+		        						if( v >= 1000000 )
+		        							return (v/1000000).toPrecision(2) + "M";
+		        						if( v >= 1000 )
+		        							return Math.round(v/1000) + "k";
+		        						return v;
+		        					}
 		        				}
 		        			}
 		        		},
