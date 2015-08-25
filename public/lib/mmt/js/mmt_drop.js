@@ -1693,8 +1693,8 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		var span =       $('<span>', {class: 'input-group-addon', text: param.label});
 		var filter =     $('<select>',{class: "form-control",     id  : param.id});
 
-		span.appendTo(fdiv);
-		filter.appendTo(fdiv);
+		span.appendTo( fdiv );
+		filter.appendTo( fdiv );
 		fdiv.appendTo(fcontainer);
 		fcontainer.appendTo($('#' + elemID));
 
@@ -2392,15 +2392,18 @@ MMTDrop.reportFactory = {
 					}
 				}});
 			
-			var maxDataX = 0;	//max value of data on Ox
+			
+			//add data to chart each second (rather than add immediatlly after receiving data)
+			//this will avoid that two data are added very closely each
+			
+			var newData = {};
+			var lastAddMoment = 0;
 			
 			var appendMsg = function( msg ){
 				//console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
 					return;
-				
-				var series = chart.series;
 				
 				//the chart cLine in 
 				//- probeMode if it shows total data of each probe
@@ -2420,114 +2423,104 @@ MMTDrop.reportFactory = {
 				
 				if( isInProbeMode )
 					serieName = "Probe-" + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
+			
 				
-				
-				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ];
+				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] + 0;
 				var val  = msg[ fMetric.selectedOption().id ];
 				
-				//whether the msg belong to one serie existing in the chart
-				var isInSerie = false;
-				for( var i in series ){
-					var serie = series[i];
+				if( newData[serieName] === undefined )
+					newData[serieName] = 0;
+				
+				newData[serieName] += val;
+				
+				//update to chart each x seconds
+				if( time - lastAddMoment > 2000 ){
 					
-					//add point to serie
-					if( serie.name === serieName){
+					var date = new Date( time );
+					var xs = chart.xs();
+					
+					var cols = [];
+					
+					var newXS = {};
+					var needLoad = false;
+					var keys = [];
+					//convert newData to columns format of C3js
+					for( var s in newData ){
+						keys.push( s );	//list of apps will be appended data
+						cols.push( [s, newData[s]] );
+						cols.push( ["x-"+s, date] );
 						
-						if (maxDataX < time )
-							maxDataX = time;
-						
-						
-						var lastPoint = serie.data[ serie.data.length - 1];
-						//do not add a msg in the past
-						if( lastPoint && time < lastPoint.x ){
-							console.log( "  in the past:  > " + time);
-							return;
-						}else if (lastPoint && time <= lastPoint.x + 200){
-							lastPoint.y = val;
-							console.log(" update the last point");
+						if( xs[ s ] == undefined){
+							newXS[ s ] = "x-" + s;
+							needLoad = true;
 						}
-						else{
-							serie.addPoint([time, val],	//x,y 
-								false, //true, 	//redraw
-								false, //true	//shift chart data
-								false //animation
-								);
-						}
-						isInSerie = true;
-						//console.log( "add [" + new Date(time) + ", " + val +"] to serie: " + serieName );
-						
-						break;
 					}
-					//else
-					//	if( isRootMsg && !isInProbeMode ) 
-					//		serie.addPoint([time, 0], true, true);
-				}
-				
-				//shift the chart ahead
-				var period = 10*60*1000;	//10 minute
-				var minX = maxDataX - period;
-				
-				for( var i in series ){
-					var serie = series[i];
-					//remove the points that older than minX;
-					var data = serie.data;
-					for( var i=0; i<data.length; i++)
-						if( data[i].x < minX ){
-							serie.removePoint(i, false, false);
-							if( i == data.length - 1 ){
-								serie.remove(false);
-								console.log(" remove serie " + serie.name );
+					
+					//load new pair nameY: nameX
+					if( needLoad )
+						chart.load({
+							xs: newXS
+						});
+					
+					
+					chart.flow( {
+						columns: cols,
+						//length: 1,
+						done: function(){
+							//console.log( chart.xs()["nghia"] );
+						}} );
+					
+					//highlight the update
+					chart.focus( keys );
+
+					
+					var minX = date.getTime() - 1000*60*10;   //10 min
+					
+					var data = chart.data.shown();
+					
+					//set null to all points outside the chart
+					for( var i in data ){
+			            var obj = data[i];
+			            
+			            for( var j in obj.values ){
+			            	var p = obj.values[j];
+			            	
+			            	if( p.x && p.x.getTime() < minX ){
+			            		p.value = null;
+			            		p.x = null;
+			            	}
+			            }
+			        }
+					
+					//remove a target when all its data are null
+					var idsToRemove = [];
+					for( var i in data ){
+						var id = data[i].id ;
+						var arr = chart.data.values( id);
+						
+						var isNull = true;
+						for( var j=0; j< arr.length; j++ )
+							if( arr[j] !== null ){
+								isNull = false;
+								break;
 							}
-						}
+						if( isNull  )
+							idsToRemove.push( id );
+					}
+					
+					
+					if( idsToRemove.length > 0){
+						  chart.unload( idsToRemove );
+						  console.log( "To remove: " + JSON.stringify( idsToRemove ) );
+					}
+					
+					//reset newData
+					newData = {};
+					lastAddMoment = time;
 				}
-				
-				//new serie will be added
-				if( isInSerie == false){
-					console.log( "add new serie: " + serieName);
-					var serie = chart.addSeries({
-						name: serieName,
-						data: [ [time, val] ],
-					}, false, false);
-				}
-				
-				chart.redraw();
 			};
 			
-			
-			/**
-			 * A timer that will insert a dump message in order to move forward the chart when no traffic.
-			 */
-			var timer = null;
-			var resetTimer = function(){
-				
-				if( timer ){
-					clearTimeout( timer );
-					timer = null;
-				}
-				
-				timer = setTimeout( function(){
-					var time = (new Date()).getTime() - 5000;
-					
-					for( var i in cLine.chart.series ){
-						var serie = cLine.chart.series[i];
-						
-						//add point to serie
-						//var x = serie.xAxis.getExtremes().max;
-						var x = serie.data[serie.data.length - 1].x;
-						
-						//do not add a msg in the past
-						if( time - x <= 5000)
-							continue;
-						
-						serie.addPoint( [time, 0], true, false );
-					}	
-					
-					resetTimer();
-				}, 
-				4000	//timer interval
-				);
-			};
-			
+		
 			database.onMessage( function( msg ){
 				if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
 					return;
@@ -2988,7 +2981,7 @@ MMTDrop.reportFactory = {
 							
 							//not root
 							if (path.indexOf("/") > 1){
-								obj.columns[i].type = "areaspline";
+								obj.columns[i].type = "area";	//area-spline
 							}
 						}
 						
@@ -3031,7 +3024,7 @@ MMTDrop.reportFactory = {
 						for( var k in obj.data ){
 							var arr = obj.data[k];
 							for( var i=1; i<cols.length; i++)
-								if( cols[i].type === "areaspline" && arr[ cols[i].id ] == undefined)
+								if( cols[i].type === "area" && arr[ cols[i].id ] == undefined)
 									arr[ cols[i].id ] = 0;
 						}
 						
@@ -3602,80 +3595,34 @@ MMTDrop.chartFactory = {
 				
 				var ylabel = (columns.length == 2) ? columns[1].label : option.ylabel;
 				var categories = [];
-				var series = [];
 
 				//init series from 1th column
 				for (var j=1; j<columns.length; j++)
-					series.push( {name:columns[j].label, data : [] } );
+					categories.push( columns[j].label );
 
-				for (var i=0; i<arrData.length; i++){
-					var msg = arrData[i];
-
-					//the first column is categorie, the next ones are series
-					categories.push( msg[0] );
-					
-					for (var j=1; j<msg.length; j++)
-						series[j-1].data.push( msg[j] );
-				}
-
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							defaultSeriesType : 'column',
-							zoomType    : 'xy',
-							spacingTop  :30,
-							spacingRight:30 
+				var chart_opt = {
+					bindto: "#" + elemID,
+					data: {
+						type: 'bar',
+						columns: arrData
+					},
+					axis : {
+						x : {
+							type: 'category',
+							categories: [""]
 						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
+						y: {
+							label: ylabel,
+							tick: {
+								format: function( val ){
+									return val; 
+								}
 							}
-						},
-						title : {
-							text : null
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x: -40,
-								verticalAlign: 'top',
-								y: 20                              
-							}    
-						},
-						legend: {
-							enabled: (series.length > 1)
-						},
-						tooltip : {
-							formatter : function() {
-								return '<span style="font-size: 10px">' +this.series.name + '</span><br/> \u25CF '+ this.key +' : ' + this.y ;
-							},
-						},
-						xAxis : {
-							categories : categories
-						},
-						yAxis : {
-							title : {
-								text : ylabel
-							}
-						},
-						plotOptions:{
-							bar:{
-								events : {
-									click : option.click,
-								},
-							},
-						},
-						series : series
+						}
+					}
 				};
-
-				var hightchart = new Highcharts.Chart(chartOption);
-				return hightchart;
+				var chart = c3.generate( chart_opt );
+				return chart;
 			});
 
 			chart.getIcon = function(){
@@ -3798,162 +3745,17 @@ MMTDrop.chartFactory = {
 					}
 				}
 
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							type        : 'pie',
-							spacingTop  : 30,
-							spacingRight: 30,
-						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
-							}
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x    : -40,
-								verticalAlign: 'top',
-								y    : 20                              
-							}
-						},
-						tooltip : {
-							headerFormat: '<span style="font-size: 10px">{series.name}</span><br/>',
-							pointFormat:  '\u25CF {point.name}: {point.y}',
-						},
-						plotOptions : {
-							pie : {
-								startAngle : 0,
-								allowPointSelect : true,
-								cursor           : 'pointer',
-								slicedOffset     : 20,
-								dataLabels       : {
-									enabled   : true,
-									formatter : function() {
-										//display only if larger than 1% or there is only one serie
-										if( this.percentage > 1  || this.point.seriesSize == 1 || this.series.data.length <= 10){
-											//round 2 digits after point, eg, 1.235 --> 1.26
-											var percent = Math.round(this.percentage * 100) / 100;
-											
-											//if 0.001 --> 0, get more digits after the point
-											var i = 1000;
-											while( percent == 0 ){
-												percent = Math.round(this.percentage * i) / i;
-												i = i * 10;
-											}
-											
-											return '<b>' + this.point.name + '</b>: ' + percent + ' %';
-										}else 
-											return null;
-									}
-								},
-								events : {
-									click : option.click,
-								},
-								point: {
-									events:{
-										//click on legend item ==> hide pies of all series
-										legendItemClick : function( e ){
-											var isVisible = !this.visible;
-											var name      = this.name;
-											var series    = this.series.chart.series;
-											
-											for( var i=0; i<series.length; i++){
-												var data = series[i].data;
-												for( var j=0; j<data.length; j++)
-													if( data[j].name === name){
-														data[j].setVisible( isVisible );
-													}
-											}
-											return false;
-										}
-									}
-								}
-							}
-						},
-						title : {
-							text : null
-						},
-						series : series
-				};
-				
-				/**
-			     * Highcharts plugin for raising up the pies corresponding the one that is hovered in the legend
-			     */
-			        Highcharts.wrap(Highcharts.Legend.prototype, 'renderItem', function (proceed, item) {
-			            
-			            proceed.call(this, item);
-			            
-			            var element = item.legendGroup.element;
-			            var series = this.chart.series;
-			            
-			            //raise up
-			            element.onmouseover = function () {
-							for( var i=0; i<series.length; i++){
-								var data = series[i].data;
-								for( var j=0; j<data.length; j++)
-									if( data[j].name === item.name){
-										data[j].sliced = true;
-										data[j].graphic.animate(data[j].slicedTranslation);
-									}
-							}
-			            };
-			            
-			            element.onmouseout = function () {
-							for( var i=0; i<series.length; i++){
-								var data = series[i].data;
-								for( var j=0; j<data.length; j++)
-									if( data[j].name === item.name){
-										data[j].sliced = false;
-										data[j].graphic.animate({
-							                translateX: 0,
-							                translateY: 0
-							            });
-									}
-							}
-			            } ; 
-			        });
-			    
-			        /**
-			         * Plugin Highcharts for multip titles of pies
-			         */
-			        Highcharts.wrap(Highcharts.seriesTypes.pie.prototype, 'render', function (proceed) {
-			            
-			            var chart = this.chart,
-			                center = this.center || (this.yAxis && this.yAxis.center), 
-			                titleOption = this.options.title,
-			                box;
-
-			            proceed.call(this);
-			            
-			            if (center && titleOption) {
-			                box = {
-			                    x: chart.plotLeft + center[0] - 0.5 * center[2],
-			                    y: chart.plotTop + center[1] - 0.5 * center[2],
-			                    width: center[2],
-			                    height: center[2]
-			                };
-			                if (!this.title) {
-			                    this.title = this.chart.renderer.label(titleOption.text)
-			                        .css(titleOption.style)
-			                        .add()
-			                        .align(titleOption, null, box);
-			                } else {
-			                    this.title.align(titleOption, null, box);
-			                }
-			            }
-			        });
-
-				var hightChart = new Highcharts.Chart(chartOption);
-		        		
-				return hightChart;
+			        console.log( arrData );
+			        var chart_opt = {
+			        		bindto : "#" + elemID,
+			        		data : {
+			        			columns: arrData,
+			        			type: "pie"
+			        		},
+			        		
+			        };
+			        var chart = c3.generate( chart_opt );
+			        return chart;
 			});
 
 			chart.getIcon = function(){
@@ -3989,7 +3791,7 @@ MMTDrop.chartFactory = {
 				}
 				
 				var columns = option.columns;
-				var arrData     = data;
+				var arrData = data;
 				
 				if( probes.length > 1){
 					columns = [];
@@ -4011,7 +3813,7 @@ MMTDrop.chartFactory = {
 								if( typeof(oo) == "object" && probe in oo)
 									arr.push( oo[probe] );
 								else
-									arr.push( 0 );
+									arr.push( null );
 							}
 						}
 
@@ -4019,183 +3821,131 @@ MMTDrop.chartFactory = {
 					}
 				}
 				
-				
-				//the first column is timestamp
-				for (var i=0; i<arrData.length; i++)
-					arrData[i][0] = parseInt(arrData[i][0]);
-
 				//sort by the first column
-				//arrData.sort( function (a, b){
-				//	return a[0] - b[0];
-				//});
-
+				arrData.sort( function (a, b){
+					return a[0] - b[0];
+				});
+				
+				var obj = [];
+				var n   = columns.length;
+				//the first column is timestamp
+				for (var i=0; i<arrData.length; i++){
+					var x = new Date( parseInt(arrData[i][0]) );
+					
+					for( var j=1; j<n; j++){
+						
+						var val = arrData[i][j];
+						if( val === undefined )
+							continue;
+						
+						if( obj[j] === undefined ){
+							obj[j]   = ["x-" + columns[j].label];
+							obj[j+n-1] = [ columns[j].label];
+						}
+						
+						obj[j].push( x );
+						obj[j+n-1].push( val );
+							
+					}
+				}
+				//as j starts from 1 ==> obj starts from 1
+				// I will remove the first index of obj
+				obj.shift();
+				
 				var ylabel = option.ylabel;
-				var series = [];
+				
+				//pair y==>x
+				var xs = {};
+				for (var j=1; j<columns.length; j++){
+					xs[columns[j].label] = "x-" + columns[j].label;
+				}
+				
+				var groups = [];
+				for (var j=1; j<columns.length; j++){
+					//not root
+					if( columns[j].label.indexOf("/") > 0 )
+						groups.push( columns[j].label );
+				}
 
+				var types = {};
 				//init series from 1th column
 				//type: areaspline, line
 				for (var j=1; j<columns.length; j++){
-					var obj =  {name:columns[j].label, data : [] };
-					
 					if( columns[j].type )
-						obj.type = columns[j].type;
-
-					series.push( obj );
+						types[ columns[j].label ] = columns[j].type;
 				}
 				
-				//set data for each serie
-				for (var i=0; i<arrData.length; i++){
-					var msg = arrData[i];
-					
-					//the first column is categorie, the next ones are series
-					for (var j=1; j<msg.length; j++){
-						if( msg[j] == undefined)
-							continue;
-						series[j-1].data.push([ msg[0], msg[j] ]);
-					}
-				}
 				
-				var isTimeLine = (type == undefined || type === "timeline" || type === "scatter");
+				var isTimeLine = (type == undefined || type === "timeseries" || type === "scatter");
 				
-				var chartOption = {
-						chart : {
-							renderTo    : elemID,
-							borderColor : '#ccc',
-							borderWidth : 1,
-							type        : type || 'spline',
-							zoomType    : 'xy',
-							spacingTop  :30,
-							spacingRight:30,                                  
-						},
-						navigation:{
-							buttonOptions: {
-								verticalAlign: 'top',
-								y: -25,
-								x: 20
-							}
-						},
-						credits: {
-							text: 'Montimage',
-							href: 'http://www.montimage.com',
-							position: {
-								align: 'right',
-								x: -40,
-								verticalAlign: 'top',
-								y: 20                              
-							}       
-						},
-						xAxis : {
-							maxZoom:isTimeLine? 15000 : 1, // 15seconds
-							gridLineWidth: 1,
-							type : isTimeLine? 'datetime' : '',
-						},
-						yAxis : {
-							title : {
-								text : ylabel,
-							},
-							min : 0,
-						},
-						title : {
-							text : "",
-						},
-						tooltip: {
-							shared: true,
-						},
-						plotOptions: {
-							scatter: {
-								marker: {
-									radius: 3,
-									states: {
-										hover: {
-											enabled: true,
-											lineColor: 'rgb(100,100,100)',
-										}
-									}
-								},
-								states: {
-									hover: {
-										marker: {
-											enabled: false,
-										}
-									}
-								},
-								tooltip: {
-									headerFormat: '<b>{series.name}</b><br>',
-									pointFormat: '{point.y}',
-									crosshairs: [false, true],
-								},
-								events : {
-									click : option.click,
-								},
-							},
-							areaspline: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								stacking: 'normal',
-								events : {
-									click : option.click,
-								},
-							},
-							area: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								stacking: 'normal',
-								events : {
-									click : option.click,
-								},
-							},
-							spline: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2 
-									}
-								},
-								events : {
-									click : option.click,
-								},
-							},
-							line: {
-								lineWidth: 2,
-								marker: {
-									enabled: false
-								},
-								shadow: false,
-								states: {
-									hover: {
-										lineWidth: 2
-									}
-								},
-								events : {
-									click : option.click,
-								},      
-							},
-						},
-						series : series 
-				};
-
-				var hightChart = new Highcharts.Chart(chartOption);
-				return hightChart;
+		        var chart_opt = {
+		        		bindto : "#" + elemID,
+		        		data : {
+		        			xs: xs,
+		        			columns: obj,
+		        			type: (type === "scatter")? type:  "",
+		        			types: types,
+		        			groups: [ groups ],
+		        		},
+		        		axis: {
+		        			x: {
+		        				type: "timeseries",
+		        				tick: {
+		        					format: function( v ){
+		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds();
+		        					},
+		        	                count : 10,
+		        	            }
+		        			},
+		        			y: {
+		        				label: ylabel,
+		        				min: 0,
+		        				padding: 0,
+		        				tick: {
+		        					format: function( v ){
+		        						if( v >= 1000000000 )
+		        							return (v/1000000000).toPrecision(2) + "G";
+		        						if( v >= 1000000 )
+		        							return (v/1000000).toPrecision(2) + "M";
+		        						if( v >= 1000 )
+		        							return Math.round(v/1000) + "k";
+		        						return v;
+		        					}
+		        				}
+		        			}
+		        		},
+		        		tooltip:{
+		        			format: {
+		        				title: function( v ){ 
+		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDay() + " " + 
+	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds(); 
+		        					}
+		        			}
+		        		},
+		        		grid: {
+		        			x: {
+		        			    show: true
+		        			},
+		        			y:{
+		        				show: true
+		        			}
+		        		},
+		        		point: {
+		        			//show: false,
+		        			r: (type === "scatter")? 2 : 0,
+		        			focus: {
+		        			    expand: {
+		        			    	r: 5
+		        			    }
+		        			}
+		        		},
+		        		line: {
+		      	    	  connectNull: true
+		      	    	}
+		        };
+		        console.log( chart_opt );
+		        var chart = c3.generate( chart_opt );
+		        return chart;
 			});
 
 			chart.getIcon = function(){
