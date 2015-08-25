@@ -3932,7 +3932,7 @@ MMTDrop.chartFactory = {
 		        		},
 		        		point: {
 		        			//show: false,
-		        			r: (type === "scatter")? 2 : 0,
+		        			r: (type === "scatter")? 3 : 2,
 		        			focus: {
 		        			    expand: {
 		        			    	r: 5
