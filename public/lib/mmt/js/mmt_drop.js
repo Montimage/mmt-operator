@@ -2435,6 +2435,7 @@ MMTDrop.reportFactory = {
 				
 				//update to chart each x seconds
 				if( time - lastAddMoment > 2000 ){
+					//chart.zoom.enable( false );
 					
 					var date = new Date( time );
 					var xs = chart.xs();
@@ -3941,7 +3942,11 @@ MMTDrop.chartFactory = {
 		        		},
 		        		line: {
 		      	    	  connectNull: true
-		      	    	}
+		      	    	},
+		      	    	zoom: {
+		      	          enabled: true,
+		      	          rescale: true
+		      	      }
 		        };
 		        console.log( chart_opt );
 		        var chart = c3.generate( chart_opt );
