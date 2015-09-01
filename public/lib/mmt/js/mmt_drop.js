@@ -11,6 +11,10 @@
 var MMTDrop = {
 		//The version of the MMTDrop library.
 		VERSION : "1.0.0",
+		/**
+		 * chartRender use either "highchart" or "c3js"
+		 */
+		chartRender: "highchart",
 };
 
 
@@ -48,7 +52,12 @@ MMTDrop.config = {
 			global : {
 				useUTC : false
 			}
-		}
+		},
+		
+		/**
+		 * Chart render: "highchart", "c3js"
+		 */
+		render: "highchart",
 };
 
 
@@ -2466,7 +2475,7 @@ MMTDrop.reportFactory = {
 					
 					chart.flow( {
 						columns: cols,
-						//length: 1,
+						length: 0,
 						done: function(){
 							//console.log( chart.xs()["nghia"] );
 						}} );
