@@ -1168,7 +1168,7 @@ MMTDrop.databaseFactory = {
 			param.format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
 			var db = new MMTDrop.Database(param, function (data){
-
+				//return data;
 				//how data is processed for stat
 				var COL = MMTDrop.constants.StatsColumn;
 				var colsToSum = [COL.TOTAL_FLOWS.id,    COL.ACTIVE_FLOWS.id,      COL.DATA_VOLUME.id,
@@ -1210,7 +1210,7 @@ MMTDrop.databaseFactory = {
 									//create a new child of msg
 									var child = MMTDrop.tools.cloneData( msg );
 
-									var path = key + '.9999999';	//
+									var path = key + '.-1';	//
 									//add new child to data
 									data[path] = child;
 									hasChildren[path] = false;
@@ -1240,8 +1240,8 @@ MMTDrop.databaseFactory = {
 
 									//if parent does not exist, create it and add it to data
 									if( parentMsg == undefined){
-										//parentMsg = MMTDrop.tools.cloneData( msg );
-										//data[ parentKey ] = parentMsg;
+										parentMsg = MMTDrop.tools.cloneData( msg );
+										data[ parentKey ] = parentMsg;
 									}
 									//if parent exists, cummulate its child
 									else
