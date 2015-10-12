@@ -287,6 +287,7 @@ var sqlite = function( dbname ){
 				cb (null, doc[i].time);
 				return;
 			}
+			cb( null, (new Date()).getTime());
 		});
 	};
 	/**
