@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    if( locals.title )
+        title MMT - #{title}
+    else
+        title MMT
+
+    script( type='text/javascript', src='/lib/jquery/dist/jquery.min.js')
+    
+    link( rel='stylesheet',         href='/lib/bootstrap/dist/css/bootstrap.min.css')
+    script( type='text/javascript', src ='/lib/bootstrap/dist/js/bootstrap.min.js')
+    
+    link( rel="stylesheet", href='/lib/font-awesome/css/font-awesome.min.css')
+
+    script( type='text/javascript', src ='/lib/jquery-validation/dist/jquery.validate.min.js')
+
+    block header
+   
+    link(rel='stylesheet', href='/css/style.css')
+    
+    block javascripts
+  body
+    block content

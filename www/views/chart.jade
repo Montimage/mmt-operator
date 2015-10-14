@@ -1,0 +1,56 @@
+extends layout
+
+block header
+    
+    link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.theme.default.css')
+    link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.css')
+    script( type='text/javascript', src ='/lib/jquery-treetable/jquery.treetable.js')
+    
+    link( rel='stylesheet',         href='/lib/datatables/media/css/dataTables.bootstrap.css')
+    script( type='text/javascript', src ='/lib/datatables/media/js/jquery.dataTables.js')
+    script( type='text/javascript', src ='/lib/datatables/media/js/dataTables.bootstrap.js')
+
+
+    //- script( type='text/javascript', src='/lib/highcharts/highcharts.js')
+    //- script( type='text/javascript', src='/lib/highcharts/highcharts-exporting.js')
+
+    //- Load c3.css
+    link( rel="stylesheet", href='/lib/c3/c3.min.css')
+    
+    
+    
+    //- Load d3.js and c3.js
+    script( type='text/javascript', src='/lib/d3/d3.min.js', charset='utf-8')
+    script( type='text/javascript', src='/lib/c3/c3.min.js')
+
+    //- mmt-drop
+    link( rel='stylesheet',         href='/lib/mmt-drop/dist/css/style.css')
+    script( type='text/javascript', src= '/lib/mmt-drop/dist/js/mmt_drop.js')
+
+    script( type='text/javascript', src='/socket.io/socket.io.js')
+    
+block content
+    #header.navbar.navbar-default.navbar-fixed-top( role="navigation")
+        .container-fluid
+            .navbar-header
+                button.navbar-toggle( type="button" data-toggle="collapse" data-target=".navbar-collapse")
+                    span.sr-only Toggle navigation
+                    each val in [1, 2, 3]
+                        span.icon-bar
+                a.navbar-brand( href="#") MMT Cloud
+            .navbar-collapse.collapse
+                ul.nav.navbar-nav.navbar-right
+                    each val, index in pages
+                        if( index === page_id )
+                            li.active
+                                a( href="#{index}" )= val.title
+                        else
+                            li
+                                a( href="#{index}" )= val.title
+    #content.container
+        block page
+    
+    footer.footer
+        .container
+            p.text-muted footer
+        

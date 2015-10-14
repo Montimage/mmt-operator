@@ -1,0 +1,23 @@
+{
+  "name": "MMT-Operator",
+  "version": "1.0",
+  "authors": [
+    "Huu Nghia NGUYEN <huunghia.nguyen@montimage.com>"
+  ],
+  "license": "@Montimage",
+  "homepage": "http://mmt-cloud.montimage.com",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4",
+    "mmt-drop": "../../mmt-drop",
+    "font-awesome": "~4.4.0",
+    "jquery-validation" : "1.14.0"
+  }
+}

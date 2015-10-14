@@ -31,26 +31,21 @@ Follow the procedure described on the following link to install the latest versi
 
     http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
-### Sqlite
-
-    sudo apt-get install sqlite3
-
 ## Usage
 
 ### MMT Operator
-
+    #Install the libraries
+    cd www
     npm install
-    // To use Mongodb as persistence
-    node app.js -d mongo
-    // To use sqlite as persistence
-    node app.js -d sqlite
-
+    bower install
+    
+    #To use Mongodb as persistence
+    node app.js
+    
 Once MMT-Operator is up and running, open your favorite browser and goto
 
     localhost:8088
 
 ## Contributors
 
-    Bachar Wehbi, bachar.wehbi@montimage.com
     Huu Nghia Nguyen
-    Luong Nguyen
