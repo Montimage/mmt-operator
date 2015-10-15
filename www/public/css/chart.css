@@ -1,0 +1,57 @@
+.footer{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+#toolbar{
+    border-bottom: 1px solid #ccc;
+    box-shadow: 3px 3px 5px #ccc;
+    background-color: white;
+    margin-bottom: 10px;
+}
+
+#toolbar-box{
+    
+}
+#addBtn{
+    border-radius: 0px !important;
+    border: 0px;
+    border-left: 1px solid #ccc;
+}
+.grid-stack-item-content{
+    border: 1px solid #ccc;
+    background-color: white;
+}
+.grid-stack-item-header{
+    border: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    position: relative;
+    background-color: white;
+    font-weight: bold;
+    margin-left: 10px;
+    padding: 10px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    float:left;
+    cursor: move;
+}
+
+.grid-stack-item-setting{
+    position: relative;
+    border: 1px solid #ccc;
+    padding: 3px;
+    float: right;
+    margin-right: 10px;
+    cursor: pointer;
+}
+.grid-stack-item-setting .glyphicon{
+    -webkit-transition: -webkit-transform .8s ease-in-out;
+    transition: transform .8s ease-in-out
+}
+
+.grid-stack-item-setting:hover .glyphicon{
+   -webkit-transform: rotate(180deg);
+   transform: rotate(180deg);
+}

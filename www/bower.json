@@ -18,6 +18,8 @@
     "jquery": "~2.1.4",
     "mmt-drop": "../../mmt-drop",
     "font-awesome": "~4.4.0",
-    "jquery-validation" : "1.14.0"
+    "jquery-validation": "1.14.0",
+    "gridstack": "0.2.3",
+    "requirejs": "~2.1.20"
   }
 }

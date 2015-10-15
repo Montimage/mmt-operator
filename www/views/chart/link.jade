@@ -1,3 +1,20 @@
 extends ../chart
+
 block page
-    p Haha
+    .grid-stack
+    script.
+        var arr = [
+            {id: "traffic", title:"Traffic", x: 0, y: 0, width: 12, height: 2},
+            {id: "network", title:"Network", x: 0, y: 2, width: 6, height: 1},
+            {id: "app", title:"Application", x: 7, y: 3, width: 4, height: 1}
+        ];
+        Grid.load_grid( arr );
+        
+        MMTDrop.setOptions({
+            serverURL : "https://192.168.0.37",
+        });
+        var report = MMTDrop.reportFactory.createCategoryReport();
+        //report.renderTo("traffic");
+        
+        var filter = MMTDrop.filterFactory.createMetricFilter();
+        filter.renderTo("toolbar-box");

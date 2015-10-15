@@ -1,7 +1,6 @@
 extends layout
 
 block header
-    
     link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.theme.default.css')
     link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.css')
     script( type='text/javascript', src ='/lib/jquery-treetable/jquery.treetable.js')
@@ -17,20 +16,28 @@ block header
     //- Load c3.css
     link( rel="stylesheet", href='/lib/c3/c3.min.css')
     
-    
-    
     //- Load d3.js and c3.js
     script( type='text/javascript', src='/lib/d3/d3.min.js', charset='utf-8')
     script( type='text/javascript', src='/lib/c3/c3.min.js')
 
+    script( type='text/javascript', src='/lib/lodash/lodash.min.js')
+    script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.min.js')
+    
+    link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.min.css')
+    script( type='text/javascript', src='/lib/gridstack/dist/gridstack.min.js')
+
     //- mmt-drop
     link( rel='stylesheet',         href='/lib/mmt-drop/dist/css/style.css')
     script( type='text/javascript', src= '/lib/mmt-drop/dist/js/mmt_drop.js')
-
+    
+    
+    link( rel='stylesheet',         href='/css/chart.css')
+    script( type='text/javascript', src= '/js/grid.js')
+    
     script( type='text/javascript', src='/socket.io/socket.io.js')
     
 block content
-    #header.navbar.navbar-default.navbar-fixed-top( role="navigation")
+    #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
         .container-fluid
             .navbar-header
                 button.navbar-toggle( type="button" data-toggle="collapse" data-target=".navbar-collapse")
@@ -43,11 +50,19 @@ block content
                     each val, index in pages
                         if( index === page_id )
                             li.active
-                                a( href="#{index}" )= val.title
+                                a( href="/chart/#{index}" )= val.title
                         else
                             li
-                                a( href="#{index}" )= val.title
-    #content.container
+                                a( href="/chart/#{index}" )= val.title
+    #toolbar.navbar-default
+        .navbar-collapse.collapse
+            .row
+                .col-md-8: #toolbar-box
+                .col-md-4: ul.nav.navbar-nav.navbar-right
+                    li
+                        button#addBtn.btn.btn-default.btn-block
+                            span.glyphicon.glyphicon-plus
+    #content
         block page
     
     footer.footer
