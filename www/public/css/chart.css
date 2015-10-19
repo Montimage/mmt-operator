@@ -1,7 +1,8 @@
 .footer{
-    position: absolute;
-    bottom: 0;
+    position: relative;
+    background-color: white;
     width: 100%;
+    margin-top: 30px;
     padding-top: 10px;
     border-top: 1px solid #ccc;
 }
@@ -9,28 +10,27 @@
     border-bottom: 1px solid #ccc;
     box-shadow: 3px 3px 5px #ccc;
     background-color: white;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    display: block;
+    width: 100%;
+    position: relative;
+    height: 33px;
 }
 
 #toolbar-box{
-    
+    padding-right: 5px;
 }
-#addBtn{
+#toolbar button{
     border-radius: 0px !important;
     border: 0px;
-    border-left: 1px solid #ccc;
-}
-.grid-stack-item-content{
-    border: 1px solid #ccc;
-    background-color: white;
+    border-right: 1px solid #ccc;
 }
 .grid-stack-item-header{
-    border: 1px solid #ccc;
-    border-right: 1px solid #ccc;
+    border-width: 1px;
+    border-style: solid;
     position: relative;
-    background-color: white;
     font-weight: bold;
-    margin-left: 10px;
+    margin-left: 0px;
     padding: 10px;
     padding-top: 3px;
     padding-bottom: 3px;
@@ -38,14 +38,43 @@
     cursor: move;
 }
 
+
+.grid-stack-item-content{
+    border-width: 1px;
+    border-style: solid;
+    border-color: #ccc;
+    background-color: white;
+    position: relative;
+    overflow: auto;
+    padding-top: 10px;
+}
+
+.report-header{
+    margin-right: 50px;
+}
+
+.grid-stack-item-content .loading{
+    text-align: center;
+    position: absolute;
+    width: 100%;
+    top: 30px;
+    z-index: 10;
+}
+.grid-stack-item-content .input-group-addon{
+    background-color: transparent;
+    border: none;
+}
 .grid-stack-item-setting{
     position: relative;
-    border: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     padding: 3px;
-    float: right;
-    margin-right: 10px;
+    float: left;
+    margin-left: 11px;
+    margin-top: 1px;
     cursor: pointer;
+    background-color: white;
 }
+
 .grid-stack-item-setting .glyphicon{
     -webkit-transition: -webkit-transform .8s ease-in-out;
     transition: transform .8s ease-in-out
@@ -54,4 +83,13 @@
 .grid-stack-item-setting:hover .glyphicon{
    -webkit-transform: rotate(180deg);
    transform: rotate(180deg);
+}
+
+.input-group-addon~.form-control{
+    margin-left: -4px;
+    height: 28px;
+    line-height: 25px;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
 }

@@ -26,15 +26,18 @@ block header
     link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.min.css')
     script( type='text/javascript', src='/lib/gridstack/dist/gridstack.min.js')
 
-    //- mmt-drop
-    link( rel='stylesheet',         href='/lib/mmt-drop/dist/css/style.css')
-    script( type='text/javascript', src= '/lib/mmt-drop/dist/js/mmt_drop.js')
+    // highcharts
+    script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
     
     
     link( rel='stylesheet',         href='/css/chart.css')
     script( type='text/javascript', src= '/js/grid.js')
+    script( type='text/javascript', src= '/js/event.js')
+    script( type='text/javascript', src= '/js/report.js')
     
-    script( type='text/javascript', src='/socket.io/socket.io.js')
+    script( type='text/javascript', src= '/js/mmt_drop.js')
+    
+    script( type='text/javascript', src='http://192.168.0.40:8088/socket.io/socket.io.js')
     
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
@@ -44,7 +47,7 @@ block content
                     span.sr-only Toggle navigation
                     each val in [1, 2, 3]
                         span.icon-bar
-                a.navbar-brand( href="#") MMT Cloud
+                a.navbar-brand( href="/") MMT-NM
             .navbar-collapse.collapse
                 ul.nav.navbar-nav.navbar-right
                     each val, index in pages
@@ -54,14 +57,11 @@ block content
                         else
                             li
                                 a( href="/chart/#{index}" )= val.title
-    #toolbar.navbar-default
-        .navbar-collapse.collapse
-            .row
-                .col-md-8: #toolbar-box
-                .col-md-4: ul.nav.navbar-nav.navbar-right
-                    li
-                        button#addBtn.btn.btn-default.btn-block
-                            span.glyphicon.glyphicon-plus
+    #toolbar
+        ul.nav.navbar-nav
+            li: button#addBtn.btn.btn-default.btn-block
+                span.glyphicon.glyphicon-plus
+        #toolbar-box
     #content
         block page
     
