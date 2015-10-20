@@ -1688,7 +1688,9 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 	var _option = {};
 	var _this = this;
-
+    this.getId = function(){
+        return param.id;
+    }
 	/**
 	 * Render the filter into an HTML element
 	 * @param {string} elemID Id of the HTML element
@@ -1740,7 +1742,17 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		if( opt == undefined ){
 			return _currentSelectedOption;
 		}
-		
+		else{
+            //check if the defaultOption is in the current option list
+		    for (var i in _option){
+			    if (opt.id == _option[i].id){
+                    MMTDrop.tools.localStorage.set(param.id, _option[i]);
+    				break;
+    			}
+	    	}
+            
+            
+        }
 		return this;
 	};
 	
@@ -1775,7 +1787,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			console.log(" There are no options in the filter " + param.id);
 			return;
 		}
-
+        
 		//create list of options
 		for (var i in _option){
 			var opt = $('<option>', {
@@ -1931,14 +1943,19 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createPeriodFilter : function(){
+			var filterID = "period_filter" + MMTDrop.tools.getUniqueNumber();
 			//create a list of options from predefined MMTDrop.period
 			var options = [];
 			for (var k in MMTDrop.constants.period){
 				var key = MMTDrop.constants.period[k];
 				options.push({id:  key, label: "Last " + MMTDrop.tools.capitalizeFirstLetter(key)});
 			}
+			
+			//var otherOpt = { id: "00", label: "Other"};
+			
+			//options.push( otherOpt );
 			var filter =  new MMTDrop.Filter({
-				id      : "period_filter" + MMTDrop.tools.getUniqueNumber(),
+				id      : filterID,
 				label   : "Period",
 				options : options,
 			}, 
@@ -1951,6 +1968,38 @@ MMTDrop.filterFactory = {
 
 				console.log("Got " + db.data().length + " from DB");
 			});
+			
+            filter.otherOpt = {};
+            
+			filter._renderTo = filter.renderTo;
+			filter.renderTo = function( elemID ){
+				filter._renderTo( elemID );
+				
+				
+				var $cal = $('<div id="'+ filterID +'-datepicker" class="datepicker-icon"> <span class="glyphicon glyphicon-calendar"/></div>');
+				$cal.appendTo( $("#" + filterID + "_container .input-group") );
+				
+				$cal.on("click", function(){
+                    if( filter.datepicker == undefined )
+					    filter.datepicker = new DatePicker( "#" + filterID + "-datepicker", function( d1, d2 ){
+						    if( d1 == undefined )
+                                return;
+                            if( filter.otherOpt.id == undefined )
+                                filter.option().push( filter.otherOpt );
+                            
+                            filter.otherOpt.id    = JSON.stringify({begin: d1, end: d2});
+                            filter.otherOpt.label = d1 + " - " + d2;
+                                                        
+                            filter.selectedOption( filter.otherOpt );
+                            filter.redraw();
+                            //fire the filter on this option
+                            filter.filter();
+    					} );
+                    filter.datepicker.show();
+				});
+				
+				
+			};
 			return filter;
 		},
 
@@ -2156,6 +2205,25 @@ MMTDrop.filterFactory = {
 
 			return filter;
 		},
+    
+        createDirectionFilter: function(){
+            var options = [{id: 2,  label: "All"},
+                           {id: 1,  label: "Incoming"},
+                           {id: -1, label: "Outgoing"},
+                           {id: 0,  label: "Other"}];
+            var filter =  new MMTDrop.Filter({
+				id      : "direction_filter" + MMTDrop.tools.getUniqueNumber(),
+				label   : "Direction",
+				options : options,
+			}, 
+			function (val, db){
+				//how it filters database when the current selected option is @{val}	
+				//It reloads data from MMT-Operator
+				console.log("Got " + db.data().length + " from DB");
+			});
+
+			return filter;
+        }
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
 //end MMTDrop.Filter

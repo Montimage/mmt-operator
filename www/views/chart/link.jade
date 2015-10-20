@@ -2,24 +2,4 @@ extends ../chart
 
 block page
     .grid-stack
-    script.
-        var arr = [
-            {id: "traffic", title:"Traffic", x: 0, y: 0, width: 12, height: 4},
-            {id: "network", title:"Network", x: 0, y: 2, width: 6, height: 3},
-            {id: "app", title:"Application", x: 2, y: 0, width: 10, height: 4, type:"info"},
-            //{id: "ap", title:"Loading", x: 2, y: 0, width: 10, height: 4, type:"warning"}
-        ];
-        Grid.together( arr );
-        
-        MMTDrop.setOptions({
-            serverURL : "http://192.168.0.40:8088",
-        });
-        
-        var report = MMTDrop.reportFactory.createHierarchyReport();
-        report.renderTo("traffic-content");
-        
-        var report2 = MMTDrop.reportFactory.createCategoryReport();
-        report2.renderTo("app-content");
-        
-        var report3 = MMTDrop.reportFactory.createRealtimeReport();
-        report3.renderTo("network-content");
+    script( type='text/javascript', src= '/js/link.js')

@@ -23,7 +23,6 @@ Grid.load_grid = function ( serialized_data, grid_stack ) {
 	var items = serialized_data; //GridStackUI.Utils.sort( serialized_data, -1 );
 	_.each(items, function (node) {
 		var header = "";
-		var setting = '<span class="grid-stack-item-setting" id="'+ node.id +'-content-setting"><span class="glyphicon glyphicon-cog"/></span>';
 		var type = node.type;
 		if( type == undefined )
 			type = "success";
@@ -32,11 +31,8 @@ Grid.load_grid = function ( serialized_data, grid_stack ) {
 		
 		if( node.title )
 			header = '<span class="grid-stack-item-header '+ bg +'" id="'+ node.id+'-content-header">' + node.title + '</span>';
-		if( node.setting_button === false)
-			setting  = '';
 
-		grid.add_widget($('<div id="'+ node.id +'" data-title="'+ node.title +'" data-type="'+ type +'" data-setting="'+ (setting != '')  +'"><div id="'+ node.id +'-content" class="grid-stack-item-content"><div class="center-block loading"><i class="fa fa-refresh fa-spin fa-4x"></i></div></div>'
-				+ setting
+		grid.add_widget($('<div id="'+ node.id +'" data-title="'+ node.title +'" data-type="'+ type +'" ><div id="'+ node.id +'-content" class="grid-stack-item-content"><div class="center-block loading"><i class="fa fa-refresh fa-spin fa-4x"></i></div></div>'
 				+ header
 				+ '</div>'),
 				node.x, node.y, node.width, node.height);
@@ -45,6 +41,18 @@ Grid.load_grid = function ( serialized_data, grid_stack ) {
 		$("#" + node.id + "-content").css("border-color", bgcolor);
 		$("#" + node.id + "-content-setting").css("border-color", bgcolor);
 	}, grid);
+	
+	//drag and drop widget to deleteBtn
+	$(function() {
+	    $( "#deleteBtn" ).droppable({
+	    	//accept:      ".grid-stack-item-header",
+	    	activeClass: "btn-warning",
+	    	hoverClass:  "btn-danger",
+	    	drop: function( event, ui ) {
+	    	  console.log("drop");
+	      }
+	    });
+	  });
 };
 
 Grid.get_grid = function ( grid_stack ) {
@@ -63,7 +71,6 @@ Grid.get_grid = function ( grid_stack ) {
 			id: id,
 			title: el.data('title'),
 			type: el.data('type'),
-			setting_button : el.data('setting')
 		};
 	});
 	return serialized_data;
@@ -78,7 +85,7 @@ Grid.together = function( serialized_data, grid_stack ) {
 	var key = "grid-data";
 
 	var add_reset_button = function(){
-		$("#toolbar ul.nav").append( $('<li> <button title="Reset gird" id="resetGridBtn" type="button" class="btn btn-default btn-block"> <span class="glyphicon glyphicon-refresh"/>  </button> </li>') );
+		$("#toolbar ul.nav").append( $('<li> <button title="Reset the gird" id="resetGridBtn" type="button" class="btn btn-default btn-block"> <span class="glyphicon glyphicon-refresh"/>  </button> </li>') );
 		
 		$("#resetGridBtn").on('click', function(){
 			MMTDrop.tools.localStorage.remove( key );

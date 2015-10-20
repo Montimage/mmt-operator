@@ -21,6 +21,8 @@ block header
     script( type='text/javascript', src='/lib/c3/c3.min.js')
 
     script( type='text/javascript', src='/lib/lodash/lodash.min.js')
+    
+    link( rel="stylesheet",        href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
     script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.min.js')
     
     link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.min.css')
@@ -28,6 +30,9 @@ block header
 
     // highcharts
     script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
+    
+    //override
+    script( type='text/javascript', src='/js/over/jquery-datepicker.js')
     
     
     link( rel='stylesheet',         href='/css/chart.css')
@@ -59,8 +64,10 @@ block content
                                 a( href="/chart/#{index}" )= val.title
     #toolbar
         ul.nav.navbar-nav
-            li: button#addBtn.btn.btn-default.btn-block
+            li: button#addBtn.btn.btn-default.btn-block( title="Add a report")
                 span.glyphicon.glyphicon-plus
+            li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
+                span.glyphicon.glyphicon-trash
         #toolbar-box
     #content
         block page

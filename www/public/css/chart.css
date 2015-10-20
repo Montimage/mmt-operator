@@ -10,15 +10,18 @@
     border-bottom: 1px solid #ccc;
     box-shadow: 3px 3px 5px #ccc;
     background-color: white;
-    margin-bottom: 20px;
     display: block;
     width: 100%;
     position: relative;
     height: 33px;
+    position: fixed;
+    top: 51px;
+    z-index: 1000;
 }
 
 #toolbar-box{
-    padding-right: 5px;
+    padding-right: 2px;
+    padding-top: 2px;
 }
 #toolbar button{
     border-radius: 0px !important;
@@ -30,7 +33,7 @@
     border-style: solid;
     position: relative;
     font-weight: bold;
-    margin-left: 0px;
+    margin-left: 10px;
     padding: 10px;
     padding-top: 3px;
     padding-bottom: 3px;
@@ -60,36 +63,55 @@
     top: 30px;
     z-index: 10;
 }
-.grid-stack-item-content .input-group-addon{
+.input-group-addon{
     background-color: transparent;
     border: none;
 }
-.grid-stack-item-setting{
-    position: relative;
-    border-bottom: 1px solid #ccc;
-    padding: 3px;
-    float: left;
-    margin-left: 11px;
-    margin-top: 1px;
-    cursor: pointer;
-    background-color: white;
-}
-
-.grid-stack-item-setting .glyphicon{
-    -webkit-transition: -webkit-transform .8s ease-in-out;
-    transition: transform .8s ease-in-out
-}
-
-.grid-stack-item-setting:hover .glyphicon{
-   -webkit-transform: rotate(180deg);
-   transform: rotate(180deg);
-}
-
-.input-group-addon~.form-control{
-    margin-left: -4px;
+.form-control{
     height: 28px;
     line-height: 25px;
+}
+.input-group-addon~.form-control{
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
+}
+
+.date-range-selected > .ui-state-active,
+.date-range-selected > .ui-state-default {
+   background: none;
+   background-color: lightsteelblue;
+}
+
+.date-picker{
+    background-color: white;
+    width: 475px;
+    cursor: move;
+    padding-top: 7px;
+}
+
+.date-picker .close-btn{
+    position: absolute;
+    top: 0px;
+    right: -6px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    cursor: pointer;
+    padding: 3px;
+    font-size: 10px;
+    font-weight: normal;
+}
+
+.datepicker-icon{
+    width: 28px;
+    height: 28px;
+    float: right;
+    font-size: 20px;
+    padding: 4px;
+    cursor: pointer;
+}
+.ui-datepicker-buttonpane{
+    hight: 50px;
+    background-color: white;
 }
