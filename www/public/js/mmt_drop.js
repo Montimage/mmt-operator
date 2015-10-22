@@ -1976,7 +1976,7 @@ MMTDrop.filterFactory = {
 				filter._renderTo( elemID );
 				
 				
-				var $cal = $('<div id="'+ filterID +'-datepicker" class="datepicker-icon"> <span class="glyphicon glyphicon-calendar"/></div>');
+				var $cal = $('<div id="'+ filterID +'-datepicker" class="datepicker-icon input-group-addon"> <span class="glyphicon glyphicon-calendar"/></div>');
 				$cal.appendTo( $("#" + filterID + "_container .input-group") );
 				
 				$cal.on("click", function(){
@@ -1988,8 +1988,11 @@ MMTDrop.filterFactory = {
                                 filter.option().push( filter.otherOpt );
                             
                             filter.otherOpt.id    = JSON.stringify({begin: d1, end: d2});
+                            
+                            d1 = (new Date(d1)).toLocaleDateString();
+                            d2 = (new Date(d2)).toLocaleDateString();
                             filter.otherOpt.label = d1 + " - " + d2;
-                                                        
+                            
                             filter.selectedOption( filter.otherOpt );
                             filter.redraw();
                             //fire the filter on this option
@@ -2207,10 +2210,9 @@ MMTDrop.filterFactory = {
 		},
     
         createDirectionFilter: function(){
-            var options = [{id: 2,  label: "All"},
-                           {id: 1,  label: "Incoming"},
-                           {id: -1, label: "Outgoing"},
-                           {id: 0,  label: "Other"}];
+            var options = [{id: 0,  label: "All"},
+                           {id: 1,  label: "Inbound"},
+                           {id: -1, label: "Outbound"}];
             var filter =  new MMTDrop.Filter({
 				id      : "direction_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Direction",
@@ -2306,11 +2308,18 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	 * @param {string} elemID - id of the HTML element
 	 */
 	this.renderTo = function(elemID){
+        var $elemID = $('#' + elemID);
+        
+        if( $elemID.length == 0 ){
+            console.warn( " I cannot find a DOM element ["+ elemID +"] to render report.");
+            return;
+        }
+        
 		_this.activeCharts = [];
-		$('#' + elemID).html("");
+		$elemID.html("");
 		
 		var rootDiv = $('<div>', {'class' : 'container-fluid'});
-		rootDiv.appendTo( $('#' + elemID) );
+		rootDiv.appendTo( $elemID );
 		
 		//draw header
 		if(title) {
@@ -3541,7 +3550,9 @@ MMTDrop.Chart = function(option, renderFn){
 			var data = _prepareData( _option, _data, _database );
 			
 			if( _option.columns.length == 0){
-				throw new Error("   no columns to render" );
+				//throw new Error("   no columns to render" );
+                console.log( " no column to render ");
+                return;
 			}
 			
 			if( data.length == 0){
@@ -3549,7 +3560,10 @@ MMTDrop.Chart = function(option, renderFn){
 			}
 			
 			this.chart = renderFn(_elemID, _option, data);
-
+            
+            if( MMTDrop.tools.isFunction( _option.afterRender )  ){
+                _option.afterRender( _this );
+            }
 		}else
 			throw new Error ("No render function is defined");
 	};
@@ -4005,7 +4019,7 @@ MMTDrop.chartFactory = {
 		        		tooltip:{
 		        			format: {
 		        				title: function( v ){ 
-		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDay() + " " + 
+		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " + 
 	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds(); 
 		        					}
 		        			}
@@ -4200,13 +4214,7 @@ MMTDrop.chartFactory = {
 						});
 
 					//first column
-					var row_name = $('<td style="cursor:pointer">');
-
-					var row_name_link = $('<a>', {
-						'text' : name
-					});
-					row_name_link.appendTo(row_name);
-
+					var row_name = $('<td>', {text: name});
 					row_name.appendTo(row_tr);
 
 					for (var j = 1; j < msg.length; j++) {
@@ -4239,9 +4247,10 @@ MMTDrop.chartFactory = {
 
 				//convert table to tree
 				table.treetable({
+                    indent            : 10,
 					expandable        : true, 
 					initialState      : "expanded",	//expand all nodes
-					clickableNodeNames: true
+					//clickableNodeNames: true
 				});
 
 				//when user click on a row
@@ -4362,13 +4371,14 @@ MMTDrop.chartFactory = {
 				var arrData = data;
 
 				//sort by path, then by name
+                /*
 				arrData.sort(function (a, b){
-					if (a[0].parent == b[0].parent )
+					if (a[0]. == b[0].parent )
 						return a[0].name > b[0].name ? 1: -1;
 
 						return a[0].path > b[0].path ? 1 : -1;
 				});
-
+                 */
 				//add each element to a row
 				for (var i in arrData) {
 					var msg = arrData[i];

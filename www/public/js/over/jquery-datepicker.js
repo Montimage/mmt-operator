@@ -54,8 +54,8 @@ function DatePicker(selector, callback) {
 			.appendTo($container.find('.ui-datepicker-buttonpane'))
 			.on('click', function () { 
 				$container.hide();
-				d1 = $.datepicker.formatDate( 'dd/mm/yy', new Date(Math.min(prv,cur)), {} );
-				d2 = $.datepicker.formatDate( 'dd/mm/yy', new Date(Math.max(prv,cur)), {} );
+				d1 = (new Date(Math.min(prv,cur))).getTime();
+				d2 = (new Date(Math.max(prv,cur))).getTime();
 				callback( d1, d2 );
 
 			});

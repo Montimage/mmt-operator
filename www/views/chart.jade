@@ -17,16 +17,16 @@ block header
     link( rel="stylesheet", href='/lib/c3/c3.min.css')
     
     //- Load d3.js and c3.js
-    script( type='text/javascript', src='/lib/d3/d3.min.js', charset='utf-8')
-    script( type='text/javascript', src='/lib/c3/c3.min.js')
+    script( type='text/javascript', src='/lib/d3/d3.js', charset='utf-8')
+    script( type='text/javascript', src='/lib/c3/c3.js')
 
     script( type='text/javascript', src='/lib/lodash/lodash.min.js')
     
     link( rel="stylesheet",        href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
-    script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.min.js')
+    script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
     
     link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.min.css')
-    script( type='text/javascript', src='/lib/gridstack/dist/gridstack.min.js')
+    script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
 
     // highcharts
     script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
@@ -42,7 +42,7 @@ block header
     
     script( type='text/javascript', src= '/js/mmt_drop.js')
     
-    script( type='text/javascript', src='http://192.168.0.40:8088/socket.io/socket.io.js')
+    script( type='text/javascript', src='/socket.io/socket.io.js')
     
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
@@ -64,14 +64,45 @@ block content
                                 a( href="/chart/#{index}" )= val.title
     #toolbar
         ul.nav.navbar-nav
-            li: button#addBtn.btn.btn-default.btn-block( title="Add a report")
+            li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
                 span.glyphicon.glyphicon-plus
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
         #toolbar-box
     #content
         block page
-    
+        
+    #modal.modal.fade
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    button.close(type="button", data-dismiss="modal", aria-label="Close" )
+                        span( aria-hidden="true") &times;
+                    h4.modal-title Select a report 
+                .modal-body.container-fluid
+                    .row
+                        .col-md-10.col-md-offset-1
+                            form.form-horizontal
+                                .form-group
+                                    label.control-label(for="reportList") Report 
+                                    select#reportList.form-control( name="reportList")
+                                .form-group
+                                    label.control-label(for="reportTitle") Title
+                                    input#reportTitle.form-control( name="reportTitle", placeholder="")
+                                .form-group
+                                    label.control-label(style="padding-right: 50px") Color
+                                    input#reportColor( type="text", style="display: none" )
+                                    .btn-group( role="group", aria-label="Border color" )
+                                        button.btn.btn-default( type="button", data-type="default") &nbsp;
+                                        button.btn.btn-primary( type="button", data-type="primary") &nbsp;
+                                        button.btn.btn-success( type="button", data-type="success") &nbsp;
+                                        button.btn.btn-info(    type="button", data-type="info")    &nbsp;
+                                        button.btn.btn-warning( type="button", data-type="warning") &nbsp;
+                                        button.btn.btn-danger(  type="button", data-type="danger")  &nbsp;
+                                    
+                            
+                .modal-footer
+                    button#doneBtn.btn.btn-primary( type="button") Done
     footer.footer
         .container
             p.text-muted footer

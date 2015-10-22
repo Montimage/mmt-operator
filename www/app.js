@@ -7,12 +7,38 @@ var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
 var chartRoute = require('./routes/chart');
+var api = require('./routes/api');
+
+var mmtAdaptor = require('./libs/dataAdaptor');
+var dbc = require('./libs/mongo_connector');
+var dbconnector = new dbc( {connectString: 'mongodb://192.168.0.37:27017/test'});
 
 var app = express();
 
 var io = require('socket.io')();
 
 app.io = io;
+
+
+var redis = require("redis");
+var report_client = redis.createClient(6379, '192.168.0.37', {});
+report_client.subscribe("protocol.stat");
+report_client.subscribe("radius.report");
+report_client.subscribe("microflows.report");
+report_client.subscribe("flow.report");
+report_client.subscribe("web.flow.report");
+report_client.subscribe("ssl.flow.report");
+report_client.subscribe("rtp.flow.report");
+
+report_client.on('message', function(channel, message) {
+    console.log( message );
+	message = mmtAdaptor.formatReportItem(JSON.parse(message));
+	//this is for test purpose only: to create two different probeID
+	//message.probe += Math.round(Math.random()); //==> either 0 or 1
+    //console.log( message );
+	dbconnector.addProtocolStats(message, function(err, msg) {
+	});
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -28,6 +54,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/chart/', chartRoute);
+
+api.dbconnector = dbconnector;
+app.use('/traffic', api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

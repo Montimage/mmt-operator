@@ -5,10 +5,15 @@ var MongoClient = require('mongodb').MongoClient, format = require('util').forma
 
 var MongoConnector = function ( opts ) {
 	this.mdb = null;
-
+    
+    if ( opts == undefined )
+        opts = {};
+    
+    opts.connectString = opts.connectString || 'mongodb://127.0.0.1:27017/MMT';
+    
 	var self = this;
 
-	MongoClient.connect('mongodb://127.0.0.1:27017/test', function(err, db) {
+	MongoClient.connect(opts.connectString, function(err, db) {
 		if (err) throw err;
 		self.mdb = db;
 		console.log("Connected to Database");
@@ -26,13 +31,13 @@ var MongoConnector = function ( opts ) {
 		// For Protocol stats, update minutes and hours stats
 		if( message.format === 99 ) { //TODO: replace with definition
 			self.insertUpdateDB("traffic_min", {format: message.format, probe: message.probe, source: message.source, path: message.path, time: moment(message.time).startOf('minute').valueOf()},
-					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount}});
+					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount, dl_data: message.dl_data, ul_data: message.ul_data, dl_packets: message.dl_packets, ul_packets: message.ul_packets}});
 
 			self.insertUpdateDB("traffic_hour", {format: message.format, probe: message.probe, source: message.source, path: message.path, time: moment(message.time).startOf('hour').valueOf()},
-					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount}});
+					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount, dl_data: message.dl_data, ul_data: message.ul_data, dl_packets: message.dl_packets, ul_packets: message.ul_packets}});
 
 			self.insertUpdateDB("traffic_day", {format: message.format, probe: message.probe, source: message.source, path: message.path, time: moment(message.time).startOf('day').valueOf()},
-					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount}});
+					{'$set': {flowcount: message.flowcount, active_flowcount: message.active_flowcount, app: message.app}, '$inc': { bytecount: message.bytecount, payloadcount: message.payloadcount, packetcount: message.packetcount, dl_data: message.dl_data, ul_data: message.ul_data, dl_packets: message.dl_packets, ul_packets: message.ul_packets}});
 		} else if ( message.format === 0 ){
 			self.insertUpdateDB("traffic_min", {format: message.format, probe: message.probe, source: message.source, time: moment(message.time).startOf('minute').valueOf()},
 					{'$inc': { dl_data: message.dl_data, ul_data: message.ul_data, dl_packets: message.dl_packets, ul_packets: message.ul_packets, count: 1 }});
@@ -71,7 +76,10 @@ var MongoConnector = function ( opts ) {
 	};
 
 	self.getProtocolStats = function ( options, callback ){
-		self.mdb.collection(options.collection).find({format: options.format, time : {'$gte' : options.time}}).sort( { time: 1 }).toArray( function( err, doc ) {
+		self.mdb.collection(options.collection).find({format: options.format, 
+                                                      "time" : {'$gte' : options.time.begin,
+                                                                '$lte' : options.time.end}
+                                                     }).sort( { time: 1 }).toArray( function( err, doc ) {
 			if (err) {
 				callback ( 'InternalError' );
 				return;
