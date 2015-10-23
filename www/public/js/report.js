@@ -414,7 +414,13 @@ var ReportFactory = {
         var newData = {};
         var lastAddMoment = 0;
 
+        fDir.onFilter( function(){
+            newData = {};
+        });
+        
         var appendMsg = function (msg) {
+            if( msg[ COL.APP_ID.id ] != 99)
+                return;
             //console.log( msg );
             var chart = cLine.chart;
             if (chart == undefined)
@@ -427,10 +433,15 @@ var ReportFactory = {
             var isInProbeMode = probeId == 0;
 
             var col = fMetric.selectedOption();
-            col.label = "All";
             var dir = fDir.selectedOption().id;
-            if (dir != 0)
-                col = _this.getCol(col, dir == 1);
+            
+            var cols = [];
+            if (dir == 0){
+                cols = [{id: col.id, label: "All"}];
+                cols.push( _this.getCol(col, true) );
+                cols.push( _this.getCol(col, false) );
+            }else
+                cols = [ _this.getCol(col, dir == 1) ];
 
             //receive msg of a probe different with the one beeing showing
             if (!isInProbeMode &&
@@ -439,53 +450,51 @@ var ReportFactory = {
                 return;
             }
 
-            var serieName = col.label;
 
-            if (isInProbeMode)
-                serieName = "Probe-" + msg[COL.PROBE_ID.id];
+            var time = msg[COL.TIMESTAMP.id] ;
+            for( var c in cols ){
+                c = cols[c];
+                var serieName = c.label;
 
+                if (isInProbeMode)
+                    serieName = "Probe-" + msg[COL.PROBE_ID.id];
+                var val  = msg[c.id];
+                
+                //For test only
+                //if( val == 0)
+                //    val = Math.round(Math.random() * 1000);
+                
+                if (newData[serieName] === undefined)
+                    newData[serieName] = 0;
 
-            var time = msg[COL.TIMESTAMP.id] + 0;
-            var val = msg[col.id];
-
-            if (newData[serieName] === undefined)
-                newData[serieName] = 0;
-
-            newData[serieName] += val;
-
+                newData[serieName] += val;
+            }
+            
             //update to chart each x seconds
-            if (time - lastAddMoment > 2000) {
+            if (time - lastAddMoment > 2*1000 && newData != {}) {
                 //chart.zoom.enable( false );
 
                 var date = new Date(time);
-                var xs = chart.xs();
+                var xs   = chart.xs();
 
-                var cols = [];
-
-                var keys = [];
+                var columns = [];
                 //convert newData to columns format of C3js
                 for (var s in newData) {
-                    keys.push(s); //list of apps will be appended data
-                    cols.push([s, newData[s]]);
-                    cols.push(["x-" + s, date]);
+                    columns.push([s, newData[s]]);    //y value
+                    columns.push(["x-" + s, date]);   //x value = time
                 }
 
                 //load new pair nameY: nameX
 
                 chart.flow({
-                    columns: cols,
-                    length: 0,
-                    done: function () {
-                        //console.log( chart.xs()["nghia"] );
-                    }
+                    columns: columns,
+                    length : 0,
                 });
 
-                //highlight the update
-                chart.focus(keys);
 
-
-                var minX = date.getTime() - 1000 * 60 * 10; //10 min
-
+                //remove the points outside the graph
+                
+                var minX = date.getTime() - 1000 * 60 * 3; //3 min
                 var data = chart.data.shown();
 
                 //set null to all points outside the chart
@@ -536,8 +545,9 @@ var ReportFactory = {
                     //dir = 1: incoming, -1 outgoing, 0: All
                     if (dir == 0) {
                         cols.push({
-                            id: col.id,
+                            id   : col.id,
                             label: "All"
+                            //type : "line"
                         });
                         cols.push(_this.getCol(col, true));
                         cols.push(_this.getCol(col, false));
@@ -553,7 +563,7 @@ var ReportFactory = {
                         var msg = data[i];
                         var proto = msg[COL.APP_ID.id];
 
-                        if (proto != ethernet)
+                        if (proto != ethernet || msg[0] != 99)
                             continue;
 
                         var o = {};
@@ -565,9 +575,9 @@ var ReportFactory = {
                     }
 
                     return {
-                        data: arr,
+                        data   : arr,
                         columns: cols,
-                        ylabel: col.label
+                        ylabel : col.label
                     };
                 }
             }

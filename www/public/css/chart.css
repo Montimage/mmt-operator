@@ -18,7 +18,9 @@
     top: 51px;
     z-index: 1000;
 }
-
+#content{
+    padding: 10px;
+}
 #toolbar-box{
     padding-right: 2px;
     padding-top: 2px;
@@ -114,7 +116,6 @@
     hight: 50px;
     background-color: white;
 }
-
-.ui-icon, .ui-widget-content .ui-icon{
+.ui-icon-gripsmall-diagonal-se{
     background-image: none !important;
 }

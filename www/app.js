@@ -49,7 +49,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
-    cookie: { maxAge: 60000 },
+    cookie: { maxAge: 30*60*1000 },
     secret: 'mmt2montimage'
 }))
 

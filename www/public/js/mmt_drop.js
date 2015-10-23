@@ -3970,6 +3970,7 @@ MMTDrop.chartFactory = {
 				for (var j=1; j<columns.length; j++){
 					//not root
 					//if( columns[j].label.indexOf("/") > 0 )
+                    if( columns[j].type == "area" )
 						groups.push( columns[j].label );
 				}
 
@@ -3995,9 +3996,12 @@ MMTDrop.chartFactory = {
 		        		data : {
 		        			xs: xs,
 		        			columns: obj,
-		        			type: (type === "scatter")? type:  "",
-		        			types: types,
-		        			groups: [ groups ],
+		        			type   : (type === "scatter")? type:  "",
+		        			types  : types,
+		        			groups : [ groups ],
+                            //order  : 'desc' // stack order by sum of values descendantly. this is default.
+                            //order: 'asc'  // stack order by sum of values ascendantly.
+                            order: null   // stack order by data definition.
 		        		},
 		        		axis: {
 		        			x: {
