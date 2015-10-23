@@ -105,9 +105,10 @@ var MongoConnector = function ( opts ) {
 				cb( err );
 				return;
 			}
-			
-			cb( null, doc[0].time );
-			
+			if( Array.isArray(doc) && doc.length > 0)
+    			cb( null, doc[0].time );
+			else
+                cb( null, (new Date()).getTime() );
 		});
 	};
 };

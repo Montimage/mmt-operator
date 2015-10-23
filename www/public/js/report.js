@@ -1,5 +1,3 @@
-var Report = {};
-
 /**
  * config:
  *  - elem:        DOM selector to render report
@@ -13,7 +11,7 @@ var Report = {};
  */
 
 
-ReportFactory = {
+var ReportFactory = {
     getCol: function (col, isIn) {
         var COL = MMTDrop.constants.StatsColumn;
         var tmp = "PAYLOAD_VOLUME";
@@ -77,40 +75,40 @@ ReportFactory = {
                 //set new data for cLine
                 database.data(data);
                 cLine.attachTo(database);
-                if( cLine.isVisible())
+                if (cLine.isVisible())
                     cLine.redraw();
 
                 cPie.attachTo(database);
-                
-                if( cPie.isVisible())
+
+                if (cPie.isVisible())
                     cPie.redraw();
                 //reset
                 database.data(oldData);
             },
-            afterRender: function( chart ){
+            afterRender: function (chart) {
                 //console.log( chart )
                 //clear old selected
-                var el ;
+                var el;
                 var $treetable = $(".treetable");
                 var $ethernet = $(".treetable tbody .selected");
-                $(".treetable tbody tr").each( function( index ){
-                    var el = $( this );
+                $(".treetable tbody tr").each(function (index) {
+                    var el = $(this);
                     var sels = ["99.178.178", //IP.IP
                                 "99.178.163", //IP.ICMP
                                 "99.178.166", //IP.IGMP
-                               "99.178.354",  //IP.TCP
-                               "99.178.376",  //IP.UDP
+                               "99.178.354", //IP.TCP
+                               "99.178.376", //IP.UDP
                                "99.30"
                                ]
-                    var id = el.data( "tt-id" );
-                    if( sels.indexOf( id ) >= 0 ){
+                    var id = el.data("tt-id");
+                    if (sels.indexOf(id) >= 0) {
                         el.addClass("selected");
-                        
-                        $treetable.treetable("collapseNode", id );
+
+                        $treetable.treetable("collapseNode", id);
                     }
                 });
-                if( $ethernet != undefined )
-                    $ethernet.trigger( "click" );
+                if ($ethernet != undefined)
+                    $ethernet.trigger("click");
             }
         });
 
@@ -150,8 +148,9 @@ ReportFactory = {
                         var path = header[i];
                         columns.push({
                             id: path,
-                            label: MMTDrop.constants.getPathFriendlyName(path),
-                            //type: "area"
+                            label: //MMTDrop.constants.getProtocolNameFromID(MMTDrop.constants.getAppIdFromPath(path)),
+                                MMTDrop.constants.getPathFriendlyName(path),
+                            type: "area"
                         });
                     }
                     return {
@@ -160,6 +159,60 @@ ReportFactory = {
                         ylabel: fMetric.selectedOption().label
                     };
                 },
+            }
+        });
+
+        cLine = MMTDrop.chartFactory.createTimeline({
+            getData: {
+                getDataFn: function (db) {
+                    var noApp = db.stat.getAppIDs().length;
+                    var col = fMetric.selectedOption();
+                    var dir = fDir.selectedOption().id;
+                    var colToSum = col;
+                    if (dir != 0)
+                        colToSum = self.getCol(col, dir == 1);
+
+                    col = colToSum;
+
+                    //if( noApp == 1)
+                    //	return db.stat.getDataTimeForChart( col, false, false );
+
+                    var obj = db.stat.getDataTimeForChart(col, true, true);
+
+                    //the first column is Timestamp, so I start from 1 instance of 0
+                    for (var i = 1; i < obj.columns.length; i++) {
+                        var msg = obj.columns[i];
+                        var path = msg.label;
+                        var arr = path.split(".");
+
+                        path = "";
+                        for (var j = arr.length - 1; j >= 0; j--) {
+                            if (path == "")
+                                path = arr[j];
+                            else
+                                path += "." + arr[j];
+                        }
+                        msg.label = path; //donot need add its grand father name
+
+                        obj.columns[i].type = "area"; //area-spline
+                    }
+
+                    var cols = [];
+
+                    for (var i = 1; i < obj.columns.length; i++)
+                        cols.push(obj.columns[i]);
+
+                    cols.sort(function (a, b) {
+                        return a.label > b.label;
+                    });
+
+                    cols.unshift(obj.columns[0]);
+
+                    obj.columns = cols;
+
+
+                    return obj;
+                }
             }
         });
         var cPie = MMTDrop.chartFactory.createPie({
@@ -199,9 +252,9 @@ ReportFactory = {
         });
         //redraw cLine when changing fMetric
         fMetric.onFilter(function () {
-            if( cLine.isVisible())
+            if (cLine.isVisible())
                 cLine.redraw();
-            if( cPie.isVisible )
+            if (cPie.isVisible)
                 cPie.redraw();
         });
 
@@ -346,11 +399,130 @@ ReportFactory = {
         return report;
     },
 
-    createTrafficReport: function (fProbe, database) {
-        var _this   = this;
-        var COL     = MMTDrop.constants.StatsColumn;
+    createRealtimeTrafficReport: function (fProbe, database) {
+        var _this = this;
+        var rep = _this.createTrafficReport(fProbe, database, true);
 
-        var fDir    = MMTDrop.filterFactory.createDirectionFilter();
+        var COL     = MMTDrop.constants.StatsColumn;
+        var cLine   = rep.groupCharts[0].charts[0];
+        var fDir    = rep.filters[0];
+        var fMetric = rep.filters[1];
+
+        //add data to chart each second (rather than add immediatlly after receiving data)
+        //this will avoid that two data are added very closely each
+
+        var newData = {};
+        var lastAddMoment = 0;
+
+        var appendMsg = function (msg) {
+            //console.log( msg );
+            var chart = cLine.chart;
+            if (chart == undefined)
+                return;
+
+            //the chart cLine in 
+            //- probeMode if it shows total data of each probe
+            //- appMode   if it shows data of each app in a probe
+            var probeId = fProbe.selectedOption().id;
+            var isInProbeMode = probeId == 0;
+
+            var col = fMetric.selectedOption();
+            col.label = "All";
+            var dir = fDir.selectedOption().id;
+            if (dir != 0)
+                col = _this.getCol(col, dir == 1);
+
+            //receive msg of a probe different with the one beeing showing
+            if (!isInProbeMode &&
+                probeId != msg[COL.PROBE_ID.id]) {
+                console.log(" donot concern");
+                return;
+            }
+
+            var serieName = col.label;
+
+            if (isInProbeMode)
+                serieName = "Probe-" + msg[COL.PROBE_ID.id];
+
+
+            var time = msg[COL.TIMESTAMP.id] + 0;
+            var val = msg[col.id];
+
+            if (newData[serieName] === undefined)
+                newData[serieName] = 0;
+
+            newData[serieName] += val;
+
+            //update to chart each x seconds
+            if (time - lastAddMoment > 2000) {
+                //chart.zoom.enable( false );
+
+                var date = new Date(time);
+                var xs = chart.xs();
+
+                var cols = [];
+
+                var keys = [];
+                //convert newData to columns format of C3js
+                for (var s in newData) {
+                    keys.push(s); //list of apps will be appended data
+                    cols.push([s, newData[s]]);
+                    cols.push(["x-" + s, date]);
+                }
+
+                //load new pair nameY: nameX
+
+                chart.flow({
+                    columns: cols,
+                    length: 0,
+                    done: function () {
+                        //console.log( chart.xs()["nghia"] );
+                    }
+                });
+
+                //highlight the update
+                chart.focus(keys);
+
+
+                var minX = date.getTime() - 1000 * 60 * 10; //10 min
+
+                var data = chart.data.shown();
+
+                //set null to all points outside the chart
+                for (var i in data) {
+                    var obj = data[i];
+
+                    for (var j in obj.values) {
+                        var p = obj.values[j];
+
+                        if (p.x && p.x.getTime() < minX) {
+                            p.value = null;
+                            p.x = null;
+                        }
+                    }
+                }
+
+                //reset newData
+                newData = {};
+                lastAddMoment = time;
+            }
+        };
+
+
+        database.onMessage(function (msg) {
+            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
+                return;
+            appendMsg(msg);
+        });
+
+        return rep;
+    },
+    
+    createTrafficReport: function (fProbe, database) {
+        var _this = this;
+        var COL = MMTDrop.constants.StatsColumn;
+
+        var fDir = MMTDrop.filterFactory.createDirectionFilter();
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
         var cLine = MMTDrop.chartFactory.createTimeline({
@@ -416,7 +588,7 @@ ReportFactory = {
 
         var report = new MMTDrop.Report(
             // title
-            "Application Report",
+            null,
 
             // database
             database,

@@ -4,8 +4,9 @@ var arr = [
         title: "Traffic",
         x: 0,
         y: 0,
-        width: 12,
-        height: 4,
+        width: 5,
+        height: 5,
+        type: "danger",
         userData: {
             fn: "createTrafficReport"
         }
@@ -14,21 +15,33 @@ var arr = [
         id: "protocol",
         title: "Protocols",
         x: 0,
-        y: 4,
+        y: 6,
         width: 12,
-        height: 4,
-        type: "danger",
+        height: 6,
+        type: "success",
         userData: {
             fn: "createProtocolReport"
         },
     },
     {
+        id: "realtime",
+        title: "Realtime",
+        x: 0,
+        y: 6,
+        width: 12,
+        height: 6,
+        type: "success",
+        userData: {
+            fn: "createRealtimeTrafficReport"
+        },
+    },
+    {
         id: "node",
         title: "Nodes",
-        x: 0,
-        y: 8,
-        width: 12,
-        height: 4,
+        x: 6,
+        y: 0,
+        width: 7,
+        height: 5,
         type: "info",
         userData: {
             fn: "createNodeReport"
@@ -46,13 +59,19 @@ $(function () {
     'use strict'
 
     MMTDrop.setOptions({
-        //serverURL: "http://192.168.0.40:8088",
+        serverURL: "http://localhost:8088",
     });
 
+    for( var i in ReportFactory)
+        MMTDrop.reportFactory[i] = ReportFactory[i];
+
+    ReportFactory = MMTDrop.reportFactory;
+    
     var fProbe = MMTDrop.filterFactory.createProbeFilter();
     var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 
     fProbe.renderTo("toolbar-box");
+    $("#"+fProbe.getId() + "_container").hide();
     fProbe.onFilter(function (sel, db) {
         EVENTS.publish("probe-change", {
             select: sel,
@@ -77,12 +96,13 @@ $(function () {
             var cb = ReportFactory[key];
             if (MMTDrop.tools.isFunction(cb)) {
                 var rep = ReportFactory[key](fProbe, database);
-                if (rep)
+                if (rep){
                     rep.renderTo(node.id + "-content");
+                }
             }
         } catch (ex) {
             console.error("Error when rending report [" + key + "] to the DOM [" + node.id + "]");
-            console.error(ex);
+            console.error(ex.stack);
         }
     }
 
@@ -90,7 +110,7 @@ $(function () {
 
     for (var i in data) {
         var node = data[i];
-        renderReport( node );
+        setTimeout( renderReport, 100, node );
     }
 
     fPeriod.filter();

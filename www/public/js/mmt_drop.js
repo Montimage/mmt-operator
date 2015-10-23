@@ -2255,7 +2255,10 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	this.activeCharts = [];
 	
 	var _this = this;
-	
+	_this.title = title;
+    _this.filters = filters;
+    _this.groupCharts = groupCharts;
+    _this.dataFlow = dataFlow;
 	/**
 	 * Register triggers
 	 * @param {DataFlow} filter - object tobe registed. {object: obj, effect: [o1, o2]}
@@ -3938,7 +3941,8 @@ MMTDrop.chartFactory = {
 						
 						var val = arrData[i][j];
 						if( val === undefined )
-							continue;
+							//continue;
+                            val = 0;
 						
 						if( obj[j] === undefined ){
 							obj[j]   = ["x-" + columns[j].label];
@@ -3965,7 +3969,7 @@ MMTDrop.chartFactory = {
 				var groups = [];
 				for (var j=1; j<columns.length; j++){
 					//not root
-					if( columns[j].label.indexOf("/") > 0 )
+					//if( columns[j].label.indexOf("/") > 0 )
 						groups.push( columns[j].label );
 				}
 
@@ -3979,6 +3983,12 @@ MMTDrop.chartFactory = {
 				
 				
 				var isTimeLine = (type == undefined || type === "timeseries" || type === "scatter");
+                
+                var formatNumber = function( v ){
+                    if( v == 0)
+                        return "";
+                    else return " " + v;
+                }
 				
 		        var chart_opt = {
 		        		bindto : "#" + elemID,
@@ -3994,15 +4004,19 @@ MMTDrop.chartFactory = {
 		        				type: "timeseries",
 		        				tick: {
 		        					format: function( v ){
-		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds();
+		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() +  (v.getMilliseconds() == 0 ? "": " " + v.getMilliseconds());
 		        					},
 		        	                count : 10,
 		        	            }
 		        			},
 		        			y: {
 		        				label: ylabel,
+                                count: 10,
 		        				min: 0,
-		        				padding: 0,
+		        				padding: {
+                                  top: 10,
+                                  bottom: 10
+                                },
 		        				tick: {
 		        					format: function( v ){
 		        						if( v >= 1000000000 )
@@ -4020,7 +4034,7 @@ MMTDrop.chartFactory = {
 		        			format: {
 		        				title: function( v ){ 
 		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " + 
-	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + " " + v.getMilliseconds(); 
+	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() +  (v.getMilliseconds() == 0 ? "": " " + v.getMilliseconds()); 
 		        					}
 		        			}
 		        		},
@@ -4034,7 +4048,7 @@ MMTDrop.chartFactory = {
 		        		},
 		        		point: {
 		        			//show: false,
-		        			r: (type === "scatter")? 3 : 2,
+		        			r: (type === "scatter")? 3 : 1,
 		        			focus: {
 		        			    expand: {
 		        			    	r: 5

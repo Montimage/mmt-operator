@@ -25,7 +25,7 @@ block header
     link( rel="stylesheet",        href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
     script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
     
-    link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.min.css')
+    link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.css')
     script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
 
     // highcharts
@@ -62,6 +62,15 @@ block content
                         else
                             li
                                 a( href="/chart/#{index}" )= val.title
+                    li.dropdown
+                        a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") 
+                            span.glyphicon.glyphicon-user
+                        ul.dropdown-menu
+                            li: a( href="/profile" ) Profile
+                            li: a( href="/change-password" ) Change password
+                            li.divider( role="separator" )
+                            li: a( href="/logout" ) Logout
+                            
     #toolbar
         ul.nav.navbar-nav
             li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
@@ -103,7 +112,4 @@ block content
                             
                 .modal-footer
                     button#doneBtn.btn.btn-primary( type="button") Done
-    footer.footer
-        .container
-            p.text-muted footer
         
