@@ -15,7 +15,7 @@ router.get('/*', function (req, res, next) {
     var getOptionsByPeriod = function (period) {
         var retval = {
             collection: 'traffic',
-            time: 60 * 1000
+            time: 5* 60 * 1000
         };
         if (period === PERIOD.HOUR) {
             retval = {
@@ -73,7 +73,8 @@ router.get('/*', function (req, res, next) {
 	options.raw    = true;
 	options.probe  = [];
 	options.source = [];
-	
+	options.proto  = [];
+    
 	if (req.query.format)
 		options.format = parseInt(req.query.format);
 	
@@ -91,7 +92,11 @@ router.get('/*', function (req, res, next) {
 			options.source.push ("'" + e  + "'") ; //TODO avoid sql injection here
 		});
 	}
-	
+	if( req.query.proto instanceof Array)
+        req.query.proto.forEach( function( e){
+            options.proto.push( e );
+        });
+
     var queryDate = function( op ){
         dbconnector.getProtocolStats(op, function(err, data) {
 			if (err) {

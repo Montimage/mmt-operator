@@ -12,20 +12,23 @@ var router = function (db, redis) {
     report_client.subscribe("rtp.flow.report");
 
     report_client.on('message', function (channel, message) {
+
         message = JSON.parse(message);
         
-        if (message[0] == 99 && message[4] == 99) {
-            message[11] = 4;//Math.round(1 * message[8]);
+        
+        if (message[0] == 99 )// && message[4] == 99) 
+        {
+            message[11] = Math.round(Math.random() * message[8] );
             message[12] = Math.round(Math.random() * message[9]);
             message[13] = Math.round(Math.random() * message[10]);
             message[14] = message[8] - message[11];
             message[15] = message[9] - message[12];
             message[16] = message[10] - message[13];
-            
             console.log(message);
         }
         //
-
+        
+        
         message = mmtAdaptor.formatReportItem( message );
 
         //this is for test purpose only: to create two different probeID

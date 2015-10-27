@@ -16,7 +16,7 @@ var probeRoute = require('./routes/probe-server.js');
 var mmtAdaptor = require('./libs/dataAdaptor');
 var dbc = require('./libs/mongo_connector');
 
-var serverIP = "192.168.0.37"
+var serverIP = "192.168.10.1"
 var dbconnector = new dbc( {
     connectString: 'mongodb://'+ serverIP +':27017/mmt-data'
 });

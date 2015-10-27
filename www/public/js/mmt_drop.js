@@ -809,6 +809,8 @@ MMTDrop.tools = function() {
 	 _this.sumUp = function(data, colSums){
 		if (colSums == null)
 			throw new Error("Need to define an id");
+        if ( Array.isArray( colSums ) == false)
+			colSums = [ colSums ];
 		if (Array.isArray (data) == false)
 			throw new Error("Need data tobe an array");
 
@@ -1943,12 +1945,19 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createPeriodFilter : function(){
-			var filterID = "period_filter" + MMTDrop.tools.getUniqueNumber();
+			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
+            var periods     = MMTDrop.constants.period;
+            var periodLabel = {};
+    		periodLabel[periods.MINUTE] = "Last 5 minutes";
+			periodLabel[periods.HOUR]   = "Last hour";
+			periodLabel[periods.DAY]    = "Last 24 hours";
+			periodLabel[periods.WEEK]   = "Last 7 days";
+			periodLabel[periods.MONTH]  = "Last 30 days";
 			//create a list of options from predefined MMTDrop.period
 			var options = [];
 			for (var k in MMTDrop.constants.period){
 				var key = MMTDrop.constants.period[k];
-				options.push({id:  key, label: "Last " + MMTDrop.tools.capitalizeFirstLetter(key)});
+				options.push({id:  key, label: periodLabel[key]});
 			}
 			
 			//var otherOpt = { id: "00", label: "Other"};
@@ -2209,10 +2218,16 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
     
-        createDirectionFilter: function(){
+        createDirectionFilter: function( withAll ){
+            if( withAll == undefined )
+               withAll = true;
+               
             var options = [{id: 0,  label: "All"},
                            {id: 1,  label: "Inbound"},
                            {id: -1, label: "Outbound"}];
+            if( !withAll )
+                options.shift();
+            
             var filter =  new MMTDrop.Filter({
 				id      : "direction_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Direction",
@@ -3521,6 +3536,7 @@ MMTDrop.Chart = function(option, renderFn){
 		}
 
 		_elemID = elemID;
+        _this.elemID = _elemID;
 		//redraw with the current _option
 		this.redraw();
 	};
@@ -3945,7 +3961,7 @@ MMTDrop.chartFactory = {
                             val = 0;
 						
 						if( obj[j] === undefined ){
-							obj[j]   = ["x-" + columns[j].label];
+							obj[j]     = ["x-" + columns[j].label];
 							obj[j+n-1] = [ columns[j].label];
 						}
 						
@@ -4067,7 +4083,9 @@ MMTDrop.chartFactory = {
 		      	          rescale: true
 		      	      }
 		        };
-		        console.log( chart_opt );
+		        //console.log( chart_opt );
+                if( param.chart )
+                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
 		        var chart = c3.generate( chart_opt );
 		        return chart;
 			});

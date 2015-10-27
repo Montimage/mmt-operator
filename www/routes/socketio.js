@@ -11,9 +11,12 @@ var router = function (io, redis) {
 
         sub.on("pmessage", function (pattern, channel, message) {
             message = JSON.parse(message);
-            var msg = mmtAdaptor.formatReportItem(message);
-            client.emit('stats', msg);
-
+            //var msg = mmtAdaptor.formatReportItem(message);
+            //client.emit('stats', msg);
+            console.log( message );
+            if( message[4] != 99)    //retain only stat for ethernet
+                return;
+            //timestamp in milli seconds
             message[3] = message[3] * 1000;
             
             //For test only

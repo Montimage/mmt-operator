@@ -15,10 +15,10 @@ var ReportFactory = {
     getCol: function (col, isIn) {
         var COL = MMTDrop.constants.StatsColumn;
         var tmp = "PAYLOAD_VOLUME";
-        if (col == COL.DATA_VOLUME)
+        if (col.id == COL.DATA_VOLUME.id)
             tmp = "DATA_VOLUME";
-        else if (col == COL.PACKET_COUNT)
-            tmp = "PACKET_COUT";
+        else if (col.id == COL.PACKET_COUNT.id)
+            tmp = "PACKET_COUNT";
 
         var label;
         if (isIn) {
@@ -38,226 +38,174 @@ var ReportFactory = {
     createProtocolReport: function (fProbe, database) {
         var self = this;
         var COL = MMTDrop.constants.StatsColumn;
-        var fDir = MMTDrop.filterFactory.createDirectionFilter();
+        var fDir = MMTDrop.filterFactory.createDirectionFilter(false);
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
-        var cTree = MMTDrop.chartFactory.createTree({
-            getData: {
-                getDataFn: function (db) {
-                    var col = fMetric.selectedOption();
-                    var cols = [{
-                        id: col.id,
-                        label: "All"
-                    }];
-                    var dir = fDir.selectedOption().id;
-                    if (dir != 0)
-                        cols = [self.getCol(col, dir == 1)];
-                    /*    
-                    if (fProbe.selectedOption().id != 0)
-                        cols.push({
-                            id: COL.DATA_VOLUME.id,
-                            label: "Data"
-                        });
-                    */
-                    return db.stat.getDataTableForChart(cols, true);
-                }
-            },
-            click: function (e) {
-                if (Array.isArray(e) == false)
-                    return;
 
-                var data = database.stat.filter([{
-                    id: COL.APP_PATH.id,
-                    data: e
-                }]);
-                var oldData = database.data();
-
-                //set new data for cLine
-                database.data(data);
-                cLine.attachTo(database);
-                if (cLine.isVisible())
-                    cLine.redraw();
-
-                cPie.attachTo(database);
-
-                if (cPie.isVisible())
-                    cPie.redraw();
-                //reset
-                database.data(oldData);
-            },
-            afterRender: function (chart) {
-                //console.log( chart )
-                //clear old selected
-                var el;
-                var $treetable = $(".treetable");
-                var $ethernet = $(".treetable tbody .selected");
-                $(".treetable tbody tr").each(function (index) {
-                    var el = $(this);
-                    var sels = ["99.178.178", //IP.IP
-                                "99.178.163", //IP.ICMP
-                                "99.178.166", //IP.IGMP
-                               "99.178.354", //IP.TCP
-                               "99.178.376", //IP.UDP
-                               "99.30"
-                               ]
-                    var id = el.data("tt-id");
-                    if (sels.indexOf(id) >= 0) {
-                        el.addClass("selected");
-
-                        $treetable.treetable("collapseNode", id);
-                    }
-                });
-                if ($ethernet != undefined)
-                    $ethernet.trigger("click");
-            }
-        });
 
         var cLine = MMTDrop.chartFactory.createTimeline({
-            //columns: [MMTDrop.constants.StatsColumn.APP_PATH]
             getData: {
                 getDataFn: function (db) {
+                    var TIME = COL.TIMESTAMP;
                     var col = fMetric.selectedOption();
                     var dir = fDir.selectedOption().id;
-                    var colToSum = col.id;
-                    if (dir != 0)
-                        colToSum = self.getCol(col, dir == 1).id;
+                    var colToSum = self.getCol(col, dir == 1);
 
-                    var colsToGroup = [COL.TIMESTAMP.id,
-						               COL.APP_PATH.id];
+                    var data = {};
+                    //the first column is Timestamp, so I start from 1 instance of 0
+                    var columns = [TIME];
 
-                    var data = db.data();
-                    data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
+                    var obj = db.stat.splitDataByClass();
 
-                    var arr = [];
-                    var header = [];
+                    cLine.dataLegend = {
+                        "dataTotal": 0,
+                        "label": col.label,
+                        "data": {}
+                    };
+                    for (var cls in obj) {
+                        var o = obj[cls];
+                        var name = MMTDrop.constants.getCategoryNameFromID(cls);
 
-                    for (var time in data) {
-                        var o = {};
-                        o[COL.TIMESTAMP.id] = time;
-
-                        var msg = data[time];
-                        for (var path in msg) {
-                            o[path] = msg[path][colToSum];
-                            if (header.indexOf(path) == -1)
-                                header.push(path);
-                        }
-                        arr.push(o);
-                    }
-                    var columns = [COL.TIMESTAMP];
-                    for (var i = 0; i < header.length; i++) {
-                        var path = header[i];
                         columns.push({
-                            id: path,
-                            label: //MMTDrop.constants.getProtocolNameFromID(MMTDrop.constants.getAppIdFromPath(path)),
-                                MMTDrop.constants.getPathFriendlyName(path),
+                            id: cls,
+                            label: name,
                             type: "area"
                         });
-                    }
-                    return {
-                        data: arr,
-                        columns: columns,
-                        ylabel: fMetric.selectedOption().label
-                    };
-                },
-            }
-        });
 
-        cLine = MMTDrop.chartFactory.createTimeline({
-            getData: {
-                getDataFn: function (db) {
-                    var noApp = db.stat.getAppIDs().length;
-                    var col = fMetric.selectedOption();
-                    var dir = fDir.selectedOption().id;
-                    var colToSum = col;
-                    if (dir != 0)
-                        colToSum = self.getCol(col, dir == 1);
+                        var total = 0;
+                        //sumup by time
+                        o = MMTDrop.tools.sumByGroup(o, colToSum.id, TIME.id);
+                        for (var t in o) {
+                            var v = o[t][colToSum.id];
+                            if (data[t] == undefined)
+                                data[t] = {};
 
-                    col = colToSum;
+                            data[t][cls] = v;
 
-                    //if( noApp == 1)
-                    //	return db.stat.getDataTimeForChart( col, false, false );
-
-                    var obj = db.stat.getDataTimeForChart(col, true, true);
-
-                    //the first column is Timestamp, so I start from 1 instance of 0
-                    for (var i = 1; i < obj.columns.length; i++) {
-                        var msg = obj.columns[i];
-                        var path = msg.label;
-                        var arr = path.split(".");
-
-                        path = "";
-                        for (var j = arr.length - 1; j >= 0; j--) {
-                            if (path == "")
-                                path = arr[j];
-                            else
-                                path += "." + arr[j];
+                            total += v;
                         }
-                        msg.label = path; //donot need add its grand father name
 
-                        obj.columns[i].type = "area"; //area-spline
+                        cLine.dataLegend.data[name] = total;
+                        cLine.dataLegend.dataTotal += total;
                     }
 
-                    var cols = [];
-
-                    for (var i = 1; i < obj.columns.length; i++)
-                        cols.push(obj.columns[i]);
-
-                    cols.sort(function (a, b) {
-                        return a.label > b.label;
-                    });
-
-                    cols.unshift(obj.columns[0]);
-
-                    obj.columns = cols;
-
-
-                    return obj;
-                }
-            }
-        });
-        var cPie = MMTDrop.chartFactory.createPie({
-            getData: {
-                getDataFn: function (db) {
-                    var col = fMetric.selectedOption();
-                    var dir = fDir.selectedOption().id;
-                    var colToSum = col.id;
-                    if (dir != 0)
-                        colToSum = self.getCol(col, dir == 1).id;
-
-                    var colsToGroup = [COL.APP_PATH.id];
-
-                    var data = db.data();
-                    data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
-
+                    //flat data
                     var arr = [];
-                    var header = [];
-
-                    for (var key in data) {
-                        var o = {};
-                        o[COL.APP_PATH.id] = MMTDrop.constants.getPathFriendlyName(key);
-
-                        var msg = data[key];
-                        o[colToSum] = msg[colToSum];
-
-                        arr.push(o);
+                    for (var o in data) {
+                        var oo = data[o];
+                        oo[TIME.id] = o;
+                        arr.push(oo);
                     }
-                    var columns = [COL.APP_PATH, col];
+
                     return {
                         data: arr,
                         columns: columns,
                         ylabel: col.label
                     };
+                }
+            },
+            chart: {
+                legend: {
+                    show: false
                 },
+                size: {
+                    height: 150
+                }
+            },
+            //custom legend
+            afterRender: function (_chart) {
+                var chart = _chart.chart;
+                var legend = _chart.dataLegend;
+
+                var $table = $("<table>", {
+                    "class": "table table-bordered table-striped table-hover table-condensed"
+                });
+                $table.appendTo($("#" + _chart.elemID));
+                $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</t><th>Percent of bandwidth</t></tr>").appendTo($table);
+                var i = 0;
+                for (var key in legend.data) {
+                    i++;
+                    var val = legend.data[key];
+                    var $tr = $("<tr>");
+                    $tr.appendTo($table);
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right",
+                            "text": i
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            chart.toggle($(this).data("id"));
+                        })
+                        .appendTo($tr);
+                    $("<td>", {
+                        "text": key
+                    }).appendTo($tr);
+                    $("<td>", {
+                        "align": "right",
+                        "text": val
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": (100 * Math.round(val / legend.dataTotal)) + "%"
+
+                    }).appendTo($tr);
+                }
+                $("<tfoot>").append(
+                    $("<tr>", {
+                        "class": 'success'
+                    }).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": i + 1
+                        })
+                    ).append(
+                        $("<td>", {
+                            "text": "Total"
+                        })
+                    ).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": legend.dataTotal
+                        })
+                    ).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": "100%"
+                        })
+                    ).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": "100%"
+                        })
+                    )).appendTo($table)
+
+                $table.DataTable({
+                    paging: false,
+                    dom: "t"
+                });
             }
         });
-        //redraw cLine when changing fMetric
-        fMetric.onFilter(function () {
-            if (cLine.isVisible())
-                cLine.redraw();
-            if (cPie.isVisible)
-                cPie.redraw();
-        });
 
+        //
 
         var dataFlow = [{
             object: fProbe,
@@ -266,7 +214,7 @@ var ReportFactory = {
                 effect: [{
                     object: fMetric,
                     effect: [{
-                        object: cTree
+                        object: cLine
                     }]
 				}, ]
             }]
@@ -285,35 +233,26 @@ var ReportFactory = {
             //charts
 					[
                 {
-                    charts: [cTree],
-                    width: 4
-                },
-                {
-                    charts: [cLine, cPie],
-                    width: 8
+                    charts: [cLine],
+                    width: 12
                 },
 					 ],
 
             //order of data flux
             dataFlow
         );
+
         return report;
     },
     createNodeReport: function (fProbe, database) {
 
-        var COL = MMTDrop.constants.FlowStatsColumn;
-        //var fDir    = MMTDrop.filterFactory.createDirectionFilter();
-        fProbe = MMTDrop.filterFactory.createProbeFilter();
-        var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-        var fMetric = MMTDrop.filterFactory.createFlowMetricFilter();
-
-        database = MMTDrop.databaseFactory.createFlowDB();
+        var COL    = MMTDrop.constants.StatsColumn;
 
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
-                    var col = fMetric.selectedOption();
+                    var col  = COL.DATA_VOLUME.id;
 
                     var sorted = false; //do not sort by default
 
@@ -328,7 +267,7 @@ var ReportFactory = {
                     for (var time in obj) {
                         var oo = {};
                         oo[COL.APP_NAME.id] = time;
-                        console.log("TIME: " + time);
+                        //console.log("TIME: " + time);
                         oo[col] = {};
                         for (var probe in obj[time])
                             if (noProbes == 1)
@@ -363,16 +302,9 @@ var ReportFactory = {
         });
 
         var dataFlow = [{
-            object: fPeriod,
+            object: fProbe,
             effect: [{
-                object: fProbe,
-                effect: [{
-                    object: fMetric,
-                    effect: [{
-                        object: cTable
-                }]
-								}]
-					}]
+                object: cTable}]
         }];
 
         var report = new MMTDrop.Report(
@@ -383,7 +315,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fPeriod, fProbe, fMetric],
+					[],
 
             // charts
 					[
@@ -403,9 +335,9 @@ var ReportFactory = {
         var _this = this;
         var rep = _this.createTrafficReport(fProbe, database, true);
 
-        var COL     = MMTDrop.constants.StatsColumn;
-        var cLine   = rep.groupCharts[0].charts[0];
-        var fDir    = rep.filters[0];
+        var COL = MMTDrop.constants.StatsColumn;
+        var cLine = rep.groupCharts[0].charts[0];
+        var fDir = rep.filters[0];
         var fMetric = rep.filters[1];
 
         //add data to chart each second (rather than add immediatlly after receiving data)
@@ -414,12 +346,12 @@ var ReportFactory = {
         var newData = {};
         var lastAddMoment = 0;
 
-        fDir.onFilter( function(){
+        fDir.onFilter(function () {
             newData = {};
         });
-        
+
         var appendMsg = function (msg) {
-            if( msg[ COL.APP_ID.id ] != 99)
+            if (msg[COL.APP_ID.id] != 99)
                 return;
             //console.log( msg );
             var chart = cLine.chart;
@@ -434,14 +366,17 @@ var ReportFactory = {
 
             var col = fMetric.selectedOption();
             var dir = fDir.selectedOption().id;
-            
+
             var cols = [];
-            if (dir == 0){
-                cols = [{id: col.id, label: "All"}];
-                cols.push( _this.getCol(col, true) );
-                cols.push( _this.getCol(col, false) );
-            }else
-                cols = [ _this.getCol(col, dir == 1) ];
+            if (dir == 0) {
+                cols.push(_this.getCol(col, true));
+                cols.push(_this.getCol(col, false));
+                cols.push({
+                    id: col.id,
+                    label: "All"
+                });
+            } else
+                cols = [_this.getCol(col, dir == 1)];
 
             //receive msg of a probe different with the one beeing showing
             if (!isInProbeMode &&
@@ -451,65 +386,41 @@ var ReportFactory = {
             }
 
 
-            var time = msg[COL.TIMESTAMP.id] ;
-            for( var c in cols ){
+            var time = msg[COL.TIMESTAMP.id];
+            for (var c in cols) {
                 c = cols[c];
                 var serieName = c.label;
 
                 if (isInProbeMode)
                     serieName = "Probe-" + msg[COL.PROBE_ID.id];
-                var val  = msg[c.id];
-                
-                //For test only
-                //if( val == 0)
-                //    val = Math.round(Math.random() * 1000);
-                
+                var val = msg[c.id];
+
                 if (newData[serieName] === undefined)
                     newData[serieName] = 0;
 
                 newData[serieName] += val;
             }
-            
+
             //update to chart each x seconds
-            if (time - lastAddMoment > 2*1000 && newData != {}) {
+            if (time - lastAddMoment > 2 * 1000 && newData != {}) {
                 //chart.zoom.enable( false );
 
                 var date = new Date(time);
-                var xs   = chart.xs();
+                var xs = chart.xs();
 
                 var columns = [];
                 //convert newData to columns format of C3js
                 for (var s in newData) {
-                    columns.push([s, newData[s]]);    //y value
-                    columns.push(["x-" + s, date]);   //x value = time
+                    columns.push([s, newData[s]]); //y value
+                    columns.push(["x-" + s, date]); //x value = time
                 }
 
                 //load new pair nameY: nameX
 
                 chart.flow({
-                    columns: columns,
-                    length : 0,
+                    columns: columns
                 });
 
-
-                //remove the points outside the graph
-                
-                var minX = date.getTime() - 1000 * 60 * 3; //3 min
-                var data = chart.data.shown();
-
-                //set null to all points outside the chart
-                for (var i in data) {
-                    var obj = data[i];
-
-                    for (var j in obj.values) {
-                        var p = obj.values[j];
-
-                        if (p.x && p.x.getTime() < minX) {
-                            p.value = null;
-                            p.x = null;
-                        }
-                    }
-                }
 
                 //reset newData
                 newData = {};
@@ -526,7 +437,7 @@ var ReportFactory = {
 
         return rep;
     },
-    
+
     createTrafficReport: function (fProbe, database) {
         var _this = this;
         var COL = MMTDrop.constants.StatsColumn;
@@ -544,13 +455,13 @@ var ReportFactory = {
 
                     //dir = 1: incoming, -1 outgoing, 0: All
                     if (dir == 0) {
-                        cols.push({
-                            id   : col.id,
-                            label: "All"
-                            //type : "line"
-                        });
                         cols.push(_this.getCol(col, true));
                         cols.push(_this.getCol(col, false));
+                        cols.push({
+                            id: col.id,
+                            label: "All"
+                                //type : "line"
+                        });
                     } else if (dir == 1)
                         cols.push(_this.getCol(col, true));
                     else
@@ -575,11 +486,49 @@ var ReportFactory = {
                     }
 
                     return {
-                        data   : arr,
+                        data: arr,
                         columns: cols,
-                        ylabel : col.label
+                        ylabel: col.label
                     };
                 }
+            },
+            chart: {
+                color: {
+                    pattern: ['red', 'green', 'blue']
+                },
+                point: {
+                    //show: false,
+                    r: 0,
+                    focus: {
+                        expand: {
+                            r: 5
+                        }
+                    }
+                },
+                grid: {
+                    x: {
+                        show: false
+                    },
+                    y: {
+                        show: false
+                    }
+                },
+            },
+            afterRender: function (chart) {
+                var  $widget = $("#" + chart.elemID).parents().filter(".grid-stack-item");
+                $widget.on("widget-resized", function (event, $widget) {
+                    setTimeout(function () {
+                        var height = $widget.find(".grid-stack-item-content").innerHeight();
+                        height -= $widget.find(".filter-bar").outerHeight(true) + 20;
+                        chart.chart.resize({
+                            height: height
+                        });
+
+                    }, 500)
+                });
+                
+
+                $widget.trigger("widget-resized", [$widget]);
             }
         });
 

@@ -65,6 +65,11 @@ Grid.load_grid = function (serialized_data, grid_stack) {
             return t.length > 2;
         };
 
+        $gridStack.on("resizestop", function( event, ui ){
+            var el = $(event.target); 
+            el.trigger('widget-resized', [el, el.width(), el.height()]);
+        });
+        
         $gridStack.on("dragstart", function (event, ui) {
             onDragging = true;
             if (!canBeDeleted()) return;
