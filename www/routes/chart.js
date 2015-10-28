@@ -39,7 +39,7 @@ router.get('/*', function(req, res, next) {
 		var err = new Error('Not Found');
 		err.status = 404;
 	}else
-		res.render("chart/" + id, { title: page.title, page_id: id, pages: pages});
+		res.render("chart", { title: page.title, page_id: id, pages: pages});
 });
 
 module.exports = router;

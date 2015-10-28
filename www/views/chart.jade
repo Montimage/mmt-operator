@@ -44,6 +44,8 @@ block header
     
     script( type='text/javascript', src='/socket.io/socket.io.js')
     
+    //script that configures the content of the grid
+    script( type='text/javascript', src= '/js/chart/#{ page_id }.js')
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
         .container-fluid
@@ -79,7 +81,8 @@ block content
                 span.glyphicon.glyphicon-trash
         #toolbar-box
     #content
-        block page
+        .grid-stack
+        //the grid will be rendered here by javasript grid.js!
         
     #modal.modal.fade
         .modal-dialog
