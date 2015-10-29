@@ -23,7 +23,7 @@ var MMTDrop = {
         RTP_APP_FORMAT : 3/**< RTP flow report format id */,
         MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
         RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
-        STATS_FORMAT : 99/**< Statistics format id */,
+        STATS_FORMAT : 100/**< Statistics format id */,
     },
     
     isFlowStats : function ( format ) {
@@ -59,6 +59,9 @@ var MMTDrop = {
         DL_DATA_VOLUME : 14, /**< Index of the data volume column */
         DL_PAYLOAD_VOLUME : 15, /**< Index of the payload data volume column */
         DL_PACKET_COUNT : 16, /**< Index of the packet count column */
+        START_TIME : 17, /**< Index of the start timestamp of the flow */
+        MAC_SRC : 18, /**< Index of the MAC address source column */
+        MAC_DEST : 19, /**< Index of the MAC address source column */
     },
     
     /**
@@ -111,117 +114,7 @@ var MMTDrop = {
         PACKET_LOSS_BURSTINESS : 1, /**< Index of the format id column */
         MAX_JITTER : 2,
     },
-    
-    /**
-     * Constants: MMTDrop defined csv format types
-     */
-    ReportType : {
-        PROTO_TREE : 0, /**< Identifier of protocol tree table chart */
-        PROTO_LIST : 1, /**< Identifier of protocol advanced table chart */
-        PROTO_CLASS_LIST : 2, /**< Identifier protocol-in-class table chart */
-        CLASS_LIST : 3, /**< Identifier of classes of protocol table chart */
-    },
-
-    /**
-     * Constants: MMTDrop defined traffic metrics
-     */
-    MetricId : {
-        DATA_VOLUME : 1, /**< Identifier of data volume metric */
-        PACKET_COUNT : 2, /**< Identifier of packet count metric */
-        PAYLOAD_VOLUME : 3, /**< Identifier of payload data volume metric */
-        ACTIVE_FLOWS : 4, /**< Identifier of active flows metric */
-    },
-
-    /**
-     * Mapping between metric IDs and metric names
-     */
-    MetricID2Name : {
-        1 : "Data Volume",
-        2 : "Packet Count",
-        3 : "Payload Volume",
-        4 : "Active Flows",
-    },
-
-    /**
-     * Mapping between metric IDs and metric names
-     */
-    MetricName2ID : {
-        "Data Volume": 1,
-        "Packet Count": 2,
-        "Payload Volume": 3,
-        "Active Flows": 4,
-    },
-
-    /**
-     * Constants: MMTDrop defined flow metrics
-     */
-    FlowMetricId : {
-        DATA_VOLUME : 1, /**< Identifier of data volume metric */
-        PACKET_COUNT : 2, /**< Identifier of packet count metric */
-        PAYLOAD_VOLUME : 3, /**< Identifier of payload data volume metric */
-        ACTIVE_FLOWS : 4, /**< Identifier of active flows metric */
-        UL_DATA_VOLUME : 5, /**< Identifier of uplink data volume metric */
-        DL_DATA_VOLUME : 6, /**< Identifier of downlink data volume metric */
-        UL_PACKET_COUNT : 7, /**< Identifier of uplink data volume metric */
-        DL_PACKET_COUNT : 8, /**< Identifier of downlink data volume metric */
-    },
-
-
-    /**
-     * Mapping between metric IDs and metric names
-     */
-    FlowMetricID2Name : {
-        1 : "Data Volume",
-        2 : "Packet Count",
-        3 : "Payload Volume",
-        4 : "Active Flows",
-        5 : "UL Data Volume",
-        6 : "DL Data Volume",
-        7 : "UL Packet Count",
-        8 : "DL Packet Count",
-    },
-
-    /**
-     * Mapping between metric IDs and metric names
-     */
-    FlowMetricName2ID : {
-        "Data Volume": 1,
-        "Packet Count": 2,
-        "Payload Volume": 3,
-        "Active Flows": 4,
-        "UL Data Volume": 5,
-        "DL Data Volume": 6,
-        "UL Packet Count": 7,
-        "DL Packet Count": 8,
-    },
-    
-    getYLabel: function(filter) {
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DATA_VOLUME]) {
-            return "data";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.PACKET_COUNT]) {
-            return "packets";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.PAYLOAD_VOLUME]) {
-            return "payload data";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.ACTIVE_FLOWS]) {
-            return "flows";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.UL_DATA_VOLUME]) {
-            return "uplink data";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.UL_PACKET_COUNT]) {
-            return "uplink packets";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DL_DATA_VOLUME]) {
-            return "downlink data";
-        }
-        if(filter.metric === MMTDrop.FlowMetricID2Name[MMTDrop.FlowMetricId.DL_PACKET_COUNT]) {
-            return "downlink packets";
-        }
-        return "";
-    },
+   
 
     /**
      * Constants: Protocol Id,Name 
@@ -437,7 +330,9 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.bytecount = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
     retval.payloadcount = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
     retval.packetcount = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    
+    retval.start_time = entry[MMTDrop.StatsColumnId.START_TIME];
+    retval.mac_src = entry[MMTDrop.StatsColumnId.MAC_SRC];
+    retval.mac_dest = entry[MMTDrop.StatsColumnId.MAC_DEST];
     return retval;
 }
 
@@ -463,6 +358,9 @@ MMTDrop.reverseStatsTimePoint = function(elem) {
     retval[MMTDrop.StatsColumnId.UL_PACKET_COUNT] = elem.ul_packets;
     retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT] = elem.dl_packets;
     
+    retval[MMTDrop.StatsColumnId.START_TIME] = elem.start_time;
+    retval[MMTDrop.StatsColumnId.MAC_SRC]    = elem.mac_src;
+    retval[MMTDrop.StatsColumnId.MAC_DEST]    = elem.mac_dest;
     return retval;
 };
 

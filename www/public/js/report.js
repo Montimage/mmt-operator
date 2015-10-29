@@ -346,28 +346,14 @@ var ReportFactory = {
         var newData = {};
         var lastAddMoment = 0;
 
-        fDir.onFilter(function () {
+        var cols = [];
+
+        var initData = function(){
             newData = {};
-        });
-
-        var appendMsg = function (msg) {
-            if (msg[COL.APP_ID.id] != 99)
-                return;
-            //console.log( msg );
-            var chart = cLine.chart;
-            if (chart == undefined)
-                return;
-
-            //the chart cLine in 
-            //- probeMode if it shows total data of each probe
-            //- appMode   if it shows data of each app in a probe
-            var probeId = fProbe.selectedOption().id;
-            var isInProbeMode = probeId == 0;
-
+            
             var col = fMetric.selectedOption();
             var dir = fDir.selectedOption().id;
-
-            var cols = [];
+            
             if (dir == 0) {
                 cols.push(_this.getCol(col, true));
                 cols.push(_this.getCol(col, false));
@@ -377,22 +363,27 @@ var ReportFactory = {
                 });
             } else
                 cols = [_this.getCol(col, dir == 1)];
-
-            //receive msg of a probe different with the one beeing showing
-            if (!isInProbeMode &&
-                probeId != msg[COL.PROBE_ID.id]) {
-                console.log(" donot concern");
+        }
+        fDir.onFilter( initData );
+        fMetric.onFilter( initData );
+        
+        var appendMsg = function (msg) {
+            if (msg[COL.APP_ID.id] != 99)
                 return;
-            }
 
+            var chart = cLine.chart;
+            if (chart == undefined)
+                return;
+            
+            chart.zoom.enable( false );
+            
+            //the chart cLine in 
 
             var time = msg[COL.TIMESTAMP.id];
             for (var c in cols) {
                 c = cols[c];
                 var serieName = c.label;
 
-                if (isInProbeMode)
-                    serieName = "Probe-" + msg[COL.PROBE_ID.id];
                 var val = msg[c.id];
 
                 if (newData[serieName] === undefined)
@@ -403,7 +394,7 @@ var ReportFactory = {
 
             //update to chart each x seconds
             if (time - lastAddMoment > 2 * 1000 && newData != {}) {
-                //chart.zoom.enable( false );
+                //
 
                 var date = new Date(time);
                 var xs = chart.xs();
@@ -416,11 +407,10 @@ var ReportFactory = {
                 }
 
                 //load new pair nameY: nameX
-
                 chart.flow({
-                    columns: columns
+                    columns: columns,
+                    length : 1
                 });
-
 
                 //reset newData
                 newData = {};
@@ -474,7 +464,7 @@ var ReportFactory = {
                         var msg = data[i];
                         var proto = msg[COL.APP_ID.id];
 
-                        if (proto != ethernet || msg[0] != 99)
+                        if (proto != ethernet || msg[0] != 100)
                             continue;
 
                         var o = {};

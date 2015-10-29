@@ -69,7 +69,7 @@ router.get('/*', function (req, res, next) {
         options = getOptionsByPeriod(period);
 
 	//default values
-	options.format = 99;
+	options.format = 100;
 	options.raw    = true;
 	options.probe  = [];
 	options.source = [];

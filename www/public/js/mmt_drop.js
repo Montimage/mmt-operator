@@ -10,11 +10,7 @@
  */
 var MMTDrop = {
 		//The version of the MMTDrop library.
-		VERSION : "1.0.0",
-		/**
-		 * chartRender use either "highchart" or "c3js"
-		 */
-		chartRender: "highchart",
+		VERSION : "1.0.0"
 };
 
 
@@ -22,6 +18,7 @@ var MMTDrop = {
 (function(MMTDrop){
 'use strict';
 
+MMTDrop.object = {};
 
 /**
  * Set global options
@@ -84,7 +81,7 @@ MMTDrop.constants = {
 			/** RADIUS protocol control format id */
 			RADIUS_REPORT_FORMAT : 9,
 			/** Statistics format id */
-			STATS_FORMAT : 99,
+			STATS_FORMAT : 100,
 		},
 
 		/**
@@ -924,6 +921,11 @@ MMTDrop.tools = function() {
  * @constructor
  */
 MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
+    //add to list of created object
+    if( MMTDrop.object.database == undefined )
+         MMTDrop.object.database = [];
+     MMTDrop.object.database.push( this );
+    
 	//this an abstract class
 	//if (this.constructor === MMTDrop.Database){
 	//	throw new Error("Cannot instantiate abstract class MMTDrop.Database\n" +
@@ -1682,7 +1684,11 @@ MMTDrop.databaseFactory = {
  * @constructor
  */
 MMTDrop.Filter = function (param, filterFn, prepareDataFn){
-
+    //add to list of created object
+    if( MMTDrop.object.filter == undefined )
+         MMTDrop.object.filter = [];
+     MMTDrop.object.filter.push( this );
+    
 	var _currentSelectedOption = null;
 	var _onFilterCallbacks = [];
 	//database attached to this filter
@@ -2262,7 +2268,10 @@ MMTDrop.filterFactory = {
  * @constructor
  */
 MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
-	
+    //add to list of created object
+    if( MMTDrop.object.report == undefined )
+         MMTDrop.object.report = [];
+     MMTDrop.object.report.push( this );
 	/**
 	 * The charts being showing
 	 * @type {MMTDrop.Chart[]}
@@ -3448,7 +3457,11 @@ MMTDrop.reportFactory = {
  * @constructor
  */
 MMTDrop.Chart = function(option, renderFn){
-
+    //add to list of created object
+    if( MMTDrop.object.chart == undefined )
+         MMTDrop.object.chart = [];
+     MMTDrop.object.chart.push( this );
+    
 	var _option = {
 			title : "",
 			getData  : {

@@ -33,7 +33,7 @@ var MongoConnector = function (opts) {
 
     self.updateHistoricalStats = function (message) {
         // For Protocol stats, update minutes and hours stats
-        if (message.format === 99) { //TODO: replace with definition
+        if (message.format === 100) { //TODO: replace with definition
             self.insertUpdateDB("traffic_min", {
                 format: message.format,
                 probe: message.probe,
