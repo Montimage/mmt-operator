@@ -34,215 +34,46 @@ var MongoConnector = function (opts) {
     self.updateHistoricalStats = function (message) {
         // For Protocol stats, update minutes and hours stats
         if (message.format === 100) { //TODO: replace with definition
-            self.insertUpdateDB("traffic_min", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                path: message.path,
-                time: moment(message.time).startOf('minute').valueOf()
-            }, {
+            var key = {
+                format  : message.format,
+                probe   : message.probe,
+                source  : message.source,
+                path    : message.path,
+                mac_src : message.mac_src,
+                mac_dest: message.mac_dest,
+                time    : moment(message.time).startOf('minute').valueOf()
+            };
+            var data = {
                 '$set': {
-                    flowcount: message.flowcount,
                     active_flowcount: message.active_flowcount,
-                    app: message.app
+                    app             : message.app
                 },
                 '$inc': {
-                    bytecount: message.bytecount,
+                    bytecount   : message.bytecount,
                     payloadcount: message.payloadcount,
-                    packetcount: message.packetcount,
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    ul_payload: message.ul_payload,
-                    dl_payload: message.dl_payload
+                    packetcount : message.packetcount,
+                    dl_data     : message.dl_data,
+                    ul_data     : message.ul_data,
+                    dl_packets  : message.dl_packets,
+                    ul_packets  : message.ul_packets,
+                    ul_payload  : message.ul_payload,
+                    dl_payload  : message.dl_payload
                 }
-            });
-
-            self.insertUpdateDB("traffic_hour", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                path: message.path,
-                time: moment(message.time).startOf('hour').valueOf()
-            }, {
-                '$set': {
-                    flowcount: message.flowcount,
-                    active_flowcount: message.active_flowcount,
-                    app: message.app
-                },
-                '$inc': {
-                    bytecount: message.bytecount,
-                    payloadcount: message.payloadcount,
-                    packetcount: message.packetcount,
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    ul_payload: message.ul_payload,
-                    dl_payload: message.dl_payload
-                }
-            });
-
-            self.insertUpdateDB("traffic_day", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                path: message.path,
-                time: moment(message.time).startOf('day').valueOf()
-            }, {
-                '$set': {
-                    flowcount: message.flowcount,
-                    active_flowcount: message.active_flowcount,
-                    app: message.app
-                },
-                '$inc': {
-                    bytecount: message.bytecount,
-                    payloadcount: message.payloadcount,
-                    packetcount: message.packetcount,
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    ul_payload: message.ul_payload,
-                    dl_payload: message.dl_payload
-                }
-            });
-        } else if (message.format === 0) {
-            self.insertUpdateDB("traffic_min", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('minute').valueOf()
-            }, {
-                '$inc': {
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    count: 1
-                }
-            });
-
-            self.insertUpdateDB("traffic_hour", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('hour').valueOf()
-            }, {
-                '$inc': {
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    count: 1
-                }
-            });
-            self.insertUpdateDB("traffic_day", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('day').valueOf()
-            }, {
-                '$inc': {
-                    dl_data: message.dl_data,
-                    ul_data: message.ul_data,
-                    dl_packets: message.dl_packets,
-                    ul_packets: message.ul_packets,
-                    count: 1
-                }
-            });
-        } else if (message.format === 1) { //TODO: replace with definition
-            self.insertUpdateDB("traffic_min", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('minute').valueOf()
-            }, {
-                '$inc': {
-                    response_time: message.response_time,
-                    transactions_count: message.transactions_count,
-                    interaction_time: message.interaction_time,
-                    count: 1
-                }
-            });
-
-            self.insertUpdateDB("traffic_hour", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('hour').valueOf()
-            }, {
-                '$inc': {
-                    response_time: message.response_time,
-                    transactions_count: message.transactions_count,
-                    interaction_time: message.interaction_time,
-                    count: 1
-                }
-            });
-
-            self.insertUpdateDB("traffic_day", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('day').valueOf()
-            }, {
-                '$inc': {
-                    response_time: message.response_time,
-                    transactions_count: message.transactions_count,
-                    interaction_time: message.interaction_time,
-                    count: 1
-                }
-            });
-        } else if (message.format === 3) { //TODO: replace with definition
-            self.insertUpdateDB("traffic_min", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('minute').valueOf()
-            }, {
-                '$inc': {
-                    packet_loss: message.packet_loss,
-                    packet_loss_burstiness: message.packet_loss_burstiness,
-                    jitter: message.jitter,
-                    count: 1
-                }
-            });
-
-            self.insertUpdateDB("traffic_hour", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('hour').valueOf()
-            }, {
-                '$inc': {
-                    packet_loss: message.packet_loss,
-                    packet_loss_burstiness: message.packet_loss_burstiness,
-                    jitter: message.jitter,
-                    count: 1
-                }
-            });
-
-            self.insertUpdateDB("traffic_day", {
-                format: message.format,
-                probe: message.probe,
-                source: message.source,
-                time: moment(message.time).startOf('day').valueOf()
-            }, {
-                '$inc': {
-                    packet_loss: message.packet_loss,
-                    packet_loss_burstiness: message.packet_loss_burstiness,
-                    jitter: message.jitter,
-                    count: 1
-                }
-            });
-        }
+            };
+            self.insertUpdateDB("traffic_min", key, data);
+                                
+            key.time = moment(message.time).startOf('hour').valueOf();
+            self.insertUpdateDB("traffic_hour", key, data);
+            
+            key.time = moment(message.time).startOf('day').valueOf();
+            self.insertUpdateDB("traffic_day", key, data);
+        } 
     };
 
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
         self.mdb.collection("traffic").insert(message, function (err, records) {
-            if (err) return;
+            //if (err) return;
             self.updateHistoricalStats(message);
         });
     };

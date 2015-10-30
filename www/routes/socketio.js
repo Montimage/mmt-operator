@@ -10,11 +10,15 @@ var router = function (io, redis) {
         sub.subscribe("protocol.flow.stat");
 
         sub.on("message", function ( channel, message) {
-            message = JSON.parse(message);
-            //var msg = mmtAdaptor.formatReportItem(message);
-            //client.emit('stats', msg);
-            message[3] = message[3] * 1000;
-            client.emit('stats_raw', message);
+            var msg = JSON.parse(message);
+            if( msg[4] != 99 )
+                return;
+            if( mmtAdaptor.convertProtocolStatFlow( msg ) == null)
+                return;
+
+            msg[3] = msg[3] * 1000;
+            
+            client.emit('stats_raw', msg);
         });
 
         client.on("message", function (msg) {

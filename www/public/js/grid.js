@@ -105,6 +105,9 @@ Grid.load_grid = function (serialized_data, grid_stack) {
 
             $deleteBtn.removeClass("btn-danger");
         });
+        $deleteBtn.on("click", function(){
+            alert("Drag and drop a report here to delete it."); 
+        });
     });
     return grid;
 };

@@ -1,34 +1,10 @@
 var arr = [
     {
-        id: "traffic",
-        title: "Traffic",
+        id: "realtime",
+        title: "Traffic in Realtime",
         x: 0,
         y: 0,
-        width: 5,
-        height: 5,
-        type: "danger",
-        userData: {
-            fn: "createTrafficReport"
-        }
-    },
-    {
-        id: "protocol",
-        title: "Protocols",
-        x: 0,
-        y: 6,
-        width: 12,
-        height: 6,
-        type: "success",
-        userData: {
-            fn: "createProtocolReport"
-        },
-    },
-    {
-        id: "realtime",
-        title: "Realtime",
-        x: 0,
-        y: 6,
-        width: 12,
+        width: 6,
         height: 6,
         type: "success",
         userData: {
@@ -36,13 +12,25 @@ var arr = [
         },
     },
     {
-        id: "node",
-        title: "Nodes",
+        id: "protocol",
+        title: "Protocols",
         x: 6,
         y: 0,
-        width: 7,
-        height: 5,
+        width: 6,
+        height: 6,
         type: "info",
+        userData: {
+            fn: "createProtocolReport"
+        },
+    },
+    {
+        id: "node",
+        title: "Nodes",
+        x: 0,
+        y: 7,
+        width: 12,
+        height: 5,
+        type: "danger",
         userData: {
             fn: "createNodeReport"
         }
@@ -74,7 +62,7 @@ $(function () {
     $("#"+fProbe.getId() + "_container").hide();
     fProbe.onFilter(function (sel, db) {
         EVENTS.publish("probe-change", {
-            select: sel,
+            select  : sel,
             database: db
         });
     })

@@ -25,10 +25,6 @@ MMTDrop.object = {};
  */
 MMTDrop.setOptions = function( opt ){
 	MMTDrop.config = MMTDrop.tools.mergeObjects( MMTDrop.config, opt  );
-	
-	if( MMTDrop.config.highChart != undefined ){
-		Highcharts.setOptions( MMTDrop.config.highChart );
-	}
 };
 
 
@@ -113,28 +109,32 @@ MMTDrop.constants = {
 			 * 
 			 */
 			APP_PATH          : {id: 5,  label: "App Path"},
-			/** Index of the is_leaf column */
-			TOTAL_FLOWS       : {id: 6,  label: "Flows"},
 			/** Index of the active flows column */
-			ACTIVE_FLOWS      : {id: 7,  label: "Active Flows"},
+			ACTIVE_FLOWS      : {id: 6,  label: "Active Flows"},
 			/** Index of the data volume column */
-			DATA_VOLUME       : {id: 8,  label: "Data Volume"},
+			DATA_VOLUME       : {id: 7,  label: "Data Volume"},
 			/** Index of the payload data volume column */
-			PAYLOAD_VOLUME    : {id: 9,  label: "Payload Volume"},
+			PAYLOAD_VOLUME    : {id: 8,  label: "Payload Volume"},
 			/** Index of the packet count column */
-			PACKET_COUNT      : {id: 10, label: "Packet Count"},
+			PACKET_COUNT      : {id: 9, label: "Packet Count"},
 			/** Index of the data volume column */
-			UL_DATA_VOLUME    : {id: 11, label: "UL Data Volume"},
+			UL_DATA_VOLUME    : {id: 10, label: "UL Data Volume"},
 			/** Index of the payload data volume column */
-			UL_PAYLOAD_VOLUME : {id: 12, label: "UL Packet Count"},
+			UL_PAYLOAD_VOLUME : {id: 11, label: "UL Packet Count"},
 			/** Index of the packet count column */
-			UL_PACKET_COUNT   : {id: 13, label: "UL Packet Count"},
+			UL_PACKET_COUNT   : {id: 12, label: "UL Packet Count"},
 			/** Index of the data volume column */
-			DL_DATA_VOLUME    : {id: 14, label: "DL Data Volume"},
+			DL_DATA_VOLUME    : {id: 13, label: "DL Data Volume"},
 			/** Index of the payload data volume column */
-			DL_PAYLOAD_VOLUME : {id: 15, label: "DL Payload Volume"},
+			DL_PAYLOAD_VOLUME : {id: 14, label: "DL Payload Volume"},
 			/** Index of the packet count column */
-			DL_PACKET_COUNT   : {id: 16, label: "DL Packet Count"},
+			DL_PACKET_COUNT   : {id: 15, label: "DL Packet Count"},
+            /** Index of the start timestamp of the flow */
+            START_TIME        : {id: 16, label: "Start Time"}, 
+            /** Index of the MAC address source column */
+            MAC_SRC           : {id: 17, label: "Destination Address"}, 
+            /** Index of the MAC address source column */
+            MAC_DEST          : {id: 18, label: "Source Address "} 
 		},
     
 		/**
@@ -507,10 +507,9 @@ MMTDrop.constants = {
 				var arr = MMTDrop.constants.CategoriesAppIdsMap[i];
 				if (arr.indexOf( appId ) > -1)
 					return i;
-			} 
+			}
 			return -1;
 		},
-
 		/**
 		 * Maps the Protocol ID to a Protocol Name
 		 * @param {number} id
@@ -1172,112 +1171,7 @@ MMTDrop.databaseFactory = {
 			param.format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
 			var db = new MMTDrop.Database(param, function (data){
-				//return data;
-				//how data is processed for stat
-				var COL = MMTDrop.constants.StatsColumn;
-				var colsToSum = [COL.TOTAL_FLOWS.id,    COL.ACTIVE_FLOWS.id,      COL.DATA_VOLUME.id,
-				                 COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, 
-				                 COL.UL_DATA_VOLUME.id, COL.UL_PAYLOAD_VOLUME.id, COL.UL_PACKET_COUNT.id,
-				                 COL.DL_DATA_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id, COL.DL_PACKET_COUNT.id,];
-
-				var obj = MMTDrop.tools.sumByGroups( data, 
-						colsToSum,
-						[COL.TIMESTAMP.id, COL.PROBE_ID.id,
-						 COL.SOURCE_ID.id, COL.APP_PATH.id]);
-
-
-				for( var time in obj)
-					for( var probe in obj[time])
-						for( var src in obj[time][probe]){
-							data = obj[time][probe][src];
-
-							//STEP 1. 
-							var hasChildren = {};
-
-							var keys = Object.keys( data );	//keys is a set of APP_PATH
-							for(var i=0; i<keys.length; i++){
-								var key = keys[i];
-
-								hasChildren[key] = false;
-
-								for(var j=0; j<keys.length; j++){
-									if (i == j)
-										continue;
-									if( keys[j].indexOf( key ) === 0 ){
-										hasChildren[key] = true;
-										break;
-									}
-								}
-								if( hasChildren[key] && false ){
-									var msg = data[key];
-
-									//create a new child of msg
-									var child = MMTDrop.tools.cloneData( msg );
-
-									var path = key + '.-1';	//
-									//add new child to data
-									data[path] = child;
-									hasChildren[path] = false;
-
-									//the data of msg will be represented by it child
-									// ==> reset data of msg to zero
-									for( var k in colsToSum )
-										if( colsToSum[k] in msg )
-											msg[ colsToSum[k] ] = 0;
-								}
-							}
-
-
-							//STEP 2. sumUp
-							keys = Object.keys( data );	//keys is a set of APP_PATH
-							for(var i=0; i<keys.length; i++){
-								var key = keys[i];
-								if( hasChildren[key] == true)
-									continue;
-
-								var msg = data[key];
-								var parentKey = MMTDrop.constants.getParentPath( key );
-								//sum up
-								while( parentKey != "." ){
-									
-									var parentMsg = data[parentKey];
-
-									//if parent does not exist, create it and add it to data
-									if( parentMsg == undefined){
-										parentMsg = MMTDrop.tools.cloneData( msg );
-										data[ parentKey ] = parentMsg;
-									}
-									//if parent exists, cummulate its child
-									else
-										for( var k in colsToSum ){
-											var col = colsToSum[k];
-											if( col in msg ){
-												parentMsg[ col ] += msg[ col ];
-											}
-										}
-
-									parentKey = MMTDrop.constants.getParentPath( parentKey );
-								}
-							}
-						}
-
-
-				data = [];
-				for( var time  in obj)
-					for( var probe in obj[time])
-						for( var src   in obj[time][probe])
-							for( var path  in obj[time][probe][src]){
-								var msg = obj[time][probe][src][path];
-								msg[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
-								msg[ COL.PROBE_ID.id  ] = parseInt(probe);
-								msg[ COL.SOURCE_ID.id ] = src;
-								msg[ COL.TIMESTAMP.id ] = parseInt(time);
-								msg[ COL.APP_PATH.id  ] = path;
-								msg[ COL.APP_ID.id    ] = MMTDrop.constants.getAppIdFromPath( path );
-								//msg[ COL.APP_ID.id  ] = MMTDrop.constants.getProtocolNameFromID( MMTDrop.constants.getAppIdFromPath( path ) );
-								data.push( msg );
-							}
-
+				
 				return data;
 			}, 
 			isAutoLoad);
@@ -4058,7 +3952,7 @@ MMTDrop.chartFactory = {
 		        							return (v/1000000).toPrecision(2) + "M";
 		        						if( v >= 1000 )
 		        							return Math.round(v/1000) + "k";
-		        						return v;
+		        						return Math.round(v);
 		        					}
 		        				}
 		        			}
@@ -4439,12 +4333,9 @@ MMTDrop.chartFactory = {
 
 
 					//first column
-					var row_name = $('<td style="cursor:pointer">');
-
-					var row_name_link = $('<a>', {
-						'text' : msg[0]
-					});
-					row_name_link.appendTo(row_name);
+					var row_name = $('<td>', {
+                            style  : "cursor:pointer",
+                        	'text' : msg[0] } );
 
 					row_name.appendTo(row_tr);
 
@@ -4474,8 +4365,10 @@ MMTDrop.chartFactory = {
 				}
 
 				tbody.appendTo(table);
-				table.dataTable();
-				
+                if( param.chart )
+                   table.dataTable( param.chart );
+                else
+				   table.dataTable();
 				
 				//when user click on a row
 				$("#" + elemID + "_table tbody tr").click({

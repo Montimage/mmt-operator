@@ -48,20 +48,19 @@ var MMTDrop = {
         TIMESTAMP : 3, /**< Index of the format id column */
         APP_ID : 4, /**< Index of the application id column */
         APP_PATH : 5, /**< Index of the application path column */
-        TOTAL_FLOWS : 6, /**< Index of the is_leaf column */
-        ACTIVE_FLOWS : 7, /**< Index of the active flows column */
-        DATA_VOLUME : 8, /**< Index of the data volume column */
-        PAYLOAD_VOLUME : 9, /**< Index of the payload data volume column */
-        PACKET_COUNT : 10, /**< Index of the packet count column */
-        UL_DATA_VOLUME : 11, /**< Index of the data volume column */
-        UL_PAYLOAD_VOLUME : 12, /**< Index of the payload data volume column */
-        UL_PACKET_COUNT : 13, /**< Index of the packet count column */
-        DL_DATA_VOLUME : 14, /**< Index of the data volume column */
-        DL_PAYLOAD_VOLUME : 15, /**< Index of the payload data volume column */
-        DL_PACKET_COUNT : 16, /**< Index of the packet count column */
-        START_TIME : 17, /**< Index of the start timestamp of the flow */
-        MAC_SRC : 18, /**< Index of the MAC address source column */
-        MAC_DEST : 19, /**< Index of the MAC address source column */
+        ACTIVE_FLOWS : 6, /**< Index of the active flows column */
+        DATA_VOLUME : 7, /**< Index of the data volume column */
+        PAYLOAD_VOLUME : 8, /**< Index of the payload data volume column */
+        PACKET_COUNT : 9, /**< Index of the packet count column */
+        UL_DATA_VOLUME : 10, /**< Index of the data volume column */
+        UL_PAYLOAD_VOLUME : 11, /**< Index of the payload data volume column */
+        UL_PACKET_COUNT : 12, /**< Index of the packet count column */
+        DL_DATA_VOLUME : 13, /**< Index of the data volume column */
+        DL_PAYLOAD_VOLUME : 14, /**< Index of the payload data volume column */
+        DL_PACKET_COUNT : 15, /**< Index of the packet count column */
+        START_TIME : 16, /**< Index of the start timestamp of the flow */
+        MAC_SRC : 17, /**< Index of the MAC address source column */
+        MAC_DEST : 18, /**< Index of the MAC address source column */
     },
     
     /**
@@ -302,7 +301,28 @@ var MMTDrop = {
             if (data.propertyIsEnumerable(prop))
                 return prop;
     },
-}
+    
+    convertProtocolStatFlow: function( msg ){
+        var serverMAC = "00:21:63:c9:d4:46";
+        var COL       = this.StatsColumnId;
+        if( msg[COL.MAC_DEST] == serverMAC )
+            return msg;
+        else if ( msg[COL.MAC_SRC] == serverMAC ){
+            //change direction
+            msg[COL.MAC_SRC]  = msg[COL.MAC_DEST];
+            msg[COL.MAC_DEST] = serverMAC;
+            //Permute DL <--> UL
+            var tmp 
+            for(var i=0; i<3; i++){
+                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
+                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
+                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
+            }
+            return msg;
+        }
+        return null;
+    }
+};
 
 MMTDrop.StatsTimePoint = function(entry) {
     var retval = {};
@@ -314,7 +334,6 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.app = entry[MMTDrop.StatsColumnId.APP_ID];
     retval.path = entry[MMTDrop.StatsColumnId.APP_PATH];
 
-    retval.flowcount  = entry[MMTDrop.StatsColumnId.TOTAL_FLOWS];
     retval.ul_data    = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
     retval.dl_data    = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
     retval.ul_packets = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
@@ -323,14 +342,12 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.ul_payload = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
     retval.dl_payload = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
     
-    if(entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS] > 0) 
-        retval.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
-    else retval.active_flowcount = 0;
+    retval.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
 
     retval.bytecount = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
     retval.payloadcount = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
     retval.packetcount = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    retval.start_time = entry[MMTDrop.StatsColumnId.START_TIME];
+    retval.start_time = Math.floor(entry[MMTDrop.StatsColumnId.START_TIME] * 1000);
     retval.mac_src = entry[MMTDrop.StatsColumnId.MAC_SRC];
     retval.mac_dest = entry[MMTDrop.StatsColumnId.MAC_DEST];
     return retval;
@@ -338,29 +355,28 @@ MMTDrop.StatsTimePoint = function(entry) {
 
 MMTDrop.reverseStatsTimePoint = function(elem) {
     var retval = [];
-    retval[MMTDrop.StatsColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.StatsColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.StatsColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.StatsColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.StatsColumnId.APP_ID]         = elem.app;
-    retval[MMTDrop.StatsColumnId.APP_PATH]       = elem.path;
-    retval[MMTDrop.StatsColumnId.TOTAL_FLOWS]    = elem.flowcount;
-    retval[MMTDrop.StatsColumnId.ACTIVE_FLOWS]   = elem.active_flowcount;
-    retval[MMTDrop.StatsColumnId.DATA_VOLUME]    = elem.bytecount;
-    retval[MMTDrop.StatsColumnId.PAYLOAD_VOLUME] = elem.payloadcount;
-    retval[MMTDrop.StatsColumnId.PACKET_COUNT]   = elem.packetcount;
+    retval[MMTDrop.StatsColumnId.FORMAT_ID]         = elem.format;
+    retval[MMTDrop.StatsColumnId.PROBE_ID]          = elem.probe;
+    retval[MMTDrop.StatsColumnId.SOURCE_ID]         = elem.source;
+    retval[MMTDrop.StatsColumnId.TIMESTAMP]         = elem.time;
+    retval[MMTDrop.StatsColumnId.APP_ID]            = elem.app;
+    retval[MMTDrop.StatsColumnId.APP_PATH]          = elem.path;
+    retval[MMTDrop.StatsColumnId.ACTIVE_FLOWS]      = elem.active_flowcount;
+    retval[MMTDrop.StatsColumnId.DATA_VOLUME]       = elem.bytecount;
+    retval[MMTDrop.StatsColumnId.PAYLOAD_VOLUME]    = elem.payloadcount;
+    retval[MMTDrop.StatsColumnId.PACKET_COUNT]      = elem.packetcount;
     retval[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME] = elem.ul_payload;
     retval[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME] = elem.dl_payload;
     
-    retval[MMTDrop.StatsColumnId.UL_DATA_VOLUME] = elem.ul_data;
-    retval[MMTDrop.StatsColumnId.DL_DATA_VOLUME] = elem.dl_data;
+    retval[MMTDrop.StatsColumnId.UL_DATA_VOLUME]    = elem.ul_data;
+    retval[MMTDrop.StatsColumnId.DL_DATA_VOLUME]    = elem.dl_data;
     
-    retval[MMTDrop.StatsColumnId.UL_PACKET_COUNT] = elem.ul_packets;
-    retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT] = elem.dl_packets;
+    retval[MMTDrop.StatsColumnId.UL_PACKET_COUNT]   = elem.ul_packets;
+    retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT]   = elem.dl_packets;
     
     retval[MMTDrop.StatsColumnId.START_TIME] = elem.start_time;
     retval[MMTDrop.StatsColumnId.MAC_SRC]    = elem.mac_src;
-    retval[MMTDrop.StatsColumnId.MAC_DEST]    = elem.mac_dest;
+    retval[MMTDrop.StatsColumnId.MAC_DEST]   = elem.mac_dest;
     return retval;
 };
 
@@ -516,7 +532,6 @@ MMTDrop.reverseFormatReportItem = function(entry) {
             return null;
     }
 };
-
 
 module.exports = MMTDrop;
 module.exports.CsvFormat = MMTDrop.CsvFormat;
