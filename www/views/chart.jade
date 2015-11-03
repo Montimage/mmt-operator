@@ -38,14 +38,16 @@ block header
     link( rel='stylesheet',         href='/css/chart.css')
     script( type='text/javascript', src= '/js/grid.js')
     script( type='text/javascript', src= '/js/event.js')
-    script( type='text/javascript', src= '/js/report.js')
     
     script( type='text/javascript', src= '/js/mmt_drop.js')
     
     script( type='text/javascript', src='/socket.io/socket.io.js')
     
     //script that configures the content of the grid
-    script( type='text/javascript', src= '/js/chart/#{ page_id }.js')
+    script( type='text/javascript', src= '/js/chart/tab.#{ page_id }.js')
+    //script render the reports based on the configuration above
+    script( type='text/javascript', src= '/js/chart/common.js')
+    
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
         .container-fluid

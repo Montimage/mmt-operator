@@ -10,7 +10,8 @@ router.get('/*', function(req, res, next) {
     
 	var id = req.params[0];
 	if( !id )
-		id = 'link';
+		//id = 'link';
+        id = 'network';
 	id = id.toLowerCase();
 	
 	var pages = {

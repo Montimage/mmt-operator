@@ -33,6 +33,7 @@
 .grid-stack-item-header{
     border-width: 1px;
     border-style: solid;
+    border-color: transparent;
     position: relative;
     font-weight: bold;
     margin-left: 10px;

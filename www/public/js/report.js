@@ -1,15 +1,3 @@
-/**
- * config:
- *  - elem:        DOM selector to render report
- * 	- channel:     where the report listens data to update its visualation
- *  - title:       title of report
- *  - chartType:   ['timeline', 'pie', 'bar', 'tree', 'table']
- *  - filterTypes: ['class', 'app', 'datatype']
- *  - metric: an array of elements ['stat', 'flow']
- *  		  or a column index, eg, MMTDrop.constants.StatsColumn.DATA_VOLUME
- *  	
- */
-
 
 var ReportFactory = {
     getCol: function (col, isIn) {

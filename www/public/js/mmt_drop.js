@@ -1484,6 +1484,37 @@ MMTDrop.databaseFactory = {
 				return arr;
 			}, isAutoLoad);
 			
+            /**
+			 * Get set of class Ids  
+			 */
+			db.stat.getAppClasses = function(){
+				var obj = db.stat.splitDataByClass();
+				var keys = Object.keys( obj );
+				return keys;
+			};
+			db.stat.splitDataByApp = function(){
+                return MMTDrop.tools.splitData(db.data(), MMTDrop.constants.FlowStatsColumn.APP_NAME.id);
+            }
+			/**
+			 * Get categories in database
+			 */
+			db.stat.splitDataByClass = function(){
+				var data = db.data();
+				var obj = {};
+				var appId = 0;
+				var catId = -1;
+				for (var i=0; i<data.length; i++){
+					appId = data[i][MMTDrop.constants.FlowStatsColumn.APP_NAME.id];
+					catId = MMTDrop.constants.getCategoryIdFromAppId( appId );
+
+					if (obj[catId] == null)
+						obj[catId] = [];
+					obj[catId].push( data[i] );
+				}
+
+				return obj;
+			};
+            
 			db.stat.getTimePointsForChart = function( col, sorted ){
 				var COL = MMTDrop.constants.FlowStatsColumn;
 				
@@ -1758,12 +1789,12 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			if (_database != null && 
 					_currentSelectedOption != null){
 
-				console.log("  filtering " + param.label + " [" + JSON.stringify(_currentSelectedOption) + "] on database (" + 
+				console.log("filtering " + param.label + " [" + JSON.stringify(_currentSelectedOption) + "] on database (" + 
 						_database.data().length + " records)");
 
 				filterFn(_currentSelectedOption, _database);
 
-				console.log("     retained " + _database.data().length + " records");
+				console.log("  - retained " + _database.data().length + " records");
 
 				//annonce to its callback registors
 				for (var i in _onFilterCallbacks){
@@ -1939,7 +1970,7 @@ MMTDrop.filterFactory = {
 			//cache data
 			function (db){
 				//update the list of probes when database changing
-				console.log("update list of probes when DB loaded");
+				console.log("  - update list of probes when DB loaded");
 				//update a list of probe IDs when database beeing available
 				//to speedup, data are splited into groupes having the same probeID
 
@@ -1991,7 +2022,7 @@ MMTDrop.filterFactory = {
 			}, 
 			function (db){
 				//update the list of probes when database changing
-				console.log("update list of App when DB loaded");
+				console.log("  - update list of App when DB loaded");
 				//update a list of probe IDs when database beeing available
 				//get a list of probe IDs
 				//to speedup, data are splited into groupes having the same AppID
@@ -2034,7 +2065,69 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
-		
+		/**
+		 * Create an application filter.
+		 * This filter retains only in database the element having <code>APP_ID.id</code> equals to <code>id</code> of the current selected option.
+		 * Its lits of options is automatically updated by application Ids existing in the <code>database</code> the filter attached to.
+		 * @returns {MMTDrop.Filter} filter
+		 */
+		createUserFilter : function(  ){
+            
+            
+			var filterID = "user_filter" + MMTDrop.tools.getUniqueNumber();
+        
+			//create a list of options 
+			var data = {};
+			var options = [{id: 0, label: "All"}];
+			var filter =  new MMTDrop.Filter({
+				id      : filterID,
+				label   : "Users",
+				options : options,
+			}, 
+			function (val, db){
+				//how filtering data
+				if (data[val.id] != null)
+					db.data( data[val.id] );
+			}, 
+			function (db){
+				//update the list of probes when database changing
+				console.log("  - update list of User when DB loaded");
+				//update a list of probe IDs when database beeing available
+				//get a list of probe IDs
+				//to speedup, data are splited into groupes having the same AppID
+				data = db.data();
+                var user_col_id = MMTDrop.constants.StatsColumn.MAC_SRC.id;
+                
+                var format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+                if( data[0] )
+                    format = data[0][0];
+                if( format == MMTDrop.constants.CsvFormat.DEFAULT_APP_FORMAT
+                  ||format == MMTDrop.constants.CsvFormat.WEB_APP_FORMAT
+                  ||format == MMTDrop.constants.CsvFormat.SSL_APP_FORMAT )
+                    user_col_id = MMTDrop.constants.FlowStatsColumn.CLIENT_ADDR.id;
+                
+                data = MMTDrop.tools.splitData( data, user_col_id );
+				var keys = Object.keys(data);
+				
+				//All
+				data[0] = db.data();
+
+				//create list of options
+				var opts = [];
+				for (var i in keys){
+					opts.push({id:  keys[i], label:  keys[i]  });
+				}
+
+				//if there are more than one option or no option ==> add "All" to top
+				if (opts.length != 1)
+					opts.unshift(MMTDrop.tools.cloneData(options[0]));
+
+				filter.option( opts );
+				filter.redraw();
+			});
+
+			return filter;
+		},
 		/**
 		 * Create an application filter.
 		 * This filters retains only in database the element having <code>APP_ID.id</code> in the current selected class, see {@link MMTDrop.constants.CategoriesAppIdsMap}.
@@ -2059,7 +2152,7 @@ MMTDrop.filterFactory = {
 			}, 
 			function (db){
 				//update the list of probes when database changing
-				console.log("update list of Class when DB loaded");
+				console.log("  - update list of Class when DB loaded");
 				//update a list of Category IDs when database beeing available
 				//to speedup, data are splited into groupes having the same ClasssID
 				data = db.stat.splitDataByClass();
@@ -2177,6 +2270,8 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
     _this.filters = filters;
     _this.groupCharts = groupCharts;
     _this.dataFlow = dataFlow;
+    
+    _this.callback = [];
 	/**
 	 * Register triggers
 	 * @param {DataFlow} filter - object tobe registed. {object: obj, effect: [o1, o2]}
@@ -2223,6 +2318,9 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			_registTrigger( fluxItem.effect[k] );
 	};
 
+    this.afterRender = function(callback, data){
+        _this.callback.push( {callback: callback, data: data} );
+    }
 
 	/**
 	 * Render the report to an HTML element
@@ -2375,12 +2473,20 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 		var filter = MMTDrop.tools.getFirstElement(dataFlow);
 		if(!filter)
 			return;
-		
-		filter = filter.object;
-		if (filter instanceof MMTDrop.Filter)
-			filter.filter();
-		else if(filter)
-			filter.renderTo( filter.htmlID, database.data() );
+		if( filter.autoTrigger === true ){
+	    	filter = filter.object;
+		    if (filter instanceof MMTDrop.Filter)
+			    filter.filter();
+    		else if(filter)
+	    		filter.renderTo( filter.htmlID, database.data() );
+        
+        }
+        
+        if( _this.callback.length > 0)
+            for( var i=0; i<_this.callback.length; i++){
+                var obj = _this.callback[i];
+                obj.callback( obj.data, _this );
+            }
 	};
 };
 
