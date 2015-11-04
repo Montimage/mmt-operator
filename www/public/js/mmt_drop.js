@@ -2270,8 +2270,15 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
     _this.filters = filters;
     _this.groupCharts = groupCharts;
     _this.dataFlow = dataFlow;
-    
+    _this.charts = [];
     _this.callback = [];
+    
+    for( var i in groupCharts ){
+        var charts = groupCharts[i].charts;
+        _this.charts = _this.charts.concat( charts );
+    }
+        
+    
 	/**
 	 * Register triggers
 	 * @param {DataFlow} filter - object tobe registed. {object: obj, effect: [o1, o2]}
@@ -3518,6 +3525,8 @@ MMTDrop.Chart = function(option, renderFn){
 		_isCopyData = isCloneData == undefined ? true: false;
 		if( _isCopyData )
 			_data = MMTDrop.tools.cloneData( _data );
+        
+        _this.database = _database;
 	};
 	
 	

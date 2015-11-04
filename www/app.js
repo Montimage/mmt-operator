@@ -1,22 +1,24 @@
-var express = require('express');
-var session = require('express-session')
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
+var express         = require('express');
+var session         = require('express-session')
+var path            = require('path');
+var favicon         = require('serve-favicon');
+var logger          = require('morgan');
+var cookieParser    = require('cookie-parser');
+var bodyParser      = require('body-parser');
 
-var routes     = require('./routes/index');
-var chartRoute = require('./routes/chart');
-var api        = require('./routes/api');
+var routes          = require('./routes/index');
+var chartRoute      = require('./routes/chart');
+var api             = require('./routes/api');
 
-var socketRoute= require('./routes/socketio.js');
-var probeRoute = require('./routes/probe-server.js');
+var socketRoute     = require('./routes/socketio.js');
+var probeRoute      = require('./routes/probe-server.js');
 
-var mmtAdaptor = require('./libs/dataAdaptor');
-var dbc = require('./libs/mongo_connector');
+var mmtAdaptor      = require('./libs/dataAdaptor');
+var dbc             = require('./libs/mongo_connector');
+var config          = require("./config.json");
 
-var serverIP = "192.168.10.1"
+var serverIP        = config.database_server;
+
 var dbconnector = new dbc( {
     connectString: 'mongodb://'+ serverIP +':27017/mmt-data'
 });
@@ -33,8 +35,8 @@ redis._createClient = redis.createClient;
 redis.createClient = function(){
     return redis._createClient(6379, serverIP, {});
 }
-
-probeRoute(dbconnector, redis);
+probeRoute.api = api;
+probeRoute.startListening(dbconnector, redis);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

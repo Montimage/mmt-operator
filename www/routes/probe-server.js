@@ -1,6 +1,8 @@
 var mmtAdaptor = require('../libs/dataAdaptor');
-
-var router = function (db, redis) {
+var config     = require("../config.json");
+console.log( config );
+var router = {};
+router.startListening = function (db, redis) {
     var report_client = redis.createClient();
 
     //report_client.subscribe("protocol.flow.stat");
@@ -19,12 +21,23 @@ var router = function (db, redis) {
             //console.log("[META] " + message)
             return;
         }
-        if( msg[0] == 99 && mmtAdaptor.convertProtocolStatFlow( msg ) == null){
-            //console.log("[DONOT] " + message)
+        var format = msg[0];
+        
+        if( format == 99 && mmtAdaptor.setDirectionProtocolStat( msg, config.mac_server ) == null){
+            console.log("[DONOT] " + message)
+            return;
+        }
+        if( (format == 0 || format == 1 || format == 2) 
+           && mmtAdaptor.setDirectionProtocolFlow(msg, config.ip_server, config.network_mask) == null){
+            console.log("[DONOT] " + message)
             return;
         }
         
+        //this is used by api
+        router.api.lastPacketTimestamp = msg[3] * 1000;    //timeestamp
+        
         msg = mmtAdaptor.formatReportItem( msg );
+
         db.addProtocolStats(msg, function (err, err_msg) {});
     });
 };

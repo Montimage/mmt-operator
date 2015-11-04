@@ -1,3 +1,4 @@
+var ipLib = require("ip");
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -302,9 +303,12 @@ var MMTDrop = {
                 return prop;
     },
     
-    convertProtocolStatFlow: function( msg ){
-        var serverMAC = "00:21:63:c9:d4:46";
+    /**
+    * 
+    */
+    setDirectionProtocolStat: function( msg, serverMAC ){
         var COL       = this.StatsColumnId;
+        
         if( msg[COL.MAC_DEST] == serverMAC )
             return msg;
         else if ( msg[COL.MAC_SRC] == serverMAC ){
@@ -314,6 +318,33 @@ var MMTDrop = {
             //Permute DL <--> UL
             var tmp 
             for(var i=0; i<3; i++){
+                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
+                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
+                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
+            }
+            return msg;
+        }
+        return null;
+    },
+    
+    setDirectionProtocolFlow: function( msg, ip_server, mask){
+        var COL       = this.FlowStatsColumnId;
+        var rootIP = ipLib.mask(ip_server, mask);
+        var isInside = function( ip ){
+            return ipLib.mask( ip, mask ) == rootIP
+        }        
+        
+        if( isInside( msg[COL.CLIENT_ADDR] )  )
+            return msg;
+        else if ( isInside( msg[COL.SERVER_ADDR] ) ){
+            //Permute DL <--> UL
+            var tmp = msg[COL.CLIENT_ADDR];
+
+            //change direction
+            msg[COL.CLIENT_ADDR] = msg[COL.SERVER_ADDR];
+            msg[COL.SERVER_ADDR] = tmp;
+
+            for(var i=0; i<2; i++){
                 tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
                 msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
                 msg[ COL.DL_DATA_VOLUME + i ] = tmp;

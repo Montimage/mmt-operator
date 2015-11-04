@@ -113,10 +113,18 @@ router.get('/*', function (req, res, next) {
     if( options.time.begin != undefined )
         queryDate( options );
     else
-    	dbconnector.getLastTime(function(err, time){
+        if( router.lastPacketTimestamp != undefined ){
+            var time    = router.lastPacketTimestamp;
+            var inteval = options.time;
+		    options.time = {begin: time - inteval, end: time };
+         
+            queryDate( options );
+        }
+    	else dbconnector.getLastTime(function(err, time){
 	    	if( err )
 		    	return next(err);
 		
+            router.lastPacketTimestamp = time;
     		console.log("lastime: %d %s", time, new Date(time));
         
             var inteval = options.time;
