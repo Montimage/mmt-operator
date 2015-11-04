@@ -1,0 +1,6 @@
+{
+    "database_server" : "192.168.10.1",
+    "mac_server"      : "00:21:63:c9:d4:46",
+    "ip_server"       : "192.168.10.1",
+    "network_mask"     : "255.255.255.0"
+}
