@@ -36,12 +36,20 @@ var filters = [MMTDrop.filterFactory.createPeriodFilter(),
                 MMTDrop.filterFactory.createProbeFilter(),
     MMTDrop.filterFactory.createFlowMetricFilter()];
 
+
+function getHMTL( tag ){
+    var html = tag[0];
+    for( var i=1; i<tag.length; i++)
+        html += ' <i class="fa fa-angle-right"/> ' + tag[i]; 
+    return html;
+}
+
 //create reports
 var SubReport = {
     data: {},
-    loadChartOfUser : function( elemID, userIP, data, isAppChart ){
-        if( isAppChart == undefined )
-            isAppChart = false;
+    loadChartOfOneUser : function( elemID, userIP, data, childrenTag ){
+        childrenTag = childrenTag.slice(0);
+        childrenTag.push( userIP );
         
         SubReport.data[elemID] = {};
         var pre = SubReport.data[elemID];
@@ -72,19 +80,17 @@ var SubReport = {
         }
         pre.db.data( arr );
         pre.filter.attachTo( pre.db );
-        if( isAppChart === false){
+        if( childrenTag.length <= 1 ){
             pre.rep = ReportFactory.createTopProtocolReport(pre.filter, pre.db);
-            pre.rep.charts[0].level = 2;
         }else{
             pre.rep = ReportFactory.createDetailOfClassReport(pre.filter, pre.db);
-            pre.rep.charts[0].level = 3;
         }
-            
+        pre.rep.charts[0].childrenTag = childrenTag;            
+        
         pre.rep.renderTo( subChartID );
         
         //fire the chain to render the chart
         pre.rep.filters[0].filter();
-        pre.rep.charts[0].level = 2;
         
         var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
         
@@ -100,16 +106,18 @@ var SubReport = {
         $subReport.find(".input-group").parent().hide().parent()
             .append($closeBtn)
             .append($("<div>", {
-                text: "detail of the client " + userIP,
+                html: getHMTL(childrenTag) ,
                 style:"text-align: center; font-weight: bold"
             }));
         
         $subReport.show("slow", "easeInQuart");
     },
     
-    loadChartOfClass : function( elemID, className, data, isAppChart ){
-        if( isAppChart == undefined )
-            isAppChart = false;
+    loadChartOfOneClass : function( elemID, className, data, childrenTag ){
+
+        //clone this array
+        childrenTag = childrenTag.slice(0);
+        childrenTag.push( className );
         
         SubReport.data[elemID] = {};
         var pre = SubReport.data[elemID];
@@ -145,23 +153,25 @@ var SubReport = {
         var arr = [];
         //list of all app in the class classID
         var appLst = MMTDrop.constants.CategoriesAppIdsMap[ classID ];
-        for( var i in data){
-            var msg = data[i];
-            var appId = msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ];
-            if( appLst.indexOf( appId )  > -1 )
-                arr.push( msg );
+        //no classified
+        if( appLst == undefined)
+            arr = data;
+        else
+            for( var i in data){
+                var msg = data[i];
+                var appId = msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ];
+                if( appLst.indexOf( appId )  > -1 )
+                    arr.push( msg );
         }
         
         pre.db.data( arr );
         pre.filter.attachTo( pre.db );
-        if( isAppChart === false ){
+        if( childrenTag.length <= 1 ){
             pre.rep = ReportFactory.createTopUserReport(pre.filter, pre.db);
-            pre.rep.charts[0].level = 2;
         }else{
             pre.rep = ReportFactory.createDetailOfClassReport(pre.filter, pre.db);
-            pre.rep.charts[0].level = 3;
         }
-        
+        pre.rep.charts[0].childrenTag = childrenTag;        
         pre.rep.renderTo( subChartID );
         
         //fire the chain to render the chart
@@ -181,17 +191,192 @@ var SubReport = {
         $subReport.find(".input-group").parent().hide().parent()
             .append($closeBtn)
             .append($("<div>", {
-                text: "detail of the class " + className,
+                html: getHMTL(childrenTag) ,
                 style:"text-align: center; font-weight: bold"
             }));
         
         $subReport.show("slow", "easeInQuart");
     },
-    
+    loadChartOfOneApplication : function( elemID, appName, data, childrenTag ){
+
+        //clone this array
+        childrenTag = childrenTag.slice(0);
+        childrenTag.push( appName );
+        
+        SubReport.data[elemID] = {};
+        var pre = SubReport.data[elemID];
+        
+        //get classID from appName
+        var APP = MMTDrop.constants.ProtocolsIDName;
+        var appID = 0;
+        for(var i in APP)
+            if( APP[i] == appName){
+                appID = i;
+                break;
+            }
+                
+        
+        pre.$mainChart = $("#" + elemID).parent().parent().parent().parent();
+        pre.$mainChart.hide();
+        
+        //get the last filter in the tool-box
+        pre.filter = filters[ filters.length - 1 ];
+        
+        var $content   = pre.$mainChart.parent();
+        var subChartID = elemID + "_sub_chart";
+        
+        var $subReport = $("<div>", {
+            "id"   : subChartID
+        });
+         
+        $content.append( $subReport );
+        $subReport.hide();
+        
+        pre.db = MMTDrop.databaseFactory.createFlowDB();
+        //retain only msg concern to appID
+        var arr = [];
+        //list of data of the appID
+        for( var i in data){
+            var msg = data[i];
+            if(  appID  ==   msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ])
+                arr.push( msg );
+        }
+        
+        pre.db.data( arr );
+        pre.filter.attachTo( pre.db );
+        pre.rep = ReportFactory.createDetailOfApplicationReport(appName, pre.filter, pre.db);
+        
+        pre.rep.charts[0].childrenTag = childrenTag;        
+        pre.rep.renderTo( subChartID );
+        
+        //fire the chain to render the chart
+        pre.rep.filters[0].filter();
+
+        var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+        
+        
+        $closeBtn.on("click", null, subChartID, function( event ){
+            var $a = $( "#" + event.data);
+            $a.hide("slow", "easeInQuart", function(){
+                $a.remove(); 
+                pre.$mainChart.show();
+            })
+        } );
+        
+        $subReport.find(".input-group").parent().hide().parent()
+            .append($closeBtn)
+            .append($("<div>", {
+                html: getHMTL(childrenTag) ,
+                style:"text-align: center; font-weight: bold"
+            }));
+        
+        $subReport.show("slow", "easeInQuart");
+    },
 }
 
 var ReportFactory = {
+    createDetailOfApplicationReport: function (appName, filter, database) {
+        var self = this;
+        var COL = MMTDrop.constants.FlowStatsColumn;
+        var fApp = MMTDrop.filterFactory.createAppFilter();
 
+        var cTable = MMTDrop.chartFactory.createTable({
+            getData: {
+                getDataFn: function (db) {
+                    var colToGroups = [
+                        COL.SERVER_ADDR, COL.CONTENT_CLASS
+                        
+                    ];
+                    var colToSums = [
+                        COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.TCP_RTT, COL.RETRANSMISSION_COUNT
+                    ];
+                    
+                    var data = db.data();
+                    
+                    var getIDs = function( arr ){
+                        var a = [];
+                        for( var i in arr )
+                            a.push( arr[i].id );
+                        return a;
+                    } 
+                    
+                    //the first column is Timestamp, so I start from 1 instance of 0
+                    var columns = [];
+
+                    var obj = MMTDrop.tools.sumByGroups(data, getIDs( colToSums ), getIDs( colToGroups ));
+
+                    for (var cls in obj) {
+                        var o = obj[cls];
+
+                        var total = 0;
+                        //sumup by col.id 
+                        o = MMTDrop.tools.sumUp(o, col.id);
+                        var v = o[col.id];
+                        data.push({
+                            "key": name,
+                            "val": v
+                        });
+
+                        total += o[col.id];
+                    }
+
+                    data.sort(function (a, b) {
+                        return a.val - b.val;
+                    });
+
+                    return {
+                        data: data,
+                        columns: [{
+                            "id": "key",
+                            label: "Source"
+                        }, {
+                            "id": "val",
+                            label: "Destination"
+                        }],
+                        ylabel: col.label
+                    };
+                }
+            },
+            afterRender: function (_chart) {
+                
+            }
+        });
+        //
+
+        var dataFlow = [{
+            object: filter,
+            effect: [{
+                object: fApp,
+                effect: [{
+                    object: cTable
+                }]
+                    }]
+        }, ];
+
+        var report = new MMTDrop.Report(
+            // title
+            null,
+
+            // database
+            database,
+
+            // filers
+					[fApp],
+
+            //charts
+					[
+                {
+                    charts: [cTable],
+                    width: 12
+                },
+					 ],
+
+            //order of data flux
+            dataFlow
+        );
+
+        return report;
+    },
     createDetailOfClassReport: function (filter, database) {
         var self = this;
         var COL = MMTDrop.constants.FlowStatsColumn;
@@ -306,8 +491,11 @@ var ReportFactory = {
                     });
                     $a.on("click", null, key, function( event ){
                         event.preventDefault();
+                        
+                        
+                        
                          var id = event.data;
-                        SubReport.loadChartOfClass(_chart.elemID, id, _chart.database.data());
+                        SubReport.loadChartOfOneApplication(_chart.elemID, id, _chart.database.data(), _chart.childrenTag);
                         
                         return false;
                     });
@@ -461,7 +649,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='50%'>Class</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     i++;
@@ -503,11 +691,12 @@ var ReportFactory = {
                     $a.on("click", null, key, function( event ){
                         event.preventDefault();
                         var id = event.data;
-                        var level = _chart.level;
-                        if( level == undefined )
-                            SubReport.loadChartOfClass(_chart.elemID, id, _chart.database.data());
-                        else if( level == 2 )
-                            SubReport.loadChartOfUser(_chart.elemID, id, _chart.database.data(), true);
+                        if( _chart.childrenTag == undefined )
+                            _chart.childrenTag = [];
+                        
+                        var childrenTag = _chart.childrenTag;
+                        
+                        SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
                             
                         return false;
                     });
@@ -728,13 +917,10 @@ var ReportFactory = {
                         event.preventDefault();
                         var ip = event.data;
                         
-                        
-                        var level = _chart.level;
-                        //for the first time
-                        if( level == undefined )
-                            SubReport.loadChartOfUser(_chart.elemID, ip, _chart.database.data());
-                        else if( level == 2 )
-                            SubReport.loadChartOfClass(_chart.elemID, ip, _chart.database.data(), true);
+                        if ( _chart.childrenTag == undefined )
+                            _chart.childrenTag = [];
+                        var childrenTag = _chart.childrenTag;
+                        SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
                         
                         
 

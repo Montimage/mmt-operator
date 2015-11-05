@@ -134,8 +134,9 @@ var MongoConnector = function (opts) {
     };
 
     self.getProtocolStats = function (options, callback) {
+        console.log( options );
         self.mdb.collection(options.collection).find({
-            format: options.format,
+            format: { $in : options.format },
             "time": {
                 '$gte': options.time.begin,
                 '$lte': options.time.end

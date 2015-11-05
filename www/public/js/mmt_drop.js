@@ -1457,7 +1457,7 @@ MMTDrop.databaseFactory = {
 		createFlowDB : function (param, isAutoLoad){
 			param = param || {};
 			//overwrite format to 0
-			param.format = 0;
+			param.format = [0, 1, 2];
 
 			var db = new MMTDrop.Database(param, function( data ){
 				//how data is process for flow

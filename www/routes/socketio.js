@@ -1,4 +1,5 @@
 var mmtAdaptor = require('../libs/dataAdaptor');
+var config     = require('../config.json');
 
 var router = function (io, redis) {
 
@@ -13,7 +14,7 @@ var router = function (io, redis) {
             var msg = JSON.parse(message);
             if( msg[4] != 99 )
                 return;
-            if( mmtAdaptor.convertProtocolStatFlow( msg ) == null)
+            if( mmtAdaptor.setDirectionProtocolStat( msg, config.mac_server ) == null)
                 return;
 
             msg[3] = msg[3] * 1000;

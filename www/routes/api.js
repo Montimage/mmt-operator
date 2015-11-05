@@ -61,7 +61,6 @@ router.get('/*', function (req, res, next) {
     if( period.indexOf("begin") > -1 && period.indexOf("end") > -1 )
         period = JSON.parse( period );
     
-    console.log( period );
 	var options;
     if( period.begin != undefined && period.end != undefined)
         options = getOptionsByPeriod2(period) ;
@@ -69,15 +68,19 @@ router.get('/*', function (req, res, next) {
         options = getOptionsByPeriod(period);
 
 	//default values
-	options.format = 100;
+	options.format = [];
 	options.raw    = true;
 	options.probe  = [];
 	options.source = [];
 	options.proto  = [];
     
-	if (req.query.format)
-		options.format = parseInt(req.query.format);
-	
+	if (req.query.format instanceof Array)
+        req.query.format.forEach( function (e){
+		    options.format.push( parseInt( e ) );
+        });
+	else if (req.query.format )
+        options.format.push( parseInt(req.query.format) );
+    
 	if (req.query.raw)
 		options.raw = (req.query.raw === 'true');
 	
