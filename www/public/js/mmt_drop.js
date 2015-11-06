@@ -944,6 +944,20 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	var _originalData = []; //it is data getting from MMT-Operator and it cannot be modified
 	var _this = this;		//pointer using in private methods
 
+    this.delete = function(){
+        _data = [];
+        _originalData = [];
+        _callbacks = [];
+        if( _socket )
+            _socket.disconnect();
+        
+        var db = MMTDrop.object.database;
+        for( var i in db )
+            if( db[i] == this ){
+                db.splice( i, 1 );
+                break;
+            }
+    }
 	/**
 	 * Get data of database
 	 * @returns {Data} data
@@ -1642,7 +1656,8 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		filter.appendTo( fdiv );
 		fdiv.appendTo(fcontainer);
 		fcontainer.appendTo($('#' + elemID));
-
+        
+        _this.domElement = fcontainer;
 		//add a list of options to the filter
 		_this.option( param.options );
 		_this.redraw();
@@ -1806,6 +1821,22 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		else 
 			throw new Error ("You need to implement how it filters data");
 	};
+    
+    this.delete = function(){
+        //unregistred the callbacks
+        _onFilterCallbacks = [];
+        
+        //remove from list of filter objects
+        var ft = MMTDrop.object.filter;
+        for( var i in ft)
+            if( ft[i] == this){
+                ft.splice( i, 1 );
+                break;
+            }
+        if( _this.domElement )
+            _this.domElement.remove();
+        
+    }
 };
 
 /**
@@ -2278,6 +2309,19 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
         _this.charts = _this.charts.concat( charts );
     }
         
+    
+    this.delete = function(){
+        _this.charts = [];
+        _this.callback = [];
+        
+        var re = MMTDrop.object.report;
+        for( var i in re )
+            if( re[i] == _this ){
+                re.splice( i, 1 );
+                break;
+            }
+        
+    }
     
 	/**
 	 * Register triggers
@@ -3485,6 +3529,9 @@ MMTDrop.Chart = function(option, renderFn){
 	var _isCopyData= false; //whether _database.data() is copied to _data
 	var _isVisible = true;
 
+    this.delete = function(){
+        
+    }
 	/**
 	 * Get the visibility property of the chart
 	 * @returns {boolean}
@@ -4456,10 +4503,16 @@ MMTDrop.chartFactory = {
 
 					for (var j = 1; j < msg.length; j++) {
 						if( option.columns[j].isMultiProbes == false){
-							var cell = $('<td>', {
-								text : msg[j],
-								align: "right"
-							});
+                            var val = msg[j];
+                            var opt = {
+									text : val,
+								};
+                                if( MMTDrop.tools.isNumber( val ))
+                                    opt.align = "right";
+ 
+								var cell = $('<td>', opt);
+                            
+							var cell = $('<td>', opt);
 							cell.appendTo(row_tr);
 						}else{
 							for( var k=0; k<option.columns[j].probes.length; k++){
@@ -4468,10 +4521,14 @@ MMTDrop.chartFactory = {
 								if( val == undefined )
 									val = 0;
 								
-								var cell = $('<td>', {
+                                var opt = {
 									text : val,
-									align: "right"
-								});
+								};
+                                if( MMTDrop.tools.isNumber( val ))
+                                    opt.align = "right";
+ 
+								var cell = $('<td>', opt);
+                                
 								cell.appendTo(row_tr);
 							}
 						}

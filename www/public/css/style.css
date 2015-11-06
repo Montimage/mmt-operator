@@ -31,6 +31,11 @@ body {
     display: none;
 }
 
+.overflow-auto-xy{
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
 @media ( min-width : 768px) {
     .sidebar {
         position: fixed;

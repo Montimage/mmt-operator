@@ -6,6 +6,14 @@
     padding-top: 10px;
     border-top: 1px solid #ccc;
 }
+@media ( max-width : 768px) {
+    #toolbar{
+        display: none !important;
+    }
+    #content{
+        padding: 0px !important;
+    }
+}
 #toolbar{
     border-bottom: 1px solid #ccc;
     box-shadow: 3px 3px 5px #ccc;
@@ -119,4 +127,8 @@
 }
 .ui-icon-gripsmall-diagonal-se{
     background-image: none !important;
+}
+
+.grid-stack .grid-stack-placeholder > .placeholder-content {
+  border: 2px dashed grey;
 }

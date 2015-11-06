@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 6,
-        height: 6,
+        height: 8,
         type: "danger",
         userData: {
             fn: "createTopUserReport"
@@ -17,7 +17,7 @@ var arr = [
         x: 6,
         y: 0,
         width: 6,
-        height: 6,
+        height: 8,
         type: "success",
         userData: {
             fn: "createTopProtocolReport"
@@ -26,8 +26,8 @@ var arr = [
 ];
 
 var availableReports = {
-    "createTopUserReport": "Top Users Report",
-    "createTopProtocolReport": "Top Protocols Report",
+    "createTopUserReport": "Top Users",
+    "createTopProtocolReport": "Top Protocols",
 }
 
 var database = MMTDrop.databaseFactory.createFlowDB();
@@ -124,13 +124,12 @@ var SubReport = {
         
         //get classID from className
         var CAT = MMTDrop.constants.CategoriesIdsMap;
-        var classID = 0;
+        var classID = -1;
         for(var i in CAT)
             if( CAT[i] == className){
                 classID = i;
                 break;
             }
-                
         
         pre.$mainChart = $("#" + elemID).parent().parent().parent().parent();
         pre.$mainChart.hide();
@@ -153,7 +152,8 @@ var SubReport = {
         var arr = [];
         //list of all app in the class classID
         var appLst = MMTDrop.constants.CategoriesAppIdsMap[ classID ];
-        //no classified
+
+        //All
         if( appLst == undefined)
             arr = data;
         else
@@ -226,7 +226,7 @@ var SubReport = {
         var subChartID = elemID + "_sub_chart";
         
         var $subReport = $("<div>", {
-            "id"   : subChartID
+            "id"   : subChartID,
         });
          
         $content.append( $subReport );
@@ -246,19 +246,30 @@ var SubReport = {
         pre.filter.attachTo( pre.db );
         pre.rep = ReportFactory.createDetailOfApplicationReport(appName, pre.filter, pre.db);
         
-        pre.rep.charts[0].childrenTag = childrenTag;        
-        pre.rep.renderTo( subChartID );
+        pre.rep.charts[0].childrenTag = childrenTag;   
+        try{
+            pre.rep.renderTo( subChartID );
         
-        //fire the chain to render the chart
-        pre.rep.filters[0].filter();
-
+            //fire the chain to render the chart
+            pre.rep.filters[0].filter();
+        }catch( err ){ 
+            console.error( err );
+            console.error( err.stack); 
+        }
         var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
         
         
-        $closeBtn.on("click", null, subChartID, function( event ){
-            var $a = $( "#" + event.data);
+        $closeBtn.on("click", null, {subChartID: subChartID, pre: pre}, function( event ){
+            var $a = $( "#" + event.data.subChartID);
+            var pre = event.data.pre;
             $a.hide("slow", "easeInQuart", function(){
                 $a.remove(); 
+
+                //delete a filter that was created by the report
+                pre.rep.filters[0].delete();
+                pre.rep.delete();
+                pre.db.delete();
+
                 pre.$mainChart.show();
             })
         } );
@@ -277,65 +288,101 @@ var SubReport = {
 var ReportFactory = {
     createDetailOfApplicationReport: function (appName, filter, database) {
         var self = this;
-        var COL = MMTDrop.constants.FlowStatsColumn;
+        var COL  = MMTDrop.constants.FlowStatsColumn;
+        var HTTP = MMTDrop.constants.HttpStatsColumn;
+        var SSL  = MMTDrop.constants.TlsStatsColumn;
+        var RTP  = MMTDrop.constants.RtpStatsColumn;
+        var FORMAT = MMTDrop.constants.CsvFormat;
         var fApp = MMTDrop.filterFactory.createAppFilter();
 
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var colToGroups = [
-                        COL.SERVER_ADDR, COL.CONTENT_CLASS
-                        
+                    var columns = [
+                        {id: COL.START_TIME.id, label: "Start Time"}, 
+                        {id: COL.SERVER_ADDR.id, label: "Server"}, 
+
                     ];
-                    var colToSums = [
-                        COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.TCP_RTT, COL.RETRANSMISSION_COUNT
+
+                    var colSum = [
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)"}, 
+                        //{id: COL.TCP_RTT.id, label: "RTT (s)"}, 
+                        {id: COL.RETRANSMISSION_COUNT.id, label:"Retrans."},
                     ];
+                    var havingAppPath = (appName == "NaP");
+                    if( havingAppPath )
+                        columns.push( {id: COL.PROTO_PATH.id, label: "Path"} );
                     
                     var data = db.data();
                     
-                    var getIDs = function( arr ){
-                        var a = [];
-                        for( var i in arr )
-                            a.push( arr[i].id );
-                        return a;
-                    } 
+                    var arr = [];
+                    var lastIndex = COL.APP_NAME.id + 1;
                     
-                    //the first column is Timestamp, so I start from 1 instance of 0
-                    var columns = [];
-
-                    var obj = MMTDrop.tools.sumByGroups(data, getIDs( colToSums ), getIDs( colToGroups ));
-
-                    for (var cls in obj) {
-                        var o = obj[cls];
-
-                        var total = 0;
-                        //sumup by col.id 
-                        o = MMTDrop.tools.sumUp(o, col.id);
-                        var v = o[col.id];
-                        data.push({
-                            "key": name,
-                            "val": v
-                        });
-
-                        total += o[col.id];
+                    var havingOther = false;
+                    
+                    for( var i in data){
+                        var msg     = data[i];
+                        var format  = msg[0];
+                        var obj     = {};
+                        
+                        var date = new Date( msg[COL.START_TIME.id] );
+                        obj[ COL.START_TIME.id ] = date.toISOString().replace('T',' ').replace('Z', '') ;
+                        
+                        var host;
+                        if( format == FORMAT.WEB_APP_FORMAT ){
+                            host = msg[ lastIndex + HTTP.HOSTNAME.id ];
+                        }
+                        else if ( format == FORMAT.SSL_APP_FORMAT ){
+                            host = msg[ lastIndex + SSL.SERVER_NAME.id ];
+                        }
+                        
+                        if( host != undefined )
+                            obj[COL.SERVER_ADDR.id]  = host ;
+                                //+ "("+ msg[COL.SERVER_ADDR.id] +")"; //hostname + ip
+                        else
+                            obj[COL.SERVER_ADDR.id]  = msg[COL.SERVER_ADDR.id]; // ip
+                        
+                        for( var j in colSum ){
+                                var val = msg[ colSum[j].id ];
+                                if( val == undefined )
+                                    val = 0;
+                            obj[ colSum[j].id ] = val;
+                        }
+                        
+                        var other = [];
+                        if( format == FORMAT.WEB_APP_FORMAT ){
+                            other.push( msg[ lastIndex + HTTP.MIME_TYPE.id ] );
+//                            other.push( msg[ lastIndex + HTTP.MIME_TYPE.id ] );                            
+                        }
+  
+                        if( other.length > 0 ){
+                            havingOther  = true;
+                            obj["other"] = other.join(", ");    
+                        }
+                        
+                        if( havingAppPath )
+                            obj[ COL.PROTO_PATH.id ] = MMTDrop.constants.getPathFriendlyName( msg[COL.PROTO_PATH.id] ) ;
+                            
+                        
+                        arr.push( obj );
+                            
                     }
-
-                    data.sort(function (a, b) {
-                        return a.val - b.val;
-                    });
-
+                    
+                    if( havingOther )
+                        colSum.push( {id: "other", label: "Other"} );
+                    
+                    columns = columns.concat( colSum  );
                     return {
-                        data: data,
-                        columns: [{
-                            "id": "key",
-                            label: "Source"
-                        }, {
-                            "id": "val",
-                            label: "Destination"
-                        }],
-                        ylabel: col.label
+                        data: arr,
+                        columns: columns
                     };
                 }
+            },
+            chart: {
+                //"scrollX": true,
+                //"scrollY": true,
+                dom: "f<'overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
             afterRender: function (_chart) {
                 
@@ -598,29 +645,46 @@ var ReportFactory = {
                         "data": {}
                     };
 
+                    var total = 0;
+
                     for (var cls in obj) {
                         var o = obj[cls];
-                        var name = MMTDrop.constants.getCategoryNameFromID(cls);
-
-                        var total = 0;
                         //sumup by col.id 
                         o = MMTDrop.tools.sumUp(o, col.id);
+
                         var v = o[col.id];
+                        if( v == 0 ) continue;
+
+                        //all
+                        /*
+                        if( cls == -1 ){
+                                total = v;
+                                continue;
+                        }
+                        */
+
+                        var name = MMTDrop.constants.getCategoryNameFromID(cls);
+
                         data.push({
                             "key": name,
                             "val": v
                         });
 
-                        total += o[col.id];
-
-                        cPie.dataLegend.data[name] = total;
-                        cPie.dataLegend.dataTotal += total;
+                        cPie.dataLegend.data[name] = v;
+                        cPie.dataLegend.dataTotal += v;
                     }
 
                     data.sort(function (a, b) {
                         return a.val - b.val;
                     });
 
+                    if( total != 0 ){
+                            var other = total - cPie.dataLegend.dataTotal;
+
+                            cPie.dataLegend.dataTotal = total;
+                            cPie.dataLegend.data["Unclassified"] = other;
+                            data.push( {"key": "Unclassified", "val": other} )
+                    }
                     return {
                         data: data,
                         columns: [{
@@ -695,8 +759,11 @@ var ReportFactory = {
                             _chart.childrenTag = [];
                         
                         var childrenTag = _chart.childrenTag;
-                        
-                        SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
+
+                        if( childrenTag.length == 1 && id == "NaP" )
+                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
+                        else
+                                SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
                             
                         return false;
                     });
@@ -920,7 +987,10 @@ var ReportFactory = {
                         if ( _chart.childrenTag == undefined )
                             _chart.childrenTag = [];
                         var childrenTag = _chart.childrenTag;
-                        SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
+                        if( childrenTag.length == 1 && childrenTag[0] == "NaP" )
+                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
+                        else
+                                SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
                         
                         
 

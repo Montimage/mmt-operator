@@ -331,6 +331,8 @@ var MMTDrop = {
         var COL       = this.FlowStatsColumnId;
         var rootIP = ipLib.mask(ip_server, mask);
         var isInside = function( ip ){
+            if( ip == ip_server )
+                return false;
             return ipLib.mask( ip, mask ) == rootIP
         }        
         
@@ -357,30 +359,30 @@ var MMTDrop = {
 
 MMTDrop.StatsTimePoint = function(entry) {
     var retval = {};
-    retval.format = entry[MMTDrop.StatsColumnId.FORMAT_ID];
-    retval.probe = entry[MMTDrop.StatsColumnId.PROBE_ID];
-    retval.source = entry[MMTDrop.StatsColumnId.SOURCE_ID];
-    retval.time = Math.floor(entry[MMTDrop.StatsColumnId.TIMESTAMP] * 1000);
+    retval.format           = entry[MMTDrop.StatsColumnId.FORMAT_ID];
+    retval.probe            = entry[MMTDrop.StatsColumnId.PROBE_ID];
+    retval.source           = entry[MMTDrop.StatsColumnId.SOURCE_ID];
+    retval.time             = Math.floor(entry[MMTDrop.StatsColumnId.TIMESTAMP] * 1000);
     
-    retval.app = entry[MMTDrop.StatsColumnId.APP_ID];
-    retval.path = entry[MMTDrop.StatsColumnId.APP_PATH];
+    retval.app              = entry[MMTDrop.StatsColumnId.APP_ID];
+    retval.path             = entry[MMTDrop.StatsColumnId.APP_PATH];
 
-    retval.ul_data    = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-    retval.dl_data    = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-    retval.ul_packets = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-    retval.dl_packets = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
+    retval.ul_data          = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
+    retval.dl_data          = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
+    retval.ul_packets       = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
+    retval.dl_packets       = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
     
-    retval.ul_payload = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-    retval.dl_payload = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
+    retval.ul_payload       = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
+    retval.dl_payload       = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
     
     retval.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
 
-    retval.bytecount = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-    retval.payloadcount = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-    retval.packetcount = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    retval.start_time = Math.floor(entry[MMTDrop.StatsColumnId.START_TIME] * 1000);
-    retval.mac_src = entry[MMTDrop.StatsColumnId.MAC_SRC];
-    retval.mac_dest = entry[MMTDrop.StatsColumnId.MAC_DEST];
+    retval.bytecount        = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
+    retval.payloadcount     = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
+    retval.packetcount      = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
+    retval.start_time       = Math.floor(entry[MMTDrop.StatsColumnId.START_TIME] * 1000);
+    retval.mac_src          = entry[MMTDrop.StatsColumnId.MAC_SRC];
+    retval.mac_dest         = entry[MMTDrop.StatsColumnId.MAC_DEST];
     return retval;
 }
 
