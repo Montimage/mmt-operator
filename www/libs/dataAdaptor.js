@@ -42,77 +42,78 @@ var MMTDrop = {
     /**
      * Constants: MMTDrop defined csv format types
      */
-    StatsColumnId : {
-        FORMAT_ID : 0, /**< Index of the format id column */
-        PROBE_ID : 1, /**< Index of the probe id column */
-        SOURCE_ID : 2, /**< Index of the data source id column */
-        TIMESTAMP : 3, /**< Index of the format id column */
-        APP_ID : 4, /**< Index of the application id column */
-        APP_PATH : 5, /**< Index of the application path column */
-        ACTIVE_FLOWS : 6, /**< Index of the active flows column */
-        DATA_VOLUME : 7, /**< Index of the data volume column */
-        PAYLOAD_VOLUME : 8, /**< Index of the payload data volume column */
-        PACKET_COUNT : 9, /**< Index of the packet count column */
-        UL_DATA_VOLUME : 10, /**< Index of the data volume column */
-        UL_PAYLOAD_VOLUME : 11, /**< Index of the payload data volume column */
-        UL_PACKET_COUNT : 12, /**< Index of the packet count column */
-        DL_DATA_VOLUME : 13, /**< Index of the data volume column */
-        DL_PAYLOAD_VOLUME : 14, /**< Index of the payload data volume column */
-        DL_PACKET_COUNT : 15, /**< Index of the packet count column */
-        START_TIME : 16, /**< Index of the start timestamp of the flow */
-        MAC_SRC : 17, /**< Index of the MAC address source column */
-        MAC_DEST : 18, /**< Index of the MAC address source column */
+    StatsColumnId           : {
+        FORMAT_ID           : 0, /**< Index of the format id column */
+        PROBE_ID            : 1, /**< Index of the probe id column */
+        SOURCE_ID           : 2, /**< Index of the data source id column */
+        TIMESTAMP           : 3, /**< Index of the format id column */
+        APP_ID              : 4, /**< Index of the application id column */
+        APP_PATH            : 5, /**< Index of the application path column */
+        ACTIVE_FLOWS        : 6, /**< Index of the active flows column */
+        DATA_VOLUME         : 7, /**< Index of the data volume column */
+        PAYLOAD_VOLUME      : 8, /**< Index of the payload data volume column */
+        PACKET_COUNT        : 9, /**< Index of the packet count column */
+        UL_DATA_VOLUME      : 10, /**< Index of the data volume column */
+        UL_PAYLOAD_VOLUME   : 11, /**< Index of the payload data volume column */
+        UL_PACKET_COUNT     : 12, /**< Index of the packet count column */
+        DL_DATA_VOLUME      : 13, /**< Index of the data volume column */
+        DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
+        DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
+        START_TIME          : 16, /**< Index of the start timestamp of the flow */
+        MAC_SRC             : 17, /**< Index of the MAC address source column */
+        MAC_DEST            : 18, /**< Index of the MAC address source column */
     },
     
     /**
      * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
      */
-    FlowStatsColumnId : {
-        FORMAT_ID : 0, /**< Index of the format id column */
-        PROBE_ID : 1, /**< Index of the probe id column */
-        SOURCE_ID : 2, /**< Index of the data source id column */
-        TIMESTAMP : 3, /**< Index of the format id column */
-        FLOW_ID : 4, /**< Index of the flow id column */
-        START_TIME : 5, /**< Index of the flow start time */
-        IP_VERSION : 6, /**< Index of the IP version number column */
-        SERVER_ADDR : 7, /**< Index of the server address column */
-        CLIENT_ADDR : 8, /**< Index of the client address column */
-        SERVER_PORT : 9, /**< Index of the server port column */
-        CLIENT_PORT : 10, /**< Index of the client port column */
-        TRANSPORT_PROTO : 11, /**< Index of the transport protocol identifier column */
-        UL_PACKET_COUNT : 12, /**< Index of the uplink packet count column */
-        DL_PACKET_COUNT : 13, /**< Index of the downlink packet count column */
-        UL_DATA_VOLUME : 14, /**< Index of the uplink data volume column */
-        DL_DATA_VOLUME : 15, /**< Index of the downlink data volume column */
-        TCP_RTT : 16, /**< Index of the TCP round trip time column */
-        RETRANSMISSION_COUNT : 17, /**< Index of the retransmissions count column */
-        APP_FAMILY : 18, /**< Index of the application family column */
-        CONTENT_CLASS : 19, /**< Index of the content class column */
-        PROTO_PATH: 20, /**< Index of the protocol path column */
-        APP_NAME : 21, /**< Index of the application name column */
-        APP_FORMAT_ID : 22, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+    FlowStatsColumnId           : {
+        FORMAT_ID               : 0, /**< Index of the format id column */
+        PROBE_ID                : 1, /**< Index of the probe id column */
+        SOURCE_ID               : 2, /**< Index of the data source id column */
+        TIMESTAMP               : 3, /**< Index of the format id column */
+        FLOW_ID                 : 4, /**< Index of the flow id column */
+        START_TIME              : 5, /**< Index of the flow start time */
+        IP_VERSION              : 6, /**< Index of the IP version number column */
+        SERVER_ADDR             : 7, /**< Index of the server address column */
+        CLIENT_ADDR             : 8, /**< Index of the client address column */
+        SERVER_PORT             : 9, /**< Index of the server port column */
+        CLIENT_PORT             : 10, /**< Index of the client port column */
+        IS_LOCAL                : 11, /** 0 (if not a local address), 1 (local address,server),2 (local address,client),3 (local address,both server and client)*/
+        TRANSPORT_PROTO         : 12, /**< Index of the transport protocol identifier column */
+        UL_PACKET_COUNT         : 13, /**< Index of the uplink packet count column */
+        DL_PACKET_COUNT         : 14, /**< Index of the downlink packet count column */
+        UL_DATA_VOLUME          : 15, /**< Index of the uplink data volume column */
+        DL_DATA_VOLUME          : 16, /**< Index of the downlink data volume column */
+        TCP_RTT                 : 17, /**< Index of the TCP round trip time column */
+        RETRANSMISSION_COUNT    : 18, /**< Index of the retransmissions count column */
+        APP_FAMILY              : 19, /**< Index of the application family column */
+        CONTENT_CLASS           : 20, /**< Index of the content class column */
+        PROTO_PATH              : 21, /**< Index of the protocol path column */
+        APP_NAME                : 22, /**< Index of the application name column */
+        //APP_FORMAT_ID           : 23, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
     },
     
     HttpStatsColumnId : {
-        RESPONSE_TIME : 0, /**< Index of the response time column */
-        TRANSACTIONS_COUNT : 1, /**< Index of the HTTP transactions count (req/res number) column */
-        INTERACTION_TIME : 2, /**< Index of the interaction time (between client and server) column */
-        HOSTNAME : 3, /**< Index of the hostname column */
-        MIME_TYPE : 4, /**< Index of the MIME type column */
-        REFERER : 5, /**< Index of the Referer column */
-        DEVICE_OS_ID : 6, /**< Index of the device and operating system ids column */
-        CDN_FLAG : 7, /**< Index of the is CDN delivered column */
+        RESPONSE_TIME       : 0, /**< Index of the response time column */
+        TRANSACTIONS_COUNT  : 1, /**< Index of the HTTP transactions count (req/res number) column */
+        INTERACTION_TIME    : 2, /**< Index of the interaction time (between client and server) column */
+        HOSTNAME            : 3, /**< Index of the hostname column */
+        MIME_TYPE           : 4, /**< Index of the MIME type column */
+        REFERER             : 5, /**< Index of the Referer column */
+        DEVICE_OS_ID        : 6, /**< Index of the device and operating system ids column */
+        CDN_FLAG            : 7, /**< Index of the is CDN delivered column */
     },
     
     TlsStatsColumnId : {
         SERVER_NAME : 0, /**< Index of the format id column */
-        CDN_FLAG : 1, /**< Index of the format id column */
+        CDN_FLAG    : 1, /**< Index of the format id column */
     },
     
     RtpStatsColumnId : {
-        PACKET_LOSS_RATE : 0, /**< Index of the format id column */
-        PACKET_LOSS_BURSTINESS : 1, /**< Index of the format id column */
-        MAX_JITTER : 2,
+        PACKET_LOSS_RATE        : 0, /**< Index of the format id column */
+        PACKET_LOSS_BURSTINESS  : 1, /**< Index of the format id column */
+        MAX_JITTER              : 2,
     },
    
 
@@ -429,6 +430,7 @@ MMTDrop.FlowStatsItem = function(entry) {
     retval.client_addr      = entry[MMTDrop.FlowStatsColumnId.CLIENT_ADDR];
     retval.server_port      = entry[MMTDrop.FlowStatsColumnId.SERVER_PORT];
     retval.client_port      = entry[MMTDrop.FlowStatsColumnId.CLIENT_PORT];
+    retval.is_local         = entry[MMTDrop.FlowStatsColumnId.IS_LOCAL];
     retval.transport_proto  = entry[MMTDrop.FlowStatsColumnId.TRANSPORT_PROTO];
     retval.ul_data          = entry[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME];
     retval.dl_data          = entry[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME];
@@ -456,6 +458,7 @@ MMTDrop.reverseFlowStatsItem = function(item) {
     retval[MMTDrop.FlowStatsColumnId.CLIENT_ADDR]           = item.client_addr;
     retval[MMTDrop.FlowStatsColumnId.SERVER_PORT]           = item.server_port;
     retval[MMTDrop.FlowStatsColumnId.CLIENT_PORT]           = item.client_port;
+    retval[MMTDrop.FlowStatsColumnId.IS_LOCAL]              = item.is_local;
     retval[MMTDrop.FlowStatsColumnId.TRANSPORT_PROTO]       = item.transport_proto;
     retval[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME]        = item.ul_data;
     retval[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME]        = item.dl_data;

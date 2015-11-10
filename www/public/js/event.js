@@ -27,7 +27,7 @@ var EVENTS = (function(){
 
 			// Cycle through channels queue, fire!
 			channels[channel].forEach(function(item) {
-				item(info != undefined ? info : {});
+				item(info !== undefined ? info : {});
 			});
 		}
 	};

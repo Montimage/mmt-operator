@@ -16,6 +16,7 @@ var probeRoute      = require('./routes/probe-server.js');
 var mmtAdaptor      = require('./libs/dataAdaptor');
 var dbc             = require('./libs/mongo_connector');
 var config          = require("./config.json");
+console.log( config );
 
 var serverIP        = config.database_server;
 

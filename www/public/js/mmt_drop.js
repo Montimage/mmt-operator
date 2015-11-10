@@ -142,57 +142,56 @@ MMTDrop.constants = {
 		 */
 		FlowStatsColumn : {
 			/** Index of the format id column */
-			FORMAT_ID : {id: 0, label:"Format"} ,
+			FORMAT_ID            : {id: 0, label:"Format"} ,
 			/** Index of the probe id column */
-			PROBE_ID  : {id: 1, label:"Probe"},
+			PROBE_ID             : {id: 1, label:"Probe"},
 			/** Index of the data source id column */
-			SOURCE_ID : {id: 2, label:"Source"},
+			SOURCE_ID            : {id: 2, label:"Source"},
 			/** Index of the format id column */
-			TIMESTAMP : {id: 3, label:"Timestamp"},
+			TIMESTAMP            : {id: 3, label:"Timestamp"},
 			/** Index of the flow id column */
-			FLOW_ID   : {id: 4, label:"Flow ID"},
+			FLOW_ID              : {id: 4, label:"Flow ID"},
 			/** Index of the flow start time */
-			START_TIME  : {id: 5, label:"Start Time"},
+			START_TIME           : {id: 5, label:"Start Time"},
 			/** Index of the IP version number column */
-			IP_VERSION  : {id: 6, label:"IP Version"},
+			IP_VERSION           : {id: 6, label:"IP Version"},
 			/** Index of the server address column */
-			SERVER_ADDR : {id: 7, label:"Server Address"},
+			SERVER_ADDR          : {id: 7, label:"Server Address"},
 			/** Index of the client address column */
-			CLIENT_ADDR : {id: 8, label:"Client Address"},
+			CLIENT_ADDR          : {id: 8, label:"Client Address"},
 			/** Index of the server port column */
-			SERVER_PORT : {id: 9, label:"Server Port"},
+			SERVER_PORT          : {id: 9, label:"Server Port"},
 			/** Index of the client port column */
-			CLIENT_PORT : {id: 10, label:"Client Port"},
+			CLIENT_PORT          : {id: 10, label:"Client Port"},
+            IS_LOCAL    : {id: 11, label: "Is local"},
 			/** Index of the transport protocol identifier column */
-			TRANSPORT_PROTO : {id: 11, label:"Transport Protocol"},
+			TRANSPORT_PROTO      : {id: 12, label:"Transport Protocol"},
 			/** Index of the uplink packet count column */
-			UL_PACKET_COUNT : {id: 12, label:"UP Packet Count"},
+			UL_PACKET_COUNT      : {id: 13, label:"UP Packet Count"},
 			/** Index of the downlink packet count column */
-			DL_PACKET_COUNT : {id: 13, label:"DL Packet Count"},
+			DL_PACKET_COUNT      : {id: 14, label:"DL Packet Count"},
 			/** Index of the uplink data volume column */
-			UL_DATA_VOLUME  : {id: 14, label:"UL Data Volume"},
+			UL_DATA_VOLUME       : {id: 15, label:"UL Data Volume"},
 			/** Index of the downlink data volume column */
-			DL_DATA_VOLUME  : {id: 15, label:"DL Data Volume"},
+			DL_DATA_VOLUME       : {id: 16, label:"DL Data Volume"},
 			/** Index of the TCP round trip time column.
-			 * 
 			 *  For UDP traffic this will be set to zero.
 			 */
-			TCP_RTT         : {id: 16, label:"TCP RTT"},
+			TCP_RTT              : {id: 17, label:"TCP RTT"},
 			/** Index of the retransmissions count column
-			 *
 			 * For UDP traffic this will be set to zero
 			 */
-			RETRANSMISSION_COUNT : {id: 17, label:"Retransmission Count"},
+			RETRANSMISSION_COUNT : {id: 18, label:"Retransmission Count"},
 			/** Index of the application family column */
-			APP_FAMILY    : {id: 18, label:"App Family"},
+			APP_FAMILY           : {id: 19, label:"App Family"},
 			/** Index of the content class column */
-			CONTENT_CLASS : {id: 19, label:"Content Class"},
+			CONTENT_CLASS        : {id: 20, label:"Content Class"},
 			/** Index of the protocol path column */
-			PROTO_PATH    : {id: 20, label:"Protocol Path"},
+			PROTO_PATH           : {id: 21, label:"Protocol Path"},
 			/** Index of the application name column */
-			APP_NAME      : {id: 21, label:"App Name"},
+			APP_NAME             : {id: 22, label:"App Name"},
 			/** Index of the start of the application specific statistics (this is not a real column, rather an index) */
-			APP_FORMAT_ID : {id: 22, label:"App Format ID"},
+			APP_FORMAT_ID        : {id: 23, label:"App Format ID"},
 		},
 
 		/**
@@ -552,8 +551,38 @@ MMTDrop.constants = {
  * A set of support tools
  * @namespace
  */
-MMTDrop.tools = function() {
-	var _this = {};	//this = Window when this inside function(){ ... }();
+MMTDrop.tools = function () {
+        var _this = {}; //this = Window when this inside function(){ ... }();
+
+    /**
+     * 
+     * @param   {[[integer]]} value
+     * @returns {[[string]]} 
+     */
+    _this.formatDataVolume = function (v) {
+        if (v >= 1000000000)
+            return (v / 1000000000).toPrecision(2) + "G";
+        if (v >= 1000000)
+            return (v / 1000000).toPrecision(2) + "M";
+        if (v >= 1000)
+            return Math.round(v / 1000) + "k";
+        return Math.round(v);
+    };
+    
+    _this.formatLocaleNumber = function( v ){
+        return v.toLocaleString();
+    }
+    
+    /**
+     * Get date and time string from a date object
+     * @param   {Date} 
+     * @returns {string} 
+     */
+    _this.formatDateTime = function (v) {
+        return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " +
+            v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() ;
+    };
+    
 	/**
 	 * Convert an object to an array
 	 * @param {Object} obj - object tobe converted
@@ -1471,7 +1500,8 @@ MMTDrop.databaseFactory = {
 		createFlowDB : function (param, isAutoLoad){
 			param = param || {};
 			//overwrite format to 0
-			param.format = [0, 1, 2];
+            if( param.format == undefined )
+    			param.format = [0, 1, 2];
 
 			var db = new MMTDrop.Database(param, function( data ){
 				//how data is process for flow
@@ -4055,7 +4085,7 @@ MMTDrop.chartFactory = {
 				for (var j=1; j<columns.length; j++){
 					//not root
 					//if( columns[j].label.indexOf("/") > 0 )
-                    if( columns[j].type == "area" )
+                    if( columns[j].type == "area-stack" )
 						groups.push( columns[j].label );
 				}
 
@@ -4093,7 +4123,7 @@ MMTDrop.chartFactory = {
 		        				type: "timeseries",
 		        				tick: {
 		        					format: function( v ){
-		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() +  (v.getMilliseconds() == 0 ? "": " " + v.getMilliseconds());
+		      	                	  return v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() ;
 		        					},
 		        	                count : 10,
 		        	            }
@@ -4107,24 +4137,13 @@ MMTDrop.chartFactory = {
                                   bottom: 10
                                 },
 		        				tick: {
-		        					format: function( v ){
-		        						if( v >= 1000000000 )
-		        							return (v/1000000000).toPrecision(2) + "G";
-		        						if( v >= 1000000 )
-		        							return (v/1000000).toPrecision(2) + "M";
-		        						if( v >= 1000 )
-		        							return Math.round(v/1000) + "k";
-		        						return Math.round(v);
-		        					}
+		        					format: MMTDrop.tools.formatDataVolume
 		        				}
 		        			}
 		        		},
 		        		tooltip:{
 		        			format: {
-		        				title: function( v ){ 
-		        					return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " + 
-	      	                	  	v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() +  (v.getMilliseconds() == 0 ? "": " " + v.getMilliseconds()); 
-		        					}
+		        				title: MMTDrop.tools.formatDateTime
 		        			}
 		        		},
 		        		grid: {

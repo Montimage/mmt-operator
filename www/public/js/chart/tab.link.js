@@ -317,8 +317,8 @@ var ReportFactory = {
                         var mac = msg[COL.MAC_SRC.id];
                         if (obj[mac] == undefined) {
                             obj[mac] = {
-                                "Address"    : mac,
                                 "Probe ID"   : "",
+                                "MAC Address": mac,
                                 "In Frames"  : 0,
                                 "Out Frames" : 0,
                                 "In Bytes"   : 0,
@@ -339,26 +339,37 @@ var ReportFactory = {
 
                     var columns = [ {id: "#", label:""} ];
                     for (var i in obj) {
-                        if (columns.length == 1)
+                        if (columns.length == 1){
                             for (var j in obj[i])
                                 columns.push({
                                     id      : j,
                                     label   : j
                                 });
-
-                        obj[i]["Start Time"]        = (new Date(obj[i]["Start Time"])).toLocaleString();
-                        obj[i]["Last Update Time"]  = (new Date(obj[i]["Last Update Time"])).toLocaleString();
+                            break;
+                        }
                     }
                     
                     var arr = MMTDrop.tools.object2Array( obj );
                     
                     arr.sort( function( a,b ){
-                        return b["In Frames"] - a["In Frames"] ;
+                        return b["Total Bytes"] - a["Total Bytes"] ;
                     } );
                     
                     for( var i=0; i<arr.length; i++)
                         arr[i]["#"] = i+1;
                     
+                    //Format data
+                    for (var i in obj) {
+                        //convert to time string    
+                        obj[i]["Start Time"]        = (new Date(obj[i]["Start Time"])).toLocaleString();
+                        obj[i]["Last Update Time"]  = (new Date(obj[i]["Last Update Time"])).toLocaleString();
+                        obj[i]["In Frames"]       = MMTDrop.tools.formatLocaleNumber( obj[i]["In Frames"]);
+                        obj[i]["Out Frames"]      = MMTDrop.tools.formatLocaleNumber( obj[i]["Out Frames"]);
+                        obj[i]["In Bytes"]        = MMTDrop.tools.formatDataVolume( obj[i]["In Bytes"]);
+                        obj[i]["Out Bytes"]       = MMTDrop.tools.formatDataVolume( obj[i]["Out Bytes"]);
+                        obj[i]["Total Bytes"]     = MMTDrop.tools.formatDataVolume( obj[i]["Total Bytes"]);
+                    }
+
                     
                     return {
                         data   : arr,
@@ -367,7 +378,7 @@ var ReportFactory = {
                 }
             },
             chart: {
-                "order": [[3, "desc"]],
+                "order": [[7, "desc"]],
                 dom: "ft<'row'<'col-sm-3'l><'col-sm-9'p>>",
             }
         });
@@ -429,10 +440,10 @@ var ReportFactory = {
             if (dir == 0) {
                 cols = [ _this.getCol(col, true) ];
                 cols.push(_this.getCol(col, false));
-                cols.push({
+                /*cols.push({
                     id: col.id,
                     label: "All"
-                });
+                });*/
             } else
                 cols = [_this.getCol(col, dir == 1)];
         }
@@ -536,11 +547,11 @@ var ReportFactory = {
                     if (dir == 0) {
                         cols.push(_this.getCol(col, true));
                         cols.push(_this.getCol(col, false));
-                        cols.push({
+                        /*cols.push({
                             id: col.id,
                             label: "All"
                                 //type : "line"
-                        });
+                        });*/
                     } else if (dir == 1)
                         cols.push(_this.getCol(col, true));
                     else
@@ -587,7 +598,7 @@ var ReportFactory = {
 
             chart: {
                 color: {
-                    pattern: ['red', 'green', 'blue']
+                    pattern: ['orange', 'green', 'blue']
                 },
                 point: {
                     //show: false,
