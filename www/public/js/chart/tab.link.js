@@ -328,6 +328,7 @@ var ReportFactory = {
                                 "Last Update Time": msg[COL.TIMESTAMP.id],
                             };
                         }
+                        
                         obj[mac]["Probe ID"]         = msg[COL.PROBE_ID.id];
                         obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
                         obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
@@ -337,14 +338,19 @@ var ReportFactory = {
                         obj[mac]["Last Update Time"] = msg[COL.TIMESTAMP.id];
                     }
 
-                    var columns = [ {id: "#", label:""} ];
+                    var columns = [ {id: "#", label: ""} ];
                     for (var i in obj) {
                         if (columns.length == 1){
-                            for (var j in obj[i])
-                                columns.push({
+                            for (var j in obj[i]){
+                                var col = {
                                     id      : j,
                                     label   : j
-                                });
+                                };
+                                
+                                if( ["In Frames", "Out Frames", "In Bytes", "Out Bytes", "Total Bytes"].indexOf( j) >= 0 )
+                                    col.align = "right";
+                                columns.push( col );
+                            }
                             break;
                         }
                     }
@@ -378,7 +384,7 @@ var ReportFactory = {
                 }
             },
             chart: {
-                "order": [[7, "desc"]],
+                "order": [[0, "asc"]],
                 dom: "ft<'row'<'col-sm-3'l><'col-sm-9'p>>",
             }
         });

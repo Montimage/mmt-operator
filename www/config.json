@@ -1,6 +1,10 @@
 {
-    "database_server" : "192.168.10.1",
-    "mac_server"      : "00:21:63:c9:d4:46",
-    "ip_server"       : "192.168.10.1",
-    "network_mask"     : "255.255.255.0"
+    "database_server"       : "192.168.10.1",
+    "database_buffer_size"  : 100,
+    "redis_server"          : "192.168.0.26",
+    "mac_gateway"           : "00:05:5d:89:26:78",
+    "local_network"         : [ { "ip": "192.168.0.0", "mask": "255.0.0.0"}, 
+                                { "ip": "172.16.0.0",  "mask": "255.0.0.0"},
+                                { "ip": "10.0.0.0",    "mask": "255.0.0.0"} ],
+    "probe_stats_period"    : 5
 }

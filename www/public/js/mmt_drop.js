@@ -561,11 +561,11 @@ MMTDrop.tools = function () {
      */
     _this.formatDataVolume = function (v) {
         if (v >= 1000000000)
-            return (v / 1000000000).toPrecision(2) + "G";
+            return (v / 1000000000).toPrecision(2) + "GB";
         if (v >= 1000000)
-            return (v / 1000000).toPrecision(2) + "M";
+            return (v / 1000000).toPrecision(2) + "MB";
         if (v >= 1000)
-            return Math.round(v / 1000) + "k";
+            return Math.round(v / 1000) + "KB";
         return Math.round(v);
     };
     
@@ -4521,18 +4521,26 @@ MMTDrop.chartFactory = {
 					row_name.appendTo(row_tr);
 
 					for (var j = 1; j < msg.length; j++) {
-						if( option.columns[j].isMultiProbes == false){
+                        
+                        var align = "left";
+                        if( option.columns[j].align )
+                            align = option.columns[j].align;
+                        else
+                            if( MMTDrop.tools.isNumber( val ))
+                                align = "right";
+                        
+                        if( option.columns[j].isMultiProbes == false){
                             var val = msg[j];
                             var opt = {
 									text : val,
 								};
-                                if( MMTDrop.tools.isNumber( val ))
-                                    opt.align = "right";
- 
-								var cell = $('<td>', opt);
+
+                                 
+							$('<td>', {
+									text : val,
+                                    align: align
+							}).appendTo(row_tr);
                             
-							var cell = $('<td>', opt);
-							cell.appendTo(row_tr);
 						}else{
 							for( var k=0; k<option.columns[j].probes.length; k++){
 								var prob = option.columns[j].probes[k];
@@ -4540,15 +4548,10 @@ MMTDrop.chartFactory = {
 								if( val == undefined )
 									val = 0;
 								
-                                var opt = {
+                                $('<td>', {
 									text : val,
-								};
-                                if( MMTDrop.tools.isNumber( val ))
-                                    opt.align = "right";
- 
-								var cell = $('<td>', opt);
-                                
-								cell.appendTo(row_tr);
+                                    align: align
+								}).appendTo(row_tr);
 							}
 						}
 					}

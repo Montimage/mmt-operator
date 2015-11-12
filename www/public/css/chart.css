@@ -132,3 +132,7 @@
 .grid-stack .grid-stack-placeholder > .placeholder-content {
   border: 2px dashed grey;
 }
+
+.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:focus, .navbar-inverse .navbar-nav>.active>a {
+    font-weight: bold;
+}

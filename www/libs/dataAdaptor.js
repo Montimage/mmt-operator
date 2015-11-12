@@ -91,7 +91,7 @@ var MMTDrop = {
         CONTENT_CLASS           : 20, /**< Index of the content class column */
         PROTO_PATH              : 21, /**< Index of the protocol path column */
         APP_NAME                : 22, /**< Index of the application name column */
-        //APP_FORMAT_ID           : 23, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+        APP_FORMAT_ID           : 23, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
     },
     
     HttpStatsColumnId : {
@@ -328,13 +328,23 @@ var MMTDrop = {
         return null;
     },
     
-    setDirectionProtocolFlow: function( msg, ip_server, mask){
+    setDirectionProtocolFlow: function( msg, local_network){
         var COL       = this.FlowStatsColumnId;
-        var rootIP = ipLib.mask(ip_server, mask);
+        
+        var rootsIP = [];
+        for( var i in local_network ){
+            var lo   = local_network[i];
+            var root = ipLib.mask(lo.ip, lo.mask);
+            
+            rootsIP.push(  {root: root, mask: lo.mask } );
+        }
         var isInside = function( ip ){
-            if( ip == ip_server )
-                return false;
-            return ipLib.mask( ip, mask ) == rootIP
+            for( var i in rootsIP ){
+                var lo = rootsIP[i];
+                if( ipLib.mask( ip, lo.mask ) == lo.root )
+                    return true;
+            }
+            return false;  
         }        
         
         if( isInside( msg[COL.CLIENT_ADDR] )  )

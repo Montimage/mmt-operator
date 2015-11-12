@@ -18,10 +18,9 @@ var dbc             = require('./libs/mongo_connector');
 var config          = require("./config.json");
 console.log( config );
 
-var serverIP        = config.database_server;
 
 var dbconnector = new dbc( {
-    connectString: 'mongodb://'+ serverIP +':27017/mmt-data'
+    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data'
 });
 
 var app = express();
@@ -34,7 +33,7 @@ app.io = io;
 var redis = require("redis");
 redis._createClient = redis.createClient;
 redis.createClient = function(){
-    return redis._createClient(6379, serverIP, {});
+    return redis._createClient(6379, config.redis_server, {});
 }
 probeRoute.api = api;
 probeRoute.startListening(dbconnector, redis);
@@ -57,7 +56,7 @@ app.use(session({
 }))
 
 
-routes.dbConnectionString = 'mongodb://'+ serverIP +':27017/mmt-admin';
+routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';
 
 app.use('/', routes);
 app.use('/chart/', chartRoute);
