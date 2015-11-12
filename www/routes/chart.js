@@ -1,5 +1,6 @@
 var express = require('express');
-var router = express.Router();
+var router  = express.Router();
+var config  = require("../config.json");
 
 router.get('/*', function(req, res, next) {
     
@@ -39,7 +40,7 @@ router.get('/*', function(req, res, next) {
 		var err = new Error('Not Found');
 		err.status = 404;
 	}else
-		res.render("chart", { title: page.title, page_id: id, pages: pages});
+		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period });
 });
 
 module.exports = router;

@@ -83,6 +83,8 @@ block content
                 span.glyphicon.glyphicon-trash
         #toolbar-box
     #content
+        script(type='text/javascript').
+            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
         

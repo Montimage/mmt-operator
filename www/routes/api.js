@@ -1,8 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-router.lastPacketTimestamp = {};
-
 router.get('/*', function (req, res, next) {
     var dbconnector = router.dbconnector;
     
@@ -114,25 +112,13 @@ router.get('/*', function (req, res, next) {
 		});
     }
 
-    var lastTS = 0;
-    for( var i in options.format )
-        if( router.lastPacketTimestamp[i] && lastTS < router.lastPacketTimestamp[i] )
-            lastTS = router.lastPacketTimestamp[i];
-    
     if( options.time.begin != undefined )
         queryDate( options );
     else
-        if( lastTS != 0 ){
-            var inteval  = options.time;
-		    options.time = {begin: lastTS - inteval, end: lastTS };
-         
-            queryDate( options );
-        }
-    	else dbconnector.getLastTime(options.format, function(err, time, format){
+        dbconnector.getLastTime(options.format, function(err, time){
 	    	if( err )
 		    	return next(err);
 		
-            router.lastPacketTimestamp[format] = time;
     		console.log("lastime: %d %s", time, new Date(time));
         
             var inteval = options.time;

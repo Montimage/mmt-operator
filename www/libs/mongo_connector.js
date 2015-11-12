@@ -1,10 +1,150 @@
-var moment      = require('moment');
+var moment = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
-var config      = require("../config.json");
+var config = require("../config.json");
 
 var MongoClient = require('mongodb').MongoClient,
     format = require('util').format;
 
+var Cache = function ( period ) {
+    this.data = [];
+    this.add = function (msg) {
+        this.data.push(msg);
+    };
+    
+    this.addArray = function( arr ){
+        this.data = this.data.concat( arr );
+    }
+    this.clear = function () {
+        this.data = [];
+    };
+    this.getLength = function () {
+        return this.data.length;
+    };
+    this.getData = function () {
+        /**
+         * [[Description]]
+         * @param   {Object}   message  [[Description]]
+         * @returns {Object}   [[Description]]
+         */
+        var getKeyData = function (message) {
+            var key = {},
+                data = {};
+
+
+            if (message.format === 100) { //TODO: replace with definition
+                key = {
+                    format: message.format,
+                    probe: message.probe,
+                    source: message.source,
+                    path: message.path,
+                    mac_src: message.mac_src,
+                    mac_dest: message.mac_dest
+                };
+                data = {
+                    '$set': {
+                        active_flowcount: message.active_flowcount,
+                        app: message.app
+                    },
+                    '$inc': {
+                        bytecount: message.bytecount,
+                        payloadcount: message.payloadcount,
+                        packetcount: message.packetcount,
+                        dl_data: message.dl_data,
+                        ul_data: message.ul_data,
+                        dl_packets: message.dl_packets,
+                        ul_packets: message.ul_packets,
+                        ul_payload: message.ul_payload,
+                        dl_payload: message.dl_payload
+                    }
+                };
+            } else {
+                key = {
+                    format: message.format,
+                    probe: message.probe,
+                    source: message.source,
+                    path: message.path,
+                    server_addr: message.server_addr,
+                    client_addr: message.client_addr,
+                    app: message.app
+
+                };
+
+                if (message.format === 0) {
+                    data = {
+                        '$inc': {
+                            dl_data: message.dl_data,
+                            ul_data: message.ul_data,
+                            dl_packets: message.dl_packets,
+                            ul_packets: message.ul_packets,
+                            count: 1
+                        }
+                    }
+
+                } else if (message.format === 1) { //TODO: replace with definition
+                    data = {
+                        '$inc': {
+                            response_time: message.response_time,
+                            transactions_count: message.transactions_count,
+                            interaction_time: message.interaction_time,
+                            count: 1
+                        }
+                    };
+
+                } else if (message.format === 3) { //TODO: replace with definition
+                    data = {
+                        '$inc': {
+                            packet_loss: message.packet_loss,
+                            packet_loss_burstiness: message.packet_loss_burstiness,
+                            jitter: message.jitter,
+                            count: 1
+                        }
+                    };
+
+                }
+            }
+
+            key.time = moment(message.time).startOf( period ).valueOf();
+            return {
+                key: key,
+                data: data
+            };
+        };
+
+        var obj = {};
+        for (var i in this.data) {
+            var msg = this.data[i];
+            var o = getKeyData(msg);
+            var key = o.key;
+            var data = o.data;
+
+            var txt = JSON.stringify(key);
+
+            if (obj[txt] == undefined) {
+                obj[txt] = {};
+                for (var j in key)
+                    obj[txt][j] = key[j];
+            }
+
+            var oo = obj[txt];
+
+            //increase
+            for (var j in data['$inc'])
+                if (oo[j] == undefined)
+                    oo[j] = data['$inc'][j];
+                else
+                    oo[j] += data['$inc'][j];
+                //set
+            for (var j in data['$set'])
+                oo[j] = data['$set'][j];
+
+            //console.log( oo );
+        }
+        var arr = [];
+        for( var i in obj )
+            arr.push( obj[i] );
+        return arr;
+    };
+};
 
 var MongoConnector = function (opts) {
     this.mdb = null;
@@ -16,169 +156,108 @@ var MongoConnector = function (opts) {
 
     var self = this;
 
+    var cache = {
+        minute : new Cache("minute"),
+        hour   : new Cache("hour"),
+        day    : new Cache("day")
+    }
+    
+    
+    
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb = db;
         console.log("Connected to Database");
     });
 
-    self.insertUpdateDB = function (collection, key, val) {
-        if (self.mdb == null) return;
-        //update record, insert it if not exists
-        self.mdb.collection(collection).update(key, val, {
-            upsert: true
-        }, function (err) {
-            if (err) throw err;
-            //console.log("Record updated");
-        });
-    };
 
-    var getKeyData = function( message ){
-        var key = {}, data = {};
-        
-        
-        if (message.format === 100) { //TODO: replace with definition
-            key = {
-                format  : message.format,
-                probe   : message.probe,
-                source  : message.source,
-                path    : message.path,
-                mac_src : message.mac_src,
-                mac_dest: message.mac_dest
-            };
-            data = {
-                '$set': {
-                    active_flowcount: message.active_flowcount,
-                    app: message.app
-                },
-                '$inc': {
-                    bytecount   : message.bytecount,
-                    payloadcount: message.payloadcount,
-                    packetcount : message.packetcount,
-                    dl_data     : message.dl_data,
-                    ul_data     : message.ul_data,
-                    dl_packets  : message.dl_packets,
-                    ul_packets  : message.ul_packets,
-                    ul_payload  : message.ul_payload,
-                    dl_payload  : message.dl_payload
-                }
-            };
-        } else {
-            key = {
-                format      : message.format,
-                probe       : message.probe,
-                source      : message.source,
-                path        : message.path,
-                server_addr : message.server_addr,
-                client_addr : message.client_addr,
-                app         : message.app
-                
-            };
-
-            if (message.format === 0) {
-                data = {
-                    '$inc': {
-                        dl_data     : message.dl_data,
-                        ul_data     : message.ul_data,
-                        dl_packets  : message.dl_packets,
-                        ul_packets  : message.ul_packets,
-                        count: 1
-                    }
-                }
-
-            } else if (message.format === 1) { //TODO: replace with definition
-                data = {
-                    '$inc': {
-                        response_time       : message.response_time,
-                        transactions_count  : message.transactions_count,
-                        interaction_time    : message.interaction_time,
-                        count: 1
-                    }
-                };
-
-            } else if (message.format === 3) { //TODO: replace with definition
-                data = {
-                    '$inc': {
-                        packet_loss             : message.packet_loss,
-                        packet_loss_burstiness  : message.packet_loss_burstiness,
-                        jitter                  : message.jitter,
-                        count                   : 1
-                    }
-                };
-
-            }
-        }
-        
-        key.time = moment(message.time).startOf('minute').valueOf();
-        
-        return {key: key, data: data};
-
-    }
+    self.lastTimestamps = {};
     
-    self.updateHistoricalStats = function (message) {
-        // For Protocol stats, update minutes and hours stats
-        var obj = getKeyData( message );
-        var data = obj.data,
-            key  = obj.key;
-        
-        if( key == undefined || key == {} )
-            return;
-        
-        if (message.format === 100) { //TODO: replace with definition
-            
-            self.insertUpdateDB("traffic_min", key, data);
-
-            key.time = moment(message.time).startOf('hour').valueOf();
-            self.insertUpdateDB("traffic_hour", key, data);
-
-            key.time = moment(message.time).startOf('day').valueOf();
-            self.insertUpdateDB("traffic_day", key, data);
-            
-            return;
-        }
-           
-
-        
-        self.insertUpdateDB("traffic_min", key, data);
-
-        key.time = moment(message.time).startOf('hour').valueOf();
-        self.insertUpdateDB("traffic_hour", key, data);
-
-        key.time = moment(message.time).startOf('day').valueOf();
-        self.insertUpdateDB("traffic_day", key, data);
-    };
-
     /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
      */
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
+
+        self.lastTimestamps[ message.format ] = message.timeStamp;
+        
+        self.mdb.collection("traffic").insert( message, function (err, records) {
+            if( err ) throw err;
+        });
+        
+        var ts = message.time;
         
         //add message to cache
-        self.cache.add( message );
+        cache.minute.add(message);
         
-        //if cache is huge, flush it to database
-        if( self.cache.getLength() >= config.database_buffer_size ){
-            self.flushCacheToDatabase();
-            self.cache.clear();
+        if( cache.minute.lastUpdateTime === undefined )
+            cache.minute.lastUpdateTime = ts;
+       
+        //if cache is in minute ==> UPDATE Minute
+        else if ( ts - cache.minute.lastUpdateTime >= 60*1000 ) {
+            
+            var data = cache.minute.getData();
+            self.mdb.collection("traffic_min").insert( data, function (err, records) {
+                if( err ) throw err;
+                console.log( ">>>>>>> flush " + data.length + " records to traffic_min" );
+            });
+            cache.minute.lastUpdateTime = ts;
+            cache.minute.clear();
+            
+            cache.hour.addArray( data );
+            
+            if( cache.hour.lastUpdateTime === undefined )
+                cache.hour.lastUpdateTime = ts;
+            else if( ts - cache.hour.lastUpdateTime >= 60*60*1000 ){
+                
+                //update traffic hour
+                data = cache.hour.getData();
+                self.mdb.collection("traffic_hour").insert( data, function (err, records) {
+                    if( err ) throw err;
+                    console.log( ">>>>>>> flush " + data.length + " records to traffic_hour" );
+                });
+                cache.hour.lastUpdateTime = ts;
+                cache.hour.clear();
+                
+                cache.day.addArray( data );
+                
+                if( cache.day.lastUpdateTime === undefined )
+                    cache.day.lastUpdateTime = ts;
+                else if( ts - cache.day.lastUpdateTime >= 24*60*60*1000 ){
+                    data = cache.day.getData();
+                    self.mdb.collection("traffic_day").insert( data, function (err, records) {
+                        if( err ) throw err;
+                        console.log( ">>>>>>> flush " + data.length + " records to traffic_day" );
+                    });
+                    
+                    cache.day.lastUpdateTime = ts;
+                    cache.day.clear();
+                    
+                    
+                    //Delete old data in traffic_min, retain only data from the last day
+                    self.mdb.collection("traffic_min").deleteMany( { time : {"$lt" : ts - 24*60*60*1000 } }, 
+                        function( err, result){ 
+                            if( err ) throw err; 
+                            console.log("<<<<< delete records in traffic_min older than " + ts - 24*60*60*1000 );
+                                              } );
+                }
+                
+                //Delete old data in traffic. Retain only data from the last hour
+                self.mdb.collection("traffic").deleteMany( { time : {"$lt" : ts - 60*60*1000} }, 
+                    function( err, result){ 
+                        if( err ) throw err; 
+                        console.log("<<<<< delete records in traffic older than " + ts - 60*60*1000 );
+                } );
+                                                            
+
+
+            }
         }
+        
+        
     };
 
-    self.flushCacheToDatabase = function(){
-
-        self.mdb.collection( "traffic" ).insert( self.cache.data , function (err, records) {
-            if ( err ) return;
-            var data = self.cache.getData();
-            var total = 0;
-            for( var i in data ){
-                var msg = data[i];
-                //self.updateHistoricalStats( msg );
-                total ++;
-            }
-            console.log( ">>>>>>>>> flush " + total +" records in the cache to database >>>>>>>>>");
-        });
-    }
 
     /**
      * [[Description]]
@@ -186,36 +265,38 @@ var MongoConnector = function (opts) {
      * @param {[[Type]]} callback [[Description]]
      */
     self.getProtocolStats = function (options, callback) {
-        console.log( options );
-        
-        var start_ts =  (new Date()).getTime();
-        
+        console.log(options);
+
+        var start_ts = (new Date()).getTime();
+
         var cursor = self.mdb.collection(options.collection).find({
-            format: { $in : options.format },
+            format: {
+                $in: options.format
+            },
             "time": {
                 '$gte': options.time.begin,
                 '$lte': options.time.end
             }
         });
 
-        cursor.toArray( function (err, doc) {
+        cursor.toArray(function (err, doc) {
             if (err) {
                 callback('InternalError');
                 return;
             }
-            
+
             var end_ts = (new Date()).getTime();
             var ts = end_ts - start_ts;
-            
-            console.log( "\n got " + doc.length + " records, took " + ts + " ms\n");
-            
+
+            console.log("\n got " + doc.length + " records, took " + ts + " ms\n");
+
             if (options.raw) {
                 var data = [];
                 for (i in doc) {
                     var record = dataAdaptor.reverseFormatReportItem(doc[i]);
                     data.push(record);
                 }
-                
+
                 callback(null, data);
             } else {
                 callback(null, doc);
@@ -231,7 +312,20 @@ var MongoConnector = function (opts) {
      */
     self.getLastTime = function (formats, cb) {
         if (self.mdb == null) return;
-        self.mdb.collection("traffic").find({format: {$in: formats}}).sort({
+        
+        for( var i in formats ){
+            var fo = formats[i];
+            if( self.lastTimestamps[ fo ] ){
+                cb( self.lastTimestamps[ fo ] );
+                return;
+            }
+        }
+        
+        self.mdb.collection("traffic").find({
+            format: {
+                $in: formats
+            }
+        }).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {
@@ -244,58 +338,6 @@ var MongoConnector = function (opts) {
                 cb(null, (new Date()).getTime(), 0);
         });
     };
-    
-    
-    /**
-    * 
-    */
-    this.cache = {
-        data: [],
-        add: function( msg ){
-            this.data.push( msg );
-            return this.data;
-        },
-        clear: function(){
-            this.data = [];
-        },
-        getLength: function(){
-            return this.data.length ;
-        },
-        getData: function(){
-            var obj = {} ;
-            for( var i in this.data ){
-                var msg = this.data[i];
-                var o   = getKeyData( msg );
-                var key = o.key;
-                var data= o.data;
-                
-                var txt = JSON.stringify( key );
-                
-                if( obj[ txt ] == undefined ){
-                    obj[ txt ] = {};
-                    for( var j in key )
-                        obj[ txt ][ j ] = key[ j ];
-                }
-                
-                var oo = obj[ txt ];
-                
-                //increase
-                for( var j in data['$inc'] )
-                    if( oo[j] == undefined)
-                        oo[ j ] = data['$inc'][ j ];
-                    else                
-                        oo[ j ] += data['$inc'][ j ];
-                //set
-                for( var j in data['$set'] )
-                    oo[ j ] = data['$set'][ j ];
-                
-                //console.log( oo );
-            }
-//            console.log( obj );
-            return obj;
-        }
-    };
-    
 };
 
 module.exports = MongoConnector;

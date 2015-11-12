@@ -43,9 +43,11 @@ var availableReports = {
     "createTrafficReport":  "Traffic"
 }
 
+var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+
 var database = MMTDrop.databaseFactory.createStatDB();
-var filters = [MMTDrop.filterFactory.createPeriodFilter(),
-                MMTDrop.filterFactory.createProbeFilter()];
+var filters = [ fPeriod, fProbe];
 
 
 //create reports
@@ -73,6 +75,41 @@ var ReportFactory = {
             type    : "area"
         };
     },
+    
+    //add zero to the period having no data 
+    addZeroPoints : function( data, period, time_id ){
+        if( data instanceof Array == false )
+            data = MMTDrop.tools.object2Array( data );
+        
+        data.sort( function( a, b){
+            return b[ time_id ] - a[time_id]
+        } )
+        
+        var arr    = [];
+        var lastTS ;
+        period = period * 1000;
+        for( var i in data ){
+            var ts = data[i][ time_id ];
+            if( lastTS === undefined )
+                lastTS = ts;
+            if( ts - lastTS > period * 2 ){
+
+                var zero = {};
+                zero[ time_id ] = lastTS + period;
+                arr.push( zero );
+
+
+                zero = {};
+                zero[ time_id ] = ts - period;
+                arr.push( zero );
+
+                lastTS = ts;
+            }
+
+            arr.push( data[i] );
+        }
+        return arr;           
+    },
 
     createProtocolReport: function (fProbe, database) {
         var self = this;
@@ -95,27 +132,30 @@ var ReportFactory = {
 
                     var data = {};
                     //the first column is Timestamp, so I start from 1 instance of 0
-                    var columns = [TIME];
+                    var columns = [];
 
-                    var obj = db.stat.splitDataByClass();
+                    var period = fPeriod.getSamplePeriod();
+                    
+                    var obj = db.stat.splitDataByApp();
 
                     cLine.dataLegend = {
                         "dataTotal": 0,
                         "label": col.label,
                         "data": {}
                     };
+                    
                     for (var cls in obj) {
                         var o    = obj[cls];
-                        var name = MMTDrop.constants.getCategoryNameFromID(cls);
+                        var name = MMTDrop.constants.getProtocolNameFromID(cls);
                         
                         var total = 0;
                         //sumup by time
                         o = MMTDrop.tools.sumByGroup(o, colToSum.id, TIME.id);
                         for (var t in o) {
-                            var v = o[t][colToSum.id];
-                            if (data[t] == undefined)
+                            var v = o[t][colToSum.id] / period;
+                            if (data[t] == undefined){
                                 data[t] = {};
-
+                            }
                             data[t][cls] = v;
 
                             total += v;
@@ -127,22 +167,76 @@ var ReportFactory = {
                         columns.push({
                             id   : cls,
                             label: name,
-                            type : "area",
+                            type : "area-stack",
                             value: total
                         });
                     }
 
-                    //flat data
-                    var arr = [];
-                    for (var o in data) {
-                        var oo = data[o];
-                        oo[TIME.id] = o;
-                        arr.push(oo);
-                    }
 
+                    
                     columns.sort( function( a, b){
                         return a.value < b.value;
                     } );
+                    
+                    
+                    var top = 3;
+                    if( columns.length > top && cLine.showAll !== true){
+                        var val = 0;
+                        for( var i=top; i<columns.length; i++)
+                            val += columns[i].value;
+                        
+                        
+                        columns.splice( top, columns.length - top);
+                        
+                        //update data
+                        for (var i in data ){
+                            var msg = data[i];
+                            var v = 0;
+                            for( var j in columns )
+                                if( msg[ columns[j].id ] )
+                                    v += msg[ columns[j].id ];
+                            var v2 = 0;
+                            for( var j in msg )
+                                v2 += msg[j];
+                            
+                            msg["other"] = v2 - v;
+                        }
+                                
+                                
+                        columns.push( {
+                            id   : "other",
+                            label: "Other",
+                            value: val,
+                            type : "area-stack"
+                        });
+                        
+                        columns.sort( function( a, b){
+                            return a.value < b.value;
+                        } );
+                        
+                        //reset dataLegend
+                        cLine.dataLegend.data = {};
+                        for (var i = 0; i <= top; i++) {
+                            var o = columns[i];
+                            cLine.dataLegend.data[o.label] = o.value;
+                        }
+                    }
+                        
+                        
+                    for( var i in columns )    
+                        if( columns[i].value === 0){
+                            columns.splice( i, columns.length - i );
+                            break;
+                        }
+                    //the first column is timestamp
+                    columns.unshift( TIME );
+                    
+                    
+                    for( var t in data )
+                        data[t][ TIME.id ] = parseInt(t);
+                    
+                    
+                    var arr = self.addZeroPoints( data );
                     
                     return {
                         data   : arr,
@@ -191,6 +285,8 @@ var ReportFactory = {
                 $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
+                    if (key == "Other")
+                        continue;
                     i++;
                     var val = legend.data[key];
                     var $tr = $("<tr>");
@@ -222,7 +318,7 @@ var ReportFactory = {
                     }).appendTo($tr);
                     $("<td>", {
                         "align": "right",
-                        "text": val
+                        "text" :  MMTDrop.tools.formatDataVolume( val )
                     }).appendTo($tr);
 
                     $("<td>", {
@@ -231,7 +327,67 @@ var ReportFactory = {
 
                     }).appendTo($tr);
                 }
-                $("<tfoot>").append(
+                //footer of table
+                var $tfoot = $("<tfoot>");
+
+                if (legend.data["Other"] != undefined) {
+                    i++;
+                    $tr = $("<tr>");
+                    var key = "Other";
+                    var val = legend.data[key];
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right"
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            var id = $(this).data("id");
+                            chart.toggle(id);
+                            //$(this).css("background-color", chart.color(id) );
+                        })
+                        .appendTo($tr);
+
+                    var $a = $("<a>", {
+                        href: "?show all clients",
+                        title: "click to show all clients",
+                        text: "Other",
+                        
+                    });
+                    $a.on("click", function(){
+                       _chart.showAll = true;
+                       _chart.redraw(); 
+                        return false;
+                    });
+                    
+                    $("<td>").append( $a ).appendTo($tr);
+
+                    
+                    $("<td>", {
+                        "align": "right",
+                        "html":  MMTDrop.tools.formatDataVolume( val )
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+
+                    }).appendTo($tr);
+
+                    $tfoot.append($tr).appendTo($table);
+                }
+                
+                $tfoot.append(
                     $("<tr>", {
                         "class": 'success'
                     }).append(
@@ -246,7 +402,7 @@ var ReportFactory = {
                     ).append(
                         $("<td>", {
                             "align": "right",
-                            "text": legend.dataTotal
+                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
                         })
                     ).append(
                         $("<td>", {
@@ -258,7 +414,7 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom   : "t",
-                    order : [[2, "desc"]]
+                    order : [[3, "desc"]]
                 });
             }
         });
@@ -459,7 +615,7 @@ var ReportFactory = {
 
         var appendMsg = function (msg) {
             
-            if (msg[COL.APP_ID.id] != 99)
+            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
                 return;
 
             console.log( JSON.stringify(msg) );
@@ -477,7 +633,7 @@ var ReportFactory = {
                 c = cols[c];
                 var serieName = c.label;
 
-                var val = msg[c.id];
+                var val = msg[c.id] / MMTDrop.config.probe_stats_period;
 
                 if (newData[serieName] === undefined)
                     newData[serieName] = 0;
@@ -510,8 +666,8 @@ var ReportFactory = {
 
                 if( data.length > 0 ){
                     var min  = data[0].values[0].x;
-
-                    if( time - min > 1*60*1000)
+                    //keep only data in the chart from the last 5 minutes
+                    if( time - min > 5*60*1000)
                         length = 1;
                 }
                 
@@ -549,10 +705,12 @@ var ReportFactory = {
                     var cols = [];
 
 
+                    var period = fPeriod.getSamplePeriod();
+                    
                     //dir = 1: incoming, -1 outgoing, 0: All
                     if (dir == 0) {
-                        cols.push(_this.getCol(col, true));
                         cols.push(_this.getCol(col, false));
+                        cols.push(_this.getCol(col, true));
                         /*cols.push({
                             id: col.id,
                             label: "All"
@@ -563,41 +721,42 @@ var ReportFactory = {
                     else
                         cols.push(_this.getCol(col, false));
 
-                    var arr = {};
-                    var ethernet = 99;
+                    var obj = {};
                     var data = db.data();
                     for (var i in data) {
                         var msg = data[i];
                         var proto = msg[COL.APP_ID.id];
 
-                        if (proto != ethernet || msg[0] != 100)
+                        if ( msg[0] != 100)
                             continue;
 
                         var time = msg[ COL.TIMESTAMP.id ];
                         var exist = true;
         
                         //data for this timestamp does not exist before
-                        if( arr[time] == undefined ){
+                        if( obj[time] == undefined ){
                             exist = false;
-                            arr[time] = {};
-                            arr[time][ COL.TIMESTAMP.id ] = time;
+                            obj[time] = {};
+                            obj[time][ COL.TIMESTAMP.id ] = time;
                         }
 
                         
                         for (var j in cols) {
                             var id = cols[j].id;
                             if( exist )
-                                arr[time][id] += msg[id];
+                                obj[time][id] += msg[id] / period;
                             else
-                                arr[time][id] = msg[id];
+                                obj[time][id] = msg[id] / period;
                         }
                     }
 
+                    var arr = _this.addZeroPoints( obj );
+                    
                     cols.unshift( COL.TIMESTAMP );
                     return {
-                        data: arr,
+                        data   : arr,
                         columns: cols,
-                        ylabel: col.label
+                        ylabel : col.label
                     };
                 }
             },

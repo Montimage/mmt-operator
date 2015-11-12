@@ -35,7 +35,7 @@ redis._createClient = redis.createClient;
 redis.createClient = function(){
     return redis._createClient(6379, config.redis_server, {});
 }
-probeRoute.api = api;
+
 probeRoute.startListening(dbconnector, redis);
 
 // view engine setup

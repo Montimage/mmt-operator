@@ -15,27 +15,24 @@ router.startListening = function (db, redis) {
     
     report_client.on('message', function (channel, message) {
 
-        //console.log( "[" + channel + "] " + message );
+        console.log( "[" + channel + "] " + message );
         
         var msg = JSON.parse(message);
         if( msg[4] == 0){
-            console.log("[META] " );
+            console.log("[META  ] " + message );
             return;
         }
         var format = msg[0];
         
         if( format == mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionProtocolStat( msg, config.mac_gateway ) == null){
-            console.log("[DONOT 1] " );
+            console.log("[DONT 1] " + message);
             return;
         }
         if( (format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) 
            && mmtAdaptor.setDirectionProtocolFlow(msg, config.local_network) == null){
-            console.log("[DONOT 2] " );
+            console.log("[DONT 2] " + message );
             return;
         }
-        
-        //this is used by api
-        router.api.lastPacketTimestamp[ format ] = msg[3] * 1000;    //timeestamp
         
         msg = mmtAdaptor.formatReportItem( msg );
 

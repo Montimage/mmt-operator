@@ -12,9 +12,9 @@ var router = function (io, redis) {
 
         sub.on("message", function ( channel, message) {
             var msg = JSON.parse(message);
-            if( msg[4] != 99 )
+            if( msg[0] != mmtAdaptor.CsvFormat.STATS_FORMAT )
                 return;
-            if( mmtAdaptor.setDirectionProtocolStat( msg, config.mac_server ) == null)
+            if( mmtAdaptor.setDirectionProtocolStat( msg, config.mac_gateway ) == null)
                 return;
 
             msg[3] = msg[3] * 1000;

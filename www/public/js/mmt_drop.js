@@ -2004,6 +2004,24 @@ MMTDrop.filterFactory = {
 				
 				
 			};
+            
+            filter.getSamplePeriod = function(){
+                var period = MMTDrop.config.probe_stats_period;
+                switch (this.selectedOption().id ){
+                    case MMTDrop.constants.period.MINUTE : 
+                        break;
+                    case MMTDrop.constants.period.HOUR :
+                        period = 60;
+                        break;
+                    case MMTDrop.constants.period.DAY : 
+                        period = 60*60;
+                        break;
+                    case MMTDrop.constants.period.MONTH : 
+                        period = 24*60*60;
+                        break;
+                }
+                return period;
+            }
 			return filter;
 		},
 
@@ -4049,6 +4067,7 @@ MMTDrop.chartFactory = {
 				var obj = [];
 				var n   = columns.length;
 				//the first column is timestamp
+                var lastTS = 0;
 				for (var i=0; i<arrData.length; i++){
 					var x = new Date( parseInt(arrData[i][0]) );
 					
@@ -4064,8 +4083,8 @@ MMTDrop.chartFactory = {
 							obj[j+n-1] = [ columns[j].label];
 						}
 						
-						obj[j].push( x );
-						obj[j+n-1].push( val );
+						obj[j].push( x );        //x
+						obj[j+n-1].push( val );  //y
 							
 					}
 				}
@@ -4085,8 +4104,10 @@ MMTDrop.chartFactory = {
 				for (var j=1; j<columns.length; j++){
 					//not root
 					//if( columns[j].label.indexOf("/") > 0 )
-                    if( columns[j].type == "area-stack" )
+                    if( columns[j].type == "area-stack" ){
+                        columns[j].type = "area";
 						groups.push( columns[j].label );
+                    }
 				}
 
 				var types = {};
