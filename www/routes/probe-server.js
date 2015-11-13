@@ -15,7 +15,7 @@ router.startListening = function (db, redis) {
     
     report_client.on('message', function (channel, message) {
 
-        console.log( "[" + channel + "] " + message );
+        //console.log( "[" + channel + "] " + message );
         
         var msg = JSON.parse(message);
         if( msg[4] == 0){

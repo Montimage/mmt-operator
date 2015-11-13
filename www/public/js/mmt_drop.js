@@ -1660,6 +1660,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     
 	var _currentSelectedOption = null;
 	var _onFilterCallbacks = [];
+    var _onChangeCallbacks = [];
 	//database attached to this filter
 	var _database = null;
 
@@ -1668,6 +1669,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     this.getId = function(){
         return param.id;
     }
+    
 	/**
 	 * Render the filter into an HTML element
 	 * @param {string} elemID Id of the HTML element
@@ -1694,7 +1696,12 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 		//handle when the filter changing
 		filter.change(function(e){
-
+            //annonce to its callback registors
+            for (var i in _onChangeCallbacks){
+                var callback = _onChangeCallbacks[i];
+                callback[0](_currentSelectedOption, _database, callback[1]);
+            }
+            
 			_currentSelectedOption = _option[this.selectedIndex]; 	//the selected option of the filter
 			
 			console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
@@ -1703,7 +1710,9 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption);
 			
 			//applying the filter to the current selection
-			_filter();
+            setTimeout( function(){
+    			_filter();
+            }, 10);
 		});
 	};
 
@@ -1819,6 +1828,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			_onFilterCallbacks.push ([callback, obj]);
 	};
 
+    this.onChange = function (callback, obj){
+		if (MMTDrop.tools.isFunction(callback))
+			_onChangeCallbacks.push ([callback, obj]);
+	};
 	/**
 	 * Filter out database with the current selected option
 	 */
@@ -2434,11 +2447,11 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
         }
         
 		_this.activeCharts = [];
-		$elemID.html("");
+
+        $elemID.html('');
 		
 		var rootDiv = $('<div>', {'class' : 'container-fluid'});
-		rootDiv.appendTo( $elemID );
-		
+        rootDiv.appendTo( $elemID );
 		//draw header
 		if(title) {
 			/*
@@ -3699,6 +3712,11 @@ MMTDrop.Chart = function(option, renderFn){
             
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );
+            }
+            
+            var afterRender = (((MMTDrop.callback) || {}).chart || {}).afterRender;
+            if( MMTDrop.tools.isFunction( afterRender )  ){
+                afterRender( _this );
             }
 		}else
 			throw new Error ("No render function is defined");

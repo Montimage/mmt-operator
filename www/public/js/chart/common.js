@@ -84,17 +84,15 @@ $(function () {
 
     for (var i in data) {
         var node = data[i];
-        setTimeout(renderReport, 500, node);
+        //render in parallel
+        setTimeout(renderReport, 0, node);
     }
 
 
     //fire the chain of filters
     setTimeout( function(){
         filters[0].filter();        
-    }, 1000 );
-
-
-
+    }, 100 );
 
 
 

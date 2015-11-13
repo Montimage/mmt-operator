@@ -29,6 +29,21 @@
 #content{
     padding: 10px;
 }
+#waiting{
+    z-index: 10001;
+    background-color: rgba(0,0,0, 0.4);
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    text-align: center;
+    color: white;
+}
+#waiting i{
+    position: fixed;
+    top: 40%;
+}
 #toolbar-box{
     padding-right: 2px;
     padding-top: 2px;

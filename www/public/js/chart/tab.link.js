@@ -49,6 +49,33 @@ var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var database = MMTDrop.databaseFactory.createStatDB();
 var filters = [ fPeriod, fProbe];
 
+console.log = function( x ){};
+
+var Loading = function( ){
+    this.chartLoaded = 0;
+    this.totalChart = 3;
+    var _his = this;
+    this.onChartLoad = function(){
+        _his.chartLoaded ++;
+        if( _his.chartLoaded >= _his.totalChart )
+            $("#waiting").hide();
+    }
+    
+    this.onShowing = function(){
+        $("#waiting").show();
+        _his.chartLoaded = 0;
+    }
+}
+
+var loading = new Loading();
+MMTDrop.callback = {
+    chart : {
+        afterRender : loading.onChartLoad
+    }
+};
+
+fPeriod.onChange( loading.onShowing );
+
 
 //create reports
 
@@ -85,14 +112,15 @@ var ReportFactory = {
             return b[ time_id ] - a[time_id]
         } )
         
-        var arr    = [];
+        var len   = data.length;
+        var arr   = [];
         var lastTS ;
         period = period * 1000;
-        for( var i in data ){
+        for( var i=0; i<len; i++ ){
             var ts = data[i][ time_id ];
             if( lastTS === undefined )
                 lastTS = ts;
-            if( ts - lastTS > period * 2 ){
+            if( ts - lastTS >   period * 2.5){
 
                 var zero = {};
                 zero[ time_id ] = lastTS + period;
@@ -175,7 +203,7 @@ var ReportFactory = {
 
                     
                     columns.sort( function( a, b){
-                        return a.value < b.value;
+                        return b.value - a.value;
                     } );
                     
                     

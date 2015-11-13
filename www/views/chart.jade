@@ -82,11 +82,14 @@ block content
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
         #toolbar-box
+    #waiting.center-block.loading
+        i.fa.fa-refresh.fa-spin.fa-4x
     #content
         script(type='text/javascript').
             MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
+        
         
     #modal.modal.fade
         .modal-dialog

@@ -5,14 +5,14 @@ var config = require("../config.json");
 var MongoClient = require('mongodb').MongoClient,
     format = require('util').format;
 
-var Cache = function ( period ) {
+var Cache = function (period) {
     this.data = [];
     this.add = function (msg) {
         this.data.push(msg);
     };
-    
-    this.addArray = function( arr ){
-        this.data = this.data.concat( arr );
+
+    this.addArray = function (arr) {
+        this.data = this.data.concat(arr);
     }
     this.clear = function () {
         this.data = [];
@@ -103,7 +103,7 @@ var Cache = function ( period ) {
                 }
             }
 
-            key.time = moment(message.time).startOf( period ).valueOf();
+            key.time = moment(message.time).startOf(period).valueOf();
             return {
                 key: key,
                 data: data
@@ -140,8 +140,8 @@ var Cache = function ( period ) {
             //console.log( oo );
         }
         var arr = [];
-        for( var i in obj )
-            arr.push( obj[i] );
+        for (var i in obj)
+            arr.push(obj[i]);
         return arr;
     };
 };
@@ -157,13 +157,13 @@ var MongoConnector = function (opts) {
     var self = this;
 
     var cache = {
-        minute : new Cache("minute"),
-        hour   : new Cache("hour"),
-        day    : new Cache("day")
+        minute: new Cache("minute"),
+        hour: new Cache("hour"),
+        day: new Cache("day")
     }
-    
-    
-    
+
+
+
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb = db;
@@ -172,7 +172,7 @@ var MongoConnector = function (opts) {
 
 
     self.lastTimestamps = {};
-    
+
     /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
@@ -180,82 +180,90 @@ var MongoConnector = function (opts) {
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
 
-        self.lastTimestamps[ message.format ] = message.timeStamp;
-        
-        self.mdb.collection("traffic").insert( message, function (err, records) {
-            if( err ) throw err;
-        });
-        
         var ts = message.time;
         
+        self.lastTimestamps[message.format] = ts;
+
+        self.mdb.collection("traffic").insert( message , function (err, records) {
+            if (err) throw err;
+        });
+
+
         //add message to cache
         cache.minute.add(message);
-        
-        if( cache.minute.lastUpdateTime === undefined )
+
+        if (cache.minute.lastUpdateTime === undefined)
             cache.minute.lastUpdateTime = ts;
-       
+
         //if cache is in minute ==> UPDATE Minute
-        else if ( ts - cache.minute.lastUpdateTime >= 60*1000 ) {
-            
+        else if (ts - cache.minute.lastUpdateTime >= 60 * 1000) {
+
             var data = cache.minute.getData();
-            self.mdb.collection("traffic_min").insert( data, function (err, records) {
-                if( err ) throw err;
-                console.log( ">>>>>>> flush " + data.length + " records to traffic_min" );
+            self.mdb.collection("traffic_min").insert(data, function (err, records) {
+                if (err) throw err;
+                console.log(">>>>>>> flush " + data.length + " records to traffic_min");
             });
             cache.minute.lastUpdateTime = ts;
             cache.minute.clear();
-            
-            cache.hour.addArray( data );
-            
-            if( cache.hour.lastUpdateTime === undefined )
+
+            cache.hour.addArray(data);
+
+            if (cache.hour.lastUpdateTime === undefined)
                 cache.hour.lastUpdateTime = ts;
-            else if( ts - cache.hour.lastUpdateTime >= 60*60*1000 ){
-                
+            else if (ts - cache.hour.lastUpdateTime >= 60 * 60 * 1000) {
+
                 //update traffic hour
                 data = cache.hour.getData();
-                self.mdb.collection("traffic_hour").insert( data, function (err, records) {
-                    if( err ) throw err;
-                    console.log( ">>>>>>> flush " + data.length + " records to traffic_hour" );
+                self.mdb.collection("traffic_hour").insert(data, function (err, records) {
+                    if (err) throw err;
+                    console.log(">>>>>>> flush " + data.length + " records to traffic_hour");
                 });
                 cache.hour.lastUpdateTime = ts;
                 cache.hour.clear();
-                
-                cache.day.addArray( data );
-                
-                if( cache.day.lastUpdateTime === undefined )
+
+                cache.day.addArray(data);
+
+                if (cache.day.lastUpdateTime === undefined)
                     cache.day.lastUpdateTime = ts;
-                else if( ts - cache.day.lastUpdateTime >= 24*60*60*1000 ){
+                else if (ts - cache.day.lastUpdateTime >= 24 * 60 * 60 * 1000) {
                     data = cache.day.getData();
-                    self.mdb.collection("traffic_day").insert( data, function (err, records) {
-                        if( err ) throw err;
-                        console.log( ">>>>>>> flush " + data.length + " records to traffic_day" );
+                    self.mdb.collection("traffic_day").insert(data, function (err, records) {
+                        if (err) throw err;
+                        console.log(">>>>>>> flush " + data.length + " records to traffic_day");
                     });
-                    
+
                     cache.day.lastUpdateTime = ts;
                     cache.day.clear();
-                    
-                    
+
+
                     //Delete old data in traffic_min, retain only data from the last day
-                    self.mdb.collection("traffic_min").deleteMany( { time : {"$lt" : ts - 24*60*60*1000 } }, 
-                        function( err, result){ 
-                            if( err ) throw err; 
-                            console.log("<<<<< delete records in traffic_min older than " + ts - 24*60*60*1000 );
-                                              } );
+                    self.mdb.collection("traffic_min").deleteMany({
+                            time: {
+                                "$lt": ts - 24 * 60 * 60 * 1000
+                            }
+                        },
+                        function (err, result) {
+                            if (err) throw err;
+                            console.log("<<<<< delete records in traffic_min older than " + ts - 24 * 60 * 60 * 1000);
+                        });
                 }
-                
+
                 //Delete old data in traffic. Retain only data from the last hour
-                self.mdb.collection("traffic").deleteMany( { time : {"$lt" : ts - 60*60*1000} }, 
-                    function( err, result){ 
-                        if( err ) throw err; 
-                        console.log("<<<<< delete records in traffic older than " + ts - 60*60*1000 );
-                } );
-                                                            
+                self.mdb.collection("traffic").deleteMany({
+                        time: {
+                            "$lt": ts - 60 * 60 * 1000
+                        }
+                    },
+                    function (err, result) {
+                        if (err) throw err;
+                        console.log("<<<<< delete records in traffic older than " + ts - 60 * 60 * 1000);
+                    });
+
 
 
             }
+
         }
-        
-        
     };
 
 
@@ -312,15 +320,15 @@ var MongoConnector = function (opts) {
      */
     self.getLastTime = function (formats, cb) {
         if (self.mdb == null) return;
-        
-        for( var i in formats ){
+
+        for (var i in formats) {
             var fo = formats[i];
-            if( self.lastTimestamps[ fo ] ){
-                cb( self.lastTimestamps[ fo ] );
+            if (self.lastTimestamps[fo]) {
+                cb(null, self.lastTimestamps[fo]);
                 return;
             }
         }
-        
+
         self.mdb.collection("traffic").find({
             format: {
                 $in: formats
