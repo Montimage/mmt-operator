@@ -561,11 +561,11 @@ MMTDrop.tools = function () {
      */
     _this.formatDataVolume = function (v) {
         if (v >= 1000000000)
-            return (v / 1000000000).toPrecision(2) + "GB";
+            return (v / 1000000000).toFixed(2) + " GB";
         if (v >= 1000000)
-            return (v / 1000000).toPrecision(2) + "MB";
+            return (v / 1000000).toFixed(2) + " MB";
         if (v >= 1000)
-            return Math.round(v / 1000) + "KB";
+            return Math.round(v / 1000) + " KB";
         return Math.round(v);
     };
     

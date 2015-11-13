@@ -49,7 +49,7 @@ var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var database = MMTDrop.databaseFactory.createStatDB();
 var filters = [ fPeriod, fProbe];
 
-console.log = function( x ){};
+//console.log = function( x ){};
 
 var Loading = function( ){
     this.chartLoaded = 0;
@@ -64,6 +64,10 @@ var Loading = function( ){
     this.onShowing = function(){
         $("#waiting").show();
         _his.chartLoaded = 0;
+        
+        $("#waiting").on("click", function(){
+            $("#waiting").hide();
+        });
     }
 }
 
@@ -123,17 +127,16 @@ var ReportFactory = {
             if( ts - lastTS >   period * 2.5){
 
                 var zero = {};
-                zero[ time_id ] = lastTS + period;
+                zero[ time_id ] = lastTS + period ;
                 arr.push( zero );
 
 
                 zero = {};
                 zero[ time_id ] = ts - period;
                 arr.push( zero );
-
-                lastTS = ts;
             }
-
+            
+            lastTS = ts;
             arr.push( data[i] );
         }
         return arr;           
@@ -387,8 +390,8 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show all clients",
-                        title: "click to show all clients",
+                        href: "?show all protocols",
+                        title: "click to show all protocols",
                         text: "Other",
                         
                     });

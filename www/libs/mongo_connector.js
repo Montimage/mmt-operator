@@ -185,7 +185,7 @@ var MongoConnector = function (opts) {
         self.lastTimestamps[message.format] = ts;
 
         self.mdb.collection("traffic").insert( message , function (err, records) {
-            if (err) throw err;
+            if (err) console.log( err );
         });
 
 
@@ -200,7 +200,7 @@ var MongoConnector = function (opts) {
 
             var data = cache.minute.getData();
             self.mdb.collection("traffic_min").insert(data, function (err, records) {
-                if (err) throw err;
+                if (err) console.log( err );
                 console.log(">>>>>>> flush " + data.length + " records to traffic_min");
             });
             cache.minute.lastUpdateTime = ts;
@@ -215,7 +215,7 @@ var MongoConnector = function (opts) {
                 //update traffic hour
                 data = cache.hour.getData();
                 self.mdb.collection("traffic_hour").insert(data, function (err, records) {
-                    if (err) throw err;
+                    if (err) console.log( err );
                     console.log(">>>>>>> flush " + data.length + " records to traffic_hour");
                 });
                 cache.hour.lastUpdateTime = ts;
@@ -228,7 +228,7 @@ var MongoConnector = function (opts) {
                 else if (ts - cache.day.lastUpdateTime >= 24 * 60 * 60 * 1000) {
                     data = cache.day.getData();
                     self.mdb.collection("traffic_day").insert(data, function (err, records) {
-                        if (err) throw err;
+                        if (err) console.log( err );
                         console.log(">>>>>>> flush " + data.length + " records to traffic_day");
                     });
 
@@ -243,7 +243,7 @@ var MongoConnector = function (opts) {
                             }
                         },
                         function (err, result) {
-                            if (err) throw err;
+                            if (err) console.log( err );
                             console.log("<<<<< delete records in traffic_min older than " + ts - 24 * 60 * 60 * 1000);
                         });
                 }
@@ -255,7 +255,7 @@ var MongoConnector = function (opts) {
                         }
                     },
                     function (err, result) {
-                        if (err) throw err;
+                        if (err) console.log( err );
                         console.log("<<<<< delete records in traffic older than " + ts - 60 * 60 * 1000);
                     });
 
