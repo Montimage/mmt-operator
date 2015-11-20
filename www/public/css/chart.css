@@ -148,6 +148,33 @@
   border: 2px dashed grey;
 }
 
-.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:focus, .navbar-inverse .navbar-nav>.active>a {
-    font-weight: bold;
+.mmt-verdict-label{
+    font-size: 13px;
+    margin-top: 5px;
+}
+#mmt-verdict-total{
+
+}
+
+.strimText {
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    width: 100%;
+}
+.fail-info{
+    font-size: 10px;  
+}
+.code-json{
+    white-space: pre-wrap;
+    width: 100%
+}
+
+.code-json number{
+    color:brown;
+}
+.code-json string{
+    color:cadetblue ;
+}
+.code-json label{
+    color: darkslategrey
 }

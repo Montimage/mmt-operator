@@ -78,6 +78,8 @@ MMTDrop.constants = {
 			RADIUS_REPORT_FORMAT : 9,
 			/** Statistics format id */
 			STATS_FORMAT : 100,
+            
+            SECURITY_FORMAT: 10,
 		},
 
 		/**
@@ -264,7 +266,25 @@ MMTDrop.constants = {
 		RadiusStatsColumn: {
 			
 		},
+    
+    SecurityColumn: {
+        /** Index of the format id column */
+        FORMAT_ID               : {id: 0, label:"Format"} ,
+        /** Index of the probe id column */
+        PROBE_ID                : {id: 1, label:"Probe"},
+        /** Index of the data source id column */
+        SOURCE_ID               : {id: 2, label:"Source"},
+        /** Index of the format id column */
+        TIMESTAMP               : {id: 3, label:"Timestamp"},
+        /** property id */
+        PROPERTY                : {id: 4, label: "Property"},
+        VERDICT                 : {id: 5, label: "Verdict"},
+        TYPE                    : {id: 6, label: "Type"},
+        DESCRIPTION             : {id: 7, label: "Description"},
+        HISTORY                 : {id: 8, label: "History"}
+    },
 		
+    
 		/**
 		 * Micro-flows statistics reports
 		 */
@@ -1045,14 +1065,17 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 * @param {function} callback The callback will be passed two paramenters: the received message and the <code>userData</code> 
 	 * @param {object} userData
 	 */
-	this.onMessage = function( callback, userData ){
+	this.onMessage = function( channel, callback, userData ){
+        if( channel == null )
+            channel = "protocol.flow.stat";
+        
 		if(MMTDrop.tools.isFunction( callback ))
 			_callbacks.push( {callback: callback, data: userData} );
 		
 		if( _socket == null){
 			_socket = new io.connect(MMTDrop.config.serverURL);
 			
-			_socket.on("stats_raw", function( msg ){
+			_socket.on( channel , function( msg ){
 				//update database with new message
 				//_originalData.shift();
 				_originalData.push( msg );
@@ -4555,7 +4578,7 @@ MMTDrop.chartFactory = {
 					//first column
 					var row_name = $('<td>', {
                             style  : "cursor:pointer",
-                        	'text' : msg[0] } );
+                        	html   : msg[0] } );
 
 					row_name.appendTo(row_tr);
 
@@ -4571,12 +4594,12 @@ MMTDrop.chartFactory = {
                         if( option.columns[j].isMultiProbes == false){
                             var val = msg[j];
                             var opt = {
-									text : val,
+									html : val,
 								};
 
                                  
 							$('<td>', {
-									text : val,
+									html : val,
                                     align: align
 							}).appendTo(row_tr);
                             
@@ -4588,7 +4611,7 @@ MMTDrop.chartFactory = {
 									val = 0;
 								
                                 $('<td>', {
-									text : val,
+									html : val,
                                     align: align
 								}).appendTo(row_tr);
 							}

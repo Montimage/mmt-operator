@@ -57,6 +57,24 @@ var Cache = function (period) {
                         dl_payload: message.dl_payload
                     }
                 };
+            } if( message.format == 10){
+                key = {
+                    format: message.format,
+                    probe: message.probe,
+                    source: message.source,
+                    property: message.property,
+                    type: message.type,
+                    verdict: message.verdict
+                };
+                data = {
+                    '$inc' :{
+                       verdict: 1,
+                       count: 1
+                    },
+                    '$set' :{
+                        time: message.time
+                    }
+                }
             } else {
                 key = {
                     format: message.format,
@@ -66,7 +84,6 @@ var Cache = function (period) {
                     server_addr: message.server_addr,
                     client_addr: message.client_addr,
                     app: message.app
-
                 };
 
                 if (message.format === 0) {
@@ -163,6 +180,17 @@ var MongoConnector = function (opts) {
     }
 
 
+    //use to delete old data from "traffic" and "traffic_time" collections
+    var lastDeletedTime = {
+        traffic: {
+            ts: null,
+            period: 5*60*1000    //delete data older than 5 min
+        },
+        traffic_min: {
+            ts: null,
+            period: 60*60*1000    //delete data older than 60 min
+        }
+    }
 
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
@@ -208,6 +236,7 @@ var MongoConnector = function (opts) {
 
             cache.hour.addArray(data);
 
+            // Update Hour
             if (cache.hour.lastUpdateTime === undefined)
                 cache.hour.lastUpdateTime = ts;
             else if (ts - cache.hour.lastUpdateTime >= 60 * 60 * 1000) {
@@ -223,6 +252,7 @@ var MongoConnector = function (opts) {
 
                 cache.day.addArray(data);
 
+                //Update Day
                 if (cache.day.lastUpdateTime === undefined)
                     cache.day.lastUpdateTime = ts;
                 else if (ts - cache.day.lastUpdateTime >= 24 * 60 * 60 * 1000) {
@@ -234,35 +264,33 @@ var MongoConnector = function (opts) {
 
                     cache.day.lastUpdateTime = ts;
                     cache.day.clear();
-
-
-                    //Delete old data in traffic_min, retain only data from the last day
-                    self.mdb.collection("traffic_min").deleteMany({
-                            time: {
-                                "$lt": ts - 24 * 60 * 60 * 1000
-                            }
-                        },
-                        function (err, result) {
-                            if (err) console.log( err );
-                            console.log("<<<<< delete records in traffic_min older than " + ts - 24 * 60 * 60 * 1000);
-                        });
                 }
-
-                //Delete old data in traffic. Retain only data from the last hour
-                self.mdb.collection("traffic").deleteMany({
-                        time: {
-                            "$lt": ts - 60 * 60 * 1000
-                        }
-                    },
-                    function (err, result) {
-                        if (err) console.log( err );
-                        console.log("<<<<< delete records in traffic older than " + ts - 60 * 60 * 1000);
-                    });
-
-
 
             }
 
+        }
+        
+        //delete Trafic        
+        for (var i in lastDeletedTime ){
+            var last = lastDeletedTime[i];
+
+            if( last.ts == undefined )
+                last.ts = ts;
+            else if( ts - last.ts >= last.period ){
+                
+                //Delete old data in traffic. Retain only data from the last hour
+                self.mdb.collection( i ).deleteMany({
+                    time: {
+                        "$lt": last.ts
+                    }
+                },
+                function (err, result) {
+                    if (err) throw err;
+                    console.log("<<<<< delete records in traffic older than " + (new Date(last.ts)).toLocaleTimeString() );
+                });
+                
+                last.ts = ts;
+            }
         }
     };
 

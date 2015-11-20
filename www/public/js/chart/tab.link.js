@@ -30,9 +30,21 @@ var arr = [
         y: 7,
         width: 12,
         height: 5,
-        type: "danger",
+        type: "warning",
         userData: {
             fn: "createNodeReport"
+        }
+    },
+    {
+        id: "security",
+        title: "Security Alert",
+        x: 0,
+        y: 7,
+        width: 12,
+        height: 5,
+        type: "danger",
+        userData: {
+            fn: "createSecurityRealtimeReport"
         }
     }
 ];
@@ -51,27 +63,10 @@ var filters = [ fPeriod, fProbe];
 
 //console.log = function( x ){};
 
-var Loading = function( ){
-    this.chartLoaded = 0;
-    this.totalChart = 3;
-    var _his = this;
-    this.onChartLoad = function(){
-        _his.chartLoaded ++;
-        if( _his.chartLoaded >= _his.totalChart )
-            $("#waiting").hide();
-    }
-    
-    this.onShowing = function(){
-        $("#waiting").show();
-        _his.chartLoaded = 0;
-        
-        $("#waiting").on("click", function(){
-            $("#waiting").hide();
-        });
-    }
-}
 
 var loading = new Loading();
+loading.totalChart = 3;
+
 MMTDrop.callback = {
     chart : {
         afterRender : loading.onChartLoad
@@ -712,7 +707,7 @@ var ReportFactory = {
         };
 
 
-        database.onMessage(function (msg) {
+        database.onMessage( "protocol.flow.stat", function (msg) {
             if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
                 return;
             appendMsg(msg);
@@ -879,5 +874,5 @@ var ReportFactory = {
             dataFlow
         );
         return report;
-    }
+    },
 }

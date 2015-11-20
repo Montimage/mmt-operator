@@ -25,6 +25,7 @@ var MMTDrop = {
         MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
         RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
         STATS_FORMAT : 100/**< Statistics format id */,
+        SECURITY_FORMAT: 10,
     },
     
     isFlowStats : function ( format ) {
@@ -64,6 +65,17 @@ var MMTDrop = {
         MAC_DEST            : 18, /**< Index of the MAC address source column */
     },
     
+    SecurityColumnId           : {
+        FORMAT_ID           : 0, /**< Index of the format id column */
+        PROBE_ID            : 1, /**< Index of the probe id column */
+        SOURCE_ID           : 2, /**< Index of the data source id column */
+        TIMESTAMP           : 3, /**< Index of the format id column */
+        PROPERTY              : 4, /**< Index of the application id column */
+        VERDICT: 5,
+        TYPE: 6,
+        DESCRIPTION: 7,
+        HISTORY: 8
+    },
     /**
      * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
      */
@@ -367,7 +379,33 @@ var MMTDrop = {
         return null;
     }
 };
+MMTDrop.SecurityPoint = function( entry ){
+    var retval = {};
+    retval.format                   = entry[MMTDrop.SecurityColumnId.FORMAT_ID];
+    retval.probe                    = entry[MMTDrop.SecurityColumnId.PROBE_ID];
+    retval.source                   = entry[MMTDrop.SecurityColumnId.SOURCE_ID];
+    retval.time                     = Math.floor(entry[MMTDrop.StatsColumnId.TIMESTAMP] * 1000);
+    retval.property                 = entry[MMTDrop.SecurityColumnId.PROPERTY];
+    retval.verdict                  = entry[MMTDrop.SecurityColumnId.VERDICT];
+    retval.type                     = entry[MMTDrop.SecurityColumnId.TYPE];
+    retval.description              = entry[MMTDrop.SecurityColumnId.DESCRIPTION];
+    retval.history                  = JSON.stringify( entry[MMTDrop.SecurityColumnId.HISTORY] );
+    return retval;
+};
 
+MMTDrop.reverseSecurityPoint = function(elem) {
+    var retval = [];
+    retval[MMTDrop.SecurityColumnId.FORMAT_ID]      = elem.format;
+    retval[MMTDrop.SecurityColumnId.PROBE_ID]       = elem.probe;
+    retval[MMTDrop.SecurityColumnId.SOURCE_ID]      = elem.source;
+    retval[MMTDrop.SecurityColumnId.TIMESTAMP]      = elem.time;
+    retval[MMTDrop.SecurityColumnId.PROPERTY]       = elem.property;
+    retval[MMTDrop.SecurityColumnId.VERDICT]        = elem.verdict;
+    retval[MMTDrop.SecurityColumnId.TYPE]           = elem.type;
+    retval[MMTDrop.SecurityColumnId.DESCRIPTION]    = elem.description;
+    retval[MMTDrop.SecurityColumnId.HISTORY]        = JSON.parse( elem.history );
+    return retval;
+}
 MMTDrop.StatsTimePoint = function(entry) {
     var retval = {};
     retval.format           = entry[MMTDrop.StatsColumnId.FORMAT_ID];
@@ -553,6 +591,8 @@ MMTDrop.formatReportItem = function(entry) {
             return MMTDrop.RtpFlowStatsItem( entry );
         case MMTDrop.CsvFormat.STATS_FORMAT : 
             return MMTDrop.StatsTimePoint( entry );
+        case MMTDrop.CsvFormat.SECURITY_FORMAT:
+            return MMTDrop.SecurityPoint( entry );
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
         default :
@@ -572,6 +612,8 @@ MMTDrop.reverseFormatReportItem = function(entry) {
             return MMTDrop.reverseRtpFlowStatsItem( entry );
         case MMTDrop.CsvFormat.STATS_FORMAT :
             return MMTDrop.reverseStatsTimePoint( entry );
+        case MMTDrop.CsvFormat.SECURITY_FORMAT:
+            return MMTDrop.reverseSecurityPoint( entry );
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
         default :

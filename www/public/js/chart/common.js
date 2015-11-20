@@ -30,14 +30,22 @@ MMTDrop.setOptions({
     //serverURL: "http://localhost:8088",
 });
 
+
+if( ReportFactory === undefined )
+    var ReportFactory = {};
+    
 for (var i in ReportFactory)
-    MMTDrop.reportFactory[i] = ReportFactory[i];
+        MMTDrop.reportFactory[i] = ReportFactory[i];
 
 ReportFactory = MMTDrop.reportFactory;
 
 
 
 $(function () {
+    
+    $("#waiting").on("click", function(){
+            $("#waiting").hide();
+    });
     
     if (filters == undefined || filters.length == 0) {
         throw new Error("Need to defined a list of filters")
