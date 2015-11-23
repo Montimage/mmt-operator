@@ -1,6 +1,8 @@
 {
     "database_server"       : "192.168.0.37",
     "redis_server"          : "192.168.0.37",
+    "data_folder"           : "test/",
+    "input_mode"            : "file",
     "mac_gateway"           : "00:05:5d:89:26:78",
     "local_network"         : [ { "ip": "192.168.0.0", "mask": "255.0.0.0"}, 
                                 { "ip": "172.16.0.0",  "mask": "255.0.0.0"},

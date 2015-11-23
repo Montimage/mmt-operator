@@ -1,0 +1,3 @@
+[
+    [10,0,"test_files/p1p1_03.pcap",1448017313766.073,2,"detected","attack","IPv4 address conflict detection (RFC5227). Possible arp poisoning.",{"event_4":{"timestamp":1399453638.576603,"description":"An arp reply with MAC address","attributes":[{"arp.ar_op":1},{"eth.src":"00:50:56:bf:71:c4"},{"eth.dst":"ff:ff:ff:ff:ff:ff"}]},"event_5":{"timestamp":1399453638.576970,"description":"An arp reply but with different MAC address","attributes":[{"arp.ar_op":2},{"eth.src":"00:1d:46:f0:87:a1"},{"eth.dst":"00:50:56:bf:71:c4"}]}}]
+]

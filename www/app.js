@@ -16,6 +16,13 @@ var probeRoute      = require('./routes/probe-server.js');
 var mmtAdaptor      = require('./libs/dataAdaptor');
 var dbc             = require('./libs/mongo_connector');
 var config          = require("./config.json");
+
+var REDIS_STR = "redis",
+    FILE_STR  = "file";
+
+if( config.input_mode != REDIS_STR || config.input_mode != FILE_STR)
+    config.input_mode = FILE_STR;
+
 console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
 
 
@@ -31,12 +38,23 @@ app.io = io;
 
 
 var redis = require("redis");
-redis._createClient = redis.createClient;
-redis.createClient = function(){
-    return redis._createClient(6379, config.redis_server, {});
+
+socketRoute.start_socketio( io );
+
+probeRoute.route_socketio = socketRoute.emit_data;
+
+if( config.input_mode == REDIS_STR ){
+    redis._createClient = redis.createClient;
+    redis.createClient = function(){
+        return redis._createClient(6379, config.redis_server, {});
+    }
+
+    probeRoute.startListening(dbconnector, redis);
+}
+else{
+    probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
 }
 
-probeRoute.startListening(dbconnector, redis);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -95,7 +113,6 @@ app.use(function(err, req, res, next) {
   });
 });
 
-
-socketRoute(io, redis);
+    
 
 module.exports = app;
