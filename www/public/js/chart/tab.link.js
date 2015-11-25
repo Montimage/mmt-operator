@@ -484,7 +484,7 @@ var ReportFactory = {
                                 "In Bytes"   : 0,
                                 "Out Bytes"  : 0,
                                 "Total Bytes": 0,
-                                "Start Time" : msg[COL.TIMESTAMP.id],
+                                "Start Time" : msg[COL.START_TIME.id],
                                 "Last Update Time": msg[COL.TIMESTAMP.id],
                             };
                         }
@@ -669,7 +669,7 @@ var ReportFactory = {
             }
 
             //update to chart each x seconds
-            if ( time - lastAddMoment > 0 * 1000 ) {
+            if ( time - lastAddMoment > 1000 ) {
                 //
 
                 var date = new Date(time);

@@ -153,7 +153,11 @@
     margin-top: 5px;
 }
 #mmt-verdict-total{
-
+    display: block;
+    float: left;
+    margin-left: 200px;
+    text-align: center;
+    max-width: 100%;
 }
 
 .strimText {

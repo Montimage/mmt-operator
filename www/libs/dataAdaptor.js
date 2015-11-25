@@ -74,7 +74,8 @@ var MMTDrop = {
         VERDICT: 5,
         TYPE: 6,
         DESCRIPTION: 7,
-        HISTORY: 8
+        HISTORY: 8,
+        VERDICT_COUNT: 9
     },
     /**
      * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
@@ -390,6 +391,10 @@ MMTDrop.SecurityPoint = function( entry ){
     retval.type                     = entry[MMTDrop.SecurityColumnId.TYPE];
     retval.description              = entry[MMTDrop.SecurityColumnId.DESCRIPTION];
     retval.history                  = JSON.stringify( entry[MMTDrop.SecurityColumnId.HISTORY] );
+    if( entry[MMTDrop.SecurityColumnId.VERDICT_COUNT] )
+        retval.verdict_count            = entry[MMTDrop.SecurityColumnId.VERDICT_COUNT];
+    else
+        retval.verdict_count = 1;
     return retval;
 };
 
@@ -403,7 +408,9 @@ MMTDrop.reverseSecurityPoint = function(elem) {
     retval[MMTDrop.SecurityColumnId.VERDICT]        = elem.verdict;
     retval[MMTDrop.SecurityColumnId.TYPE]           = elem.type;
     retval[MMTDrop.SecurityColumnId.DESCRIPTION]    = elem.description;
-    retval[MMTDrop.SecurityColumnId.HISTORY]        = JSON.parse( elem.history );
+    if( elem.history )
+        retval[MMTDrop.SecurityColumnId.HISTORY]        = JSON.parse( elem.history );
+    retval[MMTDrop.SecurityColumnId.VERDICT_COUNT]        = elem.verdict_count;
     return retval;
 }
 MMTDrop.StatsTimePoint = function(entry) {

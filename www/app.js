@@ -121,7 +121,7 @@ app.use(function(err, req, res, next) {
 function cleanup ( cb ){
     console.log( "\nCleaning up before exiting... ");
     if( dbconnector )
-        dbconnector.cleanup( cb );
+        dbconnector.flushCache( cb );
 };
 
 process.on('SIGINT',function(){
@@ -133,6 +133,7 @@ process.on('SIGINT',function(){
     }
     
     setTimeout( function(){
+        console.log("bye!");
         process.exit(1);
     }, 1000 );
 });

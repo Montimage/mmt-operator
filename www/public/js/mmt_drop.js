@@ -281,7 +281,8 @@ MMTDrop.constants = {
         VERDICT                 : {id: 5, label: "Verdict"},
         TYPE                    : {id: 6, label: "Type"},
         DESCRIPTION             : {id: 7, label: "Description"},
-        HISTORY                 : {id: 8, label: "History"}
+        HISTORY                 : {id: 8, label: "History"},
+        VERDICT_COUNT           : {id: 9, label: "Count"},
     },
 		
     

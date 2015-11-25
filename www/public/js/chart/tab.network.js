@@ -753,7 +753,7 @@ var ReportFactory = {
                         o = MMTDrop.tools.sumUp(o, col.id);
 
                         var v = o[col.id];
-                        if( v == 0 ) continue;
+                        if( v === 0 || v === undefined ) continue;
 
                         var name = MMTDrop.constants.getCategoryNameFromID(cls);
 
@@ -1047,6 +1047,8 @@ var ReportFactory = {
                         //sumup by col.id 
                         o = MMTDrop.tools.sumUp(o, col.id);
                         var v = o[col.id];
+                        if( v === undefined )
+                            v = 0;
                         data.push({
                             "key": name,
                             "val": v

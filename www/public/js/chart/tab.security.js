@@ -41,25 +41,37 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     var COL = MMTDrop.constants.SecurityColumn;
     
     var DATA    = [];
-    var VERDICT = {
+    var VERDICT = {};
+    
+    var reset = function(){
+        DATA    = [];
+        VERDICT = {
         "detected"      : 0,
         "not_detected"  : 0, 
         "respected"     : 0, 
         "not_respected" : 0, 
         "unknown"       : 0
     };
+    };
+    
+    reset();
+    fPeriod.onChange( reset );
     
     var appendData = function( msg ){
         var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ];
         var vdict = msg[ COL.VERDICT.id ];
         var ts    = msg[ COL.TIMESTAMP.id ];
+        var num_verdict = 1;
         
-        VERDICT[ vdict ] ++;
+        if( msg[ COL.VERDICT_COUNT.id ] > 0 ) 
+            num_verdict = msg[ COL.VERDICT_COUNT.id ];
+        
+        VERDICT[ vdict ] += num_verdict;
         
         for( var i in DATA ){
             var obj = DATA[ i ];
             if( obj.key == key ){
-                obj.verdict[ vdict ] ++;
+                obj.verdict[ vdict ] += num_verdict;
                 
                 obj.detail.push( msg ) ;
                 
@@ -80,7 +92,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             "not_respected" : 0, 
             "unknown"       : 0
         };
-        obj.verdict[ vdict ] ++ ;
+        obj.verdict[ vdict ] += num_verdict ;
         obj.detail           = [ msg ];
         obj.data             = MMTDrop.tools.cloneData( msg );    //data to show to the table
         
@@ -177,7 +189,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         },
         chart: {
             "order": [[0, "asc"]],
-            dom: "<'row'<'col-sm-10 text-center'<'#mmt-verdict-total'>><'col-sm-2'f>><'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+            dom: "<'row'<'#mmt-verdict-total'>f><'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
         },
         afterRender: function (_chart) {
             updateTotalVerdictDisplay();
@@ -252,9 +264,11 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 //get value of the first column == index
                 var index = $currentRow.find('td:first').find("span").data("index");
                 var item = DATA[index].detail;
-                if (item)
+                if (item){
+                    if( item.length > 20 )
+                        item ="BigData";
                     showModal(item);
-
+                }
                 return false;
             });
 
@@ -264,12 +278,15 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     var lastUpdateTime = (new Date()).getTime();
     //when a new message is comming, append it to the table
     database.onMessage( "security.report",  function (msg) {
-        var index = appendData( msg );
+        var index = -1;
+        if( msg )
+            index = appendData( msg );
         
         var now = (new Date()).getTime();
         if( now - lastUpdateTime <= 500 )
             return;
         lastUpdateTime = now;
+        
         
         updateTotalVerdictDisplay();
         
@@ -281,7 +298,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             table.api().row( index ).data( row );
             
             //flash the updated row
-            //$(table.api().row( index ).node()).stop().fadeOut(100).fadeIn(100);
+            $(table.api().row( index ).node()).stop().fadeOut(100).fadeIn(100);
             
             return;
         }
@@ -335,22 +352,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         //order of data flux
         [{object: fProbe, effect:[ {object: cTable}]}]
     );
-    /*
-    cTable.attachTo( database );
-    report.renderTo = function( elemID ){
-        var $elemID = $('#' + elemID);
-        
-        if( $elemID.length == 0 ){
-            console.warn( " I cannot find a DOM element ["+ elemID +"] to render report.");
-            return;
-        }
-        
-        $elemID.html('');
-		
-		var rootDiv = $('<div>', {'class' : 'container-fluid', id: elemID + "_chart"});
-        rootDiv.appendTo( $elemID );
-        cTable.renderTo( elemID + "_chart" );
-    }
-    */
+    
     return report;
 }
