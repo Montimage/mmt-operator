@@ -21,7 +21,7 @@ router.get('/*', function(req, res, next) {
 			'network' : {
 				title: "Network"
 			},
-			'application' : {
+/*			'application' : {
 				title: "Application"
 			},
 			'internet' : {
@@ -32,7 +32,10 @@ router.get('/*', function(req, res, next) {
 			},
 			'video' : {
 				title: "Video"
-			}
+			},
+*/            'security':{
+                title:"Security"
+            }
 	};
 	
 	var page = pages[ id ];
@@ -40,7 +43,7 @@ router.get('/*', function(req, res, next) {
 		var err = new Error('Not Found');
 		err.status = 404;
 	}else
-		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period });
+		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true) });
 });
 
 module.exports = router;

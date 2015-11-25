@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 6,
-        height: 8,
+        height: 9,
         type: "danger",
         userData: {
             fn: "createTopUserReport"
@@ -17,7 +17,7 @@ var arr = [
         x: 6,
         y: 0,
         width: 6,
-        height: 8,
+        height: 9,
         type: "success",
         userData: {
             fn: "createTopProtocolReport"
@@ -382,10 +382,26 @@ var ReportFactory = {
             chart: {
                 //"scrollX": true,
                 //"scrollY": true,
-                dom: "f<'overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+                dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
             afterRender: function (_chart) {
+                var table = _chart.chart;
+                table.DataTable().columns.adjust();
                 
+                table.on("draw.dt", function () {
+                    var $div = $('.dataTables_scrollBody');
+                    var h = $div.parents().filter(".grid-stack-item-content").height() - 130;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.children().filter("table").css( "border-top", "thin solid #ddd" );
+                });
+                table.trigger("draw.dt");
+                //resize when changing window size
+                $(window).resize(function () {
+                    if (table)
+                        table.api().draw(false);
+                });
             }
         });
         //
@@ -469,6 +485,29 @@ var ReportFactory = {
                         return a.val - b.val;
                     });
 
+                    var top = 7;
+                    if( data.length > top+1 && cPie.showAll !== true){
+                        var val = 0;
+                        
+                        //update data
+                        for (var i=top; i<data.length; i++ ){
+                            var msg = data[i];
+                            val += msg.val;
+                        }
+                                                
+                        data[top] = {
+                            key: "Other",
+                            val: val
+                        };
+                        data.length = top+1;
+                        
+                        //reset dataLegend
+                        cPie.dataLegend.data = {};
+                        for (var i = 0; i < data.length; i++) {
+                            var o = data[i];
+                            cPie.dataLegend.data[o.key] = o.val;
+                        }
+                    }
                     return {
                         data: data,
                         columns: [{
@@ -484,8 +523,11 @@ var ReportFactory = {
             },
             chart: {
                 size: {
-                    height: 200
+                    height: 300
                 },
+                legend: {
+                    hide: true,
+                }
             },
 
             //custom legend
@@ -500,6 +542,8 @@ var ReportFactory = {
                 $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
+                    if( key == "Other")
+                        continue;
                     i++;
                     var val = legend.data[key];
                     var $tr = $("<tr>");
@@ -531,15 +575,13 @@ var ReportFactory = {
                     }).appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show detail of this class",
-                        title: "click to show detail of this class",
+                        href: "?show detail of this application",
+                        title: "click to show detail of this application",
                         text: val,
                         
                     });
                     $a.on("click", null, key, function( event ){
                         event.preventDefault();
-                        
-                        
                         
                          var id = event.data;
                         SubReport.loadChartOfOneApplication(_chart.elemID, id, _chart.database.data(), _chart.childrenTag);
@@ -554,7 +596,65 @@ var ReportFactory = {
                         "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
                     }).appendTo($tr);
                 }
-                $("<tfoot>").append(
+                var $tfoot = $("<tfoot>");
+
+                if (legend.data["Other"] != undefined) {
+                    i++;
+                    $tr = $("<tr>");
+                    var key = "Other";
+                    var val = legend.data[key];
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right"
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            var id = $(this).data("id");
+                            chart.toggle(id);
+                            //$(this).css("background-color", chart.color(id) );
+                        })
+                        .appendTo($tr);
+
+                    var $a = $("<a>", {
+                        href: "?show all applications",
+                        title: "click to show all applications",
+                        text: "Other",
+                        
+                    });
+                    $a.on("click", function(){
+                       _chart.showAll = true;
+                       _chart.redraw(); 
+                        return false;
+                    });
+                    
+                    $("<td>").append( $a ).appendTo($tr);
+
+                    
+                    $("<td>", {
+                        "align": "right",
+                        "html":  val
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+
+                    }).appendTo($tr);
+
+                    $tfoot.append($tr).appendTo($table);
+                }
+                $tfoot.append(
                     $("<tr>", {
                         "class": 'success'
                     }).append(
@@ -655,14 +755,6 @@ var ReportFactory = {
                         var v = o[col.id];
                         if( v == 0 ) continue;
 
-                        //all
-                        /*
-                        if( cls == -1 ){
-                                total = v;
-                                continue;
-                        }
-                        */
-
                         var name = MMTDrop.constants.getCategoryNameFromID(cls);
 
                         data.push({
@@ -678,13 +770,30 @@ var ReportFactory = {
                         return a.val - b.val;
                     });
 
-                    if( total != 0 ){
-                            var other = total - cPie.dataLegend.dataTotal;
-
-                            cPie.dataLegend.dataTotal = total;
-                            cPie.dataLegend.data["Unclassified"] = other;
-                            data.push( {"key": "Unclassified", "val": other} )
+                    var top = 7;
+                    if( data.length > top+1 && cPie.showAll !== true){
+                        var val = 0;
+                        
+                        //update data
+                        for (var i=top; i<data.length; i++ ){
+                            var msg = data[i];
+                            val += msg.val;
+                        }
+                                                
+                        data[top] = {
+                            key: "Other",
+                            val: val
+                        };
+                        data.length = top+1;
+                        
+                        //reset dataLegend
+                        cPie.dataLegend.data = {};
+                        for (var i = 0; i < data.length; i++) {
+                            var o = data[i];
+                            cPie.dataLegend.data[o.key] = o.val;
+                        }
                     }
+                    
                     return {
                         data: data,
                         columns: [{
@@ -700,8 +809,11 @@ var ReportFactory = {
             },
             chart: {
                 size: {
-                    height: 200
+                    height: 300
                 },
+                legend: {
+                    hide: true,
+                }
             },
 
             //custom legend
@@ -716,6 +828,9 @@ var ReportFactory = {
                 $("<thead><tr><th></th><th width='50%'>Class</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
+                    if( key == "Other")
+                        continue;
+                    
                     i++;
                     var val = legend.data[key];
                     var $tr = $("<tr>");
@@ -775,7 +890,66 @@ var ReportFactory = {
                         "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
                     }).appendTo($tr);
                 }
-                $("<tfoot>").append(
+                var $tfoot = $("<tfoot>");
+
+                if (legend.data["Other"] != undefined) {
+                    i++;
+                    $tr = $("<tr>");
+                    var key = "Other";
+                    var val = legend.data[key];
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right"
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            var id = $(this).data("id");
+                            chart.toggle(id);
+                            //$(this).css("background-color", chart.color(id) );
+                        })
+                        .appendTo($tr);
+
+                    var $a = $("<a>", {
+                        href: "?show all classes",
+                        title: "click to show all classes",
+                        text: "Other",
+                        
+                    });
+                    $a.on("click", function(){
+                       _chart.showAll = true;
+                       _chart.redraw(); 
+                        return false;
+                    });
+                    
+                    $("<td>").append( $a ).appendTo($tr);
+
+                    
+                    $("<td>", {
+                        "align": "right",
+                        "html":  val
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+
+                    }).appendTo($tr);
+
+                    $tfoot.append($tr).appendTo($table);
+                }
+                
+                $tfoot.append(
                     $("<tr>", {
                         "class": 'success'
                     }).append(
@@ -887,6 +1061,29 @@ var ReportFactory = {
                         return b.val - a.val;
                     });
 
+                    var top = 7;
+                    if( data.length > top+1 && cPie.showAll !== true){
+                        var val = 0;
+                        
+                        //update data
+                        for (var i=top; i<data.length; i++ ){
+                            var msg = data[i];
+                            val += msg.val;
+                        }
+                                                
+                        data[top] = {
+                            key: "Other",
+                            val: val
+                        };
+                        data.length = top+1;
+                        
+                        //reset dataLegend
+                        cPie.dataLegend.data = {};
+                        for (var i = 0; i < data.length; i++) {
+                            var o = data[i];
+                            cPie.dataLegend.data[o.key] = o.val;
+                        }
+                    }
                     return {
                         data: data,
                         columns: [{
@@ -902,8 +1099,11 @@ var ReportFactory = {
             },
             chart: {
                 size: {
-                    height: 240
+                    height: 300
                 },
+                legend: {
+                    hide: true,
+                }
             },
 
             //custom legend
@@ -965,7 +1165,9 @@ var ReportFactory = {
                             _chart.childrenTag = [];
                         var childrenTag = _chart.childrenTag;
                         if( childrenTag.length == 1 && childrenTag[0] == "NaP" )
-                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
+                                SubReport.loadChartOfOneApplication(_chart.elemID, ip,
+                                                                    //"NaP", 
+                                                                    _chart.database.data(), childrenTag);
                         else
                                 SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
                         

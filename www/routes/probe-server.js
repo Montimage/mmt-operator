@@ -6,6 +6,7 @@ var router = {};
 
 router.process_message = function (db, message) {
 //    console.log( message );
+    try{
     var msg = JSON.parse(message);
 
     if (msg[4] == 0) {
@@ -16,7 +17,7 @@ router.process_message = function (db, message) {
     if( format == 99 )
         return;
     
-    if (format == mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionProtocolStat(msg, config.mac_gateway) == null) {
+    if (format == mmtAdaptor.CsvFormat.STATS_FORMAT && config.mac_gateway != null && mmtAdaptor.setDirectionProtocolStat(msg, config.mac_gateway) == null) {
         console.log("[DONT 1] " + message);
         //return;
     }
@@ -36,21 +37,26 @@ router.process_message = function (db, message) {
                 channel = "security.report";
                 break;
         }
-        if( channel )
-            router.route_socketio( channel, msg );
+        if( channel ){
+            var m = msg.slice( 0 );
+            m[3] *= 1000;    //timestamp
+            router.route_socketio( channel, m );
+        }
     }
     
     msg = mmtAdaptor.formatReportItem(msg);
 
     if( db && msg )
         db.addProtocolStats(msg, function (err, err_msg) {});
+    }catch( err ){
+        console.error( err );
+    }
 };
 
 
 
 router.startListening = function (db, redis) {
     var report_client = redis.createClient();
-
     //*
     report_client.subscribe("security.report");
     report_client.subscribe("protocol.flow.stat");

@@ -3900,6 +3900,8 @@ MMTDrop.chartFactory = {
 						}
 					}
 				};
+                if( param.chart )
+                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
 				var chart = c3.generate( chart_opt );
 				return chart;
 			});
@@ -4024,8 +4026,7 @@ MMTDrop.chartFactory = {
 					}
 				}
 
-			        console.log( arrData );
-			        var chart_opt = {
+                var chart_opt = {
 			        		bindto : "#" + elemID,
 			        		data : {
 			        			columns: arrData,
@@ -4033,8 +4034,10 @@ MMTDrop.chartFactory = {
 			        		},
 			        		
 			        };
-			        var chart = c3.generate( chart_opt );
-			        return chart;
+                if( param.chart )
+                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+                var chart = c3.generate( chart_opt );
+                return chart;
 			});
 
 			chart.getIcon = function(){

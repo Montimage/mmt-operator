@@ -34,18 +34,6 @@ var arr = [
         userData: {
             fn: "createNodeReport"
         }
-    },
-    {
-        id: "security",
-        title: "Security Alert",
-        x: 0,
-        y: 7,
-        width: 12,
-        height: 5,
-        type: "danger",
-        userData: {
-            fn: "createSecurityRealtimeReport"
-        }
     }
 ];
 
@@ -61,17 +49,7 @@ var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var database = MMTDrop.databaseFactory.createStatDB();
 var filters = [ fPeriod, fProbe];
 
-//console.log = function( x ){};
 
-
-var loading = new Loading();
-loading.totalChart = 3;
-
-MMTDrop.callback = {
-    chart : {
-        afterRender : loading.onChartLoad
-    }
-};
 
 fPeriod.onChange( loading.onShowing );
 
@@ -276,7 +254,7 @@ var ReportFactory = {
                     pattern: ['red', 'peru', 'orange', 'NavajoWhite', 'MediumPurple', 'purple', 'magenta', 'blue', 'MediumSpringGreen', 'green',]
                 },
                 legend: {
-                    show: true
+                    show: false 
                 },
                 size: {
                     height: 200
@@ -531,6 +509,8 @@ var ReportFactory = {
                                 
                                 if( ["In Frames", "Out Frames", "In Bytes", "Out Bytes", "Total Bytes"].indexOf( j) >= 0 )
                                     col.align = "right";
+                                else
+                                    col.align = "left";
                                 columns.push( col );
                             }
                             break;
@@ -567,7 +547,26 @@ var ReportFactory = {
             },
             chart: {
                 "order": [[0, "asc"]],
-                dom: "ft<'row'<'col-sm-3'l><'col-sm-9'p>>",
+                dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+            },
+            afterRender: function (_chart) {
+                var table = _chart.chart;
+                table.DataTable().columns.adjust();
+                
+                table.on("draw.dt", function () {
+                    var $div = $('.dataTables_scrollBody');
+                    var h = $div.parents().filter(".grid-stack-item-content").height() - 110;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.children().filter("table").css( "border-top", "thin solid #ddd" );
+                });
+                table.trigger("draw.dt");
+                //resize when changing window size
+                $(window).resize(function () {
+                    if (table)
+                        table.api().draw(false);
+                });
             }
         });
 

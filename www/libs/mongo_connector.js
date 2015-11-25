@@ -213,7 +213,7 @@ var MongoConnector = function (opts) {
         self.lastTimestamps[message.format] = ts;
 
         self.mdb.collection("traffic").insert( message , function (err, records) {
-            if (err) console.log( err );
+            if (err) console.error( err.stack );
         });
 
 
@@ -228,7 +228,7 @@ var MongoConnector = function (opts) {
 
             var data = cache.minute.getData();
             self.mdb.collection("traffic_min").insert(data, function (err, records) {
-                if (err) console.log( err );
+                if (err) console.error( err.stack );
                 console.log(">>>>>>> flush " + data.length + " records to traffic_min");
             });
             cache.minute.lastUpdateTime = ts;
@@ -244,7 +244,7 @@ var MongoConnector = function (opts) {
                 //update traffic hour
                 data = cache.hour.getData();
                 self.mdb.collection("traffic_hour").insert(data, function (err, records) {
-                    if (err) console.log( err );
+                    if (err) console.error( err.stack );
                     console.log(">>>>>>> flush " + data.length + " records to traffic_hour");
                 });
                 cache.hour.lastUpdateTime = ts;
@@ -258,8 +258,8 @@ var MongoConnector = function (opts) {
                 else if (ts - cache.day.lastUpdateTime >= 24 * 60 * 60 * 1000) {
                     data = cache.day.getData();
                     self.mdb.collection("traffic_day").insert(data, function (err, records) {
-                        if (err) console.log( err );
-                        console.log(">>>>>>> flush " + data.length + " records to traffic_day");
+                    if (err) console.error( err.stack );
+                        console.log(">>>>>>> flushed " + data.length + " records to traffic_day");
                     });
 
                     cache.day.lastUpdateTime = ts;
@@ -286,7 +286,7 @@ var MongoConnector = function (opts) {
                 },
                 function (err, result) {
                     if (err) throw err;
-                    console.log("<<<<< delete records in traffic older than " + (new Date(last.ts)).toLocaleTimeString() );
+                    console.log("<<<<< deleted "+ result.deletedCount +" records in ["+ i +"] older than " + (new Date(last.ts)).toLocaleTimeString() );
                 });
                 
                 last.ts = ts;
@@ -294,6 +294,50 @@ var MongoConnector = function (opts) {
         }
     };
 
+
+    self.cleanup = function( cb ){
+        var totalCall = 0;
+        var callback = function(){
+            totalCall ++;
+            if( totalCall == 3 )
+                cb();
+        }
+        
+        var data = cache.minute.getData();
+        if( data.length > 0 )
+            self.mdb.collection("traffic_min").insert(data, function (err, records) {
+                if (err) console.error( err.stack );
+                console.log(">>>>>>> flush " + data.length + " records to traffic_min");
+                
+                callback();
+            });
+        else
+            callback();
+        
+        cache.hour.addArray( data );
+        data = cache.hour.getData();
+        if( data.length > 0 )
+            self.mdb.collection("traffic_hour").insert(data, function (err, records) {
+                if (err) console.error( err.stack );
+                console.log(">>>>>>> flush " + data.length + " records to traffic_hour");
+                
+                callback();
+            });
+        else
+            callback();
+        
+        cache.day.addArray( data );
+        data = cache.day.getData();
+        if( data.length > 0 )
+            self.mdb.collection("traffic_day").insert(data, function (err, records) {
+                if (err) console.error( err.stack );
+                console.log(">>>>>>> flushed " + data.length + " records to traffic_day");
+                
+                callback();
+            });
+        else
+            callback();
+    };
 
     /**
      * [[Description]]

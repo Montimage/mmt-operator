@@ -25,4 +25,7 @@ html
     block javascripts
         
   body
+    if( !locals.is_in_debug_mode )
+        script(type='text/javascript').
+            console.log = function( obj ){};
     block content

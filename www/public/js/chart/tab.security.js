@@ -1,11 +1,44 @@
-ReportFactory.createSecurityRealtimeReport = function (fProbe) {
+var arr = [
+    {
+        id: "security",
+        title: "Security Alert",
+        x: 0,
+        y: 7,
+        width: 12,
+        height: 8,
+        type: "danger",
+        userData: {
+            fn: "createSecurityRealtimeReport"
+        }
+    }
+];
 
-    var COL = MMTDrop.constants.SecurityColumn;
-    var database = new MMTDrop.Database({
+var availableReports = {
+    "createNodeReport":     "Security",
+}
+
+var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+
+var database = new MMTDrop.Database({
         format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT, //0
         period: MMTDrop.constants.period.MINUTE //get data stored in DB from the last minute
-    }, null, true);
+    }, null, false);
+var filters = [ fPeriod, fProbe];
 
+MMTDrop.callback = {
+    chart : {
+        afterRender : loading.onChartLoad
+    }
+};
+
+fPeriod.onChange( loading.onShowing );
+
+var ReportFactory = {};
+
+ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
+
+    var COL = MMTDrop.constants.SecurityColumn;
     
     var DATA    = [];
     var VERDICT = {
@@ -228,10 +261,16 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe) {
 
         }
     });
-    
+    var lastUpdateTime = (new Date()).getTime();
     //when a new message is comming, append it to the table
     database.onMessage( "security.report",  function (msg) {
         var index = appendData( msg );
+        
+        var now = (new Date()).getTime();
+        if( now - lastUpdateTime <= 500 )
+            return;
+        lastUpdateTime = now;
+        
         updateTotalVerdictDisplay();
         
         var table = cTable.chart;
@@ -294,8 +333,9 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe) {
 					 ],
 
         //order of data flux
-        []
+        [{object: fProbe, effect:[ {object: cTable}]}]
     );
+    /*
     cTable.attachTo( database );
     report.renderTo = function( elemID ){
         var $elemID = $('#' + elemID);
@@ -311,6 +351,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe) {
         rootDiv.appendTo( $elemID );
         cTable.renderTo( elemID + "_chart" );
     }
-    
+    */
     return report;
 }

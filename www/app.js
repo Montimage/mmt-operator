@@ -20,11 +20,14 @@ var config          = require("./config.json");
 var REDIS_STR = "redis",
     FILE_STR  = "file";
 
-if( config.input_mode != REDIS_STR || config.input_mode != FILE_STR)
+if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
     config.input_mode = FILE_STR;
 
 console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
 
+if( config.is_in_debug_mode !== true ){
+    console.log = function( obj ){};
+}
 
 var dbconnector = new dbc( {
     connectString: 'mongodb://'+ config.database_server +':27017/mmt-data'
@@ -113,6 +116,26 @@ app.use(function(err, req, res, next) {
   });
 });
 
+//clean up
+
+function cleanup ( cb ){
+    console.log( "\nCleaning up before exiting... ");
+    if( dbconnector )
+        dbconnector.cleanup( cb );
+};
+
+process.on('SIGINT',function(){
+    try{
+          cleanup( function(){
+          } );      
+    }catch( err ){
+        console.error( err );
+    }
     
+    setTimeout( function(){
+        process.exit(1);
+    }, 1000 );
+});
+
 
 module.exports = app;

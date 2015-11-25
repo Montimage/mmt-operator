@@ -82,6 +82,11 @@ $(function () {
                     rep.renderTo(node.id + "-content");
                 }
             }
+            
+            //loading is defined in each tab
+            if( loading )
+                loading.totalChart ++;
+            
         } catch (ex) {
             console.error("Error when rending report [" + key + "] to the DOM [" + node.id + "]");
             console.error(ex.stack);
@@ -92,8 +97,7 @@ $(function () {
 
     for (var i in data) {
         var node = data[i];
-        //render in parallel
-        setTimeout(renderReport, 0, node);
+        renderReport( node);
     }
 
 
