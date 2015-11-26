@@ -13,6 +13,14 @@ var arr = [
     }
 ];
 
+jQuery.fn.flash = function(){
+    var duration = 500;
+    var current = this.css( 'background-color' );
+    this.animate( { "background-color": '#FF0000' }, duration / 2 );
+    this.animate( { "background-color": current }, duration / 2 );
+
+}
+
 var availableReports = {
     "createNodeReport":     "Security",
 }
@@ -68,7 +76,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         
         VERDICT[ vdict ] += num_verdict;
         
-        for( var i in DATA ){
+        for( var i=0; i<DATA.length; i++ ){
             var obj = DATA[ i ];
             if( obj.key == key ){
                 obj.verdict[ vdict ] += num_verdict;
@@ -189,7 +197,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         },
         chart: {
             "order": [[0, "asc"]],
-            dom: "<'row'<'#mmt-verdict-total'>f><'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+            dom: "<'row' <'col-sm-9'<'#mmt-verdict-total'>><'col-sm-3'f>><'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
         },
         afterRender: function (_chart) {
             updateTotalVerdictDisplay();
@@ -266,7 +274,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 var item = DATA[index].detail;
                 if (item){
                     if( item.length > 20 )
-                        item ="BigData";
+                        item ="BigData! We will work later to show more than 20 items";
                     showModal(item);
                 }
                 return false;
@@ -275,38 +283,69 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
 
         }
     });
+    
+    var indexOfNewRow = [];
+    var indexToUpdate = [];
     var lastUpdateTime = (new Date()).getTime();
     //when a new message is comming, append it to the table
-    database.onMessage( "security.report",  function (msg) {
-        var index = -1;
-        if( msg )
-            index = appendData( msg );
+    database.onMessage( "security.report",  function ( data ) {
+        if( data === undefined || data.length === 0 )
+            return;
+        
+        for( var i in data ){
+            var msg = data[i];
+            var index = appendData( msg );
+            if( index >= 0 ){
+                //the row is not yet in the list to update
+                if( indexToUpdate.indexOf( index ) === -1 && indexOfNewRow.indexOf( index ) === -1 )
+                    indexToUpdate.push( index );
+            }else
+                indexOfNewRow.push( DATA.length - 1 );
+        }
+        
         
         var now = (new Date()).getTime();
         if( now - lastUpdateTime <= 500 )
             return;
+        
+        
         lastUpdateTime = now;
         
-        
         updateTotalVerdictDisplay();
+
         
         var table = cTable.chart;
-        table.DataTable().columns.adjust();
+       
         
-        if( index >= 0 ){
-            var row = getDataToShow( DATA[ index ] );
-            table.api().row( index ).data( row );
+        for( var i in indexToUpdate  ){
+            var index = indexToUpdate[ i ];
+            
+            var row_data = getDataToShow( DATA[ index ] );
+            var row      = table.api().row( index );
+            
+            row.data( row_data );
             
             //flash the updated row
-            $(table.api().row( index ).node()).stop().fadeOut(100).fadeIn(100);
-            
+            $( row.node() ).stop().flash();;
+        }
+        indexToUpdate = [];
+        
+        //there are no new rows to add
+        if( indexOfNewRow.length == 0 ){
+            table.DataTable().columns.adjust();
             return;
         }
         
-        //need to append to the table a new row
-        var new_row = getDataToShow( DATA[ DATA.length - 1 ] );
-        
+        for( var i in indexOfNewRow ){
+            var index = indexOfNewRow[ i ]; 
+            //need to append to the table a new row
+            var new_row = getDataToShow( DATA[ index ] );
 
+            //show msg to the table
+            table.api().row.add( new_row );
+        }
+        indexOfNewRow = [];
+        
         var inLastPage = false;
         var o = table.api().page.info();
         var currentPage = o.page;
@@ -314,8 +353,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         if (currentPage == (o.pages - 1))
             inLastPage = true;
 
-        //show msg to the table
-        table.api().row.add( new_row );
+        table.DataTable().columns.adjust();
         table.api().draw(false);
 
         //console.log(" in the last page:" + inLastPage);

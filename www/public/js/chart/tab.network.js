@@ -148,21 +148,27 @@ var SubReport = {
         $subReport.hide();
         
         pre.db = MMTDrop.databaseFactory.createFlowDB();
+        pre.db.data( data );
+        
+        var obj = pre.db.stat.splitDataByClass();
+        var arr = obj[ classID ];
+        /*
         //retain only msg concern to classID
         var arr = [];
         //list of all app in the class classID
         var appLst = MMTDrop.constants.CategoriesAppIdsMap[ classID ];
 
         //All
-        if( appLst === undefined)
+        if( appLst === undefined ){
             arr = data;
-        else
+        }else
             for( var i in data){
                 var msg = data[i];
                 var appId = msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ];
                 if( appLst.indexOf( appId )  > -1 )
                     arr.push( msg );
         }
+        */
         
         pre.db.data( arr );
         pre.filter.attachTo( pre.db );
@@ -482,7 +488,7 @@ var ReportFactory = {
                     }
 
                     data.sort(function (a, b) {
-                        return a.val - b.val;
+                        return b.val - a.val;
                     });
 
                     var top = 7;
@@ -767,7 +773,7 @@ var ReportFactory = {
                     }
 
                     data.sort(function (a, b) {
-                        return a.val - b.val;
+                        return b.val - a.val;
                     });
 
                     var top = 7;

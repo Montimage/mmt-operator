@@ -5,8 +5,10 @@ var router = {}
 router.socketio_clients = [];
 
 router.emit_data = function( channel, msg ){
-    for( var i in router.socketio_clients )
+    for( var i in router.socketio_clients ){
+        console.log("\n--------> flush " + msg.length + " records to clients on the chanel " + channel);
         router.socketio_clients[i].emit( channel, msg );
+    }
 };
 
 router.start_socketio = function (io) {

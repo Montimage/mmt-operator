@@ -1,12 +1,26 @@
 {
-    "database_server"       : "192.168.0.37",
-    "redis_server"          : "192.168.0.37",
-    "data_folder"           : "test/",
-    "input_mode"            : "redis",
-    "//mac_gateway"           : "00:05:5d:89:26:78",
-    "local_network"         : [ { "ip": "192.168.0.0", "mask": "255.0.0.0"}, 
-                                { "ip": "172.16.0.0",  "mask": "255.0.0.0"},
-                                { "ip": "10.0.0.0",    "mask": "255.0.0.0"} ],
-    "probe_stats_period"    : 5,
-    "is_in_debug_mode"      : true 
+    "database_server": "192.168.0.37",
+    "redis_server": "192.168.0.37",
+    "data_folder": "/Users/nhnghia/temps/share_vbox/",
+    "input_mode": "file",
+    "//mac_gateway": "00:05:5d:89:26:78",
+    "local_network": [{
+            "ip": "192.168.0.0",
+            "mask": "255.0.0.0"
+        },
+        {
+            "ip": "172.16.0.0",
+            "mask": "255.0.0.0"
+        },
+        {
+            "ip": "10.0.0.0",
+            "mask": "255.0.0.0"
+        }],
+    "probe_stats_period": 5,
+    "buffer_socketio": {
+        "max_length_size": 2000,
+        "max_period_size": 3600,
+        "flush_to_client_period": 1
+    },
+    "is_in_debug_mode": true
 }

@@ -165,35 +165,36 @@ MMTDrop.constants = {
 			SERVER_PORT          : {id: 9, label:"Server Port"},
 			/** Index of the client port column */
 			CLIENT_PORT          : {id: 10, label:"Client Port"},
-            IS_LOCAL    : {id: 11, label: "Is local"},
+            
+            //IS_LOCAL    : {id: 11, label: "Is local"},
 			/** Index of the transport protocol identifier column */
-			TRANSPORT_PROTO      : {id: 12, label:"Transport Protocol"},
+			TRANSPORT_PROTO      : {id: 11, label:"Transport Protocol"},
 			/** Index of the uplink packet count column */
-			UL_PACKET_COUNT      : {id: 13, label:"UP Packet Count"},
+			UL_PACKET_COUNT      : {id: 12, label:"UP Packet Count"},
 			/** Index of the downlink packet count column */
-			DL_PACKET_COUNT      : {id: 14, label:"DL Packet Count"},
+			DL_PACKET_COUNT      : {id: 13, label:"DL Packet Count"},
 			/** Index of the uplink data volume column */
-			UL_DATA_VOLUME       : {id: 15, label:"UL Data Volume"},
+			UL_DATA_VOLUME       : {id: 14, label:"UL Data Volume"},
 			/** Index of the downlink data volume column */
-			DL_DATA_VOLUME       : {id: 16, label:"DL Data Volume"},
+			DL_DATA_VOLUME       : {id: 15, label:"DL Data Volume"},
 			/** Index of the TCP round trip time column.
 			 *  For UDP traffic this will be set to zero.
 			 */
-			TCP_RTT              : {id: 17, label:"TCP RTT"},
+			TCP_RTT              : {id: 16, label:"TCP RTT"},
 			/** Index of the retransmissions count column
 			 * For UDP traffic this will be set to zero
 			 */
-			RETRANSMISSION_COUNT : {id: 18, label:"Retransmission Count"},
+			RETRANSMISSION_COUNT : {id: 17, label:"Retransmission Count"},
 			/** Index of the application family column */
-			APP_FAMILY           : {id: 19, label:"App Family"},
+			APP_FAMILY           : {id: 18, label:"App Family"},
 			/** Index of the content class column */
-			CONTENT_CLASS        : {id: 20, label:"Content Class"},
+			CONTENT_CLASS        : {id: 19, label:"Content Class"},
 			/** Index of the protocol path column */
-			PROTO_PATH           : {id: 21, label:"Protocol Path"},
+			PROTO_PATH           : {id: 20, label:"Protocol Path"},
 			/** Index of the application name column */
-			APP_NAME             : {id: 22, label:"App Name"},
+			APP_NAME             : {id: 21, label:"App Name"},
 			/** Index of the start of the application specific statistics (this is not a real column, rather an index) */
-			APP_FORMAT_ID        : {id: 23, label:"App Format ID"},
+			APP_FORMAT_ID        : {id: 22, label:"App Format ID"},
 		},
 
 		/**
@@ -1077,9 +1078,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 			_socket = new io.connect(MMTDrop.config.serverURL);
 			
 			_socket.on( channel , function( msg ){
+                console.log( "received " + msg.length + " records from server on the channel " + channel);
 				//update database with new message
 				//_originalData.shift();
-				_originalData.push( msg );
+				//_originalData.push( msg );
+                _originalData.concat( msg );
 				
 				//fire callbacks
 				for( var i=0; i<_callbacks.length; i++){

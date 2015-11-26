@@ -92,19 +92,21 @@ var MMTDrop = {
         CLIENT_ADDR             : 8, /**< Index of the client address column */
         SERVER_PORT             : 9, /**< Index of the server port column */
         CLIENT_PORT             : 10, /**< Index of the client port column */
-        IS_LOCAL                : 11, /** 0 (if not a local address), 1 (local address,server),2 (local address,client),3 (local address,both server and client)*/
-        TRANSPORT_PROTO         : 12, /**< Index of the transport protocol identifier column */
-        UL_PACKET_COUNT         : 13, /**< Index of the uplink packet count column */
-        DL_PACKET_COUNT         : 14, /**< Index of the downlink packet count column */
-        UL_DATA_VOLUME          : 15, /**< Index of the uplink data volume column */
-        DL_DATA_VOLUME          : 16, /**< Index of the downlink data volume column */
-        TCP_RTT                 : 17, /**< Index of the TCP round trip time column */
-        RETRANSMISSION_COUNT    : 18, /**< Index of the retransmissions count column */
-        APP_FAMILY              : 19, /**< Index of the application family column */
-        CONTENT_CLASS           : 20, /**< Index of the content class column */
-        PROTO_PATH              : 21, /**< Index of the protocol path column */
-        APP_NAME                : 22, /**< Index of the application name column */
-        APP_FORMAT_ID           : 23, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
+
+        //IS_LOCAL                : 11, /** 0 (if not a local address), 1 (local address,server),2 (local address,client),3 (local address,both server and client)*/
+
+        TRANSPORT_PROTO         : 11, /**< Index of the transport protocol identifier column */
+        UL_PACKET_COUNT         : 12, /**< Index of the uplink packet count column */
+        DL_PACKET_COUNT         : 13, /**< Index of the downlink packet count column */
+        UL_DATA_VOLUME          : 14, /**< Index of the uplink data volume column */
+        DL_DATA_VOLUME          : 15, /**< Index of the downlink data volume column */
+        TCP_RTT                 : 16, /**< Index of the TCP round trip time column */
+        RETRANSMISSION_COUNT    : 17, /**< Index of the retransmissions count column */
+        APP_FAMILY              : 18, /**< Index of the application family column */
+        CONTENT_CLASS           : 19, /**< Index of the content class column */
+        PROTO_PATH              : 20, /**< Index of the protocol path column */
+        APP_NAME                : 21, /**< Index of the application name column */
+        APP_FORMAT_ID           : 22, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
     },
     
     HttpStatsColumnId : {
@@ -385,7 +387,7 @@ MMTDrop.SecurityPoint = function( entry ){
     retval.format                   = entry[MMTDrop.SecurityColumnId.FORMAT_ID];
     retval.probe                    = entry[MMTDrop.SecurityColumnId.PROBE_ID];
     retval.source                   = entry[MMTDrop.SecurityColumnId.SOURCE_ID];
-    retval.time                     = Math.floor(entry[MMTDrop.StatsColumnId.TIMESTAMP] * 1000);
+    retval.time                     = entry[MMTDrop.StatsColumnId.TIMESTAMP];
     retval.property                 = entry[MMTDrop.SecurityColumnId.PROPERTY];
     retval.verdict                  = entry[MMTDrop.SecurityColumnId.VERDICT];
     retval.type                     = entry[MMTDrop.SecurityColumnId.TYPE];
@@ -418,7 +420,7 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.format           = entry[MMTDrop.StatsColumnId.FORMAT_ID];
     retval.probe            = entry[MMTDrop.StatsColumnId.PROBE_ID];
     retval.source           = entry[MMTDrop.StatsColumnId.SOURCE_ID];
-    retval.time             = Math.floor(entry[MMTDrop.StatsColumnId.TIMESTAMP] * 1000);
+    retval.time             = entry[MMTDrop.StatsColumnId.TIMESTAMP];
     
     retval.app              = entry[MMTDrop.StatsColumnId.APP_ID];
     retval.path             = entry[MMTDrop.StatsColumnId.APP_PATH];
@@ -436,7 +438,7 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.bytecount        = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
     retval.payloadcount     = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
     retval.packetcount      = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    retval.start_time       = Math.floor(entry[MMTDrop.StatsColumnId.START_TIME] * 1000);
+    retval.start_time       = entry[MMTDrop.StatsColumnId.START_TIME];
     retval.mac_src          = entry[MMTDrop.StatsColumnId.MAC_SRC];
     retval.mac_dest         = entry[MMTDrop.StatsColumnId.MAC_DEST];
     return retval;
@@ -477,7 +479,7 @@ MMTDrop.FlowStatsItem = function(entry) {
     retval.format           = entry[MMTDrop.FlowStatsColumnId.FORMAT_ID];
     retval.probe            = entry[MMTDrop.FlowStatsColumnId.PROBE_ID];
     retval.source           = entry[MMTDrop.FlowStatsColumnId.SOURCE_ID];
-    retval.time             = Math.floor(entry[MMTDrop.FlowStatsColumnId.TIMESTAMP] * 1000);
+    retval.time             = entry[MMTDrop.FlowStatsColumnId.TIMESTAMP];
     retval.fid              = entry[MMTDrop.FlowStatsColumnId.FLOW_ID];
     retval.start_time       = Math.floor(entry[MMTDrop.FlowStatsColumnId.START_TIME] * 1000);
     retval.ip_version       = entry[MMTDrop.FlowStatsColumnId.IP_VERSION];

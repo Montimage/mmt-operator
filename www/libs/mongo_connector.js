@@ -317,15 +317,16 @@ var MongoConnector = function (opts) {
         var callback = function () {
             totalCall++;
             if (totalCall == 3)
-                cb();
+                if( cb )
+                    cb();
         }
 
         var data = cache.minute.getData();
+        cache.minute.clear();
         if (data.length > 0)
             self.mdb.collection("traffic_min").insert(data, function (err, records) {
                 if (err) console.error(err.stack);
                 console.log(">>>>>>> flush " + data.length + " records to traffic_min");
-
                 callback();
             });
         else
@@ -333,11 +334,11 @@ var MongoConnector = function (opts) {
 
         cache.hour.addArray(data);
         data = cache.hour.getData();
+        cache.hour.clear();
         if (data.length > 0)
             self.mdb.collection("traffic_hour").insert(data, function (err, records) {
                 if (err) console.error(err.stack);
                 console.log(">>>>>>> flush " + data.length + " records to traffic_hour");
-
                 callback();
             });
         else
@@ -345,11 +346,11 @@ var MongoConnector = function (opts) {
 
         cache.day.addArray(data);
         data = cache.day.getData();
+        cache.day.clear();
         if (data.length > 0)
             self.mdb.collection("traffic_day").insert(data, function (err, records) {
                 if (err) console.error(err.stack);
                 console.log(">>>>>>> flushed " + data.length + " records to traffic_day");
-
                 callback();
             });
         else

@@ -135,7 +135,7 @@ process.on('SIGINT',function(){
     setTimeout( function(){
         console.log("bye!");
         process.exit(1);
-    }, 1000 );
+    }, 2000 );
 });
 
 

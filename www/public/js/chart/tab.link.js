@@ -638,79 +638,112 @@ var ReportFactory = {
         fDir.onFilter(initData);
         fMetric.onFilter(initData);
 
-        var appendMsg = function (msg) {
-            
-            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
+        var appendMsg = function ( data ) {
+            if( data == undefined || data.length == 0 )
                 return;
-
-            console.log( JSON.stringify(msg) );
             
             var chart = cLine.chart;
             if (chart == undefined)
                 return;
-
             chart.zoom.enable(false);
 
-            //the chart cLine in 
-
-            var time = msg[COL.TIMESTAMP.id];
-            for (var c in cols) {
-                c = cols[c];
-                var serieName = c.label;
-
-                var val = msg[c.id] / MMTDrop.config.probe_stats_period;
-
-                if (newData[serieName] === undefined)
-                    newData[serieName] = 0;
-                else
-                    console.log( "plus: " + serieName ); 
-                
-                newData[serieName] += val;
+            var maxOx = 0;
+            var minOx = 0; 
+            
+            var chart_data = chart.data.shown();
+            if( chart_data ){
+                chart_data = chart_data[0];
+                if( chart_data ){
+                    chart_data = chart_data.values;
+                    if( chart_data ){
+                        var maxOx = chart_data[ chart_data.length - 1 ].x.getTime();
+                        var minOx = chart_data[0].x.getTime();
+                    }
+                }
             }
+            
+            var numberofdrop = 0;
+            for( var i in data ){
+                var msg = data[i];
+                if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
+                    continue;
 
+                var time = msg[COL.TIMESTAMP.id];
+                
+                if( time < maxOx ){
+                    numberofdrop ++;
+                    continue;
+                }
+                
+                for (var c in cols) {
+                    c = cols[c];
+                    var serieName = c.label;
+                    var val       = msg[c.id];
+
+                    if (newData[time] === undefined)
+                        newData[time] = {};
+                    if (newData[time][serieName] === undefined )
+                        newData[time][serieName] = 0;
+
+                    newData[time][serieName] += val;
+                }
+            }
+            
+            console.log( "---> drop " + numberofdrop + " records that are older than " + (new Date(maxOx)).toLocaleTimeString() );
+            
+            var localtime = (new Date()).getTime();
+            
             //update to chart each x seconds
-            if ( time - lastAddMoment > 1000 ) {
+            if ( localtime - lastAddMoment > 1000 && !$.isEmptyObject( newData ) ) {
                 //
-
-                var date = new Date(time);
-                var xs = chart.xs();
-
-                var columns = [];
+                var obj = {};
                 //convert newData to columns format of C3js
-                for (var s in newData) {
-                    columns.push([s, newData[s]]); //y value
-                    columns.push(["x-" + s, date]); //x value = time
+                var length = 0;
+                //for each time step
+                for (var t in newData) {
+                    length ++;
+                    var o = newData[t];
+                    var time = new Date( parseInt( t ) );
+                    
+                    //for each category (In/Out)
+                    for( var s in o ){
+                        //init for the first element of each array
+                        if( length === 1 ){
+                            obj["x-" + s] = [ "x-" + s];    //Ox
+                            obj[   s    ] = [ s ];          //Oy
+                        }
+                        
+                        var val = o[s] / MMTDrop.config.probe_stats_period;
+                        val = Math.round( val );
+                        
+                        obj["x-" + s].push( time );    //Ox
+                        obj[    s   ].push( val );     //Oy
+                    }
                 }
 
                 //reset newData
                 newData       = {};
-                lastAddMoment = time;
+                lastAddMoment = localtime;
                 
-                var length = 0;
-                var data = chart.data.shown();
 
-                if( data.length > 0 ){
-                    var min  = data[0].values[0].x;
-                    //keep only data in the chart from the last 5 minutes
-                    if( time - min > 5*60*1000)
-                        length = 1;
+                if( maxOx - minOx < 5*60*1000){
+                    length = 0;
                 }
                 
+                var columns = MMTDrop.tools.object2Array( obj );
                 try {
                     chart.flow({
                         columns: columns,
                         length : length 
                     });
-                } catch (err) {}
+                } catch (err) {
+                    console.error( err.stack );
+                }
             }
         };
 
 
-        database.onMessage( "protocol.flow.stat", function (msg) {
-            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
-                return;
-            appendMsg(msg);
-        });
+        database.onMessage( "protocol.flow.stat", appendMsg );
 
         return rep;
     },
@@ -734,8 +767,8 @@ var ReportFactory = {
                     
                     //dir = 1: incoming, -1 outgoing, 0: All
                     if (dir == 0) {
-                        cols.push(_this.getCol(col, false));
-                        cols.push(_this.getCol(col, true));
+                        cols.push(_this.getCol(col, true));    //in
+                        cols.push(_this.getCol(col, false));   //out
                         /*cols.push({
                             id: col.id,
                             label: "All"

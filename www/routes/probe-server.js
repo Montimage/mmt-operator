@@ -1,14 +1,88 @@
 var fs = require('fs');
 var mmtAdaptor = require('../libs/dataAdaptor');
 var config = require("../config.json");
+var LineByLineReader = require('line-by-line');
+
 
 var router = {};
+router.cacheData = {};
+
+//cache size
+var MAX_LENGTH = 5000;
+var MAX_PERIOD = 60*60*1000;    //1 hour
+var FLUSH_PERIOD = 5*1000;
+
+if( config.buffer_socketio ){
+    if( config.buffer_socketio.max_length_size )
+        MAX_LENGTH = parseInt( config.buffer_socketio.max_length_size );
+    if( config.buffer_socketio.max_period_size )
+        MAX_PERIOD = parseInt( config.buffer_socketio.max_period_size ) * 1000;
+    if( config.buffer_socketio.flush_to_client_period )
+        FLUSH_PERIOD = parseInt( config.buffer_socketio.flush_to_client_period ) * 1000;
+}
+
+/**
+ * A cache retains data in a period.
+ * @param {integer} period size of this cache by seconds
+ */
+var CacheTimeStat = function( channel ){
+    
+    var self = this;
+    this.latestTimestamp = null;
+    this.oldestTimestamp = null;
+    this.numberOfRemoved = 0;
+    this.data = [];
+    //msg.time is in miliseconds;
+    this.push = function( msg ){
+        if( msg === undefined )
+            return;
+        
+        msg = msg.slice( 0 ); //clone data
+        self.data.push( msg );
+        var time = msg[3];
+        self.latestTimestamp = time;
+        if( self.oldestTimestamp === null )
+            self.oldestTimestamp = time;
+        else{
+            var index = -1;
+            while ( (self.latestTimestamp - self.oldestTimestamp > MAX_PERIOD || self.data.length > MAX_LENGTH) && index < self.data.length - 1) {
+                index ++;
+                self.oldestTimestamp = self.data[index][3];
+            }
+            
+            if( index > -1 ){
+                //remove the first (index+1) elements
+                self.data.splice(0, index+1 );
+                self.numberOfRemoved += index + 1;
+            }
+        }
+    };
+    
+    this.flushDataToClient = function(){
+        var data = self.data;
+    
+        if( data.length > 0 ){
+            if( self.numberOfRemoved > 0 )
+            console.log( "  there are " + self.numberOfRemoved +" records in ["+ channel +"] that are either older than "+ (new Date( self.oldestTimestamp)).toLocaleTimeString() +" or over flow the cache length " + MAX_LENGTH );
+            
+            self.numberOfRemoved = 0;
+            self.data = [];
+            if( router.route_socketio ){
+                router.route_socketio( channel, data );
+            }
+        }
+    }
+    
+    setInterval( self.flushDataToClient, FLUSH_PERIOD );    //each 5 seconds
+}
 
 
 router.process_message = function (db, message) {
+    //console.log( message );
     try {
         var msg = JSON.parse(message);
-
+        msg[3] *= 1000; //timestamp
+        
         if (msg[4] == 0) {
             console.log("[META  ] " + message);
             return;
@@ -38,9 +112,10 @@ router.process_message = function (db, message) {
                 break;
             }
             if (channel) {
-                var m = msg.slice(0);
-                m[3] *= 1000; //timestamp
-                router.route_socketio(channel, m);
+                if( router.cacheData[ channel ] === undefined )
+                    router.cacheData[ channel ] = new CacheTimeStat( channel );
+                else
+                    router.cacheData[ channel ].push( msg );
             }
         }
 
@@ -51,8 +126,9 @@ router.process_message = function (db, message) {
 
 
     } catch (err) {
-        console.error("Error when processing the message: " + message);
+        console.error("Error when processing the message: $" + message + "$");
         console.error(err.stack);
+        //process.exit(0);
     }
 };
 
@@ -80,39 +156,27 @@ router.startListening = function (db, redis) {
 
 
 router.startListeningAtFolder = function (db, folder_path) {
-    var listen_period = config.probe_stats_period * 1000;
+    if (folder_path.charAt(folder_path.length - 1) != "/")
+        folder_path += "/";
 
     var process_file = function (file_name, cb) {
-        var input_stream = fs.createReadStream(file_name);
-        var remaining = '';
+        var lr = new LineByLineReader(file_name);
 
-        input_stream.on('data', function (data) {
-            remaining += data;
-            var index = remaining.indexOf('\n');
-            while (index > -1) {
-                var line = remaining.substring(0, index);
-                remaining = remaining.substring(index + 1);
-
-                router.process_message(db, "[" + line + "]");
-
-                index = remaining.indexOf('\n');
-            }
+        lr.on('line', function (line) {
+            // 'line' contains the current line without the trailing newline character.
+            router.process_message(db, "[" + line + "]");
         });
 
-        input_stream.on('end', function () {
-            if (remaining.length > 0) {
-                router.process_message(db, "[" + remaining + "]");
-            }
-            //delete file
-            fs.unlink(file_name, function (err) {});
-
+        lr.on('end', function () {
+            // All lines are read, file is closed now.
+            fs.unlinkSync( file_name );
             cb();
         });
     };
 
 
     //get list of files contains data and not beeing locked
-    var read_and_sort_files_by_date = function (dir) {
+    var get_csv_file = function (dir) {
 
         var files = fs.readdirSync(dir);
         var arr = [];
@@ -121,55 +185,46 @@ router.startListeningAtFolder = function (db, folder_path) {
             if (file_name.match(/csv$/i) == null)
                 continue;
 
-            var lock_file = dir + file_name.replace(".csv", ".lock");
+            var lock_file = dir + file_name + ".lock";
 
             if (fs.existsSync(lock_file) == false) {
                 arr.push(dir + file_name);
             }
         }
 
-        return arr.map(function (v) {
-                return {
-                    name: v,
-                    time: fs.statSync(v).mtime.getTime()
-                };
-            })
-            .sort(function (a, b) {
-                return b.time - a.time;
-            })
-            .map(function (v) {
-                return v.name;
-            });
+        if( arr.length == 0 )
+            return null;
+        
+        //sort by ascending of file name
+        arr = arr.sort();
+        
+        return arr[0];
     };
+    
     var isPrintedMessage = false;
 
     var process_folder = function () {
-        var files = read_and_sort_files_by_date(folder_path);
-        var total = files.length;
-        var num_file = 0;
-        if (total == 0) {
-            if (isPrintedMessage) {
+        var file_name = get_csv_file( folder_path );
+        if (file_name == null) {
+            if ( !isPrintedMessage ) {
                 isPrintedMessage = true;
-                console.log("Waiting data in the folder [" + folder_path + "] ... ");
+                process.stdout.write("\nWaiting data in the folder [" + folder_path + "] ");
+            }else{
+                process.stdout.write(".");
             }
-            setTimeout(process_folder, listen_period);
+            setTimeout(process_folder, 1500);
             return;
         }
 
-        console.log("Processing " + JSON.stringify(files));
-        for (var i in files) {
-            var file_name = files[i];
-            process_file(files[i], function () {
-                num_file++;
-                console.log(num_file + " done file " + file_name);
-                if (num_file == total) {
-                    setTimeout(process_folder, listen_period);
-                }
-            });
-        }
+        isPrintedMessage = false;
+        console.log("\nProcessing  file [" + file_name + "]");
+        process_file(file_name, function () {
+            console.log(" ==> DONE ");
+            process_folder();
+        });
     };
 
-    process_folder();
+    setTimeout( process_folder, 2000);
 }
 
 module.exports = router;
