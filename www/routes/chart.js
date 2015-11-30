@@ -10,8 +10,10 @@ router.get('/*', function(req, res, next) {
     }
     
 	var id = req.params[0];
-	if( !id )
-		id = 'link';
+	if( !id ){
+		res.redirect("/chart/link");
+        return;s
+    }
 	id = id.toLowerCase();
 	
 	var pages = {

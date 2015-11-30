@@ -20,7 +20,7 @@
     "buffer_socketio": {
         "max_length_size": 2000,
         "max_period_size": 3600,
-        "flush_to_client_period": 1
+        "flush_to_client_period": 5
     },
     "is_in_debug_mode": true
 }

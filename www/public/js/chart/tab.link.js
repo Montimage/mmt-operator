@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "protocol",
-        title: "Protocols",
+        title: "Applications",
         x: 6,
         y: 0,
         width: 6,
@@ -39,7 +39,7 @@ var arr = [
 
 var availableReports = {
     "createNodeReport":     "Nodes",
-    "createProtocolReport": "Protocols",
+    "createProtocolReport": "Applications",
     "createTrafficReport":  "Traffic"
 }
 
@@ -49,7 +49,7 @@ var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var database = MMTDrop.databaseFactory.createStatDB();
 var filters = [ fPeriod, fProbe];
 
-
+MMTDrop.setOptions({format_payload : true });
 
 fPeriod.onChange( loading.onShowing );
 
@@ -121,7 +121,13 @@ var ReportFactory = {
         var fDir = MMTDrop.filterFactory.createDirectionFilter();
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
-
+        var PROTO = ["ETHERNET", "IP", "UDP", "TCP", "HTTP", "SSL"];
+        var setName = function( name ){
+            if( PROTO.indexOf( name ) >= 0 ){
+                return name + "_UNKNOWN";
+            }
+            return name;
+        }
 
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
@@ -138,7 +144,7 @@ var ReportFactory = {
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-                    var period = fPeriod.getSamplePeriod();
+                    var period = MMTDrop.config.probe_stats_period;
                     
                     var obj = db.stat.splitDataByApp();
 
@@ -151,16 +157,18 @@ var ReportFactory = {
                     for (var cls in obj) {
                         var o    = obj[cls];
                         var name = MMTDrop.constants.getProtocolNameFromID(cls);
+                        name = setName( name );
                         
                         var total = 0;
                         //sumup by time
                         o = MMTDrop.tools.sumByGroup(o, colToSum.id, TIME.id);
                         for (var t in o) {
-                            var v = o[t][colToSum.id] / period;
+                            var v = o[t][colToSum.id];
                             if (data[t] == undefined){
                                 data[t] = {};
                             }
-                            data[t][cls] = v;
+                            //divide to get bandwidth
+                            data[t][cls] = v / period;
 
                             total += v;
                         }
@@ -226,14 +234,15 @@ var ReportFactory = {
                         }
                     }
                         
-                        
-                    for( var i in columns )    
+                    for( var i in columns ){
                         if( columns[i].value === 0){
                             columns.splice( i, columns.length - i );
                             break;
                         }
+                    }
                     //the first column is timestamp
                     columns.unshift( TIME );
+                    
                     
                     
                     for( var t in data )
@@ -363,8 +372,8 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show all protocols",
-                        title: "click to show all protocols",
+                        href: "?show all applications",
+                        title: "click to show all applications",
                         text: "Other",
                         
                     });
@@ -763,7 +772,7 @@ var ReportFactory = {
                     var cols = [];
 
 
-                    var period = fPeriod.getSamplePeriod();
+                    var period = MMTDrop.config.probe_stats_period;
                     
                     //dir = 1: incoming, -1 outgoing, 0: All
                     if (dir == 0) {

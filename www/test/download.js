@@ -8,7 +8,7 @@ function download() {
     index++;
     console.log("\nDownloading " + index );
     file = fs.createWriteStream(index + "ubuntu.iso");
-    request = http.get("http://192.168.0.27/ubuntu.iso", function (response) {
+    request = http.get("http://releases.ubuntu.com/14.04.3/ubuntu-14.04.3-desktop-amd64.iso", function (response) {
         process.stdout.write(".");
         response.pipe(file);
         file.on('finish', function () {

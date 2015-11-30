@@ -80,8 +80,10 @@ var CacheTimeStat = function( channel ){
 router.process_message = function (db, message) {
     //console.log( message );
     try {
-        var msg = JSON.parse(message);
-        msg[3] *= 1000; //timestamp
+        var msg = mmtAdaptor.formatMessage( message );
+        if( msg === null )
+            return;
+        
         
         if (msg[4] == 0) {
             console.log("[META  ] " + message);

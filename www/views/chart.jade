@@ -22,11 +22,14 @@ block header
 
     script( type='text/javascript', src='/lib/lodash/lodash.min.js')
     
-    link( rel="stylesheet",        href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
+    link( rel="stylesheet",         href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
     script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
     
-    link( rel="stylesheet",        href='/lib/gridstack/dist/gridstack.css')
+    link( rel="stylesheet",         href='/lib/gridstack/dist/gridstack.css')
     script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
+
+    script( type='text/javascript', src="/lib/sweetalert/dist/sweetalert.min.js" )
+    link( rel="stylesheet",         href="/lib/sweetalert/dist/sweetalert.css" )
 
     // highcharts
     script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
@@ -88,6 +91,9 @@ block content
     #content
         script(type='text/javascript').
             MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
+            window.alert = function( txt ) {
+                sweetAlert("", txt);
+            }
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
         

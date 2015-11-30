@@ -22,6 +22,9 @@ MMTDrop.object = {};
 
 /**
  * Set global options
+ * 
+ * probe_stats_period: number
+ * format_payload: boolean
  */
 MMTDrop.setOptions = function( opt ){
 	MMTDrop.config = MMTDrop.tools.mergeObjects( MMTDrop.config, opt  );
@@ -582,12 +585,15 @@ MMTDrop.tools = function () {
      * @returns {[[string]]} 
      */
     _this.formatDataVolume = function (v) {
+        if( MMTDrop.config.format_payload !== true )
+            return Math.round(v);
+        
         if (v >= 1000000000)
-            return (v / 1000000000).toFixed(2) + " GB";
+            return (v / 1000000000).toFixed(2) + " G";
         if (v >= 1000000)
-            return (v / 1000000).toFixed(2) + " MB";
+            return (v / 1000000).toFixed(2) + " M";
         if (v >= 1000)
-            return Math.round(v / 1000) + " KB";
+            return Math.round(v / 1000) + " K";
         return Math.round(v);
     };
     
@@ -4114,6 +4120,10 @@ MMTDrop.chartFactory = {
 				
 				var obj = [];
 				var n   = columns.length;
+                if( n > 20 ){
+                    alert("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+                    n = 20;
+                }
 				//the first column is timestamp
                 var lastTS = 0;
 				for (var i=0; i<arrData.length; i++){
