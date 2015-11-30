@@ -59,11 +59,14 @@ fPeriod.onChange( loading.onShowing );
 var ReportFactory = {
     getCol: function (col, isIn) {
         var COL = MMTDrop.constants.StatsColumn;
+        
         var tmp = "PAYLOAD_VOLUME";
         if (col.id == COL.DATA_VOLUME.id)
             tmp = "DATA_VOLUME";
         else if (col.id == COL.PACKET_COUNT.id)
             tmp = "PACKET_COUNT";
+
+            
 
         var label;
         if (isIn) {
@@ -89,7 +92,7 @@ var ReportFactory = {
         if( time_id == undefined )
             time_id = 3;
         if( period == undefined )
-            period = MMTDrop.config.probe_stats_period;
+            period = fPeriod.getDistanceBetweenToSamples();
         
         //order ASC of time
         data.sort( function( a, b){
@@ -99,12 +102,11 @@ var ReportFactory = {
         var len   = data.length;
         var arr   = [];
         var lastTS ;
-        period = period * 1000;
         for( var i=0; i<len; i++ ){
             var ts = data[i][ time_id ];
             if( lastTS === undefined )
                 lastTS = ts;
-            if( ts - lastTS >   period * 2.5){
+            else if( ts - lastTS >   period * 2.5){
 
                 var zero = {};
                 zero[ time_id ] = lastTS + period ;
@@ -113,6 +115,10 @@ var ReportFactory = {
 
                 zero = {};
                 zero[ time_id ] = ts - period;
+                arr.push( zero );
+            }else if (ts - lastTS >   period * 2 ){
+                var zero = {};
+                zero[ time_id ] = lastTS + period ;
                 arr.push( zero );
             }
             
@@ -144,14 +150,28 @@ var ReportFactory = {
                     var dir         = fDir.selectedOption().id;
                     
                     var colToSum    = col;
-                    if( dir != 0 )
+                    
+                    if( dir != 0 && col.id !== COL.ACTIVE_FLOWS.id )
                         colToSum = self.getCol(col, dir == 1);
 
                     var data = {};
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-                    var period = MMTDrop.config.probe_stats_period;
+                    var period = fPeriod.getSamplePeriod();
+                    
+                    var ylabel = col.label;
+                    
+                    if( col.id === COL.PACKET_COUNT.id ){
+                        period = 1;    //donot change the total number
+                        ylabel += " (total)";
+                    }
+                    else if( col.id === COL.ACTIVE_FLOWS.id ){
+                        ylabel += " (per second)";
+                    }else{
+                        period *= 8;    //  bit/second
+                        ylabel += " (bit/second)";
+                    }
                     
                     var obj = db.stat.splitDataByApp();
 
@@ -261,7 +281,7 @@ var ReportFactory = {
                     return {
                         data   : arr,
                         columns: columns,
-                        ylabel : col.label
+                        ylabel : ylabel
                     };
                 }
             },
@@ -634,21 +654,27 @@ var ReportFactory = {
 
         var cols = [];
 
+        var isInDataMode = true;
         var initData = function () {
             newData = {};
 
             var col = fMetric.selectedOption();
             var dir = fDir.selectedOption().id;
 
-            if (dir == 0) {
-                cols = [ _this.getCol(col, true) ];
-                cols.push(_this.getCol(col, false));
-                /*cols.push({
-                    id: col.id,
-                    label: "All"
-                });*/
-            } else
-                cols = [_this.getCol(col, dir == 1)];
+            isInDataMode = (col.id !== COL.ACTIVE_FLOWS.id && col.id !== COL.PACKET_COUNT.id );
+            
+            if( col.id !== COL.ACTIVE_FLOWS.id ){
+                if (dir == 0) {
+                    cols = [ _this.getCol(col, true) ];
+                    cols.push(_this.getCol(col, false));
+                    /*cols.push({
+                        id: col.id,
+                        label: "All"
+                    });*/
+                } else
+                    cols = [_this.getCol(col, dir == 1)];
+            }else
+                cols = [ col ];
         }
         
         fDir.onFilter(initData);
@@ -729,8 +755,10 @@ var ReportFactory = {
                             obj[   s    ] = [ s ];          //Oy
                         }
                         
-                        var val = o[s] / MMTDrop.config.probe_stats_period;
-                        val = Math.round( val );
+                        var val = o[s];
+                        
+                        if( isInDataMode )
+                            val = Math.round( val / (MMTDrop.config.probe_stats_period/8) );
                         
                         obj["x-" + s].push( time );    //Ox
                         obj[    s   ].push( val );     //Oy
@@ -779,22 +807,38 @@ var ReportFactory = {
                     var cols = [];
 
 
-                    var period = MMTDrop.config.probe_stats_period;
+                    var period = fPeriod.getSamplePeriod();
                     
-                    //dir = 1: incoming, -1 outgoing, 0: All
-                    if (dir == 0) {
-                        cols.push(_this.getCol(col, true));    //in
-                        cols.push(_this.getCol(col, false));   //out
-                        /*cols.push({
-                            id: col.id,
-                            label: "All"
-                                //type : "line"
-                        });*/
-                    } else if (dir == 1)
-                        cols.push(_this.getCol(col, true));
-                    else
-                        cols.push(_this.getCol(col, false));
-
+                    var ylabel = col.label;
+                    
+                    if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id){
+                        period = 1;    //donot change the total number      
+                        ylabel += " (total)";
+                    }
+                    else if( col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id ){
+                        ylabel += " (per second)";
+                    }else{
+                        period *= 8;    //  bit/second
+                        ylabel += " (bit/second)";
+                    }
+                    
+                    if( col.id !== COL.ACTIVE_FLOWS.id ){
+                        //dir = 1: incoming, -1 outgoing, 0: All
+                        if (dir == 0) {
+                            cols.push(_this.getCol(col, true));    //in
+                            cols.push(_this.getCol(col, false));   //out
+                            /*cols.push({
+                                id: col.id,
+                                label: "All"
+                                    //type : "line"
+                            });*/
+                        } else if (dir == 1)
+                            cols.push(_this.getCol(col, true));
+                        else
+                            cols.push(_this.getCol(col, false));
+                    }else
+                        cols.push( col );
+                    
                     var obj = {};
                     var data = db.data();
                     for (var i in data) {
@@ -830,7 +874,7 @@ var ReportFactory = {
                     return {
                         data   : arr,
                         columns: cols,
-                        ylabel : col.label
+                        ylabel : ylabel
                     };
                 }
             },

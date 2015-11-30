@@ -584,6 +584,7 @@ MMTDrop.formatMessage = function( message ){
             msg[ MMTDrop.StatsColumnId.START_TIME ] *= 1000;
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
+            break;
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
         default :

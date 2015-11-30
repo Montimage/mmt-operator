@@ -399,11 +399,10 @@ var MongoConnector = function (opts) {
                 var data = [];
                 for (i in doc) {
                     var record = doc[i];
-                    if( record.last_time )
-                        record.time = record.last_time;
+                    //if( record.last_time )
+                    //    record.time = record.last_time;
                     
                     record = dataAdaptor.reverseFormatReportItem(doc[i]);
-
 
                     data.push(record);
                 }

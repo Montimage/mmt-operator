@@ -2052,21 +2052,45 @@ MMTDrop.filterFactory = {
 			};
             
             filter.getSamplePeriod = function(){
-                var period = MMTDrop.config.probe_stats_period;
+                var period = 1;
                 switch (this.selectedOption().id ){
                     case MMTDrop.constants.period.MINUTE : 
+                        period = 1;
                         break;
                     case MMTDrop.constants.period.HOUR :
-                        period = 60;
+                        period = 60;    //each minute
                         break;
                     case MMTDrop.constants.period.DAY : 
-                        period = 60*60;
+                        period = 60*60;    //each hour
                         break;
+                    case MMTDrop.constants.period.WEEK : 
+                        period = 60*60;    //each hour
                     case MMTDrop.constants.period.MONTH : 
-                        period = 24*60*60;
+                        period = 24*60*60;    //each day
                         break;
                 }
-                return period;
+                return period * MMTDrop.config.probe_stats_period;
+            };
+            
+            filter.getDistanceBetweenToSamples = function(){
+                var period = 1;
+                switch (this.selectedOption().id ){
+                    case MMTDrop.constants.period.MINUTE : 
+                        period = MMTDrop.config.probe_stats_period;
+                        break;
+                    case MMTDrop.constants.period.HOUR :
+                        period = 60;    //each minute
+                        break;
+                    case MMTDrop.constants.period.DAY : 
+                        period = 60*60;    //each hour
+                        break;
+                    case MMTDrop.constants.period.WEEK : 
+                        period = 60*60;    //each hour
+                    case MMTDrop.constants.period.MONTH : 
+                        period = 24*60*60;    //each day
+                        break;
+                }
+                return period * 1000;
             }
 			return filter;
 		},
