@@ -82,11 +82,18 @@ var ReportFactory = {
     
     //add zero to the period having no data 
     addZeroPoints : function( data, period, time_id ){
+        
         if( data instanceof Array == false )
             data = MMTDrop.tools.object2Array( data );
         
+        if( time_id == undefined )
+            time_id = 3;
+        if( period == undefined )
+            period = MMTDrop.config.probe_stats_period;
+        
+        //order ASC of time
         data.sort( function( a, b){
-            return b[ time_id ] - a[time_id]
+            return a[ time_id ] - b[time_id]
         } )
         
         var len   = data.length;

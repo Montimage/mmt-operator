@@ -177,13 +177,14 @@ router.startListeningAtFolder = function (db, folder_path) {
     };
 
 
-    //get list of files contains data and not beeing locked
+    //get the oldest file containing data and not beeing locked
     var get_csv_file = function (dir) {
 
         var files = fs.readdirSync(dir);
         var arr = [];
         for (var i in files) {
             var file_name = files[i];
+            //need to end with csv
             if (file_name.match(/csv$/i) == null)
                 continue;
 

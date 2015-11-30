@@ -533,6 +533,12 @@ var ReportFactory = {
                 },
                 legend: {
                     hide: true,
+                },
+                data: {
+                    onclick: function( d, i ){
+                        var id = d.id;
+                        SubReport.loadChartOfOneApplication(cPie.elemID, id, cPie.database.data(), cPie.childrenTag);
+                    }
                 }
             },
 
@@ -819,6 +825,21 @@ var ReportFactory = {
                 },
                 legend: {
                     hide: true,
+                },
+                data: {
+                    onclick: function( d, i ){
+                        var id = d.id;
+                        var _chart = cPie;
+                        if( _chart.childrenTag == undefined )
+                            _chart.childrenTag = [];
+                        
+                        var childrenTag = _chart.childrenTag;
+
+                        if( childrenTag.length == 1 && id == "NaP" )
+                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
+                        else
+                                SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
+                    }
                 }
             },
 
@@ -1111,6 +1132,21 @@ var ReportFactory = {
                 },
                 legend: {
                     hide: true,
+                },
+                data: {
+                    onclick: function( d, i ){
+                        var ip = d.id;
+                        var _chart = cPie;
+                        if ( _chart.childrenTag == undefined )
+                            _chart.childrenTag = [];
+                        var childrenTag = _chart.childrenTag;
+                        if( childrenTag.length == 1 && childrenTag[0] == "NaP" )
+                                SubReport.loadChartOfOneApplication(_chart.elemID, ip,
+                                                                    //"NaP", 
+                                                                    _chart.database.data(), childrenTag);
+                        else
+                                SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
+                    }
                 }
             },
 
