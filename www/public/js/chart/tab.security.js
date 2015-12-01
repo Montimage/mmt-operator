@@ -147,13 +147,123 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         var html = "";
         for( var v in verdict ){
             if( verdict[v] == 0 ) continue;
+            if( html != "") html += ", ";
             html += '<span class="label '+ bootstrap_class_name[v] +' mmt-verdict-label"> ' + v + '</span><span class="badge">' + verdict[v] + '</span> ';
         }
         return html;
     };
     
+
+    //detail of each property
+    var detailOfPopupProperty = null;
+    var openingRow = null;
+    var popupTable = MMTDrop.chartFactory.createTable({
+        getData: {
+            getDataFn: function (db) {
+                var cols = [{id: "index", label:""}, COL.TIMESTAMP, COL.VERDICT, {id: "concern", label: "IP or MAC addresses of  Concerned Machines"}];
+                var data = db.data();
+                var arr = [];
+                for( var index=0; index<data.length; index++ ){
+                    var msg = data[index];
+                    var o  = {};
+
+                    o[ "index" ] = index+1;
+                    var time = msg[COL.TIMESTAMP.id];
+                    if( typeof( time ) === "number"){
+                        time = MMTDrop.tools.formatDateTime( new Date( time ), true);
+                        msg[COL.TIMESTAMP.id] = time;
+                    }
+
+                    o[ COL.TIMESTAMP.id ] = time;
+                    o[ COL.VERDICT.id   ] = msg[ COL.VERDICT.id ];
+                    var history = msg[ COL.HISTORY.id ];
+
+                    var concernt = msg.concernt ;
+                    if( concernt == null ){
+                        concernt = "";
+                        for( var i in history ){
+                            var event = history[ i ].attributes;
+                            for( var j in event ){
+                                var atts = event[j];
+                                for( var key in atts )
+                                    if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
+                                        //if the att is not yet added
+                                        if( concernt.indexOf( atts[key] ) === -1 ){
+                                            //
+                                            if( concernt != "") concernt += ", ";
+                                            concernt += atts[key];
+                                        }
+                                    }
+                            }
+                        }
+                        msg.concernt = concernt;
+                    }
+                    o[ "concern" ] = concernt;
+                    arr.push( o );
+                }
+                return {
+                    columns: cols,
+                    data   : arr
+                };
+            }
+        },
+        afterRender: function( _chart ){
+             // Add event listener for opening and closing details
+            _chart.chart.on('click', 'tr[role=row]', function () {
+                var tr = $(this);
+                var row = _chart.chart.api().row(tr);
+
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                    openingRow = null;
+                } else {
+                    //close the last opening
+                    if (openingRow) {
+                        openingRow.child.hide();
+                        $(openingRow.node()).removeClass('shown');
+                    }
+
+                    // Open this row
+                    var index = row.data()[0] - 1;
+                    var history = detailOfPopupProperty[ index ];
+                    if( history ) history = history[ COL.HISTORY.id ];
+
+                    var str = "";
+                    for( var ev in history ){
+                        var event = history[ev];
+
+                        if( typeof( event.timestamp) === "number" ){
+                            event.timestamp *= 1000;
+                            event.timestamp = MMTDrop.tools.formatDateTime( new Date( event.timestamp ), true );
+                        }
+                        event = JSON.stringify(event, function (key, val) {
+                            if (typeof val === "string")
+                                return "<string>" + val + "</string>";
+                            if (typeof val === "number")
+                                return "<number>" + val + "</number>";
+                            return val;
+                        })
+                        .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
+                        .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
+                        .replace(/\"(.+)\":/g, "<label>$1</label> :");
+
+                        str += "<li>" + event + "</li>";
+                    }
+
+                    row.child('<div id="detailTest"><ul>' + str + '</ul></div>').show();
+                    tr.addClass('shown');
+                    openingRow = row;
+                }
+                return false;
+            });
+
+        }
+    });
+
     var updateTotalVerdictDisplay = function(){
-        $("#mmt-verdict-total").html( getVerdictHTML( VERDICT ) );
+        $("#mmt-verdict-total").html( "<strong>Total:</strong> " + getVerdictHTML( VERDICT ) );
     };
     //this is applied for each element of data
     var getDataToShow = function( obj ){
@@ -188,7 +298,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 
                 var cols = [];
                 for( var i=0; i<columnsToShow.length; i++)
-                    cols.push( {id: i, label: columnsToShow[i].label } );
+                    cols.push( {id: i, label: columnsToShow[i].label, align: "left" } );
                 return {
                     columns: cols,
                     data   : arr
@@ -203,7 +313,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             updateTotalVerdictDisplay();
             var modal = '<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
                         +'<div class="modal-dialog">'
-                        +'<div class="modal-content">'
+                        +'<div class="modal-content" style="width: 800px">'
                         +'<div class="modal-header">'
                         +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
                         +'<h4 class="modal-title">Detail</h4>'
@@ -250,19 +360,28 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
 
                 //popup a modal when user clicks on an item of the table
                 var showModal = function (data) {
-                        data = JSON.stringify(data, function (key, val) {
-                            if (typeof val === "string")
-                                return "<string>" + val + "</string>";
-                            if (typeof val === "number")
-                                return "<number>" + val + "</number>";
-                            return val;
-                        }, "  ");
-                        data = data.replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>');
-                        data = data.replace(/\"<number/g, "<number").replace(/number>\"/g, "number>");
-                        data = data.replace(/\"(.+)\":/g, "<label>$1</label> :");
+                    detailOfPopupProperty = data;
+                    var prop = 0;
+                    var des  = "";
+                    for( var i in data )
+                        if( prop !== 0 && des != "") 
+                            break;
+                        else{
+                            prop = data[i][4];
+                            des  = data[i][7]
+                        }
+                    
+                    $("#detailItem").html("<strong>Property " + prop + "</strong><br/>" + des + '<br/><div id="popupTable"/>');
+                    
+                    var db = new MMTDrop.Database( {}, null, false );
+                    db.data( data );
+                    popupTable.attachTo( db, false );
 
-                        $("#detailItem").html(data);
-                        $("#modalWindow").modal();
+                    popupTable.renderTo( "popupTable" );
+
+                    if( loading )
+                        loading.onHide();
+                    $("#modalWindow").modal();
                 };
                 
                     //set the current selected row 
@@ -273,9 +392,10 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 var index = $currentRow.find('td:first').find("span").data("index");
                 var item = DATA[index].detail;
                 if (item){
-                    if( item.length > 20 )
-                        item ="BigData! We will work later to show more than 20 items";
-                    showModal(item);
+                    if( loading )
+                        loading.onShowing();
+                        
+                    setTimeout(showModal, 100, item );
                 }
                 return false;
             });

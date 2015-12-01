@@ -116,26 +116,29 @@ app.use(function(err, req, res, next) {
   });
 });
 
-//clean up
 
+function exit(){
+    console.log("bye!\n");
+    setTimeout( function(){
+        process.exit(1);
+    }, 2000 );
+}
+
+//clean up
 function cleanup ( cb ){
     console.log( "\nCleaning up before exiting... ");
     if( dbconnector )
-        dbconnector.flushCache( cb );
+        dbconnector.flushCache( exit );
 };
+
 
 process.on('SIGINT',function(){
     try{
-          cleanup( function(){
-          } );      
+          cleanup();      
     }catch( err ){
         console.error( err );
+        exit();
     }
-    
-    setTimeout( function(){
-        console.log("bye!\n");
-        process.exit(1);
-    }, 2000 );
 });
 
 

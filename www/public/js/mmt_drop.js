@@ -606,9 +606,13 @@ MMTDrop.tools = function () {
      * @param   {Date} 
      * @returns {string} 
      */
-    _this.formatDateTime = function (v) {
+    _this.formatDateTime = function (v, withMillisecond) {
+        var milli = "";
+        if( withMillisecond === true )
+            milli = ":" + v.getMilliseconds();
+        
         return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " +
-            v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() ;
+            v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + milli ;
     };
     
 	/**
@@ -4536,7 +4540,7 @@ MMTDrop.chartFactory = {
 					'cellpadding' : 0,
 					'cellspacing' : 0,
 					'border'      : 0,
-					'class'       : "table table-striped table-bordered"
+					'class'       : "table table-striped table-bordered table-hover"
 				});
 
 				table.appendTo($('#' + elemID));

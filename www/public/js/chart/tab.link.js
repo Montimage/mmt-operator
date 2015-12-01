@@ -651,9 +651,11 @@ var ReportFactory = {
 
         var newData = {};
         var lastAddMoment = 0;
-        
+        var lengthOx = 0; 
+        var max_time = 0;
         var cols = [];
-
+        var zeroPoint = {};
+        
         var selectedMetricId = null;
         var initData = function () {
             newData = {};
@@ -675,7 +677,13 @@ var ReportFactory = {
                     cols = [_this.getCol(col, dir == 1)];
             }else
                 cols = [ col ];
+            
+            for (var c in cols) {
+                var serieName = cols[c].label;
+                zeroPoint[ serieName ] = 0;
+            }
         }
+        
         
         fDir.onFilter(initData);
         fMetric.onFilter(initData);
@@ -691,21 +699,22 @@ var ReportFactory = {
                 return;
             chart.zoom.enable(false);
 
-            var maxOx = 0;
             
-            var chart_data = chart.data.shown();
-            if( chart_data ){
-                chart_data = chart_data[0];
+            if( max_time === 0){
+                var chart_data = chart.data.shown();
                 if( chart_data ){
-                    chart_data = chart_data.values;
+                    chart_data = chart_data[0];
                     if( chart_data ){
-                        var maxOx = chart_data[ chart_data.length - 1 ].x.getTime();
+                        chart_data = chart_data.values;
+                        if( chart_data ){
+                            lengthOx = chart_data.length;
+                            max_time = chart_data[ chart_data.length - 1 ].x.getTime();
+                        }
                     }
                 }
             }
             
             var numberofdrop = 0;
-            var max_time = maxOx;
             
             for( var i in data ){
                 var msg = data[i];
@@ -719,31 +728,6 @@ var ReportFactory = {
                     continue;
                 }
                 
-                //add zero points
-                if( time - max_time > samplePeriod * 2.5){
-                    
-                    //add 2 zero points
-                    newData[max_time + samplePeriod] = {};
-                    newData[time - samplePeriod]  = {};
-                    
-                    for (var c in cols) {
-                        var serieName = cols[c].label;
-                        newData[max_time + samplePeriod][serieName] = 0;
-                        newData[time  - samplePeriod][serieName] = 0;
-                    }
-                }else if( time - max_time > samplePeriod * 2){
-                    
-                    //add 1 zero points
-                    newData[max_time + samplePeriod] = {};
-                    
-                    for (var c in cols) {
-                        var serieName = cols[c].label;
-                        newData[max_time + samplePeriod][serieName] = 0;
-                    }
-                }else 
-                    if( time - max_time < samplePeriod )
-                        continue;
-                
                 for (var c in cols) {
                     c = cols[c];
                     var serieName = c.label;
@@ -756,30 +740,65 @@ var ReportFactory = {
 
                     newData[time][serieName] += val;
                 }
-                
-                max_time = time;
             }
             
-            console.log( "---> drop " + numberofdrop + " records that are older than " + (new Date(maxOx)).toLocaleTimeString() );
+            console.log( "---> drop " + numberofdrop + " records that are older than " + (new Date(max_time)).toLocaleTimeString() );
             
             var localtime = (new Date()).getTime();
             
             //update to chart each x seconds
             if ( localtime - lastAddMoment > 1000 && !$.isEmptyObject( newData ) ) {
+                
+                //list of timestamps
+                var keys = Object.keys( newData );
+                keys = keys.map( function( i ){ return parseInt( i); } ) ;
+                keys.sort();
+                
+                var max_Ox = max_time;
+                
+                //add some zero points 
+                var new_keys = [];
+                for( var i in keys ){
+                    var time = keys[i];
+                    //add zero points
+                    if( time - max_time > samplePeriod * 2.5 && lengthOx > 0 ){    
+                        //add 2 zero points
+                        new_keys.push( max_time + samplePeriod );
+                        new_keys.push( time     - samplePeriod );
+                        
+                    }else if( time - max_time > samplePeriod * 2  && lengthOx > 0 ){
+                        //add 1 zero points
+                        new_keys.push( time     - samplePeriod );
+                    }
+                    
+                    
+                    new_keys.push( time );
+                    max_time = time;
+                }
+                
                 //
                 var obj = {};
                 //convert newData to columns format of C3js
                 var length = 0;
+                
+                
                 //for each time step
-                for (var t in newData) {
-                    length ++;
-                    var o = newData[t];
-                    var time = new Date( parseInt( t ) );
+                for (var i in new_keys) {
+                    var time = new_keys[i];
+                    var o    = newData[time];
                     
+                    if( time < max_Ox )
+                        continue;
+                    
+                    if( o == undefined ) o = zeroPoint;
+                    
+                    time = new Date( time );
+                    
+                    length ++;                    
                     //for each category (In/Out)
                     for( var s in o ){
                         //init for the first element of each array
-                        if( length === 1 ){
+                        if( obj["x-" + s] == undefined ){
                             obj["x-" + s] = [ "x-" + s];    //Ox
                             obj[   s    ] = [ s ];          //Oy
                         }
@@ -797,12 +816,19 @@ var ReportFactory = {
                         obj[    s   ].push( val );     //Oy
                     }
                 }
-
+                
+                
+                max_Ox = max_time;
                 //reset newData
                 newData       = {};
                 lastAddMoment = localtime;
                 
                 var columns = MMTDrop.tools.object2Array( obj );
+                
+                
+                if( lengthOx < 5 )
+                    length = 0;
+                
                 try {
                     chart.flow({
                         columns: columns,
