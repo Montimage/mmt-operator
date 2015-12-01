@@ -171,7 +171,10 @@ router.startListeningAtFolder = function (db, folder_path) {
 
         lr.on('end', function () {
             // All lines are read, file is closed now.
+            //remove data file
             fs.unlinkSync( file_name );
+            //remove semaphore file
+            fs.unlinkSync( file_name + ".sem" );
             cb();
         });
     };
@@ -188,9 +191,9 @@ router.startListeningAtFolder = function (db, folder_path) {
             if (file_name.match(/csv$/i) == null)
                 continue;
 
-            var lock_file = dir + file_name + ".lock";
+            var lock_file = dir + file_name + ".sem";
 
-            if (fs.existsSync(lock_file) == false) {
+            if (fs.existsSync(lock_file) == true) {
                 arr.push(dir + file_name);
             }
         }

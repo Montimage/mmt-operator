@@ -2055,7 +2055,8 @@ MMTDrop.filterFactory = {
                 var period = 1;
                 switch (this.selectedOption().id ){
                     case MMTDrop.constants.period.MINUTE : 
-                        period = 1;
+                        //each 5 second, for example
+                        period = MMTDrop.config.probe_stats_period;
                         break;
                     case MMTDrop.constants.period.HOUR :
                         period = 60;    //each minute
@@ -2069,7 +2070,7 @@ MMTDrop.filterFactory = {
                         period = 24*60*60;    //each day
                         break;
                 }
-                return period * MMTDrop.config.probe_stats_period;
+                return period;
             };
             
             filter.getDistanceBetweenToSamples = function(){

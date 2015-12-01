@@ -1,6 +1,6 @@
 {
     "database_server": "192.168.0.37",
-    "redis_server": "192.168.0.37",
+    "redis_server": "192.168.0.7",
     "data_folder": "/Users/nhnghia/temps/share_vbox/",
     "input_mode": "file",
     "//mac_gateway": "00:05:5d:89:26:78",

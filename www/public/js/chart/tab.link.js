@@ -169,7 +169,7 @@ var ReportFactory = {
                     else if( col.id === COL.ACTIVE_FLOWS.id ){
                         ylabel += " (per second)";
                     }else{
-                        period *= 8;    //  bit/second
+                        period /= 8;    //  bit/second
                         ylabel += " (bit/second)";
                     }
                     
@@ -651,17 +651,17 @@ var ReportFactory = {
 
         var newData = {};
         var lastAddMoment = 0;
-
+        
         var cols = [];
 
-        var isInDataMode = true;
+        var selectedMetricId = null;
         var initData = function () {
             newData = {};
 
             var col = fMetric.selectedOption();
             var dir = fDir.selectedOption().id;
 
-            isInDataMode = (col.id !== COL.ACTIVE_FLOWS.id && col.id !== COL.PACKET_COUNT.id );
+            selectedMetricId = col.id;
             
             if( col.id !== COL.ACTIVE_FLOWS.id ){
                 if (dir == 0) {
@@ -680,6 +680,8 @@ var ReportFactory = {
         fDir.onFilter(initData);
         fMetric.onFilter(initData);
 
+        var samplePeriod = fPeriod.getDistanceBetweenToSamples();
+        
         var appendMsg = function ( data ) {
             if( data == undefined || data.length == 0 )
                 return;
@@ -690,7 +692,6 @@ var ReportFactory = {
             chart.zoom.enable(false);
 
             var maxOx = 0;
-            var minOx = 0; 
             
             var chart_data = chart.data.shown();
             if( chart_data ){
@@ -699,12 +700,13 @@ var ReportFactory = {
                     chart_data = chart_data.values;
                     if( chart_data ){
                         var maxOx = chart_data[ chart_data.length - 1 ].x.getTime();
-                        var minOx = chart_data[0].x.getTime();
                     }
                 }
             }
             
             var numberofdrop = 0;
+            var max_time = maxOx;
+            
             for( var i in data ){
                 var msg = data[i];
                 if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
@@ -712,10 +714,35 @@ var ReportFactory = {
 
                 var time = msg[COL.TIMESTAMP.id];
                 
-                if( time < maxOx ){
+                if( time < max_time ){
                     numberofdrop ++;
                     continue;
                 }
+                
+                //add zero points
+                if( time - max_time > samplePeriod * 2.5){
+                    
+                    //add 2 zero points
+                    newData[max_time + samplePeriod] = {};
+                    newData[time - samplePeriod]  = {};
+                    
+                    for (var c in cols) {
+                        var serieName = cols[c].label;
+                        newData[max_time + samplePeriod][serieName] = 0;
+                        newData[time  - samplePeriod][serieName] = 0;
+                    }
+                }else if( time - max_time > samplePeriod * 2){
+                    
+                    //add 1 zero points
+                    newData[max_time + samplePeriod] = {};
+                    
+                    for (var c in cols) {
+                        var serieName = cols[c].label;
+                        newData[max_time + samplePeriod][serieName] = 0;
+                    }
+                }else 
+                    if( time - max_time < samplePeriod )
+                        continue;
                 
                 for (var c in cols) {
                     c = cols[c];
@@ -729,6 +756,8 @@ var ReportFactory = {
 
                     newData[time][serieName] += val;
                 }
+                
+                max_time = time;
             }
             
             console.log( "---> drop " + numberofdrop + " records that are older than " + (new Date(maxOx)).toLocaleTimeString() );
@@ -757,8 +786,12 @@ var ReportFactory = {
                         
                         var val = o[s];
                         
-                        if( isInDataMode )
-                            val = Math.round( val / (MMTDrop.config.probe_stats_period/8) );
+                        //showing Data Volume, Payload
+                        if( selectedMetricId === COL.DATA_VOLUME.id || selectedMetricId === COL.PAYLOAD_VOLUME.id )
+                            val = Math.round( val / (MMTDrop.config.probe_stats_period/8) );    //8: bit/second
+                        else if( selectedMetricId === COL.ACTIVE_FLOWS.id )
+                            val = Math.round( val / (MMTDrop.config.probe_stats_period ) );
+                            
                         
                         obj["x-" + s].push( time );    //Ox
                         obj[    s   ].push( val );     //Oy
@@ -768,11 +801,6 @@ var ReportFactory = {
                 //reset newData
                 newData       = {};
                 lastAddMoment = localtime;
-                
-
-                if( maxOx - minOx < 5*60*1000){
-                    length = 0;
-                }
                 
                 var columns = MMTDrop.tools.object2Array( obj );
                 try {
@@ -818,7 +846,7 @@ var ReportFactory = {
                     else if( col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id ){
                         ylabel += " (per second)";
                     }else{
-                        period *= 8;    //  bit/second
+                        period /= 8;    //  bit/second
                         ylabel += " (bit/second)";
                     }
                     

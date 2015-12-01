@@ -305,20 +305,20 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var columns = [
-                        {id: COL.START_TIME.id, label: "Start Time"}, 
-                        {id: COL.SERVER_ADDR.id, label: "Server"}, 
+                        {id: COL.START_TIME.id, label: "Start Time", align:"right"}, 
+                        {id: COL.SERVER_ADDR.id, label: "Server", align:"right"}, 
 
                     ];
 
                     var colSum = [
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"}, 
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)"}, 
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)", align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)", align:"right"}, 
                         //{id: COL.TCP_RTT.id, label: "RTT (s)"}, 
                         {id: COL.RETRANSMISSION_COUNT.id, label:"Retrans."},
                     ];
                     var havingAppPath = (appName == "NaP");
                     if( havingAppPath )
-                        columns.push( {id: COL.PROTO_PATH.id, label: "Path"} );
+                        columns.push( {id: COL.PROTO_PATH.id, label: "Path", align:"right"} );
                     
                     var data = db.data();
                     
@@ -537,6 +537,7 @@ var ReportFactory = {
                 data: {
                     onclick: function( d, i ){
                         var id = d.id;
+                        if( id === "Other") return;
                         SubReport.loadChartOfOneApplication(cPie.elemID, id, cPie.database.data(), cPie.childrenTag);
                     }
                 }
@@ -829,6 +830,8 @@ var ReportFactory = {
                 data: {
                     onclick: function( d, i ){
                         var id = d.id;
+                        if( id === "Other") return;
+                        
                         var _chart = cPie;
                         if( _chart.childrenTag == undefined )
                             _chart.childrenTag = [];
@@ -1136,6 +1139,8 @@ var ReportFactory = {
                 data: {
                     onclick: function( d, i ){
                         var ip = d.id;
+                        if( ip === "Other") return;
+                        
                         var _chart = cPie;
                         if ( _chart.childrenTag == undefined )
                             _chart.childrenTag = [];

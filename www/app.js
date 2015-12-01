@@ -133,7 +133,7 @@ process.on('SIGINT',function(){
     }
     
     setTimeout( function(){
-        console.log("bye!");
+        console.log("bye!\n");
         process.exit(1);
     }, 2000 );
 });
