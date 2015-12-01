@@ -693,7 +693,7 @@ var ReportFactory = {
         var appendMsg = function ( data ) {
             if( data == undefined || data.length == 0 )
                 return;
-            
+
             var chart = cLine.chart;
             if (chart == undefined)
                 return;
@@ -721,7 +721,7 @@ var ReportFactory = {
                 if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
                     continue;
 
-                var time = msg[COL.TIMESTAMP.id];
+                var time = parseInt( msg[COL.TIMESTAMP.id] );
                 
                 if( time < max_time ){
                     numberofdrop ++;
@@ -790,7 +790,8 @@ var ReportFactory = {
                     if( time < max_Ox )
                         continue;
                     
-                    if( o == undefined ) o = zeroPoint;
+                    if( o == undefined ) 
+                        o = zeroPoint;
                     
                     time = new Date( time );
                     
@@ -804,13 +805,14 @@ var ReportFactory = {
                         }
                         
                         var val = o[s];
-                        
+                        console.log( MMTDrop.tools.formatDataVolume( val)) ;
                         //showing Data Volume, Payload
                         if( selectedMetricId === COL.DATA_VOLUME.id || selectedMetricId === COL.PAYLOAD_VOLUME.id )
-                            val = Math.round( val / (MMTDrop.config.probe_stats_period/8) );    //8: bit/second
+                            val =  val * 8 / MMTDrop.config.probe_stats_period ;    //8: bit/second
                         else if( selectedMetricId === COL.ACTIVE_FLOWS.id )
-                            val = Math.round( val / (MMTDrop.config.probe_stats_period ) );
-                            
+                            val =  val / MMTDrop.config.probe_stats_period ;
+                        
+                        console.log( ' == ' + MMTDrop.tools.formatDataVolume( val)) ;
                         
                         obj["x-" + s].push( time );    //Ox
                         obj[    s   ].push( val );     //Oy
