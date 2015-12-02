@@ -2,7 +2,7 @@
     "database_server": "192.168.0.37",
     "redis_server": "192.168.0.7",
     "data_folder": "/Users/nhnghia/temps/share_vbox/",
-    "input_mode": "redis",
+    "input_mode": "file",
     "//mac_gateway": "00:05:5d:89:26:78",
     "local_network": [{
             "ip": "192.0.0.0",
@@ -20,7 +20,7 @@
     "buffer_socketio": {
         "max_length_size": 2000,
         "max_period_size": 3600,
-        "flush_to_client_period": 5
+        "flush_to_client_period": 1
     },
     "is_in_debug_mode": true
 }

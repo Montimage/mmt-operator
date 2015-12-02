@@ -805,14 +805,14 @@ var ReportFactory = {
                         }
                         
                         var val = o[s];
-                        console.log( MMTDrop.tools.formatDataVolume( val)) ;
+                        //console.log( MMTDrop.tools.formatDataVolume( val)) ;
                         //showing Data Volume, Payload
                         if( selectedMetricId === COL.DATA_VOLUME.id || selectedMetricId === COL.PAYLOAD_VOLUME.id )
                             val =  val * 8 / MMTDrop.config.probe_stats_period ;    //8: bit/second
                         else if( selectedMetricId === COL.ACTIVE_FLOWS.id )
                             val =  val / MMTDrop.config.probe_stats_period ;
                         
-                        console.log( ' == ' + MMTDrop.tools.formatDataVolume( val)) ;
+                        //console.log( ' == ' + MMTDrop.tools.formatDataVolume( val)) ;
                         
                         obj["x-" + s].push( time );    //Ox
                         obj[    s   ].push( val );     //Oy

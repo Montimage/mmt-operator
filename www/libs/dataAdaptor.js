@@ -327,7 +327,10 @@ MMTDrop.SecurityPoint = function( entry ){
     retval.verdict                  = entry[MMTDrop.SecurityColumnId.VERDICT];
     retval.type                     = entry[MMTDrop.SecurityColumnId.TYPE];
     retval.description              = entry[MMTDrop.SecurityColumnId.DESCRIPTION];
+    
     retval.history                  = JSON.stringify( entry[MMTDrop.SecurityColumnId.HISTORY] );
+    //retval.history                  = "'" + entry[MMTDrop.SecurityColumnId.HISTORY] + "'";
+    
     if( entry[MMTDrop.SecurityColumnId.VERDICT_COUNT] )
         retval.verdict_count            = entry[MMTDrop.SecurityColumnId.VERDICT_COUNT];
     else
@@ -345,9 +348,12 @@ MMTDrop.reverseSecurityPoint = function(elem) {
     retval[MMTDrop.SecurityColumnId.VERDICT]        = elem.verdict;
     retval[MMTDrop.SecurityColumnId.TYPE]           = elem.type;
     retval[MMTDrop.SecurityColumnId.DESCRIPTION]    = elem.description;
+    
     if( elem.history )
         retval[MMTDrop.SecurityColumnId.HISTORY]        = JSON.parse( elem.history );
-    retval[MMTDrop.SecurityColumnId.VERDICT_COUNT]        = elem.verdict_count;
+    
+    //retval[MMTDrop.SecurityColumnId.HISTORY]        = elem.history;
+    retval[MMTDrop.SecurityColumnId.VERDICT_COUNT]  = elem.verdict_count;
     return retval;
 }
 MMTDrop.StatsTimePoint = function(entry) {
@@ -571,17 +577,17 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
     //timestamp
-    msg[ 3 ] *= 1000;
+    msg[ 3 ] = Math.round( msg[3] * 1000 );
     //format
     switch( msg[0] ) {
         case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
         case MMTDrop.CsvFormat.WEB_APP_FORMAT :
         case MMTDrop.CsvFormat.SSL_APP_FORMAT :
         case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-            msg[ MMTDrop.FlowStatsColumnId.START_TIME ] *= 1000;
+            msg[ MMTDrop.FlowStatsColumnId.START_TIME ] = Math.round(msg[ MMTDrop.FlowStatsColumnId.START_TIME ] * 1000 );
             break;
         case MMTDrop.CsvFormat.STATS_FORMAT :
-            msg[ MMTDrop.StatsColumnId.START_TIME ] *= 1000;
+            msg[ MMTDrop.StatsColumnId.START_TIME ] = Math.round( msg[ MMTDrop.FlowStatsColumnId.START_TIME ] * 1000 );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
             break;
