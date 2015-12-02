@@ -576,18 +576,21 @@ MMTDrop.reverseFormatReportItem = function(entry) {
  */
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
+    var formatTime = function( ts ){
+        return Math.round( ts ) * 1000;    //remove millisecond
+    }
     //timestamp
-    msg[ 3 ] = Math.round( msg[3] * 1000 );
+    msg[ 3 ] = formatTime( msg[3] );
     //format
     switch( msg[0] ) {
         case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
         case MMTDrop.CsvFormat.WEB_APP_FORMAT :
         case MMTDrop.CsvFormat.SSL_APP_FORMAT :
         case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-            msg[ MMTDrop.FlowStatsColumnId.START_TIME ] = Math.round(msg[ MMTDrop.FlowStatsColumnId.START_TIME ] * 1000 );
+            msg[ MMTDrop.FlowStatsColumnId.START_TIME ] = formatTime(msg[ MMTDrop.FlowStatsColumnId.START_TIME ] );
             break;
         case MMTDrop.CsvFormat.STATS_FORMAT :
-            msg[ MMTDrop.StatsColumnId.START_TIME ] = Math.round( msg[ MMTDrop.FlowStatsColumnId.START_TIME ] * 1000 );
+            msg[ MMTDrop.StatsColumnId.START_TIME ] = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
             break;

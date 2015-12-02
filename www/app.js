@@ -73,7 +73,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
     cookie: { maxAge: 30*60*1000 },
-    secret: 'mmt2montimage'
+    secret: 'mmt2montimage',
+    resave: true, saveUninitialized: true
 }))
 
 

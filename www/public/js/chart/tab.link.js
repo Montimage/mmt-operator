@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "Traffic in Realtime",
+        title: "Traffic",
         x: 0,
         y: 0,
         width: 6,
@@ -51,9 +51,13 @@ var filters = [ fPeriod, fProbe];
 
 MMTDrop.setOptions({format_payload : true });
 
-fPeriod.onChange( loading.onShowing );
+fPeriod.onChange( function(){
+} );
 
 
+function inDetailMode(){
+    return ( fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE );
+}
 //create reports
 
 var ReportFactory = {
@@ -723,7 +727,7 @@ var ReportFactory = {
 
                 var time = parseInt( msg[COL.TIMESTAMP.id] );
                 
-                if( time < max_time ){
+                if( time <= max_time ){
                     numberofdrop ++;
                     continue;
                 }
@@ -843,7 +847,8 @@ var ReportFactory = {
         };
 
 
-        database.onMessage( "protocol.flow.stat", appendMsg );
+        if( inDetailMode() )
+            database.onMessage( "protocol.flow.stat", appendMsg );
 
         return rep;
     },

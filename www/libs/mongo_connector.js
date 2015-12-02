@@ -67,8 +67,8 @@ var Cache = function (period) {
                     probe: message.probe,
                     source: message.source,
                     property: message.property,
-                    type: message.type,
-                    verdict: message.verdict
+                    verdict: message.verdict,
+                    type: message.type
                 };
                 data = {
                     '$inc': {

@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "security",
-        title: "Security Alert",
+        title: "Security Alerts",
         x: 0,
         y: 7,
         width: 12,
@@ -39,8 +39,6 @@ MMTDrop.callback = {
         afterRender : loading.onChartLoad
     }
 };
-
-fPeriod.onChange( loading.onShowing );
 
 var ReportFactory = {};
 
@@ -132,7 +130,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         },
         {
             id: COL.DESCRIPTION.id,
-            label: "Description"
+            label: "Description (will be hidden)"
         }
         ];
     
@@ -154,13 +152,23 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     };
     
 
+    function inDetailMode(){
+        return ( fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE );
+    }
+    
     //detail of each property
     var detailOfPopupProperty = null;
     var openingRow = null;
     var popupTable = MMTDrop.chartFactory.createTable({
         getData: {
             getDataFn: function (db) {
+
                 var cols = [{id: "index", label:""}, COL.TIMESTAMP, COL.VERDICT, {id: "concern", label: "IP or MAC addresses of  Concerned Machines"}];
+
+                
+                if( ! inDetailMode() )
+                    cols = [{id: "index", label:""}, {id: COL.TIMESTAMP.id, label: "Timestamp", align: "left"}, COL.VERDICT, {id: "concern", label: "Total"}];
+
                 var data = db.data();
                 var arr = [];
                 for( var index=0; index<data.length; index++ ){
@@ -168,35 +176,39 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                     var o  = {};
 
                     o[ "index" ] = index+1;
-                    var time = msg[COL.TIMESTAMP.id];
-                    if( typeof( time ) === "number"){
-                        time = MMTDrop.tools.formatDateTime( new Date( time ), true);
-                        msg[COL.TIMESTAMP.id] = time;
+                    var time = msg.time;
+                    if( time === undefined ){
+                        time = MMTDrop.tools.formatDateTime( new Date( msg[COL.TIMESTAMP.id] ));
+                        msg.time = time;
                     }
 
                     o[ COL.TIMESTAMP.id ] = time;
                     o[ COL.VERDICT.id   ] = msg[ COL.VERDICT.id ];
                     var history = msg[ COL.HISTORY.id ];
 
-                    var concernt = msg.concernt ;
-                    if( concernt == null ){
-                        concernt = "";
-                        for( var i in history ){
-                            var event = history[ i ].attributes;
-                            for( var j in event ){
-                                var atts = event[j];
-                                for( var key in atts )
-                                    if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
-                                        //if the att is not yet added
-                                        if( concernt.indexOf( atts[key] ) === -1 ){
-                                            //
-                                            if( concernt != "") concernt += ", ";
-                                            concernt += atts[key];
+                    var concernt = msg[ COL.VERDICT_COUNT.id ];
+
+                    if( inDetailMode() ){
+                        concernt = msg.concernt ;
+                        if( concernt == null ){
+                            concernt = "";
+                            for( var i in history ){
+                                var event = history[ i ].attributes;
+                                for( var j in event ){
+                                    var atts = event[j];
+                                    for( var key in atts )
+                                        if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
+                                            //if the att is not yet added
+                                            if( concernt.indexOf( atts[key] ) === -1 ){
+                                                //
+                                                if( concernt != "") concernt += ", ";
+                                                concernt += atts[key];
+                                            }
                                         }
-                                    }
+                                }
                             }
+                            msg.concernt = concernt;
                         }
-                        msg.concernt = concernt;
                     }
                     o[ "concern" ] = concernt;
                     arr.push( o );
@@ -408,7 +420,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     var indexToUpdate = [];
     var lastUpdateTime = (new Date()).getTime();
     //when a new message is comming, append it to the table
-    database.onMessage( "security.report",  function ( data ) {
+    function addAlerts( data ) {
         if( data === undefined || data.length === 0 )
             return;
         
@@ -486,8 +498,11 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         }
 
         //console.log(new Date() + "  Add a new Row");
-    });
+    };
 
+    
+    if( inDetailMode() )
+        database.onMessage( "security.report",  addAlerts);
 
     var report = new MMTDrop.Report(
         // title

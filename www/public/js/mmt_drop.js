@@ -609,7 +609,7 @@ MMTDrop.tools = function () {
     _this.formatDateTime = function (v, withMillisecond) {
         var milli = "";
         if( withMillisecond === true )
-            milli = ":" + v.getMilliseconds();
+            milli = "." + v.getMilliseconds();
         
         return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " +
             v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + milli ;
@@ -1698,6 +1698,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 	var _currentSelectedOption = null;
 	var _onFilterCallbacks = [];
     var _onChangeCallbacks = [];
+    var _afterChangeCallbacks = [];
 	//database attached to this filter
 	var _database = null;
 
@@ -1721,6 +1722,8 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		var span =       $('<span>', {class: 'input-group-addon', text: param.label});
 		var filter =     $('<select>',{class: "form-control",     id  : param.id});
 
+        this.select = filter;
+        
 		span.appendTo( fdiv );
 		filter.appendTo( fdiv );
 		fdiv.appendTo(fcontainer);
@@ -1746,6 +1749,11 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			//save the current selected index
 			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption);
 			
+            for (var i in _afterChangeCallbacks){
+                var callback = _afterChangeCallbacks[i];
+                callback[0](_currentSelectedOption, _database, callback[1]);
+            }
+            
 			//applying the filter to the current selection
             setTimeout( function(){
     			_filter();
@@ -1869,6 +1877,11 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		if (MMTDrop.tools.isFunction(callback))
 			_onChangeCallbacks.push ([callback, obj]);
 	};
+    
+    this.afterChanged = function (callback, obj){
+		if (MMTDrop.tools.isFunction(callback))
+			_afterChangeCallbacks.push ([callback, obj]);
+	};
 	/**
 	 * Filter out database with the current selected option
 	 */
@@ -1990,7 +2003,7 @@ MMTDrop.filterFactory = {
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var periodLabel = {};
-    		periodLabel[periods.MINUTE] = "Last 5 minutes";
+    		periodLabel[periods.MINUTE] = "Last 5 minutes (in realtime)";
 			periodLabel[periods.HOUR]   = "Last hour";
 			periodLabel[periods.DAY]    = "Last 24 hours";
 			periodLabel[periods.WEEK]   = "Last 7 days";
@@ -2020,6 +2033,12 @@ MMTDrop.filterFactory = {
 				console.log("Got " + db.data().length + " from DB");
 			});
 			
+            
+            filter.afterChanged( function (){
+                location.reload();
+                throw new Error("Stop");
+            });
+            
             filter.otherOpt = {};
             
 			filter._renderTo = filter.renderTo;

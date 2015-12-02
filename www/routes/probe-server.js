@@ -8,8 +8,8 @@ var router = {};
 router.cacheData = {};
 
 //cache size
-var MAX_LENGTH = 5000;
-var MAX_PERIOD = 60*60*1000;    //1 hour
+var MAX_LENGTH   = 5000;
+var MAX_PERIOD   = 60*60*1000;    //1 hour
 var FLUSH_PERIOD = 5*1000;
 
 if( config.buffer_socketio ){
@@ -45,6 +45,7 @@ var CacheTimeStat = function( channel ){
             self.oldestTimestamp = time;
         else{
             var index = -1;
+            //
             while ( (self.latestTimestamp - self.oldestTimestamp > MAX_PERIOD || self.data.length > MAX_LENGTH) && index < self.data.length - 1) {
                 index ++;
                 self.oldestTimestamp = self.data[index][3];
@@ -63,17 +64,19 @@ var CacheTimeStat = function( channel ){
     
         if( data.length > 0 ){
             if( self.numberOfRemoved > 0 )
-            console.log( "  there are " + self.numberOfRemoved +" records in ["+ channel +"] that are either older than "+ (new Date( self.oldestTimestamp)).toLocaleTimeString() +" or over flow the cache length " + MAX_LENGTH );
+                console.log( "  there are " + self.numberOfRemoved +" records in ["+ channel +"] that are either older than "+ (new Date( self.oldestTimestamp)).toLocaleTimeString() +" or over flow the cache length " + MAX_LENGTH );
             
+            //reset data
             self.numberOfRemoved = 0;
             self.data = [];
+            
             if( router.route_socketio ){
                 router.route_socketio( channel, data );
             }
         }
     }
     
-    setInterval( self.flushDataToClient, FLUSH_PERIOD );    //each 5 seconds
+    setInterval( self.flushDataToClient, FLUSH_PERIOD );    //each X seconds
 }
 
 
@@ -102,6 +105,9 @@ router.process_message = function (db, message) {
             return;
         }
 
+        //TODO: to be remove, this chages probe ID, only for Thales demo
+        msg[1] = "Sodium";
+        
         //route_socketio is assigned from app.js
         if (router.route_socketio) {
             var channel = null;
