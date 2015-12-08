@@ -136,10 +136,15 @@ MMTDrop.constants = {
 			DL_PACKET_COUNT   : {id: 15, label: "DL Packet Count"},
             /** Index of the start timestamp of the flow */
             START_TIME        : {id: 16, label: "Start Time"}, 
+            
+            IP_SRC           : {id: 17, label: "IP Destination"}, 
             /** Index of the MAC address source column */
-            MAC_SRC           : {id: 17, label: "Destination Address"}, 
+            IP_DEST          : {id: 18, label: "IP Source "} ,
+
             /** Index of the MAC address source column */
-            MAC_DEST          : {id: 18, label: "Source Address "} 
+            MAC_SRC           : {id: 19, label: "MAC Destination"}, 
+            /** Index of the MAC address source column */
+            MAC_DEST          : {id: 20, label: "MAC Source "} 
 		},
     
 		/**
@@ -607,12 +612,22 @@ MMTDrop.tools = function () {
      * @returns {string} 
      */
     _this.formatDateTime = function (v, withMillisecond) {
+        return v.toLocaleString();
+        
         var milli = "";
         if( withMillisecond === true )
-            milli = "." + v.getMilliseconds();
+            milli = "." + ("00" + v.getMilliseconds()).slice(-3);
         
-        return v.getFullYear() + "-" + (v.getMonth() + 1) + "-" + v.getDate() + " " +
-            v.getHours() + ":" + v.getMinutes() + ":" + v.getSeconds() + milli ;
+        var time = v.getFullYear();
+            time += "-" + ("0" + (v.getMonth() + 1)).slice(-2);
+            time += "-" + ("0" + v.getDate()).slice(-2);
+            time += " " + ("0" + v.getHours()).slice(-2);
+            time += ":" + ("0" + v.getMinutes()).slice(-2);
+            time += ":" + ("0" + v.getSeconds()).slice(-2);
+            time += milli ;
+
+        
+        return time;
     };
     
 	/**
@@ -695,6 +710,9 @@ MMTDrop.tools = function () {
 	 * @memberof! MMTDrop.tools
 	 */
 	 _this.cloneData = function (obj){
+	 	if( obj instanceof Array )
+	 		return obj.slice(0);
+	 		
 		var seen = [];
 //		return JSON.parse( JSON.stringify (obj));
 		var str = JSON.stringify(obj, function(key, val) {
@@ -1086,13 +1104,14 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		
 		if( _socket == null){
 			_socket = new io.connect(MMTDrop.config.serverURL);
-			
+			_socket.emit("subscribe", channel );
 			_socket.on( channel , function( msg ){
                 console.log( "received " + msg.length + " records from server on the channel " + channel);
 				//update database with new message
 				//_originalData.shift();
 				//_originalData.push( msg );
-                _originalData.concat( msg );
+                _originalData = _originalData.concat( msg );
+                _data = _data.concat( msg );
 				
 				//fire callbacks
 				for( var i=0; i<_callbacks.length; i++){
@@ -2402,7 +2421,7 @@ MMTDrop.filterFactory = {
 			function (val, db){
 				//how it filters database when the current selected option is @{val}	
 				//It reloads data from MMT-Operator
-				console.log("Got " + db.data().length + " from DB");
+				//console.log("Got " + db.data().length + " from DB");
 			});
 
 			return filter;
@@ -4168,9 +4187,9 @@ MMTDrop.chartFactory = {
 				
 				var obj = [];
 				var n   = columns.length;
-                if( n > 20 ){
-                    alert("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                    n = 20;
+                if( n > 5 ){
+                    //alert("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+                    n = 5;
                 }
 				//the first column is timestamp
                 var lastTS = 0;

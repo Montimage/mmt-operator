@@ -1,6 +1,7 @@
-var moment = require('moment');
+var moment      = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
-var config = require("../config.json");
+var Window      = require("./window.js");
+var config      = require("../config.json");
 
 var MongoClient = require('mongodb').MongoClient,
     format = require('util').format;
@@ -180,6 +181,18 @@ var Cache = function (period) {
     };
 };
 
+//cache size
+var MAX_LENGTH   = 100000;
+var MAX_PERIOD   = 5*60;    //5 minutes
+
+//cache size from config.js
+if( config.buffer_socketio.max_length_size )
+    MAX_LENGTH = parseInt( config.buffer_socketio.max_length_size );
+if( config.buffer_socketio.max_period_size )
+    MAX_PERIOD = parseInt( config.buffer_socketio.max_period_size );
+
+
+
 var MongoConnector = function (opts) {
     this.mdb = null;
 
@@ -196,7 +209,8 @@ var MongoConnector = function (opts) {
         day: new Cache("day")
     }
 
-
+    self.window =new Window( MAX_PERIOD,  MAX_LENGTH );
+    
     //use to delete old data from "traffic" and "traffic_time" collections
     var lastDeletedTime = {
         traffic: {
@@ -213,10 +227,29 @@ var MongoConnector = function (opts) {
         if (err) throw err;
         self.mdb = db;
         console.log("Connected to Database");
-    });
+        
+        //load last data to the windows
+        self.getLastTime( function( err, ts ){
+            var option = {
+                format: [100, 0, 1, 2],    //all kind of data
+                time:{
+                    begin: ts - 5*60*1000,
+                    end  : ts
+                },
+                collection: "traffic",
+                raw: true
+            };
+            self.getCurrentProtocolStats( option, function( err, data ){
+                if( err ) console.error( err.stack );
+                console.log( "WINDOW: loaded " + data.length + " records to RAM");
+                self.window.pushArray( data );
+            });    
+        } )
+        
+    });    
 
 
-    self.lastTimestamps = {};
+    self.lastTimestamp = 0;
 
     /**
      * Stock a report to database
@@ -225,9 +258,14 @@ var MongoConnector = function (opts) {
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
 
+        //
+        self.window.push( message );
+        
+        
+        message = dataAdaptor.formatReportItem(message);
         var ts = message.time;
 
-        self.lastTimestamps[message.format] = ts;
+        self.lastTimestamp = ts;
 
         self.mdb.collection("traffic").insert(message, function (err, records) {
             if (err) console.error(err.stack);
@@ -236,7 +274,7 @@ var MongoConnector = function (opts) {
 
         //add message to cache
         cache.minute.add(message);
-
+        
         if (cache.minute.lastUpdateTime === undefined)
             cache.minute.lastUpdateTime = ts;
 
@@ -359,6 +397,13 @@ var MongoConnector = function (opts) {
 
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
+        if( options.period === "minute"){
+            var data = self.window.getAllData( options.format );
+            console.log("got " + data.length + "/" + self.window.data.length + " from window cache");
+            callback(null, data );
+            return;
+        }
+            
         self.flushCache( function(){
             self.getCurrentProtocolStats( options, callback );
         } );
@@ -393,7 +438,7 @@ var MongoConnector = function (opts) {
             var end_ts = (new Date()).getTime();
             var ts = end_ts - start_ts;
 
-            console.log("\n got " + doc.length + " records, took " + ts + " ms\n");
+            console.log("\n got " + doc.length + " records, took " + ts + " ms");
 
             if (options.raw) {
                 var data = [];
@@ -407,6 +452,9 @@ var MongoConnector = function (opts) {
                     data.push(record);
                 }
 
+                ts = (new Date()).getTime() - end_ts;
+
+                console.log("converted " + doc.length + " records, took " + ts + " ms\n");
                 callback(null, data);
             } else {
                 callback(null, doc);
@@ -417,35 +465,28 @@ var MongoConnector = function (opts) {
 
     /**
      * Get timestamp of the last report having some predefined format
-     * @param {Array} formats [[Description]]
      * @param {Callback} cb      [[Description]]
      */
-    self.getLastTime = function (formats, cb) {
+    self.getLastTime = function ( cb ) {
         if (self.mdb == null) return;
 
-        for (var i in formats) {
-            var fo = formats[i];
-            if (self.lastTimestamps[fo]) {
-                cb(null, self.lastTimestamps[fo]);
-                return;
-            }
+
+        if (self.lastTimestamp > 0 ) {
+            cb(null, self.lastTimestamp);
+            return;
         }
 
         self.mdb.collection("traffic").find({
-            format: {
-                $in: formats
-            }
         }).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {
-                cb(err);
-                return;
+                self.lastTimestamp = (new Date()).getTime();
             }
-            if (Array.isArray(doc) && doc.length > 0)
-                cb(null, doc[0].time, doc[0].format);
-            else
-                cb(null, (new Date()).getTime(), 0);
+            else if (Array.isArray(doc) && doc.length > 0)
+                self.lastTimestamp = doc[0].time;
+            
+            cb(null, self.lastTimestamp);
         });
     };
 };

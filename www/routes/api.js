@@ -73,6 +73,7 @@ router.get('/*', function (req, res, next) {
 	options.probe  = [];
 	options.source = [];
 	options.proto  = [];
+    options.period = period;
     
 	if (req.query.format instanceof Array)
         req.query.format.forEach( function (e){
@@ -115,7 +116,7 @@ router.get('/*', function (req, res, next) {
     if( options.time.begin != undefined )
         queryDate( options );
     else
-        dbconnector.getLastTime(options.format, function(err, time){
+        dbconnector.getLastTime(function(err, time){
 	    	if( err )
 		    	return next(err);
 		

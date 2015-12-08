@@ -1,32 +1,64 @@
 var mmtAdaptor = require('../libs/dataAdaptor');
-var config     = require('../config.json');
+var config = require('../config.json');
+
+var FLUSH_PERIOD = 5 * 1000;
+
+if (config.buffer_socketio.flush_to_client_period)
+    FLUSH_PERIOD = parseInt(config.buffer_socketio.flush_to_client_period) * 1000;
+
 
 var router = {}
-router.socketio_clients = [];
-
-router.emit_data = function( channel, msg ){
-    for( var i in router.socketio_clients ){
-        console.log("\n--------> flush " + msg.length + " records to clients on the chanel " + channel);
-        router.socketio_clients[i].emit( channel, msg );
-    }
-};
+router.activeChannels = {};
 
 router.start_socketio = function (io) {
     io.sockets.on('connection', function (client) {
-        router.socketio_clients.push( client );
-        
-        client.on("message", function (msg) {
-            
+
+        client.on("subscribe", function (msg) {
+            router.activeChannels[ msg ] = true;
+            client.channel = msg;
         });
 
         client.on('disconnect', function () {
-            for( var i in router.socketio_clients)
-                if (router.socketio_clients[i] == client ){
-                    router.socketio_clients.splice( i, 1 );
-                    return;
-                }
+            if( client.channel != undefined  && router.activeChannels[ client.channel ] === true )
+                router.activeChannels[ client.channel ] = false
         });
     });
+
+    function getClient(roomId) {
+        var res = [],
+            room = io.sockets.adapter.rooms[roomId];
+        if (room) {
+            for (var id in room) {
+                res.push(io.sockets.adapter.nsp.connected[id]);
+            }
+        }
+        return res;
+    }
+
+    var flushDataToClient = function () {
+        
+        console.log( router.activeChannels );
+        
+        var channels = {
+            "protocol.flow.stat": [100],
+            "security.report": [10]
+        };
+
+        for (var channel in channels) {
+            if( router.activeChannels[ channel ] !== true )
+                continue;
+            
+            var formats = channels[channel];
+            var data = router.windowCache.getFreshData(formats);
+            if (data.length > 0) {
+                console.log("\n--------> flush " + data.length + " records to clients on the chanel " + channel);
+                io.emit(channel, data);
+            }
+        }
+    }
+    //
+    setInterval(flushDataToClient, FLUSH_PERIOD);
+
 };
 
 module.exports = router;

@@ -4,6 +4,10 @@ var Loading = function( ){
     var _his = this;
     this.onChartLoad = function(){
         _his.chartLoaded ++;
+        
+        var ts = (new Date()).getTime() - ts_start;
+        console.log( "renderd " + _his.chartLoaded + ", took " + ts + " ms" );
+        
         if( _his.chartLoaded >= _his.totalChart )
             setTimeout( function( l ){
                 l.onHide();
@@ -17,6 +21,7 @@ var Loading = function( ){
     this.onShowing = function(){
         $("#waiting").show();
         _his.chartLoaded = 0;
+        ts_start = (new Date()).getTime();
     }
 }
 
@@ -27,6 +32,9 @@ MMTDrop.callback = {
     }
 };
 
+var ts_start = 0;
+
 $( function(){
+    ts_start = (new Date()).getTime();
     //loading.onHide();
 } );

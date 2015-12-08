@@ -333,7 +333,7 @@ var ReportFactory = {
                         var obj     = {};
                         
                         var date = new Date( msg[COL.START_TIME.id] );
-                        obj[ COL.START_TIME.id ] = date.toISOString().replace('T',' ').replace('Z', '') ;
+                        obj[ COL.START_TIME.id ] = MMTDrop.tools.formatDateTime( date ) ;
                         
                         var host;
                         if( format == FORMAT.WEB_APP_FORMAT ){

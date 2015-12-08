@@ -103,8 +103,8 @@ $(function () {
 
     //fire the chain of filters
     setTimeout( function(){
-        filters[0].filter();        
-    }, 100 );
+        filters[0].filter(); 
+    }, 0 );
 
 
 

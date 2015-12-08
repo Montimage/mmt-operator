@@ -367,8 +367,8 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             // Add event listener for opening and closing details
             table.on('click', 'tr[role=row]', function () {
                 //clear the last selected row
-                if ($currentRow)
-                    $currentRow.removeClass('active');
+                //if ($currentRow)
+                    //$currentRow.removeClass('active');
 
                 //popup a modal when user clicks on an item of the table
                 var showModal = function (data) {
@@ -398,7 +398,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 
                     //set the current selected row 
                 $currentRow = $(this);
-                $currentRow.addClass('active');
+                //$currentRow.addClass('active');
 
                 //get value of the first column == index
                 var index = $currentRow.find('td:first').find("span").data("index");

@@ -5,6 +5,7 @@ var favicon         = require('serve-favicon');
 var logger          = require('morgan');
 var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
+var compress        = require('compression');
 
 var routes          = require('./routes/index');
 var chartRoute      = require('./routes/chart');
@@ -42,9 +43,8 @@ app.io = io;
 
 var redis = require("redis");
 
+socketRoute.windowCache = dbconnector.window;
 socketRoute.start_socketio( io );
-
-probeRoute.route_socketio = socketRoute.emit_data;
 
 if( config.input_mode == REDIS_STR ){
     redis._createClient = redis.createClient;
@@ -65,14 +65,18 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(compress()); 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'),{
+    maxAge: 30*24*60*60*1000,    //30 day
+    lastModified: true
+}));
 
 app.use(session({
-    cookie: { maxAge: 30*60*1000 },
+    cookie: { maxAge: 60*60*1000 },
     secret: 'mmt2montimage',
     resave: true, saveUninitialized: true
 }))

@@ -54,7 +54,6 @@ MMTDrop.setOptions({format_payload : true });
 fPeriod.onChange( function(){
 } );
 
-
 function inDetailMode(){
     return ( fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE );
 }
@@ -110,19 +109,11 @@ var ReportFactory = {
             var ts = data[i][ time_id ];
             if( lastTS === undefined )
                 lastTS = ts;
-            else if( ts - lastTS >   period * 2.5){
-
+            
+            while (ts - lastTS >   period * 1.5 ){
                 var zero = {};
-                zero[ time_id ] = lastTS + period ;
-                arr.push( zero );
-
-
-                zero = {};
-                zero[ time_id ] = ts - period;
-                arr.push( zero );
-            }else if (ts - lastTS >   period * 2 ){
-                var zero = {};
-                zero[ time_id ] = lastTS + period ;
+                lastTS += period;
+                zero[ time_id ] = lastTS ;
                 arr.push( zero );
             }
             
@@ -314,7 +305,11 @@ var ReportFactory = {
                     x: {
                         show: false
                     }
-                }
+                },
+                zoom: {
+                  enabled: false,
+                  rescale: false
+              }
             },
 
             //custom legend
@@ -573,9 +568,9 @@ var ReportFactory = {
                         obj[i]["Last Update Time"]  = (new Date(obj[i]["Last Update Time"])).toLocaleString();
                         obj[i]["In Frames"]       = MMTDrop.tools.formatLocaleNumber( obj[i]["In Frames"]);
                         obj[i]["Out Frames"]      = MMTDrop.tools.formatLocaleNumber( obj[i]["Out Frames"]);
-                        obj[i]["In Bytes"]        = MMTDrop.tools.formatDataVolume( obj[i]["In Bytes"]);
-                        obj[i]["Out Bytes"]       = MMTDrop.tools.formatDataVolume( obj[i]["Out Bytes"]);
-                        obj[i]["Total Bytes"]     = MMTDrop.tools.formatDataVolume( obj[i]["Total Bytes"]);
+                        obj[i]["In Bytes"]        = MMTDrop.tools.formatDataVolume(   obj[i]["In Bytes"]);
+                        obj[i]["Out Bytes"]       = MMTDrop.tools.formatDataVolume(   obj[i]["Out Bytes"]);
+                        obj[i]["Total Bytes"]     = MMTDrop.tools.formatDataVolume(   obj[i]["Total Bytes"]);
                     }
 
                     
@@ -647,8 +642,7 @@ var ReportFactory = {
 
         var COL     = MMTDrop.constants.StatsColumn;
         var cLine   = rep.groupCharts[0].charts[0];
-        var fDir    = rep.filters[0];
-        var fMetric = rep.filters[1];
+        var fMetric = rep.filters[0];
 
         //add data to chart each second (rather than add immediatlly after receiving data)
         //this will avoid that two data are added very closely each
@@ -665,20 +659,16 @@ var ReportFactory = {
             newData = {};
 
             var col = fMetric.selectedOption();
-            var dir = fDir.selectedOption().id;
 
             selectedMetricId = col.id;
             
             if( col.id !== COL.ACTIVE_FLOWS.id ){
-                if (dir == 0) {
-                    cols = [ _this.getCol(col, true) ];
-                    cols.push(_this.getCol(col, false));
-                    /*cols.push({
-                        id: col.id,
-                        label: "All"
-                    });*/
-                } else
-                    cols = [_this.getCol(col, dir == 1)];
+                cols = [ _this.getCol(col, true) ];
+                cols.push(_this.getCol(col, false));
+                /*cols.push({
+                    id: col.id,
+                    label: "All"
+                });*/
             }else
                 cols = [ col ];
             
@@ -689,7 +679,7 @@ var ReportFactory = {
         }
         
         
-        fDir.onFilter(initData);
+        fProbe.onFilter(initData);
         fMetric.onFilter(initData);
 
         var samplePeriod = fPeriod.getDistanceBetweenToSamples();
@@ -701,8 +691,6 @@ var ReportFactory = {
             var chart = cLine.chart;
             if (chart == undefined)
                 return;
-            chart.zoom.enable(false);
-
             
             if( max_time === 0){
                 var chart_data = chart.data.shown();
@@ -724,10 +712,13 @@ var ReportFactory = {
                 var msg = data[i];
                 if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
                     continue;
-
+                
                 var time = parseInt( msg[COL.TIMESTAMP.id] );
                 
-                if( time <= max_time ){
+                if( max_time === 0 )
+                    max_time = time - 5*60*1000; //last 5 minute
+                
+                if( time < max_time ){
                     numberofdrop ++;
                     continue;
                 }
@@ -765,14 +756,11 @@ var ReportFactory = {
                 for( var i in keys ){
                     var time = keys[i];
                     //add zero points
-                    if( time - max_time > samplePeriod * 2.5 && lengthOx > 0 ){    
-                        //add 2 zero points
-                        new_keys.push( max_time + samplePeriod );
-                        new_keys.push( time     - samplePeriod );
-                        
-                    }else if( time - max_time > samplePeriod * 2  && lengthOx > 0 ){
-                        //add 1 zero points
-                        new_keys.push( time     - samplePeriod );
+                    var ts = max_time;
+                    while( time - ts > samplePeriod * 1.5 ){    
+                        //add zero points
+                        ts +=  samplePeriod;
+                        new_keys.push( ts );
                     }
                     
                     
@@ -785,14 +773,10 @@ var ReportFactory = {
                 //convert newData to columns format of C3js
                 var length = 0;
                 
-                
                 //for each time step
                 for (var i in new_keys) {
                     var time = new_keys[i];
                     var o    = newData[time];
-                    
-                    if( time < max_Ox )
-                        continue;
                     
                     if( o == undefined ) 
                         o = zeroPoint;
@@ -823,8 +807,6 @@ var ReportFactory = {
                     }
                 }
                 
-                
-                max_Ox = max_time;
                 //reset newData
                 newData       = {};
                 lastAddMoment = localtime;
@@ -857,13 +839,11 @@ var ReportFactory = {
         var _this = this;
         var COL = MMTDrop.constants.StatsColumn;
 
-        var fDir = MMTDrop.filterFactory.createDirectionFilter();
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
                 getDataFn: function (db) {
-                    var dir = fDir.selectedOption().id;
                     var col = fMetric.selectedOption();
                     var cols = [];
 
@@ -885,18 +865,13 @@ var ReportFactory = {
                     
                     if( col.id !== COL.ACTIVE_FLOWS.id ){
                         //dir = 1: incoming, -1 outgoing, 0: All
-                        if (dir == 0) {
-                            cols.push(_this.getCol(col, true));    //in
-                            cols.push(_this.getCol(col, false));   //out
+                        cols.push(_this.getCol(col, true));    //in
+                        cols.push(_this.getCol(col, false));   //out
                             /*cols.push({
                                 id: col.id,
                                 label: "All"
                                     //type : "line"
                             });*/
-                        } else if (dir == 1)
-                            cols.push(_this.getCol(col, true));
-                        else
-                            cols.push(_this.getCol(col, false));
                     }else
                         cols.push( col );
                     
@@ -969,9 +944,13 @@ var ReportFactory = {
                         padding: {
                             top   : 10,
                             bottom: 0
-                        }
+                        },
                     }
                 },
+                zoom: {
+                  enabled: false,
+                  rescale: false
+               }
             },
 
             afterRender: function (chart) {
@@ -993,14 +972,11 @@ var ReportFactory = {
         });
 
         var dataFlow = [{
-            object: fDir,
+            object: fProbe,
             effect: [{
-                object: fProbe,
+                object: fMetric,
                 effect: [{
-                    object: fMetric,
-                    effect: [{
-                        object: cLine
-                    }]
+                    object: cLine
 								}]
 					}]
         }];
@@ -1013,7 +989,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fDir, fMetric],
+					[fMetric],
 
             // charts
 					[

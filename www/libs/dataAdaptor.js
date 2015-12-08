@@ -56,8 +56,10 @@ var MMTDrop = {
         DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
         DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
         START_TIME          : 16, /**< Index of the start timestamp of the flow */
-        MAC_SRC             : 17, /**< Index of the MAC address source column */
-        MAC_DEST            : 18, /**< Index of the MAC address source column */
+        IP_SRC              : 17, /**< Index of the IP address source column */
+        IP_DEST             : 18, /**< Index of the IP address destination column */
+        MAC_SRC             : 19, /**< Index of the MAC address source column */
+        MAC_DEST            : 20, /**< Index of the MAC address destination column */
     },
     
     SecurityColumnId           : {
@@ -257,7 +259,10 @@ var MMTDrop = {
     /**
     * 
     */
-    setDirectionProtocolStat: function( msg, serverMAC ){
+     /**
+    * 
+    */
+    setDirectionProtocolStatByMAC: function( msg, serverMAC ){
         var COL       = this.StatsColumnId;
         
         if( msg[COL.MAC_DEST] == serverMAC )
@@ -269,6 +274,44 @@ var MMTDrop = {
             //Permute DL <--> UL
             var tmp 
             for(var i=0; i<3; i++){
+                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
+                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
+                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
+            }
+            return msg;
+        }
+        return null;
+    },
+    setDirectionStatFlowByIP: function( msg, local_network){
+        var COL       = this.StatsColumnId;
+        
+        var rootsIP = [];
+        for( var i in local_network ){
+            var lo   = local_network[i];
+            var root = ipLib.mask(lo.ip, lo.mask);
+            
+            rootsIP.push(  {root: root, mask: lo.mask } );
+        }
+        var isInside = function( ip ){
+            for( var i in rootsIP ){
+                var lo = rootsIP[i];
+                if( ipLib.mask( ip, lo.mask ) == lo.root )
+                    return true;
+            }
+            return false;  
+        }        
+        
+        if( isInside( msg[COL.IP_SRC] )  )
+            return msg;
+        else if ( isInside( msg[COL.IP_DEST] ) ){
+            //Permute DL <--> UL
+            var tmp = msg[COL.IP_SRC];
+
+            //change direction
+            msg[COL.IP_SRC] = msg[COL.IP_DEST];
+            msg[COL.IP_DEST] = tmp;
+
+            for(var i=0; i<2; i++){
                 tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
                 msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
                 msg[ COL.DL_DATA_VOLUME + i ] = tmp;
@@ -380,6 +423,8 @@ MMTDrop.StatsTimePoint = function(entry) {
     retval.payloadcount     = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
     retval.packetcount      = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
     retval.start_time       = entry[MMTDrop.StatsColumnId.START_TIME];
+    retval.ip_src          = entry[MMTDrop.StatsColumnId.IP_SRC];
+    retval.ip_dest         = entry[MMTDrop.StatsColumnId.IP_DEST];
     retval.mac_src          = entry[MMTDrop.StatsColumnId.MAC_SRC];
     retval.mac_dest         = entry[MMTDrop.StatsColumnId.MAC_DEST];
     return retval;
@@ -407,6 +452,10 @@ MMTDrop.reverseStatsTimePoint = function(elem) {
     retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT]   = elem.dl_packets;
     
     retval[MMTDrop.StatsColumnId.START_TIME] = elem.start_time;
+    
+    retval[MMTDrop.StatsColumnId.IP_SRC]    = elem.ip_src;
+    retval[MMTDrop.StatsColumnId.IP_DEST]   = elem.ip_dest;
+    
     retval[MMTDrop.StatsColumnId.MAC_SRC]    = elem.mac_src;
     retval[MMTDrop.StatsColumnId.MAC_DEST]   = elem.mac_dest;
     return retval;
