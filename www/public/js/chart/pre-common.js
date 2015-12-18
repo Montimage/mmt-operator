@@ -38,3 +38,14 @@ $( function(){
     ts_start = (new Date()).getTime();
     //loading.onHide();
 } );
+
+jQuery.fn.getWidgetParent = function(){
+    var o = $(this[0]) // It's your element
+    return o.parents().filter(".grid-stack-item");
+}
+
+jQuery.fn.getWidgetContentOfParent = function(){
+    var o = $(this[0]) // It's your element
+    var widget = o.parents().filter(".grid-stack-item");
+    return widget.find(".grid-stack-item-content");
+}

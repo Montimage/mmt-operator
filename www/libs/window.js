@@ -1,5 +1,3 @@
-var BinarySearchTree = require('binary-search-tree').BinarySearchTree;
-
 /**
  * A cache retains data in a period.
  * @param {integer} MAX_PERIOD period size of this cache by seconds
@@ -84,6 +82,8 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
      */
     this.getAllData = function( formats ){
         var arr = [];
+        if( self.data.length == 0 )
+            return arr; 
         //do not add the last timestamp
         var lastTimestamp = self.data[ self.data.length - 1][3];
         
@@ -110,6 +110,8 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
      */
     this.getFreshData = function( formats ){
         var arr = [];
+        if( self.data.length == 0 )
+            return arr; 
         var lastTimestamp = self.data[ self.data.length - 1][3];
         
         if( formats instanceof Array )

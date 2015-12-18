@@ -37,7 +37,11 @@ router.get('/*', function(req, res, next) {
 			},
 */            'security':{
                 title:"Security"
+            },
+            'behavior':{
+                title:"Behavior"
             }
+        
 	};
 	
 	var page = pages[ id ];
