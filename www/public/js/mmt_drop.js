@@ -583,7 +583,9 @@ MMTDrop.constants = {
  */
 MMTDrop.tools = function () {
         var _this = {}; //this = Window when this inside function(){ ... }();
-
+    _this.random = function( n ){
+        return Math.round(Math.random()* n);
+    }
     /**
      * 
      * @param   {[[integer]]} value

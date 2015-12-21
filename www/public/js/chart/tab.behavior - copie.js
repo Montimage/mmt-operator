@@ -170,7 +170,7 @@ function IPGraph(domElem, w, h) {
             });
 
         node.exit().remove();
-
+/*
         force.on("tick", function (e) {
             var nodes = force.nodes();
             var q = d3.geom.quadtree(nodes),
@@ -185,8 +185,8 @@ function IPGraph(domElem, w, h) {
                     return "translate(" + d.x + "," + d.y + ")";
                 });
         });
-
-        force.start();
+*/
+        //force.start();
 
     };
 

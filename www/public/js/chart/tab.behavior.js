@@ -13,6 +13,31 @@ var arr = [
     }
 ];
 
+var dataBase = {
+    "name": "",
+    "children": []
+};
+
+for (var i in MMTDrop.constants.CategoriesIdsMap) {
+    if (i == 0)
+        continue;
+    var cat_name = MMTDrop.constants.CategoriesIdsMap[i];
+    var n = MMTDrop.tools.random(10);
+    var arr = [];
+    for (var j = 0; j < n; j++) {
+        var ip = MMTDrop.tools.random(255) + "." + MMTDrop.tools.random(255) + "." + MMTDrop.tools.random(255) + "." + MMTDrop.tools.random(255)
+        arr.push({
+            name: ip,
+            cat_index: i
+        });
+    }
+    dataBase.children.push({
+        name: cat_name,
+        cat_index: i,
+        children: arr
+    });
+}
+
 var availableReports = {
     "createBehaviorReport": "Behavior Analysis",
 }
@@ -25,6 +50,211 @@ var database = MMTDrop.databaseFactory.createFlowDB({
 var filters = [MMTDrop.filterFactory.createPeriodFilter(),
                 MMTDrop.filterFactory.createProbeFilter()];
 
+// Move d to be adjacent to the cluster node.
+function myGraph(domID) {
+
+
+    // set up the D3 visualisation in the specified element
+    var w = $(domID).width(),
+        h = $(domID).getWidgetContentOfParent().innerHeight() - 30;
+    var diameter = Math.min(w, h);
+
+    var color = d3.scale.category10();
+
+    var i = 0,
+        root;
+
+    var tree = d3.layout.tree()
+        .size([360, diameter / 2 - 120])
+        .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; })
+
+    var diagonal = d3.svg.diagonal.radial()
+        .projection(function (d) {
+            return [d.y, d.x / 180 * Math.PI];
+        });
+
+    var zoom = d3.behavior.zoom()
+        .scaleExtent([0.1, 3])
+        .on("zoom", zoomed);
+
+    var vis = d3.select( domID ).append("svg:svg")
+        .attr("width", w)
+        .attr("height", h)
+        .append("svg:g")
+        .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")")
+        //.call(zoom)
+    ;
+
+    
+    function update(source) {
+        var duration = d3.event && d3.event.altKey ? 5000 : 500;
+
+        // Compute the new tree layout.
+        var nodes = tree.nodes(root);
+
+        // Update the nodes…
+        var node = vis.selectAll("g.node")
+            .data(nodes, function (d) {
+                return d.id || (d.id = ++i);
+            });
+
+        // Enter any new nodes at the parent's previous position.
+        var nodeEnter = node.enter().append("svg:g")
+            .attr("class", "node")
+            .attr("transform", function (d) {
+                return "rotate(" + (source.x0 - 90) + ")translate(" + source.y0 + ")";
+            })
+            .on("click", function (d) {
+                toggle(d);
+                update(d);
+            });
+
+        nodeEnter.append("svg:circle")
+            .attr("r", function( d ){
+                if( d.children )
+                    return 5;
+                return 3;
+            })
+            //.style("fill", function (d, i) {
+            //    return d._children ? "lightsteelblue" : "#ff0";
+            //})
+            ;
+
+        nodeEnter.append("svg:text")
+            .attr("x", 10)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .text(function (d) {
+                return d.name;
+            })
+            .style("fill", function (d) {
+                return color( d.cat_index );
+            })
+        ;
+
+        // Transition nodes to their new position.
+        var nodeUpdate = node.transition()
+            .duration(duration)
+            .attr("transform", function (d) {
+                return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")";
+            });
+
+        nodeUpdate.select("circle")
+            .style("fill", function (d, i) {
+                if( d.children || d._children )
+                    return d._children ? color(d.cat_index) : "#fff";
+                return "#fff";
+                
+            })
+            .style("stroke", function (d, i) {
+                return color(d.cat_index);
+            })
+        ;
+
+        nodeUpdate.select("text")
+            .style("fill-opacity", 1);
+
+        // Transition exiting nodes to the parent's new position.
+        var nodeExit = node.exit().transition()
+            .duration(duration)
+            .attr("transform", function (d) {
+                return "rotate(" + (source.x - 90) + ")translate(" + source.y + ")";
+            })
+            .remove();
+
+        nodeExit.select("circle")
+            .attr("r", 1e-6);
+
+        nodeExit.select("text")
+            .style("fill-opacity", 1e-6);
+
+        // Update the links…
+        var link = vis.selectAll("path.link")
+            .data(tree.links(nodes), function (d) {
+                return d.target.id;
+            });
+
+        // Enter any new links at the parent's previous position.
+        link.enter().insert("svg:path", "g")
+            .attr("class", "link")
+            .attr("stroke", function( d,i ){
+                //if( d.children )
+                //    return color( target.cat_index );
+                return "#ccc";
+            })
+            .attr("d", function (d, i) {
+                var o = {
+                    x: source.x0,
+                    y: source.y0,
+                };
+                return diagonal({
+                    source: o,
+                    target: o
+                });
+            })
+            .transition()
+            .duration(duration)
+            .attr("d", diagonal);
+
+        // Transition links to their new position.
+        link.transition()
+            .duration(duration)
+            .attr("d", diagonal);
+
+        // Transition exiting nodes to the parent's new position.
+        link.exit().transition()
+            .duration(duration)
+            .attr("d", function (d) {
+                var o = {
+                    x: source.x,
+                    y: source.y
+                };
+                return diagonal({
+                    source: o,
+                    target: o
+                });
+            })
+            .remove();
+
+        // Stash the old positions for transition.
+        nodes.forEach(function (d) {
+            d.x0 = d.x;
+            d.y0 = d.y;
+        });
+    }
+
+    // Toggle children.
+    function toggle(d) {
+        if (d.children) {
+            d._children = d.children;
+            d.children = null;
+        } else {
+            d.children = d._children;
+            d._children = null;
+        }
+    }
+    
+    root = dataBase;
+        root.x0 = h / 2;
+        root.y0 = 0;
+
+        function toggleAll(d) {
+            if (d.children) {
+                d.children.forEach(toggleAll);
+                toggle(d);
+            }
+        }
+
+        // Initialize the display to show a few nodes.
+        update(root);
+    
+    // Define the zoom function for the zoomable tree
+
+    function zoomed() {
+        vis.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+    }
+}
+
 MMTDrop.chartFactory.createBehavior = function (param) {
     var _param = {};
     _param = MMTDrop.tools.mergeObjects(_param, param);
@@ -32,502 +262,30 @@ MMTDrop.chartFactory.createBehavior = function (param) {
     var chart = new MMTDrop.Chart(_param,
         function (elemID, option, data) {
             $('<style type="text/css">\
-svg{font-family: Arial, sans-serif;font-size:10px;}\
-.axis path,.axis line {fill: none;stroke:#b6b6b6;shape-rendering: crispEdges;}\
-/*.tick line{fill:none;stroke:none;}*/\
-.tick text{fill:#999;}\
-text, rect, circle{ cursor: pointer}\
-circle:hover{stroke-width: 2; stroke:#00F}\
-rect:hover{stroke-width: 2; stroke:#00F}\
-g.journal.active{cursor:pointer;}\
-text.label{font-size:12px;font-weight:bold;cursor:pointer;}\
-text.value{font-size:12px;font-weight:bold;}\
-.circle-animate{ stroke-width:3 !important; stroke:red !important}\
-.category-animate{ stroke:red !important; font-size: 12px !important;}\
+.node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; } \
+.node { font: 10px sans-serif; } \
+.link { fill: none; stroke-width: 1.5px; } \
 </style>').appendTo("head");
 
             elemID = "#" + elemID;
 
-            var animate = {
-                stop: function () {
-                    this.isStop = true;
-                    
-                    if( this.timeout )
-                        clearTimeout( this.timeout );
-                   
-                    this.clearColor();
-                    this.currentIndex = 0;
-                    
-                    return this;
-                },
-                clearColor: function () {
-                    $(".circle-animate").attr("class", "");
-                    $(".category-animate").attr("class", "");
-                     d3.select("#connector").attr("display", "none");
-                    return this;
-                },
-                currentIndex: 0,
-                animate: function (arr) {
-                    this.data = arr;
-                    this.isStop = false;
-                    this.animateNow();
-                    return this;
-                },
-                animateNow: function(){
-                    if( this.isStop === true )
-                        return this;
-                
-                    
-                    //remove animation of the previous element
-                    this.clearColor();
 
-                    var obj = this.data[this.currentIndex];
-
-                    $(obj).attr("class", "circle-animate");
-                    var cat = $(obj).attr("category");
-                    $("#" + cat).attr("class", "category-animate");
-
-                    if (this.currentIndex > 0) {
-                        var o_obj = this.data[this.currentIndex - 1];
-                        var x1 = $(o_obj).attr("cx"),
-                            y1 = $(o_obj).attr("cy");
-                        d3.select("#connector").attr({
-                            "x1": x1,
-                            "y1": y1,
-                            "x2": x1,
-                            "y2": y1
-                        });
-                        d3.select("#connector").transition().attr({
-                            "x1": x1,
-                            "y1": y1,
-                            "x2": $(obj).attr("cx"),
-                            "y2": $(obj).attr("cy"),
-                            display: "block"
-                        })
-                        .duration(1000)
-                        .each("end", function(){
-                            this.animateNow();
-                        }.bind( this ) );
+            var graph = new myGraph(elemID);
+            /*
+                setInterval(function () {
+                    var rand = function (i) {
+                        return Math.round(Math.random() * i);
                     }
-                    else{
-                        this.timeout = setTimeout( this.animateNow.bind( this ), 500 );
-                    }
+                    var cat1 = MMTDrop.constants.CategoriesIdsMap[rand(2)];
+                    var cat2 = MMTDrop.constants.CategoriesIdsMap[rand(15)];
+                    var ip = rand(255);
+                    //graph.addCategory( cat1 )
+                    //graph.addCategory( cat2 )
+                    //graph.addLink(cat1, cat2, 10);
+                    graph.addIP(ip, cat1);
+                }, 2000);
+                */
 
-                    this.currentIndex++;
-                    if (this.currentIndex >= this.data.length)
-                        this.currentIndex = 0;
-
-                    return this;
-                }
-            };
-
-            var getLastIpElement = function (ip) {
-                //IPv4
-                var n = ip.lastIndexOf(".");
-                //IPv6
-                if (n === -1)
-                    n = ip.lastIndexOf(":");
-                if (n === -1)
-                    n = 0;
-                return ip.substr(n);
-            };
-
-            var margin = {
-                    top: 20,
-                    right: 400,
-                    bottom: 0,
-                    left: 20
-                },
-                outerWidth = $(elemID).width(),
-                width = outerWidth - margin.left - margin.right,
-                height = $(elemID).getWidgetContentOfParent().height() - 40;
-
-            var start_year = 2004,
-                end_year = 2013;
-
-            var ipArray = [];
-
-            var c20 = d3.scale.category20();
-            var color = function (ip) {
-                var d = ipArray.indexOf(ip);
-                if (d === -1)
-                    d = ipArray.push(ip) - 1;
-                return c20(d);
-            };
-
-            var svg = d3.select(elemID).append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .style("margin-left", margin.left + "px")
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            var defs = svg.append("defs")
-
-            defs.append("marker")
-                .attr("id", "arrowhead")
-                .attr("viewBox", "0 0 10 10")
-                .attr("refX", 0)
-                .attr("refY", 5)
-                .attr("markerWidth", 8)
-                .attr("markerHeight", 6)
-                .attr("orient", "auto")
-                .append("path")
-                .attr("d", "M 0 0 L 10 5 L 0 10 z");
-            ;
-            svg.append("g")
-                .append("line")
-                .attr({
-                    id: "connector",
-                    "stroke-width": 1,
-                    "stroke": "#cccccc",
-                    "marker-end": "url(#arrowhead)",
-                    display: "none"
-                });
-            svg.append("g")
-                .attr({
-                    fill: "white"
-                })
-                .append("text")
-                .attr({
-                    id: "tooltip",
-                    fill:"#999",
-                    "text-anchor": "middle"
-            });
-            
-            var dataBase = [{
-                "category": [{
-                    timestamp: 2006,
-                    data: 6,
-                    ip: "1.0.0.1"
-                }, {
-                    timestamp: 2007,
-                    data: 10,
-                    ip: "1.0.0.2"
-                }, {
-                    timestamp: 2008,
-                    data: 11,
-                    ip: "1.0.0.3"
-                }, {
-                    timestamp: 2009,
-                    data: 23,
-                    ip: "1.0.0.2"
-                }, {
-                    timestamp: 2010,
-                    data: 1,
-                    ip: "1.0.0.5"
-                }, {
-                    timestamp: 2010,
-                    data: 1,
-                    ip: "1.0.0.6"
-                }],
-                "name": "Web"
-            }, {
-                "category": [{
-                    timestamp: 2008,
-                    data: 1,
-                    ip: "1.0.0.1"
-                }, {
-                    timestamp: 2010,
-                    data: 3,
-                    ip: "1.0.0.2"
-                }, {
-                    timestamp: 2011,
-                    data: 4,
-                    ip: "1.0.0.3"
-                }, {
-                    timestamp: 2012,
-                    data: 17,
-                    ip: "1.0.0.4"
-                }, {
-                    timestamp: 2013,
-                    data: 10,
-                    ip: "1.0.0.5"
-                }],
-                "name": "P2P"
-            }, ];
-
-            function flattern(data) {
-                for (var i = 0; i < data.length; i++) {
-                    var category = data[i].category;
-                    var years = {};
-                    for (var j = 0; j < category.length; j++) {
-                        var elem = category[j];
-                        if (years[elem.timestamp] === undefined) {
-                            years[elem.timestamp] = 1;
-                            elem.timestampOffset = 0;
-                        } else {
-                            elem.timestampOffset = years[elem.timestamp];
-                            years[elem.timestamp]++;
-                        }
-                    }
-                    data[i].yearCount = years;
-                }
-            }
-
-            flattern(dataBase);
-           var x = d3.scale.linear()
-                .range([0, width]);
-
-            var xAxis = d3.svg.axis()
-                .scale(x)
-                .orient("top");
-
-
-            var formatYears = d3.format("0000");
-            xAxis.tickFormat(formatYears);
-        
-            x.domain([start_year, end_year]);
-        
-            var xScale = d3.scale.linear()
-                .domain([start_year, end_year])
-                .range([0, width]);
-
-            var rScale = d3.scale.linear()
-                .domain([0, 10])
-                .range([2, 9]);
-
-            var chart = svg.append("g")
-                .attr("id", "chart-svg");
-            chart._svgGroup = {};
-        
-            chart._svgGroup.oX = chart.append("g");
-            chart._svgGroup.oX
-                .append("path")
-                .attr("d", "M0,0h" + (outerWidth - 100) )
-                .attr("marker-end", "url(#arrowhead)")
-            ;
-            chart._svgGroup.oX
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + 10 + ")")
-                .call(xAxis)
-            ;
-            chart._svgGroup.circles = chart.append("g")
-                .attr({
-                    id: "circle-group"
-                });
-            chart._svgGroup.rects = chart.append("g")
-                .attr({
-                    id: "hot-group",
-                    fill: "white"
-                });
-            function update() {
-                var vspace = 50;
-
-                for (var j = 0; j < dataBase.length; j++) {
-
-                    var old_data = dataBase[j]['category'].filter(function (d) {
-                        return d.timestamp < end_year;
-                    });
-                    var cur_data = dataBase[j]['category'].filter(function (d) {
-                        return d.timestamp >= end_year;
-                    });
-
-                    var name = dataBase[j].name;
-
-                    chart._svgGroup.circles.selectAll("circle")
-                        .data(dataBase[j].category, function (d) {
-                            return d.ip + d.timestamp;
-                        })
-                        .enter()
-                        .append("circle")
-                        .attr("cx", function (d) {
-                            return xScale(d.timestamp) + d.timestampOffset * 5 * 2.2; // 5 is radius
-                        })
-                        .attr("cy", (j + 1) * vspace)
-                        .attr("r", 5)
-                        .attr("ip", function (d) {
-                            return d.ip;
-                        })
-                        .attr("ts", function (d) {
-                            return d.timestamp;
-                        })
-                        .style("fill", function (d) {
-                            return color(d.ip);
-                        })
-                        .attr("category", name)
-                        //.style("display", "none")
-                        .on("mouseover", showHistoric)
-                        .on("mouseout", hideHistoric);
-
-                    chart._svgGroup.rects.selectAll("rect")
-                        .data(cur_data, function (d) {
-                            return d.ip + d.timestamp;
-                        })
-                        .enter()
-                        .append("rect")
-                        .attr("x", function (d, i) {
-                            return width - 10 +  d.timestampOffset *1.2* 30;
-                        })
-                        .attr("y", (j + 1) * vspace - 9)
-                        .attr("ip", function (d) {
-                            return d.ip;
-                        })
-                        .attr("ts", function (d) {
-                            return d.timestamp;
-                        })
-                        .attr("category", name)
-                        .attr("width", 30)
-                        .attr("height", 18)
-                        .style("fill", function (d) {
-                            return color(d.ip);
-                        })
-                        .on("mouseover", showHistoric)
-                        .on("mouseout", hideHistoric);
-
-                    chart._svgGroup.rects.selectAll("text")
-                        .data(cur_data, function (d) {
-                            return d.ip + d.timestamp;
-                        })
-                        .enter()
-                        .append("text")
-                        .attr("y", (j + 1) * vspace - 12)
-                        .attr("x", function (d, i) {
-                            return width - 10 +  d.timestampOffset *1.2* 30 + 15;
-                        })
-                        .attr("ip", function (d) {
-                            return d.ip;
-                        })
-                        .attr("ts", function (d) {
-                            return d.timestamp;
-                        })
-                        .attr("text-anchor", "middle")
-                        .attr("class", "value")
-                        .text(function (d) {
-                            return getLastIpElement(d.ip);
-                        })
-                        .style("fill", "grey")
-                    ;
-
-                    chart._svgGroup.rects.selectAll("text")
-                        .data([name], function (d) {
-                            return d;
-                        })
-                        .enter()
-                        .append("text")
-                        .attr("y", (j + 1) * vspace + 5)
-                        .attr("x", outerWidth - 50)
-                        .attr("text-anchor", "end")
-                        .attr("id", function (d) {
-                            return d;
-                        })
-                        .text(function (d) {
-                            return d;
-                        })
-                        .style("fill", "grey")
-                        .on("mouseover", mouseover)
-                        .on("mouseout", mouseout);
-                };
-            }
-
-            update();
-            function move( ts ) {
-                var duration = 500;
-                
-                var target = chart.selectAll( "circle" );
-                target.transition().duration( duration ).attr("cx", function( d ){
-                    return xScale( d.timestamp + d.timestampOffset - ts );
-                });
-                
-                //update aXis
-                start_year += ts;
-                end_year   += ts;
-                
-                x.domain([start_year, end_year]);
-                chart.selectAll("g.x.axis").transition( duration ).call( xAxis );
-                
-                setTimeout( function(){
-                    //chart.selectAll( "circle" ).;
-                }, duration );
-            }
-
-            function addIp(timestamp, ip, category, data) {
-                var obj = {
-                    timestamp: timestamp,
-                    ip: ip,
-                    data: data,
-                    timestampOffset: 0
-                };
-
-                for (var i = 0; i < dataBase.length; i++) {
-                    var cat = dataBase[i];
-                    if (cat.name == category) {
-                        if (cat.yearCount[timestamp] === undefined) {
-                            cat.yearCount[timestamp] = 1;
-                        } else {
-                            obj.timestampOffset += cat.yearCount[timestamp];
-                            cat.yearCount[timestamp] ++;
-                        }
-                        cat.category.push(obj);
-                        return;
-                    }
-                }
-                //not found category
-                dataBase.push({
-                    category: [obj],
-                    name: category,
-                    yearCount: 1
-                });
-            }
-
-            setTimeout(function () {
-                addIp(2013, "10.0.2.1", "Mailmmmm", 25);
-                addIp(2013, "10.0.2.2", "Mail", 15);
-                update();
-            }, 2000);
-
-            setTimeout(move, 1000, 1);
-            setTimeout(move, 2000, 2);
-        
-            function mouseover(p) {
-                var g = d3.select(this).node();
-                if (!g) return;
-                var cat = g.attributes["id"].value;
-                d3.selectAll('circle[category="' + cat + '"]').transition().attr("r", function (d) {
-                    return rScale(d.data)
-                });
-                //d3.select(g).selectAll("rect").style("display", "none");
-            }
-
-            function mouseout(p) {
-                var g = d3.select(this).node();
-                if (!g) return;
-                var cat = g.attributes["id"].value;
-                d3.selectAll('circle[category="' + cat + '"]').transition().attr("r", 5);
-                //d3.select(g).selectAll("rect").style("display", "block");
-            }
-
-            function showHistoric(p) {
-                var ip = $(this).attr("ip");
-                var x  = $(this).attr("cx");
-                var y  = $(this).attr("cy");
-                
-                if( x !== undefined && y !== undefined )
-                    //show tooltip
-                    $("#tooltip").attr({
-                        display: "block",
-                        x: x,
-                        y: y - 12
-                    }).text( ip );
-
-                var arr = $('circle[ip="' + ip + '"]');
-                //arr.addClass("animate");
-                if (arr.length <= 0)
-                    return;
-
-                arr.sort(function (a, b) {
-                    return parseInt($(a).attr("ts")) - parseInt($(b).attr("ts"));
-                });
-
-                animate.stop().animate(arr);
-            };
-
-            function hideHistoric() {
-                animate.stop();
-                $("#tooltip").attr({
-                        display: "none",
-                    });
-            }
         });
     return chart;
 }
