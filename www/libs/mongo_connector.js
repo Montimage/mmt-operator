@@ -231,7 +231,7 @@ var MongoConnector = function (opts) {
         //load last data to the windows
         self.getLastTime( function( err, ts ){
             var option = {
-                format: [100, 0, 1, 2],    //all kind of data
+                format: [100, 0, 1, 2, 10, 11, 12],    //all kind of data
                 time:{
                     begin: ts - 5*60*1000,
                     end  : ts
@@ -267,6 +267,16 @@ var MongoConnector = function (opts) {
 
         self.lastTimestamp = ts;
 
+        if( message.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT 
+           || message.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT){
+            
+            self.mdb.collection("behaviour").insert(message, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+            
+            return;
+        }
+           
         self.mdb.collection("traffic").insert(message, function (err, records) {
             if (err) console.error(err.stack);
         });
@@ -419,6 +429,12 @@ var MongoConnector = function (opts) {
 
         var start_ts = (new Date()).getTime();
 
+        if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
+           || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
+            
+            options.collection = "behaviour";
+        }
+        
         var cursor = self.mdb.collection(options.collection).find({
             format: {
                 $in: options.format

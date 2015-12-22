@@ -30,7 +30,9 @@ router.process_message = function (db, message) {
             console.log("[DONT 2] " + message);
             return;
         }
-
+        if( format === 11 || format === 12 ){
+            console.log( message );
+        }
         //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
         
@@ -59,6 +61,8 @@ router.startListening = function (db, redis) {
     report_client.subscribe("web.flow.report");
     report_client.subscribe("ssl.flow.report");
     report_client.subscribe("rtp.flow.report");
+    
+    report_client.subscribe("behaviour.report");
     //*/
 
     report_client.on('message', function (channel, message) {
@@ -125,7 +129,7 @@ router.startListeningAtFolder = function (db, folder_path) {
         if (file_name == null) {
             if ( !isPrintedMessage ) {
                 isPrintedMessage = true;
-                process.stdout.write("\nWaiting data in the folder [" + folder_path + "] ");
+                process.stdout.write("\nWaiting for data in the folder [" + folder_path + "] ");
             }else{
                 process.stdout.write(".");
             }

@@ -83,6 +83,8 @@ MMTDrop.constants = {
 			STATS_FORMAT : 100,
             
             SECURITY_FORMAT: 10,
+            BA_PROFILE_FORMAT: 12,
+            BA_BANDWIDTH_FORMAT: 11
 		},
 
 		/**
@@ -276,6 +278,23 @@ MMTDrop.constants = {
 			
 		},
     
+    BehaviourColumn: {
+        /** Index of the format id column */
+        FORMAT_ID               : {id: 0, label:"Format"} ,
+        /** Index of the probe id column */
+        PROBE_ID                : {id: 1, label:"Probe"},
+        /** Index of the data source id column */
+        SOURCE_ID               : {id: 2, label:"Source"},
+        /** Index of the format id column */
+        TIMESTAMP               : {id: 3, label:"Timestamp"},
+        /** property id */
+        PROPERTY                : {id: 4, label: "Property"},
+        IP                      : {id: 5, label: "IP"},
+        BEFORE                  : {id: 6, label: "Before"},
+        AFTER                   : {id: 7, label: "After"},
+        DESCRIPTION             : {id: 8, label: "Description"},
+    },
+		
     SecurityColumn: {
         /** Index of the format id column */
         FORMAT_ID               : {id: 0, label:"Format"} ,
@@ -293,7 +312,6 @@ MMTDrop.constants = {
         HISTORY                 : {id: 8, label: "History"},
         VERDICT_COUNT           : {id: 9, label: "Count"},
     },
-		
     
 		/**
 		 * Micro-flows statistics reports
@@ -1088,8 +1106,8 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	};
 
 	
-	var _callbacks = [];
-	var _socket    = null;
+	var _callbacks = {};
+	var _sockets    = {};
 	
 	/**
 	 * Register a callback when receiving a new message in realtime from MMT-Operator.
@@ -1101,13 +1119,25 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         if( channel == null )
             channel = "protocol.flow.stat";
         
-		if(MMTDrop.tools.isFunction( callback ))
-			_callbacks.push( {callback: callback, data: userData} );
-		
-		if( _socket == null){
-			_socket = new io.connect(MMTDrop.config.serverURL);
-			_socket.emit("subscribe", channel );
-			_socket.on( channel , function( msg ){
+        if( _callbacks[ channel ]  == undefined )
+                _callbacks[ channel ] = [];
+        else{
+            if(MMTDrop.tools.isFunction( callback ))
+                _callbacks[ channel ].push( {callback: callback, data: userData} );
+            //io was created before
+            return;
+        }
+        
+		if(MMTDrop.tools.isFunction( callback )){
+			_callbacks[ channel ].push( {callback: callback, data: userData} );
+        }
+        else
+            return;
+        
+		if( _sockets[ channel ] == null){
+			var socket = new io.connect(MMTDrop.config.serverURL);
+			socket.emit("subscribe", channel );
+			socket.on( channel , function( msg ){
                 console.log( "received " + msg.length + " records from server on the channel " + channel);
 				//update database with new message
 				//_originalData.shift();
@@ -1115,13 +1145,14 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
                 _originalData = _originalData.concat( msg );
                 _data = _data.concat( msg );
 				
+                var cb = _callbacks[ channel ];
 				//fire callbacks
-				for( var i=0; i<_callbacks.length; i++){
-					var fn = _callbacks[i];
+				for( var i=0; i<cb.length; i++){
+					var fn = cb[i];
 					fn.callback( msg, fn.data );
 				}
-					
 			});
+            _sockets[ channel ] = socket;
 		}
 	};
 	

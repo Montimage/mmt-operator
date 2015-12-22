@@ -15,6 +15,9 @@
         {
             "ip": "10.0.0.0",
             "mask": "255.0.0.0"
+        },{
+            "ip" : "fe80::",
+            "mask": "10"
         }],
     "probe_stats_period": 5,
     "buffer_socketio": {

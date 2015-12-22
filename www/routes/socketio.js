@@ -12,13 +12,17 @@ router.activeChannels = {};
 
 router.start_socketio = function (io) {
     io.sockets.on('connection', function (client) {
-
+        
+        console.log( "[IO] a client is connected" );
+        
         client.on("subscribe", function (msg) {
+            console.log( "[IO] a client subscribes to the channel ["+ msg +"]");
             router.activeChannels[ msg ] = true;
             client.channel = msg;
         });
 
         client.on('disconnect', function () {
+            console.log( "[IO] a client unsubscribes to the channel ["+ client.channel +"]");
             if( client.channel != undefined  && router.activeChannels[ client.channel ] === true )
                 router.activeChannels[ client.channel ] = false
         });
@@ -37,11 +41,13 @@ router.start_socketio = function (io) {
 
     var flushDataToClient = function () {
         
-        console.log( router.activeChannels );
+        //console.log( router.activeChannels );
         
         var channels = {
             "protocol.flow.stat": [100],
-            "security.report": [10]
+            "security.report": [10],
+            "ba_profile.report": [12],
+            "ba_bandwidth.report": [11]
         };
 
         for (var channel in channels) {
