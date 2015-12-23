@@ -30,7 +30,7 @@ var availableReports = {
     "createBandwidthReport": "Bandwidth Analysis"
 }
 
-var database = MMTDrop.databaseFactory.createFlowDB({
+var database = new MMTDrop.Database({
     format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT,
                MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT]
 });
@@ -47,7 +47,13 @@ function myGraph(domID, root) {
         h = $(domID).getWidgetContentOfParent().innerHeight() - 30;
     var diameter = Math.min(w, h);
 
-    var color = d3.scale.category10();
+    var COLOR = d3.scale.category10();
+    var color = function( d) {
+        if( d === 15 )
+            return "#999"
+            
+        return COLOR( d );
+    }
 
     var index = 0;
 
@@ -68,7 +74,6 @@ function myGraph(domID, root) {
         .append("svg:g")
         .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
-
     this.update = function (source) {
         var duration = d3.event && d3.event.altKey ? 5000 : 500;
 
@@ -88,7 +93,7 @@ function myGraph(domID, root) {
                 return "rotate(" + (source.x0 - 90) + ")translate(" + source.y0 + ")";
             })
             .attr("cursor", function (d) {
-                if (d.children || d._children)
+                if ((d.children || d._children) && (d.parent))
                     return "pointer";
                 return "default";
             })
@@ -96,7 +101,7 @@ function myGraph(domID, root) {
                 return d.name;
             })
             .on("click", function (d) {
-                if (d.children || d._children) {
+                if ((d.children || d._children) && (d.parent)) {
                     toggle(d);
                     _this.update(d);
                 }
@@ -140,6 +145,11 @@ function myGraph(domID, root) {
             })
             .style("stroke", function (d, i) {
                 return color(d.cat_index);
+            })
+            .attr("r", function (d) {
+                if (d.children || d._children)
+                    return 5;
+                return 3;
             });
 
         nodeUpdate.select("text")
@@ -239,29 +249,30 @@ function myGraph(domID, root) {
                     }, 500, "linear", function () {
                         $(this).animate({
                             opacity: 1
-                        }, 300, "linear", function () {
+                        }, 500, "linear", function () {
                             $(this).animate({
                                 opacity: 0
-                            }, 300, "linear", function () {
+                            }, 500, "linear", function () {
                                 $(this).animate({
                                     opacity: 1
                                 }, 300);
                             });
                         });
                     });
+                    
                     setTimeout(function (arr, j, cat) {
                         arr.splice(j, 1);
                         _this.update(cat);
-                    }, 2000, arr, j, cat)
-                    return true;
+                    }, 3000, arr, j, cat)
+                    return 4000;
                 }
             }
         }
-        return false;
+        return 500;
     }
 
     this.addIp = function (ip, cat_name) {
-        for (var i in root.children) {
+        for (var i = 0; i < root.children.length; i++) {
             var cat = root.children[i];
             if (cat.name != cat_name)
                 continue;
@@ -270,17 +281,19 @@ function myGraph(domID, root) {
             if (cat.children === undefined && cat._children) {
                 cat._children.push({
                     name: ip,
-                    cat_index: i
+                    cat_index: cat.cat_index
                 });
                 return;
             }
+
             if (cat.children === undefined)
                 cat.children = [];
 
             cat.children.push({
                 name: ip,
-                cat_index: i
+                cat_index: cat.cat_index
             });
+
             _this.update(cat);
             //flash
             /*
@@ -307,8 +320,10 @@ function myGraph(domID, root) {
     }
 
     this.moveIp = function (ip, new_cat) {
-        this.removeIp(ip);
-        setTimeout(this.addIp, 3000, ip, new_cat);
+        var timeout = this.removeIp(ip);
+        setTimeout(this.addIp, timeout, ip, new_cat);
+        
+        return timeout + 1000;
     }
 
     root.x0 = h / 2;
@@ -329,6 +344,7 @@ MMTDrop.chartFactory.createBehaviour = function (param) {
 .node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; } \
 .node { font: 10px sans-serif; } \
 .link { fill: none; stroke-width: 1.5px; } \
+.ba-profile-table{font-size: 12px;}\
 </style>').appendTo("head");
             var root = data[0][0];
             var graph = new myGraph("#" + elemID, root);
@@ -362,13 +378,12 @@ var ReportFactory = {
                         });
                     }
 
+                    root.children.sort(function (a, b) {
+                        return a.name.localeCompare( b.name );
+                    });
+
                     root.children.push({
                         name: "Inactive",
-                        cat_index: root.children.length,
-                        children: []
-                    })
-                    root.children.push({
-                        name: "*",
                         cat_index: root.children.length,
                         children: []
                     })
@@ -394,10 +409,15 @@ var ReportFactory = {
 
 
                     data = new_data;
+                    var obj = MMTDrop.tools.splitData(data, COL.IP.id);
+                    //for each IP, we retain only the last category
+                    for (var ip in obj) {
+                        data = obj[ip];
+                        data.sort(function (a, b) {
+                            return b[COL.TIMESTAMP.id] - a[COL.TIMESTAMP.id];
+                        });
 
-                    for (var i in data) {
-                        var msg = data[i];
-                        var ip = msg[COL.IP.id];
+                        var msg = data[0];
                         var cat_name = msg[COL.AFTER.id];
 
                         if (cat_name == "null")
@@ -416,6 +436,10 @@ var ReportFactory = {
                 }
             }
         });
+
+        var openingRow = null;
+        var HISTORY = {};
+
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
@@ -426,57 +450,177 @@ var ReportFactory = {
                             new_data.push(data[i]);
 
                     var obj = MMTDrop.tools.splitData(new_data, COL.IP.id);
+
                     data = [];
 
-                    var colObj = {};
-                    colObj["IP"] = "IP";
-
                     for (var ip in obj) {
-                        var o = {
-                            IP: ip
-                        };
-
+                        var cats = [];
                         var arr = obj[ip];
+                        HISTORY[ip] = [];
                         for (var j = 0; j < arr.length; j++) {
                             var msg = arr[j];
-                            var ts = msg[COL.TIMESTAMP.id]
                             var cat_name = msg[COL.AFTER.id];
-                            if (cat_name == "null")
-                                cat_name = "Inactive";
+                            //if( cat_name == "null" )
+                            //    cat_name = "Inactive";
+                            cats.push(cat_name);
 
-                            colObj[ts] = ts;
-                            o[ts] = cat_name;
+                            HISTORY[ip].push( msg );
                         }
 
-                        data.push(o);
-                    }
-                    var cols = [];
-                    for (var id in colObj) {
-                        var label = id;
-                        if (id != "IP") {
-                            var d = new Date(parseInt(id));
-                            label = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " " + d.getHours() + "H";
-                        }
-                        cols.push({
-                            id: colObj[id],
-                            label: label
+                        data.push([0, ip, cats.join()]);
+
+                        data.sort( function( a, b){
+                            return a[1].localeCompare( b[1] );
+                        });
+                        
+                        data.forEach( function(d, i ){
+                           d[0] = ( i + 1 ); 
                         });
                     }
-
                     return {
                         data: data,
-                        columns: cols
+                        columns: [
+                            {
+                                id: 0,
+                                label: ""
+                            },
+                            {
+                                id: 1,
+                                label: "IP Address",
+                                align: "left"
+                            },
+                            {
+                                id: 2,
+                                label: "History",
+                                align: "left"
+                            }
+                        ]
                     };
                 }
             },
             chart: {
                 "paging": false,
-                "scrollX": true,
-                "scrollY": true,
-                "info": false
+                "info": true,
+                "dom": "<f><'ba-profile-table overflow-auto-xy't><l>",
+                "order": [[0, "asc"]],
+            },
+            afterRender: function (_chart) {
+                var table = _chart.chart;
+                table.DataTable().columns.adjust();
+
+                table.on("draw.dt", function () {
+                    var $div = $('.ba-profile-table');
+                    var h = $div.getWidgetContentOfParent().height() - 70;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.css("border", "thin solid #ddd");
+                    $div.children().filter("table").css( "border", "none" );
+                });
+                //resize when changing window size
+                $(window).on('resize', null, table, function (e) {
+                    if (e.data)
+                        e.data.api().draw(false);
+                });
+                $(window).trigger('resize');
+
+
+                var $currentRow;
+                // Add event listener for opening and closing details
+                table.on('click', 'tr[role=row]', function () {
+                    var tr = $(this);
+                    var row = _chart.chart.api().row(tr);
+
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                        openingRow = null;
+                    } else {
+                        //close the last opening
+                        if (openingRow) {
+                            openingRow.child.hide();
+                            $(openingRow.node()).removeClass('shown');
+                        }
+                        if (row.data() == undefined)
+                            return;
+                        // Open this row
+                        var ip = row.data()[1];
+                        var history = HISTORY[ip];
+                        var str = "";
+                        for (var i in history) {
+                            var msg = history[i];
+                            var d = new Date(msg[COL.TIMESTAMP.id]);
+                            var event = {
+                                timestamp: MMTDrop.tools.formatDateTime(d),
+                                property: msg[COL.PROPERTY.id],
+                                before: msg[COL.BEFORE.id],
+                                after: msg[COL.AFTER.id],
+                                description: msg[COL.DESCRIPTION.id],
+                            };
+                            event = JSON.stringify(event, function (key, val) {
+                                if (typeof val === "string")
+                                    return "<string>" + val + "</string>";
+                                if (typeof val === "number")
+                                    return "<number>" + val + "</number>";
+                                return val;
+                            })
+                            .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
+                            .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
+                            //.replace(/\"(.+)\":/g, "<label>$1</label> :")
+                            ;
+
+                            str += "<li>" + event + "</li>";
+                        }
+                        row.child('<div id="detailTest" class="overflow-auto-x code-json"><ul>' + str + '</ul></div>').show();
+                        tr.addClass('shown');
+                        openingRow = row;
+                    }
+                    return false;
+                });
             }
         })
 
+         var addDataToTable = function( msg ){
+            var ip = msg[ COL.IP.id ];
+            var cat_name = msg[ COL.AFTER.id ];
+            var table = cTable.chart.api();
+            var data = table.data();
+            
+            var animate = function( elem ){
+                //when there is a row being expanding to show its detail
+                if( openingRow )
+                    return;
+                var $elem = $(elem);
+                $(".ba-profile-table").animate({
+                    scrollTop: $elem.offset().top}, 'slow', "linear");
+                
+                setTimeout( function( $e ){
+                        $e.stop().flash();
+                }, 1000, $elem )
+            }
+            
+            //foreach row of datatable
+            for( var i=0; i<data.length; i++){
+                var row = data[i];
+                if( row[1] == ip ){
+                    found = true;
+                    var old_text = table.cell( i, 2 ).data();
+                    table.cell(i,2).data( old_text + ", " + cat_name).draw() ;
+                    
+                    animate( table.row(i).node() );
+                    
+                    //add to history
+                    HISTORY[ ip ].push( msg );
+                    return;
+                }
+            }
+            //ip does not exist in the table
+            HISTORY[ ip ] = [ msg ];
+            var $row = table.row.add( [data.length + 1, ip, cat_name] ).draw().node();
+            animate( $row );
+        };
+        
         var behaviourChange = {
             isUpdating: false,
             data: [],
@@ -497,27 +641,30 @@ var ReportFactory = {
                 }
                 this.isUpdating = true;
                 //get the first element of data
-                var obj = this.data.shift();
-                cLine.chart.moveIp(obj.ip, obj.cat_name);
-
-                setTimeout(this.drawElement.bind(this), 5000);
-            }
-        };
-
-
-        database.onMessage("ba_profile.report", function (arr) {
-            for (var i = 0; i < arr.length; i++) {
-                var msg = arr[i];
+                var msg = this.data.shift();
+                
+                //
+                addDataToTable( msg );
+                
                 var ip = msg[MMTDrop.constants.BehaviourColumn.IP.id];
                 var cat_name = msg[MMTDrop.constants.BehaviourColumn.AFTER.id];
 
                 if (cat_name == "null")
                     cat_name = "Inactive";
+                
+                var timeout = cLine.chart.moveIp( ip, cat_name);
+                timeout += 1000;
+                
+                setTimeout(this.drawElement.bind(this), timeout );
+            }
+        };
 
-                behaviourChange.data.push({
-                    ip: ip,
-                    cat_name: cat_name
-                });
+        database.onMessage("ba_profile.report", function (arr) {
+            for (var i = 0; i < arr.length; i++) {
+                var msg = arr[i];
+               
+
+                behaviourChange.data.push( msg );
                 behaviourChange.update();
             }
         });
@@ -536,11 +683,11 @@ var ReportFactory = {
 					[
                 {
                     charts: [cLine],
-                    width: 5
+                    width: 7
                 },
                 {
                     charts: [cTable],
-                    width: 7
+                    width: 5
                 }
 					 ],
 
@@ -562,8 +709,10 @@ var ReportFactory = {
     },
 
     createBandwidthReport: function (fProbe, database) {
-        var openingRow = null;
         var COL = MMTDrop.constants.BehaviourColumn;
+        var openingRow = null;
+        var HISTORY = {};
+
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
@@ -580,26 +729,43 @@ var ReportFactory = {
                     for (var ip in obj) {
                         var cats = [];
                         var arr = obj[ip];
+                        HISTORY[ip] = [];
                         for (var j = 0; j < arr.length; j++) {
                             var msg = arr[j];
                             var cat_name = msg[COL.AFTER.id];
                             //if( cat_name == "null" )
                             //    cat_name = "Inactive";
                             cats.push(cat_name);
+
+                            HISTORY[ip].push( msg );
                         }
 
-                        data.push([ip, cats.join()]);
+                        data.push([0, ip, cats.join()]);
+
+                        data.sort( function( a, b){
+                            return a[1].localeCompare( b[1] );
+                        });
+                        
+                        data.forEach( function(d, i ){
+                           d[0] = ( i + 1 ); 
+                        });
                     }
                     return {
                         data: data,
                         columns: [
                             {
                                 id: 0,
-                                label: "IP Address"
+                                label: ""
                             },
                             {
                                 id: 1,
-                                label: "History"
+                                label: "IP Address",
+                                align: "left"
+                            },
+                            {
+                                id: 2,
+                                label: "Application History",
+                                align: "left"
                             }
                         ]
                     };
@@ -607,13 +773,30 @@ var ReportFactory = {
             },
             chart: {
                 "paging": false,
-                //"scrollX": true,
-                //"scrollY": true,
-                "info": false
+                "info": true,
+                "dom": "<f><'ba-bandwidth-table overflow-auto-xy't><l>",
+                "order": [[0, "asc"]],
             },
             afterRender: function (_chart) {
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
+
+                table.on("draw.dt", function () {
+                    var $div = $('.ba-bandwidth-table');
+                    var h = $div.getWidgetContentOfParent().height() - 70;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.css("border", "thin solid #ddd");
+                    $div.children().filter("table").css( "border", "none" );
+                });
+                //resize when changing window size
+                $(window).on('resize', null, table, function (e) {
+                    if (e.data)
+                        e.data.api().draw(false);
+                });
+                $(window).trigger('resize');
+
 
                 var $currentRow;
                 // Add event listener for opening and closing details
@@ -632,35 +815,37 @@ var ReportFactory = {
                             openingRow.child.hide();
                             $(openingRow.node()).removeClass('shown');
                         }
-
+                        if (row.data() == undefined)
+                            return;
                         // Open this row
-                        var index = row.data()[0] - 1;
-                        var history = detailOfPopupProperty[index];
-                        if (history) history = history[COL.HISTORY.id];
-
+                        var ip = row.data()[1];
+                        var history = HISTORY[ip];
                         var str = "";
-                        for (var ev in history) {
-                            var event = history[ev];
-
-                            if (typeof (event.timestamp) === "number") {
-                                event.timestamp *= 1000;
-                                event.timestamp = MMTDrop.tools.formatDateTime(new Date(event.timestamp), true);
-                            }
+                        for (var i in history) {
+                            var msg = history[i];
+                            var d = new Date(msg[COL.TIMESTAMP.id]);
+                            var event = {
+                                timestamp: MMTDrop.tools.formatDateTime(d),
+                                property: msg[COL.PROPERTY.id],
+                                before: msg[COL.BEFORE.id],
+                                after: msg[COL.AFTER.id],
+                                description: msg[COL.DESCRIPTION.id],
+                            };
                             event = JSON.stringify(event, function (key, val) {
-                                    if (typeof val === "string")
-                                        return "<string>" + val + "</string>";
-                                    if (typeof val === "number")
-                                        return "<number>" + val + "</number>";
-                                    return val;
-                                })
-                                .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
-                                .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
-                                .replace(/\"(.+)\":/g, "<label>$1</label> :");
+                                if (typeof val === "string")
+                                    return "<string>" + val + "</string>";
+                                if (typeof val === "number")
+                                    return "<number>" + val + "</number>";
+                                return val;
+                            })
+                            .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
+                            .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
+                            //.replace(/\"(.+)\":/g, "<label>$1</label> :")
+                            ;
 
                             str += "<li>" + event + "</li>";
                         }
-
-                        row.child('<div id="detailTest"><ul>' + str + '</ul></div>').show();
+                        row.child('<div id="detailTest" class="overflow-auto-x code-json"><ul>' + str + '</ul></div>').show();
                         tr.addClass('shown');
                         openingRow = row;
                     }
@@ -669,17 +854,85 @@ var ReportFactory = {
             }
         })
 
+         var addDataToTable = function( msg ){
+            var ip = msg[ COL.IP.id ];
+            var cat_name = msg[ COL.AFTER.id ];
+            var table = cTable.chart.api();
+            var data = table.data();
+            
+            var animate = function( elem ){
+                //when there is a row being expanding to show its detail
+                if( openingRow )
+                    return;
+                var $elem = $(elem);
+                $(".ba-bandwidth-table").animate({
+                    scrollTop: $elem.offset().top}, 'slow', "linear");
+                
+                setTimeout( function( $e ){
+                        $e.stop().flash();
+                }, 1000, $elem )
+            }
+            
+            //foreach row of datatable
+            for( var i=0; i<data.length; i++){
+                var row = data[i];
+                if( row[1] == ip ){
+                    found = true;
+                    var old_text = table.cell( i, 2 ).data();
+                    table.cell(i,2).data( old_text + ", " + cat_name).draw() ;
+                    
+                    animate( table.row(i).node() );
+                    
+                    //add to history
+                    HISTORY[ ip ].push( msg );
+                    return;
+                }
+            }
+            //ip does not exist in the table
+            HISTORY[ ip ] = [ msg ];
+            var $row = table.row.add( [data.length + 1, ip, cat_name] ).draw().node();
+            animate( $row );
+        };
+        
+        var behaviourChange = {
+            isUpdating: false,
+            data: [],
+            update: function () {
+                if (this.isUpdating)
+                    return;
+                if (this.data.length == 0)
+                    return;
+
+                this.drawElement();
+
+            },
+
+            drawElement: function () {
+                if (this.data.length === 0) {
+                    this.isUpdating = false;
+                    return;
+                }
+                this.isUpdating = true;
+                //get the first element of data
+                var msg = this.data.shift();
+                
+                //
+                addDataToTable( msg );
+                
+                var timeout = 2000;
+                
+                setTimeout(this.drawElement.bind(this), timeout );
+            }
+        };
 
         database.onMessage("ba_bandwidth.report", function (arr) {
             for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
-                var ip = msg[MMTDrop.constants.BehaviourColumn.IP.id];
-                var cat_name = msg[MMTDrop.constants.BehaviourColumn.AFTER.id];
-
-                //if( cat_name == "null" )
-                //    cat_name = "Inactive";
+                behaviourChange.data.push( msg );
+                behaviourChange.update();
             }
         });
+
 
         var report = new MMTDrop.Report(
             // title

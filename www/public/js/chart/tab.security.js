@@ -13,13 +13,6 @@ var arr = [
     }
 ];
 
-jQuery.fn.flash = function(){
-    var duration = 500;
-    var current = this.css( 'background-color' );
-    this.animate( { "background-color": '#FF0000' }, duration / 2 );
-    this.animate( { "background-color": current }, duration / 2 );
-
-}
 
 var availableReports = {
     "createNodeReport":     "Security",
@@ -259,12 +252,13 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                         })
                         .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
                         .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
-                        .replace(/\"(.+)\":/g, "<label>$1</label> :");
+                        //.replace(/\"(.+)\":/g, "<label>$1</label> :")
+                        ;
 
                         str += "<li>" + event + "</li>";
                     }
 
-                    row.child('<div id="detailTest"><ul>' + str + '</ul></div>').show();
+                    row.child('<div id="detailTest" class="code-json"><ul>' + str + '</ul></div>').show();
                     tr.addClass('shown');
                     openingRow = row;
                 }

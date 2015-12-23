@@ -1047,8 +1047,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         _data = [];
         _originalData = [];
         _callbacks = [];
-        if( _socket )
-            _socket.disconnect();
+        if( _sockets )
+            for( var i in _sockets)
+            _sockets[i].disconnect();
         
         var db = MMTDrop.object.database;
         for( var i in db )

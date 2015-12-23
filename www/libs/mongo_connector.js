@@ -267,19 +267,18 @@ var MongoConnector = function (opts) {
 
         self.lastTimestamp = ts;
 
+        self.mdb.collection("traffic").insert(message, function (err, records) {
+            if (err) console.error(err.stack);
+        });
+
         if( message.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT 
            || message.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT){
             
             self.mdb.collection("behaviour").insert(message, function (err, records) {
                 if (err) console.error(err.stack);
             });
-            
             return;
         }
-           
-        self.mdb.collection("traffic").insert(message, function (err, records) {
-            if (err) console.error(err.stack);
-        });
 
 
         //add message to cache

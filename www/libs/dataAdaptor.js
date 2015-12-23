@@ -379,33 +379,33 @@ var MMTDrop = {
 
 MMTDrop.BehaviourPoint = function( entry ){
     var retval = {};
-    retval.format                   = entry[MMTDrop.SecurityColumnId.FORMAT_ID];
-    retval.probe                    = entry[MMTDrop.SecurityColumnId.PROBE_ID];
-    retval.source                   = entry[MMTDrop.SecurityColumnId.SOURCE_ID];
-    retval.time                     = entry[MMTDrop.StatsColumnId.TIMESTAMP];
-    retval.property                 = entry[MMTDrop.SecurityColumnId.PROPERTY];
-    retval.ip                     = entry[MMTDrop.SecurityColumnId.IP];
-    retval.description              = entry[MMTDrop.SecurityColumnId.DESCRIPTION];
+    retval.format                   = entry[MMTDrop.BehaviourColumnId.FORMAT_ID];
+    retval.probe                    = entry[MMTDrop.BehaviourColumnId.PROBE_ID];
+    retval.source                   = entry[MMTDrop.BehaviourColumnId.SOURCE_ID];
+    retval.time                     = entry[MMTDrop.BehaviourColumnId.TIMESTAMP];
+    retval.property                 = entry[MMTDrop.BehaviourColumnId.PROPERTY];
+    retval.ip                       = entry[MMTDrop.BehaviourColumnId.IP];
+    retval.description              = entry[MMTDrop.BehaviourColumnId.DESCRIPTION];
     
-    retval.before                  = JSON.stringify( entry[MMTDrop.SecurityColumnId.BEFORE] );
-    retval.after            = entry[MMTDrop.SecurityColumnId.AFTER];
+    retval.before                  = entry[MMTDrop.BehaviourColumnId.AFTER];
+    retval.after                   = entry[MMTDrop.BehaviourColumnId.AFTER];
     return retval;
 };
 
 MMTDrop.reverseBehaviourPoint = function(elem) {
     var retval = [];
-    retval[MMTDrop.SecurityColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.SecurityColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.SecurityColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.SecurityColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.SecurityColumnId.PROPERTY]       = elem.property;
-    retval[MMTDrop.SecurityColumnId.VERDICT]        = elem.verdict;
-    retval[MMTDrop.SecurityColumnId.IP]           = elem.ip;
-    retval[MMTDrop.SecurityColumnId.DESCRIPTION]    = elem.description;
+    retval[MMTDrop.BehaviourColumnId.FORMAT_ID]      = elem.format;
+    retval[MMTDrop.BehaviourColumnId.PROBE_ID]       = elem.probe;
+    retval[MMTDrop.BehaviourColumnId.SOURCE_ID]      = elem.source;
+    retval[MMTDrop.BehaviourColumnId.TIMESTAMP]      = elem.time;
+    retval[MMTDrop.BehaviourColumnId.PROPERTY]       = elem.property;
+    retval[MMTDrop.BehaviourColumnId.VERDICT]        = elem.verdict;
+    retval[MMTDrop.BehaviourColumnId.IP]           = elem.ip;
+    retval[MMTDrop.BehaviourColumnId.DESCRIPTION]    = elem.description;
     
-    retval[MMTDrop.SecurityColumnId.BEFORE]        = JSON.parse( elem.before );
+    retval[MMTDrop.BehaviourColumnId.BEFORE]        =  elem.before ;
     
-    retval[MMTDrop.SecurityColumnId.AFTER]  = elem.after;
+    retval[MMTDrop.BehaviourColumnId.AFTER]  = elem.after;
     return retval;
 }
 

@@ -31,7 +31,7 @@ router.process_message = function (db, message) {
             return;
         }
         if( format === 11 || format === 12 ){
-            console.log( message );
+            //console.log( mmtAdaptor.formatReportItem( msg ) );
         }
         //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
