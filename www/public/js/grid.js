@@ -67,7 +67,9 @@ Grid.load_grid = function (serialized_data, grid_stack) {
 
         $gridStack.on("resizestop", function( event, ui ){
             var el = $(event.target); 
-            el.trigger('widget-resized', [el, el.width(), el.height()]);
+            setTimeout(function( el ){
+                el.trigger('widget-resized', [el, el.width(), el.height()]);
+            }, 100, el);
         });
         
         $gridStack.on("dragstart", function (event, ui) {

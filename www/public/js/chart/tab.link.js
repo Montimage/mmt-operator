@@ -4,8 +4,8 @@ var arr = [
         title: "Traffic",
         x: 0,
         y: 0,
-        width: 6,
-        height: 6,
+        width: 12,
+        height: 4,
         type: "success",
         userData: {
             fn: "createRealtimeTrafficReport"
@@ -13,10 +13,10 @@ var arr = [
     },
     {
         id: "protocol",
-        title: "Applications",
-        x: 6,
-        y: 0,
-        width: 6,
+        title: "Protocols",
+        x: 0,
+        y: 4,
+        width: 12,
         height: 6,
         type: "info",
         userData: {
@@ -27,7 +27,7 @@ var arr = [
         id: "node",
         title: "Nodes",
         x: 0,
-        y: 7,
+        y: 10,
         width: 12,
         height: 5,
         type: "warning",
@@ -38,89 +38,90 @@ var arr = [
 ];
 
 var availableReports = {
-    "createNodeReport":     "Nodes",
-    "createProtocolReport": "Applications",
-    "createTrafficReport":  "Traffic"
+    "createNodeReport": "Nodes",
+    "createProtocolReport": "Protocols ",
+    "createTrafficReport": "Traffic"
 }
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+var fProbe = MMTDrop.filterFactory.createProbeFilter();
 
 var database = MMTDrop.databaseFactory.createStatDB();
-var filters = [ fPeriod, fProbe];
+var filters = [fPeriod, fProbe];
 
-MMTDrop.setOptions({format_payload : true });
+MMTDrop.setOptions({
+    format_payload: true
+});
 
-fPeriod.onChange( function(){
-} );
+fPeriod.onChange(function () {});
 
-function inDetailMode(){
-    return ( fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE );
+function inDetailMode() {
+    return (fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE);
 }
 //create reports
 
 var ReportFactory = {
     getCol: function (col, isIn) {
         var COL = MMTDrop.constants.StatsColumn;
-        
+
         var tmp = "PAYLOAD_VOLUME";
         if (col.id == COL.DATA_VOLUME.id)
             tmp = "DATA_VOLUME";
         else if (col.id == COL.PACKET_COUNT.id)
             tmp = "PACKET_COUNT";
 
-            
+
 
         var label;
         if (isIn) {
-            label   = "In";
-            tmp     = "DL_" + tmp;
+            label = "In";
+            tmp = "DL_" + tmp;
         } else {
-            label   = "Out";
-            tmp     = "UL_" + tmp;
+            label = "Out";
+            tmp = "UL_" + tmp;
         }
         return {
-            id      : COL[tmp].id,
-            label   : label,
-            type    : "area"
+            id: COL[tmp].id,
+            label: label,
+            type: "area"
         };
     },
-    
+
     //add zero to the period having no data 
-    addZeroPoints : function( data, period, time_id ){
-        
-        if( data instanceof Array == false )
-            data = MMTDrop.tools.object2Array( data );
-        
-        if( time_id == undefined )
+    addZeroPoints: function (data, period, time_id) {
+
+        if (data instanceof Array == false)
+            data = MMTDrop.tools.object2Array(data);
+
+        if (time_id == undefined)
             time_id = 3;
-        if( period == undefined )
+        if (period == undefined)
             period = fPeriod.getDistanceBetweenToSamples();
-        
+
         //order ASC of time
-        data.sort( function( a, b){
-            return a[ time_id ] - b[time_id]
-        } )
-        
-        var len   = data.length;
-        var arr   = [];
-        var lastTS ;
-        for( var i=0; i<len; i++ ){
-            var ts = data[i][ time_id ];
-            if( lastTS === undefined )
+        data.sort(function (a, b) {
+            return a[time_id] - b[time_id]
+        })
+
+        var len = data.length;
+        var arr = [];
+        var lastTS;
+        for (var i = 0; i < len; i++) {
+            var ts = data[i][time_id];
+            if (lastTS === undefined)
                 lastTS = ts;
-            
-            while (ts - lastTS >   period * 1.5 ){
+
+            while (ts - lastTS > period * 1.5) {
                 var zero = {};
                 lastTS += period;
-                zero[ time_id ] = lastTS ;
-                arr.push( zero );
+                zero[time_id] = lastTS;
+                arr.push(zero);
             }
-            
+
             lastTS = ts;
-            arr.push( data[i] );
+            arr.push(data[i]);
         }
-        return arr;           
+        return arr;
     },
 
     createProtocolReport: function (fProbe, database) {
@@ -130,8 +131,8 @@ var ReportFactory = {
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
         var PROTO = ["ETHERNET", "IP", "UDP", "TCP", "HTTP", "SSL"];
-        var setName = function( name ){
-            if( PROTO.indexOf( name ) >= 0 ){
+        var setName = function (name) {
+            if (PROTO.indexOf(name) >= 0) {
                 return name + "_UNKNOWN";
             }
             return name;
@@ -140,13 +141,13 @@ var ReportFactory = {
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
                 getDataFn: function (db) {
-                    var TIME        = COL.TIMESTAMP;
-                    var col         = fMetric.selectedOption();
-                    var dir         = fDir.selectedOption().id;
-                    
-                    var colToSum    = col;
-                    
-                    if( dir != 0 && col.id !== COL.ACTIVE_FLOWS.id )
+                    var TIME = COL.TIMESTAMP;
+                    var col = fMetric.selectedOption();
+                    var dir = fDir.selectedOption().id;
+
+                    var colToSum = col;
+
+                    if (dir != 0 && col.id !== COL.ACTIVE_FLOWS.id)
                         colToSum = self.getCol(col, dir == 1);
 
                     var data = {};
@@ -154,20 +155,19 @@ var ReportFactory = {
                     var columns = [];
 
                     var period = fPeriod.getSamplePeriod();
-                    
+
                     var ylabel = col.label;
-                    
-                    if( col.id === COL.PACKET_COUNT.id ){
-                        period = 1;    //donot change the total number
+
+                    if (col.id === COL.PACKET_COUNT.id) {
+                        period = 1; //donot change the total number
                         ylabel += " (total)";
-                    }
-                    else if( col.id === COL.ACTIVE_FLOWS.id ){
+                    } else if (col.id === COL.ACTIVE_FLOWS.id) {
                         ylabel += " (per second)";
-                    }else{
-                        period /= 8;    //  bit/second
+                    } else {
+                        period /= 8; //  bit/second
                         ylabel += " (bit/second)";
                     }
-                    
+
                     var obj = db.stat.splitDataByApp();
 
                     cLine.dataLegend = {
@@ -175,18 +175,18 @@ var ReportFactory = {
                         "label": col.label,
                         "data": {}
                     };
-                    
+
                     for (var cls in obj) {
-                        var o    = obj[cls];
+                        var o = obj[cls];
                         var name = MMTDrop.constants.getProtocolNameFromID(cls);
-                        name = setName( name );
-                        
+                        name = setName(name);
+
                         var total = 0;
                         //sumup by time
                         o = MMTDrop.tools.sumByGroup(o, colToSum.id, TIME.id);
                         for (var t in o) {
                             var v = o[t][colToSum.id];
-                            if (data[t] == undefined){
+                            if (data[t] == undefined) {
                                 data[t] = {};
                             }
                             //divide to get bandwidth
@@ -197,57 +197,57 @@ var ReportFactory = {
 
                         cLine.dataLegend.data[name] = total;
                         cLine.dataLegend.dataTotal += total;
-                        
+
                         columns.push({
-                            id   : cls,
+                            id: cls,
                             label: name,
-                            type : "area-stack",
+                            type: "area-stack",
                             value: total
                         });
                     }
 
 
-                    
-                    columns.sort( function( a, b){
+
+                    columns.sort(function (a, b) {
                         return b.value - a.value;
-                    } );
-                    
-                    
+                    });
+
+
                     var top = 3;
-                    if( columns.length > top && cLine.showAll !== true){
+                    if (columns.length > top && cLine.showAll !== true) {
                         var val = 0;
-                        for( var i=top; i<columns.length; i++)
+                        for (var i = top; i < columns.length; i++)
                             val += columns[i].value;
-                        
-                        
-                        columns.splice( top, columns.length - top);
-                        
+
+
+                        columns.splice(top, columns.length - top);
+
                         //update data
-                        for (var i in data ){
+                        for (var i in data) {
                             var msg = data[i];
                             var v = 0;
-                            for( var j in columns )
-                                if( msg[ columns[j].id ] )
-                                    v += msg[ columns[j].id ];
+                            for (var j in columns)
+                                if (msg[columns[j].id])
+                                    v += msg[columns[j].id];
                             var v2 = 0;
-                            for( var j in msg )
+                            for (var j in msg)
                                 v2 += msg[j];
-                            
+
                             msg["other"] = v2 - v;
                         }
-                                
-                                
-                        columns.push( {
-                            id   : "other",
+
+
+                        columns.push({
+                            id: "other",
                             label: "Other",
                             value: val,
-                            type : "area-stack"
+                            type: "area-stack"
                         });
-                        
-                        columns.sort( function( a, b){
+
+                        columns.sort(function (a, b) {
                             return a.value < b.value;
-                        } );
-                        
+                        });
+
                         //reset dataLegend
                         cLine.dataLegend.data = {};
                         for (var i = 0; i <= top; i++) {
@@ -255,37 +255,37 @@ var ReportFactory = {
                             cLine.dataLegend.data[o.label] = o.value;
                         }
                     }
-                        
-                    for( var i in columns ){
-                        if( columns[i].value === 0){
-                            columns.splice( i, columns.length - i );
+
+                    for (var i in columns) {
+                        if (columns[i].value === 0) {
+                            columns.splice(i, columns.length - i);
                             break;
                         }
                     }
                     //the first column is timestamp
-                    columns.unshift( TIME );
-                    
-                    
-                    
-                    for( var t in data )
-                        data[t][ TIME.id ] = parseInt(t);
-                    
-                    
-                    var arr = self.addZeroPoints( data );
-                    
+                    columns.unshift(TIME);
+
+
+
+                    for (var t in data)
+                        data[t][TIME.id] = parseInt(t);
+
+
+                    var arr = self.addZeroPoints(data);
+
                     return {
-                        data   : arr,
+                        data: arr,
                         columns: columns,
-                        ylabel : ylabel
+                        ylabel: ylabel
                     };
                 }
             },
             chart: {
                 color: {
-                    pattern: ['red', 'peru', 'orange', 'NavajoWhite', 'MediumPurple', 'purple', 'magenta', 'blue', 'MediumSpringGreen', 'green',]
+                    pattern: ['red', 'peru', 'orange', 'NavajoWhite', 'MediumPurple', 'purple', 'magenta', 'blue', 'MediumSpringGreen', 'green', ]
                 },
                 legend: {
-                    show: false 
+                    show: false
                 },
                 size: {
                     height: 200
@@ -296,7 +296,7 @@ var ReportFactory = {
                             count: 5
                         },
                         padding: {
-                            top   : 10,
+                            top: 10,
                             bottom: 0
                         }
                     }
@@ -307,21 +307,25 @@ var ReportFactory = {
                     }
                 },
                 zoom: {
-                  enabled: false,
-                  rescale: false
-              }
+                    enabled: false,
+                    rescale: false
+                }
             },
 
             //custom legend
             afterRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
+                var legendId = _chart.elemID + "-legend";
+                $("#" + _chart.elemID).parent().parent().parent().append(
+                    $('<div class="col-md-4" id="' + legendId + '"/>')
+                );
 
                 var $table = $("<table>", {
                     "class": "table table-bordered table-striped table-hover table-condensed"
                 });
-                $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
+                $table.appendTo($("#" + legendId));
+                $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -357,7 +361,7 @@ var ReportFactory = {
                     }).appendTo($tr);
                     $("<td>", {
                         "align": "right",
-                        "text" :  MMTDrop.tools.formatDataVolume( val )
+                        "text": MMTDrop.tools.formatDataVolume(val)
                     }).appendTo($tr);
 
                     $("<td>", {
@@ -401,20 +405,20 @@ var ReportFactory = {
                         href: "?show all applications",
                         title: "click to show all applications",
                         text: "Other",
-                        
+
                     });
-                    $a.on("click", function(){
-                       _chart.showAll = true;
-                       _chart.redraw(); 
+                    $a.on("click", function () {
+                        _chart.showAll = true;
+                        _chart.redraw();
                         return false;
                     });
-                    
-                    $("<td>").append( $a ).appendTo($tr);
 
-                    
+                    $("<td>").append($a).appendTo($tr);
+
+
                     $("<td>", {
                         "align": "right",
-                        "html":  MMTDrop.tools.formatDataVolume( val )
+                        "html": MMTDrop.tools.formatDataVolume(val)
                     }).appendTo($tr);
 
                     $("<td>", {
@@ -425,7 +429,7 @@ var ReportFactory = {
 
                     $tfoot.append($tr).appendTo($table);
                 }
-                
+
                 $tfoot.append(
                     $("<tr>", {
                         "class": 'success'
@@ -441,7 +445,7 @@ var ReportFactory = {
                     ).append(
                         $("<td>", {
                             "align": "right",
-                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
+                            "text": MMTDrop.tools.formatDataVolume(legend.dataTotal)
                         })
                     ).append(
                         $("<td>", {
@@ -450,11 +454,39 @@ var ReportFactory = {
                         })
                     )).appendTo($table);
 
-                $table.dataTable({
+                var table = $table.dataTable({
                     paging: false,
-                    dom   : "t",
-                    order : [[3, "desc"]]
+                    dom: "t",
+                    order: [[3, "desc"]]
                 });
+
+                table.DataTable().columns.adjust();
+
+                table.on("draw.dt", function () {
+                    var $div = $('.dataTables_scrollBody');
+                    var h = $div.getWidgetContentOfParent().height() - 110;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.children().filter("table").css("border-top", "thin solid #ddd");
+                });
+
+                //resize when changing window size
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
+                //resize when changing window size
+                $widget.on("widget-resized", null, {
+                    table: table,
+                    chart: chart
+                }, function (event, widget) {
+                    event.data.table.api().draw(false);
+                    var height = widget.find(".grid-stack-item-content").innerHeight();
+                    height -= widget.find(".filter-bar").outerHeight(true) + 15;
+                    event.data.chart.resize({
+                        height: height
+                    });
+
+                });
+                $widget.trigger("widget-resized", [$widget]);
             }
         });
 
@@ -487,7 +519,7 @@ var ReportFactory = {
 					[
                 {
                     charts: [cLine],
-                    width: 12
+                    width: 8
                 },
 					 ],
 
@@ -512,70 +544,73 @@ var ReportFactory = {
                         var mac = msg[COL.MAC_SRC.id];
                         if (obj[mac] == undefined) {
                             obj[mac] = {
-                                "Probe ID"   : "",
+                                "Probe ID": "",
                                 "MAC Address": mac,
-                                "In Frames"  : 0,
-                                "Out Frames" : 0,
-                                "In Bytes"   : 0,
-                                "Out Bytes"  : 0,
+                                "In Frames": 0,
+                                "Out Frames": 0,
+                                "In Bytes": 0,
+                                "Out Bytes": 0,
                                 "Total Bytes": 0,
-                                "Start Time" : msg[COL.START_TIME.id],
+                                "Start Time": msg[COL.START_TIME.id],
                                 "Last Update Time": msg[COL.TIMESTAMP.id],
                             };
                         }
-                        
-                        obj[mac]["Probe ID"]         = msg[COL.PROBE_ID.id];
-                        obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
-                        obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
-                        obj[mac]["In Bytes"]        += msg[COL.DL_DATA_VOLUME.id];
-                        obj[mac]["Out Bytes"]       += msg[COL.UL_DATA_VOLUME.id];
-                        obj[mac]["Total Bytes"]     += msg[COL.DATA_VOLUME.id];
+
+                        obj[mac]["Probe ID"] = msg[COL.PROBE_ID.id];
+                        obj[mac]["In Frames"] += msg[COL.DL_PACKET_COUNT.id];
+                        obj[mac]["Out Frames"] += msg[COL.UL_PACKET_COUNT.id];
+                        obj[mac]["In Bytes"] += msg[COL.DL_DATA_VOLUME.id];
+                        obj[mac]["Out Bytes"] += msg[COL.UL_DATA_VOLUME.id];
+                        obj[mac]["Total Bytes"] += msg[COL.DATA_VOLUME.id];
                         obj[mac]["Last Update Time"] = msg[COL.TIMESTAMP.id];
                     }
 
-                    var columns = [ {id: "#", label: ""} ];
+                    var columns = [{
+                        id: "#",
+                        label: ""
+                    }];
                     for (var i in obj) {
-                        if (columns.length == 1){
-                            for (var j in obj[i]){
+                        if (columns.length == 1) {
+                            for (var j in obj[i]) {
                                 var col = {
-                                    id      : j,
-                                    label   : j
+                                    id: j,
+                                    label: j
                                 };
-                                
-                                if( ["In Frames", "Out Frames", "In Bytes", "Out Bytes", "Total Bytes"].indexOf( j) >= 0 )
+
+                                if (["In Frames", "Out Frames", "In Bytes", "Out Bytes", "Total Bytes"].indexOf(j) >= 0)
                                     col.align = "right";
                                 else
                                     col.align = "left";
-                                columns.push( col );
+                                columns.push(col);
                             }
                             break;
                         }
                     }
-                    
-                    var arr = MMTDrop.tools.object2Array( obj );
-                    
-                    arr.sort( function( a,b ){
-                        return b["Total Bytes"] - a["Total Bytes"] ;
-                    } );
-                    
-                    for( var i=0; i<arr.length; i++)
-                        arr[i]["#"] = i+1;
-                    
+
+                    var arr = MMTDrop.tools.object2Array(obj);
+
+                    arr.sort(function (a, b) {
+                        return b["Total Bytes"] - a["Total Bytes"];
+                    });
+
+                    for (var i = 0; i < arr.length; i++)
+                        arr[i]["#"] = i + 1;
+
                     //Format data
                     for (var i in obj) {
                         //convert to time string    
-                        obj[i]["Start Time"]        = (new Date(obj[i]["Start Time"])).toLocaleString();
-                        obj[i]["Last Update Time"]  = (new Date(obj[i]["Last Update Time"])).toLocaleString();
-                        obj[i]["In Frames"]       = MMTDrop.tools.formatLocaleNumber( obj[i]["In Frames"]);
-                        obj[i]["Out Frames"]      = MMTDrop.tools.formatLocaleNumber( obj[i]["Out Frames"]);
-                        obj[i]["In Bytes"]        = MMTDrop.tools.formatDataVolume(   obj[i]["In Bytes"]);
-                        obj[i]["Out Bytes"]       = MMTDrop.tools.formatDataVolume(   obj[i]["Out Bytes"]);
-                        obj[i]["Total Bytes"]     = MMTDrop.tools.formatDataVolume(   obj[i]["Total Bytes"]);
+                        obj[i]["Start Time"] = (new Date(obj[i]["Start Time"])).toLocaleString();
+                        obj[i]["Last Update Time"] = (new Date(obj[i]["Last Update Time"])).toLocaleString();
+                        obj[i]["In Frames"] = MMTDrop.tools.formatLocaleNumber(obj[i]["In Frames"]);
+                        obj[i]["Out Frames"] = MMTDrop.tools.formatLocaleNumber(obj[i]["Out Frames"]);
+                        obj[i]["In Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["In Bytes"]);
+                        obj[i]["Out Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Out Bytes"]);
+                        obj[i]["Total Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Total Bytes"]);
                     }
 
-                    
+
                     return {
-                        data   : arr,
+                        data: arr,
                         columns: columns
                     };
                 }
@@ -585,23 +620,27 @@ var ReportFactory = {
                 dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
             afterRender: function (_chart) {
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
+
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
-                
+
                 table.on("draw.dt", function () {
                     var $div = $('.dataTables_scrollBody');
-                    var h = $div.parents().filter(".grid-stack-item-content").height() - 110;
+                    var h = $div.getWidgetContentOfParent().height() - 110;
                     $div.css('height', h);
                     $div.css('margin-top', 10);
                     $div.css('margin-bottom', 10);
-                    $div.children().filter("table").css( "border-top", "thin solid #ddd" );
+                    $div.children().filter("table").css("border-top", "thin solid #ddd");
                 });
                 table.trigger("draw.dt");
+
                 //resize when changing window size
-                $(window).resize(function () {
-                    if (table)
-                        table.api().draw(false);
+                $widget.on("widget-resized", null, table, function (event, widget) {
+                    if (event.data)
+                        event.data.api().draw(false);
                 });
+                $widget.trigger("widget-resized", [$widget]);
             }
         });
 
@@ -637,11 +676,11 @@ var ReportFactory = {
     },
 
     createRealtimeTrafficReport: function (fProbe, database) {
-        var _this   = this;
-        var rep     = _this.createTrafficReport(fProbe, database, true);
+        var _this = this;
+        var rep = _this.createTrafficReport(fProbe, database, true);
 
-        var COL     = MMTDrop.constants.StatsColumn;
-        var cLine   = rep.groupCharts[0].charts[0];
+        var COL = MMTDrop.constants.StatsColumn;
+        var cLine = rep.groupCharts[0].charts[0];
         var fMetric = rep.filters[0];
 
         //add data to chart each second (rather than add immediatlly after receiving data)
@@ -649,11 +688,11 @@ var ReportFactory = {
 
         var newData = {};
         var lastAddMoment = 0;
-        var lengthOx = 0; 
+        var lengthOx = 0;
         var max_time = 0;
         var cols = [];
         var zeroPoint = {};
-        
+
         var selectedMetricId = null;
         var initData = function () {
             newData = {};
@@ -661,176 +700,178 @@ var ReportFactory = {
             var col = fMetric.selectedOption();
 
             selectedMetricId = col.id;
-            
-            if( col.id !== COL.ACTIVE_FLOWS.id ){
-                cols = [ _this.getCol(col, true) ];
+
+            if (col.id !== COL.ACTIVE_FLOWS.id) {
+                cols = [_this.getCol(col, true)];
                 cols.push(_this.getCol(col, false));
                 /*cols.push({
                     id: col.id,
                     label: "All"
                 });*/
-            }else
-                cols = [ col ];
-            
+            } else
+                cols = [col];
+
             for (var c in cols) {
                 var serieName = cols[c].label;
-                zeroPoint[ serieName ] = 0;
+                zeroPoint[serieName] = 0;
             }
         }
-        
-        
+
+
         fProbe.onFilter(initData);
         fMetric.onFilter(initData);
 
         var samplePeriod = fPeriod.getDistanceBetweenToSamples();
-        
-        var appendMsg = function ( data ) {
-            if( data == undefined || data.length == 0 )
+
+        var appendMsg = function (data) {
+            if (data == undefined || data.length == 0)
                 return;
 
             var chart = cLine.chart;
             if (chart == undefined)
                 return;
-            
-            if( max_time === 0){
+
+            if (max_time === 0) {
                 var chart_data = chart.data.shown();
-                if( chart_data ){
+                if (chart_data) {
                     chart_data = chart_data[0];
-                    if( chart_data ){
+                    if (chart_data) {
                         chart_data = chart_data.values;
-                        if( chart_data ){
+                        if (chart_data) {
                             lengthOx = chart_data.length;
-                            max_time = chart_data[ chart_data.length - 1 ].x.getTime();
+                            max_time = chart_data[chart_data.length - 1].x.getTime();
                         }
                     }
                 }
             }
-            
+
             var numberofdrop = 0;
-            
-            for( var i in data ){
+
+            for (var i in data) {
                 var msg = data[i];
-                if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT )
+                if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
                     continue;
-                
-                var time = parseInt( msg[COL.TIMESTAMP.id] );
-                
-                if( max_time === 0 )
-                    max_time = time - 5*60*1000; //last 5 minute
-                
-                if( time < max_time ){
-                    numberofdrop ++;
+
+                var time = parseInt(msg[COL.TIMESTAMP.id]);
+
+                if (max_time === 0)
+                    max_time = time - 5 * 60 * 1000; //last 5 minute
+
+                if (time < max_time) {
+                    numberofdrop++;
                     continue;
                 }
-                
+
                 for (var c in cols) {
                     c = cols[c];
                     var serieName = c.label;
-                    var val       = msg[c.id];
+                    var val = msg[c.id];
 
                     if (newData[time] === undefined)
                         newData[time] = {};
-                    if (newData[time][serieName] === undefined )
+                    if (newData[time][serieName] === undefined)
                         newData[time][serieName] = 0;
 
                     newData[time][serieName] += val;
                 }
             }
-            
-            console.log( "---> drop " + numberofdrop + " records that are older than " + (new Date(max_time)).toLocaleTimeString() );
-            
+
+            console.log("---> drop " + numberofdrop + " records that are older than " + (new Date(max_time)).toLocaleTimeString());
+
             var localtime = (new Date()).getTime();
-            
+
             //update to chart each x seconds
-            if ( localtime - lastAddMoment > 1000 && !$.isEmptyObject( newData ) ) {
-                
+            if (localtime - lastAddMoment > 1000 && !$.isEmptyObject(newData)) {
+
                 //list of timestamps
-                var keys = Object.keys( newData );
-                keys = keys.map( function( i ){ return parseInt( i); } ) ;
+                var keys = Object.keys(newData);
+                keys = keys.map(function (i) {
+                    return parseInt(i);
+                });
                 keys.sort();
-                
+
                 var max_Ox = max_time;
-                
+
                 //add some zero points 
                 var new_keys = [];
-                for( var i in keys ){
+                for (var i in keys) {
                     var time = keys[i];
                     //add zero points
                     var ts = max_time;
-                    while( time - ts > samplePeriod * 1.5 ){    
+                    while (time - ts > samplePeriod * 1.5) {
                         //add zero points
-                        ts +=  samplePeriod;
-                        new_keys.push( ts );
+                        ts += samplePeriod;
+                        new_keys.push(ts);
                     }
-                    
-                    
-                    new_keys.push( time );
+
+
+                    new_keys.push(time);
                     max_time = time;
                 }
-                
+
                 //
                 var obj = {};
                 //convert newData to columns format of C3js
                 var length = 0;
-                
+
                 //for each time step
                 for (var i in new_keys) {
                     var time = new_keys[i];
-                    var o    = newData[time];
-                    
-                    if( o == undefined ) 
+                    var o = newData[time];
+
+                    if (o == undefined)
                         o = zeroPoint;
-                    
-                    time = new Date( time );
-                    
-                    length ++;                    
+
+                    time = new Date(time);
+
+                    length++;
                     //for each category (In/Out)
-                    for( var s in o ){
+                    for (var s in o) {
                         //init for the first element of each array
-                        if( obj["x-" + s] == undefined ){
-                            obj["x-" + s] = [ "x-" + s];    //Ox
-                            obj[   s    ] = [ s ];          //Oy
+                        if (obj["x-" + s] == undefined) {
+                            obj["x-" + s] = ["x-" + s]; //Ox
+                            obj[s] = [s]; //Oy
                         }
-                        
+
                         var val = o[s];
                         //console.log( MMTDrop.tools.formatDataVolume( val)) ;
                         //showing Data Volume, Payload
-                        if( selectedMetricId === COL.DATA_VOLUME.id || selectedMetricId === COL.PAYLOAD_VOLUME.id )
-                            val =  val * 8 / MMTDrop.config.probe_stats_period ;    //8: bit/second
-                        else if( selectedMetricId === COL.ACTIVE_FLOWS.id )
-                            val =  val / MMTDrop.config.probe_stats_period ;
-                        
+                        if (selectedMetricId === COL.DATA_VOLUME.id || selectedMetricId === COL.PAYLOAD_VOLUME.id)
+                            val = val * 8 / MMTDrop.config.probe_stats_period; //8: bit/second
+                        else if (selectedMetricId === COL.ACTIVE_FLOWS.id)
+                            val = val / MMTDrop.config.probe_stats_period;
+
                         //console.log( ' == ' + MMTDrop.tools.formatDataVolume( val)) ;
-                        
-                        obj["x-" + s].push( time );    //Ox
-                        obj[    s   ].push( val );     //Oy
+
+                        obj["x-" + s].push(time); //Ox
+                        obj[s].push(val); //Oy
                     }
                 }
-                
+
                 //reset newData
-                newData       = {};
+                newData = {};
                 lastAddMoment = localtime;
-                
-                var columns = MMTDrop.tools.object2Array( obj );
-                
-                
-                if( lengthOx < 5 )
+
+                var columns = MMTDrop.tools.object2Array(obj);
+
+
+                if (lengthOx < 5)
                     length = 0;
-                
+
                 try {
                     chart.flow({
                         columns: columns,
-                        length : length 
+                        length: length
                     });
                 } catch (err) {
-                    console.error( err.stack );
+                    console.error(err.stack);
                 }
             }
         };
 
 
-        if( inDetailMode() )
-            database.onMessage( "protocol.flow.stat", appendMsg );
+        if (inDetailMode())
+            database.onMessage("protocol.flow.stat", appendMsg);
 
         return rep;
     },
@@ -849,68 +890,67 @@ var ReportFactory = {
 
 
                     var period = fPeriod.getSamplePeriod();
-                    
+
                     var ylabel = col.label;
-                    
-                    if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id){
-                        period = 1;    //donot change the total number      
+
+                    if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id) {
+                        period = 1; //donot change the total number      
                         ylabel += " (total)";
-                    }
-                    else if( col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id ){
+                    } else if (col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id) {
                         ylabel += " (per second)";
-                    }else{
-                        period /= 8;    //  bit/second
+                    } else {
+                        period /= 8; //  bit/second
                         ylabel += " (bit/second)";
                     }
-                    
-                    if( col.id !== COL.ACTIVE_FLOWS.id ){
+
+                    if (col.id !== COL.ACTIVE_FLOWS.id) {
                         //dir = 1: incoming, -1 outgoing, 0: All
-                        cols.push(_this.getCol(col, true));    //in
-                        cols.push(_this.getCol(col, false));   //out
-                            /*cols.push({
-                                id: col.id,
-                                label: "All"
-                                    //type : "line"
-                            });*/
-                    }else
-                        cols.push( col );
-                    
+                        cols.push(_this.getCol(col, true)); //in
+                        cols.push(_this.getCol(col, false)); //out
+                        /*cols.push({
+                            id: col.id,
+                            label: "All"
+                                //type : "line"
+                        });*/
+                    } else
+                        cols.push(col);
+
                     var obj = {};
                     var data = db.data();
                     for (var i in data) {
                         var msg = data[i];
                         var proto = msg[COL.APP_ID.id];
 
-                        if ( msg[0] != 100)
+                        if (msg[0] != 100)
                             continue;
 
-                        var time = msg[ COL.TIMESTAMP.id ];
+                        var time = msg[COL.TIMESTAMP.id];
                         var exist = true;
-        
+
                         //data for this timestamp does not exist before
-                        if( obj[time] == undefined ){
+                        if (obj[time] == undefined) {
                             exist = false;
                             obj[time] = {};
-                            obj[time][ COL.TIMESTAMP.id ] = time;
+                            obj[time][COL.TIMESTAMP.id] = time;
                         }
 
-                        
+
                         for (var j in cols) {
                             var id = cols[j].id;
-                            if( exist )
+                            if (exist)
                                 obj[time][id] += msg[id] / period;
                             else
                                 obj[time][id] = msg[id] / period;
                         }
                     }
 
-                    var arr = _this.addZeroPoints( obj );
-                    
-                    cols.unshift( COL.TIMESTAMP );
+                    var arr = _this.addZeroPoints(obj);
+
+                    cols.unshift(COL.TIMESTAMP);
                     return {
-                        data   : arr,
+                        data: arr,
                         columns: cols,
-                        ylabel : ylabel
+                        ylabel: ylabel
                     };
                 }
             },
@@ -942,31 +982,26 @@ var ReportFactory = {
                             count: 5
                         },
                         padding: {
-                            top   : 10,
+                            top: 10,
                             bottom: 0
                         },
                     }
                 },
                 zoom: {
-                  enabled: false,
-                  rescale: false
-               }
+                    enabled: false,
+                    rescale: false
+                }
             },
 
             afterRender: function (chart) {
-                var $widget = $("#" + chart.elemID).parents().filter(".grid-stack-item");
+                var $widget = $("#" + chart.elemID).getWidgetParent();
                 $widget.on("widget-resized", function (event, $widget) {
-                    setTimeout(function () {
-                        var height = $widget.find(".grid-stack-item-content").innerHeight();
-                        height -= $widget.find(".filter-bar").outerHeight(true) + 20;
-                        chart.chart.resize({
-                            height: height
-                        });
-
-                    }, 500)
+                    var height = $widget.find(".grid-stack-item-content").innerHeight();
+                    height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                    chart.chart.resize({
+                        height: height
+                    });
                 });
-
-
                 $widget.trigger("widget-resized", [$widget]);
             }
         });

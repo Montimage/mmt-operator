@@ -23,6 +23,10 @@ router.get('/*', function(req, res, next) {
 			'network' : {
 				title: "Network"
 			},
+            'dpi':
+            {
+                title: "DPI"
+            },
 /*			'application' : {
 				title: "Application"
 			},

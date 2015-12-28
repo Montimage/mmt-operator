@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "top_proto",
-        title: "Top Protocols",
+        title: "Top Profiles",
         x: 6,
         y: 0,
         width: 6,
@@ -855,7 +855,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Class</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='50%'>Profile</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if( key == "Other")

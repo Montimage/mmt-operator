@@ -30,21 +30,29 @@ router.post("/", function (req, res, next) {
         }).toArray(
             function (err, doc) {
                 if (err) throw err;
-                var p = "mmt2nm";
+                
+                var loginOK = false;
+                
                 //not found username
-                if (Array.isArray(doc) && doc.length == 0) {
-                    db.collection("admin").insert({
-                        username: user,
-                        password: p
-                    }, function (err, result) {
-                        if (err) throw err;
-                        console.log("Initilized username:" + user);
-                    });
-                } else
-                    p = doc[0].password;
+                if (Array.isArray(doc) && doc.length === 0 ) {
+                    //verify the default user+pass
+                    if( user === "admin" && pass === "mmt2nm" ){
+                        loginOK = true;
+                    
+                        //initilize database
+                        db.collection("admin").insert({
+                            username: user,
+                            password: pass
+                        }, function (err, result) {
+                            //if (err) throw err;
+                            console.log("Initilized username:" + user);
+                        });
+                    }
+                } else{
+                    loginOK = (doc[0].password === pass);
+                }
 
-
-                if (pass == p) {
+                if ( loginOK ) {
                     req.session.loggedin = {
                         username: user
                     }

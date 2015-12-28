@@ -76,8 +76,8 @@ app.use(express.static(path.join(__dirname, 'public'),{
 }));
 
 app.use(session({
-    cookie: { maxAge: 60*60*1000 },
-    secret: 'mmt2montimage',
+    cookie: { maxAge: 4*60*60*1000 }, //4h
+    secret: 'mmt2montimage',    //hash code to generate cookie
     resave: true, saveUninitialized: true
 }))
 
