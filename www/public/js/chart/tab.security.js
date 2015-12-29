@@ -123,7 +123,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         },
         {
             id: COL.DESCRIPTION.id,
-            label: "Description (will be hidden)"
+            label: "Description" //(will be hidden)"
         }
         ];
     

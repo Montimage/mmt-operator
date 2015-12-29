@@ -24,7 +24,7 @@ router.get('/*', function (req, res, next) {
             };
         } else if (period === PERIOD.DAY) {
             retval = {
-                collection: 'traffic_hour',
+                collection: 'traffic_min',
                 time: 24 * 3600 * 1000
             };
         } else if (period === PERIOD.WEEK) {

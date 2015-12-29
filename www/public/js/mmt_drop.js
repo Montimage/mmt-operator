@@ -290,8 +290,8 @@ MMTDrop.constants = {
         /** property id */
         PROPERTY                : {id: 4, label: "Property"},
         IP                      : {id: 5, label: "IP"},
-        BEFORE                  : {id: 6, label: "Before"},
-        AFTER                   : {id: 7, label: "After"},
+        BEFORE                  : {id: 6, label: "Old Profile"},
+        AFTER                   : {id: 7, label: "New Profile"},
         DESCRIPTION             : {id: 8, label: "Description"},
     },
 		
@@ -601,7 +601,62 @@ MMTDrop.constants = {
  * @namespace
  */
 MMTDrop.tools = function () {
-        var _this = {}; //this = Window when this inside function(){ ... }();
+    var _this = {}; //this = Window when this inside function(){ ... }();
+    
+    /**
+     * add zero points
+     * @param   {Array}    data       [[Description]]
+     * @param   {Number} period_sampling  interval between 2 consecutif samples (in millisecond)
+     * @param   {Number} period_total     total intervals (in millisecond)
+     * @param   {Number} time_id    column id of timestamp (=3 normally)
+     *                                
+     * @returns {Array} [[Description]]
+     */
+    _this.addZeroPointsToData = function (data, period_sampling, period_total, time_id) {
+
+        if (data instanceof Array == false)
+            data = MMTDrop.tools.object2Array(data);
+
+        if (time_id == undefined)
+            time_id = 3;
+        if (period_sampling == undefined)
+            period_sampling = 5000;
+
+        //order ASC of time
+        data.sort(function (a, b) {
+            return a[time_id] - b[time_id]
+        })
+
+        if( period_total ){
+            var start_time = data[ data.length - 1][ time_id ] - period_total;
+            if( start_time < data[0][ time_id ]){
+                var zero = {};                    
+                zero[time_id] = start_time;
+                data.unshift(zero);
+            }
+        }
+
+        var len = data.length;
+        var arr = [];
+        var lastTS;
+        for (var i = 0; i < len; i++) {
+            var ts = data[i][time_id];
+            if (lastTS === undefined)
+                lastTS = ts;
+
+            while (ts - lastTS > period_sampling * 1.5) {
+                var zero = {};
+                lastTS += period_sampling;
+                zero[time_id] = lastTS;
+                arr.push(zero);
+            }
+
+            lastTS = ts;
+            arr.push(data[i]);
+        }
+        return arr;
+    };
+    
     _this.random = function( n ){
         return Math.round(Math.random()* n);
     }
@@ -615,11 +670,11 @@ MMTDrop.tools = function () {
             return Math.round(v);
         
         if (v >= 1000000000)
-            return (v / 1000000000).toFixed(2) + " G";
+            return (v / 1000000000).toFixed(2) + "G";
         if (v >= 1000000)
-            return (v / 1000000).toFixed(2) + " M";
+            return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
-            return Math.round(v / 1000) + " K";
+            return Math.round(v / 1000) + "K";
         return Math.round(v);
     };
     
@@ -650,6 +705,7 @@ MMTDrop.tools = function () {
         
         return time;
     };
+    
     
 	/**
 	 * Convert an object to an array
@@ -1198,9 +1254,10 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		 * @alias stat.filter
 		 * @memberof! MMTDrop.Database#
 		 */
-		stat.filter = function( criteria ){
+		stat.filter = function( criteria, data ){
 			var arr = [];
-			var data = _this.data();
+            if( data === undefined )
+                data = _this.data();
 			for( var i in data){
 				var msg = data[i];
 				var satisfy = true;
@@ -1305,10 +1362,123 @@ MMTDrop.databaseFactory = {
 			param.format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
 			var db = new MMTDrop.Database(param, function (data){
-				
-				return data;
+                    return data;
 			}, 
 			isAutoLoad);
+    
+        
+            db.stat.sumDataByParent = function( ){
+                var data = db.data();
+                //how data is processed for stat
+                var COL = MMTDrop.constants.StatsColumn;
+                var colsToSum = [COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id,
+                                 COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id]
+
+                var obj = MMTDrop.tools.sumByGroups(data,
+                    colsToSum, [COL.TIMESTAMP.id, COL.PROBE_ID.id,
+                                 COL.SOURCE_ID.id, COL.APP_PATH.id]);
+
+
+                for (var time in obj)
+                    for (var probe in obj[time])
+                        for (var src in obj[time][probe]) {
+                            data = obj[time][probe][src];
+
+                            //STEP 1. 
+                            var hasChildren = {};
+
+                            var keys = Object.keys(data); //keys is a set of APP_PATH
+                            for (var i = 0; i < keys.length; i++) {
+                                var key = keys[i];
+
+                                hasChildren[key] = false;
+
+                                for (var j = 0; j < keys.length; j++) {
+                                    if (i == j)
+                                        continue;
+                                    if (keys[j].indexOf( key + ".") === 0 ) {
+                                        hasChildren[key] = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            for (var i = 0; i < keys.length; i++) {
+                                var key = keys[ i ];
+                                //if this has child
+                                if (hasChildren[key]) {
+                                    var msg = data[key];
+
+                                    //create a new child of msg
+                                    var child = MMTDrop.tools.cloneData(msg);
+
+                                    var path = key + '.-1'; //
+                                    //add new child to data
+                                    data[path] = child;
+                                    hasChildren[path] = false;
+
+                                    //the data of msg will be represented by it child
+                                    // ==> reset data of msg to zero
+                                    for (var k in colsToSum)
+                                        if (colsToSum[k] in msg)
+                                            msg[colsToSum[k]] = 0;
+                                }
+                            }
+
+
+                            //STEP 2. sumUp
+                            keys = Object.keys(data); //keys is a set of APP_PATH
+                            for (var i = 0; i < keys.length; i++) {
+                                var key = keys[i];
+                                if (hasChildren[key] == true)
+                                    continue;
+
+                                var msg = data[key];
+                                var parentKey = MMTDrop.constants.getParentPath(key);
+                                //sum up
+                                while (parentKey != ".") {
+
+                                    var parentMsg = data[parentKey];
+
+                                    //if parent does not exist, create it and add it to data
+                                    if (parentMsg == undefined) {
+                                        parentMsg = MMTDrop.tools.cloneData(msg);
+                                        data[parentKey] = parentMsg;
+                                    }
+                                    //if parent exists, cummulate its child
+                                    else
+                                        for (var k in colsToSum) {
+                                            var col = colsToSum[k];
+                                            if (col in msg) {
+                                                parentMsg[col] += msg[col];
+                                            }
+                                        }
+
+                                    parentKey = MMTDrop.constants.getParentPath(parentKey);
+                                }
+                            }
+                        }
+
+
+                data = [];
+                for (var time in obj)
+                    for (var probe in obj[time])
+                        for (var src in obj[time][probe])
+                            for (var path in obj[time][probe][src]) {
+                                var msg = obj[time][probe][src][path];
+                                msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+                                msg[COL.PROBE_ID.id] = parseInt(probe);
+                                msg[COL.SOURCE_ID.id] = src;
+                                msg[COL.TIMESTAMP.id] = parseInt(time);
+                                msg[COL.APP_PATH.id] = path;
+                                msg[COL.APP_ID.id] = MMTDrop.constants.getAppIdFromPath(path);
+                                //msg[ COL.APP_ID.id  ] = MMTDrop.constants.getProtocolNameFromID( MMTDrop.constants.getAppIdFromPath( path ) );
+                                data.push(msg);
+                            }
+
+                return data;
+            }
+            
 
 			/**
 			 * Change path of application Ids to path of application names
@@ -1878,7 +2048,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		for (var i in _option){
 			var opt = $('<option>', {
 				text : _option[i].label,
-				value: _option[i].id
+				value: _option[i].id,
 			});
 			opt.appendTo(filter);
 		}
@@ -1894,12 +2064,22 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			}
 		}
 		//if not, set default is the first option in the list
-		if( isExist == false )
+		if( isExist == false ){
+            //if there is one option selected by the code
 			for (var i in _option){
-				defaultOption = _option[i];
-				break;
+                if( _option[i].selected === true){
+                    defaultOption = _option[i];
+                    isExist = true;
+                    break;
+                }
 			}
-		
+            
+            if( isExist == false )
+                for (var i in _option){
+                    defaultOption = _option[i];
+                    break;
+                }
+        }
 		//set selection to defaultValue (that is either the first option or the former selection)
 		filter.val(defaultOption.id);
 		_currentSelectedOption = defaultOption;
@@ -2056,19 +2236,12 @@ MMTDrop.filterFactory = {
 		createPeriodFilter : function(){
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
-            var periodLabel = {};
-    		periodLabel[periods.MINUTE] = "Last 5 minutes (in realtime)";
-			periodLabel[periods.HOUR]   = "Last hour";
-			periodLabel[periods.DAY]    = "Last 24 hours";
-			periodLabel[periods.WEEK]   = "Last 7 days";
-			periodLabel[periods.MONTH]  = "Last 30 days";
-			//create a list of options from predefined MMTDrop.period
-			var options = [];
-			for (var k in MMTDrop.constants.period){
-				var key = MMTDrop.constants.period[k];
-				options.push({id:  key, label: periodLabel[key]});
-			}
-			
+            var options = [];
+    		options.push( { id: periods.MINUTE, label: "Last 5 minutes" });
+			options.push( { id: periods.HOUR  , label: "Last hour" });
+			options.push( { id: periods.DAY   , label: "Last 24 hours", selected: true });
+			options.push( { id: periods.WEEK  , label: "Last 7 days" });
+			options.push( { id: periods.MONTH , label: "Last 30 days" });
 			//var otherOpt = { id: "00", label: "Other"};
 			
 			//options.push( otherOpt );
@@ -2128,28 +2301,35 @@ MMTDrop.filterFactory = {
 				
 			};
             
-            filter.getSamplePeriod = function(){
+            /**
+             * Get the total interval
+             * @returns {[[Type]]} [[Description]]
+             */
+            filter.getSamplePeriodTotal = function(){
                 var period = 1;
                 switch (this.selectedOption().id ){
                     case MMTDrop.constants.period.MINUTE : 
-                        //each 5 second, for example
-                        period = MMTDrop.config.probe_stats_period;
+                        period = 5*60//5 min
                         break;
                     case MMTDrop.constants.period.HOUR :
-                        period = 60;    //each minute
+                        period = 60*60;    //each minute
                         break;
                     case MMTDrop.constants.period.DAY : 
-                        period = 60*60;    //each hour
+                        period = 24*60*60;    //each hour
                         break;
                     case MMTDrop.constants.period.WEEK : 
-                        period = 60*60;    //each hour
+                        period = 7*24*60*60;    //each hour
                     case MMTDrop.constants.period.MONTH : 
-                        period = 24*60*60;    //each day
+                        period = 30*24*60*60;    //each day
                         break;
                 }
                 return period;
             };
             
+            /**
+             * get the interval between two consecutive samples
+             * @returns {Number} second
+             */
             filter.getDistanceBetweenToSamples = function(){
                 var period = 1;
                 switch (this.selectedOption().id ){
@@ -2160,7 +2340,7 @@ MMTDrop.filterFactory = {
                         period = 60;    //each minute
                         break;
                     case MMTDrop.constants.period.DAY : 
-                        period = 60*60;    //each hour
+                        period = 60;    //each minute 
                         break;
                     case MMTDrop.constants.period.WEEK : 
                         period = 60*60;    //each hour
@@ -2168,8 +2348,30 @@ MMTDrop.filterFactory = {
                         period = 24*60*60;    //each day
                         break;
                 }
-                return period * 1000;
+                return period;
             }
+            
+            filter.getTimeFormat = function(){
+                var format = "YYYY/MM/DD HH:mm";
+                switch (this.selectedOption().id ){
+                    case MMTDrop.constants.period.MINUTE : 
+                        format = "HH:mm:ss";
+                        break;
+                    case MMTDrop.constants.period.HOUR :
+                        format = "HH:mm";    //each minute
+                        break;
+                    case MMTDrop.constants.period.DAY : 
+                        format = "HH:mm";    //each minute 
+                        break;
+                    case MMTDrop.constants.period.WEEK : 
+                        format = "YYYY/MM/DD HH [h]";    //each hour
+                    case MMTDrop.constants.period.MONTH : 
+                        format = "YYYY/MM/DD";    //each day
+                        break;
+                }
+                return format;
+            }
+            
 			return filter;
 		},
 
@@ -4493,10 +4695,10 @@ MMTDrop.chartFactory = {
 
 				//sort by path, then by name
 				arrData.sort(function (a, b){
-					if (a[0].parent === b[0].parent )
-						return a[0].name > b[0].name ? 1: -1;
-
-					return a[0].path > b[0].path ? 1 : -1;
+					if (a[0].parent === b[0].parent ){
+						return a[0].name.localeCompare( b[0].name );
+                    }
+					return a[0].path.localeCompare( b[0].path );
 				});
 
 				//add each element to a row

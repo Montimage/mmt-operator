@@ -65,27 +65,27 @@ var MMTDrop = {
     },
     
     SecurityColumnId           : {
-        FORMAT_ID           : 0, /**< Index of the format id column */
-        PROBE_ID            : 1, /**< Index of the probe id column */
-        SOURCE_ID           : 2, /**< Index of the data source id column */
-        TIMESTAMP           : 3, /**< Index of the format id column */
-        PROPERTY              : 4, /**< Index of the application id column */
-        VERDICT: 5,
-        TYPE: 6,
-        DESCRIPTION: 7,
-        HISTORY: 8,
-        VERDICT_COUNT: 9
+        FORMAT_ID               : 0, /**< Index of the format id column */
+        PROBE_ID                : 1, /**< Index of the probe id column */
+        SOURCE_ID               : 2, /**< Index of the data source id column */
+        TIMESTAMP               : 3, /**< Index of the format id column */
+        PROPERTY                : 4, /**< Index of the application id column */
+        VERDICT                 : 5,
+        TYPE                    : 6,
+        DESCRIPTION             : 7,
+        HISTORY                 : 8,
+        VERDICT_COUNT           : 9
     },
     BehaviourColumnId           : {
-        FORMAT_ID           : 0, /**< Index of the format id column */
-        PROBE_ID            : 1, /**< Index of the probe id column */
-        SOURCE_ID           : 2, /**< Index of the data source id column */
-        TIMESTAMP           : 3, /**< Index of the format id column */
-        PROPERTY              : 4, /**< Index of the application id column */
-        IP: 5,
-        BEFORE: 6,
-        AFTER: 7,
-        DESCRIPTION: 8
+        FORMAT_ID               : 0, /**< Index of the format id column */
+        PROBE_ID                : 1, /**< Index of the probe id column */
+        SOURCE_ID               : 2, /**< Index of the data source id column */
+        TIMESTAMP               : 3, /**< Index of the format id column */
+        PROPERTY                : 4, /**< Index of the application id column */
+        IP                      : 5,
+        BEFORE                  : 6,
+        AFTER                   : 7,
+        DESCRIPTION             : 8
     },
     /**
      * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
@@ -500,13 +500,13 @@ MMTDrop.reverseStatsTimePoint = function(elem) {
     retval[MMTDrop.StatsColumnId.UL_PACKET_COUNT]   = elem.ul_packets;
     retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT]   = elem.dl_packets;
     
-    retval[MMTDrop.StatsColumnId.START_TIME] = elem.start_time;
+    retval[MMTDrop.StatsColumnId.START_TIME]        = elem.start_time;
     
-    retval[MMTDrop.StatsColumnId.IP_SRC]    = elem.ip_src;
-    retval[MMTDrop.StatsColumnId.IP_DEST]   = elem.ip_dest;
+    retval[MMTDrop.StatsColumnId.IP_SRC]            = elem.ip_src;
+    retval[MMTDrop.StatsColumnId.IP_DEST]           = elem.ip_dest;
     
-    retval[MMTDrop.StatsColumnId.MAC_SRC]    = elem.mac_src;
-    retval[MMTDrop.StatsColumnId.MAC_DEST]   = elem.mac_dest;
+    retval[MMTDrop.StatsColumnId.MAC_SRC]           = elem.mac_src;
+    retval[MMTDrop.StatsColumnId.MAC_DEST]          = elem.mac_dest;
     return retval;
 };
 

@@ -166,16 +166,14 @@ table.treetable  tbody{
 table.treetable >tbody>tr>td:first-child {
     width: 100%;
 }
-table.treetable>tbody>tr>th:nth-child(1n+2) {
-    min-width: 100px;
-    text-align: center;
-}
 table.treetable>thead>tr>th:first-child {
     width: 100%;
 }
-table.treetable>thead>tr>th:nth-child(1n+2) {
+table.treetable>tbody>tr>td {
     min-width: 100px;
-    text-align: center;
+}
+table.treetable>thead>tr>th {
+    min-width: 100px;
 }
 
 tr.selected a {

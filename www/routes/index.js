@@ -160,7 +160,7 @@ router.get("/profile", function (req, res, next) {
 
     res.render('profile', {
         title: 'Profile',
-        clientID: "abc",
+        clientID: "admin",
         startOn: (new Date()).toDateString(),
         expiredOn: (new Date()).toDateString()
     });

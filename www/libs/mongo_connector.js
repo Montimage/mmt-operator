@@ -38,6 +38,8 @@ var Cache = function (period) {
                     probe: message.probe,
                     source: message.source,
                     path: message.path,
+                    ip_src: message.ip_src,
+                    ip_dest: message.ip_dest,
                     mac_src: message.mac_src,
                     mac_dest: message.mac_dest
                 };
@@ -209,7 +211,7 @@ var MongoConnector = function (opts) {
         day: new Cache("day")
     }
 
-    self.window =new Window( MAX_PERIOD,  MAX_LENGTH );
+    self.window = new Window( MAX_PERIOD,  MAX_LENGTH );
     
     //use to delete old data from "traffic" and "traffic_time" collections
     var lastDeletedTime = {

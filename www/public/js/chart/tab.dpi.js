@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 4,
+        height: 6,
         type: "success",
         userData: {
             fn: "createNodeReport"
@@ -20,120 +20,7 @@ var availableReports = {
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var fProbe = MMTDrop.filterFactory.createProbeFilter();
 
-var database = new MMTDrop.Database({
-        format: MMTDrop.constants.CsvFormat.STATS_FORMAT
-    },
-    function (data) {
-        //how data is processed for stat
-        var COL = MMTDrop.constants.StatsColumn;
-        var colsToSum = [COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id,
-                         COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id]
-
-        var obj = MMTDrop.tools.sumByGroups(data,
-            colsToSum, [COL.TIMESTAMP.id, COL.PROBE_ID.id,
-						 COL.SOURCE_ID.id, COL.APP_PATH.id]);
-
-
-        for (var time in obj)
-            for (var probe in obj[time])
-                for (var src in obj[time][probe]) {
-                    data = obj[time][probe][src];
-
-                    //STEP 1. 
-                    var hasChildren = {};
-
-                    var keys = Object.keys(data); //keys is a set of APP_PATH
-                    for (var i = 0; i < keys.length; i++) {
-                        var key = keys[i];
-
-                        hasChildren[key] = false;
-
-                        for (var j = 0; j < keys.length; j++) {
-                            if (i == j)
-                                continue;
-                            if (keys[j].indexOf( key + ".") === 0 ) {
-                                hasChildren[key] = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    for (var i = 0; i < keys.length; i++) {
-                        var key = keys[ i ];
-                        //if this has child
-                        if (hasChildren[key]) {
-                            var msg = data[key];
-
-                            //create a new child of msg
-                            var child = MMTDrop.tools.cloneData(msg);
-
-                            var path = key + '.-1'; //
-                            //add new child to data
-                            data[path] = child;
-                            hasChildren[path] = false;
-
-                            //the data of msg will be represented by it child
-                            // ==> reset data of msg to zero
-                            for (var k in colsToSum)
-                                if (colsToSum[k] in msg)
-                                    msg[colsToSum[k]] = 0;
-                        }
-                    }
-
-
-                    //STEP 2. sumUp
-                    keys = Object.keys(data); //keys is a set of APP_PATH
-                    for (var i = 0; i < keys.length; i++) {
-                        var key = keys[i];
-                        if (hasChildren[key] == true)
-                            continue;
-
-                        var msg = data[key];
-                        var parentKey = MMTDrop.constants.getParentPath(key);
-                        //sum up
-                        while (parentKey != ".") {
-
-                            var parentMsg = data[parentKey];
-
-                            //if parent does not exist, create it and add it to data
-                            if (parentMsg == undefined) {
-                                parentMsg = MMTDrop.tools.cloneData(msg);
-                                data[parentKey] = parentMsg;
-                            }
-                            //if parent exists, cummulate its child
-                            else
-                                for (var k in colsToSum) {
-                                    var col = colsToSum[k];
-                                    if (col in msg) {
-                                        parentMsg[col] += msg[col];
-                                    }
-                                }
-
-                            parentKey = MMTDrop.constants.getParentPath(parentKey);
-                        }
-                    }
-                }
-
-
-        data = [];
-        for (var time in obj)
-            for (var probe in obj[time])
-                for (var src in obj[time][probe])
-                    for (var path in obj[time][probe][src]) {
-                        var msg = obj[time][probe][src][path];
-                        msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
-                        msg[COL.PROBE_ID.id] = parseInt(probe);
-                        msg[COL.SOURCE_ID.id] = src;
-                        msg[COL.TIMESTAMP.id] = parseInt(time);
-                        msg[COL.APP_PATH.id] = path;
-                        msg[COL.APP_ID.id] = MMTDrop.constants.getAppIdFromPath(path);
-                        //msg[ COL.APP_ID.id  ] = MMTDrop.constants.getProtocolNameFromID( MMTDrop.constants.getAppIdFromPath( path ) );
-                        data.push(msg);
-                    }
-
-        return data;
-
-    });
+var database = MMTDrop.databaseFactory.createStatDB();
 var filters = [fPeriod, fProbe];
 
 MMTDrop.setOptions({
@@ -175,7 +62,9 @@ var ReportFactory = {
                     for (var i in args)
                         cols.push(args[i].id);
 
-                    var obj = MMTDrop.tools.sumByGroups(db.data(),
+                    var data = db.stat.sumDataByParent();
+                    cTree.data = data;
+                    var obj = MMTDrop.tools.sumByGroups( data,
                         cols, [group.id,
 						 MMTDrop.constants.StatsColumn.PROBE_ID.id]);
 
@@ -199,6 +88,9 @@ var ReportFactory = {
 
                                 if (!isNaN(temp) && parseInt(temp) != 0)
                                     isZero = false;
+                                
+                                if( args[i].id == COL.DATA_VOLUME.id)
+                                    temp = MMTDrop.tools.formatDataVolume( temp );
 
                                 oo[prob] = temp;
                             }
@@ -244,7 +136,7 @@ var ReportFactory = {
                 var data = database.stat.filter([{
                     id: COL.APP_PATH.id,
                     data: e
-                }]);
+                }], cTree.data);
                 var oldData = database.data();
 
                 //set new data for cLine
@@ -308,7 +200,7 @@ var ReportFactory = {
                     return {
                         data: arr,
                         columns: columns,
-                        ylabel: fMetric.selectedOption().label
+                        ylabel: fMetric.selectedOption().label + " (in total)"
                     };
                 },
             },

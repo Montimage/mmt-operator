@@ -155,4 +155,17 @@ $(function () {
         renderReport(node);
 
     });
+    
+    
+    
+    setTimeout(function(){
+        var p = fPeriod.getDistanceBetweenToSamples() * 1000;
+        if( p <= 60*1000 )
+            p = 60*1000;
+        setTimeout( function(){
+            location.reload();
+            throw new Error("Stop");
+        }, p);
+    }, 100);
+
 });
