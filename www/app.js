@@ -29,6 +29,14 @@ console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
 if( config.is_in_debug_mode !== true ){
     console.log = function( obj ){};
 }
+/*else{
+    console.old_log = console.log;
+    console.log  = function( obj ){
+        
+        console.old_log( (new Date()).toLocaleTimeString() + ": " + obj );
+    }
+}*/
+    
 
 var dbconnector = new dbc( {
     connectString: 'mongodb://'+ config.database_server +':27017/mmt-data'
@@ -65,7 +73,7 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(compress()); 
+//app.use(compress()); 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));

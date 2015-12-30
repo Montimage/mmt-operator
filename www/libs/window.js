@@ -20,12 +20,11 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
     this.data            = [];
     
     this.pushArray = function( arr ){
+        if( arr === undefined )
+            arr = []; 
         console.log( "WINDOW " + name + ": load " + arr.length + " records to RAM"  );
-        console.time( "loadDataToRAM" );
         for( var i=0; i<arr.length; i++ )
             self.push( arr[i] );
-        
-        console.timeEnd("loadDataToRAM");
     }
     
     //msg.time is in miliseconds;

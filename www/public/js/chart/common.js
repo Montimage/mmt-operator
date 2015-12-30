@@ -167,12 +167,13 @@ $(function () {
         if( p <= 60*1000 )
             p = 60*1000;
         //p = 10*1000;
-        setTimeout( function(){
+        setInterval( function(){
+            console.log(" Reload ======>");
             //MMTDrop.tools.localStorage.set("reload", 1);
             loading.onShowing();
             fPeriod.filter();
-            throw new Error("Stop");
         }, p);
+        
     }, 100);
 
 });

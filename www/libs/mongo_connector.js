@@ -39,15 +39,15 @@ var Cache = function (period) {
                     source: message.source,
                     path: message.path,
                     ip_src: message.ip_src,
-                    ip_dest: message.ip_dest,
-                    mac_src: message.mac_src,
-                    mac_dest: message.mac_dest
+                    //ip_dest: message.ip_dest
                 };
                 data = {
                     '$set': {
                         app: message.app,
                         last_time: message.time,
-                        start_time: message.start_time
+                        start_time: message.start_time,
+                        mac_src: message.mac_src,
+                        //mac_dest: message.mac_dest
                     },
                     '$inc': {
                         bytecount: message.bytecount,
@@ -111,6 +111,10 @@ var Cache = function (period) {
                 } else if (message.format === 1) {
                     data = {
                         '$inc': {
+                            dl_data: message.dl_data,
+                            ul_data: message.ul_data,
+                            dl_packets: message.dl_packets,
+                            ul_packets: message.ul_packets,
                             response_time: message.response_time,
                             transactions_count: message.transactions_count,
                             interaction_time: message.interaction_time,
@@ -122,9 +126,30 @@ var Cache = function (period) {
                         }
                     };
 
+                } else if (message.format === 2) {
+                    data = {
+                        '$inc': {
+                            dl_data: message.dl_data,
+                            ul_data: message.ul_data,
+                            dl_packets: message.dl_packets,
+                            ul_packets: message.ul_packets,
+                            count: 1,
+                            active_flowcount: message.active_flowcount
+                        },
+                        '$set': {
+                            last_time: message.time,
+                            server_name: message.server_name,
+                            cdn: message.cdn
+                        }
+                    };
+
                 } else if (message.format === 3) {
                     data = {
                         '$inc': {
+                            dl_data: message.dl_data,
+                            ul_data: message.ul_data,
+                            dl_packets: message.dl_packets,
+                            ul_packets: message.ul_packets,
                             packet_loss: message.packet_loss,
                             packet_loss_burstiness: message.packet_loss_burstiness,
                             jitter: message.jitter,
@@ -148,9 +173,9 @@ var Cache = function (period) {
 
         var obj = {};
         for (var i in this.data) {
-            var msg = this.data[i];
-            var o = getKeyData(msg);
-            var key = o.key;
+            var msg  = this.data[i];
+            var o    = getKeyData(msg);
+            var key  = o.key;
             var data = o.data;
 
             var txt = JSON.stringify(key);
@@ -175,10 +200,12 @@ var Cache = function (period) {
 
             //console.log( oo );
         }
-        
         var arr = [];
         for (var i in obj)
             arr.push(obj[i]);
+        
+        console.log( period + " compress " + this.data.length +  " records ===> " + arr.length);
+        
         return arr;
     };
 };
@@ -210,12 +237,12 @@ var MongoConnector = function (opts) {
     self.window = new Window( 5*60,  MAX_LENGTH, "real" );
     self.window_minute = new Window( 24*60*60,  MAX_LENGTH, "min" );
     
-    cache.minute.clear = function(){
+    self.window_minute.addData = function( arr ){
         //add to window_minute
-        this.data.forEach(function(e,i){
-            self.window_minute.push( dataAdaptor.reverseFormatReportItem( e ) ); 
+        arr.forEach(function(e,i){
+            if( e )
+                self.window_minute.push( dataAdaptor.reverseFormatReportItem( e ) ); 
         });
-        this.data = [];
     }
     
     
@@ -267,7 +294,6 @@ var MongoConnector = function (opts) {
                 if( err ) console.error( err.stack );
                 self.window_minute.pushArray( data );
             });
-            
         } );
         
         
@@ -316,6 +342,7 @@ var MongoConnector = function (opts) {
         else if (ts - cache.minute.lastUpdateTime >= 60 * 1000) {
 
             var data = cache.minute.getData();
+            self.window_minute.addData( data );
             self.mdb.collection("traffic_min").insert(data, function (err, records) {
                 if (err) console.error(err.stack);
                 console.log(">>>>>>> flush " + data.length + " records to traffic_min");
@@ -395,6 +422,7 @@ var MongoConnector = function (opts) {
         }
 
         var data = cache.minute.getData();
+        self.window_minute.addData( data );
         cache.minute.clear();
         if (data.length > 0)
             self.mdb.collection("traffic_min").insert(data, function (err, records) {

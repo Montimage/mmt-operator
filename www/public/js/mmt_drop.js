@@ -616,6 +616,8 @@ MMTDrop.tools = function () {
 
         if (data instanceof Array == false)
             data = MMTDrop.tools.object2Array(data);
+        if( data.length === 0 )
+            return data;
 
         if (time_id == undefined)
             time_id = 3;
