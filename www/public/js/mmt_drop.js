@@ -973,7 +973,7 @@ MMTDrop.tools = function () {
 
 			for (var key in msg){
 				//check if key existing in colSums
-				if (MMTDrop.tools.inArray(key, colSums) == -1)
+				if ((colSums.length === 1 && colSums[0] != key) || MMTDrop.tools.inArray(key, colSums) == -1)
 					continue;
 				var val = msg[key];
 				
@@ -2141,7 +2141,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 				//annonce to its callback registors
 				for (var i in _onFilterCallbacks){
 					var callback = _onFilterCallbacks[i];
-					callback[0](_currentSelectedOption, _database, callback[1]);
+                    //async
+                    setTimeout(function( cb, _c, _db ){
+                        cb[0](_c, _db, cb[1]);
+                    }, 5, callback, _currentSelectedOption, _database);
 				}
 			}
 		}
@@ -2361,10 +2364,11 @@ MMTDrop.filterFactory = {
                         format = "HH:mm";    //each minute
                         break;
                     case MMTDrop.constants.period.DAY : 
-                        format = "HH:mm";    //each minute 
+                        format = "MM/DD HH:mm";    //each minute 
                         break;
                     case MMTDrop.constants.period.WEEK : 
-                        format = "YYYY/MM/DD HH [h]";    //each hour
+                        format = "YYYY/MM/DD HH[h]";    //each hour
+                        break;
                     case MMTDrop.constants.period.MONTH : 
                         format = "YYYY/MM/DD";    //each day
                         break;
@@ -3947,7 +3951,7 @@ MMTDrop.Chart = function(option, renderFn){
 	};
 
 	this.clean = function(){
-		$('#' + _elemID).html('');
+		$('#' + _elemID).empty();
 	};
 
 	/**
@@ -4426,7 +4430,7 @@ MMTDrop.chartFactory = {
 				var n   = columns.length;
                 if( n > 5 ){
                     //alert("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                    n = 5;
+                    //n = 5;
                 }
 				//the first column is timestamp
                 var lastTS = 0;

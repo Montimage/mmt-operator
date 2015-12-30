@@ -32,7 +32,8 @@ var availableReports = {
 
 var database = MMTDrop.databaseFactory.createFlowDB();
 
-var filters = [MMTDrop.filterFactory.createPeriodFilter(),
+var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var filters = [fPeriod,
                 MMTDrop.filterFactory.createProbeFilter(),
     MMTDrop.filterFactory.createFlowMetricFilter()];
 
@@ -68,7 +69,7 @@ var SubReport = {
          
         pre.$mainChart.parent().append( $subReport );
         
-        $subReport.hide();
+        //$subReport.hide();
         
         pre.db = MMTDrop.databaseFactory.createFlowDB();
         //retain only msg concern to userIP
@@ -110,7 +111,7 @@ var SubReport = {
                 style:"text-align: center; font-weight: bold"
             }));
         
-        $subReport.show("slow", "easeInQuart");
+        //$subReport.show("slow", "easeInQuart");
     },
     
     loadChartOfOneClass : function( elemID, className, data, childrenTag ){
@@ -145,7 +146,7 @@ var SubReport = {
         });
          
         $content.append( $subReport );
-        $subReport.hide();
+        //$subReport.hide();
         
         pre.db = MMTDrop.databaseFactory.createFlowDB();
         pre.db.data( data );
@@ -201,7 +202,7 @@ var SubReport = {
                 style:"text-align: center; font-weight: bold"
             }));
         
-        $subReport.show("slow", "easeInQuart");
+        //$subReport.show("slow", "easeInQuart");
     },
     loadChartOfOneApplication : function( elemID, appName, data, childrenTag ){
 
@@ -236,7 +237,7 @@ var SubReport = {
         });
          
         $content.append( $subReport );
-        $subReport.hide();
+        //$subReport.hide();
         
         pre.db = MMTDrop.databaseFactory.createFlowDB();
         //retain only msg concern to appID
@@ -287,7 +288,7 @@ var SubReport = {
                 style:"text-align: center; font-weight: bold"
             }));
         
-        $subReport.show("slow", "easeInQuart");
+        //$subReport.show("slow", "easeInQuart");
     },
 }
 
@@ -779,6 +780,7 @@ var ReportFactory = {
                         cPie.dataLegend.dataTotal += v;
                     }
 
+                    
                     data.sort(function (a, b) {
                         return b.val - a.val;
                     });
@@ -1062,7 +1064,6 @@ var ReportFactory = {
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-                    var obj = MMTDrop.tools.splitData(db.data(), COL.CLIENT_ADDR.id);
 
                     cPie.dataLegend = {
                         "dataTotal": 0,
@@ -1070,24 +1071,23 @@ var ReportFactory = {
                         "data": {}
                     };
 
-                    for (var cls in obj) {
-                        var o = obj[cls];
-                        var name = cls;
+                    var db_data = db.data();
+                    for( var i=0; i< db_data.length; i++){
+                        var val = db_data[i][ col.id ];
+                        var name = db_data[i][ COL.CLIENT_ADDR.id ];
+                        
+                        if( cPie.dataLegend.data[name] === undefined )
+                            cPie.dataLegend.data[name] = 0;
 
-                        //sumup by col.id 
-                        o = MMTDrop.tools.sumUp(o, col.id);
-                        var v = o[col.id];
-                        if( v === undefined )
-                            v = 0;
+                        cPie.dataLegend.data[name] += val;
+                        cPie.dataLegend.dataTotal  += val;
+                    }
+                    for( var name in cPie.dataLegend.data )
                         data.push({
                             "key": name,
-                            "val": v
+                            "val": cPie.dataLegend.data[ name ]
                         });
-
-
-                        cPie.dataLegend.data[name] = v;
-                        cPie.dataLegend.dataTotal += v;
-                    }
+                    
 
                     data.sort(function (a, b) {
                         return b.val - a.val;

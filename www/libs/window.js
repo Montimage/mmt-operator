@@ -3,9 +3,13 @@
  * @param {integer} MAX_PERIOD period size of this cache by seconds
  * @param {integer} MAX_LENGTH size of this cache
  */
-var Window = function ( MAX_PERIOD, MAX_LENGTH ){
+var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
+    if( name === undefined )
+        name = "";
+    
     MAX_PERIOD *= 1000;
     var self = this;
+    this.name = name;
     this.config = {
         MAX_PERIOD : MAX_PERIOD,
         MAX_LENGTH : MAX_LENGTH
@@ -16,6 +20,7 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
     this.data            = [];
     
     this.pushArray = function( arr ){
+        console.log( "WINDOW " + name + ": load " + arr.length + " records to RAM"  );
         console.time( "loadDataToRAM" );
         for( var i=0; i<arr.length; i++ )
             self.push( arr[i] );
@@ -71,7 +76,7 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
         //remove the first (index+1) elements
         
         if( numberOfRemoved > 0 ){
-            console.log( "WINDOW: removed " +  numberOfRemoved + "/" + self.data.length + " records");
+            console.log( "WINDOW " + name + ": removed " +  numberOfRemoved + "/" + self.data.length + " records");
             self.data.splice(0, numberOfRemoved);
         }
     };
@@ -80,22 +85,22 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
      * Get all data, and mark them as being proceessed
      * @returns {Array} [[Description]]
      */
-    this.getAllData = function( formats ){
+    this.getAllData = function( formats, start_time ){
         var arr = [];
         if( self.data.length == 0 )
             return arr; 
-        //do not add the last timestamp
-        var lastTimestamp = self.data[ self.data.length - 1][3];
+        if( start_time === undefined )
+            start_time = 0;
         
         if( formats instanceof Array )
             for( var i=0; i<self.data.length; i++ ){
                 var msg = self.data[i];
                 if( formats.indexOf( msg[0] ) == -1 )
                     continue;
-
-                if( msg[3] >= lastTimestamp )
-                    break;
                 
+                if( msg[3] < start_time )
+                    continue;
+
                 if( msg.isFreshData === true)
                     delete( msg.isFreshData );
                 
@@ -105,6 +110,7 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
         return arr;
     }
     
+    
     /**
      * Get all fresh data
      */
@@ -112,7 +118,6 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
         var arr = [];
         if( self.data.length == 0 )
             return arr; 
-        var lastTimestamp = self.data[ self.data.length - 1][3];
         
         if( formats instanceof Array )
             for( var i in self.data ){
@@ -120,9 +125,6 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH ){
                 if( formats.indexOf( msg[0] ) == -1 )
                     continue;
 
-                if( msg[3] >= lastTimestamp )
-                    break;
-                
                 if( msg.isFreshData === true){
                     delete( msg.isFreshData );
                     arr.push( msg );

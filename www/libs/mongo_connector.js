@@ -184,15 +184,11 @@ var Cache = function (period) {
 };
 
 //cache size
-var MAX_LENGTH   = 100000;
-var MAX_PERIOD   = 5*60;    //5 minutes
+var MAX_LENGTH   = 1000000;
 
 //cache size from config.js
 if( config.buffer_socketio.max_length_size )
     MAX_LENGTH = parseInt( config.buffer_socketio.max_length_size );
-if( config.buffer_socketio.max_period_size )
-    MAX_PERIOD = parseInt( config.buffer_socketio.max_period_size );
-
 
 
 var MongoConnector = function (opts) {
@@ -211,7 +207,17 @@ var MongoConnector = function (opts) {
         day: new Cache("day")
     }
 
-    self.window = new Window( MAX_PERIOD,  MAX_LENGTH );
+    self.window = new Window( 5*60,  MAX_LENGTH, "real" );
+    self.window_minute = new Window( 24*60*60,  MAX_LENGTH, "min" );
+    
+    cache.minute.clear = function(){
+        //add to window_minute
+        this.data.forEach(function(e,i){
+            self.window_minute.push( dataAdaptor.reverseFormatReportItem( e ) ); 
+        });
+        this.data = [];
+    }
+    
     
     //use to delete old data from "traffic" and "traffic_time" collections
     var lastDeletedTime = {
@@ -232,10 +238,11 @@ var MongoConnector = function (opts) {
         
         //load last data to the windows
         self.getLastTime( function( err, ts ){
+            
             var option = {
                 format: [100, 0, 1, 2, 10, 11, 12],    //all kind of data
                 time:{
-                    begin: ts - 5*60*1000,
+                    begin: ts - self.window.config.MAX_PERIOD,
                     end  : ts
                 },
                 collection: "traffic",
@@ -243,10 +250,26 @@ var MongoConnector = function (opts) {
             };
             self.getCurrentProtocolStats( option, function( err, data ){
                 if( err ) console.error( err.stack );
-                console.log( "WINDOW: loaded " + data.length + " records to RAM");
                 self.window.pushArray( data );
-            });    
-        } )
+            });  
+            
+            
+            option = {
+                format: [100, 0, 1, 2, 10, 11, 12],    //all kind of data
+                time:{
+                    begin: ts - self.window_minute.config.MAX_PERIOD,
+                    end  : ts
+                },
+                collection: "traffic_min",
+                raw: true
+            };
+            self.getCurrentProtocolStats( option, function( err, data ){
+                if( err ) console.error( err.stack );
+                self.window_minute.pushArray( data );
+            });
+            
+        } );
+        
         
     });    
 
@@ -297,6 +320,7 @@ var MongoConnector = function (opts) {
                 if (err) console.error(err.stack);
                 console.log(">>>>>>> flush " + data.length + " records to traffic_min");
             });
+            
             cache.minute.lastUpdateTime = ts;
             cache.minute.clear();
 
@@ -408,9 +432,18 @@ var MongoConnector = function (opts) {
 
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
-        if( options.period === "minute"){
+        
+        console.log(options);
+        
+        if( options.period === "minute" ){
             var data = self.window.getAllData( options.format );
             console.log("got " + data.length + "/" + self.window.data.length + " from window cache");
+            callback(null, data );
+            return;
+        }
+        else if( options.collection === "traffic_min"  ){
+            var data = self.window_minute.getAllData( options.format, options.time.begin );
+            console.log("got " + data.length + "/" + self.window_minute.data.length + " from window_minute cache");
             callback(null, data );
             return;
         }
@@ -426,14 +459,13 @@ var MongoConnector = function (opts) {
      * @param {[[Type]]} callback [[Description]]
      */
     self.getCurrentProtocolStats = function (options, callback) {
-        console.log(options);
-
+        
         var start_ts = (new Date()).getTime();
 
         if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
            || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
             
-            options.collection = "behaviour";
+            //options.collection = "behaviour";
         }
         
         var cursor = self.mdb.collection(options.collection).find({

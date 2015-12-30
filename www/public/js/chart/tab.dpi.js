@@ -205,7 +205,15 @@ var ReportFactory = {
                 },
             },
             chart: {
-
+                point: {
+                    //show: false,
+                    r: 0,
+                    focus: {
+                        expand: {
+                            r: 5
+                        }
+                    }
+                },
             },
             afterRender: function (_chart) {
                 var $widget = $("#" + _chart.elemID).getWidgetParent();

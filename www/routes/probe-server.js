@@ -78,10 +78,12 @@ router.startListeningAtFolder = function (db, folder_path) {
 
     var process_file = function (file_name, cb) {
         var lr = new LineByLineReader(file_name);
-
+        var totalLines = 0;
+        
         lr.on('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
             router.process_message(db, "[" + line + "]");
+            totalLines ++;
         });
 
         lr.on('end', function () {
@@ -90,7 +92,7 @@ router.startListeningAtFolder = function (db, folder_path) {
             fs.unlinkSync( file_name );
             //remove semaphore file
             fs.unlinkSync( file_name + ".sem" );
-            cb();
+            cb( totalLines );
         });
     };
 
@@ -139,8 +141,8 @@ router.startListeningAtFolder = function (db, folder_path) {
 
         isPrintedMessage = false;
         console.log("\nProcessing  file [" + file_name + "]");
-        process_file(file_name, function () {
-            console.log(" ==> DONE ");
+        process_file(file_name, function ( total ) {
+            console.log(" ==> DONE ("+ total +" lines)");
             process_folder();
         });
     };

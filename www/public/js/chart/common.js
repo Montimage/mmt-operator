@@ -157,13 +157,20 @@ $(function () {
     });
     
     
+    if( MMTDrop.tools.localStorage.get("reload") == 1 ){
+        //MMTDrop.tools.localStorage.remove("reload");
+        //loading.onHide();
+    }
     
     setTimeout(function(){
         var p = fPeriod.getDistanceBetweenToSamples() * 1000;
         if( p <= 60*1000 )
             p = 60*1000;
+        //p = 10*1000;
         setTimeout( function(){
-            location.reload();
+            //MMTDrop.tools.localStorage.set("reload", 1);
+            loading.onShowing();
+            fPeriod.filter();
             throw new Error("Stop");
         }, p);
     }, 100);

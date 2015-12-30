@@ -21,8 +21,7 @@
         }],
     "probe_stats_period": 5,
     "buffer_socketio": {
-        "max_length_size": 20000,
-        "max_period_size": 300,
+        "max_length_size": 500000,
         "flush_to_client_period": 3
     },
     "is_in_debug_mode": true
