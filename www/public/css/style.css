@@ -165,12 +165,14 @@ table.treetable  tbody{
 
 table.treetable >tbody>tr>td:first-child {
     width: 100%;
+    cursor: default;
 }
 table.treetable>thead>tr>th:first-child {
     width: 100%;
 }
 table.treetable>tbody>tr>td {
     min-width: 100px;
+    cursor: pointer;
 }
 table.treetable>thead>tr>th {
     min-width: 100px;

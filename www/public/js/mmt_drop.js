@@ -630,7 +630,7 @@ MMTDrop.tools = function () {
         })
 
         if( period_total ){
-            var start_time = data[ data.length - 1][ time_id ] - period_total;
+            var start_time = data[ data.length - 1][ time_id ] - period_total + period_sampling;
             if( start_time < data[0][ time_id ]){
                 var zero = {};                    
                 zero[time_id] = start_time;
@@ -708,6 +708,13 @@ MMTDrop.tools = function () {
         return time;
     };
     
+    _this.printStack = function(){
+        try{
+            throw new Error( "Get Stack" );
+        }catch( err ){
+            console.log( err.stack );
+        }
+    }
     
 	/**
 	 * Convert an object to an array
@@ -722,6 +729,7 @@ MMTDrop.tools = function () {
 		});
 	};
 
+    
 	/**
 	 * Check whether a value existing in an array
 	 * @param {object} val 
@@ -1139,6 +1147,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		return this;
 	};
 
+    var isFirstTime = true;
 	/**
 	 * Reload data from MMT-Operator.
 	 * @param {DatabaseParam} [new_param=null] - a new parameter of database. 
@@ -1149,12 +1158,25 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		if (new_param)
 			_param = MMTDrop.tools.mergeObjects(_param, new_param);
 
-		console.log(" - reload database: " + JSON.stringify(_param));
+        if( isFirstTime ){
+            _param.isReload = false;
+            isFirstTime = false;
+            console.log(" - load database: " + JSON.stringify(_param));
+        }else
+            console.log(" - reload database: " + JSON.stringify(_param));
 
-		_originalData = _get (_param);
+        var newData = _get (_param);
+        
+        if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) )
+            _originalData = _originalData.concat( newData );
+        else
+            _originalData = newData;
+        
+        
 		if (typeof(dataProcessingFn) == "function"){
-			_originalData = dataProcessingFn(_originalData);
+			_originalData = dataProcessingFn( _originalData );
 		}
+        
 		this.reset();
 	};
 
@@ -1378,11 +1400,28 @@ MMTDrop.databaseFactory = {
                 var colsToSum = [COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id,
                                  COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id]
 
-                var obj = MMTDrop.tools.sumByGroups(data,
-                    colsToSum, [COL.TIMESTAMP.id, COL.PROBE_ID.id,
-                                 COL.SOURCE_ID.id, COL.APP_PATH.id]);
+                var obj = {};
+                var ms, msg, ts, probe, src, path;
+                for( var i in data ){
+                    msg = data[i];
+                    ts    = msg[ COL.TIMESTAMP.id ];
+                    probe = msg[ COL.PROBE_ID.id ];
+                    src   = msg[ COL.SOURCE_ID.id ];
+                    path  = msg[ COL.APP_PATH.id ];
+                    
+                    if( obj[ts]                         === undefined ) obj[ts]                    = {};
+                    else if( obj[ts][probe]             === undefined ) obj[ts][probe]             = {};
+                    else if( obj[ts][probe][src]        === undefined ) obj[ts][probe][src]        = {};
+                    else if( obj[ts][probe][src][path]  === undefined ) obj[ts][probe][src][path]  = msg;
+                    else{
+                        ms = obj[ts][probe][src][path];
+                        for( var j=0; j<colsToSum.length; j++)
+                            ms[ colsToSum[j] ] += msg[ colsToSum[j] ];
+                    }
+                }
 
-
+                console.log("OK");
+                
                 for (var time in obj)
                     for (var probe in obj[time])
                         for (var src in obj[time][probe]) {
@@ -1445,7 +1484,7 @@ MMTDrop.databaseFactory = {
                                     var parentMsg = data[parentKey];
 
                                     //if parent does not exist, create it and add it to data
-                                    if (parentMsg == undefined) {
+                                    if (parentMsg === undefined) {
                                         parentMsg = MMTDrop.tools.cloneData(msg);
                                         data[parentKey] = parentMsg;
                                     }
@@ -1463,23 +1502,23 @@ MMTDrop.databaseFactory = {
                             }
                         }
 
-
+                console.log("ok");
                 data = [];
                 for (var time in obj)
                     for (var probe in obj[time])
                         for (var src in obj[time][probe])
                             for (var path in obj[time][probe][src]) {
                                 var msg = obj[time][probe][src][path];
-                                msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
-                                msg[COL.PROBE_ID.id] = parseInt(probe);
-                                msg[COL.SOURCE_ID.id] = src;
-                                msg[COL.TIMESTAMP.id] = parseInt(time);
-                                msg[COL.APP_PATH.id] = path;
-                                msg[COL.APP_ID.id] = MMTDrop.constants.getAppIdFromPath(path);
+                                //msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+                                //msg[COL.PROBE_ID.id]  = parseInt(probe);
+                                //msg[COL.SOURCE_ID.id] = src;
+                                //msg[COL.TIMESTAMP.id] = parseInt(time);
+                                msg[COL.APP_PATH.id]  = path;
+                                msg[COL.APP_ID.id]    = MMTDrop.constants.getAppIdFromPath(path);
                                 //msg[ COL.APP_ID.id  ] = MMTDrop.constants.getProtocolNameFromID( MMTDrop.constants.getAppIdFromPath( path ) );
                                 data.push(msg);
                             }
-
+                console.log("ok");
                 return data;
             }
             
@@ -2262,6 +2301,7 @@ MMTDrop.filterFactory = {
 				//how it filters database when the current selected option is @{val}	
 				//It reloads data from MMT-Operator
 				var param = {period:val.id};
+                param.isReload = true;
 				db.reload(param);
 
 				console.log("Got " + db.data().length + " from DB");
@@ -4040,6 +4080,16 @@ MMTDrop.Chart = function(option, renderFn){
 
 		if (MMTDrop.tools.isFunction(renderFn)){
 
+            if( MMTDrop.tools.isFunction( _option.beforeRender )  ){
+                _option.beforeRender( _this );
+                _option.beforeRender = null;
+            }
+            
+            if( MMTDrop.tools.isFunction( _option.beforeEachRender )  ){
+                _option.beforeEachRender( _this );
+                _option.beforeEachRender = null;
+            }
+            
 			//opt can be changed in this function
 			var data = _prepareData( _option, _data, _database );
 			
@@ -4057,6 +4107,11 @@ MMTDrop.Chart = function(option, renderFn){
             
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );
+                _option.afterRender = null;
+            }
+            
+            if( MMTDrop.tools.isFunction( _option.afterEachRender )  ){
+                _option.afterEachRender( _this );
             }
             
             var afterRender = (((MMTDrop.callback) || {}).chart || {}).afterRender;
@@ -4115,6 +4170,9 @@ MMTDrop.Chart = function(option, renderFn){
 			
 			if( obj.ylabel )
 				opt.ylabel = obj.ylabel;
+            
+            if( obj.height )
+                opt.height = obj.height;
 		}
 
 		//copy data to an array of array containing only data to show
@@ -4463,6 +4521,9 @@ MMTDrop.chartFactory = {
 				obj.shift();
 				
 				var ylabel = option.ylabel;
+                var height = 200;
+                if( option.height )
+                    height = option.height;
 				
 				//pair y==>x
 				var xs = {};
@@ -4509,6 +4570,9 @@ MMTDrop.chartFactory = {
                             //order: 'asc'  // stack order by sum of values ascendantly.
                             order: null   // stack order by data definition.
 		        		},
+                        size:{
+                            height: height  
+                        },
 		        		axis: {
 		        			x: {
 		        				type: "timeseries",

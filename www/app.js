@@ -29,13 +29,14 @@ console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
 if( config.is_in_debug_mode !== true ){
     console.log = function( obj ){};
 }
-/*else{
+else{
     console.old_log = console.log;
     console.log  = function( obj ){
-        
-        console.old_log( (new Date()).toLocaleTimeString() + ": " + obj );
+        var d = (new Date());
+        console.old_log( d.getTime() + " " + d.toLocaleTimeString() );
+        console.old_log( obj );
     }
-}*/
+}
     
 
 var dbconnector = new dbc( {

@@ -210,10 +210,16 @@ var ReportFactory = {
                             label: MMTDrop.constants.getPathFriendlyName(path)
                         });
                     }
+                    
+                    var $widget = $("#" + cLine.elemID).getWidgetParent();
+                    var height = $widget.find(".grid-stack-item-content").innerHeight();
+                        height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                    
                     return {
                         data: arr,
                         columns: columns,
-                        ylabel: fMetric.selectedOption().label + " (in total)"
+                        ylabel: fMetric.selectedOption().label + " (in total)",
+                        height: height
                     };
                 },
             },
@@ -265,7 +271,6 @@ var ReportFactory = {
                         height: height
                     });
                 });
-                $widget.trigger("widget-resized", [$widget]);
             }
         });
 

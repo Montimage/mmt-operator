@@ -162,17 +162,27 @@ $(function () {
         //loading.onHide();
     }
     
+    var reloadCount = 0;
     setTimeout(function(){
         var p = fPeriod.getDistanceBetweenToSamples() * 1000;
         if( p <= 60*1000 )
             p = 60*1000;
         //p = 10*1000;
         setInterval( function(){
-            console.log(" Reload ======>");
-            //MMTDrop.tools.localStorage.set("reload", 1);
+            reloadCount ++;
+            console.log( reloadCount + " Reload ======>");
+            
+            if( reloadCount >= 20 ){
+                location.reload();
+                throw new Error("Stop");
+            }
+                
+            
             loading.onShowing();
             fPeriod.filter();
         }, p);
+        
+        fPeriod.onChange( loading.onShowing  );
         
     }, 100);
 

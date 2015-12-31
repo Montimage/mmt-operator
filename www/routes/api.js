@@ -20,22 +20,22 @@ router.get('/*', function (req, res, next) {
         if (period === PERIOD.HOUR) {
             retval = {
                 collection: 'traffic_min',
-                time: 3600 * 1000
+                time: (60  + 1) * 60* 1000 //+1 min => as the last minute is not reported as it is being processed
             };
         } else if (period === PERIOD.DAY) {
             retval = {
                 collection: 'traffic_min',
-                time: 24 * 3600 * 1000
+                time: (24 * 60 + 1) * 60 * 1000// +1min
             };
         } else if (period === PERIOD.WEEK) {
             retval = {
                 collection: 'traffic_hour',
-                time: 7 * 24 * 3600 * 1000
+                time: (7 * 24 + 1) * 3600 * 1000// +1h
             };
         } else if (period === PERIOD.MONTH) {
             retval = {
                 collection: 'traffic_day',
-                time: 30 * 24 * 3600 * 1000
+                time: (30 + 1) * 24 * 3600 * 1000//+1day
             };
         }
         return retval;
@@ -74,6 +74,8 @@ router.get('/*', function (req, res, next) {
 	options.source = [];
 	options.proto  = [];
     options.period = period;
+    options.isReload = false;
+    
     
 	if (req.query.format instanceof Array)
         req.query.format.forEach( function (e){
@@ -100,6 +102,8 @@ router.get('/*', function (req, res, next) {
         req.query.proto.forEach( function( e){
             options.proto.push( e );
         });
+    if (req.query.isReload)
+		options.isReload = (req.query.isReload === 'true');
 
     var queryDate = function( op ){
         dbconnector.getProtocolStats(op, function(err, data) {
@@ -120,7 +124,7 @@ router.get('/*', function (req, res, next) {
 	    	if( err )
 		    	return next(err);
 		
-    		console.log("lastime: %d %s", time, new Date(time));
+    		console.log("lastime: " + time + " " + (new Date(time)).toLocaleDateString() );
         
             var inteval = options.time;
 		    options.time = {begin: time - inteval, end: time };

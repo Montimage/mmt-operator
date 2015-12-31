@@ -22,9 +22,10 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
     this.pushArray = function( arr ){
         if( arr === undefined )
             arr = []; 
-        console.log( "WINDOW " + name + ": load " + arr.length + " records to RAM"  );
         for( var i=0; i<arr.length; i++ )
             self.push( arr[i] );
+        
+        console.log( "WINDOW " + name + ": load " + arr.length + " records to RAM"  );
     }
     
     //msg.time is in miliseconds;
@@ -91,6 +92,9 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
         if( start_time === undefined )
             start_time = 0;
         
+        //do not report the last element
+        var last_time = self.data[ self.data.length - 1 ][ 3 ];
+        
         if( formats instanceof Array )
             for( var i=0; i<self.data.length; i++ ){
                 var msg = self.data[i];
@@ -99,13 +103,16 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
                 
                 if( msg[3] < start_time )
                     continue;
+                
+                //if( msg[3] >= last_time )
+                //    break;
 
                 if( msg.isFreshData === true)
                     delete( msg.isFreshData );
                 
                 arr.push( msg );
             }
-        
+        console.log( "WINDOW " + self.name + " : got " + arr.length + " records");
         return arr;
     }
     
@@ -129,6 +136,7 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
                     arr.push( msg );
                 }
             }
+        console.log( "WINDOW " + self.name + " : got " + arr.length + " fresh records");
         return arr;
     }
 }

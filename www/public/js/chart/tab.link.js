@@ -83,7 +83,7 @@ var ReportFactory = {
         return {
             id: COL[tmp].id,
             label: label,
-            type: "area"
+            //type: "area"
         };
     },
 
@@ -138,7 +138,7 @@ var ReportFactory = {
                         ylabel += " (bit/second)";
                     }
 
-                    var data = db.stat.sumDataByParent();
+                    var data = db.stat.sumDataByParent( );
                     var obj = MMTDrop.tools.splitData( data, COL.APP_PATH.id );
 
                     cLine.dataLegend = {
@@ -156,7 +156,7 @@ var ReportFactory = {
                         var count = 0;
                         for( var i=0; i<cls.length; i++)
                             if( cls[ i ] === '.') count ++;
-                        if( count >= 5 || count === 0 ){
+                        if( count >= 4 || count === 0 ){
                             delete obj[ cls ];
                             continue;
                         }
@@ -256,10 +256,15 @@ var ReportFactory = {
 
                     var arr = self.addZeroPoints(data);
 
+                    var $widget = $("#" + cLine.elemID).getWidgetParent();
+                    var height = $widget.find(".grid-stack-item-content").innerHeight();
+                        height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                    
                     return {
-                        data: arr,
+                        data   : arr,
                         columns: columns,
-                        ylabel: ylabel
+                        ylabel : ylabel,
+                        height : height
                     };
                 }
             },
@@ -278,9 +283,6 @@ var ReportFactory = {
                 },
                 legend: {
                     show: false
-                },
-                size: {
-                    height: 200
                 },
                 axis: {
                     x: {
@@ -313,9 +315,8 @@ var ReportFactory = {
                     }
                 },
             },
-
             //custom legend
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
                 var legendId = _chart.elemID + "-legend";
@@ -449,32 +450,20 @@ var ReportFactory = {
                 });
 
                 table.DataTable().columns.adjust();
-
-                table.on("draw.dt", function () {
-                    var $div = $('.dataTables_scrollBody');
-                    var h = $div.getWidgetContentOfParent().height() - 110;
-                    $div.css('height', h);
-                    $div.css('margin-top', 10);
-                    $div.css('margin-bottom', 10);
-                    $div.children().filter("table").css("border-top", "thin solid #ddd");
-                });
-
-                //resize when changing window size
+            },
+            afterRender: function( _chart ){
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
                 $widget.on("widget-resized", null, {
-                    table: table,
-                    chart: chart
+                    chart: _chart
                 }, function (event, widget) {
-                    event.data.table.api().draw(false);
                     var height = widget.find(".grid-stack-item-content").innerHeight();
                     height -= widget.find(".filter-bar").outerHeight(true) + 15;
-                    event.data.chart.resize({
+                    console.log( "resize protocol chhart " + height );
+                    event.data.chart.chart.resize({
                         height: height
                     });
-
                 });
-                $widget.trigger("widget-resized", [$widget]);
             }
         });
 
@@ -634,6 +623,10 @@ var ReportFactory = {
                     if (event.data)
                         event.data.api().draw(false);
                 });
+
+            },
+            afterEachRender: function (_chart) {
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
                 $widget.trigger("widget-resized", [$widget]);
             }
         });
@@ -941,10 +934,16 @@ var ReportFactory = {
                     var arr = _this.addZeroPoints(obj);
 
                     cols.unshift(COL.TIMESTAMP);
+                    
+                    var $widget = $("#" + cLine.elemID).getWidgetParent();
+                    var height = $widget.find(".grid-stack-item-content").innerHeight();
+                    height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                    
                     return {
                         data: arr,
                         columns: cols,
-                        ylabel: ylabel
+                        ylabel: ylabel,
+                        height: height
                     };
                 }
             },
@@ -999,6 +998,7 @@ var ReportFactory = {
             },
 
             afterRender: function (chart) {
+                //register resize handle
                 var $widget = $("#" + chart.elemID).getWidgetParent();
                 $widget.on("widget-resized", function (event, $widget) {
                     var height = $widget.find(".grid-stack-item-content").innerHeight();
@@ -1007,7 +1007,6 @@ var ReportFactory = {
                         height: height
                     });
                 });
-                $widget.trigger("widget-resized", [$widget]);
             }
         });
 

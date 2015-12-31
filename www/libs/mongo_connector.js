@@ -235,7 +235,7 @@ var MongoConnector = function (opts) {
     }
 
     self.window = new Window( 5*60,  MAX_LENGTH, "real" );
-    self.window_minute = new Window( 24*60*60,  MAX_LENGTH, "min" );
+    self.window_minute = new Window( (24+1)*60*60,  MAX_LENGTH, "min" );
     
     self.window_minute.addData = function( arr ){
         //add to window_minute
@@ -277,7 +277,8 @@ var MongoConnector = function (opts) {
             };
             self.getCurrentProtocolStats( option, function( err, data ){
                 if( err ) console.error( err.stack );
-                self.window.pushArray( data );
+                //self.window.pushArray( data );
+                self.window.data = data;
             });  
             
             
@@ -292,7 +293,8 @@ var MongoConnector = function (opts) {
             };
             self.getCurrentProtocolStats( option, function( err, data ){
                 if( err ) console.error( err.stack );
-                self.window_minute.pushArray( data );
+                //self.window_minute.pushArray( data );
+                self.window_minute.data = data;
             });
         } );
         
@@ -464,13 +466,23 @@ var MongoConnector = function (opts) {
         console.log(options);
         
         if( options.period === "minute" ){
-            var data = self.window.getAllData( options.format );
+            var data;
+            if( options.isReload )
+                data = self.window.getFreshData( options.format );
+            else
+                data = self.window.getAllData( options.format );
+            
             console.log("got " + data.length + "/" + self.window.data.length + " from window cache");
             callback(null, data );
             return;
         }
         else if( options.collection === "traffic_min"  ){
-            var data = self.window_minute.getAllData( options.format, options.time.begin );
+            var data;
+            if( options.isReload )
+                data = self.window_minute.getFreshData( options.format );
+            else
+                data = self.window_minute.getAllData( options.format, options.time.begin );
+            
             console.log("got " + data.length + "/" + self.window_minute.data.length + " from window_minute cache");
             callback(null, data );
             return;
