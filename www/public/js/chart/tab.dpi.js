@@ -32,7 +32,11 @@ fPeriod.onChange(function () {});
 //create reports
 
 var ReportFactory = {
+    formatTime : function( date ){
+          return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
+    },
     createNodeReport: function (fProbe, database) {
+        var _this = this;
         var COL = MMTDrop.constants.StatsColumn;
         var cTree = MMTDrop.chartFactory.createTree({
             getData: {
@@ -172,6 +176,7 @@ var ReportFactory = {
 						                 MMTDrop.constants.StatsColumn.APP_PATH.id];
 
                     var data = db.data();
+                    
                     data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
 
                     var arr = [];
@@ -179,7 +184,7 @@ var ReportFactory = {
 
                     for (var time in data) {
                         var o = {};
-                        o[MMTDrop.constants.StatsColumn.TIMESTAMP.id] = time;
+                        o[MMTDrop.constants.StatsColumn.TIMESTAMP.id] = parseInt( time );
 
                         var msg = data[time];
                         for (var path in msg) {
@@ -189,6 +194,14 @@ var ReportFactory = {
                         }
                         arr.push(o);
                     }
+                    
+                    var time_id = 3;
+                    var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
+                    var period_total    = 1000 * fPeriod.getSamplePeriodTotal();
+        
+                    arr = MMTDrop.tools.addZeroPointsToData( arr, period_sampling, period_total, time_id );
+                   
+                    
                     var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
                     for (var i = 0; i < header.length; i++) {
                         var path = header[i];
@@ -212,6 +225,32 @@ var ReportFactory = {
                         expand: {
                             r: 5
                         }
+                    }
+                },
+                axis: {
+                    x: {
+                        tick: {
+                            format: _this.formatTime
+                        }
+                    },
+                    y: {
+                        tick: {
+                            count: 5
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 0
+                        }
+                    }
+                },
+                grid: {
+                    x: {
+                        show: false
+                    }
+                },
+                tooltip:{
+                    format: {
+                        title:  _this.formatTime
                     }
                 },
             },

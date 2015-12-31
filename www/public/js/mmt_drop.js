@@ -910,7 +910,8 @@ MMTDrop.tools = function () {
 		if (col == null)
 			throw new Error("Need to define an id");
 		if (Array.isArray (data) == false)
-			throw new Error("Need data tobe an array");
+            return data;
+			//throw new Error("Need data tobe an array");
 		if (data.length === 0)
 			return {};
 
@@ -966,7 +967,8 @@ MMTDrop.tools = function () {
         if ( Array.isArray( colSums ) == false)
 			colSums = [ colSums ];
 		if (Array.isArray (data) == false)
-			throw new Error("Need data tobe an array");
+			//throw new Error("Need data tobe an array");
+            return data;
 
 		var obj = {};
 
