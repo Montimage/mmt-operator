@@ -163,13 +163,9 @@ var ReportFactory = {
                 database.data(oldData);
             },
             afterEachRender: function (_chart) {
-                var str = ""
-                if( _chart.totalProtocols > 1 )
-                    str = "There are "+ _chart.totalProtocols +" protocols/applications";
-                else 
-                    str = "There is "+ _chart.totalProtocols +" protocol";
+                var str = _chart.totalProtocols +" distinct protocols/applications";
                 
-                $("#" + _chart.elemID).append('<div style="font-size:11px; margin-top: 10px">'+ str +'</div>');
+                $("#" + _chart.elemID).append('<div style="font-size:11px; margin-top: 10px; color:green">'+ str +'</div>');
                 
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size

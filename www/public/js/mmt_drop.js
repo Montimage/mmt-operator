@@ -1179,35 +1179,36 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         var newData = _get (_param);
         
         if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) && _originalData.length > 0 ){
+            if( newData.length > 0 ){
+                //remove data outside the period
+                var period = 0;
+                if( _param.period == MMTDrop.constants.period.MINUTE ){
+                    period = 5*60*1000;
+                }
+                else if( _param.period == MMTDrop.constants.period.HOUR ){
+                    period = 60*60*1000;
+                }
+                else if( _param.period == MMTDrop.constants.period.DAY ){
+                    period = 24*60*60*1000;
+                }
 
-            //remove data outside the period
-            var period = 0;
-            if( _param.period == MMTDrop.constants.period.MINUTE ){
-                period = 5*60*1000;
+                var maxTs = newData[ newData.length - 1 ][ 3 ];
+
+                var minTs = maxTs - period;
+
+                var i = 0;
+                for( i=0; i<_originalData.length; i++ ){
+                    if( _originalData[i][ 3 ] >= minTs )
+                        break;
+                }
+                //remove the i-first elements that are older than minTs
+                if( i > 0){
+                    _originalData.splice(0, i);
+                    console.log( " - removed " + i + " elements being older than " + (new Date( minTs )) ) ;
+                }
+
+                _originalData = _originalData.concat( newData );
             }
-            else if( _param.period == MMTDrop.constants.period.HOUR ){
-                period = 60*60*1000;
-            }
-            else if( _param.period == MMTDrop.constants.period.DAY ){
-                period = 24*60*60*1000;
-            }
-            
-            var maxTs = newData[ newData.length - 1 ][ 3 ];
-            
-            var minTs = maxTs - period;
-            
-            var i = 0;
-            for( i=0; i<_originalData.length; i++ ){
-                if( _originalData[i][ 3 ] >= minTs )
-                    break;
-            }
-            //remove the i-first elements that are older than minTs
-            if( i > 0){
-                _originalData.splice(0, i);
-                console.log( " - removed " + i + " elements being older than " + (new Date( minTs )) ) ;
-            }
-            
-            _originalData = _originalData.concat( newData );
         }else
             _originalData = newData;
         
