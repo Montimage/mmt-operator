@@ -62,7 +62,7 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
         
         //
         var numberOfRemoved = 0;
-        while ( self.latestTimestamp - self.oldestTimestamp > MAX_PERIOD 
+        while ( self.latestTimestamp - self.oldestTimestamp >= MAX_PERIOD 
                  || self.data.length > MAX_LENGTH ) {
             
             if( numberOfRemoved >= self.data.length - 1 )
@@ -104,9 +104,6 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
                 if( msg[3] < start_time )
                     continue;
                 
-                //if( msg[3] >= last_time )
-                //    break;
-
                 if( msg.isFreshData === true)
                     delete( msg.isFreshData );
                 
@@ -116,7 +113,6 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
         return arr;
     }
     
-    
     /**
      * Get all fresh data
      */
@@ -125,12 +121,15 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
         if( self.data.length == 0 )
             return arr; 
         
+        //do not report the last element
+        var last_time = self.data[ self.data.length - 1 ][ 3 ];
+        
         if( formats instanceof Array )
             for( var i in self.data ){
                 var msg = self.data[i];
                 if( formats.indexOf( msg[0] ) == -1 )
                     continue;
-
+                
                 if( msg.isFreshData === true){
                     delete( msg.isFreshData );
                     arr.push( msg );

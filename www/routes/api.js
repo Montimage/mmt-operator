@@ -110,6 +110,10 @@ router.get('/*', function (req, res, next) {
 			if (err) {
 				return next(err);
 			}
+            
+            //if( data.length === 0 || data === undefined )
+            //    data = createZeroMessage();
+            
 			//this allow a req coming from a different domain
 			res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");

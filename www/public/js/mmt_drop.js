@@ -797,9 +797,20 @@ MMTDrop.tools = function () {
 	 * @memberof! MMTDrop.tools
 	 */
 	 _this.cloneData = function (obj){
-	 	if( obj instanceof Array )
-	 		return obj.slice(0);
-	 		
+        if( Array.isArray( obj ) ){
+            var _data = [];
+            var msg;
+            for( var i=0; i<obj.length; i++ ){
+                msg = obj[i];
+                if( Array.isArray( msg ))
+                    msg = msg.slice( 0 );
+                else
+                    msg = JSON.parse( JSON.stringify( msg ) );
+                _data.push( msg );
+            }
+            return _data;
+        }
+         
 		var seen = [];
 //		return JSON.parse( JSON.stringify (obj));
 		var str = JSON.stringify(obj, function(key, val) {
@@ -1167,9 +1178,37 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
         var newData = _get (_param);
         
-        if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) )
+        if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) && _originalData.length > 0 ){
+
+            //remove data outside the period
+            var period = 0;
+            if( _param.period == MMTDrop.constants.period.MINUTE ){
+                period = 5*60*1000;
+            }
+            else if( _param.period == MMTDrop.constants.period.HOUR ){
+                period = 60*60*1000;
+            }
+            else if( _param.period == MMTDrop.constants.period.DAY ){
+                period = 24*60*60*1000;
+            }
+            
+            var maxTs = newData[ newData.length - 1 ][ 3 ];
+            
+            var minTs = maxTs - period;
+            
+            var i = 0;
+            for( i=0; i<_originalData.length; i++ ){
+                if( _originalData[i][ 3 ] >= minTs )
+                    break;
+            }
+            //remove the i-first elements that are older than minTs
+            if( i > 0){
+                _originalData.splice(0, i);
+                console.log( " - removed " + i + " elements being older than " + (new Date( minTs )) ) ;
+            }
+            
             _originalData = _originalData.concat( newData );
-        else
+        }else
             _originalData = newData;
         
         
@@ -1185,7 +1224,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 */
 	this.reset = function(){
 		if (_originalData){
-			_data = MMTDrop.tools.cloneData(_originalData);
+            _data = MMTDrop.tools.cloneData(_originalData);
 		}
 	};
 
@@ -1394,6 +1433,7 @@ MMTDrop.databaseFactory = {
     
         
             db.stat.sumDataByParent = function( ){
+            	
                 var data = db.data();
                 //how data is processed for stat
                 var COL = MMTDrop.constants.StatsColumn;
@@ -1419,8 +1459,6 @@ MMTDrop.databaseFactory = {
                             ms[ colsToSum[j] ] += msg[ colsToSum[j] ];
                     }
                 }
-
-                console.log("OK");
                 
                 for (var time in obj)
                     for (var probe in obj[time])
@@ -1502,7 +1540,6 @@ MMTDrop.databaseFactory = {
                             }
                         }
 
-                console.log("ok");
                 data = [];
                 for (var time in obj)
                     for (var probe in obj[time])
@@ -1518,7 +1555,6 @@ MMTDrop.databaseFactory = {
                                 //msg[ COL.APP_ID.id  ] = MMTDrop.constants.getProtocolNameFromID( MMTDrop.constants.getAppIdFromPath( path ) );
                                 data.push(msg);
                             }
-                console.log("ok");
                 return data;
             }
             
@@ -2187,7 +2223,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
                     //async
                     setTimeout(function( cb, _c, _db ){
                         cb[0](_c, _db, cb[1]);
-                    }, 5, callback, _currentSelectedOption, _database);
+                    }, 0, callback, _currentSelectedOption, _database);
 				}
 			}
 		}
@@ -4016,9 +4052,9 @@ MMTDrop.Chart = function(option, renderFn){
 		_data     = db.data();
 		
 		_isCopyData = isCloneData == undefined ? true: false;
-		if( _isCopyData )
+		if( _isCopyData ){
 			_data = MMTDrop.tools.cloneData( _data );
-        
+        }
         _this.database = _database;
 	};
 	
@@ -4854,15 +4890,27 @@ MMTDrop.chartFactory = {
 						var arr = [];
 						var selectedRows = $('#' + elemID + "_treetable tbody tr").filter(".selected");
 						selectedRows.each( function(){;
-							var id = this.dataset["ttId"];
+							var id = this.dataset["ttId"];//data-tt-id
 							arr.push( id );
 						});
+                        MMTDrop.tools.localStorage.set("tree-selected-ids-" + elemID, arr );
 						option.click( arr, this );
 					}
 				});
 
+                var preSelected = MMTDrop.tools.localStorage.get("tree-selected-ids-" + elemID)
 				//click in the first 'tr' of the tree element
-				$("#" + elemID + "_treetable tbody tr:first td:last").trigger("click");
+                if( preSelected == undefined || preSelected.length === 0)
+                    $("#" + elemID + "_treetable tbody tr:first td:last").trigger("click");
+                else{
+                    for( var i=0; i<preSelected.length; i++)
+                        $("#" + elemID + "_treetable tbody tr[data-tt-Id='"+ preSelected[i] +"']").toggleClass("selected");
+                    
+                    //if user regist to handle click event ==> give him the control
+					if (option.click)
+						option.click( preSelected );
+                                     
+                }
 				
 				return table;
 			});

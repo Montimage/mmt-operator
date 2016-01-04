@@ -77,18 +77,20 @@ var ReportFactory = {
                     var probes = db.stat.getProbes();
                     var nProbe = probes.length;
 
+                    var APP = {};
                     var data = [];
-                    for (var app in obj) {
+                    for (var path in obj) {
                         var o = {};
-                        o[group.id] = app;
+                        o[group.id] = path;
+                        APP[ MMTDrop.constants.getAppIdFromPath( path ) ] = 0;
 
                         var isZero = true;
 
                         for (var i in args) {
                             var oo = {};
                             var temp = 0;
-                            for (var prob in obj[app]) {
-                                temp = obj[app][prob][args[i].id];
+                            for (var prob in obj[path]) {
+                                temp = obj[path][prob][args[i].id];
 
                                 if (!isNaN(temp) && parseInt(temp) != 0)
                                     isZero = false;
@@ -109,6 +111,15 @@ var ReportFactory = {
                         if (isZero == false)
                             data.push(o);
                     }
+                    
+                    //calculate total unique app/proto
+                    //console.log( APP );
+                    cTree.totalProtocols = 0;
+                    for( var app in APP )
+                        if( app != -1)  //_other
+                            cTree.totalProtocols ++;
+                    
+                    
                     //columns to show. The first column is APP_PATH
                     var columns = [group];
 
@@ -151,13 +162,21 @@ var ReportFactory = {
                 //reset
                 database.data(oldData);
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
+                var str = ""
+                if( _chart.totalProtocols > 1 )
+                    str = "There are "+ _chart.totalProtocols +" protocols/applications";
+                else 
+                    str = "There is "+ _chart.totalProtocols +" protocol";
+                
+                $("#" + _chart.elemID).append('<div style="font-size:11px; margin-top: 10px">'+ str +'</div>');
+                
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
                 $widget.on("widget-resized", null, _chart.chart, function (event, widget) {
                     var chart = $("table.treetable tbody");
                     var height = widget.find(".grid-stack-item-content").innerHeight();
-                    height -= widget.find(".filter-bar").outerHeight(true) + 45;
+                    height -= widget.find(".filter-bar").outerHeight(true) + 65;
                     chart.css({
                         "max-height": height,
                         "height": height

@@ -106,7 +106,6 @@ var ReportFactory = {
         var COL = MMTDrop.constants.StatsColumn;
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
-        var PROTO = ["ETHERNET", "IP", "UDP", "TCP", "HTTP", "SSL"];
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             name = name.replace("ETHERNET", "ETH");
@@ -148,7 +147,10 @@ var ReportFactory = {
                     };
                     
                     var o = MMTDrop.tools.sumUp (obj["99"], colToSum.id);
-                    cLine.dataLegend.dataTotal = o[ colToSum.id ];
+                    if( o && o[ colToSum.id ])
+                        cLine.dataLegend.dataTotal = o[ colToSum.id ];
+                    else
+                        cLine.dataLegend.dataTotal = 0;
                     
                     //filter key
                     for (var cls in obj) {
@@ -319,16 +321,11 @@ var ReportFactory = {
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
-                var legendId = _chart.elemID + "-legend";
-                $("#"+ legendId).remove();
-                $("#" + _chart.elemID).parent().parent().parent().append(
-                    $('<div class="col-md-4 overflow-auto-xy" id="' + legendId + '"/>')
-                );
-
+                
                 var $table = $("<table>", {
                     "class": "table table-bordered table-striped table-hover table-condensed"
                 });
-                $table.appendTo($("#" + legendId));
+
                 $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
@@ -442,7 +439,17 @@ var ReportFactory = {
                             "text": "100%"
                         })
                     )).appendTo($table);
-
+                
+                
+                var legendId = _chart.elemID + "-legend";
+                
+                $("#"+ legendId).remove();
+                $("#" + _chart.elemID).parent().parent().parent().append(
+                    $('<div class="col-md-4 overflow-auto-xy" id="' + legendId + '"/>')
+                );
+                $table.appendTo($("#" + legendId));
+                
+                
                 var table = $table.dataTable({
                     paging: false,
                     dom: "t",
@@ -602,7 +609,7 @@ var ReportFactory = {
                 "order": [[0, "asc"]],
                 dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
 
                 var table = _chart.chart;
@@ -623,10 +630,6 @@ var ReportFactory = {
                     if (event.data)
                         event.data.api().draw(false);
                 });
-
-            },
-            afterEachRender: function (_chart) {
-                var $widget = $("#" + _chart.elemID).getWidgetParent();
                 $widget.trigger("widget-resized", [$widget]);
             }
         });
