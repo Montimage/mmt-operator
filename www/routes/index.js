@@ -165,4 +165,34 @@ router.get("/profile", function (req, res, next) {
         expiredOn: (new Date()).toDateString()
     });
 });
+
+
+router.get("/setting", function (req, res, next) {
+    if (req.session.loggedin == undefined) {
+        res.redirect("/");
+        return;
+    }
+
+    res.render('setting', {
+        title: 'Setting'
+    });
+});
+
+router.post("/setting", function (req, res, next) {
+    if (req.session.loggedin == undefined) {
+        res.redirect("/");
+        return;
+    }
+    var action = req.body.action;
+    if( action == "empty_database" ){
+        router.dbconnector.emptyDatabase(
+            function(){
+                    res.redirect("/");
+            }
+        );
+        return;
+    }
+    res.redirect("/");
+});
+
 module.exports = router;

@@ -82,6 +82,8 @@ var Cache = function (period) {
                         description: message.description
                     }
                 }
+            } else if( message.format == 11 || message.format == 12 ){
+                  key = Object.keys( message );
             } else {
                 key = {
                     format: message.format,
@@ -577,6 +579,19 @@ var MongoConnector = function (opts) {
             
             cb(null, self.lastTimestamp);
         });
+    };
+    
+    
+    self.emptyDatabase = function( cb ){
+        self.mdb.dropDatabase( function( err, doc ){
+            console.log( "drop database!");
+            self.window.clear();
+            self.window_minute.clear();
+            cache.day.clear();
+            cache.minute.clear();
+            cache.hour.clear();
+            cb( err );
+        } );
     };
 };
 

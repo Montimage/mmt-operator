@@ -92,7 +92,7 @@ app.use(session({
 
 
 routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';
-
+routes.dbconnector        = dbconnector;
 app.use('/', routes);
 app.use('/chart/', chartRoute);
 

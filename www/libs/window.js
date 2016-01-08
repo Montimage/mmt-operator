@@ -18,7 +18,9 @@ var Window = function ( MAX_PERIOD, MAX_LENGTH, name ){
     this.oldestTimestamp = 0;
     
     this.data            = [];
-    
+    this.clear     = function(){
+        this.data = [];
+    }
     this.pushArray = function( arr ){
         if( arr === undefined )
             arr = []; 

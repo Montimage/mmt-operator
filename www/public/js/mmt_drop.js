@@ -278,7 +278,7 @@ MMTDrop.constants = {
 			
 		},
     
-    BehaviourColumn: {
+    BehaviourBandWidthColumn: {
         /** Index of the format id column */
         FORMAT_ID               : {id: 0, label:"Format"} ,
         /** Index of the probe id column */
@@ -290,11 +290,31 @@ MMTDrop.constants = {
         /** property id */
         PROPERTY                : {id: 4, label: "Property"},
         IP                      : {id: 5, label: "IP"},
-        BEFORE                  : {id: 6, label: "Old Profile"},
-        AFTER                   : {id: 7, label: "New Profile"},
-        DESCRIPTION             : {id: 8, label: "Description"},
+        APP                     : {id: 6, label: "Profile"},
+        BW_BEFORE               : {id: 7, label: "Old Bandwidth"},
+        BW_AFTER                : {id: 8, label: "New Bandwidth"},
+        VERDICT                 : {id: 9, label: "Verdict"},
+        DESCRIPTION             : {id: 10, label: "Description"},
     },
-		
+    BehaviourProfileColumn: {
+        /** Index of the format id column */
+        FORMAT_ID               : {id: 0, label:"Format"} ,
+        /** Index of the probe id column */
+        PROBE_ID                : {id: 1, label:"Probe"},
+        /** Index of the data source id column */
+        SOURCE_ID               : {id: 2, label:"Source"},
+        /** Index of the format id column */
+        TIMESTAMP               : {id: 3, label:"Timestamp"},
+        /** property id */
+        PROPERTY                : {id: 4, label: "Property"},
+        IP                      : {id: 5, label: "IP"},
+        PROFILE_BEFORE          : {id: 6, label: "Old Profile"},
+        PROFILE_AFTER           : {id: 7, label: "New Profile"},
+        BW_BEFORE               : {id: 8, label: "Old Bandwidth"},
+        BW_AFTER                : {id: 9, label: "New Bandwidth"},
+        VERDICT                 : {id: 10, label: "Verdict"},
+        DESCRIPTION             : {id: 11, label: "Description"},
+    },
     SecurityColumn: {
         /** Index of the format id column */
         FORMAT_ID               : {id: 0, label:"Format"} ,

@@ -30,7 +30,15 @@ router.process_message = function (db, message) {
             console.log("[DONT 2] " + message);
             return;
         }
-        if( format === 11 || format === 12 ){
+        if( format === 11 && msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ){
+            console.log( message )
+            return;
+            //console.log( mmtAdaptor.formatReportItem( msg ) );
+        }
+        
+        if( format === 12 && msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] == "NO_CHANGE_CATEGORY" ){
+            console.log( message )
+            return;
             //console.log( mmtAdaptor.formatReportItem( msg ) );
         }
         //TODO: to be remove, this chages probe ID, only for Thales demo

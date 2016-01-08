@@ -1,23 +1,23 @@
 var arr = [
     {
-        id: "behaviour",
+        id: "profile",
         title: "Profile",
         x: 0,
-        y: 8,
+        y: 0,
         width: 12,
-        height: 8,
+        height: 6,
         type: "success",
         userData: {
-            fn: "createBehaviourReport"
+            fn: "createProfileReport"
         },
     },
     {
         id: "ba_bandwidth",
         title: "Bandwidth",
         x: 0,
-        y: 0,
+        y: 7,
         width: 12,
-        height: 4,
+        height: 6,
         type: "info",
         userData: {
             fn: "createBandwidthReport"
@@ -26,7 +26,7 @@ var arr = [
 ];
 
 var availableReports = {
-    "createBehaviourReport": "Profile",
+    "createProfileReport": "Profile",
     "createBandwidthReport": "Bandwidth"
 }
 
@@ -348,7 +348,7 @@ function myGraph(domID, root) {
     this.update(root);
 }
 
-MMTDrop.chartFactory.createBehaviour = function (param) {
+MMTDrop.chartFactory.createProfile = function (param) {
     var _param = {};
     _param = MMTDrop.tools.mergeObjects(_param, param);
 
@@ -359,7 +359,7 @@ MMTDrop.chartFactory.createBehaviour = function (param) {
 .node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; } \
 .node { font: 11px sans-serif; } \
 .link { fill: none; stroke-width: 1.5px; } \
-.ba-profile-table{font-size: 12px;}\
+td {text-align: right;}\
 </style>').appendTo("head");
             var root = data[0][0];
             var graph = new myGraph("#" + elemID, root);
@@ -370,10 +370,10 @@ MMTDrop.chartFactory.createBehaviour = function (param) {
 }
 
 var ReportFactory = {
-    createBehaviourReport: function (fProbe, database) {
-        var COL = MMTDrop.constants.BehaviourColumn;
+    createProfileReport: function (fProbe, database) {
+        var COL = MMTDrop.constants.BehaviourProfileColumn;
 
-        var cLine = MMTDrop.chartFactory.createBehaviour({
+        var cLine = MMTDrop.chartFactory.createProfile({
             getData: {
                 getDataFn: function (db) {
                     var root = {
@@ -433,9 +433,9 @@ var ReportFactory = {
                         });
 
                         var msg = data[0];
-                        var cat_name = msg[COL.AFTER.id];
+                        var cat_name = msg[COL.PROFILE_AFTER.id];
 
-                        if (cat_name == "null")
+                        if (cat_name == "null" || cat_name == "" )
                             cat_name = "Inactive";
 
                         addToRoot(ip, cat_name);
@@ -466,15 +466,18 @@ var ReportFactory = {
 
                         //desc of timestamp
                     new_data.sort(function (a, b) {
-                        return b[COL.TIMESTAMP.id] - a[COL.TIMESTAMP.id];
+                        return a[COL.TIMESTAMP.id] - b[COL.TIMESTAMP.id];
                     });
 
-                    for (var i = 0; i < new_data.length; i++) {
-                        var msg = new_data[i];
+                    for (var i = 0; i < new_data.length; i++ ) {
+                        var msg  = new_data[i];
                         var date = msg[COL.TIMESTAMP.id];
                         msg[COL.TIMESTAMP.id] = moment(date).format("YYYY/MM/DD HH:mm");
+                        if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" || msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "")
+                            msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] = "Inactive";
+                        
                         //add index column
-                        msg.push(i + 1);
+                        msg.push( i + 1 );
                     }
 
                     HISTORY = new_data;
@@ -484,23 +487,23 @@ var ReportFactory = {
                         columns: [{
                             id: COL.DESCRIPTION.id + 1,
                             label: ""
-                        }, COL.TIMESTAMP, COL.IP, COL.BEFORE, COL.AFTER]
+                        }, COL.TIMESTAMP, COL.IP, COL.PROFILE_BEFORE, COL.PROFILE_AFTER]
                     };
                 }
             },
             chart: {
-                "paging": true,
+                "paging": false,
                 "info": true,
-                "dom": '<"row" <"col-md-6" l><"col-md-6" f>> <"ba-profile-table overflow-auto-xy" t><"row" <"col-md-4" i><"col-md-8" p>>',
+                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-profile-table overflow-auto-xy" t>',
                 "order": [[0, "desc"]],
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
 
                 table.on("draw.dt", function () {
                     var $div = $('.ba-profile-table');
-                    var h = $div.getWidgetContentOfParent().height() - 120;
+                    var h = $div.getWidgetContentOfParent().height() - 70;
                     $div.css('height', h);
                     $div.css('margin-top', 10);
                     $div.css('margin-bottom', 10);
@@ -535,12 +538,15 @@ var ReportFactory = {
                         if (row.data() == undefined)
                             return;
                         // Open this row
-                        var id = row.data()[0];
-                        var msg = HISTORY[id - 1];
-                        var str = "<li>Property ID: " + msg[COL.PROPERTY.id] + "</li>";
-                        str += "<li>Description: " + msg[COL.DESCRIPTION.id] + "</li>",
+                        var index = row.data()[0];
+                        var msg = HISTORY[index - 1];
+                        var str = "";
+                        for (var i in MMTDrop.constants.BehaviourProfileColumn ) {
+                            var col = MMTDrop.constants.BehaviourProfileColumn[ i ];
 
-                            row.child('<div id="detailTest" class="overflow-auto-x code-json"><ul>' + str + '</ul></div>').show();
+                            str += "<li>" + col.label + "  = " + msg[ col.id ] + "</li>";
+                        }
+                        row.child('<div id="detailTest" class="overflow-auto-x code-json"><ul>' + str + '</ul></div>').show();
                         tr.addClass('shown');
                         openingRow = row;
                     }
@@ -567,15 +573,17 @@ var ReportFactory = {
             }
 
             //ip does not exist in the table
+            msg.push( HISTORY.length + 1);
             HISTORY.push(msg);
 
             var $row = table.row.add([HISTORY.length, 
                                       moment( msg[ COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm"), 
                                       msg[ COL.IP.id],
-                                      msg[ COL.BEFORE.id ],
-                                      msg[ COL.AFTER.id ]
+                                      msg[ COL.PROFILE_BEFORE.id ],
+                                      msg[ COL.PROFILE_AFTER.id ]
                                      ]).draw().node();
-
+            table.columns.adjust();
+            
             animate($row);
         };
 
@@ -604,11 +612,8 @@ var ReportFactory = {
                 //
                 addDataToTable(msg);
 
-                var ip = msg[MMTDrop.constants.BehaviourColumn.IP.id];
-                var cat_name = msg[MMTDrop.constants.BehaviourColumn.AFTER.id];
-
-                if (cat_name == "null")
-                    cat_name = "Inactive";
+                var ip       = msg[MMTDrop.constants.BehaviourProfileColumn.IP.id];
+                var cat_name = msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id];
 
                 var timeout = cLine.chart.moveIp(ip, cat_name);
                 timeout += 1000;
@@ -621,6 +626,8 @@ var ReportFactory = {
             for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
 
+                if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" || msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "")
+                    msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] = "Inactive";
 
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
@@ -667,9 +674,23 @@ var ReportFactory = {
     },
 
     createBandwidthReport: function (fProbe, database) {
-        var COL = MMTDrop.constants.BehaviourColumn;
+        var COL = MMTDrop.constants.BehaviourBandWidthColumn;
         var openingRow = null;
         var HISTORY = {};
+        
+        var formatBandwidth = function( msg ){
+            var txt = 100;
+            var v1 = msg[COL.BW_BEFORE.id],
+                v2 =  msg[COL.BW_AFTER.id];
+            
+            if( v1 == 0 )
+                txt = 1000;
+            if( v2 !== 0  && v1 > v2 )
+                txt = Math.round( v2 / v1 * 100 ) ;
+            
+            txt = txt + "%";
+            return txt;
+        }
 
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
@@ -680,62 +701,45 @@ var ReportFactory = {
                         if (data[i][0] === MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT)
                             new_data.push(data[i]);
 
-                    var obj = MMTDrop.tools.splitData(new_data, COL.IP.id);
+                     //desc of timestamp
+                    new_data.sort(function (a, b) {
+                        return a[COL.TIMESTAMP.id] - b[COL.TIMESTAMP.id];
+                    });
 
-                    data = [];
-
-                    for (var ip in obj) {
-                        var cats = [];
-                        var arr = obj[ip];
-                        HISTORY[ip] = [];
-                        for (var j = 0; j < arr.length; j++) {
-                            var msg = arr[j];
-                            var cat_name = msg[COL.AFTER.id];
-                            //if( cat_name == "null" )
-                            //    cat_name = "Inactive";
-                            cats.push(cat_name);
-
-                            HISTORY[ip].push(msg);
-                        }
-
-                        data.push([0, ip, cats.join()]);
-
-                        data.sort(function (a, b) {
-                            return a[1].localeCompare(b[1]);
-                        });
-
-                        data.forEach(function (d, i) {
-                            d[0] = (i + 1);
-                        });
+                    for (var i = 0; i < new_data.length; i++) {
+                        var msg = new_data[i];
+                        var date = msg[COL.TIMESTAMP.id];
+                        msg[COL.TIMESTAMP.id] = moment(date).format("YYYY/MM/DD HH:mm");
+                        //add index column
+                        msg.push(i + 1);
                     }
+
+                    HISTORY = new_data;
+
                     return {
-                        data: data,
-                        columns: [
-                            {
-                                id: 0,
-                                label: ""
-                            },
-                            {
-                                id: 1,
-                                label: "IP Address",
-                                align: "left"
-                            },
-                            {
-                                id: 2,
-                                label: "Application History",
-                                align: "left"
-                            }
-                        ]
+                        data: new_data,
+                        columns: [{
+                            id: COL.DESCRIPTION.id + 1,
+                            label: ""
+                        }, 
+                                  {id: COL.TIMESTAMP.id, label: COL.TIMESTAMP.label         }, 
+                                  {id: COL.IP.id,        label: COL.IP.label                }, 
+                                  COL.APP, 
+                                  {id: COL.BW_BEFORE.id, label: COL.BW_BEFORE.label + " (B)"}, 
+                                  {id: COL.BW_AFTER.id,  label: COL.BW_AFTER.label + " (B)" }, 
+                                  {id: COL.PROBE_ID.id,  label: "Probe ID"                  }, 
+                                  COL.SOURCE_ID,
+                                  COL.PROPERTY]
                     };
                 }
             },
             chart: {
                 "paging": false,
                 "info": true,
-                "dom": "<f><'ba-bandwidth-table overflow-auto-xy't><l>",
-                "order": [[0, "asc"]],
+                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-bandwidth-table overflow-auto-xy" t>',
+                "order": [[0, "desc"]],
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
 
@@ -776,32 +780,13 @@ var ReportFactory = {
                         if (row.data() == undefined)
                             return;
                         // Open this row
-                        var ip = row.data()[1];
-                        var history = HISTORY[ip];
+                        var index = row.data()[0];
+                        var msg = HISTORY[index - 1];
                         var str = "";
-                        for (var i in history) {
-                            var msg = history[i];
-                            var d = new Date(msg[COL.TIMESTAMP.id]);
-                            var event = {
-                                timestamp: MMTDrop.tools.formatDateTime(d),
-                                property: msg[COL.PROPERTY.id],
-                                before: msg[COL.BEFORE.id],
-                                after: msg[COL.AFTER.id],
-                                description: msg[COL.DESCRIPTION.id],
-                            };
-                            event = JSON.stringify(event, function (key, val) {
-                                    if (typeof val === "string")
-                                        return "<string>" + val + "</string>";
-                                    if (typeof val === "number")
-                                        return "<number>" + val + "</number>";
-                                    return val;
-                                })
-                                .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
-                                .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
-                                //.replace(/\"(.+)\":/g, "<label>$1</label> :")
-                            ;
+                        for (var i in MMTDrop.constants.BehaviourBandWidthColumn ) {
+                            var col = MMTDrop.constants.BehaviourBandWidthColumn[ i ];
 
-                            str += "<li>" + event + "</li>";
+                            str += "<li>" + col.label + "  = " + msg[ col.id ] + "</li>";
                         }
                         row.child('<div id="detailTest" class="overflow-auto-x code-json"><ul>' + str + '</ul></div>').show();
                         tr.addClass('shown');
@@ -813,10 +798,7 @@ var ReportFactory = {
         })
 
         var addDataToTable = function (msg) {
-            var ip = msg[COL.IP.id];
-            var cat_name = msg[COL.AFTER.id];
             var table = cTable.chart.api();
-            var data = table.data();
 
             var animate = function (elem) {
                 //when there is a row being expanding to show its detail
@@ -824,32 +806,30 @@ var ReportFactory = {
                     return;
                 var $elem = $(elem);
                 $(".ba-bandwidth-table").animate({
-                    scrollTop: $elem.offset().top
+                    scrollTop: 0
                 }, 'slow', "linear");
 
                 setTimeout(function ($e) {
                     $e.stop().flash();
-                }, 1000, $elem)
+                }, 100, $elem)
             }
 
-            //foreach row of datatable
-            for (var i = 0; i < data.length; i++) {
-                var row = data[i];
-                if (row[1] == ip) {
-                    found = true;
-                    var old_text = table.cell(i, 2).data();
-                    table.cell(i, 2).data(old_text + ", " + cat_name).draw();
-
-                    animate(table.row(i).node());
-
-                    //add to history
-                    HISTORY[ip].push(msg);
-                    return;
-                }
-            }
+            msg[ COL.TIMESTAMP.id] = moment( msg[ COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm")
+            
             //ip does not exist in the table
-            HISTORY[ip] = [msg];
-            var $row = table.row.add([data.length + 1, ip, cat_name]).draw().node();
+            HISTORY.push(msg);
+            var arr = [HISTORY.length, 
+                                      msg[ COL.TIMESTAMP.id ], 
+                                      msg[ COL.IP.id        ],
+                                      msg[ COL.APP.id       ], 
+                                      msg[ COL.BW_BEFORE.id ], 
+                                      msg[ COL.BW_AFTER.id  ], 
+                                      msg[ COL.PROBE_ID.id  ], 
+                                      msg[ COL.SOURCE_ID.id ],
+                                      msg[ COL.PROPERTY.id  ]
+                                     ]
+            var $row = table.row.add( arr ).draw().node();
+            table.columns.adjust();
             animate($row);
         };
 

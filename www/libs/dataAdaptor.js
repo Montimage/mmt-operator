@@ -76,16 +76,32 @@ var MMTDrop = {
         HISTORY                 : 8,
         VERDICT_COUNT           : 9
     },
-    BehaviourColumnId           : {
+    BehaviourBandwidthColumnId           : {
         FORMAT_ID               : 0, /**< Index of the format id column */
         PROBE_ID                : 1, /**< Index of the probe id column */
         SOURCE_ID               : 2, /**< Index of the data source id column */
         TIMESTAMP               : 3, /**< Index of the format id column */
         PROPERTY                : 4, /**< Index of the application id column */
         IP                      : 5,
-        BEFORE                  : 6,
-        AFTER                   : 7,
-        DESCRIPTION             : 8
+        APP                     : 6,
+        BW_BEFORE               : 7,
+        BW_AFTER                : 8,
+        VERDICT                 : 9,
+        DESCRIPTION             : 10
+    },
+    BehaviourProfileColumnId           : {
+        FORMAT_ID               : 0, /**< Index of the format id column */
+        PROBE_ID                : 1, /**< Index of the probe id column */
+        SOURCE_ID               : 2, /**< Index of the data source id column */
+        TIMESTAMP               : 3, /**< Index of the format id column */
+        PROPERTY                : 4, /**< Index of the application id column */
+        IP                      : 5,
+        PROFILE_BEFORE          : 6,
+        PROFILE_AFTER           : 7,
+        BW_BEFORE               : 8,
+        BW_AFTER                : 9,
+        VERDICT                 : 10,
+        DESCRIPTION             : 11
     },
     /**
      * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
@@ -377,35 +393,73 @@ var MMTDrop = {
     }
 };
 
-MMTDrop.BehaviourPoint = function( entry ){
+MMTDrop.BehaviourBandwidthPoint = function( entry ){
     var retval = {};
-    retval.format                   = entry[MMTDrop.BehaviourColumnId.FORMAT_ID];
-    retval.probe                    = entry[MMTDrop.BehaviourColumnId.PROBE_ID];
-    retval.source                   = entry[MMTDrop.BehaviourColumnId.SOURCE_ID];
-    retval.time                     = entry[MMTDrop.BehaviourColumnId.TIMESTAMP];
-    retval.property                 = entry[MMTDrop.BehaviourColumnId.PROPERTY];
-    retval.ip                       = entry[MMTDrop.BehaviourColumnId.IP];
-    retval.description              = entry[MMTDrop.BehaviourColumnId.DESCRIPTION];
+    retval.format                   = entry[MMTDrop.BehaviourBandwidthColumnId.FORMAT_ID];
+    retval.probe                    = entry[MMTDrop.BehaviourBandwidthColumnId.PROBE_ID];
+    retval.source                   = entry[MMTDrop.BehaviourBandwidthColumnId.SOURCE_ID];
+    retval.time                     = entry[MMTDrop.BehaviourBandwidthColumnId.TIMESTAMP];
+    retval.property                 = entry[MMTDrop.BehaviourBandwidthColumnId.PROPERTY];
+    retval.ip                       = entry[MMTDrop.BehaviourBandwidthColumnId.IP];
+    retval.description              = entry[MMTDrop.BehaviourBandwidthColumnId.DESCRIPTION];
+    retval.verdict                  = entry[MMTDrop.BehaviourProfileColumnId.VERDICT];
     
-    retval.before                  = entry[MMTDrop.BehaviourColumnId.AFTER];
-    retval.after                   = entry[MMTDrop.BehaviourColumnId.AFTER];
+    retval.app                      = entry[MMTDrop.BehaviourBandwidthColumnId.APP];
+    retval.bw_before                = entry[MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE];
+    retval.bw_after                 = entry[MMTDrop.BehaviourBandwidthColumnId.BW_AFTER];
     return retval;
 };
 
-MMTDrop.reverseBehaviourPoint = function(elem) {
+MMTDrop.reverseBehaviourBandwidthPoint = function(elem) {
     var retval = [];
-    retval[MMTDrop.BehaviourColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.BehaviourColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.BehaviourColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.BehaviourColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.BehaviourColumnId.PROPERTY]       = elem.property;
-    retval[MMTDrop.BehaviourColumnId.VERDICT]        = elem.verdict;
-    retval[MMTDrop.BehaviourColumnId.IP]           = elem.ip;
-    retval[MMTDrop.BehaviourColumnId.DESCRIPTION]    = elem.description;
+    retval[MMTDrop.BehaviourBandwidthColumnId.FORMAT_ID]      = elem.format;
+    retval[MMTDrop.BehaviourBandwidthColumnId.PROBE_ID]       = elem.probe;
+    retval[MMTDrop.BehaviourBandwidthColumnId.SOURCE_ID]      = elem.source;
+    retval[MMTDrop.BehaviourBandwidthColumnId.TIMESTAMP]      = elem.time;
+    retval[MMTDrop.BehaviourBandwidthColumnId.PROPERTY]       = elem.property;
+    retval[MMTDrop.BehaviourBandwidthColumnId.VERDICT]        = elem.verdict;
+    retval[MMTDrop.BehaviourBandwidthColumnId.IP]             = elem.ip;
+    retval[MMTDrop.BehaviourBandwidthColumnId.DESCRIPTION]    = elem.description;
+
+    retval[MMTDrop.BehaviourBandwidthColumnId.APP]            = elem.app;
+    retval[MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE]      = elem.bw_before;
+    retval[MMTDrop.BehaviourBandwidthColumnId.BW_AFTER]       = elem.bw_after;
+    return retval;
+}
+
+MMTDrop.BehaviourProfilePoint = function( entry ){
+    var retval = {};
+    retval.format                   = entry[MMTDrop.BehaviourProfileColumnId.FORMAT_ID];
+    retval.probe                    = entry[MMTDrop.BehaviourProfileColumnId.PROBE_ID];
+    retval.source                   = entry[MMTDrop.BehaviourProfileColumnId.SOURCE_ID];
+    retval.time                     = entry[MMTDrop.BehaviourProfileColumnId.TIMESTAMP];
+    retval.property                 = entry[MMTDrop.BehaviourProfileColumnId.PROPERTY];
+    retval.ip                       = entry[MMTDrop.BehaviourProfileColumnId.IP];
+    retval.description              = entry[MMTDrop.BehaviourProfileColumnId.DESCRIPTION];
+    retval.verdict                  = entry[MMTDrop.BehaviourProfileColumnId.VERDICT];
     
-    retval[MMTDrop.BehaviourColumnId.BEFORE]        =  elem.before ;
-    
-    retval[MMTDrop.BehaviourColumnId.AFTER]  = elem.after;
+    retval.profile_before           = entry[MMTDrop.BehaviourProfileColumnId.PROFILE_BEFORE];
+    retval.profile_after            = entry[MMTDrop.BehaviourProfileColumnId.PROFILE_AFTER];
+    retval.bw_before                = entry[MMTDrop.BehaviourProfileColumnId.BW_BEFORE];
+    retval.bw_after                 = entry[MMTDrop.BehaviourProfileColumnId.BW_AFTER];
+    return retval;
+};
+
+MMTDrop.reverseBehaviourProfilePoint = function(elem) {
+    var retval = [];
+    retval[MMTDrop.BehaviourProfileColumnId.FORMAT_ID]      = elem.format;
+    retval[MMTDrop.BehaviourProfileColumnId.PROBE_ID]       = elem.probe;
+    retval[MMTDrop.BehaviourProfileColumnId.SOURCE_ID]      = elem.source;
+    retval[MMTDrop.BehaviourProfileColumnId.TIMESTAMP]      = elem.time;
+    retval[MMTDrop.BehaviourProfileColumnId.PROPERTY]       = elem.property;
+    retval[MMTDrop.BehaviourProfileColumnId.VERDICT]        = elem.verdict;
+    retval[MMTDrop.BehaviourProfileColumnId.IP]             = elem.ip;
+    retval[MMTDrop.BehaviourProfileColumnId.DESCRIPTION]    = elem.description;
+
+    retval[MMTDrop.BehaviourProfileColumnId.PROFILE_BEFORE] = elem.profile_before;
+    retval[MMTDrop.BehaviourProfileColumnId.PROFILE_AFTER]  = elem.profile_after;
+    retval[MMTDrop.BehaviourProfileColumnId.BW_BEFORE]      = elem.bw_before;
+    retval[MMTDrop.BehaviourProfileColumnId.BW_AFTER]       = elem.bw_after;
     return retval;
 }
 
@@ -640,8 +694,9 @@ MMTDrop.formatReportItem = function(entry) {
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
             return MMTDrop.SecurityPoint( entry );
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
+            return MMTDrop.BehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
-            return MMTDrop.BehaviourPoint( entry );
+            return MMTDrop.BehaviourProfilePoint( entry );
             
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
@@ -665,8 +720,9 @@ MMTDrop.reverseFormatReportItem = function(entry) {
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
             return MMTDrop.reverseSecurityPoint( entry );
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
+            return MMTDrop.reverseBehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
-            return MMTDrop.reverseBehaviourPoint( entry );
+            return MMTDrop.reverseBehaviourProfilePoint( entry );
             
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
