@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "profile",
-        title: "Profile",
+        title: "Profile Change",
         x: 0,
         y: 0,
         width: 12,
@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "ba_bandwidth",
-        title: "Bandwidth",
+        title: "Bandwidth Usage Change",
         x: 0,
         y: 7,
         width: 12,
