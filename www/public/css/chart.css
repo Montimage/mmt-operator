@@ -166,7 +166,8 @@
 }
 .code-json{
     white-space: pre-wrap;
-    width: 100%
+    width: 100%;
+    text-align: left;
 }
 
 .code-json number{

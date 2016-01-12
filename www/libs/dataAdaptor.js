@@ -755,6 +755,9 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
+            //ip
+            if( msg[ 6 ] == "undefined ")
+                return null;
             break;
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO

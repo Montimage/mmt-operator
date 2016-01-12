@@ -334,6 +334,10 @@ var ReportFactory = {
                         var obj     = {};
                         
                         var date = new Date( msg[COL.START_TIME.id] );
+                        
+                        if( msg[COL.START_TIME.id] == undefined )
+                            date = new Date( msg[COL.TIMESTAMP.id] );
+                        
                         obj[ COL.START_TIME.id ] = MMTDrop.tools.formatDateTime( date ) ;
                         
                         var host;
@@ -391,7 +395,7 @@ var ReportFactory = {
                 //"scrollY": true,
                 dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
                 
@@ -545,7 +549,7 @@ var ReportFactory = {
             },
 
             //custom legend
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 
@@ -849,7 +853,7 @@ var ReportFactory = {
             },
 
             //custom legend
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 
@@ -1156,7 +1160,7 @@ var ReportFactory = {
             },
 
             //custom legend
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 

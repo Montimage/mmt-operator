@@ -1484,10 +1484,11 @@ MMTDrop.databaseFactory = {
                     src   = msg[ COL.SOURCE_ID.id ];
                     path  = msg[ COL.APP_PATH.id ];
                     
-                    if( obj[ts]                         === undefined ) obj[ts]                    = {};
-                    else if( obj[ts][probe]             === undefined ) obj[ts][probe]             = {};
-                    else if( obj[ts][probe][src]        === undefined ) obj[ts][probe][src]        = {};
-                    else if( obj[ts][probe][src][path]  === undefined ) obj[ts][probe][src][path]  = msg;
+                    if( obj[ts]                    === undefined ) obj[ts]                    = {};
+                    if( obj[ts][probe]             === undefined ) obj[ts][probe]             = {};
+                    if( obj[ts][probe][src]        === undefined ) obj[ts][probe][src]        = {};
+                    
+                    if( obj[ts][probe][src][path]  === undefined ) obj[ts][probe][src][path]  = msg;
                     else{
                         ms = obj[ts][probe][src][path];
                         for( var j=0; j<colsToSum.length; j++)

@@ -107,6 +107,7 @@ var Cache = function (period) {
                         },
                         '$set': {
                             last_time: message.time,
+                            start_time: message.start_time
                         }
                     }
 
@@ -124,7 +125,8 @@ var Cache = function (period) {
                             active_flowcount: message.active_flowcount
                         },
                         '$set': {
-                            last_time: message.time
+                            last_time: message.time,
+                            start_time: message.start_time
                         }
                     };
 
@@ -140,6 +142,7 @@ var Cache = function (period) {
                         },
                         '$set': {
                             last_time: message.time,
+                            start_time: message.start_time,
                             server_name: message.server_name,
                             cdn: message.cdn
                         }
@@ -159,7 +162,8 @@ var Cache = function (period) {
                             active_flowcount: message.active_flowcount
                         },
                         '$set': {
-                            last_time: message.time
+                            last_time: message.time,
+                            start_time: message.start_time
                         }
                     };
 
@@ -590,7 +594,15 @@ var MongoConnector = function (opts) {
             cache.day.clear();
             cache.minute.clear();
             cache.hour.clear();
-            cb( err );
+            
+            //empty also mmt-bandwidth
+            MongoClient.connect('mongodb://' + config.database_server +':27017/mmt-bandwidth', function (err, db) {
+                if (! err) 
+                    db.dropDatabase( function( err, doc) {
+                        cb( err );
+                    });
+            });
+            
         } );
     };
 };

@@ -454,7 +454,6 @@ var ReportFactory = {
 
         var openingRow = null;
         var HISTORY = [];
-
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
@@ -487,7 +486,7 @@ var ReportFactory = {
                         columns: [{
                             id: COL.DESCRIPTION.id + 1,
                             label: ""
-                        }, COL.TIMESTAMP, COL.IP, COL.PROFILE_BEFORE, COL.PROFILE_AFTER]
+                        }, COL.TIMESTAMP, COL.IP, COL.PROFILE_BEFORE, COL.PROFILE_AFTER, COL.VERDICT]
                     };
                 }
             },
@@ -498,6 +497,7 @@ var ReportFactory = {
                 "order": [[0, "desc"]],
             },
             afterEachRender: function (_chart) {
+                $('td:contains("CHANGE_CATEGORY")').parent().css("color", "red")
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
 
@@ -569,6 +569,8 @@ var ReportFactory = {
 
                 setTimeout(function ($e) {
                     $e.stop().flash();
+                    
+                    $('td:contains("CHANGE_CATEGORY")').parent().css("color", "red")
                 }, 100, $elem)
             }
 
@@ -580,7 +582,8 @@ var ReportFactory = {
                                       moment( msg[ COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm"), 
                                       msg[ COL.IP.id],
                                       msg[ COL.PROFILE_BEFORE.id ],
-                                      msg[ COL.PROFILE_AFTER.id ]
+                                      msg[ COL.PROFILE_AFTER.id ],
+                                      msg[ COL.VERDICT.id ],
                                      ]).draw().node();
             table.columns.adjust();
             
@@ -628,7 +631,7 @@ var ReportFactory = {
 
                 if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" || msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "")
                     msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] = "Inactive";
-
+                
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
             }
@@ -648,11 +651,11 @@ var ReportFactory = {
 					[
                 {
                     charts: [cLine],
-                    width: 7
+                    width: 6
                 },
                 {
                     charts: [cTable],
-                    width: 5
+                    width: 6
                 }
 					 ],
 
@@ -729,7 +732,8 @@ var ReportFactory = {
                                   {id: COL.BW_AFTER.id,  label: COL.BW_AFTER.label + " (B)" }, 
                                   {id: COL.PROBE_ID.id,  label: "Probe ID"                  }, 
                                   COL.SOURCE_ID,
-                                  COL.PROPERTY]
+                                  COL.PROPERTY,
+                                  COL.VERDICT]
                     };
                 }
             },
@@ -740,6 +744,7 @@ var ReportFactory = {
                 "order": [[0, "desc"]],
             },
             afterEachRender: function (_chart) {
+                $('td:contains("CHANGE_BANDWIDTH")').parent().css("color", "red")
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
 
@@ -826,11 +831,13 @@ var ReportFactory = {
                                       msg[ COL.BW_AFTER.id  ], 
                                       msg[ COL.PROBE_ID.id  ], 
                                       msg[ COL.SOURCE_ID.id ],
-                                      msg[ COL.PROPERTY.id  ]
+                                      msg[ COL.PROPERTY.id  ],
+                                      msg[ COL.VERDICT.id   ]
                                      ]
             var $row = table.row.add( arr ).draw().node();
             table.columns.adjust();
-            animate($row);
+            //animate($row);
+            $('td:contains("CHANGE_BANDWIDTH")').parent().css("color", "red")
         };
 
         var behaviourChange = {
@@ -858,7 +865,7 @@ var ReportFactory = {
                 //
                 addDataToTable(msg);
 
-                var timeout = 2000;
+                var timeout = 1000;
 
                 setTimeout(this.drawElement.bind(this), timeout);
             }
