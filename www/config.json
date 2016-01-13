@@ -2,7 +2,7 @@
     "database_server": "localhost",
     "redis_server": "192.168.0.7",
     "data_folder": "/Users/nhnghia/temps/share_vbox/probe-output/",
-    "input_mode": "file",
+    "input_mode": "redis",
     "local_network": [{
             "ip": "192.0.0.0",
             "mask": "255.0.0.0"

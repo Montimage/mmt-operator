@@ -33,7 +33,7 @@ else{
     console.old_log = console.log;
     console.log  = function( obj ){
         var d = (new Date());
-        console.old_log( d.getTime() + " " + d.toLocaleTimeString() );
+        console.old_log( d.getTime() + " " + d.toLocaleTimeString());
         console.old_log( obj );
     }
 }

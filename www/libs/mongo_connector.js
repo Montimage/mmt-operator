@@ -3,6 +3,8 @@ var dataAdaptor = require('./dataAdaptor.js');
 var Window      = require("./window.js");
 var config      = require("../config.json");
 
+var DataCache       = require("./cache.js");
+
 var MongoClient = require('mongodb').MongoClient,
     format = require('util').format;
 
@@ -267,9 +269,26 @@ var MongoConnector = function (opts) {
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb = db;
+        
+        self.dataCache = {
+            total: new DataCache( db, "data_total", 
+                                 ["format", "probe", "source"], 
+                                 ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload"], 
+                                 []),
+            mac: new DataCache( db, "data_mac", 
+                               ["format", "probe", "source", "mac_src"], 
+                               ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], 
+                               []),
+            app: new DataCache( db, "data_app", 
+                               ["format", "probe", "source", "path"], 
+                               ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], 
+                               []),
+        }
+        
         console.log("Connected to Database");
         
         //load last data to the windows
+        /*
         self.getLastTime( function( err, ts ){
             
             var option = {
@@ -304,7 +323,7 @@ var MongoConnector = function (opts) {
             });
         } );
         
-        
+        */
     });    
 
 
@@ -320,10 +339,15 @@ var MongoConnector = function (opts) {
         //
         self.window.push( message );
         
-        
         message = dataAdaptor.formatReportItem(message);
+        
+        if( message.format === 100 )
+            for( var i in self.dataCache)
+                self.dataCache[i].addMessage( message );
+        
         var ts = message.time;
 
+        
         self.lastTimestamp = ts;
 
         self.mdb.collection("traffic").insert(message, function (err, records) {
@@ -469,7 +493,12 @@ var MongoConnector = function (opts) {
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
         
-        console.log(options);
+        if( options.id === "dpi"){
+            self.flushCache( function(){
+                self.getCurrentProtocolStats( options, callback );
+            } );
+            return;
+        }
         
         if( options.period === "minute" ){
             var data;
@@ -508,13 +537,7 @@ var MongoConnector = function (opts) {
         
         var start_ts = (new Date()).getTime();
 
-        if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
-           || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
-            
-            //options.collection = "behaviour";
-        }
-        
-        var cursor = self.mdb.collection(options.collection).find({
+        options.query = {
             format: {
                 $in: options.format
             },
@@ -522,7 +545,25 @@ var MongoConnector = function (opts) {
                 '$gte': options.time.begin,
                 '$lte': options.time.end
             }
-        });
+        };
+        
+        if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
+           || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
+            
+            //options.collection = "behaviour";
+        }
+        if( options.id === "dpi" ){
+            options.collection = "data_app_" + options.period_groupby;
+            options.query = {
+                "time": {
+                    '$gte': options.time.begin
+                }
+            }
+        }
+        
+        console.log(options);
+        
+        var cursor = self.mdb.collection(options.collection).find( options.query );
 
         cursor.toArray(function (err, doc) {
             if (err) {

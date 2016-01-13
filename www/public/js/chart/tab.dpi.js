@@ -20,7 +20,9 @@ var availableReports = {
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var fProbe = MMTDrop.filterFactory.createProbeFilter();
 
-var database = MMTDrop.databaseFactory.createStatDB();
+var database = MMTDrop.databaseFactory.createStatDB({
+    id : "dpi"
+});
 var filters = [fPeriod, fProbe];
 
 MMTDrop.setOptions({
@@ -233,12 +235,15 @@ var ReportFactory = {
                     return {
                         data: arr,
                         columns: columns,
-                        ylabel: fMetric.selectedOption().label + " (in total)",
+                        ylabel: fMetric.selectedOption().label + " (total)",
                         height: height
                     };
                 },
             },
             chart: {
+                data:{
+                    type: "step"
+                },
                 point: {
                     //show: false,
                     r: 0,

@@ -14,26 +14,31 @@ router.get('/*', function (req, res, next) {
 
     var getOptionsByPeriod = function (period) {
         var retval = {
+            period_groupby: 'real',
             collection: 'traffic',
             time: 5* 60 * 1000
         };
         if (period === PERIOD.HOUR) {
             retval = {
+                period_groupby: 'minute',
                 collection: 'traffic_min',
                 time: (60  + 1) * 60* 1000 //+1 min => as the last minute is not reported as it is being processed
             };
         } else if (period === PERIOD.DAY) {
             retval = {
+                period_groupby: 'minute',
                 collection: 'traffic_min',
                 time: (24 * 60 + 1) * 60 * 1000// +1min
             };
         } else if (period === PERIOD.WEEK) {
             retval = {
+                period_groupby: 'hour',
                 collection: 'traffic_hour',
                 time: (7 * 24 + 1) * 3600 * 1000// +1h
             };
         } else if (period === PERIOD.MONTH) {
             retval = {
+                period_groupby: 'day',
                 collection: 'traffic_day',
                 time: (30 + 1) * 24 * 3600 * 1000//+1day
             };
@@ -76,6 +81,8 @@ router.get('/*', function (req, res, next) {
     options.period = period;
     options.isReload = false;
     
+    if (req.query.id)
+		options.id = req.query.id;
     
 	if (req.query.format instanceof Array)
         req.query.format.forEach( function (e){
