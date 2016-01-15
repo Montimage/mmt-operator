@@ -31,10 +31,10 @@ if( config.is_in_debug_mode !== true ){
 }
 else{
     console.old_log = console.log;
-    console.log  = function( obj ){
+    console.log  = function(){
         var d = (new Date());
         console.old_log( d.getTime() + " " + d.toLocaleTimeString());
-        console.old_log( obj );
+        console.old_log( arguments );
     }
 }
     

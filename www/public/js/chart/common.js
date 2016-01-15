@@ -20,8 +20,6 @@ var availableReports = {
     "createNodeReport":     "Nodes",
 }
 
-var database = 
-var filters = [];
 */
 
 'use strict'
@@ -39,7 +37,8 @@ for (var i in ReportFactory)
 
 ReportFactory = MMTDrop.reportFactory;
 
-
+var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var reports = [];
 
 $(function () {
     
@@ -47,39 +46,23 @@ $(function () {
             $("#waiting").hide();
     });
     
-    if (filters == undefined || filters.length == 0) {
-        throw new Error("Need to defined a list of filters")
-    }
-    if (database == undefined) {
-        throw new Error("Need to defined a database")
+    if (fPeriod == undefined) {
+        throw new Error("Need to defined fPeriod filter")
     }
 
 
-    var filter;
-    for (var i = filters.length - 1; i >= 0; i--) {
-        filter = filters[i];
-        filter.renderTo("toolbar-box");
-        filter.attachTo(database);
-    }
+    fPeriod.renderTo("toolbar-box");
 
-    //register the chain of filters
-    for (var i = 0; i < filters.length - 1; i++)
-        filters[i].onFilter(function (val, db, index) {
-            filters[index].attachTo(db);
-            filters[index].filter();
-        }, i + 1);
-
-    //the last filter will effect the reports
-    filter = filters[ filters.length - 1 ];
 
     var renderReport = function (node) {
         try {
             var key = node.userData.fn;
             var cb = ReportFactory[key];
             if (MMTDrop.tools.isFunction(cb)) {
-                var rep = ReportFactory[key](filter, database);
+                var rep = ReportFactory[key]( fPeriod );
                 if (rep) {
                     rep.renderTo(node.id + "-content");
+                    reports.push( rep );
                 }
             }
             
@@ -101,9 +84,30 @@ $(function () {
     }
 
 
+    fPeriod.onFilter( function( opt ){
+        console.log("fProbe filtering");
+        for( var i=0; i<reports.length; i++ ){
+            setTimeout( function( rep, period ){
+                rep.database.reload({ period :  period});
+                var filter = MMTDrop.tools.getFirstElement(rep.dataFlow);
+                if(!filter) return;
+
+                filter = filter.object;
+                if (filter instanceof MMTDrop.Filter)
+                    filter.filter();
+                else if( filter ){ //chart
+                    filter.attachTo( rep.database );
+                    filter.redraw();
+                }
+
+            }, 0, reports[i], opt.id);
+            
+        }
+    });
+    
     //fire the chain of filters
     setTimeout( function(){
-        filters[0].filter(); 
+        fPeriod.filter(); 
     }, 0 );
 
 

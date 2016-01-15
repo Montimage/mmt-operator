@@ -451,6 +451,11 @@ MMTDrop.constants = {
 			FLOW_DURATION  : {id: 105, label:"Flow duration"}
 		},
 		
+        //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
+        PureProtocol :  [
+            30,81,82,85,99,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
+            231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,
+        ],
 
 		/**
 		 * A table of Protocol-Id : Name 
@@ -613,11 +618,12 @@ MMTDrop.constants = {
 		 *   
 		 */
 		period : {
-			MINUTE : "minute",
-			HOUR   : "hour",
-			DAY    : "day",
-			WEEK   : "week",
-			MONTH  : "month",
+			MINUTE   : "minute",
+			HOUR     : "hour",
+            HALF_DAY : "12hour",
+			DAY      : "day",
+			WEEK     : "week",
+			MONTH    : "month",
 		},
 };
 
@@ -1206,11 +1212,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         if( isFirstTime ){
             _param.isReload = false;
             isFirstTime = false;
-            console.log(" - load database: " + JSON.stringify(_param));
+            console.log("Load database: " + JSON.stringify(_param));
         }else
-            console.log(" - reload database: " + JSON.stringify(_param));
+            console.log("Reload database: " + JSON.stringify(_param));
 
         var newData = _get (_param);
+        
+        console.log("  - got " + newData.length + " elements");
         
         if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) && _originalData.length > 0 ){
             if( newData.length > 0 ){
@@ -2047,6 +2055,16 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
         return param.id;
     }
     
+    this.hide = function(){
+        $("#" + param.id + "_container").hide();
+    }
+    
+    this.show = function(){
+        $("#" + param.id + "_container").show();
+    }
+    this.getDatabase = function(){
+        return _database;
+    }
 	/**
 	 * Render the filter into an HTML element
 	 * @param {string} elemID Id of the HTML element
@@ -2246,21 +2264,21 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			if (_database != null && 
 					_currentSelectedOption != null){
 
-				console.log("filtering " + param.label + " [" + JSON.stringify(_currentSelectedOption) + "] on database (" + 
-						_database.data().length + " records)");
+                if( _database.data )
+                    console.log("filtering " + param.label + " [" + JSON.stringify(_currentSelectedOption) + "] on database (" + _database.data().length + " records)");
 
 				filterFn(_currentSelectedOption, _database);
 
-				console.log("  - retained " + _database.data().length + " records");
-
-				//annonce to its callback registors
-				for (var i in _onFilterCallbacks){
-					var callback = _onFilterCallbacks[i];
-                    //async
-                    setTimeout(function( cb, _c, _db ){
-                        cb[0](_c, _db, cb[1]);
-                    }, 0, callback, _currentSelectedOption, _database);
-				}
+                if( _database.data )
+                    console.log("  - retained " + _database.data().length + " records");
+            }
+            //annonce to its callback registors
+            for (var i in _onFilterCallbacks){
+                var callback = _onFilterCallbacks[i];
+                //async
+                setTimeout(function( cb, _c, _db ){
+                    cb[0](_c, _db, cb[1]);
+                }, 0, callback, _currentSelectedOption, _database);
 			}
 		}
 		else 
@@ -2355,11 +2373,12 @@ MMTDrop.filterFactory = {
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var options = [];
-    		options.push( { id: periods.MINUTE, label: "Last 5 minutes" });
-			options.push( { id: periods.HOUR  , label: "Last hour" });
-			options.push( { id: periods.DAY   , label: "Last 24 hours", selected: true });
-			options.push( { id: periods.WEEK  , label: "Last 7 days" });
-			options.push( { id: periods.MONTH , label: "Last 30 days" });
+    		options.push( { id: periods.MINUTE    , label: "Last 5 minutes" });
+			options.push( { id: periods.HOUR      , label: "Last hour"      });
+			options.push( { id: periods.HALF_DAY  , label: "Last 12 hour"   });
+			options.push( { id: periods.DAY       , label: "Last 24 hour"   , selected: true });
+			options.push( { id: periods.WEEK      , label: "Last 7 days"    });
+			options.push( { id: periods.MONTH     , label: "Last 30 days"   });
 			//var otherOpt = { id: "00", label: "Other"};
 			
 			//options.push( otherOpt );
@@ -2370,21 +2389,8 @@ MMTDrop.filterFactory = {
 			}, 
 
 			function (val, db){
-				//how it filters database when the current selected option is @{val}	
-				//It reloads data from MMT-Operator
-				var param = {period:val.id};
-                param.isReload = true;
-				db.reload(param);
-
-				console.log("Got " + db.data().length + " from DB");
 			});
 			
-            
-            filter.afterChanged( function (){
-                location.reload();
-                throw new Error("Stop");
-            });
-            
             filter.otherOpt = {};
             
 			filter._renderTo = filter.renderTo;
@@ -2542,6 +2548,10 @@ MMTDrop.filterFactory = {
 
 				filter.option( opts );
 				filter.redraw();
+                if( opts.length == 1 ){
+                    filter.hide();
+                }else
+                    filter.show();
 			});
 
 			return filter;
@@ -2815,12 +2825,13 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	this.activeCharts = [];
 	
 	var _this = this;
-	_this.title = title;
-    _this.filters = filters;
+    _this.database    = database;
+	_this.title       = title;
+    _this.filters     = filters;
     _this.groupCharts = groupCharts;
-    _this.dataFlow = dataFlow;
-    _this.charts = [];
-    _this.callback = [];
+    _this.dataFlow    = dataFlow;
+    _this.charts      = [];
+    _this.callback    = [];
     
     for( var i in groupCharts ){
         var charts = groupCharts[i].charts;
@@ -2864,7 +2875,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			for (var k=0; k<obj.length; k++){
 				var o = obj[k].object;
 
-				o.attachTo( db );
+                o.attachTo( db );
 				//o is either a filter or a chart
 				if (o instanceof MMTDrop.Filter){
 					o.filter();
@@ -3035,8 +3046,11 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			_registTrigger(filter);
 		};
 
+        //for (var i in charts)
+		//	charts[i].attachTo(database, false);
 		for (var i in filters)
 			filters[i].attachTo(database);
+
 
 		//filter for the first element that is either a filter or a chart
 		var filter = MMTDrop.tools.getFirstElement(dataFlow);
@@ -3051,6 +3065,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
         
         }
         
+        //after render
         if( _this.callback.length > 0)
             for( var i=0; i<_this.callback.length; i++){
                 var obj = _this.callback[i];
@@ -4040,9 +4055,10 @@ MMTDrop.Chart = function(option, renderFn){
 			columns : [],	//columns to show and its header labels
 	};
 
-	var _elemID = null;
-	var _this   = this;
-	var _database  = null;
+	var _elemID    = null;
+	var _this      = this;
+	this.database  = null;
+    var _database  = null;
 	var _data      = []; 	//that is a copy of _database.data() at the moment of executing this.attachTo
 	var _isCopyData= false; //whether _database.data() is copied to _data
 	var _isVisible = true;
@@ -4163,19 +4179,16 @@ MMTDrop.Chart = function(option, renderFn){
             }
             
 			//opt can be changed in this function
-			var data = _prepareData( _option, _data, _database );
+			var data = _prepareData( _option, _data, _this.database );
 			
 			if( _option.columns.length == 0){
 				//throw new Error("   no columns to render" );
                 console.log( " no column to render ");
-                return;
 			}
-			
-			if( data.length == 0){
+			else if( data.length == 0){
 				console.log( "   no data");
-			}
-			
-			this.chart = renderFn(_elemID, _option, data);
+			}else 
+                this.chart = renderFn(_elemID, _option, data);
             
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );
@@ -4609,6 +4622,10 @@ MMTDrop.chartFactory = {
 					//if( columns[j].label.indexOf("/") > 0 )
                     if( columns[j].type == "area-stack" ){
                         columns[j].type = "area";
+						groups.push( columns[j].label );
+                    }
+                    else if( columns[j].type == "area-step-stack" ){
+                        columns[j].type = "area-step";
 						groups.push( columns[j].label );
                     }
 				}

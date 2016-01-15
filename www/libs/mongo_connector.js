@@ -273,7 +273,7 @@ var MongoConnector = function (opts) {
         self.dataCache = {
             total: new DataCache( db, "data_total", 
                                  ["format", "probe", "source"], 
-                                 ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload"], 
+                                 ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], 
                                  []),
             mac: new DataCache( db, "data_mac", 
                                ["format", "probe", "source", "mac_src"], 
@@ -286,44 +286,6 @@ var MongoConnector = function (opts) {
         }
         
         console.log("Connected to Database");
-        
-        //load last data to the windows
-        /*
-        self.getLastTime( function( err, ts ){
-            
-            var option = {
-                format: [100, 0, 1, 2, 10, 11, 12],    //all kind of data
-                time:{
-                    begin: ts - self.window.config.MAX_PERIOD,
-                    end  : ts
-                },
-                collection: "traffic",
-                raw: true
-            };
-            self.getCurrentProtocolStats( option, function( err, data ){
-                if( err ) console.error( err.stack );
-                //self.window.pushArray( data );
-                self.window.data = data;
-            });  
-            
-            
-            option = {
-                format: [100, 0, 1, 2, 10, 11, 12],    //all kind of data
-                time:{
-                    begin: ts - self.window_minute.config.MAX_PERIOD,
-                    end  : ts
-                },
-                collection: "traffic_min",
-                raw: true
-            };
-            self.getCurrentProtocolStats( option, function( err, data ){
-                if( err ) console.error( err.stack );
-                //self.window_minute.pushArray( data );
-                self.window_minute.data = data;
-            });
-        } );
-        
-        */
     });    
 
 
@@ -493,7 +455,7 @@ var MongoConnector = function (opts) {
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
         
-        if( options.id === "dpi"){
+        if( options.id !== undefined ){
             self.flushCache( function(){
                 self.getCurrentProtocolStats( options, callback );
             } );
@@ -528,46 +490,17 @@ var MongoConnector = function (opts) {
         } );
     };
     
-    /**
-     * [[Description]]
-     * @param {Object}   options  [[Description]]
-     * @param {[[Type]]} callback [[Description]]
-     */
-    self.getCurrentProtocolStats = function (options, callback) {
+    
+    // Do a query on database. Action can be "find", "aggregate", ...
+    self.queryDB = function(collection, action, query, callback, raw){
+        console.log( action, " on [", collection, "] query : ", query );
         
         var start_ts = (new Date()).getTime();
-
-        options.query = {
-            format: {
-                $in: options.format
-            },
-            "time": {
-                '$gte': options.time.begin,
-                '$lte': options.time.end
-            }
-        };
-        
-        if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
-           || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
-            
-            //options.collection = "behaviour";
-        }
-        if( options.id === "dpi" ){
-            options.collection = "data_app_" + options.period_groupby;
-            options.query = {
-                "time": {
-                    '$gte': options.time.begin
-                }
-            }
-        }
-        
-        console.log(options);
-        
-        var cursor = self.mdb.collection(options.collection).find( options.query );
+        var cursor = self.mdb.collection( collection )[ action ]( query );
 
         cursor.toArray(function (err, doc) {
             if (err) {
-                callback('InternalError');
+                callback( err );
                 return;
             }
 
@@ -575,8 +508,8 @@ var MongoConnector = function (opts) {
             var ts = end_ts - start_ts;
 
             console.log("\n got " + doc.length + " records, took " + ts + " ms");
-
-            if (options.raw) {
+            
+            if ( raw === undefined || raw === true ) {
                 var data = [];
                 for (i in doc) {
                     var record = doc[i];
@@ -597,6 +530,109 @@ var MongoConnector = function (opts) {
             }
 
         });
+    }
+    
+    /**
+     * [[Description]]
+     * @param {Object}   options  [[Description]]
+     * @param {[[Type]]} callback [[Description]]
+     */
+    self.getCurrentProtocolStats = function (options, callback) {
+        
+        options.query = {
+            format: {
+                $in: options.format
+            },
+            "time": {
+                '$gte': options.time.begin,
+                '$lte': options.time.end
+            }
+        };
+        
+        if( options.format.indexOf( dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) >= 0
+           || options.format.indexOf( dataAdaptor.CsvFormat.BA_PROFILE_FORMAT ) >= 0){
+            
+            //options.collection = "behaviour";
+        }
+        if( options.id !== "" ){
+            if( ["link.protocol", "dpi"].indexOf( options.id ) > -1 )
+                options.collection = "data_app_" + options.period_groupby;
+            else if ( ["link.traffic"].indexOf( options.id ) > -1 )
+                options.collection = "data_total_" + options.period_groupby;
+            else if ( ["link.nodes"].indexOf( options.id ) > -1 )
+                options.collection = "data_mac_" + options.period_groupby;
+            else{
+                console.error("Not yet implemented for " + options.id);
+                callback( null, []);
+            }
+                
+            options.query = {
+                "time": {
+                    '$gte': options.time.begin
+                }
+            };
+            
+            if( options.id === "link.protocol" ){
+                //get total data of each app
+                self.queryDB( options.collection, 
+                             "aggregate", 
+                             [
+                                {"$match" : options.query },
+                                {"$group" : {"_id": "$path", "bytecount": {"$sum" : "$bytecount" }, "payloadcount": {"$sum" : "$payloadcount" }, "packetcount": {"$sum" : "$packetcount" }, "active_flowcount": {"$sum" : "$active_flowcount" }}}
+                            ], 
+                             function( err, doc ){
+                        if( err ){
+                            callback( err );
+                            return;
+                        }
+                        
+                        doc.sort( function( a, b) { return b.bytecount - a.bytecount; } );
+                        var top_app_list = [];
+                        for( var i=0; i<doc.length; i++){
+                            if( top_app_list.lenght > 8 ) break;
+                            var path = doc[ i ]._id;
+                            
+                            if( dataAdaptor.getAppLevelFromPath( path ) > 3 )
+                                continue;
+                            
+                            var app  = dataAdaptor.getAppIdFromPath( path ) ;
+                            //add only protocol, not application
+                            if( dataAdaptor.PureProtocol.indexOf( app ) > -1 )
+                                top_app_list.push( path );
+                        }
+                    
+                        var total = {"bytecount": 0, "payloadcount": 0, "packetcount": 0, "active_flowcount": 0};
+                        for( var i=0; i<doc.length; i++){
+                            for( var key in total )
+                                total[ key ] += doc[i][ key ]
+                        }
+                    
+                        total.format = 100;
+                        total.app    = 99;
+                        total.path   = "99";
+                    
+                        options.query.path = { "$in" : top_app_list };
+                    
+                        self.queryDB( options.collection, "find", options.query, function( err, arr){
+                            if( err ){ callback( err); return; };
+                            var msg = arr[ 0 ];
+                            if( options.raw ){
+                                total = dataAdaptor.reverseFormatReportItem( total );
+                                total[ 1 ] = msg[ 1 ];
+                            }else
+                                total.probe = msg.probe;
+                            
+                            arr.push( total );
+                            callback( null, arr );
+                        } , options.raw);
+            }, false );
+                return;
+            }
+        }
+        
+        console.log(options);
+        
+        self.queryDB( options.collection, "find", options.query, callback, options.raw);
     };
 
     /**

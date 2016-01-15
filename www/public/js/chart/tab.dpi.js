@@ -17,19 +17,12 @@ var availableReports = {
     "createNodeReport": "Protocol Hierarchy",
 }
 
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var fProbe = MMTDrop.filterFactory.createProbeFilter();
 
-var database = MMTDrop.databaseFactory.createStatDB({
-    id : "dpi"
-});
-var filters = [fPeriod, fProbe];
 
 MMTDrop.setOptions({
     format_payload: true
 });
 
-fPeriod.onChange(function () {});
 
 //create reports
 
@@ -37,10 +30,13 @@ var ReportFactory = {
     formatTime : function( date ){
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
-    createNodeReport: function (fProbe, database) {
-        var _this = this;
-        var COL = MMTDrop.constants.StatsColumn;
-        var cTree = MMTDrop.chartFactory.createTree({
+    createNodeReport: function ( fPeriod ) {
+        var _this    = this;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var database = MMTDrop.databaseFactory.createStatDB({id : "dpi"});
+        var COL      = MMTDrop.constants.StatsColumn;
+        
+        var cTree    = MMTDrop.chartFactory.createTree({
             getData: {
                 getDataFn: function (db) {
                     var args = [{
@@ -165,9 +161,12 @@ var ReportFactory = {
                 database.data(oldData);
             },
             afterEachRender: function (_chart) {
+                //show total of detected protocol/app
+                if( _chart.totalProtocols == undefined )
+                    _chart.totalProtocols = 0;
                 var str = _chart.totalProtocols +" distinct protocols/applications";
                 
-                $("#" + _chart.elemID).append('<div style="font-size:11px; margin-top: 10px; color:green">'+ str +'</div>');
+                $("#" + _chart.elemID).append('<div style="font-size:12px; margin-top: 10px; color:green">'+ str +'</div>');
                 
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
@@ -235,8 +234,8 @@ var ReportFactory = {
                     return {
                         data: arr,
                         columns: columns,
-                        ylabel: fMetric.selectedOption().label + " (total)",
-                        height: height
+                        ylabel : fMetric.selectedOption().label + " (total)",
+                        height : height
                     };
                 },
             },
@@ -300,14 +299,13 @@ var ReportFactory = {
         fMetric.onFilter(function () {
             cLine.redraw();
         });
-
         var dataFlow = [{
-            object: fProbe,
-            effect: [{
-                object: cTree,
-                effect: []
-					}, ]
-			}, ];
+                object: fProbe,
+                effect: [{
+                    object: cTree,
+                    effect: []
+                            }, ]
+                            }];
 
         var report = new MMTDrop.Report(
             // title
@@ -317,7 +315,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fMetric],
+					[fProbe, fMetric],
 
             //charts
 					[

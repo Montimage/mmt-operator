@@ -199,6 +199,14 @@ var MMTDrop = {
             return path.toString().substring(0, n);
         }
     },
+    
+    getAppLevelFromPath : function( path ){
+        var count = 0;
+        for( var j=0; j<path.length; j++){
+            if( path[ j ] === '.') count ++;
+        }
+        return count;
+    },
 
     /**
      * Return the path friendly name. <br>
@@ -220,9 +228,9 @@ var MMTDrop = {
      * Returns the application id given the application path.
      * @param {Object} path application protocol path
      */
-    getAppId : function(path) {
-        var n = path.toString().lastIndexOf(".");
-        return path.toString().substring(n + 1, path.toString().length);
+    getAppIdFromPath : function(path) {
+        var n = path.lastIndexOf(".");
+        return parseInt( path.substring(n + 1, path.length) );
     },
 
     /**
@@ -390,7 +398,12 @@ var MMTDrop = {
             return msg;
         }
         return null;
-    }
+    },
+    //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
+    PureProtocol :  [
+        30,81,82,85,99,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
+        231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,
+    ],
 };
 
 MMTDrop.BehaviourBandwidthPoint = function( entry ){

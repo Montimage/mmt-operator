@@ -38,16 +38,12 @@ var arr = [
 ];
 
 var availableReports = {
-    "createNodeReport": "Nodes",
+    "createNodeReport"    : "Nodes",
     "createProtocolReport": "Protocols ",
-    "createTrafficReport": "Traffic"
+    "createTrafficReport" : "Traffic"
 }
 
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var fProbe = MMTDrop.filterFactory.createProbeFilter();
 
-var database = MMTDrop.databaseFactory.createStatDB();
-var filters = [fPeriod, fProbe];
 
 MMTDrop.setOptions({
     format_payload: true
@@ -100,12 +96,14 @@ var ReportFactory = {
         return MMTDrop.tools.addZeroPointsToData( data, period_sampling, period_total, time_id );
     },
 
-    createProtocolReport: function (fProbe, database) {
-        var _this = this;
-        var self = this;
-        var COL = MMTDrop.constants.StatsColumn;
-        var fMetric = MMTDrop.filterFactory.createMetricFilter();
-
+    createProtocolReport: function (fPeriod) {
+        var _this    = this;
+        var self     = this;
+        var COL      = MMTDrop.constants.StatsColumn;
+        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol"});
+        var fMetric  = MMTDrop.filterFactory.createMetricFilter();
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             name = name.replace("ETHERNET", "ETH");
@@ -137,7 +135,7 @@ var ReportFactory = {
                         ylabel += " (bit/second)";
                     }
 
-                    var data = db.stat.sumDataByParent( );
+                    var data = db.data(); //db.stat.sumDataByParent( );
                     var obj = MMTDrop.tools.splitData( data, COL.APP_PATH.id );
 
                     cLine.dataLegend = {
@@ -170,6 +168,10 @@ var ReportFactory = {
                                 if( obj[ parent ])
                                     delete obj[ parent ];
                             }
+                        //delete all applications (retain only protocols)
+                        var app = MMTDrop.constants.getAppIdFromPath( cls );
+                        if( MMTDrop.constants.PureProtocol.indexOf( app ) == -1 )
+                            delete obj[ cls ];
                     }
                     
                     //get total data of each app path
@@ -185,7 +187,7 @@ var ReportFactory = {
                         columns.push({
                             id: cls,
                             label: name,
-                            type: "area-stack",
+                            type: "area-step-stack",
                             value: total
                         });
                     }
@@ -477,16 +479,13 @@ var ReportFactory = {
         //
 
         var dataFlow = [{
-            object: fProbe,
-            effect: [{
-                //object: fDir,
-                //effect: [{
+                object: fProbe,
+                effect: [{
                     object: fMetric,
                     effect: [{
                         object: cLine
                     }]
-				//}, ]
-            }]
+				}, ]
 			}, ];
 
         var report = new MMTDrop.Report(
@@ -497,7 +496,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fMetric],
+					[fProbe, fMetric],
 
             //charts
 					[
@@ -513,10 +512,10 @@ var ReportFactory = {
 
         return report;
     },
-    createNodeReport: function (fProbe, database) {
+    createNodeReport: function (fProbe) {
 
         var COL = MMTDrop.constants.StatsColumn;
-
+        var database = MMTDrop.databaseFactory.createStatDB({id: "link.nodes"});
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
@@ -613,6 +612,8 @@ var ReportFactory = {
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
 
                 var table = _chart.chart;
+                if( table === undefined ) return;
+                
                 table.DataTable().columns.adjust();
 
                 table.on("draw.dt", function () {
@@ -635,10 +636,7 @@ var ReportFactory = {
         });
 
         var dataFlow = [{
-            object: fProbe,
-            effect: [{
                 object: cTable
-            }]
         }];
 
         var report = new MMTDrop.Report(
@@ -665,8 +663,9 @@ var ReportFactory = {
         return report;
     },
 
-    createRealtimeTrafficReport: function (fProbe, database) {
+    createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
+        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic"});
         var rep = _this.createTrafficReport(fProbe, database, true);
 
         var COL = MMTDrop.constants.StatsColumn;
@@ -952,6 +951,9 @@ var ReportFactory = {
             },
 
             chart: {
+                data:{
+                    type: "step"
+                },
                 color: {
                     pattern: ['orange', 'green', 'blue']
                 },
@@ -1014,13 +1016,10 @@ var ReportFactory = {
         });
 
         var dataFlow = [{
-            object: fProbe,
-            effect: [{
                 object: fMetric,
                 effect: [{
                     object: cLine
 								}]
-					}]
         }];
 
         var report = new MMTDrop.Report(

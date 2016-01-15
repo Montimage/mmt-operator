@@ -33,34 +33,25 @@ router.process_message = function (db, message) {
         }
         if( format === 11) {
             if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ||
-              msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] ){
+              msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                 console.log( message )
                 return;
                 //console.log( mmtAdaptor.formatReportItem( msg ) );
             }
-            console.log( message );
         }
-        
+
         if( format === 12 ){
-            if( msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] == "NO_CHANGE_CATEGORY" ){
+            if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
+                 || msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
+                 || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ] === "undefined" ){
                 console.log( message )
                 return;
                 //console.log( mmtAdaptor.formatReportItem( msg ) );
             }else{
-                /*
-                var ip          =  msg[ mmtAdaptor.BehaviourProfileColumnId.IP ];
-                var new_profile =  msg[ mmtAdaptor.BehaviourProfileColumnId.PROFILE_AFTER ];
-
-                if( CURRENT_PROFILE[ ip ] === new_profile ){
-                    console.log(" PROFILE_NO_CHANGE ");
-                    console.log( message )
-                    return;
-                }
-
-                CURRENT_PROFILE[ ip ] = new_profile;
-                */
             }
+
         }
+
         //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
         

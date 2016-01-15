@@ -30,12 +30,12 @@ var availableReports = {
     "createTopProtocolReport": "Top Protocols",
 };
 
-var database = MMTDrop.databaseFactory.createFlowDB();
-
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var filters = [fPeriod,
-                MMTDrop.filterFactory.createProbeFilter(),
-    MMTDrop.filterFactory.createFlowMetricFilter()];
+var databases = {
+    "createTopUserReport"     : MMTDrop.databaseFactory.createFlowDB(),
+    "createTopProtocolReport" : MMTDrop.databaseFactory.createFlowDB(),
+}
+//
+MMTDrop.filterFactory.createFlowMetricFilter();
 
 
 function getHMTL( tag ){
