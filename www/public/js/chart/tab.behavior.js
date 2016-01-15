@@ -39,6 +39,48 @@ var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var filters = [fPeriod,
                 MMTDrop.filterFactory.createProbeFilter()];
 
+var modify_profile = function( msg ){
+	var old_verdict = msg[ MMTDrop.constants.BehaviourProfileColumn.VERDICT.id ];
+	var new_verdict = old_verdict;
+ 
+	if( old_verdict === "NO_ACTIVITY_BEFORE" )
+		new_verdict = "No activity before";
+	else if( old_verdict === "NO_ACTIVITY_CURRENT" )
+		new_verdict = "No activity currently detected";
+	else if( old_verdict === "CHANGE_CATEGORY" )
+		new_verdict = "Change in category";
+
+	msg[ MMTDrop.constants.BehaviourProfileColumn.VERDICT.id ] = new_verdict;
+}
+
+
+
+var modify_bandwidth = function( msg ){
+	var COL    = MMTDrop.constants.BehaviourBandWidthColumn;
+	var before = msg[ COL.BW_BEFORE.id ]; 
+	var after  = msg[ COL.BW_AFTER.id ];
+	
+	var change = ((after-before)*100 / before).toFixed( 2 );
+
+	var old_verdict = msg[ COL.VERDICT.id ];
+	var new_verdict = old_verdict;
+ 
+	if( old_verdict === "NO_ACTIVITY_BEFORE" )
+		new_verdict = "No activity before";
+	else if( old_verdict === "NO_ACTIVITY_CURRENT" )
+		new_verdict = "No activity currently detected";
+	else if( old_verdict === "CHANGE_BANDWIDTH" )
+		new_verdict = "Change in bandwidth by " + change + "%";
+
+	msg[ COL.VERDICT.id ] = new_verdict;
+	
+	if( msg[ COL.APP.id ] === "*" )
+		msg[ COL.APP.id ] = "";
+
+	if( msg[ COL.IP.id ] === "*" )
+		msg[ COL.IP.id ] = "";
+}
+
 // Move d to be adjacent to the cluster node.
 function myGraph(domID, root) {
     var _this = this;
@@ -99,6 +141,11 @@ function myGraph(domID, root) {
                 if ((d.children || d._children) && (d.parent))
                     return "pointer";
                 return "default";
+            })
+            .attr("parent", function(d){
+                if( d.parent )
+                    return d.parent.name;
+                return "";
             })
             .attr("name", function (d) {
                 return d.name;
@@ -335,6 +382,29 @@ function myGraph(domID, root) {
     }
 
     this.moveIp = function (ip, new_cat) {
+        var current_cat = $( 'g[name="' + ip + '"]' ).attr("parent");
+        if( current_cat === new_cat ){
+            console.log(ip + " no change category");
+            //flash
+            $('g[name="' + ip + '"]').animate({
+                opacity: 0
+            }, 500, "linear", function () {
+                $(this).animate({
+                    opacity: 1
+                }, 1000, "linear", function () {
+                    $(this).animate({
+                        opacity: 0
+                    }, 1000, "linear", function () {
+                        $(this).animate({
+                            opacity: 1
+                        }, 300);
+                    });
+                });
+            });
+            return 3000;
+        }
+        
+        
         var timeout = this.removeIp(ip);
         setTimeout(this.addIp, timeout, ip, new_cat);
 
@@ -477,6 +547,8 @@ var ReportFactory = {
                         
                         //add index column
                         msg.push( i + 1 );
+			//change verdict
+			modify_profile( msg );
                     }
 
                     HISTORY = new_data;
@@ -576,6 +648,8 @@ var ReportFactory = {
 
             //ip does not exist in the table
             msg.push( HISTORY.length + 1);
+		modify_profile( msg );
+
             HISTORY.push(msg);
 
             var $row = table.row.add([HISTORY.length, 
@@ -715,6 +789,8 @@ var ReportFactory = {
                         msg[COL.TIMESTAMP.id] = moment(date).format("YYYY/MM/DD HH:mm");
                         //add index column
                         msg.push(i + 1);
+			//change verdict
+			modify_bandwidth( msg );
                     }
 
                     HISTORY = new_data;
@@ -726,13 +802,13 @@ var ReportFactory = {
                             label: ""
                         }, 
                                   {id: COL.TIMESTAMP.id, label: COL.TIMESTAMP.label         }, 
+                                  {id: COL.PROBE_ID.id,  label: "Probe ID"                  }, 
+                                  COL.SOURCE_ID,
+                                  COL.PROPERTY,
                                   {id: COL.IP.id,        label: COL.IP.label                }, 
                                   COL.APP, 
                                   {id: COL.BW_BEFORE.id, label: COL.BW_BEFORE.label + " (B)"}, 
                                   {id: COL.BW_AFTER.id,  label: COL.BW_AFTER.label + " (B)" }, 
-                                  {id: COL.PROBE_ID.id,  label: "Probe ID"                  }, 
-                                  COL.SOURCE_ID,
-                                  COL.PROPERTY,
                                   COL.VERDICT]
                     };
                 }
@@ -820,18 +896,19 @@ var ReportFactory = {
             }
 
             msg[ COL.TIMESTAMP.id] = moment( msg[ COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm")
-            
+			modify_bandwidth( msg );
+
             //ip does not exist in the table
             HISTORY.push(msg);
             var arr = [HISTORY.length, 
                                       msg[ COL.TIMESTAMP.id ], 
+                                      msg[ COL.PROBE_ID.id  ], 
+                                      msg[ COL.SOURCE_ID.id ],
+                                      msg[ COL.PROPERTY.id  ],
                                       msg[ COL.IP.id        ],
                                       msg[ COL.APP.id       ], 
                                       msg[ COL.BW_BEFORE.id ], 
                                       msg[ COL.BW_AFTER.id  ], 
-                                      msg[ COL.PROBE_ID.id  ], 
-                                      msg[ COL.SOURCE_ID.id ],
-                                      msg[ COL.PROPERTY.id  ],
                                       msg[ COL.VERDICT.id   ]
                                      ]
             var $row = table.row.add( arr ).draw().node();
