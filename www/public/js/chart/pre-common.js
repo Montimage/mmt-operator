@@ -57,3 +57,7 @@ jQuery.fn.flash = function(){
     this.animate( { "background-color": current }, duration / 2 );
 
 }
+
+MMTDrop.setOptions({
+    format_payload: true
+});

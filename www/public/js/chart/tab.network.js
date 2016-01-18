@@ -6,7 +6,7 @@ var arr = [
         y: 0,
         width: 6,
         height: 9,
-        type: "danger",
+        type: "info",
         userData: {
             fn: "createTopUserReport"
         },
@@ -30,11 +30,6 @@ var availableReports = {
     "createTopProtocolReport": "Top Protocols",
 };
 
-var databases = {
-    "createTopUserReport"     : MMTDrop.databaseFactory.createFlowDB(),
-    "createTopProtocolReport" : MMTDrop.databaseFactory.createFlowDB(),
-}
-//
 MMTDrop.filterFactory.createFlowMetricFilter();
 
 
@@ -741,15 +736,17 @@ var ReportFactory = {
         return report;
     },
     
-    createTopProtocolReport: function (filter, database) {
+    createTopProtocolReport: function (filter) {
         var self = this;
-        var COL = MMTDrop.constants.FlowStatsColumn;
-        var fUser = MMTDrop.filterFactory.createUserFilter();
+        var database = MMTDrop.databaseFactory.createStatDB({id: "network.profile"});
+        var COL      = MMTDrop.constants.StatsColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
             getData: {
                 getDataFn: function (db) {
-                    var col = filter.selectedOption();
+                    var col = fMetric.selectedOption();
 
                     var data = [];
                     //the first column is Timestamp, so I start from 1 instance of 0
@@ -898,9 +895,9 @@ var ReportFactory = {
                     }).appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show detail of this class",
+                        href : "?show detail of this class",
                         title: "click to show detail of this class",
-                        text: val,
+                        text : MMTDrop.tools.formatDataVolume( val ),
                         
                     });
                     $a.on("click", null, key, function( event ){
@@ -973,7 +970,7 @@ var ReportFactory = {
                     
                     $("<td>", {
                         "align": "right",
-                        "html":  val
+                        "html" :  MMTDrop.tools.formatDataVolume( val )
                     }).appendTo($tr);
 
                     $("<td>", {
@@ -1000,7 +997,7 @@ var ReportFactory = {
                     ).append(
                         $("<td>", {
                             "align": "right",
-                            "text": legend.dataTotal
+                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
                         })
                     ).append(
                         $("<td>", {
@@ -1019,15 +1016,13 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{
-            object: filter,
-            effect: [{
-                object: fUser,
+        var dataFlow = [{object:fProbe,
+                         effect:[{
+                object: fMetric,
                 effect: [{
                     object: cPie
                 }]
-                    }]
-        }, ];
+        }, ] }];
 
         var report = new MMTDrop.Report(
             // title
@@ -1037,7 +1032,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fUser],
+					[fProbe, fMetric],
 
             //charts
 					[
@@ -1054,15 +1049,17 @@ var ReportFactory = {
         return report;
     },
 
-    createTopUserReport: function (filter, database) {
+    createTopUserReport: function (filter) {
         var self = this;
-        var COL = MMTDrop.constants.FlowStatsColumn;
-        var fApp = MMTDrop.filterFactory.createClassFilter();
+        var database = MMTDrop.databaseFactory.createStatDB({id: "network.user"});
+        var COL      = MMTDrop.constants.StatsColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
             getData: {
                 getDataFn: function (db) {
-                    var col = filter.selectedOption();
+                    var col = fMetric.selectedOption();
 
                     var data = [];
                     //the first column is Timestamp, so I start from 1 instance of 0
@@ -1076,15 +1073,19 @@ var ReportFactory = {
                     };
 
                     var db_data = db.data();
+                    
                     for( var i=0; i< db_data.length; i++){
-                        var val = db_data[i][ col.id ];
-                        var name = db_data[i][ COL.CLIENT_ADDR.id ];
+                        var val  = db_data[i][ col.id ];
+                        var name = db_data[i][ COL.IP_SRC.id ];
                         
-                        if( cPie.dataLegend.data[name] === undefined )
-                            cPie.dataLegend.data[name] = 0;
+                        if( name === "*")
+                            cPie.dataLegend.dataTotal  = val;
+                        else{
+                            if( cPie.dataLegend.data[name] === undefined )
+                                cPie.dataLegend.data[name] = 0;
 
-                        cPie.dataLegend.data[name] += val;
-                        cPie.dataLegend.dataTotal  += val;
+                            cPie.dataLegend.data[name] += val;
+                        }
                     }
                     for( var name in cPie.dataLegend.data )
                         data.push({
@@ -1099,12 +1100,12 @@ var ReportFactory = {
 
                     var top = 7;
                     if( data.length > top+1 && cPie.showAll !== true){
-                        var val = 0;
+                        var val = cPie.dataLegend.dataTotal;
                         
                         //update data
                         for (var i=top; i<data.length; i++ ){
                             var msg = data[i];
-                            val += msg.val;
+                            val -= msg.val;
                         }
                                                 
                         data[top] = {
@@ -1204,9 +1205,9 @@ var ReportFactory = {
                     }).appendTo($tr);
 
                     var $atotal = $("<a>", {
-                        text: val,
+                        text : MMTDrop.tools.formatDataVolume( val ),
                         title: "click to show detail of this user",
-                        href:"?show detail of this user"
+                        href :"?show detail of this user"
                     });
                     
                     //click to show detail of this user
@@ -1287,7 +1288,7 @@ var ReportFactory = {
                     
                     $("<td>", {
                         "align": "right",
-                        "html":  val
+                        "html":  MMTDrop.tools.formatDataVolume( val ),
                     }).appendTo($tr);
 
                     $("<td>", {
@@ -1314,7 +1315,7 @@ var ReportFactory = {
                     ).append(
                         $("<td>", {
                             "align": "right",
-                            "text": legend.dataTotal
+                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
                         })
                     ).append(
                         $("<td>", {
@@ -1327,21 +1328,19 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom: "t",
-                    order: [[2, "desc"]]
+                    order: [[3, "desc"]]
                 });
             }
         });
         //
 
-        var dataFlow = [{
-            object: filter,
-            effect: [{
-                object: fApp,
+        var dataFlow = [{object:fProbe,
+                         effect:[{
+                object: fMetric,
                 effect: [{
                     object: cPie
                 }]
-                    }]
-        }, ];
+        }, ] }];
 
         var report = new MMTDrop.Report(
             // title
@@ -1351,7 +1350,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fApp],
+					[fProbe, fMetric],
 
             //charts
 					[

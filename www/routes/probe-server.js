@@ -23,11 +23,11 @@ router.process_message = function (db, message) {
         if (format == 99)
             return;
 
-        if (format == mmtAdaptor.CsvFormat.STATS_FORMAT && config.local_network != null && mmtAdaptor.setDirectionStatFlowByIP(msg, config.local_network) == null) {
+        if (format == mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
             console.log("[DONT 1] " + message);
-            //return;
+            return;
         }
-        if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) && mmtAdaptor.setDirectionProtocolFlow(msg, config.local_network) == null) {
+        else if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) && mmtAdaptor.setDirectionProtocolFlow(msg ) == null) {
             console.log("[DONT 2] " + message);
             return;
         }
@@ -43,7 +43,7 @@ router.process_message = function (db, message) {
         if( format === 12 ){
             if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
-                 || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ] === "undefined" ){
+                 || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
                 console.log( message )
                 return;
                 //console.log( mmtAdaptor.formatReportItem( msg ) );

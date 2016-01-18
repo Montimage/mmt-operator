@@ -28,4 +28,10 @@ html
     if( !locals.is_in_debug_mode )
         script(type='text/javascript').
             console.log = function( obj ){};
+    script(type='text/javascript').
+        var id = window.location.pathname;
+        if( id !== "login" && id !== "logout"  && id !== "" )
+            try{
+                MMTDrop.tools.cookie.set("current_url", id, 1);
+            }catch( ex ){ console.log( ex ); }
     block content

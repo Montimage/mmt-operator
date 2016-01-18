@@ -618,12 +618,13 @@ MMTDrop.constants = {
 		 *   
 		 */
 		period : {
-			MINUTE   : "minute",
-			HOUR     : "hour",
-            HALF_DAY : "12hour",
-			DAY      : "day",
-			WEEK     : "week",
-			MONTH    : "month",
+			MINUTE      : "minute",
+			HOUR        : "hour",
+            HALF_DAY    : "12hours",
+            QUARTER_DAY : "6hours",
+			DAY         : "day",
+			WEEK        : "week",
+			MONTH       : "month",
 		},
 };
 
@@ -933,6 +934,37 @@ MMTDrop.tools = function () {
 		};
 	}();
 
+    
+    _this.cookie = {
+        set: function(name, value, days) {
+            var expires;
+
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toGMTString();
+            } else {
+                expires = "";
+            }
+            document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + expires + "; path=/";
+        },
+
+        get: function(name) {
+            var nameEQ = encodeURIComponent(name) + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length, c.length));
+            }
+            return null;
+        },
+
+        remove: function(name) {
+            createCookie(name, "", -1);
+        }
+
+    }
 
 	/**
 	 * Check if an object is a function
@@ -1656,6 +1688,7 @@ MMTDrop.databaseFactory = {
 				var obj = {};
 				var appId = 0;
 				var catId = -1;
+                var path ;
 				for (var i=0; i<data.length; i++){
 					appId = data[i][MMTDrop.constants.StatsColumn.APP_ID.id];
 					catId = MMTDrop.constants.getCategoryIdFromAppId( appId );
@@ -2075,7 +2108,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 		//var fcontainer = $('<div>',  {class: 'col-xs-6 col-sm-4 col-md-3 col-lg-2  pull-right', id: param.id + "_container"});
 		var fcontainer = $('<div>',  {class: 'filter-container  pull-right', id: param.id + "_container"});
-		var fdiv =       $('<div>',  {class: 'input-group '});
+		var fdiv =       $('<div>',  {class: 'input-group input-group-sm'});
 		var span =       $('<span>', {class: 'input-group-addon', text: param.label});
 		var filter =     $('<select>',{class: "form-control",     id  : param.id});
 
@@ -2359,6 +2392,18 @@ MMTDrop.filterFactory = {
 
 			}
 			);
+            filter.getUnit = function(){
+                var val = filter.selectedOption().id;
+                switch( val ){
+                    case MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME:
+                    case MMTDrop.constants.StatsColumn.DATA_VOLUME:
+                        return "B";
+                        
+                    case MMTDrop.constants.StatsColumn.PACKET_COUNT:
+                    case MMTDrop.constants.StatsColumn.ACTIVE_FLOWS:
+                        return "";
+                }
+            }
 			return filter;
 		},
 
@@ -2373,12 +2418,13 @@ MMTDrop.filterFactory = {
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var options = [];
-    		options.push( { id: periods.MINUTE    , label: "Last 5 minutes" });
-			options.push( { id: periods.HOUR      , label: "Last hour"      });
-			options.push( { id: periods.HALF_DAY  , label: "Last 12 hour"   });
-			options.push( { id: periods.DAY       , label: "Last 24 hour"   , selected: true });
-			options.push( { id: periods.WEEK      , label: "Last 7 days"    });
-			options.push( { id: periods.MONTH     , label: "Last 30 days"   });
+    		options.push( { id: periods.MINUTE     , label: "Last 5 minutes" });
+			options.push( { id: periods.HOUR       , label: "Last hour"      });
+			options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
+			options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"   });
+			options.push( { id: periods.DAY        , label: "Last 24 hours"   , selected: true });
+			options.push( { id: periods.WEEK       , label: "Last 7 days"    });
+			options.push( { id: periods.MONTH      , label: "Last 30 days"   });
 			//var otherOpt = { id: "00", label: "Other"};
 			
 			//options.push( otherOpt );
@@ -2437,15 +2483,22 @@ MMTDrop.filterFactory = {
                         period = 5*60//5 min
                         break;
                     case MMTDrop.constants.period.HOUR :
-                        period = 60*60;    //each minute
+                        period = 60*60;    //1 hour
+                        break;
+                    case MMTDrop.constants.period.QUARTER_DAY :
+                        period = 6*60*60;    //6 hours
+                        break;
+                    case MMTDrop.constants.period.HALF_DAY :
+                        period = 12*60*60;    //12 hours
                         break;
                     case MMTDrop.constants.period.DAY : 
-                        period = 24*60*60;    //each hour
+                        period = 24*60*60;    //24 hours
                         break;
                     case MMTDrop.constants.period.WEEK : 
-                        period = 7*24*60*60;    //each hour
+                        period = 7*24*60*60;    //7 days
+                        break;
                     case MMTDrop.constants.period.MONTH : 
-                        period = 30*24*60*60;    //each day
+                        period = 30*24*60*60;    //30 days
                         break;
                 }
                 return period;
@@ -2461,14 +2514,15 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.period.MINUTE : 
                         period = MMTDrop.config.probe_stats_period;
                         break;
-                    case MMTDrop.constants.period.HOUR :
-                        period = 60;    //each minute
-                        break;
-                    case MMTDrop.constants.period.DAY : 
+                    case MMTDrop.constants.period.HOUR        :
+                    case MMTDrop.constants.period.QUARTER_DAY :
+                    case MMTDrop.constants.period.HALF_DAY    :
+                    case MMTDrop.constants.period.DAY         : 
                         period = 60;    //each minute 
                         break;
                     case MMTDrop.constants.period.WEEK : 
                         period = 60*60;    //each hour
+                        break;
                     case MMTDrop.constants.period.MONTH : 
                         period = 24*60*60;    //each day
                         break;
@@ -2655,7 +2709,7 @@ MMTDrop.filterFactory = {
 				//get a list of probe IDs
 				//to speedup, data are splited into groupes having the same AppID
 				data = db.data();
-                var user_col_id = MMTDrop.constants.StatsColumn.MAC_SRC.id;
+                var user_col_id = MMTDrop.constants.StatsColumn.IP_SRC.id;
                 
                 var format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
                 if( data[0] )
@@ -2701,7 +2755,7 @@ MMTDrop.filterFactory = {
 			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
-				label   : "Class",
+				label   : "Profile",
 				options : options,
 			}, 
 			function (val, db){

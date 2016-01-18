@@ -29,7 +29,7 @@ var arr = [
         x: 0,
         y: 10,
         width: 12,
-        height: 7,
+        height: 5,
         type: "warning",
         userData: {
             fn: "createNodeReport"
@@ -43,11 +43,6 @@ var availableReports = {
     "createTrafficReport" : "Traffic"
 }
 
-
-
-MMTDrop.setOptions({
-    format_payload: true
-});
 
 
 function inDetailMode() {
@@ -124,15 +119,22 @@ var ReportFactory = {
                     var period = fPeriod.getDistanceBetweenToSamples();
 
                     var ylabel = col.label;
+                    var unit   = "";
 
                     if (col.id === COL.PACKET_COUNT.id) {
                         period = 1; //donot change the total number
                         ylabel += " (total)";
+                        unit   = "Packet Count";
                     } else if (col.id === COL.ACTIVE_FLOWS.id) {
                         ylabel += " (per second)";
+                        unit   = "Flow Count";
                     } else {
                         period /= 8; //  bit/second
                         ylabel += " (bit/second)";
+                        if( col.id === COL.DATA_VOLUME.id )
+                            unit = "Data (Byte)";
+                        else
+                            unit = "Payload (Byte)";
                     }
 
                     var data = db.data(); //db.stat.sumDataByParent( );
@@ -140,8 +142,8 @@ var ReportFactory = {
 
                     cLine.dataLegend = {
                         "dataTotal": 0,
-                        "label": col.label,
-                        "data": {}
+                        "label"    : unit,
+                        "data"     : {}
                     };
                     
                     var o = MMTDrop.tools.sumUp (obj["99"], colToSum.id);
@@ -543,12 +545,12 @@ var ReportFactory = {
                             };
                         }
 
-                        obj[mac]["Probe ID"] = msg[COL.PROBE_ID.id];
-                        obj[mac]["In Frames"] += msg[COL.DL_PACKET_COUNT.id];
-                        obj[mac]["Out Frames"] += msg[COL.UL_PACKET_COUNT.id];
-                        obj[mac]["In Bytes"] += msg[COL.DL_DATA_VOLUME.id];
-                        obj[mac]["Out Bytes"] += msg[COL.UL_DATA_VOLUME.id];
-                        obj[mac]["Total Bytes"] += msg[COL.DATA_VOLUME.id];
+                        obj[mac]["Probe ID"]         = msg[COL.PROBE_ID.id];
+                        obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
+                        obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
+                        obj[mac]["In Bytes"]        += msg[COL.DL_DATA_VOLUME.id];
+                        obj[mac]["Out Bytes"]       += msg[COL.UL_DATA_VOLUME.id];
+                        obj[mac]["Total Bytes"]     += msg[COL.DATA_VOLUME.id];
                         obj[mac]["Last Update Time"] = msg[COL.TIMESTAMP.id];
                     }
 

@@ -1,4 +1,5 @@
-var ipLib = require("ip");
+var ipLib  = require("ip");
+var config = require("../config.json");
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -293,96 +294,65 @@ var MMTDrop = {
                 return prop;
     },
     
-    /**
-    * 
-    */
-     /**
-    * 
-    */
-    setDirectionProtocolStatByMAC: function( msg, serverMAC ){
+    setDirectionStatFlowByIP: function( msg ){
+        if( config.local_network == null )
+            return msg;
+        
         var COL       = this.StatsColumnId;
         
-        if( msg[COL.MAC_DEST] == serverMAC )
+        if( this.isLocalIP( msg[COL.IP_SRC] )  )
             return msg;
-        else if ( msg[COL.MAC_SRC] == serverMAC ){
-            //change direction
-            msg[COL.MAC_SRC]  = msg[COL.MAC_DEST];
-            msg[COL.MAC_DEST] = serverMAC;
-            //Permute DL <--> UL
-            var tmp 
-            for(var i=0; i<3; i++){
-                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
-                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
-                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
-            }
-            return msg;
-        }
-        return null;
-    },
-    setDirectionStatFlowByIP: function( msg, local_network){
-        var COL       = this.StatsColumnId;
-        
-        var rootsIP = [];
-        for( var i in local_network ){
-            var lo   = local_network[i];
-            var root = ipLib.mask(lo.ip, lo.mask);
-            
-            rootsIP.push(  {root: root, mask: lo.mask } );
-        }
-        var isInside = function( ip ){
-            if( ip == "undefined" )
-                return true;
-            
-            for( var i in rootsIP ){
-                var lo = rootsIP[i];
-                if( ipLib.mask( ip, lo.mask ) == lo.root )
-                    return true;
-            }
-            return false;  
-        }        
-        
-        if( isInside( msg[COL.IP_SRC] )  )
-            return msg;
-        else if ( isInside( msg[COL.IP_DEST] ) ){
-            //Permute DL <--> UL
-            var tmp = msg[COL.IP_SRC];
-
-            //change direction
-            msg[COL.IP_SRC] = msg[COL.IP_DEST];
-            msg[COL.IP_DEST] = tmp;
-
-            for(var i=0; i<2; i++){
-                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
-                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
-                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
-            }
-            return msg;
+        else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
+            this.inverseStatDirection( msg )
         }
         return null;
     },
     
-    setDirectionProtocolFlow: function( msg, local_network){
+    isLocalIP : function( ip ){
+        if( this._localIPs === undefined ){
+            var rootsIP = [];
+            for( var i in config.local_network ){
+                var lo   = config.local_network[i];
+                var root = ipLib.mask(lo.ip, lo.mask);
+
+                rootsIP.push(  {root: root, mask: lo.mask } );
+            }
+            this._localIPs = rootsIP;
+        }
+        for( var i in this._localIPs ){
+            var lo = this._localIPs[ i ];
+            if( ipLib.mask( ip, lo.mask ) == lo.root )
+                return true;
+        }
+        return false;  
+    },
+    inverseStatDirection: function( msg ){
+        var COL       = this.StatsColumnId;
+        //Permute DL <--> UL
+        var tmp = msg[COL.IP_SRC];
+        //change direction
+        msg[COL.IP_SRC]  = msg[COL.IP_DEST];
+        msg[COL.IP_DEST] = tmp;
+
+        var tmp = msg[COL.MAC_SRC];
+        //change direction
+        msg[COL.MAC_SRC]  = msg[COL.MAC_DEST];
+        msg[COL.MAC_DEST] = tmp;
+        
+        for(var i=0; i<2; i++){
+            tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
+            msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
+            msg[ COL.DL_DATA_VOLUME + i ] = tmp;
+        }
+        return msg;
+    },
+    
+    setDirectionProtocolFlow: function( msg ){
         var COL       = this.FlowStatsColumnId;
         
-        var rootsIP = [];
-        for( var i in local_network ){
-            var lo   = local_network[i];
-            var root = ipLib.mask(lo.ip, lo.mask);
-            
-            rootsIP.push(  {root: root, mask: lo.mask } );
-        }
-        var isInside = function( ip ){
-            for( var i in rootsIP ){
-                var lo = rootsIP[i];
-                if( ipLib.mask( ip, lo.mask ) == lo.root )
-                    return true;
-            }
-            return false;  
-        }        
-        
-        if( isInside( msg[COL.CLIENT_ADDR] )  )
+        if( this.isLocalIP( msg[COL.CLIENT_ADDR] )  )
             return msg;
-        else if ( isInside( msg[COL.SERVER_ADDR] ) ){
+        else if ( this.isLocalIP( msg[COL.SERVER_ADDR] ) ){
             //Permute DL <--> UL
             var tmp = msg[COL.CLIENT_ADDR];
 

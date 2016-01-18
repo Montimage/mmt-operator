@@ -74,7 +74,7 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(compress()); 
+//app.use(compress()); 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -132,8 +132,8 @@ app.use(function(err, req, res, next) {
 
 
 function exit(){
-    console.log("bye!\n");
     setTimeout( function(){
+        console.log("bye!\n");
         process.exit(1);
     }, 2000 );
 }

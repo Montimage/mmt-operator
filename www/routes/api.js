@@ -5,11 +5,13 @@ router.get('/*', function (req, res, next) {
     var dbconnector = router.dbconnector;
     
     var PERIOD = {
-        MINUTE: "minute",
-        HOUR: "hour",
-        DAY: "day",
-        WEEK: "week",
-        MONTH: "month"
+        MINUTE     : "minute",
+        HOUR       : "hour",
+        HALF_DAY   : "12hours",
+        QUARTER_DAY: "6hours",
+        DAY        : "day",
+        WEEK       : "week",
+        MONTH      : "month"
     };
 
     var getOptionsByPeriod = function (period) {
@@ -23,6 +25,18 @@ router.get('/*', function (req, res, next) {
                 period_groupby: 'minute',
                 collection: 'traffic_min',
                 time: (60  + 1) * 60* 1000 //+1 min => as the last minute is not reported as it is being processed
+            };
+        } else if (period === PERIOD.HALF_DAY) {
+            retval = {
+                period_groupby: 'minute',
+                collection: 'traffic_min',
+                time: (12 * 60 + 1) * 60 * 1000// +1min
+            };
+        } else if (period === PERIOD.QUARTER_DAY) {
+            retval = {
+                period_groupby: 'minute',
+                collection: 'traffic_min',
+                time: (6 * 60 + 1) * 60 * 1000// +1min
             };
         } else if (period === PERIOD.DAY) {
             retval = {

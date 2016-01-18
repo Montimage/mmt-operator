@@ -10,6 +10,7 @@
          data: {
              $inc: array of string
              $set: array of string
+             $init: array of string
          }
      },
      period: "real", "minute", "hour", "day"
@@ -30,13 +31,13 @@ function Cache ( option ) {
         _retain_period         = 5*60*1000; //retain data of the last 5 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
-        _retain_period         = 24*60*60*1000;  //retain data of the last day
+        _retain_period         = 24*60*60*1000;   //retain data of the last day
     }else if( _period_to_update_name == "hour" ){
         _period_to_update_value = 60*60*1000;     //update each hour
-        _retain_period         = 7*24*60*60*1000;//retain data of the last week
+        _retain_period         = 7*24*60*60*1000; //retain data of the last week
     }else if( _period_to_update_name == "day" ){
         _period_to_update_value = 24*60*60*1000;  //update each day
-        _retain_period         = -1;             //retain all data
+        _retain_period         = -1;              //retain all data
     }
     
     this.data = [];
@@ -85,11 +86,13 @@ function Cache ( option ) {
         
         //need messages arrive in time order
         if( ts - _lastUpdateTime > _period_to_update_value ){
-            _lastUpdateTime = ts;
-            
-            var data = _this.flushDataToDatabase();
+            var data = [];
+            if( _lastUpdateTime !== 0 ){
+                 data = _this.flushDataToDatabase();
+            }
             _this.removeOldDataFromDatabase( ts );
             
+            _lastUpdateTime = ts;
             if( cb != null ) cb( data );
         }
     };
@@ -108,9 +111,12 @@ function Cache ( option ) {
         
         //need messages arrive in time order
         if( ts - _lastUpdateTime > _period_to_update_value ){
-            _lastUpdateTime = ts;
+            var data = [];
+            if( _lastUpdateTime !== 0 )
+                data = _this.flushDataToDatabase();
             
-            var data = _this.flushDataToDatabase();
+            _lastUpdateTime = ts;      
+            
             if( cb != null ) cb( data );
             
             _this.removeOldDataFromDatabase( ts );
@@ -173,6 +179,14 @@ function Cache ( option ) {
                 oo[j] = msg[ key ];
             }
             
+            //init
+            for( var j in data_id["$init"] ){
+                var key = data_id["$init"][ j ];
+                var val = msg[ key ];
+                if( oo[ key ] === undefined && val != undefined )
+                    oo[ key ] = val;
+            }
+            
             //console.log( oo );
         }
         
@@ -188,15 +202,16 @@ function Cache ( option ) {
 };
 
 
-var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids ){
+var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids, $init_ids ){
     var option = {
         database: mongodb,
         collection_name: collection_name_prefix,
         message_format:{
             key: $key_ids,
             data: {
-                $inc: $inc_ids,
-                $set: $set_ids
+                $inc : $inc_ids,
+                $set : $set_ids,
+                $init: $init_ids,
             }
         },
         period: "real"

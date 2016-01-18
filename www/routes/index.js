@@ -9,7 +9,10 @@ var router = express.Router();
 router.get('/', function (req, res, next) {
     var session = req.session;
     if (session.loggedin) {
-        res.redirect("/chart");
+        var url = "/chart";
+        if( req.cookies.current_url )
+            url = req.cookies.current_url;
+        res.redirect( url );
         return;
     }
 
@@ -56,7 +59,7 @@ router.post("/", function (req, res, next) {
                     req.session.loggedin = {
                         username: user
                     }
-                    res.redirect("/chart");
+                    res.redirect("/");
                     return;
                 }
 
