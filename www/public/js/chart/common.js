@@ -87,8 +87,8 @@ $(function () {
     fPeriod.onFilter( function( opt ){
         console.log("fProbe filtering");
         for( var i=0; i<reports.length; i++ ){
-            setTimeout( function( rep, period ){
-                rep.database.reload({ period :  period});
+            
+            reports[ i ].database.reload({ period :  opt.id}, function(new_data, rep){
                 var filter = MMTDrop.tools.getFirstElement(rep.dataFlow);
                 if(!filter) return;
 
@@ -100,8 +100,7 @@ $(function () {
                     filter.redraw();
                 }
 
-            }, 0, reports[i], opt.id);
-            
+            }, reports[ i ]);
         }
     });
     

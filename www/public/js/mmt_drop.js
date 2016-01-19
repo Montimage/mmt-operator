@@ -732,7 +732,7 @@ MMTDrop.tools = function () {
      */
     _this.formatDateTime = function (v, withMillisecond) {
         return v.toLocaleString();
-        
+       /* 
         var milli = "";
         if( withMillisecond === true )
             milli = "." + ("00" + v.getMilliseconds()).slice(-3);
@@ -747,6 +747,7 @@ MMTDrop.tools = function () {
 
         
         return time;
+        */
     };
     
     _this.printStack = function(){
@@ -1220,9 +1221,6 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 */
 	this.data = function( val ){
 		if (val == undefined){
-			if(isAutoLoad && _data.length == 0)
-				this.reload();
-			
 			return _data ;
 		}
 		//do something here
@@ -1237,7 +1235,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 * The new parameter will merge with the current one of the database.
 	 * @see {@link MMTDrop.tools#mergeObjects} 
 	 */
-	this.reload = function(new_param){
+	this.reload = function(new_param, callback, user_data){
 		if (new_param)
 			_param = MMTDrop.tools.mergeObjects(_param, new_param);
 
@@ -1248,50 +1246,24 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         }else
             console.log("Reload database: " + JSON.stringify(_param));
 
-        var newData = _get (_param);
-        
-        console.log("  - got " + newData.length + " elements");
-        
-        if( _param.isReload === true && (_param.period == MMTDrop.constants.period.DAY || _param.period == MMTDrop.constants.period.MINUTE || _param.period == MMTDrop.constants.period.HOUR) && _originalData.length > 0 ){
-            if( newData.length > 0 ){
-                //remove data outside the period
-                var period = 0;
-                if( _param.period == MMTDrop.constants.period.MINUTE ){
-                    period = 5*60*1000;
-                }
-                else if( _param.period == MMTDrop.constants.period.HOUR ){
-                    period = 60*60*1000;
-                }
-                else if( _param.period == MMTDrop.constants.period.DAY ){
-                    period = 24*60*60*1000;
-                }
+        var onSuccess = function( newData ){
+                            console.log("  - got " + newData.length + " elements");
 
-                var maxTs = newData[ newData.length - 1 ][ 3 ];
-
-                var minTs = maxTs - period;
-
-                var i = 0;
-                for( i=0; i<_originalData.length; i++ ){
-                    if( _originalData[i][ 3 ] >= minTs )
-                        break;
-                }
-                //remove the i-first elements that are older than minTs
-                if( i > 0){
-                    _originalData.splice(0, i);
-                    console.log( " - removed " + i + " elements being older than " + (new Date( minTs )) ) ;
-                }
-
-                _originalData = _originalData.concat( newData );
-            }
-        }else
             _originalData = newData;
+
+
+            if (typeof(dataProcessingFn) == "function"){
+                _originalData = dataProcessingFn( _originalData );
+            }
+
+            this.reset();
+            
+            if( callback ) callback( _originalData, user_data );
+        };
         
         
-		if (typeof(dataProcessingFn) == "function"){
-			_originalData = dataProcessingFn( _originalData );
-		}
+        _get (_param, {success: onSuccess.bind( this )} );
         
-		this.reset();
 	};
 
 	/**
@@ -1446,15 +1418,15 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		// asyn
 		if (callback) {
 			$.ajax({
-				url  : _serverURL,
-				type : "GET",
+				url      : _serverURL,
+				type     : "GET",
 				dataType : "json",
-				data  : param,
-				cache : false,
+				data     : param,
+				cache    : false,
 
-				error : callback.error, // (xhr, status, error),
-				success : function(data) {
-					callback.sucess(data);
+				error    : callback.error, // (xhr, status, error),
+				success  : function(data) {
+					callback.success(data);
 				}
 			});
 			return;

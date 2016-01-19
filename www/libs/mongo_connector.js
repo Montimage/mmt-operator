@@ -50,32 +50,33 @@ var MongoConnector = function (opts) {
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
 
-        message = dataAdaptor.formatReportItem(message);
+        var msg = dataAdaptor.formatReportItem(message);
 
-        if (message.format === 100){
+        if (msg.format === 100){
             for (var i in self.dataCache)
-                self.dataCache[i].addMessage(message);
+                self.dataCache[i].addMessage( msg );
 
             //add traffic for the other side
-            var msg = dataAdaptor.inverseStatDirection( message );
-            if( dataAdaptor.isLocalIP( message.ip_dest )){
-                self.dataCache.ip.addMessage( msg );
+            var msg2 = dataAdaptor.inverseStatDirection( message );
+            msg2     = dataAdaptor.formatReportItem( msg2 );
+            if( dataAdaptor.isLocalIP( msg2.ip_dest )){
+                self.dataCache.ip.addMessage( msg2 );
             }
-            self.dataCache.mac.addMessage( msg );
+            self.dataCache.mac.addMessage( msg2 );
         }
 
-        var ts = message.time;
+        var ts = msg.time;
 
 
         self.lastTimestamp = ts;
 
-        self.mdb.collection("traffic").insert(message, function (err, records) {
+        self.mdb.collection("traffic").insert(msg, function (err, records) {
             if (err) console.error(err.stack);
         });
 
-        if (message.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || message.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
+        if (msg.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || msg.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
 
-            self.mdb.collection("behaviour").insert(message, function (err, records) {
+            self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
             return;
