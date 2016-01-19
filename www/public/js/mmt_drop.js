@@ -4537,13 +4537,294 @@ MMTDrop.chartFactory = {
 			return chart;
 		},
 
+        createTimeline : function (param, type){
+            if( location.search === "?c3js" )
+                return this.createTimelineC3JS( param, type );
+            return this.createTimelineHighChart( param, type );
+        },
 
+        /**
+		 * Create Timeline Chart
+		 * @param {ChartParam} param
+		 * @returns {MMTDrop.Chart} chart
+		 */
+		createTimelineHighChart : function (param, type){
+			var _param = {};
+			_param = MMTDrop.tools.mergeObjects( _param, param );
+
+			var chart = new MMTDrop.Chart( _param,
+					function (elemID, option, data){
+
+				//flat data: retain the first columns
+				//the next ones are of each probe
+				//get list of probes
+				var probes = [];
+				for( var i in option.columns){
+					if( Array.isArray(option.columns[i].probes) && option.columns[i].probes.length > 1)
+						for( var j=0; j<option.columns[i].probes.length; j++){
+							var prob = option.columns[i].probes[j];
+							if( probes.indexOf( prob ) == -1)
+								probes.push( prob );
+						}
+				}
+				
+				var columns = option.columns;
+				var arrData     = data;
+				
+				if( probes.length > 1){
+					columns = [];
+					columns.push( option.columns[0]  );
+					for( var i=1; i<option.columns.length; i++)
+						for( var k=0; k<probes.length; k++)
+							columns.push( {label: option.columns[i].label + "-" + probes[k]} );
+
+					arrData = [];
+					for( var i in data){
+						var msg = data[i];
+						var arr = [];
+						arr.push( msg[ 0 ] );
+
+						for( var j=1; j<msg.length; j++){
+							var oo = msg[j];
+							for( var k=0; k<probes.length; k++)	{
+								var probe = probes[k];
+								if( typeof(oo) == "object" && probe in oo)
+									arr.push( oo[probe] );
+								else
+									arr.push( 0 );
+							}
+						}
+
+						arrData.push( arr );
+					}
+				}
+				
+				
+				//the first column is timestamp
+				for (var i=0; i<arrData.length; i++)
+					arrData[i][0] = parseInt(arrData[i][0]);
+
+				//sort by the first column
+				//arrData.sort( function (a, b){
+				//	return a[0] - b[0];
+				//});
+
+                var height = option.height;
+                if( height === undefined )
+                    height = 200;
+                
+				var ylabel = option.ylabel;
+				var series = [];
+
+				//init series from 1th column
+				//type: areaspline, line
+				for (var j=1; j<columns.length; j++){
+					var obj =  {name:columns[j].label, data : [] };
+					
+                    if( columns[j].type == "area-stack" ){
+                        obj.type  = "area";                        
+                    }
+                    else if( columns[j].type == "area-step-stack" ){
+                        obj.step  = true;
+                        obj.type  = "area";
+                    }
+                    obj.step  = true;
+					series.push( obj );
+				}
+				
+				//set data for each serie
+				for (var i=0; i<arrData.length; i++){
+					var msg = arrData[i];
+					
+					//the first column is categorie, the next ones are series
+					for (var j=1; j<msg.length; j++){
+						if( msg[j] == undefined){
+							//continue;
+                            msg[j] = 0;
+                        }
+						series[j-1].data.push([ msg[0], msg[j] ]);
+					}
+				}
+				
+				var isTimeLine = (type == undefined || type === "timeline" || type === "scatter");
+				
+				var chartOption = {
+						chart : {
+							renderTo    : elemID,
+							//type        : type || 'spline',
+							zoomType    : 'xy',
+							spacingTop  :30,
+							spacingRight:30,             
+                            height      : height,
+						},
+						navigation:{
+							buttonOptions: {
+								verticalAlign: 'top',
+								y: -25,
+								x: 20
+							}
+						},
+						credits: {
+							text: 'Montimage',
+							href: 'http://www.montimage.com',
+							position: {
+								align: 'right',
+								x: -40,
+								verticalAlign: 'top',
+								y: 20                              
+							}       
+						},
+						xAxis : {
+							maxZoom:isTimeLine? 15000 : 1, // 15seconds
+							gridLineWidth: 0,
+							type : isTimeLine? 'datetime' : '',
+						},
+						yAxis : {
+							title : {
+								text : ylabel,
+							},
+                            gridLineDashStyle: "longdash",
+							min : 0,
+						},
+						title : {
+							text : "",
+						},
+						tooltip: {
+							shared: true,
+						},
+						plotOptions: {
+							scatter: {
+								marker: {
+									radius: 3,
+									states: {
+										hover: {
+											enabled: true,
+											lineColor: 'rgb(100,100,100)',
+										}
+									}
+								},
+								states: {
+									hover: {
+										marker: {
+											enabled: false,
+										}
+									}
+								},
+								tooltip: {
+									headerFormat: '<b>{series.name}</b><br>',
+									pointFormat: '{point.y}',
+									crosshairs: [false, true],
+								},
+								events : {
+									click : option.click,
+								},
+							},
+							areaspline: {
+								lineWidth: 1,
+								marker: {
+									enabled: false
+								},
+								shadow: false,
+								states: {
+									hover: {
+										lineWidth: 2
+									}
+								},
+								stacking: 'normal',
+								events : {
+									click : option.click,
+								},
+							},
+							area: {
+								lineWidth: 1,
+								marker: {
+									enabled: false
+								},
+								shadow: false,
+								states: {
+									hover: {
+										lineWidth: 2
+									}
+								},
+								stacking: 'normal',
+								events : {
+									click : option.click,
+								},
+							},
+							spline: {
+								lineWidth: 1,
+								marker: {
+									enabled: false
+								},
+								shadow: false,
+								states: {
+									hover: {
+										lineWidth: 2 
+									}
+								},
+								events : {
+									click : option.click,
+								},
+							},
+							line: {
+								lineWidth: 1,
+								marker: {
+									enabled: false
+								},
+								shadow: false,
+								states: {
+									hover: {
+										lineWidth: 2
+									}
+								},
+								events : {
+									click : option.click,
+								},      
+							},
+						},
+						series : series 
+				};
+
+				var hightChart = new Highcharts.Chart(chartOption);
+                
+                hightChart.color = function( k ){
+                    var series = this.series;
+                    for( var i in series )
+                        if( series[i].name === k )
+                            return series[ i ].color;
+                };
+                hightChart.focus = function( k ){
+                    var series = this.series;
+                    for( var i in series )
+                        if( series[i].name === k )
+                            series[i].lineWdith = 2;
+                };
+                hightChart.revert = function( ){
+                    var series = this.series;
+                    for( var i in series )
+                        if( series[i].lineWidth === 2 )
+                            series[i].lineWdith = 1;
+                };
+                hightChart.resize = function( size ){
+                    this.setSize( size.width, size.height );
+                }
+                
+				return hightChart;
+			});
+
+			chart.getIcon = function(){
+				return $('<i>', {'class': 'glyphicons-chart'});
+			};
+            
+            
+			return chart;
+		},
 		/**
 		 * Create Timeline Chart
 		 * @param {ChartParam} param
 		 * @returns {MMTDrop.Chart} chart
 		 */
-		createTimeline : function (param, type){
+		createTimelineC3JS : function (param, type){
 			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
