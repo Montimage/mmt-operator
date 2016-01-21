@@ -14,16 +14,17 @@ var MMTDrop = {
      * Constants: MMTDrop defined csv format types
      */
     CsvFormat : {
-        DEFAULT_APP_FORMAT : 0/**< Default application flow report format id */,
-        WEB_APP_FORMAT : 1/**< WEB flow report format id */,
-        SSL_APP_FORMAT : 2/**< SSL flow report format id */,
-        RTP_APP_FORMAT : 3/**< RTP flow report format id */,
+        DEFAULT_APP_FORMAT      : 0/**< Default application flow report format id */,
+        WEB_APP_FORMAT          : 1/**< WEB flow report format id */,
+        SSL_APP_FORMAT          : 2/**< SSL flow report format id */,
+        RTP_APP_FORMAT          : 3/**< RTP flow report format id */,
         MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
-        RADIUS_REPORT_FORMAT : 9/**< RADIUS protocol control format id */,
-        STATS_FORMAT : 100/**< Statistics format id */,
-        SECURITY_FORMAT: 10,
-        BA_PROFILE_FORMAT: 12,
-        BA_BANDWIDTH_FORMAT: 11
+        RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
+        STATS_FORMAT            : 100/**< Statistics format id */,
+        SECURITY_FORMAT         : 10,
+        BA_PROFILE_FORMAT       : 12,
+        BA_BANDWIDTH_FORMAT     : 11,
+        LICENSE                 : 30,
     },
     
     isFlowStats : function ( format ) {
@@ -59,8 +60,8 @@ var MMTDrop = {
         DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
         DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
         START_TIME          : 16, /**< Index of the start timestamp of the flow */
-        IP_SRC              : 17, /**< Index of the IP address source column */
-        IP_DEST             : 18, /**< Index of the IP address destination column */
+        IP_DEST             : 17, /**< Index of the IP address destination column */
+        IP_SRC              : 18, /**< Index of the IP address source column */
         MAC_SRC             : 19, /**< Index of the MAC address source column */
         MAC_DEST            : 20, /**< Index of the MAC address destination column */
     },
@@ -158,6 +159,16 @@ var MMTDrop = {
         MAX_JITTER              : 2,
     },
    
+     LicenseColumnId           : {
+        FORMAT_ID                       : 0, /**< Index of the format id column */
+        PROBE_ID                        : 1, /**< Index of the probe id column */
+        SOURCE_ID                       : 2, /**< Index of the data source id column */
+        TIMESTAMP                       : 3, /**< Index of the format id column */
+        LICENSE_INFO_ID                 : 4, /**< Index of the application id column */
+        NUMBER_OF_MAC                   : 5,
+        MAC_ADDRESSES                   : 6,
+        EXPIRY_DATE                     : 7
+    },
     /**
      * Return the parent of the given protocol path. <br>
      * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
@@ -303,12 +314,15 @@ var MMTDrop = {
         if( this.isLocalIP( msg[COL.IP_SRC] )  )
             return msg;
         else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
-            this.inverseStatDirection( msg )
+            return this.inverseStatDirection( msg )
         }
         return null;
     },
     
     isLocalIP : function( ip ){
+        if( ip === undefined || ip === "undefined")
+            return false;
+        
         if( this._localIPs === undefined ){
             var rootsIP = [];
             for( var i in config.local_network ){
@@ -319,6 +333,7 @@ var MMTDrop = {
             }
             this._localIPs = rootsIP;
         }
+        
         for( var i in this._localIPs ){
             var lo = this._localIPs[ i ];
             if( ipLib.mask( ip, lo.mask ) == lo.root )
@@ -347,34 +362,43 @@ var MMTDrop = {
         return msg;
     },
     
-    setDirectionProtocolFlow: function( msg ){
-        var COL       = this.FlowStatsColumnId;
-        
-        if( this.isLocalIP( msg[COL.CLIENT_ADDR] )  )
-            return msg;
-        else if ( this.isLocalIP( msg[COL.SERVER_ADDR] ) ){
-            //Permute DL <--> UL
-            var tmp = msg[COL.CLIENT_ADDR];
-
-            //change direction
-            msg[COL.CLIENT_ADDR] = msg[COL.SERVER_ADDR];
-            msg[COL.SERVER_ADDR] = tmp;
-
-            for(var i=0; i<2; i++){
-                tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
-                msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
-                msg[ COL.DL_DATA_VOLUME + i ] = tmp;
-            }
-            return msg;
-        }
-        return null;
-    },
     //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
     PureProtocol :  [
         30,81,82,85,99,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
         231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,
     ],
+    //list of protocols that should have children
+    ParentProtocol: [
+        99,153,154,155,178,179,180,181,182,
+        341,354,376,461,
+    ],
 };
+
+MMTDrop.LicensePoint = function( entry ){
+    var retval = {};
+    retval.format                               = entry[MMTDrop.LicenseColumnId.FORMAT_ID];
+    retval.probe                                = entry[MMTDrop.LicenseColumnId.PROBE_ID];
+    retval.source                               = entry[MMTDrop.LicenseColumnId.SOURCE_ID];
+    retval.time                                 = entry[MMTDrop.LicenseColumnId.TIMESTAMP];
+    retval.info_id                              = entry[MMTDrop.LicenseColumnId.LICENSE_INFO_ID];
+    retval.number_of_mac                        = entry[MMTDrop.LicenseColumnId.NUMBER_OF_MAC];
+    retval.mac_addresses                        = entry[MMTDrop.LicenseColumnId.MAC_ADDRESSES];
+    retval.expire_date                          = entry[MMTDrop.LicenseColumnId.EXPIRY_DATE];
+    return retval;
+}
+
+MMTDrop.reverseLicensePoint = function(elem) {
+    var retval = [];
+    retval[MMTDrop.LicenseColumnId.FORMAT_ID]                    = elem.format;
+    retval[MMTDrop.LicenseColumnId.PROBE_ID]                     = elem.probe;
+    retval[MMTDrop.LicenseColumnId.SOURCE_ID]                    = elem.source;
+    retval[MMTDrop.LicenseColumnId.TIMESTAMP]                    = elem.time;
+    retval[MMTDrop.LicenseColumnId.LICENSE_INFO_ID]              = elem.info_id;
+    retval[MMTDrop.LicenseColumnId.NUMBER_OF_MAC]                = elem.number_of_mac;
+    retval[MMTDrop.LicenseColumnId.MAC_ADDRESSES]                = elem.mac_addreses;
+    retval[MMTDrop.LicenseColumnId.EXPIRY_DATE]                  = elem.expire_date;
+    return retval;
+}
 
 MMTDrop.BehaviourBandwidthPoint = function( entry ){
     var retval = {};
@@ -680,6 +704,8 @@ MMTDrop.formatReportItem = function(entry) {
             return MMTDrop.BehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
             return MMTDrop.BehaviourProfilePoint( entry );
+        case MMTDrop.CsvFormat.LICENSE:
+            return MMTDrop.LicensePoint( entry );
             
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
@@ -706,6 +732,8 @@ MMTDrop.reverseFormatReportItem = function(entry) {
             return MMTDrop.reverseBehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
             return MMTDrop.reverseBehaviourProfilePoint( entry );
+        case MMTDrop.CsvFormat.LICENSE:
+            return MMTDrop.reverseLicensePoint( entry );
             
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
@@ -741,6 +769,9 @@ MMTDrop.formatMessage = function( message ){
             //ip
             if( msg[ 6 ] == "undefined ")
                 return null;
+            break;
+        case MMTDrop.CsvFormat.LICENSE:
+            msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] == formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
             break;
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO

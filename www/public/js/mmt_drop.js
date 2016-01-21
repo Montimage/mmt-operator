@@ -13,7 +13,11 @@ var MMTDrop = {
 		VERSION : "1.0.0"
 };
 
-
+Highcharts.setOptions({
+	global: {
+		useUTC: false
+	}
+});
 
 (function(MMTDrop){
 'use strict';
@@ -529,7 +533,7 @@ MMTDrop.constants = {
 			 for( var i=0; i<id.length; i++)
 				 name.push( MMTDrop.constants.getProtocolNameFromID( id[i] ) );
 			 
-			 return name.join(".");
+			 return name.join("/");
 		 },
 
 		 /**
@@ -4538,9 +4542,9 @@ MMTDrop.chartFactory = {
 		},
 
         createTimeline : function (param, type){
-            if( location.search === "?c3js" )
-                return this.createTimelineC3JS( param, type );
-            return this.createTimelineHighChart( param, type );
+            if( location.search === "?highchart" )
+                return this.createTimelineHighChart( param, type );
+            return this.createTimelineC3JS( param, type );
         },
 
         /**

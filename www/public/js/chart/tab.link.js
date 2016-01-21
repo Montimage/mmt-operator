@@ -29,7 +29,7 @@ var arr = [
         x: 0,
         y: 10,
         width: 12,
-        height: 5,
+        height: 7,
         type: "warning",
         userData: {
             fn: "createNodeReport"
@@ -213,6 +213,14 @@ var ReportFactory = {
                             val += columns[i].value;
 
                         cLine.dataLegend.data[ "Other" ] = cLine.dataLegend.dataTotal - val;
+                    }else{
+                        //other
+                        var val = 0;
+                        for (var i = 0; i < columns.length; i++)
+                            val += columns[i].value;
+
+                        if( val < cLine.dataLegend.dataTotal )
+                             cLine.dataLegend.data[ "Other" ] = cLine.dataLegend.dataTotal - val;
                     }
                     
                     //update legend
@@ -416,7 +424,7 @@ var ReportFactory = {
 
                     $("<td>", {
                         "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                        "text": (val * 100 / legend.dataTotal).toFixed(2) + "%"
 
                     }).appendTo($tr);
 

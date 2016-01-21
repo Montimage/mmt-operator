@@ -16,6 +16,7 @@
     "ip": "1.0.2",
     "jade": "~1.11.0",
     "line-by-line": "0.1.4",
+    "macaddress": "^0.2.8",
     "moment": "2.3.1",
     "mongodb": "2.0.48",
     "morgan": "~1.6.1",

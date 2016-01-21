@@ -30,6 +30,13 @@ var MongoConnector = function (opts) {
         if (err) throw err;
         self.mdb = db;
 
+        self.startProbeTime = 0;
+        self.mdb.collection("license").find().sort({_id:-1}).limit(1).toArray( function(err, doc){
+            if( err ) console.error( err );
+            self.startProbeTime = doc[0].time;
+            console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+        } )
+        
         self.dataCache = {
             total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
             mac: new DataCache(db, "data_mac", ["format", "probe", "source", "mac_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
@@ -53,9 +60,9 @@ var MongoConnector = function (opts) {
         var msg = dataAdaptor.formatReportItem(message);
 
         if (msg.format === 100){
-            for (var i in self.dataCache)
-                self.dataCache[i].addMessage( msg );
-
+            self.dataCache.total.addMessage( msg );
+            self.dataCache.mac.addMessage( msg );
+            self.dataCache.ip.addMessage( msg );
             //add traffic for the other side
             var msg2 = dataAdaptor.inverseStatDirection( message );
             msg2     = dataAdaptor.formatReportItem( msg2 );
@@ -63,6 +70,26 @@ var MongoConnector = function (opts) {
                 self.dataCache.ip.addMessage( msg2 );
             }
             self.dataCache.mac.addMessage( msg2 );
+            
+            //add traffic for each app in the app_path
+            msg2 = msg;
+            //
+            if( dataAdaptor.ParentProtocol.indexOf( msg2.app  ) > -1 ){
+                msg2.app = -1;
+                msg2.path += ".-1";
+            }
+            var arr = [];
+            do{
+                arr.push( msg2 );
+                
+                index = msg2.path.lastIndexOf(".");
+                if( index === -1 ) break; //root
+                msg2       = JSON.parse(JSON.stringify( msg2 ))
+                msg2.app   = msg2.path.substr( index + 1 );
+                msg2.path  = msg2.path.substr( 0, index );
+            }
+            while( true );
+            self.dataCache.app.addArray( arr );
         }
 
         var ts = msg.time;
@@ -81,7 +108,15 @@ var MongoConnector = function (opts) {
             });
             return;
         }
-
+        
+        if (msg.format === dataAdaptor.CsvFormat.LICENSE) {
+            self.startProbeTime = msg.time;
+            console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+            self.mdb.collection("license").insert(msg, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+            return;
+        }
     };
 
 
@@ -120,7 +155,7 @@ var MongoConnector = function (opts) {
             }
 
             var end_ts = (new Date()).getTime();
-            var ts = end_ts - start_ts;
+            var ts     = end_ts - start_ts;
 
             console.log("\n got " + doc.length + " records, took " + ts + " ms");
 
@@ -189,47 +224,11 @@ var MongoConnector = function (opts) {
                             top_list.push(id);
                     }
 
-                    var obj = {
-                        "bytecount": 0,
-                        "payloadcount": 0,
-                        "packetcount": 0,
-                        "active_flowcount": 0
-                    };
-                    for (var i = 0; i < doc.length; i++) {
-                        for (var key in obj)
-                            obj[key] += doc[i][key]
-                    }
-
-                    obj.format = 100;
-                    obj[ total.group_by ] = total.default_value;
-
                     options.query[ total.group_by ] = {
                         "$in": top_list
                     };
 
-                    self.queryDB(options.collection, "find", options.query, function (err, arr) {
-                        if (err) {
-                            callback(err);
-                            return;
-                        };
-                        if( arr.length === 0){
-                            callback( null,  [] );
-                            return;
-                        }
-                            
-                        var msg = arr[0];
-                        if (options.raw) {
-                            obj = dataAdaptor.reverseFormatReportItem(obj);
-                            obj[1] = msg[1]; //probe
-                            obj[2] = msg[2];
-                        } else{
-                            obj.probe  = msg.probe;
-                            obj.source = msg.source
-                        }
-
-                        arr.push( obj );
-                        callback(null, arr);
-                    }, options.raw);
+                    self.queryDB(options.collection, "find", options.query, callback, options.raw);
                 }, false);
         };
     
@@ -278,9 +277,10 @@ var MongoConnector = function (opts) {
                 //get total data of each app
                 self.queryTop( options, {
                     group_by        : "path",
-                    default_value   : "99",
                     size            : 8,
                     filter          : function( id ){
+                        if( id === "99" )//ethernet: total
+                            return true;
                         if( dataAdaptor.getAppLevelFromPath( id ) > 3 )
                             return false;
                         var app  = dataAdaptor.getAppIdFromPath( id ) ;
@@ -292,12 +292,22 @@ var MongoConnector = function (opts) {
                 }, callback )
                 return;
             }
+            
+            
+            if( options.id === "link.nodes" ){
+                options.query = {
+                    "time": {
+                        '$gte': self.startProbeTime
+                    }
+                }
+                self.queryDB(options.collection, "find", options.query, callback, options.raw);
+                return;
+            }
 
             if (options.id === "network.user") {
                 //get total data of each app
                 self.queryTop( options, {
                         group_by        : "ip_src",
-                        default_value   : "*",
                         size            : 8,
                         filter          : function( id ){
                             return true;
@@ -339,6 +349,7 @@ var MongoConnector = function (opts) {
 
     self.emptyDatabase = function (cb) {
         self.mdb.dropDatabase(function (err, doc) {
+            self.lastTimestamp = 0;
             console.log("drop database!");
             //empty also mmt-bandwidth
             MongoClient.connect('mongodb://' + config.database_server + ':27017/mmt-bandwidth', function (err, db) {

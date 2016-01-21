@@ -44,7 +44,7 @@ var ReportFactory = {
                         label: "Packets"
                     }];
 
-                    if (fProbe.selectedOption().id != 0)
+                    //if (fProbe.selectedOption().id != 0)
                         args.push({
                             id: COL.DATA_VOLUME.id,
                             label: "Data (B)"
@@ -64,7 +64,8 @@ var ReportFactory = {
                     for (var i in args)
                         cols.push(args[i].id);
 
-                    var data = db.stat.sumDataByParent();
+                    //var data = db.stat.sumDataByParent();
+                    var data = db.data();
                     cTree.data = data;
                     var obj = MMTDrop.tools.sumByGroups( data,
                         cols, [group.id,

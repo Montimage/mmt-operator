@@ -80,6 +80,7 @@ function Cache ( option ) {
     }
     
     this.addMessage = function ( msg, cb ) {
+        msg    = JSON.parse(JSON.stringify( msg ));
         var ts = msg.time;
         
         _this.data.push( msg );
@@ -230,6 +231,16 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     
     this.addMessage = function( msg ){
         _cache_real.addMessage( msg, function( arr_1 ){
+            _cache_minute.addArray( arr_1, function( arr_2){
+                _cache_hour.addArray( arr_2, function( arr_3 ){
+                    _cache_day.addArray( arr_3 );
+                })
+            } )
+        } );
+    };
+    
+    this.addArray = function( arr ){
+        _cache_real.addArray( arr, function( arr_1 ){
             _cache_minute.addArray( arr_1, function( arr_2){
                 _cache_hour.addArray( arr_2, function( arr_3 ){
                     _cache_day.addArray( arr_3 );

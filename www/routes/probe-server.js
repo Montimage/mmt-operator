@@ -23,11 +23,11 @@ router.process_message = function (db, message) {
         if (format == 99)
             return;
 
-        if (format == mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
             console.log("[DONT 1] " + message);
             return;
         }
-        else if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) && mmtAdaptor.setDirectionProtocolFlow(msg ) == null) {
+        else if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) ) {
             console.log("[DONT 2] " + message);
             return;
         }

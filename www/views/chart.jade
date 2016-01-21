@@ -19,7 +19,7 @@ block header
     script( type='text/javascript', src='/lib/moment/moment.js', charset='utf-8')
     
     //- Load d3.js and c3.js
-    script( type='text/javascript', src='/lib/d3/d3.js', charset='utf-8')
+    script( type='text/javascript', src='//d3js.org/d3.v3.min.js', charset='utf-8')
     script( type='text/javascript', src='/lib/c3/c3.js')
 
     script( type='text/javascript', src='/lib/lodash/lodash.min.js')
@@ -90,6 +90,14 @@ block content
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
         #toolbar-box
+
+    //#info-alert
+        .alert.alert-danger.alert-dismissible( role="alert" )
+            button.close( type="button", data-dismiss="alert", aria-label="Close")
+                span( aria-hidden="true" ) &times;
+            strong Better check yourself, you're not looking too good.
+
+
     #waiting.center-block.loading
         i.fa.fa-refresh.fa-spin.fa-4x
     #content
