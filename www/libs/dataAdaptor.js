@@ -64,6 +64,9 @@ var MMTDrop = {
         IP_SRC              : 18, /**< Index of the IP address source column */
         MAC_SRC             : 19, /**< Index of the MAC address source column */
         MAC_DEST            : 20, /**< Index of the MAC address destination column */
+        SESSION_ID:21,
+        PORT_DEST:22,
+        PORT_SRC: 23
     },
     
     SecurityColumnId           : {
@@ -395,7 +398,7 @@ MMTDrop.reverseLicensePoint = function(elem) {
     retval[MMTDrop.LicenseColumnId.TIMESTAMP]                    = elem.time;
     retval[MMTDrop.LicenseColumnId.LICENSE_INFO_ID]              = elem.info_id;
     retval[MMTDrop.LicenseColumnId.NUMBER_OF_MAC]                = elem.number_of_mac;
-    retval[MMTDrop.LicenseColumnId.MAC_ADDRESSES]                = elem.mac_addreses;
+    retval[MMTDrop.LicenseColumnId.MAC_ADDRESSES]                = elem.mac_addresses;
     retval[MMTDrop.LicenseColumnId.EXPIRY_DATE]                  = elem.expire_date;
     return retval;
 }
@@ -511,32 +514,37 @@ MMTDrop.reverseSecurityPoint = function(elem) {
 }
 MMTDrop.StatsTimePoint = function(entry) {
     var retval = {};
-    retval.format           = entry[MMTDrop.StatsColumnId.FORMAT_ID];
-    retval.probe            = entry[MMTDrop.StatsColumnId.PROBE_ID];
-    retval.source           = entry[MMTDrop.StatsColumnId.SOURCE_ID];
-    retval.time             = entry[MMTDrop.StatsColumnId.TIMESTAMP];
+    retval.format               = entry[MMTDrop.StatsColumnId.FORMAT_ID];
+    retval.probe                = entry[MMTDrop.StatsColumnId.PROBE_ID];
+    retval.source               = entry[MMTDrop.StatsColumnId.SOURCE_ID];
+    retval.time                 = entry[MMTDrop.StatsColumnId.TIMESTAMP];
     
-    retval.app              = entry[MMTDrop.StatsColumnId.APP_ID];
-    retval.path             = entry[MMTDrop.StatsColumnId.APP_PATH];
+    retval.app                  = entry[MMTDrop.StatsColumnId.APP_ID];
+    retval.path                 = entry[MMTDrop.StatsColumnId.APP_PATH];
 
-    retval.ul_data          = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-    retval.dl_data          = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-    retval.ul_packets       = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-    retval.dl_packets       = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
+    retval.ul_data              = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
+    retval.dl_data              = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
+    retval.ul_packets           = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
+    retval.dl_packets           = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
     
-    retval.ul_payload       = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-    retval.dl_payload       = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
+    retval.ul_payload           = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
+    retval.dl_payload           = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
     
-    retval.active_flowcount = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
+    retval.active_flowcount     = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
 
-    retval.bytecount        = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-    retval.payloadcount     = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-    retval.packetcount      = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    retval.start_time       = entry[MMTDrop.StatsColumnId.START_TIME];
-    retval.ip_src          = entry[MMTDrop.StatsColumnId.IP_SRC];
-    retval.ip_dest         = entry[MMTDrop.StatsColumnId.IP_DEST];
-    retval.mac_src          = entry[MMTDrop.StatsColumnId.MAC_SRC];
-    retval.mac_dest         = entry[MMTDrop.StatsColumnId.MAC_DEST];
+    retval.bytecount            = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
+    retval.payloadcount         = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
+    retval.packetcount          = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
+    retval.start_time           = entry[MMTDrop.StatsColumnId.START_TIME];
+    retval.ip_src               = entry[MMTDrop.StatsColumnId.IP_SRC];
+    retval.ip_dest              = entry[MMTDrop.StatsColumnId.IP_DEST];
+    retval.mac_src              = entry[MMTDrop.StatsColumnId.MAC_SRC];
+    retval.mac_dest             = entry[MMTDrop.StatsColumnId.MAC_DEST];
+
+    retval.session_id           = entry[MMTDrop.StatsColumnId.SESSION_ID];
+    retval.port_src             = entry[MMTDrop.StatsColumnId.PORT_SRC];
+    retval.port_dest            = entry[MMTDrop.StatsColumnId.PORT_DEST];
+    
     return retval;
 }
 
@@ -568,6 +576,12 @@ MMTDrop.reverseStatsTimePoint = function(elem) {
     
     retval[MMTDrop.StatsColumnId.MAC_SRC]           = elem.mac_src;
     retval[MMTDrop.StatsColumnId.MAC_DEST]          = elem.mac_dest;
+    
+    retval[MMTDrop.StatsColumnId.SESSION_ID]        = elem.session_id;
+    
+    retval[MMTDrop.StatsColumnId.PORT_SRC]          = elem.port_src;
+    retval[MMTDrop.StatsColumnId.PORT_DEST]         = elem.port_dest;
+    
     return retval;
 };
 

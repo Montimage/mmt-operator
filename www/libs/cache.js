@@ -176,8 +176,8 @@ function Cache ( option ) {
             //set
             for (var j in data_id['$set']){
                 var key = data_id['$set'][ j ];
-                
-                oo[j] = msg[ key ];
+                if( msg[key] != undefined )
+                    oo[j] = msg[ key ];
             }
             
             //init

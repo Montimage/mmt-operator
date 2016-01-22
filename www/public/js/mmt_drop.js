@@ -381,6 +381,21 @@ MMTDrop.constants = {
 			QUALITY_INDEX     : "Quality Index",
 		},
 
+    
+    LicenseColumnId           : {
+         /** Index of the format id column */
+        FORMAT_ID               : {id: 0, label:"Format"} ,
+        /** Index of the probe id column */
+        PROBE_ID                : {id: 1, label:"Probe"},
+        /** Index of the data source id column */
+        SOURCE_ID               : {id: 2, label:"Source"},
+        /** Index of the format id column */
+        TIMESTAMP               : {id: 3, label:"Timestamp"},
+        NUMBER_OF_MAC           : {id: 5, lable: ""},
+        MAC_ADDRESSES           : {id: 6, lable: ""},
+        EXPIRY_DATE             : {id: 7, lable: ""}
+    },
+    
 		/**
 		 * Mapping between RTP meric IDs and metric names
 		 */

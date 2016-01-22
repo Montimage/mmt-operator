@@ -33,7 +33,10 @@ var MongoConnector = function (opts) {
         self.startProbeTime = 0;
         self.mdb.collection("license").find().sort({_id:-1}).limit(1).toArray( function(err, doc){
             if( err ) console.error( err );
-            self.startProbeTime = doc[0].time;
+            if(doc.length > 0 )
+                self.startProbeTime = doc[0].time;
+            else
+                self.startProbeTime = (new Date()).getTime();
             console.log("The last runing probe is " + (new Date( self.startProbeTime )));
         } )
         
@@ -262,9 +265,12 @@ var MongoConnector = function (opts) {
                 options.collection = "data_mac_" + options.period_groupby;
             else if (["network.user"].indexOf(options.id) > -1)
                 options.collection = "data_ip_" + options.period_groupby;
+            else if( options.id === "chart.license")
+                options.collection = "license";
             else {
                 console.error("Not yet implemented for " + options.id);
-                callback(null, []);
+                callback(null, ["Not yet implemented"]);
+                return;
             }
 
             options.query = {
@@ -289,7 +295,7 @@ var MongoConnector = function (opts) {
                             return true;
                         return false;
                     },
-                }, callback )
+                }, callback );
                 return;
             }
             
@@ -312,8 +318,23 @@ var MongoConnector = function (opts) {
                         filter          : function( id ){
                             return true;
                         },
-                    }, callback )
-                    return;
+                    }, callback );
+                return;
+            }
+            
+            if(options.id === "chart.license"){
+                self.mdb.collection("license").find().sort({_id:-1}).limit(1).toArray( function(err, doc){
+                            if( err ) console.error( err );
+                            if(doc.length === 0 ){
+                                callback( err );
+                                return;
+                            }
+                    
+                            var msg = doc[0];
+                            if (options.raw === undefined || options.raw === true)
+                                msg = dataAdaptor.reverseFormatReportItem( msg );
+                            callback(null, [ msg ]);
+                        } );
                 return;
             }
         }
