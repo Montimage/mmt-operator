@@ -22,8 +22,8 @@ router.get('/*', function (req, res, next) {
         };
         if (period === PERIOD.HOUR) {
             retval = {
-                period_groupby: 'minute',
-                collection: 'traffic_min',
+                period_groupby: "real",//'minute',
+                collection: "traffic",//'traffic_min',
                 time: (60  + 1) * 60* 1000 //+1 min => as the last minute is not reported as it is being processed
             };
         } else if (period === PERIOD.HALF_DAY) {

@@ -44,9 +44,9 @@ router.start_socketio = function (io) {
         //console.log( router.activeChannels );
         
         var channels = {
-            "protocol.flow.stat": [100],
-            "security.report": [10],
-            "ba_profile.report": [12],
+            "protocol.flow.stat" : [100],
+            "security.report"    : [10],
+            "ba_profile.report"  : [12],
             "ba_bandwidth.report": [11]
         };
 

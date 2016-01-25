@@ -162,10 +162,14 @@ table.treetable  tbody{
     overflow-x: hidden;
     display: block;
 }
-
+table.treetable span.indenter{
+    overflow-x: hidden;
+}
 table.treetable >tbody>tr>td:first-child {
     width: 100%;
     cursor: default;
+    overflow: hidden;
+    white-space: nowrap;
 }
 table.treetable>thead>tr>th:first-child {
     width: 100%;
@@ -173,6 +177,11 @@ table.treetable>thead>tr>th:first-child {
 table.treetable>tbody>tr>td {
     min-width: 100px;
     cursor: pointer;
+    border-collapse: collapse;
+    border: thin solid #efefef;
+}
+table>tbody>tr:hover {
+    text-decoration: underline;
 }
 table.treetable>thead>tr>th {
     min-width: 100px;

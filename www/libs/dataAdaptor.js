@@ -352,7 +352,7 @@ var MMTDrop = {
         msg[COL.IP_SRC]  = msg[COL.IP_DEST];
         msg[COL.IP_DEST] = tmp;
 
-        var tmp = msg[COL.MAC_SRC];
+        tmp = msg[COL.MAC_SRC];
         //change direction
         msg[COL.MAC_SRC]  = msg[COL.MAC_DEST];
         msg[COL.MAC_DEST] = tmp;
@@ -374,7 +374,7 @@ var MMTDrop = {
     ParentProtocol: [
         99,153,154,155,178,179,180,181,182,
         341,354,376,461,
-    ],
+    ]
 };
 
 MMTDrop.LicensePoint = function( entry ){

@@ -143,10 +143,10 @@ MMTDrop.constants = {
             /** Index of the start timestamp of the flow */
             START_TIME        : {id: 16, label: "Start Time"}, 
             
-            IP_SRC           : {id: 17, label: "IP Destination"}, 
-            /** Index of the MAC address source column */
-            IP_DEST          : {id: 18, label: "IP Source "} ,
 
+            IP_DEST          : {id: 17, label: "IP Source "} ,
+            IP_SRC           : {id: 18, label: "IP Destination"}, 
+            
             /** Index of the MAC address source column */
             MAC_SRC           : {id: 19, label: "MAC Destination"}, 
             /** Index of the MAC address source column */
@@ -2503,9 +2503,9 @@ MMTDrop.filterFactory = {
                 var period = 1;
                 switch (this.selectedOption().id ){
                     case MMTDrop.constants.period.MINUTE : 
+                    case MMTDrop.constants.period.HOUR   :
                         period = MMTDrop.config.probe_stats_period;
                         break;
-                    case MMTDrop.constants.period.HOUR        :
                     case MMTDrop.constants.period.QUARTER_DAY :
                     case MMTDrop.constants.period.HALF_DAY    :
                     case MMTDrop.constants.period.DAY         : 
@@ -2525,12 +2525,14 @@ MMTDrop.filterFactory = {
                 var format = "YYYY/MM/DD HH:mm";
                 switch (this.selectedOption().id ){
                     case MMTDrop.constants.period.MINUTE : 
+                    case MMTDrop.constants.period.HOUR :
                         format = "HH:mm:ss";
                         break;
-                    case MMTDrop.constants.period.HOUR :
+                    case MMTDrop.constants.period.QUARTER_DAY :
                         format = "HH:mm";    //each minute
                         break;
-                    case MMTDrop.constants.period.DAY : 
+                    case MMTDrop.constants.period.HALF_DAY    :
+                    case MMTDrop.constants.period.DAY         : 
                         format = "MM/DD HH:mm";    //each minute 
                         break;
                     case MMTDrop.constants.period.WEEK : 

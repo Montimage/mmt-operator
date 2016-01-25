@@ -42,9 +42,14 @@ var MongoConnector = function (opts) {
         
         self.dataCache = {
             total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
+            
             mac: new DataCache(db, "data_mac", ["format", "probe", "source", "mac_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
+            
             ip: new DataCache(db, "data_ip", ["format", "probe", "source", "ip_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
+            
             app: new DataCache(db, "data_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
+            
+            pure_app: new DataCache(db, "data_pure_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
         }
 
         console.log("Connected to Database");
@@ -66,12 +71,17 @@ var MongoConnector = function (opts) {
             self.dataCache.total.addMessage( msg );
             self.dataCache.mac.addMessage( msg );
             self.dataCache.ip.addMessage( msg );
-            //add traffic for the other side
+            
+            self.dataCache.pure_app.addMessage( msg );
+            
+            //add traffic for the other side (src <--> dest )
             var msg2 = dataAdaptor.inverseStatDirection( message );
             msg2     = dataAdaptor.formatReportItem( msg2 );
-            if( dataAdaptor.isLocalIP( msg2.ip_dest )){
+            //only if it is local
+            if( dataAdaptor.isLocalIP( msg2.ip_src )){
                 self.dataCache.ip.addMessage( msg2 );
             }
+            
             self.dataCache.mac.addMessage( msg2 );
             
             //add traffic for each app in the app_path
@@ -99,10 +109,6 @@ var MongoConnector = function (opts) {
 
 
         self.lastTimestamp = ts;
-
-        self.mdb.collection("traffic").insert(msg, function (err, records) {
-            if (err) console.error(err.stack);
-        });
 
         if (msg.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || msg.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
 
@@ -257,7 +263,7 @@ var MongoConnector = function (opts) {
             //options.collection = "behaviour";
         }
         if (options.id !== "") {
-            if (["link.protocol", "dpi", "network.profile"].indexOf(options.id) > -1)
+            if (["link.protocol", "dpi"].indexOf(options.id) > -1)
                 options.collection = "data_app_" + options.period_groupby;
             else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
@@ -267,6 +273,8 @@ var MongoConnector = function (opts) {
                 options.collection = "data_ip_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
+            else if (["network.profile"].indexOf(options.id) > -1)
+                options.collection = "data_pure_app_" + options.period_groupby;
             else {
                 console.error("Not yet implemented for " + options.id);
                 callback(null, ["Not yet implemented"]);
@@ -311,14 +319,95 @@ var MongoConnector = function (opts) {
             }
 
             if (options.id === "network.user") {
-                //get total data of each app
-                self.queryTop( options, {
-                        group_by        : "ip_src",
-                        size            : 8,
-                        filter          : function( id ){
-                            return true;
-                        },
-                    }, callback );
+                self.queryDB(options.collection,
+                "aggregate", [
+                    {
+                        "$match": options.query
+                    },
+                    {
+                        "$group": {
+                            "_id": "$ip_src", //"$path",
+                            "bytecount": {
+                                "$sum": "$bytecount"
+                            },
+                            "payloadcount": {
+                                "$sum": "$payloadcount"
+                            },
+                            "packetcount": {
+                                "$sum": "$packetcount"
+                            },
+                            "active_flowcount": {
+                                "$sum": "$active_flowcount"
+                            },
+                            "format": {
+                                "$first": "$format"
+                            },
+                            "time": {
+                                "$first": "$time"
+                            },
+                            "probe":{
+                                "$first" : "$probe"
+                            },
+                            "source":{
+                                "$first" : "$source"
+                            },
+                            "ip_src":{
+                                "$first" : "$ip_src"
+                            }
+                        }
+                    }], callback, options.raw );
+                return;
+            }
+            
+            if (options.id === "network.profile") {
+                self.queryDB(options.collection,
+                "aggregate", [
+                    {
+                        "$match": options.query
+                    },
+                    {
+                        "$group": {
+                            "_id": "$path",
+                            "bytecount": {
+                                "$sum": "$bytecount"
+                            },
+                            "payloadcount": {
+                                "$sum": "$payloadcount"
+                            },
+                            "packetcount": {
+                                "$sum": "$packetcount"
+                            },
+                            "active_flowcount": {
+                                "$sum": "$active_flowcount"
+                            },
+                            "format": {
+                                "$first": "$format"
+                            },
+                            "time": {
+                                "$first": "$time"
+                            },
+                            "probe":{
+                                "$first" : "$probe"
+                            },
+                            "source":{
+                                "$first" : "$source"
+                            },
+                            "path":{
+                                "$first" : "$path"
+                            },
+                            "app":{
+                                "$first" : "$app"
+                            }
+                        }
+                    }], function( err, arr ){
+                        if( err ){
+                            callback( err );
+                            return;
+                        }
+                            
+                        callback( err, arr);
+                        
+                    } , options.raw );
                 return;
             }
             

@@ -1010,7 +1010,7 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom: "t",
-                    order: [[2, "desc"]]
+                    order: [[3, "desc"]]
                 });
             }
         });
@@ -1078,14 +1078,12 @@ var ReportFactory = {
                         var val  = db_data[i][ col.id ];
                         var name = db_data[i][ COL.IP_SRC.id ];
                         
-                        if( name === "*")
-                            cPie.dataLegend.dataTotal  = val;
-                        else{
-                            if( cPie.dataLegend.data[name] === undefined )
-                                cPie.dataLegend.data[name] = 0;
 
-                            cPie.dataLegend.data[name] += val;
-                        }
+                        if( cPie.dataLegend.data[name] === undefined )
+                            cPie.dataLegend.data[name] = 0;
+
+                        cPie.dataLegend.data[name] += val;
+                        cPie.dataLegend.dataTotal  += val;
                     }
                     for( var name in cPie.dataLegend.data )
                         data.push({

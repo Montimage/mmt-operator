@@ -30,11 +30,6 @@ var availableReports = {
     "createBandwidthReport": "Bandwidth"
 }
 
-var database = new MMTDrop.Database({
-    format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT,
-               MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT]
-});
-
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var filters = [fPeriod,
                 MMTDrop.filterFactory.createProbeFilter()];
@@ -440,7 +435,12 @@ td {text-align: right;}\
 }
 
 var ReportFactory = {
-    createProfileReport: function (fProbe, database) {
+    createProfileReport: function (fPeriod) {
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var database = new MMTDrop.Database({
+            format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT],
+            id: "network.user"
+        });
         var COL = MMTDrop.constants.BehaviourProfileColumn;
 
         var cLine = MMTDrop.chartFactory.createProfile({
@@ -719,7 +719,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[],
+					[fProbe],
 
             //charts
 					[

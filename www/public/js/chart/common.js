@@ -39,6 +39,7 @@ ReportFactory = MMTDrop.reportFactory;
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var reports = [];
+var isAutoReload = true;
 
 $(function () {
     
@@ -164,7 +165,7 @@ $(function () {
         //MMTDrop.tools.localStorage.remove("reload");
         //loading.onHide();
     }
-    
+
     var reloadCount = 0;
     setTimeout(function(){
         var p = fPeriod.getDistanceBetweenToSamples() * 1000;
@@ -172,6 +173,8 @@ $(function () {
             p = 60*1000;
         //p = 10*1000;
         setInterval( function(){
+            if( !isAutoReload )
+                return;
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
             
