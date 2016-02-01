@@ -37,14 +37,16 @@ Follow the procedure described on the following link to install the latest versi
     #Install the libraries
     cd www
     npm install
-    bower install
+    #If there are errors when npm install of mongodb, use sudo apt-get install libkrb5-dev
+    
+    node_modules/bower/bin/bower install
     
     #To use Mongodb as persistence
-    node app.js
+    sudo npm start
     
 Once MMT-Operator is up and running, open your favorite browser and goto
 
-    localhost:8088
+    localhost
 
 ## Contributors
 
