@@ -39,8 +39,6 @@ Follow the procedure described on the following link to install the latest versi
     npm install
     #If there are errors when npm install of mongodb, use sudo apt-get install libkrb5-dev
     
-    node_modules/bower/bin/bower install
-    
     #To use Mongodb as persistence
     sudo npm start
     

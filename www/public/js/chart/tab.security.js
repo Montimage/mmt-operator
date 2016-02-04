@@ -18,15 +18,6 @@ var availableReports = {
     "createNodeReport":     "Security",
 }
 
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var fProbe  = MMTDrop.filterFactory.createProbeFilter();
-
-var database = new MMTDrop.Database({
-        format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT, //0
-        period: MMTDrop.constants.period.MINUTE //get data stored in DB from the last minute
-    }, null, false);
-var filters = [ fPeriod, fProbe];
-
 MMTDrop.callback = {
     chart : {
         afterRender : loading.onChartLoad
@@ -35,8 +26,12 @@ MMTDrop.callback = {
 
 var ReportFactory = {};
 
-ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
-
+ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
+    var fProbe  = MMTDrop.filterFactory.createProbeFilter();
+    var database = new MMTDrop.Database({
+        format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT
+    }, null, false);
+    
     var COL = MMTDrop.constants.SecurityColumn;
     
     var DATA    = [];
@@ -144,11 +139,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         return html;
     };
     
-
-    function inDetailMode(){
-        return ( fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE );
-    }
-    
     //detail of each property
     var detailOfPopupProperty = null;
     var openingRow = null;
@@ -157,10 +147,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             getDataFn: function (db) {
 
                 var cols = [{id: "index", label:""}, COL.TIMESTAMP, COL.VERDICT, {id: "concern", label: "IP or MAC addresses of  Concerned Machines"}];
-
-                
-                if( ! inDetailMode() )
-                    cols = [{id: "index", label:""}, {id: COL.TIMESTAMP.id, label: "Timestamp", align: "left"}, COL.VERDICT, {id: "concern", label: "Total"}];
 
                 var data = db.data();
                 var arr = [];
@@ -181,27 +167,25 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
 
                     var concernt = msg[ COL.VERDICT_COUNT.id ];
 
-                    if( inDetailMode() ){
-                        concernt = msg.concernt ;
-                        if( concernt == null ){
-                            concernt = "";
-                            for( var i in history ){
-                                var event = history[ i ].attributes;
-                                for( var j in event ){
-                                    var atts = event[j];
-                                    for( var key in atts )
-                                        if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
-                                            //if the att is not yet added
-                                            if( concernt.indexOf( atts[key] ) === -1 ){
-                                                //
-                                                if( concernt != "") concernt += ", ";
-                                                concernt += atts[key];
-                                            }
+                    concernt = msg.concernt ;
+                    if( concernt == null ){
+                        concernt = "";
+                        for( var i in history ){
+                            var event = history[ i ].attributes;
+                            for( var j in event ){
+                                var atts = event[j];
+                                for( var key in atts )
+                                    if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
+                                        //if the att is not yet added
+                                        if( concernt.indexOf( atts[key] ) === -1 ){
+                                            //
+                                            if( concernt != "") concernt += ", ";
+                                            concernt += atts[key];
                                         }
-                                }
+                                    }
                             }
-                            msg.concernt = concernt;
                         }
+                        msg.concernt = concernt;
                     }
                     o[ "concern" ] = concernt;
                     arr.push( o );
@@ -212,7 +196,11 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 };
             }
         },
-        afterRender: function( _chart ){
+        chart: {
+            "order": [[0, "asc"]],
+            dom: "<'row'<'col-sm-5'l><'col-sm-7<<'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
+        },
+        afterEachRender: function( _chart ){
              // Add event listener for opening and closing details
             _chart.chart.on('click', 'tr[role=row]', function () {
                 var tr = $(this);
@@ -271,6 +259,8 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     var updateTotalVerdictDisplay = function(){
         $("#mmt-verdict-total").html( "<strong>Total:</strong> " + getVerdictHTML( VERDICT ) );
     };
+    
+    
     //this is applied for each element of data
     var getDataToShow = function( obj ){
         var msg = obj.data;
@@ -288,7 +278,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             arr.push( val );
         }
         return arr;
-    }
+    };
     
     var cTable = MMTDrop.chartFactory.createTable({
         getData: {
@@ -313,9 +303,17 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         },
         chart: {
             "order": [[0, "asc"]],
-            dom: "<'row' <'col-sm-9'<'#mmt-verdict-total'>><'col-sm-3'f>><'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+            dom: "<'row' <'col-sm-9'<'#mmt-verdict-total'>><'col-sm-3'f>><'dataTables_scrollBody overflow-auto-xy row-cursor-pointer't><'row'<'col-sm-3'l><'col-sm-9'p>>",
         },
-        afterRender: function (_chart) {
+        afterEachRender: function (_chart) {
+            ///configuration of interface: arrange components
+            //hide the filers of report (not the one of Datatable)
+            $("#report_filters").hide();
+            
+            var table = _chart.chart;
+            if( table == undefined )
+                return;
+            
             updateTotalVerdictDisplay();
             var modal = '<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
                         +'<div class="modal-dialog">'
@@ -329,11 +327,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
             
             $("body").append( $(modal) );
             
-            var table = _chart.chart;
-
-            ///configuration of interface: arrange components
-            //hide the filers of report (not the one of Datatable)
-            $("#report_filters").hide();
 
             table.on("draw.dt", function () {
                 var $div = $('.dataTables_scrollBody');
@@ -387,7 +380,8 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
 
                     if( loading )
                         loading.onHide();
-                    $("#modalWindow").modal();
+                    
+                    $("#modalWindow").modal();               
                 };
                 
                     //set the current selected row 
@@ -397,8 +391,8 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
                 //get value of the first column == index
                 var index = $currentRow.find('td:first').find("span").data("index");
                 var item = DATA[index].detail;
-                if (item){
-                    if( loading )
+                if ( item ){
+                    if( loading && item.length > 200)
                         loading.onShowing();
                         
                     setTimeout(showModal, 100, item );
@@ -495,9 +489,6 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
     };
 
     
-    if( inDetailMode() )
-        database.onMessage( "security.report",  addAlerts);
-
     var report = new MMTDrop.Report(
         // title
         null,
@@ -506,7 +497,7 @@ ReportFactory.createSecurityRealtimeReport = function (fProbe, database) {
         database,
 
         // filers
-					[],
+					[fProbe],
 
         // charts
 					[

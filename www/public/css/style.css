@@ -41,6 +41,9 @@ body {
 .overflow-auto-y{
     overflow-y: auto;
 }
+.row-cursor-pointer tr{
+    cursor: pointer
+}
 @media ( min-width : 768px) {
     .sidebar {
         position: fixed;
@@ -196,6 +199,12 @@ tr.selected a {
 
 .c3-area {
     opacity: 0.8;
+}
+.c3-line {
+    stroke-width: 1px;
+}
+
+.c3-axis-y-label{
 }
 
 .dataTable{font-size: 12px;}

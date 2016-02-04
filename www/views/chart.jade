@@ -90,7 +90,17 @@ block content
                 span.glyphicon.glyphicon-plus
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
+
         #toolbar-box
+        
+        .auto-reload-button
+            .input-group.input-group-sm
+                span.input-group-addon Auto reload
+                .onoffswitch
+                    input.onoffswitch-checkbox#isAutoReloadChk(type="checkbox", name="isAutoReloadChk",checked)
+                    label.onoffswitch-label(for="isAutoReloadChk")
+                        span.onoffswitch-inner
+                        span.onoffswitch-switch
 
     //#info-alert
         .alert.alert-danger.alert-dismissible( role="alert" )

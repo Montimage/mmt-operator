@@ -672,12 +672,10 @@ MMTDrop.tools = function () {
      *                                
      * @returns {Array} [[Description]]
      */
-    _this.addZeroPointsToData = function (data, period_sampling, period_total, time_id) {
+    _this.addZeroPointsToData = function (data, period_sampling, time_id, start_time, end_time) {
 
         if (data instanceof Array == false)
             data = MMTDrop.tools.object2Array(data);
-        if( data.length === 0 )
-            return data;
 
         if (time_id == undefined)
             time_id = 3;
@@ -689,15 +687,20 @@ MMTDrop.tools = function () {
             return a[time_id] - b[time_id]
         })
 
-        if( period_total ){
-            var start_time = data[ data.length - 1][ time_id ] - period_total + period_sampling;
-            if( start_time < data[0][ time_id ]){
-                var zero = {};                    
-                zero[time_id] = start_time;
-                data.unshift(zero);
-            }
-        }
 
+        //add first element if need
+        if( data.length == 0 || start_time < data[0][ time_id ]){
+            var zero = {};                    
+            zero[time_id] = start_time;
+            data.unshift(zero);
+        }
+        //add last element if need
+        if( data.length == 0 || end_time > data[ data.length - 1 ][ time_id ]){
+            var zero = {};                    
+            zero[time_id] = end_time;
+            data.push(zero);
+        }
+        
         var len = data.length;
         var arr = [];
         var lastTS;
@@ -1246,6 +1249,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		_data = val;
 		return this;
 	};
+    
+    this.time = {
+        begin: 0,
+        end  : 0
+    };
 
     var isFirstTime = true;
 	/**
@@ -1266,10 +1274,10 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
             console.log("Reload database: " + JSON.stringify(_param));
 
         var onSuccess = function( newData ){
-                            console.log("  - got " + newData.length + " elements");
+                            console.log("  - got " + newData.data.length + " elements");
 
-            _originalData = newData;
-
+            _originalData = newData.data;
+            _this.time    = newData.time;
 
             if (typeof(dataProcessingFn) == "function"){
                 _originalData = dataProcessingFn( _originalData );
@@ -2839,7 +2847,7 @@ MMTDrop.filterFactory = {
 			});
 
 			return filter;
-        }
+        },
 };
 ///////////////////////////////////////////////////////////////////////////////////////////
 //end MMTDrop.Filter
@@ -4233,9 +4241,10 @@ MMTDrop.Chart = function(option, renderFn){
                 console.log( " no column to render ");
 			}
 			else if( data.length == 0){
-				console.log( "   no data");
-			}else 
-                this.chart = renderFn(_elemID, _option, data);
+				//$("#" + _elemID).html('<div class="center-block text-warning" style="text-align:center">No data available</div>');
+                console.log( "no data" );
+			} 
+            this.chart = renderFn(_elemID, _option, data);
             
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );

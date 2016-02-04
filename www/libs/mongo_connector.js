@@ -30,15 +30,7 @@ var MongoConnector = function (opts) {
         if (err) throw err;
         self.mdb = db;
 
-        self.startProbeTime = 0;
-        self.mdb.collection("license").find().sort({_id:-1}).limit(1).toArray( function(err, doc){
-            if( err ) console.error( err );
-            if(doc.length > 0 )
-                self.startProbeTime = doc[0].time;
-            else
-                self.startProbeTime = (new Date()).getTime();
-            console.log("The last runing probe is " + (new Date( self.startProbeTime )));
-        } )
+        self.startTime = (new Date()).getTime();
         
         self.dataCache = {
             total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
@@ -118,9 +110,20 @@ var MongoConnector = function (opts) {
             return;
         }
         
+        if (msg.format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
+
+            self.mdb.collection("security").insert(msg, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+            return;
+        }
+        
         if (msg.format === dataAdaptor.CsvFormat.LICENSE) {
-            self.startProbeTime = msg.time;
-            console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+            if( self.startProbeTime == undefined ){
+                self.startProbeTime = msg.time;
+                console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+            }
+            
             self.mdb.collection("license").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -141,6 +144,34 @@ var MongoConnector = function (opts) {
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
 
+        options.query = {
+            format: {
+                $in: options.format
+            },
+            "time": {
+                '$gte': options.time.begin,
+                '$lte': options.time.end
+            }
+        };
+
+        var find_in_specific_table = false;
+        
+        if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {
+            options.collection = "behaviour";
+            find_in_specific_table = true;
+        }
+        else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
+            options.collection = "security";
+            find_in_specific_table = true;
+        }
+        
+        if( find_in_specific_table ){
+            self.queryDB(options.collection, "find", options.query, callback, options.raw);
+            return;
+        }
+        
+        
+        
         if (options.id !== undefined) {
             self.flushCache(function () {
                 self.getCurrentProtocolStats(options, callback);
@@ -248,20 +279,6 @@ var MongoConnector = function (opts) {
          */
     self.getCurrentProtocolStats = function (options, callback) {
 
-        options.query = {
-            format: {
-                $in: options.format
-            },
-            "time": {
-                '$gte': options.time.begin,
-                '$lte': options.time.end
-            }
-        };
-
-        if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0) {
-
-            //options.collection = "behaviour";
-        }
         if (options.id !== "") {
             if (["link.protocol", "dpi"].indexOf(options.id) > -1)
                 options.collection = "data_app_" + options.period_groupby;
@@ -280,12 +297,6 @@ var MongoConnector = function (opts) {
                 callback(null, ["Not yet implemented"]);
                 return;
             }
-
-            options.query = {
-                "time": {
-                    '$gte': options.time.begin
-                }
-            };
 
             if (options.id === "link.protocol") {
                 //get total data of each app
@@ -309,11 +320,7 @@ var MongoConnector = function (opts) {
             
             
             if( options.id === "link.nodes" ){
-                options.query = {
-                    "time": {
-                        '$gte': self.startProbeTime
-                    }
-                }
+                options.query.time['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
                 self.queryDB(options.collection, "find", options.query, callback, options.raw);
                 return;
             }
@@ -437,6 +444,10 @@ var MongoConnector = function (opts) {
      */
     self.getLastTime = function (cb) {
         if (self.mdb == null) return;
+        
+        //if online analysis ==> lastime is the current time of operator machine
+        cb( null, (new Date()).getTime() );
+        return;
 
 
         if (self.lastTimestamp > 0) {

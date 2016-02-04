@@ -22,8 +22,6 @@ var availableReports = {
 
 */
 
-'use strict'
-
 MMTDrop.setOptions({
     //serverURL: "http://localhost:8088",
 });
@@ -39,9 +37,9 @@ ReportFactory = MMTDrop.reportFactory;
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var reports = [];
-var isAutoReload = true;
 
 $(function () {
+    'use strict'
     
     $("#waiting").on("click", function(){
             $("#waiting").hide();
@@ -53,7 +51,7 @@ $(function () {
 
 
     fPeriod.renderTo("toolbar-box");
-
+    fPeriod.onChange( loading.onShowing  );
 
     var renderReport = function (node) {
         try {
@@ -167,29 +165,35 @@ $(function () {
     }
 
     var reloadCount = 0;
-    setTimeout(function(){
+    var auto_reload_timer = null;
+    function start_auto_reload_timer(){
+        if( auto_reload_timer )
+            clearInterval( auto_reload_timer );
         var p = fPeriod.getDistanceBetweenToSamples() * 1000;
         if( p <= 60*1000 )
             p = 60*1000;
         //p = 10*1000;
-        setInterval( function(){
-            if( !isAutoReload )
-                return;
+        auto_reload_timer = setInterval( function(){
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
             
-            if( reloadCount >= 20 ){
+            if( reloadCount >= 10 ){
                 location.reload();
                 throw new Error("Stop");
             }
-                
             
             loading.onShowing();
             fPeriod.filter();
-        }, p);
-        
-        fPeriod.onChange( loading.onShowing  );
-        
-    }, 100);
+        }, p);   
+    }
+    
+    $("#isAutoReloadChk").change( function(){
+        if( $(this).is(":checked") ){
+            start_auto_reload_timer();
+        }else{
+            clearInterval( auto_reload_timer );
+        }
+    });
 
+    $("#isAutoReloadChk").trigger("change");
 });

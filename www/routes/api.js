@@ -126,7 +126,7 @@ router.get('/*', function (req, res, next) {
     if (req.query.isReload)
 		options.isReload = (req.query.isReload === 'true');
 
-    var queryDate = function( op ){
+    var queryData = function( op ){
         dbconnector.getProtocolStats(op, function(err, data) {
 			if (err) {
 				return next(err);
@@ -138,23 +138,24 @@ router.get('/*', function (req, res, next) {
 			//this allow a req coming from a different domain
 			res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");
-			res.send(data);
+            var obj = {
+                data: data,
+                time: op.time
+            }
+			res.send( obj );
 		});
     }
 
-    if( options.time.begin != undefined )
-        queryDate( options );
-    else
-        dbconnector.getLastTime(function(err, time){
-	    	if( err )
-		    	return next(err);
-		
-    		console.log("lastime: " + time + " " + (new Date(time)).toLocaleDateString() );
-        
-            var inteval = options.time;
-		    options.time = {begin: time - inteval, end: time };
-         
-            queryDate( options );
+    dbconnector.getLastTime(function(err, time){
+        if( err )
+            return next(err);
+
+        console.log("lastime: " + time + " " + (new Date(time)).toLocaleDateString() );
+
+        var inteval = options.time;
+        options.time = {begin: time - inteval, end: time };
+
+        queryData( options );
 	});
 });
 

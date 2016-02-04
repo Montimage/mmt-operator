@@ -29,7 +29,7 @@ var arr = [
         x: 0,
         y: 10,
         width: 12,
-        height: 7,
+        height: 6,
         type: "warning",
         userData: {
             fn: "createNodeReport"
@@ -83,12 +83,10 @@ var ReportFactory = {
     },
     
     //add zero to the period having no data 
-    addZeroPoints: function (data, period, time_id) {
+    addZeroPoints: function (data, start_time, end_time) {
         var time_id = 3;
         var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-        var period_total    = 1000 * fPeriod.getSamplePeriodTotal();
-        
-        return MMTDrop.tools.addZeroPointsToData( data, period_sampling, period_total, time_id );
+        return MMTDrop.tools.addZeroPointsToData( data, period_sampling, time_id, start_time, end_time );
     },
 
     createProtocolReport: function (fPeriod) {
@@ -268,7 +266,7 @@ var ReportFactory = {
                         data[t][TIME.id] = parseInt(t);
 
 
-                    var arr = self.addZeroPoints(data);
+                    var arr = self.addZeroPoints(data, db.time.begin, db.time.end);
 
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height = $widget.find(".grid-stack-item-content").innerHeight();
@@ -530,6 +528,8 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
+                    var lastMinute  = db.time.end -   60*1000;
+                    var last5Minute = db.time.end - 5*60*1000;
 
                     var obj = {};
                     for (var i in data) {
@@ -537,55 +537,44 @@ var ReportFactory = {
                         
                         //if( msg[ COL.APP_PATH.id ] !== "99" )
                         //    continue;
-                        
-                        var mac = msg[COL.MAC_SRC.id];
+                        var time = msg[COL.TIMESTAMP.id];
+                        var mac  = msg[COL.MAC_SRC.id];
                         if (obj[mac] == undefined) {
                             obj[mac] = {
-                                "Probe ID": "",
-                                "MAC Address": mac,
-                                "In Frames": 0,
-                                "Out Frames": 0,
-                                "In Bytes": 0,
-                                "Out Bytes": 0,
-                                "Total Bytes": 0,
-                                "Start Time": msg[COL.START_TIME.id],
-                                "Last Update Time": msg[COL.TIMESTAMP.id],
+                                "Probe ID"          : msg[COL.PROBE_ID.id],
+                                "MAC Address"       : mac,
+                                "In Frames"         : 0,
+                                "Out Frames"        : 0,
+                                "In Bytes"          : 0,
+                                "Out Bytes"         : 0,
+                                "Total Bytes"       : 0,
+                                "StartTime"         : time,
+                                "LastTime"          : time,
                             };
                         }
-
-                        obj[mac]["Probe ID"]         = msg[COL.PROBE_ID.id];
+                        if( obj[mac]["LastTime"] < time )
+                            obj[mac]["LastTime"] = time;
+                        
+                        if( obj[mac]["StartTime"] > time )
+                            obj[mac]["StartTime"] = time;
+                        
+                        if( time < lastMinute )
+                            continue;
+                        
                         obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
                         obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
                         obj[mac]["In Bytes"]        += msg[COL.DL_DATA_VOLUME.id];
                         obj[mac]["Out Bytes"]       += msg[COL.UL_DATA_VOLUME.id];
                         obj[mac]["Total Bytes"]     += msg[COL.DATA_VOLUME.id];
-                        obj[mac]["Last Update Time"] = msg[COL.TIMESTAMP.id];
                     }
 
-                    var columns = [{
-                        id: "#",
-                        label: ""
-                    }];
-                    for (var i in obj) {
-                        if (columns.length == 1) {
-                            for (var j in obj[i]) {
-                                var col = {
-                                    id: j,
-                                    label: j
-                                };
-
-                                if (["In Frames", "Out Frames", "In Bytes", "Out Bytes", "Total Bytes"].indexOf(j) >= 0)
-                                    col.align = "right";
-                                else
-                                    col.align = "left";
-                                columns.push(col);
-                            }
-                            break;
-                        }
+                    var arr = [];
+                    //retain only the machines updating in the last 5 minutes
+                    for( var i in obj ){
+                        if( obj[i]["LastTime"] >= last5Minute )
+                            arr.push( obj[i] );
                     }
-
-                    var arr = MMTDrop.tools.object2Array(obj);
-
+                    
                     arr.sort(function (a, b) {
                         return b["Total Bytes"] - a["Total Bytes"];
                     });
@@ -593,21 +582,27 @@ var ReportFactory = {
                     for (var i = 0; i < arr.length; i++)
                         arr[i]["#"] = i + 1;
 
-                    var format = fPeriod.getTimeFormat();
-                    
                     //Format data
                     for (var i in obj) {
                         //convert to time string    
-                        obj[i]["Start Time"] = moment(obj[i]["Start Time"]).format( format );
-                        obj[i]["Last Update Time"] = moment(obj[i]["Last Update Time"]).format( format );
-                        obj[i]["In Frames"] = MMTDrop.tools.formatLocaleNumber(obj[i]["In Frames"]);
-                        obj[i]["Out Frames"] = MMTDrop.tools.formatLocaleNumber(obj[i]["Out Frames"]);
-                        obj[i]["In Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["In Bytes"]);
-                        obj[i]["Out Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Out Bytes"]);
+                        obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
+                        obj[i]["LastTime"]    = moment(obj[i]["LastTime"]).format( "MM/DD HH:mm:ss" );
+                        obj[i]["In Frames"]   = MMTDrop.tools.formatLocaleNumber(obj[i]["In Frames"]);
+                        obj[i]["Out Frames"]  = MMTDrop.tools.formatLocaleNumber(obj[i]["Out Frames"]);
+                        obj[i]["In Bytes"]    = MMTDrop.tools.formatDataVolume(obj[i]["In Bytes"]);
+                        obj[i]["Out Bytes"]   = MMTDrop.tools.formatDataVolume(obj[i]["Out Bytes"]);
                         obj[i]["Total Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Total Bytes"]);
                     }
 
-
+                     var columns = [{id: "#"            , label: ""               , align:"right"},
+                                  {id:"Probe ID"        , label:"Probe ID"        , align:"right"},
+                                  {id:"MAC Address"     , label:"MAC Address"     , align:"right"},
+                                  {id:"In Frames"       , label:"In Frames"       , align:"right"},
+                                  {id:"Out Frames"      , label:"Out Frames"      , align:"right"},
+                                  {id:"In Bytes"        , label:"In Bytes"        , align:"right"},
+                                  {id:"Out Bytes"       , label:"Out Bytes"       , align:"right"},
+                                  {id:"StartTime"      , label:"Start Time"      , align:"right"},
+                                  {id:"LastTime", label:"Last Update Time", align:"right"},];
                     return {
                         data: arr,
                         columns: columns
@@ -642,6 +637,17 @@ var ReportFactory = {
                         event.data.api().draw(false);
                 });
                 $widget.trigger("widget-resized", [$widget]);
+                
+                //add a separator
+                /*
+                $widget.before('<div style="margin-left: -10px; height: '
+                               + ($widget.outerHeight(true) + 40) +'px; background-color: white; width:120%; position: absolute; top:'
+                               + ($widget.position().top + 15) +'px;">&nbsp;</div>')
+                */
+                
+                //$widget.css({"margin-left": -10, "width": "10"});
+                //var $content = $("#" + _chart.elemID).getWidgetContentOfParent();
+                //$content.css({"margin-left": 10, "box-shadow": "3px -3px 5px #999" });
             }
         });
 
@@ -943,7 +949,7 @@ var ReportFactory = {
                         }
                     }
 
-                    var arr = _this.addZeroPoints(obj);
+                    var arr = _this.addZeroPoints(obj, db.time.begin, db.time.end );
 
                     cols.unshift(COL.TIMESTAMP);
                     
