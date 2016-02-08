@@ -64,7 +64,6 @@ var ReportFactory = {
                     for (var i in args)
                         cols.push(args[i].id);
 
-                    //var data = db.stat.sumDataByParent();
                     var data = db.data();
                     cTree.data = data;
                     var obj = MMTDrop.tools.sumByGroups( data,
@@ -214,9 +213,8 @@ var ReportFactory = {
                     
                     var time_id = 3;
                     var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-                    var period_total    = 1000 * fPeriod.getSamplePeriodTotal();
         
-                    arr = MMTDrop.tools.addZeroPointsToData( arr, period_sampling, period_total, time_id );
+                    arr = MMTDrop.tools.addZeroPointsToData( arr, period_sampling, time_id, db.time.begin, db.time.end );
                    
                     
                     var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];

@@ -30,9 +30,6 @@ var availableReports = {
     "createBandwidthReport": "Bandwidth"
 }
 
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var filters = [fPeriod,
-                MMTDrop.filterFactory.createProbeFilter()];
 
 var modify_profile = function( msg ){
 	var old_verdict = msg[ MMTDrop.constants.BehaviourProfileColumn.VERDICT.id ];
@@ -115,8 +112,11 @@ function myGraph(domID, root) {
         .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
     this.update = function (source) {
-        var duration = d3.event && d3.event.altKey ? 5000 : 500;
+        var duration = 0;
 
+        if ((source.children || source._children) && (source.parent)) {
+            duration = d3.event && d3.event.altKey ? 5000 : 500;
+        }
         // Compute the new tree layout.
         var nodes = tree.nodes(root);
 
@@ -146,7 +146,8 @@ function myGraph(domID, root) {
                 return d.name;
             })
             .on("click", function (d) {
-                if ((d.children || d._children) && (d.parent)) {
+                if ((d.children || d._children) && (d.parent)) 
+                {
                     toggle(d);
                     _this.update(d);
                 }
@@ -438,8 +439,7 @@ var ReportFactory = {
     createProfileReport: function (fPeriod) {
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var database = new MMTDrop.Database({
-            format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT],
-            id: "network.user"
+            format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT]
         });
         var COL = MMTDrop.constants.BehaviourProfileColumn;
 
@@ -538,6 +538,12 @@ var ReportFactory = {
                         return a[COL.TIMESTAMP.id] - b[COL.TIMESTAMP.id];
                     });
 
+                    var old_data = MMTDrop.tools.localStorage.get("data-profile");
+                    MMTDrop.tools.localStorage.set("data-profile", new_data);
+                    if( old_data == null ){
+                        
+                    }
+                    
                     for (var i = 0; i < new_data.length; i++ ) {
                         var msg  = new_data[i];
                         var date = msg[COL.TIMESTAMP.id];
@@ -547,8 +553,8 @@ var ReportFactory = {
                         
                         //add index column
                         msg.push( i + 1 );
-			//change verdict
-			modify_profile( msg );
+                        //change verdict
+                        modify_profile( msg );
                     }
 
                     HISTORY = new_data;
@@ -644,11 +650,11 @@ var ReportFactory = {
                     
                     $('td:contains("CHANGE_CATEGORY")').parent().css("color", "red")
                 }, 100, $elem)
-            }
+            };
 
             //ip does not exist in the table
             msg.push( HISTORY.length + 1);
-		modify_profile( msg );
+            modify_profile( msg );
 
             HISTORY.push(msg);
 
@@ -699,17 +705,20 @@ var ReportFactory = {
             }
         };
 
-        database.onMessage("ba_profile.report", function (arr) {
+        //database.onMessage("ba_profile.report", 
+       function addMessages(arr) {
             for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
 
-                if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" || msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "")
+                if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" ||
+                    msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "")
                     msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] = "Inactive";
                 
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
             }
-        });
+        }
+        //);
 
         var report = new MMTDrop.Report(
             // title
@@ -750,8 +759,12 @@ var ReportFactory = {
         return report;
     },
 
-    createBandwidthReport: function (fProbe, database) {
+    createBandwidthReport: function (fPeriod) {
         var COL = MMTDrop.constants.BehaviourBandWidthColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var database = new MMTDrop.Database({
+            format: [MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT]
+        });
         var openingRow = null;
         var HISTORY = {};
         
@@ -806,7 +819,7 @@ var ReportFactory = {
                                   COL.SOURCE_ID,
                                   COL.PROPERTY,
                                   {id: COL.IP.id,        label: COL.IP.label                }, 
-                                  COL.APP, 
+                                  {id: COL.APP.id,       label: "Profile/App"               },
                                   {id: COL.BW_BEFORE.id, label: COL.BW_BEFORE.label + " (B)"}, 
                                   {id: COL.BW_AFTER.id,  label: COL.BW_AFTER.label + " (B)" }, 
                                   COL.VERDICT]
@@ -948,13 +961,14 @@ var ReportFactory = {
             }
         };
 
-        database.onMessage("ba_bandwidth.report", function (arr) {
+       //database.onMessage("ba_bandwidth.report", 
+       function addMessages (arr) {
             for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
             }
-        });
+        };
 
 
         var report = new MMTDrop.Report(
@@ -965,7 +979,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[],
+					[fProbe],
 
             //charts
 					[

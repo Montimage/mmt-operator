@@ -11,7 +11,6 @@ var routes          = require('./routes/index');
 var chartRoute      = require('./routes/chart');
 var api             = require('./routes/api');
 
-var socketRoute     = require('./routes/socketio.js');
 var probeRoute      = require('./routes/probe-server.js');
 
 var mmtAdaptor      = require('./libs/dataAdaptor');
@@ -51,9 +50,6 @@ app.io = io;
 
 
 var redis = require("redis");
-
-socketRoute.windowCache = dbconnector.window;
-socketRoute.start_socketio( io );
 
 if( config.input_mode == REDIS_STR ){
     redis._createClient = redis.createClient;
