@@ -188,7 +188,9 @@ $(function () {
     }
     
     $("#isAutoReloadChk").change( function(){
-        if( $(this).is(":checked") ){
+        var is_on = $(this).is(":checked");
+        console.log( "autoReload: " + is_on );
+        if( is_on ){
             start_auto_reload_timer();
         }else{
             clearInterval( auto_reload_timer );

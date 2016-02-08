@@ -24,37 +24,37 @@ router.get('/*', function (req, res, next) {
             retval = {
                 period_groupby: "real",//'minute',
                 collection: "traffic",//'traffic_min',
-                time: (60  + 1) * 60* 1000 //+1 min => as the last minute is not reported as it is being processed
+                time: 60 * 60* 1000 
             };
         } else if (period === PERIOD.HALF_DAY) {
             retval = {
                 period_groupby: 'minute',
                 collection: 'traffic_min',
-                time: (12 * 60 + 1) * 60 * 1000// +1min
+                time: 12 * 60 * 60 * 1000
             };
         } else if (period === PERIOD.QUARTER_DAY) {
             retval = {
                 period_groupby: 'minute',
                 collection: 'traffic_min',
-                time: (6 * 60 + 1) * 60 * 1000// +1min
+                time: 6 * 60  * 60 * 1000
             };
         } else if (period === PERIOD.DAY) {
             retval = {
                 period_groupby: 'minute',
                 collection: 'traffic_min',
-                time: (24 * 60 + 1) * 60 * 1000// +1min
+                time: 24 * 60 * 60 * 1000
             };
         } else if (period === PERIOD.WEEK) {
             retval = {
                 period_groupby: 'hour',
                 collection: 'traffic_hour',
-                time: (7 * 24 + 1) * 3600 * 1000// +1h
+                time: 7 * 24 * 3600 * 1000
             };
         } else if (period === PERIOD.MONTH) {
             retval = {
                 period_groupby: 'day',
                 collection: 'traffic_day',
-                time: (30 + 1) * 24 * 3600 * 1000//+1day
+                time: 30 * 24 * 3600 * 1000 //TODO a month does not always have 30 days
             };
         }
         return retval;
@@ -131,12 +131,8 @@ router.get('/*', function (req, res, next) {
 			if (err) {
 				return next(err);
 			}
-            
-            //if( data.length === 0 || data === undefined )
-            //    data = createZeroMessage();
-            
 			//this allow a req coming from a different domain
-			res.setHeader("Access-Control-Allow-Origin", "*");
+			//res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");
             var obj = {
                 data: data,
@@ -144,13 +140,13 @@ router.get('/*', function (req, res, next) {
             }
 			res.send( obj );
 		});
-    }
+    };
 
     dbconnector.getLastTime(function(err, time){
         if( err )
             return next(err);
 
-        console.log("lastime: " + time + " " + (new Date(time)).toLocaleDateString() );
+        console.log("lastime: " + time + " " + (new Date(time)).toTimeString() );
 
         var inteval = options.time;
         options.time = {begin: time - inteval, end: time };

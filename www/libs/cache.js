@@ -25,10 +25,12 @@ function Cache ( option ) {
     var _mdb                    = option.database;
     var _lastUpdateTime         = 0;
     var _period_to_update_name  = option.period;
+    var _init_data_obj = null;
     
     if( _period_to_update_name == "real" ){
         _period_to_update_value = 0;         //update immediately
         _retain_period         = 5*60*1000; //retain data of the last 5 minutes
+        _init_data_obj         = {};
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
         _retain_period         = 24*60*60*1000;   //retain data of the last day
@@ -39,6 +41,9 @@ function Cache ( option ) {
         _period_to_update_value = 24*60*60*1000;  //update each day
         _retain_period         = -1;              //retain all data
     }
+    
+    if( option.retain_period != undefined )
+        _retain_period = option.retain_period;
     
     this.data = [];
     
@@ -54,7 +59,7 @@ function Cache ( option ) {
            time:{ "$lt" :  ts } 
         }, function( err, result){
             
-            if( _period_to_update_name !== "real")
+            if( _period_to_update_name !== "real" || result.deletedCount > 10 )
                 console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
             
             if( cb != null ) cb( err, result.deletedCount );
@@ -184,8 +189,21 @@ function Cache ( option ) {
             for( var j in data_id["$init"] ){
                 var key = data_id["$init"][ j ];
                 var val = msg[ key ];
-                if( oo[ key ] === undefined && val != undefined )
-                    oo[ key ] = val;
+                
+                //init for the data in a period: minute, hour, day, month, 
+                if( _period_to_update_name !== "real"){
+
+                    if( oo[ key ] === undefined && val != undefined )
+                        oo[ key ] = val;
+                    
+                }else{
+                    //init for the data in a real
+                    if( _init_data_obj[ key ] == undefined )
+                        _init_data_obj[ key ] = val;
+                    else
+                        oo[ key ] = _init_data_obj[ key ];
+                        
+                }
             }
             
             //console.log( oo );
@@ -203,7 +221,8 @@ function Cache ( option ) {
 };
 
 
-var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids, $init_ids ){
+var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids, $init_ids, retain_period ){
+    
     var option = {
         database: mongodb,
         collection_name: collection_name_prefix,
@@ -215,22 +234,30 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
                 $init: $init_ids,
             }
         },
-        period: "real"
+        period: "real",
+        retain_period: retain_period
     }
     var _cache_real   = new Cache( option );
     
-    option.period = "minute";
-    var _cache_minute = new Cache( option );
+    var is_retain_all = (retain_period != undefined);
     
-    option.period = "hour";
-    var _cache_hour   = new Cache( option );
+    if( is_retain_all !== true ){
     
-    option.period = "day";
-    var _cache_day    = new Cache( option );
+        option.period = "minute";
+        var _cache_minute = new Cache( option );
+
+        option.period = "hour";
+        var _cache_hour   = new Cache( option );
+
+        option.period = "day";
+        var _cache_day    = new Cache( option );
     
+    }
     
     this.addMessage = function( msg ){
         _cache_real.addMessage( msg, function( arr_1 ){
+            if( is_retain_all === true ) return;
+            
             _cache_minute.addArray( arr_1, function( arr_2){
                 _cache_hour.addArray( arr_2, function( arr_3 ){
                     _cache_day.addArray( arr_3 );
@@ -241,6 +268,8 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     
     this.addArray = function( arr ){
         _cache_real.addArray( arr, function( arr_1 ){
+            if( is_retain_all === true ) return;
+            
             _cache_minute.addArray( arr_1, function( arr_2){
                 _cache_hour.addArray( arr_2, function( arr_3 ){
                     _cache_day.addArray( arr_3 );
@@ -250,12 +279,17 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     };
     
     this.flushDataToDatabase = function(){
+        if( is_retain_all === true ) return;
+        
         var arr = _cache_minute.flushDataToDatabase();
+        
         _cache_hour.addArray( arr );
         arr = _cache_hour.flushDataToDatabase();
+        
         _cache_day.addArray( arr );
         _cache_day.flushDataToDatabase();
-    }
+    };
+    
 }
 
 module.exports = DataCache;

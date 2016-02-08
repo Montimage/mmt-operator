@@ -13,9 +13,15 @@ Grid.add_widget = function (node) {
     if (node.title)
         header = '<span class="grid-stack-item-header ' + bg + '" id="' + node.id + '-content-header">' + node.title + '</span>';
 
-    grid.add_widget($('<div id="' + node.id + '" data-title="' + node.title + '" data-type="' + type + '" data-user="' + encodeURI(JSON.stringify(node.userData)) + '" ><div id="' + node.id + '-content" class="grid-stack-item-content"></div>' + header + '</div>'),
+    if( node.locked !== true )
+        node.locked = false;
+    
+    grid.add_widget($('<div id="' + node.id + '" data-title="' + node.title + '" data-type="' + type + '" data-user="' + encodeURI(JSON.stringify(node.userData)) + '" data-gs-locked="'+ node.locked +'" data-gs-no-resize="'+ node.locked +'" data-gs-no-move="'+ node.locked +'"><div id="' + node.id + '-content" class="grid-stack-item-content"></div>' + header + '</div>'),
         node.x, node.y, node.width, node.height);
 
+    if( node.locked )
+        $("#" + node.id + "-content-header").css("cursor", "default");
+    
     var bgcolor = $("#" + node.id + "-content-header").css("background-color");
     $("#" + node.id + "-content").css("border-color", bgcolor);
     $("#" + node.id + "-content-setting").css("border-color", bgcolor);

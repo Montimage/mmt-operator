@@ -121,7 +121,7 @@ MMTDrop.constants = {
 			 */
 			APP_PATH          : {id: 5,  label: "App Path"},
 			/** Index of the active flows column */
-			ACTIVE_FLOWS      : {id: 6,  label: "Active Flows"},
+			ACTIVE_FLOWS      : {id: 6,  label: "Flow Count"},
 			/** Index of the data volume column */
 			DATA_VOLUME       : {id: 7,  label: "Data Volume"},
 			/** Index of the payload data volume column */
@@ -441,7 +441,7 @@ MMTDrop.constants = {
 			 * 
 			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
 			 */
-			ACTIVE_FLOWS   : {id: 104, label:"Active flow"},
+			ACTIVE_FLOWS   : {id: 104, label:"Flow count"},
 			
 			/** Number of upload packets
 			 * 

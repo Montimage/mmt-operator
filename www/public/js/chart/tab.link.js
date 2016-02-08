@@ -27,10 +27,11 @@ var arr = [
         id: "node",
         title: "Nodes",
         x: 0,
-        y: 10,
+        y: 9,
         width: 12,
-        height: 6,
+        height: 7,
         type: "warning",
+        locked: true,
         userData: {
             fn: "createNodeReport"
         }
@@ -521,7 +522,7 @@ var ReportFactory = {
         return report;
     },
     createNodeReport: function (fProbe) {
-
+        var DETAIL = {};//data detail of each MAC
         var COL = MMTDrop.constants.StatsColumn;
         var database = MMTDrop.databaseFactory.createStatDB({id: "link.nodes"});
         var cTable = MMTDrop.chartFactory.createTable({
@@ -535,10 +536,10 @@ var ReportFactory = {
                     for (var i in data) {
                         var msg = data[i];
                         
-                        //if( msg[ COL.APP_PATH.id ] !== "99" )
-                        //    continue;
                         var time = msg[COL.TIMESTAMP.id];
+                        
                         var mac  = msg[COL.MAC_SRC.id];
+                        
                         if (obj[mac] == undefined) {
                             obj[mac] = {
                                 "Probe ID"          : msg[COL.PROBE_ID.id],
@@ -548,7 +549,7 @@ var ReportFactory = {
                                 "In Bytes"          : 0,
                                 "Out Bytes"         : 0,
                                 "Total Bytes"       : 0,
-                                "StartTime"         : time,
+                                "StartTime"         : msg[COL.START_TIME.id],
                                 "LastTime"          : time,
                             };
                         }
@@ -561,6 +562,13 @@ var ReportFactory = {
                         if( time < lastMinute )
                             continue;
                         
+                        /*
+                        if( DETAIL[ mac ] == undefined )
+                            DETAIL[ mac ] = [];
+                        DETAIL[ mac ].push( msg );
+                        */
+                        
+                        //calculate only data from the last minute
                         obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
                         obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
                         obj[mac]["In Bytes"]        += msg[COL.DL_DATA_VOLUME.id];
@@ -601,7 +609,8 @@ var ReportFactory = {
                                   {id:"Out Frames"      , label:"Out Frames"      , align:"right"},
                                   {id:"In Bytes"        , label:"In Bytes"        , align:"right"},
                                   {id:"Out Bytes"       , label:"Out Bytes"       , align:"right"},
-                                  {id:"StartTime"      , label:"Start Time"      , align:"right"},
+                                  {id:"Total Bytes"     , label:"Total Bytes"     , align:"right"},
+                                  {id:"StartTime"       , label:"Start Time"      , align:"right"},
                                   {id:"LastTime", label:"Last Update Time", align:"right"},];
                     return {
                         data: arr,
@@ -633,21 +642,17 @@ var ReportFactory = {
 
                 //resize when changing window size
                 $widget.on("widget-resized", null, table, function (event, widget) {
-                    if (event.data)
+                    if (event.data){
                         event.data.api().draw(false);
+                    }
                 });
                 $widget.trigger("widget-resized", [$widget]);
                 
                 //add a separator
-                /*
-                $widget.before('<div style="margin-left: -10px; height: '
-                               + ($widget.outerHeight(true) + 40) +'px; background-color: white; width:120%; position: absolute; top:'
-                               + ($widget.position().top + 15) +'px;">&nbsp;</div>')
-                */
-                
-                //$widget.css({"margin-left": -10, "width": "10"});
-                //var $content = $("#" + _chart.elemID).getWidgetContentOfParent();
-                //$content.css({"margin-left": 10, "box-shadow": "3px -3px 5px #999" });
+                $widget.css({"margin-top": "20px"});
+                $widget.before('<div style="margin: 0; height: '
+                               + ($widget.outerHeight(true) + 30) +'px; background-color: white; left: -10px; right:-10px; position: absolute; top:'
+                               + ($widget.position().top ) +'px;">&nbsp;</div>')
             }
         });
 

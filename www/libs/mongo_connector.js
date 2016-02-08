@@ -35,13 +35,13 @@ var MongoConnector = function (opts) {
         self.dataCache = {
             total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
             
-            mac: new DataCache(db, "data_mac", ["format", "probe", "source", "mac_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
-            
             ip: new DataCache(db, "data_ip", ["format", "probe", "source", "ip_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
             
             app: new DataCache(db, "data_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
             
             pure_app: new DataCache(db, "data_pure_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
+            
+            mac: new DataCache(db, "data_mac", ["format", "probe", "source", "mac_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"], 5*60*1000),
         }
 
         console.log("Connected to Database");
@@ -285,7 +285,7 @@ var MongoConnector = function (opts) {
             else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
-                options.collection = "data_mac_" + options.period_groupby;
+                options.collection = "data_mac_" + "real"; //options.period_groupby;
             else if (["network.user"].indexOf(options.id) > -1)
                 options.collection = "data_ip_" + options.period_groupby;
             else if( options.id === "chart.license")
@@ -321,6 +321,7 @@ var MongoConnector = function (opts) {
             
             if( options.id === "link.nodes" ){
                 options.query.time['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
+                
                 self.queryDB(options.collection, "find", options.query, callback, options.raw);
                 return;
             }
@@ -446,7 +447,9 @@ var MongoConnector = function (opts) {
         if (self.mdb == null) return;
         
         //if online analysis ==> lastime is the current time of operator machine
-        cb( null, (new Date()).getTime() );
+        var time = (new Date()).getTime();
+        time -= config.probe_stats_period * 1000;
+        cb( null, time );
         return;
 
 
