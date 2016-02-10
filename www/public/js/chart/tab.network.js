@@ -41,252 +41,6 @@ function getHMTL( tag ){
 }
 
 //create reports
-var SubReport = {
-    data: {},
-    loadChartOfOneUser : function( elemID, userIP, data, childrenTag ){
-        childrenTag = childrenTag.slice(0);
-        childrenTag.push( userIP );
-        
-        SubReport.data[elemID] = {};
-        var pre = SubReport.data[elemID];
-
-        pre.$mainChart = $("#" + elemID).parent().parent().parent().parent();
-        pre.$mainChart.hide();
-        
-        //get the last filter in the tool-box
-        pre.filter = filters[ filters.length - 1 ];
-        
-        var subChartID = elemID + "_sub_chart";
-        
-        var $subReport = $("<div>", {
-            "id"   : subChartID
-        });
-         
-        pre.$mainChart.parent().append( $subReport );
-        
-        //$subReport.hide();
-        
-        pre.db = MMTDrop.databaseFactory.createFlowDB();
-        //retain only msg concern to userIP
-        var arr  = [];
-        for( var i in data){
-            var msg = data[i];
-            if( msg[ MMTDrop.constants.FlowStatsColumn.CLIENT_ADDR.id ] == userIP )
-                arr.push( msg );
-        }
-        pre.db.data( arr );
-        pre.filter.attachTo( pre.db );
-        if( childrenTag.length <= 1 ){
-            pre.rep = ReportFactory.createTopProtocolReport(pre.filter, pre.db);
-        }else{
-            pre.rep = ReportFactory.createDetailOfClassReport(pre.filter, pre.db);
-        }
-        pre.rep.charts[0].childrenTag = childrenTag;            
-        
-        pre.rep.renderTo( subChartID );
-        
-        //fire the chain to render the chart
-        pre.rep.filters[0].filter();
-        
-        var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
-        
-        
-        $closeBtn.on("click", null, subChartID, function( event ){
-            var $a = $( "#" + event.data);
-            $a.hide("slow", "easeInQuart", function(){
-                $a.remove(); 
-                pre.$mainChart.show();
-            });
-        } );
-        
-        $subReport.find(".input-group").parent().hide().parent()
-            .append($closeBtn)
-            .append($("<div>", {
-                html: getHMTL(childrenTag) ,
-                style:"text-align: center; font-weight: bold"
-            }));
-        
-        //$subReport.show("slow", "easeInQuart");
-    },
-    
-    loadChartOfOneClass : function( elemID, className, data, childrenTag ){
-
-        //clone this array
-        childrenTag = childrenTag.slice(0);
-        childrenTag.push( className );
-        
-        SubReport.data[elemID] = {};
-        var pre = SubReport.data[elemID];
-        
-        //get classID from className
-        var CAT = MMTDrop.constants.CategoriesIdsMap;
-        var classID = -1;
-        for(var i in CAT)
-            if( CAT[i] == className){
-                classID = i;
-                break;
-            }
-        
-        pre.$mainChart = $("#" + elemID).parent().parent().parent().parent();
-        pre.$mainChart.hide();
-        
-        //get the last filter in the tool-box
-        pre.filter = filters[ filters.length - 1 ];
-        
-        var $content   = pre.$mainChart.parent();
-        var subChartID = elemID + "_sub_chart";
-        
-        var $subReport = $("<div>", {
-            "id"   : subChartID
-        });
-         
-        $content.append( $subReport );
-        //$subReport.hide();
-        
-        pre.db = MMTDrop.databaseFactory.createFlowDB();
-        pre.db.data( data );
-        
-        var obj = pre.db.stat.splitDataByClass();
-        var arr = obj[ classID ];
-        /*
-        //retain only msg concern to classID
-        var arr = [];
-        //list of all app in the class classID
-        var appLst = MMTDrop.constants.CategoriesAppIdsMap[ classID ];
-
-        //All
-        if( appLst === undefined ){
-            arr = data;
-        }else
-            for( var i in data){
-                var msg = data[i];
-                var appId = msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ];
-                if( appLst.indexOf( appId )  > -1 )
-                    arr.push( msg );
-        }
-        */
-        
-        pre.db.data( arr );
-        pre.filter.attachTo( pre.db );
-        if( childrenTag.length <= 1 ){
-            pre.rep = ReportFactory.createTopUserReport(pre.filter, pre.db);
-        }else{
-            pre.rep = ReportFactory.createDetailOfClassReport(pre.filter, pre.db);
-        }
-        pre.rep.charts[0].childrenTag = childrenTag;        
-        pre.rep.renderTo( subChartID );
-        
-        //fire the chain to render the chart
-        pre.rep.filters[0].filter();
-
-        var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
-        
-        
-        $closeBtn.on("click", null, subChartID, function( event ){
-            var $a = $( "#" + event.data);
-            $a.hide("slow", "easeInQuart", function(){
-                $a.remove(); 
-                pre.$mainChart.show();
-            });
-        } );
-        
-        $subReport.find(".input-group").parent().hide().parent()
-            .append($closeBtn)
-            .append($("<div>", {
-                html: getHMTL(childrenTag) ,
-                style:"text-align: center; font-weight: bold"
-            }));
-        
-        //$subReport.show("slow", "easeInQuart");
-    },
-    loadChartOfOneApplication : function( elemID, appName, data, childrenTag ){
-
-        //clone this array
-        childrenTag = childrenTag.slice(0);
-        childrenTag.push( appName );
-        
-        SubReport.data[elemID] = {};
-        var pre = SubReport.data[elemID];
-        
-        //get classID from appName
-        var APP = MMTDrop.constants.ProtocolsIDName;
-        var appID = 0;
-        for(var i in APP)
-            if( APP[i] == appName){
-                appID = i;
-                break;
-            }
-                
-        
-        pre.$mainChart = $("#" + elemID).parent().parent().parent().parent();
-        pre.$mainChart.hide();
-        
-        //get the last filter in the tool-box
-        pre.filter = filters[ filters.length - 1 ];
-        
-        var $content   = pre.$mainChart.parent();
-        var subChartID = elemID + "_sub_chart";
-        
-        var $subReport = $("<div>", {
-            "id"   : subChartID,
-        });
-         
-        $content.append( $subReport );
-        //$subReport.hide();
-        
-        pre.db = MMTDrop.databaseFactory.createFlowDB();
-        //retain only msg concern to appID
-        var arr = [];
-        //list of data of the appID
-        for( var i in data){
-            var msg = data[i];
-            if(  appID  ==   msg[ MMTDrop.constants.FlowStatsColumn.APP_NAME.id ])
-                arr.push( msg );
-        }
-        
-        pre.db.data( arr );
-        pre.filter.attachTo( pre.db );
-        pre.rep = ReportFactory.createDetailOfApplicationReport(appName, pre.filter, pre.db);
-        
-        pre.rep.charts[0].childrenTag = childrenTag;   
-        try{
-            pre.rep.renderTo( subChartID );
-        
-            //fire the chain to render the chart
-            pre.rep.filters[0].filter();
-        }catch( err ){ 
-            console.error( err );
-            console.error( err.stack); 
-        }
-        var $closeBtn = $('<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
-        
-        
-        $closeBtn.on("click", null, {subChartID: subChartID, pre: pre}, function( event ){
-            var $a = $( "#" + event.data.subChartID);
-            var pre = event.data.pre;
-            $a.hide("slow", "easeInQuart", function(){
-                $a.remove(); 
-
-                //delete a filter that was created by the report
-                pre.rep.filters[0].delete();
-                pre.rep.delete();
-                pre.db.delete();
-
-                pre.$mainChart.show();
-            })
-        } );
-        
-        $subReport.find(".input-group").parent().hide().parent()
-            .append($closeBtn)
-            .append($("<div>", {
-                html: getHMTL(childrenTag) ,
-                style:"text-align: center; font-weight: bold"
-            }));
-        
-        //$subReport.show("slow", "easeInQuart");
-    },
-}
-
 var ReportFactory = {
     createDetailOfApplicationReport: function (appName, filter, database) {
         var self = this;
@@ -446,101 +200,63 @@ var ReportFactory = {
 
         return report;
     },
-    createDetailOfClassReport: function (filter, database) {
+    createApplicationReport: function (filter, ip) {
         var self = this;
-        var COL = MMTDrop.constants.FlowStatsColumn;
-        var fApp = MMTDrop.filterFactory.createAppFilter();
-
-        var cPie = MMTDrop.chartFactory.createPie({
+        var db_param = {id: "network.profile" };
+        if( ip !== undefined )
+            db_param["userData"] = {ip: ip };
+        var database = MMTDrop.databaseFactory.createStatDB( db_param );
+        var COL      = MMTDrop.constants.StatsColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        
+        var cPie = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var col = filter.selectedOption();
-
-                    var data = [];
+                    var data = db.data();
                     //the first column is Timestamp, so I start from 1 instance of 0
-                    var columns = [];
+                    var columns = [COL.DATA_VOLUME, COL.PACKET_COUNT];
+                    
+                    var obj = MMTDrop.tools.sumByGroup( data, 
+                                                       [COL.DATA_VOLUME.id, COL.PACKET_COUNT.id], 
+                                                       COL.APP_ID.id );
 
-                    var obj = db.stat.splitDataByApp();
-
-                    cPie.dataLegend = {
-                        "dataTotal": 0,
-                        "label": col.label,
-                        "data": {}
-                    };
-
+                    data = [];
                     for (var cls in obj) {
                         var o = obj[cls];
+                        cls = parseInt( cls );
                         var name = MMTDrop.constants.getProtocolNameFromID(cls);
 
-                        var total = 0;
-                        //sumup by col.id 
-                        o = MMTDrop.tools.sumUp(o, col.id);
-                        var v = o[col.id];
-                        data.push({
-                            "key": name,
-                            "val": v
-                        });
-
-                        total += o[col.id];
-
-                        cPie.dataLegend.data[name] = total;
-                        cPie.dataLegend.dataTotal += total;
+                        data.push( [0, name, 
+                                    o[COL.DATA_VOLUME.id], 
+                                    o[ COL.PACKET_COUNT.id ],
+                                    MMTDrop.constants.getCategoryNameFromID(MMTDrop.constants.getCategoryIdFromAppId( cls ))
+                                   ] )
                     }
 
+                    //sort by data size
                     data.sort(function (a, b) {
-                        return b.val - a.val;
+                        return b[2] - a[2];
                     });
-
-                    var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true){
-                        var val = 0;
-                        
-                        //update data
-                        for (var i=top; i<data.length; i++ ){
-                            var msg = data[i];
-                            val += msg.val;
-                        }
-                                                
-                        data[top] = {
-                            key: "Other",
-                            val: val
-                        };
-                        data.length = top+1;
-                        
-                        //reset dataLegend
-                        cPie.dataLegend.data = {};
-                        for (var i = 0; i < data.length; i++) {
-                            var o = data[i];
-                            cPie.dataLegend.data[o.key] = o.val;
-                        }
+                    //index
+                    for( var i=0; i<data.length; i++ ){
+                        data[i][0] = (i+1);
+                        data[i][2] = MMTDrop.tools.formatDataVolume(   data[i][2] );
+                        data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
                     }
                     return {
                         data: data,
-                        columns: [{
-                            "id": "key",
-                            label: ""
-                        }, {
-                            "id": "val",
-                            label: ""
-                        }],
-                        ylabel: col.label
+                        columns: [{id: 0, label: ""           , align: "left"}, 
+                                  {id: 1, label: "Application", align: "left"},
+                                  {id: 2, label: "Data       ", align: "right"},
+                                  {id: 3, label: "Packet"     , align: "right"},
+                                  {id: 4, label: "Profile"    , align: "right"}],
                     };
                 }
             },
             chart: {
-                size: {
-                    height: 300
-                },
-                legend: {
-                    hide: true,
-                },
-                data: {
-                    onclick: function( d, i ){
-                        var id = d.id;
-                        if( id === "Other") return;
-                        SubReport.loadChartOfOneApplication(cPie.elemID, id, cPie.database.data(), cPie.childrenTag);
-                    }
-                }
+                "paging": false,
+                "info"  : true,
+                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
             },
 
             //custom legend
@@ -548,166 +264,14 @@ var ReportFactory = {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 
-                var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
-                });
-                $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Application</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
-                var i = 0;
-                for (var key in legend.data) {
-                    if( key == "Other")
-                        continue;
-                    i++;
-                    var val = legend.data[key];
-                    var $tr = $("<tr>");
-                    $tr.appendTo($table);
-
-                    $("<td>", {
-                            "class": "item-" + key,
-                            "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
-                            "align": "right"
-                        })
-                        .css({
-                            "background-color": chart.color(key)
-                        })
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
-                        .on('click', function () {
-                            var id = $(this).data("id");
-                            chart.toggle(id);
-                            //$(this).css("background-color", chart.color(id) );
-                        })
-                        .appendTo($tr);
-                    $("<td>", {
-                        "text": key
-                    }).appendTo($tr);
-
-                    var $a = $("<a>", {
-                        href: "?show detail of this application",
-                        title: "click to show detail of this application",
-                        text: val,
-                        
-                    });
-                    $a.on("click", null, key, function( event ){
-                        event.preventDefault();
-                        
-                         var id = event.data;
-                        SubReport.loadChartOfOneApplication(_chart.elemID, id, _chart.database.data(), _chart.childrenTag);
-                        
-                        return false;
-                    });
-                    
-                    $("<td>", {align: "right"}).append( $a ).appendTo($tr);
-
-                    $("<td>", {
-                        "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
-                    }).appendTo($tr);
-                }
-                var $tfoot = $("<tfoot>");
-
-                if (legend.data["Other"] != undefined) {
-                    i++;
-                    $tr = $("<tr>");
-                    var key = "Other";
-                    var val = legend.data[key];
-
-                    $("<td>", {
-                            "class": "item-" + key,
-                            "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
-                            "align": "right"
-                        })
-                        .css({
-                            "background-color": chart.color(key)
-                        })
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
-                        .on('click', function () {
-                            var id = $(this).data("id");
-                            chart.toggle(id);
-                            //$(this).css("background-color", chart.color(id) );
-                        })
-                        .appendTo($tr);
-
-                    var $a = $("<a>", {
-                        href: "?show all applications",
-                        title: "click to show all applications",
-                        text: "Other",
-                        
-                    });
-                    $a.on("click", function(){
-                       _chart.showAll = true;
-                       _chart.redraw(); 
-                        return false;
-                    });
-                    
-                    $("<td>").append( $a ).appendTo($tr);
-
-                    
-                    $("<td>", {
-                        "align": "right",
-                        "html":  val
-                    }).appendTo($tr);
-
-                    $("<td>", {
-                        "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
-
-                    }).appendTo($tr);
-
-                    $tfoot.append($tr).appendTo($table);
-                }
-                $tfoot.append(
-                    $("<tr>", {
-                        "class": 'success'
-                    }).append(
-                        $("<td>", {
-                            "align": "center",
-                            "text": i
-                        })
-                    ).append(
-                        $("<td>", {
-                            "text": "Total"
-                        })
-                    ).append(
-                        $("<td>", {
-                            "align": "right",
-                            "text": legend.dataTotal
-                        })
-                    ).append(
-                        $("<td>", {
-                            "align": "right",
-                            "text": "100%"
-                        })
-                    )
-                ).appendTo($table);
-
-                $table.dataTable({
-                    paging: false,
-                    dom: "t",
-                    order: [[2, "desc"]]
-                });
             }
         });
         //
 
         var dataFlow = [{
-            object: filter,
+            object: fProbe,
             effect: [{
-                object: fApp,
-                effect: [{
-                    object: cPie
-                }]
+                object: cPie
                     }]
         }, ];
 
@@ -719,7 +283,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fApp],
+					[fProbe],
 
             //charts
 					[
@@ -735,10 +299,128 @@ var ReportFactory = {
 
         return report;
     },
-    
-    createTopProtocolReport: function (filter) {
+    createDestinationReport: function (filter, ip) {
         var self = this;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "network.profile"});
+        var db_param = {id: "network.destination" };
+        if( ip !== undefined )
+            db_param["userData"] = {ip: ip };
+        var database = MMTDrop.databaseFactory.createStatDB( db_param );
+        var COL      = MMTDrop.constants.StatsColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        
+        var cPie = MMTDrop.chartFactory.createTable({
+            getData: {
+                getDataFn: function (db) {
+                    var data = db.data();
+                    var obj = {};
+
+                    for (var i=0; i<data.length; i++) {
+                        var msg  = data[i];
+                        var ip   = msg[ COL.IP_DEST.id ];
+                        var time = msg[ COL.TIMESTAMP.id ];
+                        
+                        if( obj[ip] === undefined )
+                            obj[ ip ] = [
+                                0, //0: index
+                                ip,//1: ip
+                                0, //2: data
+                                0, //3: packet
+                                msg[ COL.START_TIME.id ], //4: start time
+                                time //5: last updated
+                            ];
+                        obj[ ip ][ 2 ] += msg[ COL.DATA_VOLUME.id];
+                        obj[ ip ][ 3 ] += msg[ COL.PACKET_COUNT.id ];
+                        
+                        if( obj[ ip ][ 4 ] > time )
+                            obj[ ip ][ 4 ] = time;
+                        if( obj[ ip ][ 5 ] < time )
+                            obj[ ip ][ 5 ] = time;
+                    }
+
+                    data = [];
+                    for( var i in obj )
+                        data.push( obj[i] );
+                    
+                    //sort by data size
+                    data.sort(function (a, b) {
+                        return b[2] - a[2];
+                    });
+                    //index
+                    for( var i=0; i<data.length; i++ ){
+                        data[i][0] = (i+1);
+                        data[i][2] = MMTDrop.tools.formatDataVolume( data[i][2] );
+                        data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
+                        data[i][4] = moment( data[i][4] ).format("YYYY/MM/DD HH:mm:ss");
+                        data[i][5] = moment( data[i][5] ).format("MM/DD HH:mm:ss");
+                    }
+                        
+
+                    return {
+                        data: data,
+                        columns: [{id: 0, label: ""              , align: "left"}, 
+                                  {id: 1, label: "Destination IP", align: "left"},
+                                  {id: 2, label: "Data       "   , align: "right"},
+                                  {id: 3, label: "Packet"        , align: "right"},
+                                  {id: 4, label: "Start Time"    , align: "right"},
+                                  {id: 5, label: "Last Updated"  , align: "right"},
+                                 ],
+                    };
+                }
+            },
+            chart: {
+                "paging": false,
+                "info"  : true,
+                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+            },
+            click: function( el ){
+                console.log( el );
+            },
+            //custom legend
+            afterEachRender: function (_chart) {
+                var chart = _chart.chart;
+                
+
+            }
+        });
+        //
+
+        var dataFlow = [{
+            object: fProbe,
+            effect: [{
+                object: cPie
+                    }]
+        }, ];
+
+        var report = new MMTDrop.Report(
+            // title
+            null,
+
+            // database
+            database,
+
+            // filers
+					[fProbe],
+
+            //charts
+					[
+                {
+                    charts: [cPie],
+                    width: 12
+                },
+					 ],
+
+            //order of data flux
+            dataFlow
+        );
+
+        return report;
+    },
+    createTopProtocolReport: function (filter, ip) {
+        var self = this;
+        var db_param = {id: "network.profile" };
+        if( ip !== undefined )
+            db_param["userData"] = {ip: ip };
+        var database = MMTDrop.databaseFactory.createStatDB( db_param );
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -756,8 +438,8 @@ var ReportFactory = {
 
                     cPie.dataLegend = {
                         "dataTotal": 0,
-                        "label": col.label,
-                        "data": {}
+                        "label"    : col.label.substr(0, col.label.indexOf(" ")),
+                        "data"     : {}
                     };
 
                     var total = 0;
@@ -787,7 +469,7 @@ var ReportFactory = {
                     });
 
                     var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true){
+                    if( data.length > top+1 && cPie.showAll !== true && ip == undefined ){
                         var val = 0;
                         
                         //update data
@@ -819,7 +501,6 @@ var ReportFactory = {
                             "id": "val",
                             label: ""
                         }],
-                        ylabel: col.label
                     };
                 }
             },
@@ -835,16 +516,7 @@ var ReportFactory = {
                         var id = d.id;
                         if( id === "Other") return;
                         
-                        var _chart = cPie;
-                        if( _chart.childrenTag == undefined )
-                            _chart.childrenTag = [];
-                        
-                        var childrenTag = _chart.childrenTag;
-
-                        if( childrenTag.length == 1 && id == "NaP" )
-                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
-                        else
-                                SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
+                        var _chart = cPie.chart;
                     }
                 }
             },
@@ -855,7 +527,7 @@ var ReportFactory = {
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
+                    "class": "table table-bordered table-striped table-condensed"
                 });
                 $table.appendTo($("#" + _chart.elemID));
                 $("<thead><tr><th></th><th width='50%'>Profile</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
@@ -903,20 +575,15 @@ var ReportFactory = {
                     $a.on("click", null, key, function( event ){
                         event.preventDefault();
                         var id = event.data;
-                        if( _chart.childrenTag == undefined )
-                            _chart.childrenTag = [];
                         
-                        var childrenTag = _chart.childrenTag;
-
-                        if( childrenTag.length == 1 && id == "NaP" )
-                                SubReport.loadChartOfOneApplication(_chart.elemID, "NaP", _chart.database.data(), childrenTag);
+                        if( ip )
+                            location.href = "?profile=" + id + "&ip = " + ip;
                         else
-                                SubReport.loadChartOfOneClass(_chart.elemID, id, _chart.database.data(), childrenTag);
-                            
+                            location.href = "?profile=" + id;
                         return false;
                     });
                     
-                    $("<td>", {align: "right"}).append( $a ).appendTo($tr);
+                    $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
 
                     $("<td>", {
                         "align": "right",
@@ -1049,9 +716,9 @@ var ReportFactory = {
         return report;
     },
 
-    createTopUserReport: function (filter) {
+    createTopUserReport: function (filter, userData) {
         var self = this;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "network.user"});
+        var database = MMTDrop.databaseFactory.createStatDB({id: "network.user", userData: userData});
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -1065,11 +732,10 @@ var ReportFactory = {
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-
                     cPie.dataLegend = {
                         "dataTotal": 0,
-                        "label": col.label,
-                        "data": {}
+                        "label"    : col.label,
+                        "data"     : {}
                     };
 
                     var db_data = db.data();
@@ -1098,17 +764,17 @@ var ReportFactory = {
 
                     var top = 7;
                     if( data.length > top+1 && cPie.showAll !== true){
-                        var val = cPie.dataLegend.dataTotal;
+                        var val = 0;
                         
                         //update data
                         for (var i=top; i<data.length; i++ ){
                             var msg = data[i];
-                            val -= msg.val;
+                            val += msg.val;
                         }
                                                 
                         data[top] = {
                             key: "Other",
-                            val: val
+                            val: val 
                         };
                         data.length = top+1;
                         
@@ -1119,6 +785,7 @@ var ReportFactory = {
                             cPie.dataLegend.data[o.key] = o.val;
                         }
                     }
+                    
                     return {
                         data: data,
                         columns: [{
@@ -1145,15 +812,7 @@ var ReportFactory = {
                         if( ip === "Other") return;
                         
                         var _chart = cPie;
-                        if ( _chart.childrenTag == undefined )
-                            _chart.childrenTag = [];
-                        var childrenTag = _chart.childrenTag;
-                        if( childrenTag.length == 1 && childrenTag[0] == "NaP" )
-                                SubReport.loadChartOfOneApplication(_chart.elemID, ip,
-                                                                    //"NaP", 
-                                                                    _chart.database.data(), childrenTag);
-                        else
-                                SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
+                        //TODO
                     }
                 }
             },
@@ -1198,38 +857,19 @@ var ReportFactory = {
                             //$(this).css("background-color", chart.color(id) );
                         })
                         .appendTo($tr);
-                    $("<td>", {
-                        "text": key
-                    }).appendTo($tr);
-
-                    var $atotal = $("<a>", {
-                        text : MMTDrop.tools.formatDataVolume( val ),
+                    
+                    var $label = $("<a>", {
+                        text : key,
                         title: "click to show detail of this user",
-                        href :"?show detail of this user"
+                        href :"?ip=" + key
                     });
                     
-                    //click to show detail of this user
-                    $atotal.on("click", null, key, function( event ){
-                        event.preventDefault();
-                        var ip = event.data;
-                        
-                        if ( _chart.childrenTag == undefined )
-                            _chart.childrenTag = [];
-                        var childrenTag = _chart.childrenTag;
-                        if( childrenTag.length == 1 && childrenTag[0] == "NaP" )
-                                SubReport.loadChartOfOneApplication(_chart.elemID, ip,
-                                                                    //"NaP", 
-                                                                    _chart.database.data(), childrenTag);
-                        else
-                                SubReport.loadChartOfOneUser(_chart.elemID, ip, _chart.database.data(), childrenTag);
-                        
-                        
-
-                        return false;
-                    });
+                    $("<td>", {align: "left"}).append($label).appendTo($tr);
                     
-                    $("<td>", {align: "right"}).append($atotal).appendTo($tr);
-                    
+                    $("<td>", {
+                        "text" : MMTDrop.tools.formatDataVolume( val ),
+                        "align": "right"
+                    }).appendTo($tr);
 
                     $("<td>", {
                         "align": "right",
@@ -1364,4 +1004,60 @@ var ReportFactory = {
 
         return report;
     },
+    
+}
+
+var param = MMTDrop.tools.getURLParameters();
+if( param.ip != undefined ){
+    var ip = param.ip; //'<a href="?">'+ param.ip +'</a>'
+    arr = [{
+        id: "profile",
+        title: ip + " &gt; Profiles",
+        x: 0,
+        y: 0,
+        width: 5,
+        height: 10,
+        type: "info",
+        userData: {
+            fn: "createIPUserReport"
+        },
+    },{
+        id: "user",
+        title: ip + " &gt; Destinations",
+        x: 6,
+        y: 0,
+        width: 7,
+        height: 5,
+        type: "info",
+        userData: {
+            fn: "createIPDestinationReport"
+        },
+    },{
+        id: "app",
+        title: ip + " &gt; Protocols/Applications",
+        x: 6,
+        y: 6,
+        width: 7,
+        height: 5,
+        type: "info",
+        userData: {
+            fn: "createIPApplicationReport"
+        },
+    }];
+    
+    ReportFactory.ip = param.ip;
+    ReportFactory.createIPUserReport = function( filter ){
+        var rep = this.createTopProtocolReport( filter, this.ip);
+        return rep;
+    };
+    
+    ReportFactory.createIPApplicationReport = function( filter ){
+        var rep = this.createApplicationReport( filter, this.ip);
+        return rep;
+    };
+    
+    ReportFactory.createIPDestinationReport = function( filter ){
+        var rep = this.createDestinationReport( filter, this.ip);
+        return rep;
+    }
 }

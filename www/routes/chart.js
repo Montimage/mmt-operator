@@ -52,8 +52,9 @@ router.get('/*', function(req, res, next) {
 	if( !page){
 		var err = new Error('Not Found');
 		err.status = 404;
-	}else
+	}else{
 		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true) });
+    }
 });
 
 module.exports = router;

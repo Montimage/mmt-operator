@@ -534,6 +534,10 @@ MMTDrop.constants = {
 		 */
 		getProtocolNameFromID : function(id) {
 			var protocolName;
+            id = parseInt( id );
+            if( id < 0 ){
+                return ":" + (-1 * id);
+            }
 			protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'NaP';
 			return protocolName;
 		},
@@ -1174,6 +1178,18 @@ MMTDrop.tools = function () {
 
 		return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
 	};
+    
+    
+    _this.getURLParameters  = function(){
+        var vars = {}, hash;
+        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        for(var i = 0; i < hashes.length; i++){
+            hash = hashes[i].split('=');
+            vars[hash[0]] = hash[1];
+        }
+        return vars;
+
+    };
 
 	return _this;
 }();
@@ -5332,7 +5348,7 @@ MMTDrop.chartFactory = {
 					'cellpadding' : 0,
 					'cellspacing' : 0,
 					'border'      : 0,
-					'class'       : "table table-striped table-bordered table-hover"
+					'class'       : "table table-striped table-bordered table-condensed"
 				});
 
 				table.appendTo($('#' + elemID));

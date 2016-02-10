@@ -64,9 +64,9 @@ var MMTDrop = {
         IP_SRC              : 18, /**< Index of the IP address source column */
         MAC_SRC             : 19, /**< Index of the MAC address source column */
         MAC_DEST            : 20, /**< Index of the MAC address destination column */
-        SESSION_ID:21,
-        PORT_DEST:22,
-        PORT_SRC: 23
+        SESSION_ID          : 21, //Identifier of the session or if the protocol does not have session its session id = 0 
+        PORT_DEST           : 22, //Server port number (0 if transport protocol is session less like ICMP)
+        PORT_SRC            : 23, //Client port number (0 if transport protocol is session less like ICMP) 
     },
     
     SecurityColumnId           : {
@@ -377,383 +377,64 @@ var MMTDrop = {
     ]
 };
 
-MMTDrop.LicensePoint = function( entry ){
-    var retval = {};
-    retval.format                               = entry[MMTDrop.LicenseColumnId.FORMAT_ID];
-    retval.probe                                = entry[MMTDrop.LicenseColumnId.PROBE_ID];
-    retval.source                               = entry[MMTDrop.LicenseColumnId.SOURCE_ID];
-    retval.time                                 = entry[MMTDrop.LicenseColumnId.TIMESTAMP];
-    retval.info_id                              = entry[MMTDrop.LicenseColumnId.LICENSE_INFO_ID];
-    retval.number_of_mac                        = entry[MMTDrop.LicenseColumnId.NUMBER_OF_MAC];
-    retval.mac_addresses                        = entry[MMTDrop.LicenseColumnId.MAC_ADDRESSES];
-    retval.expire_date                          = entry[MMTDrop.LicenseColumnId.EXPIRY_DATE];
-    return retval;
-}
-
-MMTDrop.reverseLicensePoint = function(elem) {
-    var retval = [];
-    retval[MMTDrop.LicenseColumnId.FORMAT_ID]                    = elem.format;
-    retval[MMTDrop.LicenseColumnId.PROBE_ID]                     = elem.probe;
-    retval[MMTDrop.LicenseColumnId.SOURCE_ID]                    = elem.source;
-    retval[MMTDrop.LicenseColumnId.TIMESTAMP]                    = elem.time;
-    retval[MMTDrop.LicenseColumnId.LICENSE_INFO_ID]              = elem.info_id;
-    retval[MMTDrop.LicenseColumnId.NUMBER_OF_MAC]                = elem.number_of_mac;
-    retval[MMTDrop.LicenseColumnId.MAC_ADDRESSES]                = elem.mac_addresses;
-    retval[MMTDrop.LicenseColumnId.EXPIRY_DATE]                  = elem.expire_date;
-    return retval;
-}
-
-MMTDrop.BehaviourBandwidthPoint = function( entry ){
-    var retval = {};
-    retval.format                   = entry[MMTDrop.BehaviourBandwidthColumnId.FORMAT_ID];
-    retval.probe                    = entry[MMTDrop.BehaviourBandwidthColumnId.PROBE_ID];
-    retval.source                   = entry[MMTDrop.BehaviourBandwidthColumnId.SOURCE_ID];
-    retval.time                     = entry[MMTDrop.BehaviourBandwidthColumnId.TIMESTAMP];
-    retval.property                 = entry[MMTDrop.BehaviourBandwidthColumnId.PROPERTY];
-    retval.ip                       = entry[MMTDrop.BehaviourBandwidthColumnId.IP];
-    retval.description              = entry[MMTDrop.BehaviourBandwidthColumnId.DESCRIPTION];
-    retval.verdict                  = entry[MMTDrop.BehaviourProfileColumnId.VERDICT];
-    
-    retval.app                      = entry[MMTDrop.BehaviourBandwidthColumnId.APP];
-    retval.bw_before                = entry[MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE];
-    retval.bw_after                 = entry[MMTDrop.BehaviourBandwidthColumnId.BW_AFTER];
-    return retval;
-};
-
-MMTDrop.reverseBehaviourBandwidthPoint = function(elem) {
-    var retval = [];
-    retval[MMTDrop.BehaviourBandwidthColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.BehaviourBandwidthColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.BehaviourBandwidthColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.BehaviourBandwidthColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.BehaviourBandwidthColumnId.PROPERTY]       = elem.property;
-    retval[MMTDrop.BehaviourBandwidthColumnId.VERDICT]        = elem.verdict;
-    retval[MMTDrop.BehaviourBandwidthColumnId.IP]             = elem.ip;
-    retval[MMTDrop.BehaviourBandwidthColumnId.DESCRIPTION]    = elem.description;
-
-    retval[MMTDrop.BehaviourBandwidthColumnId.APP]            = elem.app;
-    retval[MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE]      = elem.bw_before;
-    retval[MMTDrop.BehaviourBandwidthColumnId.BW_AFTER]       = elem.bw_after;
-    return retval;
-}
-
-MMTDrop.BehaviourProfilePoint = function( entry ){
-    var retval = {};
-    retval.format                   = entry[MMTDrop.BehaviourProfileColumnId.FORMAT_ID];
-    retval.probe                    = entry[MMTDrop.BehaviourProfileColumnId.PROBE_ID];
-    retval.source                   = entry[MMTDrop.BehaviourProfileColumnId.SOURCE_ID];
-    retval.time                     = entry[MMTDrop.BehaviourProfileColumnId.TIMESTAMP];
-    retval.property                 = entry[MMTDrop.BehaviourProfileColumnId.PROPERTY];
-    retval.ip                       = entry[MMTDrop.BehaviourProfileColumnId.IP];
-    retval.description              = entry[MMTDrop.BehaviourProfileColumnId.DESCRIPTION];
-    retval.verdict                  = entry[MMTDrop.BehaviourProfileColumnId.VERDICT];
-    
-    retval.profile_before           = entry[MMTDrop.BehaviourProfileColumnId.PROFILE_BEFORE];
-    retval.profile_after            = entry[MMTDrop.BehaviourProfileColumnId.PROFILE_AFTER];
-    retval.bw_before                = entry[MMTDrop.BehaviourProfileColumnId.BW_BEFORE];
-    retval.bw_after                 = entry[MMTDrop.BehaviourProfileColumnId.BW_AFTER];
-    return retval;
-};
-
-MMTDrop.reverseBehaviourProfilePoint = function(elem) {
-    var retval = [];
-    retval[MMTDrop.BehaviourProfileColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.BehaviourProfileColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.BehaviourProfileColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.BehaviourProfileColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.BehaviourProfileColumnId.PROPERTY]       = elem.property;
-    retval[MMTDrop.BehaviourProfileColumnId.VERDICT]        = elem.verdict;
-    retval[MMTDrop.BehaviourProfileColumnId.IP]             = elem.ip;
-    retval[MMTDrop.BehaviourProfileColumnId.DESCRIPTION]    = elem.description;
-
-    retval[MMTDrop.BehaviourProfileColumnId.PROFILE_BEFORE] = elem.profile_before;
-    retval[MMTDrop.BehaviourProfileColumnId.PROFILE_AFTER]  = elem.profile_after;
-    retval[MMTDrop.BehaviourProfileColumnId.BW_BEFORE]      = elem.bw_before;
-    retval[MMTDrop.BehaviourProfileColumnId.BW_AFTER]       = elem.bw_after;
-    return retval;
-}
-
-MMTDrop.SecurityPoint = function( entry ){
-    var retval = {};
-    retval.format                   = entry[MMTDrop.SecurityColumnId.FORMAT_ID];
-    retval.probe                    = entry[MMTDrop.SecurityColumnId.PROBE_ID];
-    retval.source                   = entry[MMTDrop.SecurityColumnId.SOURCE_ID];
-    retval.time                     = entry[MMTDrop.StatsColumnId.TIMESTAMP];
-    retval.property                 = entry[MMTDrop.SecurityColumnId.PROPERTY];
-    retval.verdict                  = entry[MMTDrop.SecurityColumnId.VERDICT];
-    retval.type                     = entry[MMTDrop.SecurityColumnId.TYPE];
-    retval.description              = entry[MMTDrop.SecurityColumnId.DESCRIPTION];
-    
-    retval.history                  = JSON.stringify( entry[MMTDrop.SecurityColumnId.HISTORY] );
-    //retval.history                  = "'" + entry[MMTDrop.SecurityColumnId.HISTORY] + "'";
-    
-    if( entry[MMTDrop.SecurityColumnId.VERDICT_COUNT] )
-        retval.verdict_count            = entry[MMTDrop.SecurityColumnId.VERDICT_COUNT];
-    else
-        retval.verdict_count = 1;
-    return retval;
-};
-
-MMTDrop.reverseSecurityPoint = function(elem) {
-    var retval = [];
-    retval[MMTDrop.SecurityColumnId.FORMAT_ID]      = elem.format;
-    retval[MMTDrop.SecurityColumnId.PROBE_ID]       = elem.probe;
-    retval[MMTDrop.SecurityColumnId.SOURCE_ID]      = elem.source;
-    retval[MMTDrop.SecurityColumnId.TIMESTAMP]      = elem.time;
-    retval[MMTDrop.SecurityColumnId.PROPERTY]       = elem.property;
-    retval[MMTDrop.SecurityColumnId.VERDICT]        = elem.verdict;
-    retval[MMTDrop.SecurityColumnId.TYPE]           = elem.type;
-    retval[MMTDrop.SecurityColumnId.DESCRIPTION]    = elem.description;
-    
-    if( elem.history )
-        retval[MMTDrop.SecurityColumnId.HISTORY]        = JSON.parse( elem.history );
-    
-    //retval[MMTDrop.SecurityColumnId.HISTORY]        = elem.history;
-    retval[MMTDrop.SecurityColumnId.VERDICT_COUNT]  = elem.verdict_count;
-    return retval;
-}
-MMTDrop.StatsTimePoint = function(entry) {
-    var retval = {};
-    retval.format               = entry[MMTDrop.StatsColumnId.FORMAT_ID];
-    retval.probe                = entry[MMTDrop.StatsColumnId.PROBE_ID];
-    retval.source               = entry[MMTDrop.StatsColumnId.SOURCE_ID];
-    retval.time                 = entry[MMTDrop.StatsColumnId.TIMESTAMP];
-    
-    retval.app                  = entry[MMTDrop.StatsColumnId.APP_ID];
-    retval.path                 = entry[MMTDrop.StatsColumnId.APP_PATH];
-
-    retval.ul_data              = entry[MMTDrop.StatsColumnId.UL_DATA_VOLUME];
-    retval.dl_data              = entry[MMTDrop.StatsColumnId.DL_DATA_VOLUME];
-    retval.ul_packets           = entry[MMTDrop.StatsColumnId.UL_PACKET_COUNT];
-    retval.dl_packets           = entry[MMTDrop.StatsColumnId.DL_PACKET_COUNT];
-    
-    retval.ul_payload           = entry[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME];
-    retval.dl_payload           = entry[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME];
-    
-    retval.active_flowcount     = entry[MMTDrop.StatsColumnId.ACTIVE_FLOWS];
-
-    retval.bytecount            = entry[MMTDrop.StatsColumnId.DATA_VOLUME];
-    retval.payloadcount         = entry[MMTDrop.StatsColumnId.PAYLOAD_VOLUME];
-    retval.packetcount          = entry[MMTDrop.StatsColumnId.PACKET_COUNT];
-    retval.start_time           = entry[MMTDrop.StatsColumnId.START_TIME];
-    retval.ip_src               = entry[MMTDrop.StatsColumnId.IP_SRC];
-    retval.ip_dest              = entry[MMTDrop.StatsColumnId.IP_DEST];
-    retval.mac_src              = entry[MMTDrop.StatsColumnId.MAC_SRC];
-    retval.mac_dest             = entry[MMTDrop.StatsColumnId.MAC_DEST];
-
-    retval.session_id           = entry[MMTDrop.StatsColumnId.SESSION_ID];
-    retval.port_src             = entry[MMTDrop.StatsColumnId.PORT_SRC];
-    retval.port_dest            = entry[MMTDrop.StatsColumnId.PORT_DEST];
-    
-    return retval;
-}
-
-MMTDrop.reverseStatsTimePoint = function(elem) {
-    var retval = [];
-    retval[MMTDrop.StatsColumnId.FORMAT_ID]         = elem.format;
-    retval[MMTDrop.StatsColumnId.PROBE_ID]          = elem.probe;
-    retval[MMTDrop.StatsColumnId.SOURCE_ID]         = elem.source;
-    retval[MMTDrop.StatsColumnId.TIMESTAMP]         = elem.time;
-    retval[MMTDrop.StatsColumnId.APP_ID]            = elem.app;
-    retval[MMTDrop.StatsColumnId.APP_PATH]          = elem.path;
-    retval[MMTDrop.StatsColumnId.ACTIVE_FLOWS]      = elem.active_flowcount;
-    retval[MMTDrop.StatsColumnId.DATA_VOLUME]       = elem.bytecount;
-    retval[MMTDrop.StatsColumnId.PAYLOAD_VOLUME]    = elem.payloadcount;
-    retval[MMTDrop.StatsColumnId.PACKET_COUNT]      = elem.packetcount;
-    retval[MMTDrop.StatsColumnId.UL_PAYLOAD_VOLUME] = elem.ul_payload;
-    retval[MMTDrop.StatsColumnId.DL_PAYLOAD_VOLUME] = elem.dl_payload;
-    
-    retval[MMTDrop.StatsColumnId.UL_DATA_VOLUME]    = elem.ul_data;
-    retval[MMTDrop.StatsColumnId.DL_DATA_VOLUME]    = elem.dl_data;
-    
-    retval[MMTDrop.StatsColumnId.UL_PACKET_COUNT]   = elem.ul_packets;
-    retval[MMTDrop.StatsColumnId.DL_PACKET_COUNT]   = elem.dl_packets;
-    
-    retval[MMTDrop.StatsColumnId.START_TIME]        = elem.start_time;
-    
-    retval[MMTDrop.StatsColumnId.IP_SRC]            = elem.ip_src;
-    retval[MMTDrop.StatsColumnId.IP_DEST]           = elem.ip_dest;
-    
-    retval[MMTDrop.StatsColumnId.MAC_SRC]           = elem.mac_src;
-    retval[MMTDrop.StatsColumnId.MAC_DEST]          = elem.mac_dest;
-    
-    retval[MMTDrop.StatsColumnId.SESSION_ID]        = elem.session_id;
-    
-    retval[MMTDrop.StatsColumnId.PORT_SRC]          = elem.port_src;
-    retval[MMTDrop.StatsColumnId.PORT_DEST]         = elem.port_dest;
-    
-    return retval;
-};
-
-/**
-  * Flow statistics data entry
-  */
-MMTDrop.FlowStatsItem = function(entry) {
-    var retval = {};
-    retval.format           = entry[MMTDrop.FlowStatsColumnId.FORMAT_ID];
-    retval.probe            = entry[MMTDrop.FlowStatsColumnId.PROBE_ID];
-    retval.source           = entry[MMTDrop.FlowStatsColumnId.SOURCE_ID];
-    retval.time             = entry[MMTDrop.FlowStatsColumnId.TIMESTAMP];
-    retval.fid              = entry[MMTDrop.FlowStatsColumnId.FLOW_ID];
-    retval.start_time       = entry[MMTDrop.FlowStatsColumnId.START_TIME];
-    retval.ip_version       = entry[MMTDrop.FlowStatsColumnId.IP_VERSION];
-    retval.server_addr      = entry[MMTDrop.FlowStatsColumnId.SERVER_ADDR];
-    retval.client_addr      = entry[MMTDrop.FlowStatsColumnId.CLIENT_ADDR];
-    retval.server_port      = entry[MMTDrop.FlowStatsColumnId.SERVER_PORT];
-    retval.client_port      = entry[MMTDrop.FlowStatsColumnId.CLIENT_PORT];
-    retval.transport_proto  = entry[MMTDrop.FlowStatsColumnId.TRANSPORT_PROTO];
-    retval.ul_data          = entry[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME];
-    retval.dl_data          = entry[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME];
-    retval.ul_packets       = entry[MMTDrop.FlowStatsColumnId.UL_PACKET_COUNT];
-    retval.dl_packets       = entry[MMTDrop.FlowStatsColumnId.DL_PACKET_COUNT];
-    retval.tcp_rtt          = entry[MMTDrop.FlowStatsColumnId.TCP_RTT];
-    retval.retransmission   = entry[MMTDrop.FlowStatsColumnId.RETRANSMISSION_COUNT];
-    retval.family           = entry[MMTDrop.FlowStatsColumnId.APP_FAMILY];
-    retval.content_class    = entry[MMTDrop.FlowStatsColumnId.CONTENT_CLASS];
-    retval.path             = entry[MMTDrop.FlowStatsColumnId.PROTO_PATH];
-    retval.app              = entry[MMTDrop.FlowStatsColumnId.APP_NAME];
-    return retval;
-};
-
-MMTDrop.reverseFlowStatsItem = function(item) {
-    var retval = [];
-    retval[MMTDrop.FlowStatsColumnId.FORMAT_ID]             = item.format;
-    retval[MMTDrop.FlowStatsColumnId.PROBE_ID]              = item.probe;
-    retval[MMTDrop.FlowStatsColumnId.SOURCE_ID]             = item.source;
-    retval[MMTDrop.FlowStatsColumnId.TIMESTAMP]             = item.time;
-    retval[MMTDrop.FlowStatsColumnId.FLOW_ID]               = item.fid;
-    retval[MMTDrop.FlowStatsColumnId.START_TIME]            = item.start_time;
-    retval[MMTDrop.FlowStatsColumnId.IP_VERSION]            = item.ip_version;
-    retval[MMTDrop.FlowStatsColumnId.SERVER_ADDR]           = item.server_addr;
-    retval[MMTDrop.FlowStatsColumnId.CLIENT_ADDR]           = item.client_addr;
-    retval[MMTDrop.FlowStatsColumnId.SERVER_PORT]           = item.server_port;
-    retval[MMTDrop.FlowStatsColumnId.CLIENT_PORT]           = item.client_port;
-    retval[MMTDrop.FlowStatsColumnId.TRANSPORT_PROTO]       = item.transport_proto;
-    retval[MMTDrop.FlowStatsColumnId.UL_DATA_VOLUME]        = item.ul_data;
-    retval[MMTDrop.FlowStatsColumnId.DL_DATA_VOLUME]        = item.dl_data;
-    retval[MMTDrop.FlowStatsColumnId.UL_PACKET_COUNT]       = item.ul_packets;
-    retval[MMTDrop.FlowStatsColumnId.DL_PACKET_COUNT]       = item.dl_packets;
-    retval[MMTDrop.FlowStatsColumnId.TCP_RTT]               = item.tcp_rtt;
-    retval[MMTDrop.FlowStatsColumnId.RETRANSMISSION_COUNT]  = item.retransmission;
-    retval[MMTDrop.FlowStatsColumnId.APP_FAMILY]            = item.family;
-    retval[MMTDrop.FlowStatsColumnId.CONTENT_CLASS]         = item.content_class;
-    retval[MMTDrop.FlowStatsColumnId.PROTO_PATH]            = item.path;
-    retval[MMTDrop.FlowStatsColumnId.APP_NAME]              = item.app;
-    return retval;
-};
-
-MMTDrop.HttpFlowStatsItem = function(entry) {
-    var retval = MMTDrop.FlowStatsItem(entry);
-
-    retval.response_time        = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.RESPONSE_TIME];
-    retval.transactions_count   = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.TRANSACTIONS_COUNT];
-    retval.interaction_time     = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.INTERACTION_TIME];
-    retval.hostname             = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.HOSTNAME];
-    retval.mime                 = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.MIME_TYPE];
-    retval.referer              = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.REFERER];
-    retval.device_os_id         = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.DEVICE_OS_ID];
-    retval.cdn                  = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.CDN_FLAG];
-    return retval;
-};
-
-MMTDrop.reverseHttpFlowStatsItem = function(item) {
-    var retval = MMTDrop.reverseFlowStatsItem(item);
-
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.RESPONSE_TIME]       = item.response_time;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.TRANSACTIONS_COUNT]  = item.transactions_count;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.INTERACTION_TIME]    = item.interaction_time;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.HOSTNAME]            = item.hostname;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.MIME_TYPE]           = item.mime;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.REFERER]             = item.referer;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.DEVICE_OS_ID]        = item.device_os_id;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.HttpStatsColumnId.CDN_FLAG]            = item.cdn;
-    return retval;
-};
-
-MMTDrop.TlsFlowStatsItem = function(entry) {
-    var retval = MMTDrop.FlowStatsItem(entry);
-    retval.server_name = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.SERVER_NAME];
-    retval.cdn = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.CDN_FLAG];
-    return retval;
-};
-
-MMTDrop.reverseTlsFlowStatsItem = function(item) {
-    var retval = MMTDrop.reverseFlowStatsItem(item);
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.SERVER_NAME] = item.server_name;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.TlsStatsColumnId.CDN_FLAG] = item.cdn;
-    return retval;
-};
-
-MMTDrop.RtpFlowStatsItem = function(entry) {
-    var retval = MMTDrop.FlowStatsItem(entry);
-    retval.packet_loss = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_RATE];
-    retval.packet_loss_burstiness = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_BURSTINESS];
-    retval.jitter = entry[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.MAX_JITTER];
-    return retval;
-};
-
-MMTDrop.reverseRtpFlowStatsItem = function(item) {
-    var retval = MMTDrop.reverseFlowStatsItem(item);
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_RATE] = item.packet_loss;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.PACKET_LOSS_BURSTINESS] = item.packet_loss_burstiness;
-    retval[MMTDrop.FlowStatsColumnId.APP_FORMAT_ID + MMTDrop.RtpStatsColumnId.MAX_JITTER] = item.jitter;
-    return retval;
-};
-
+//array => object
 MMTDrop.formatReportItem = function(entry) {
     switch( entry[0] ) {
-        case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT : 
-            return MMTDrop.FlowStatsItem( entry );
-        case MMTDrop.CsvFormat.WEB_APP_FORMAT : 
-            return MMTDrop.HttpFlowStatsItem( entry );
-        case MMTDrop.CsvFormat.SSL_APP_FORMAT : 
-            return MMTDrop.TlsFlowStatsItem( entry );
-        case MMTDrop.CsvFormat.RTP_APP_FORMAT : 
-            return MMTDrop.RtpFlowStatsItem( entry );
-        case MMTDrop.CsvFormat.STATS_FORMAT : 
-            return MMTDrop.StatsTimePoint( entry );
+        case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
+            break;
+        case MMTDrop.CsvFormat.WEB_APP_FORMAT :
+            break;
+        case MMTDrop.CsvFormat.SSL_APP_FORMAT :
+            break;
+        case MMTDrop.CsvFormat.RTP_APP_FORMAT :
+            break;
+        case MMTDrop.CsvFormat.STATS_FORMAT :
+            break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
-            return MMTDrop.SecurityPoint( entry );
+            entry[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( entry[ MMTDrop.SecurityColumnId.HISTORY ] );
+            break;
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
-            return MMTDrop.BehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
-            return MMTDrop.BehaviourProfilePoint( entry );
         case MMTDrop.CsvFormat.LICENSE:
-            return MMTDrop.LicensePoint( entry );
-            
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
-        default :
-            return null;
     }
+    
+    var obj = {};
+    for( var i in entry ){
+        obj[ i ] = entry[ i ];
+    }
+    return obj;
 };
 
+//object => array
 MMTDrop.reverseFormatReportItem = function(entry) {
-    switch( entry.format ) {
+    switch( entry[0] ) {
         case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
-            return MMTDrop.reverseFlowStatsItem( entry );
+            break;
         case MMTDrop.CsvFormat.WEB_APP_FORMAT :
-            return MMTDrop.reverseHttpFlowStatsItem( entry );
+            break;
         case MMTDrop.CsvFormat.SSL_APP_FORMAT :
-            return MMTDrop.reverseTlsFlowStatsItem( entry );
+            break;
         case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-            return MMTDrop.reverseRtpFlowStatsItem( entry );
+            break;
         case MMTDrop.CsvFormat.STATS_FORMAT :
-            return MMTDrop.reverseStatsTimePoint( entry );
+            break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
-            return MMTDrop.reverseSecurityPoint( entry );
+            entry[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.parse( entry[ MMTDrop.SecurityColumnId.HISTORY ] );
+            break;
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
-            return MMTDrop.reverseBehaviourBandwidthPoint( entry );
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
-            return MMTDrop.reverseBehaviourProfilePoint( entry );
         case MMTDrop.CsvFormat.LICENSE:
-            return MMTDrop.reverseLicensePoint( entry );
-            
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
-        default :
-            return null;
     }
+    
+    var arr = [];
+    for( var i in entry ){
+        arr[ parseInt( i ) ] = entry[ i ];
+    }
+    return arr;
 };
 /**
  * Convert a message in string format to an array

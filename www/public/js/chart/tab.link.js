@@ -556,6 +556,9 @@ var ReportFactory = {
                         if( obj[mac]["LastTime"] < time )
                             obj[mac]["LastTime"] = time;
                         
+                        if( obj[mac]["StartTime"] == undefined )
+                            obj[mac]["StartTime"] = time;
+                            
                         if( obj[mac]["StartTime"] > time )
                             obj[mac]["StartTime"] = time;
                         

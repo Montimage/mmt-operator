@@ -6,6 +6,7 @@ var LineByLineReader = require('line-by-line');
 var CURRENT_PROFILE = {};
 
 var router = {};
+var COL = mmtAdaptor.StatsColumnId;
 
 router.process_message = function (db, message) {
     //console.log( message );
@@ -23,7 +24,9 @@ router.process_message = function (db, message) {
         if (format == 99)
             return;
 
-        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT && mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT &&
+            //mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+            msg[ COL.IP_SRC ] == "undefined"){
             console.log("[DONT 1] " + message);
             return;
         }

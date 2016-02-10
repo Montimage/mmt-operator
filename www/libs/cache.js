@@ -29,7 +29,7 @@ function Cache ( option ) {
     
     if( _period_to_update_name == "real" ){
         _period_to_update_value = 0;         //update immediately
-        _retain_period         = 5*60*1000; //retain data of the last 5 minutes
+        _retain_period         = 60*60*1000; //retain data of the last 60 minutes
         _init_data_obj         = {};
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
@@ -46,6 +46,9 @@ function Cache ( option ) {
         _retain_period = option.retain_period;
     
     this.data = [];
+    this.getCollectionName = function(){
+        return _collection_name;
+    };
     
     this.removeOldDataFromDatabase = function( ts, cb ){
         //retain all
@@ -55,9 +58,10 @@ function Cache ( option ) {
         }
         ts -= _retain_period;
         
-        _mdb.collection( _collection_name ).deleteMany({
-           time:{ "$lt" :  ts } 
-        }, function( err, result){
+        var query = {}
+        query[ TIMESTAMP ] = { "$lt" :  ts };
+        
+        _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
             
             if( _period_to_update_name !== "real" || result.deletedCount > 10 )
                 console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
@@ -78,6 +82,10 @@ function Cache ( option ) {
         _mdb.collection( _collection_name ).insert( data, function( err, result){
             if( _period_to_update_name !== "real")
                 console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            if( err ){
+                console.error( err );
+                console.log( result );
+            }
             if( cb ) cb( err, result );
         } );
         
@@ -85,8 +93,9 @@ function Cache ( option ) {
     }
     
     this.addMessage = function ( msg, cb ) {
+        //clone object;
         msg    = JSON.parse(JSON.stringify( msg ));
-        var ts = msg.time;
+        var ts = msg[ TIMESTAMP ];
         
         _this.data.push( msg );
         
@@ -113,7 +122,7 @@ function Cache ( option ) {
         var last = _this.data[ _this.data.length - 1 ];
         if( last == null )
             console.log( _this.data );
-        var ts   = last.time;
+        var ts   = last[ TIMESTAMP ];
         
         //need messages arrive in time order
         if( ts - _lastUpdateTime > _period_to_update_value ){
@@ -132,6 +141,7 @@ function Cache ( option ) {
     this.clear = function () {
         this.data = [];
     };
+    var TIMESTAMP = 3;
     
     var _getData = function () {
         
@@ -153,9 +163,9 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
             
             if( _period_to_update_name === "real" )
-                key_obj.time = msg.time;
+                key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ] ;
             else
-                key_obj.time = moment( msg.time ).startOf( _period_to_update_name ).valueOf();
+                key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
             
             var txt = JSON.stringify( key_obj );
             
@@ -182,7 +192,7 @@ function Cache ( option ) {
             for (var j in data_id['$set']){
                 var key = data_id['$set'][ j ];
                 if( msg[key] != undefined )
-                    oo[j] = msg[ key ];
+                    oo[ key ] = msg[ key ];
             }
             
             //init
@@ -264,7 +274,7 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
                 })
             } )
         } );
-    };
+        };
     
     this.addArray = function( arr ){
         _cache_real.addArray( arr, function( arr_1 ){

@@ -207,4 +207,6 @@ tr.selected a {
 .c3-axis-y-label{
 }
 
-.dataTable{font-size: 12px;}
+.dataTable, .dataTables_filter, .dataTables_info{
+    font-size: 12px;
+}

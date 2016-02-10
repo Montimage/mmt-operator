@@ -125,6 +125,9 @@ router.get('/*', function (req, res, next) {
         });
     if (req.query.isReload)
 		options.isReload = (req.query.isReload === 'true');
+    
+    if( req.query.userData )
+        options.userData = req.query.userData;
 
     var queryData = function( op ){
         dbconnector.getProtocolStats(op, function(err, data) {

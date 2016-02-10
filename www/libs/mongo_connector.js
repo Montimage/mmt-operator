@@ -25,23 +25,48 @@ var MongoConnector = function (opts) {
     opts.connectString = opts.connectString || 'mongodb://127.0.0.1:27017/MMT';
 
     var self = this;
-
+    var COL = dataAdaptor.StatsColumnId;
+    var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb = db;
 
         self.startTime = (new Date()).getTime();
         
+        //all columns of HTTP => they cover all columns of SSL,RTP et FTP
+        var init_set = [];
+        for( var i=0; i<10; i++) init_set.push( COL.PORT_SRC + i + 1 );
+        init_set.push( COL.START_TIME );
         self.dataCache = {
-            total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
+            //total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
             
-            ip: new DataCache(db, "data_ip", ["format", "probe", "source", "ip_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"]),
+            total: new DataCache(db, "data_total", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
+                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS], []),
             
-            app: new DataCache(db, "data_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
+            ip: new DataCache(db, "data_ip", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME]),
             
-            pure_app: new DataCache(db, "data_pure_app", ["format", "probe", "source", "path", "app"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], []),
+            app: new DataCache(db, "data_app", 
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
             
-            mac: new DataCache(db, "data_mac", ["format", "probe", "source", "mac_src"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount", "bytecount", "payloadcount", "packetcount"], [], ["start_time"], 5*60*1000),
+            pure_app: new DataCache(db, "data_pure_app", 
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
+            
+            session: new DataCache(db, "data_session", 
+                                   //key
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.IP_SRC, COL.IP_DEST],
+                                   //inc
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
+                                   //set
+                               [COL.APP_ID, COL.APP_PATH]
+                                  //init
+                               ,init_set
+                                  ),
+            
+            mac: new DataCache(db, "data_mac", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
+                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
         }
 
         console.log("Connected to Database");
@@ -57,52 +82,58 @@ var MongoConnector = function (opts) {
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
 
-        var msg = dataAdaptor.formatReportItem(message);
-
-        if (msg.format === 100){
-            self.dataCache.total.addMessage( msg );
-            self.dataCache.mac.addMessage( msg );
-            self.dataCache.ip.addMessage( msg );
-            
+        var msg    = dataAdaptor.formatReportItem(message);
+        var format = msg[ FORMAT_ID ];
+        
+        if ( format === 100){
+            self.dataCache.total.addMessage(    msg );
+            self.dataCache.mac.addMessage(      msg );
+            self.dataCache.ip.addMessage(       msg );
             self.dataCache.pure_app.addMessage( msg );
-            
+            self.dataCache.session.addMessage(  msg );
             //add traffic for the other side (src <--> dest )
+            /*
             var msg2 = dataAdaptor.inverseStatDirection( message );
             msg2     = dataAdaptor.formatReportItem( msg2 );
             //only if it is local
-            if( dataAdaptor.isLocalIP( msg2.ip_src )){
+            if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
                 self.dataCache.ip.addMessage( msg2 );
             }
             
             self.dataCache.mac.addMessage( msg2 );
+            */
             
             //add traffic for each app in the app_path
-            msg2 = msg;
+            var msg2 = msg;
             //
-            if( dataAdaptor.ParentProtocol.indexOf( msg2.app  ) > -1 ){
-                msg2.app = -1;
-                msg2.path += ".-1";
+            if( dataAdaptor.ParentProtocol.indexOf( msg2[ COL.APP_ID   ]  ) > -1 ){
+                var port = 1;
+                if( msg2[ COL.PORT_DEST ] != undefined )
+                    port = msg2[ COL.PORT_DEST ];
+                msg2[ COL.APP_ID   ] =    -1 *  port;
+                msg2[ COL.APP_PATH ] += ".-" + port;
             }
+            
             var arr = [];
             do{
                 arr.push( msg2 );
                 
-                index = msg2.path.lastIndexOf(".");
+                index = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 if( index === -1 ) break; //root
-                msg2       = JSON.parse(JSON.stringify( msg2 ))
-                msg2.app   = msg2.path.substr( index + 1 );
-                msg2.path  = msg2.path.substr( 0, index );
+                msg2                  = JSON.parse(JSON.stringify( msg2 ))
+                msg2[ COL.APP_ID   ]  = msg2[ COL.APP_PATH ].substr( index + 1 );
+                msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index );
             }
             while( true );
             self.dataCache.app.addArray( arr );
         }
 
-        var ts = msg.time;
+        var ts = msg[ TIMESTAMP ];
 
 
         self.lastTimestamp = ts;
 
-        if (msg.format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || msg.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
+        if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || msg.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
 
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
@@ -110,7 +141,7 @@ var MongoConnector = function (opts) {
             return;
         }
         
-        if (msg.format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
+        if ( format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
 
             self.mdb.collection("security").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
@@ -118,9 +149,9 @@ var MongoConnector = function (opts) {
             return;
         }
         
-        if (msg.format === dataAdaptor.CsvFormat.LICENSE) {
+        if ( format === dataAdaptor.CsvFormat.LICENSE) {
             if( self.startProbeTime == undefined ){
-                self.startProbeTime = msg.time;
+                self.startProbeTime = msg[ TIMESTAMP ];
                 console.log("The last runing probe is " + (new Date( self.startProbeTime )));
             }
             
@@ -144,15 +175,13 @@ var MongoConnector = function (opts) {
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
 
-        options.query = {
-            format: {
-                $in: options.format
-            },
-            "time": {
+        options.query = {};
+        options.query[ TIMESTAMP ] = {
                 '$gte': options.time.begin,
                 '$lte': options.time.end
-            }
         };
+        options.query[ FORMAT_ID ] = {$in: options.format };
+            
 
         var find_in_specific_table = false;
         
@@ -170,9 +199,13 @@ var MongoConnector = function (opts) {
             return;
         }
         
+        if( options.period_groupby == "real") {
+            self.getCurrentProtocolStats(options, callback);
+            return;
+        }
         
         
-        if (options.id !== undefined) {
+        if (options.id !== undefined ) {
             self.flushCache(function () {
                 self.getCurrentProtocolStats(options, callback);
             });
@@ -223,54 +256,42 @@ var MongoConnector = function (opts) {
     }
 
     self.queryTop = function (options, total, callback) {
-            self.queryDB(options.collection,
-                "aggregate", [
-                    {
-                        "$match": options.query
-                        },
-                    {
-                        "$group": {
-                            "_id": "$" + total.group_by, //"$path",
-                            "bytecount": {
-                                "$sum": "$bytecount"
-                            },
-                            "payloadcount": {
-                                "$sum": "$payloadcount"
-                            },
-                            "packetcount": {
-                                "$sum": "$packetcount"
-                            },
-                            "active_flowcount": {
-                                "$sum": "$active_flowcount"
-                            }
-                        }
-                        }
-                            ],
-                function (err, doc) {
-                    if (err) {
-                        callback(err);
-                        return;
-                    }
+        var groupby = { "_id": "$" + total.group_by }; //"$path",
 
-                    doc.sort(function (a, b) {
-                        return b.bytecount - a.bytecount;
-                    });
-                    var top_list = [];
-                    for (var i = 0; i < doc.length; i++) {
-                        if (top_list.length > total.size) break;
-                        var id = doc[i]._id;
+        [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach( function(el, index ){
+            groupby[ el ] = { "$sum" : "$" + el };
+        });
+    
+        self.queryDB(options.collection,
+            "aggregate", [
+                {"$match": options.query},
+                {"$group": groupby} ],
+            function (err, doc) {
+                if (err) {
+                    callback(err);
+                    return;
+                }
 
-                        if (total.filter(id))
-                            top_list.push(id);
-                    }
+                doc.sort(function (a, b) {
+                    return b[ COL.DATA_VOLUME ] - a[ COL.DATA_VOLUME ];
+                });
+            
+                var top_list = [];
+                for (var i = 0; i < doc.length; i++) {
+                    if (top_list.length > total.size) break;
+                    var id = doc[i]._id;
 
-                    options.query[ total.group_by ] = {
-                        "$in": top_list
-                    };
+                    if (total.filter(id))
+                        top_list.push(id);
+                }
 
-                    self.queryDB(options.collection, "find", options.query, callback, options.raw);
-                }, false);
-        };
+                options.query[ total.group_by ] = {
+                    "$in": top_list
+                };
+
+                self.queryDB(options.collection, "find", options.query, callback, options.raw);
+            }, false);
+    };
     
         /**
          * [[Description]]
@@ -286,12 +307,10 @@ var MongoConnector = function (opts) {
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
                 options.collection = "data_mac_" + "real"; //options.period_groupby;
-            else if (["network.user"].indexOf(options.id) > -1)
-                options.collection = "data_ip_" + options.period_groupby;
+            else if (["network.user", "network.profile", "network.destination"].indexOf(options.id) > -1)
+                options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
-            else if (["network.profile"].indexOf(options.id) > -1)
-                options.collection = "data_pure_app_" + options.period_groupby;
             else {
                 console.error("Not yet implemented for " + options.id);
                 callback(null, ["Not yet implemented"]);
@@ -301,14 +320,20 @@ var MongoConnector = function (opts) {
             if (options.id === "link.protocol") {
                 //get total data of each app
                 self.queryTop( options, {
-                    group_by        : "path",
+                    group_by        : COL.APP_PATH,
                     size            : 8,
                     filter          : function( id ){
+                        if( id == null )
+                            return false;
                         if( id === "99" )//ethernet: total
                             return true;
-                        if( dataAdaptor.getAppLevelFromPath( id ) > 3 )
+                        //maxi 3
+                        if( dataAdaptor.getAppLevelFromPath( id ) > 4 )
                             return false;
+                        
                         var app  = dataAdaptor.getAppIdFromPath( id ) ;
+                        if( app < 0 )//an app being child of a protocol is not classified but we know its port
+                            return true; 
                         //add only protocol, not application
                         if( dataAdaptor.PureProtocol.indexOf( app ) > -1 )
                             return true;
@@ -320,102 +345,77 @@ var MongoConnector = function (opts) {
             
             
             if( options.id === "link.nodes" ){
-                options.query.time['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
+                options.query[ TIMESTAMP ]['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
                 
                 self.queryDB(options.collection, "find", options.query, callback, options.raw);
                 return;
             }
 
             if (options.id === "network.user") {
+                var groupby = { "_id": "$" + COL.IP_SRC };
+                [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$sum" : "$" + el };
+                });
+                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
                 self.queryDB(options.collection,
                 "aggregate", [
-                    {
-                        "$match": options.query
-                    },
-                    {
-                        "$group": {
-                            "_id": "$ip_src", //"$path",
-                            "bytecount": {
-                                "$sum": "$bytecount"
-                            },
-                            "payloadcount": {
-                                "$sum": "$payloadcount"
-                            },
-                            "packetcount": {
-                                "$sum": "$packetcount"
-                            },
-                            "active_flowcount": {
-                                "$sum": "$active_flowcount"
-                            },
-                            "format": {
-                                "$first": "$format"
-                            },
-                            "time": {
-                                "$first": "$time"
-                            },
-                            "probe":{
-                                "$first" : "$probe"
-                            },
-                            "source":{
-                                "$first" : "$source"
-                            },
-                            "ip_src":{
-                                "$first" : "$ip_src"
-                            }
-                        }
-                    }], callback, options.raw );
+                    {"$match": options.query},
+                    {"$group": groupby}
+                    ], callback, options.raw );
                 return;
             }
             
             if (options.id === "network.profile") {
+                if( options.userData ){
+                    if( options.userData.ip )
+                        options.query[ COL.IP_SRC ] = options.userData.ip;
+                }
+                //id of group_by
+                var groupby = { "_id": "$" + COL.APP_PATH };
+                //sumup
+                [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$sum" : "$" + el };
+                });
+                //init
+                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.APP_PATH, COL.APP_ID ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+                
                 self.queryDB(options.collection,
                 "aggregate", [
-                    {
-                        "$match": options.query
-                    },
-                    {
-                        "$group": {
-                            "_id": "$path",
-                            "bytecount": {
-                                "$sum": "$bytecount"
-                            },
-                            "payloadcount": {
-                                "$sum": "$payloadcount"
-                            },
-                            "packetcount": {
-                                "$sum": "$packetcount"
-                            },
-                            "active_flowcount": {
-                                "$sum": "$active_flowcount"
-                            },
-                            "format": {
-                                "$first": "$format"
-                            },
-                            "time": {
-                                "$first": "$time"
-                            },
-                            "probe":{
-                                "$first" : "$probe"
-                            },
-                            "source":{
-                                "$first" : "$source"
-                            },
-                            "path":{
-                                "$first" : "$path"
-                            },
-                            "app":{
-                                "$first" : "$app"
-                            }
-                        }
-                    }], function( err, arr ){
-                        if( err ){
-                            callback( err );
-                            return;
-                        }
-                            
-                        callback( err, arr);
-                        
-                    } , options.raw );
+                    {"$match": options.query},
+                    {"$group": groupby}
+                    ], callback, options.raw );
+                return;
+            }
+            
+            if (options.id === "network.destination") {
+                if( options.userData ){
+                    if( options.userData.ip )
+                        options.query[ COL.IP_SRC ] = options.userData.ip;
+                }
+                
+                var groupby = { "_id": "$" + COL.IP_DEST };
+                [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$sum" : "$" + el };
+                });
+                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.START_TIME, COL.IP_DEST ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+                groupby[ COL.TIMESTAMP ] = {"$last" : "$" + COL.TIMESTAMP };
+                self.queryDB(options.collection,
+                "aggregate", [
+                    {"$match": options.query},
+                    {"$group": groupby}
+                    ], callback, options.raw );
                 return;
             }
             

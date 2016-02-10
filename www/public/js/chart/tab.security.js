@@ -198,7 +198,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         },
         chart: {
             "order": [[0, "asc"]],
-            dom: "<'row'<'col-sm-5'l><'col-sm-7<<'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
+            dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
         },
         afterEachRender: function( _chart ){
              // Add event listener for opening and closing details
