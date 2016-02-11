@@ -4,7 +4,6 @@ var Window = require("./window.js");
 var config = require("../config.json");
 
 var DataCache = require("./cache.js");
-
 var MongoClient = require('mongodb').MongoClient,
     format = require('util').format;
 
@@ -29,25 +28,26 @@ var MongoConnector = function (opts) {
     var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
-        self.mdb = db;
-
+        self.mdb       = db;
         self.startTime = (new Date()).getTime();
         
         //all columns of HTTP => they cover all columns of SSL,RTP et FTP
         var init_set = [];
         for( var i=0; i<10; i++) init_set.push( COL.PORT_SRC + i + 1 );
         init_set.push( COL.START_TIME );
+        
+        
         self.dataCache = {
-            //total: new DataCache(db, "data_total", ["format", "probe", "source"], ["ul_data", "dl_data", "ul_packets", "dl_packets", "ul_payload", "dl_payload", "active_flowcount"], []),
             
             total: new DataCache(db, "data_total", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS], []),
             
             ip: new DataCache(db, "data_ip", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
-                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME]),
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME, COL.MAC_SRC]),
             
             app: new DataCache(db, "data_app", 
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.APP_PATH, COL.APP_ID],
+                               //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
             
             pure_app: new DataCache(db, "data_pure_app", 
@@ -58,11 +58,12 @@ var MongoConnector = function (opts) {
                                    //key
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.IP_SRC, COL.IP_DEST],
                                    //inc
-                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
+                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, 
+                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
                                    //set
-                               [COL.APP_ID, COL.APP_PATH]
+                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.PORT_SRC, COL.PORT_DEST],
                                   //init
-                               ,init_set
+                               init_set
                                   ),
             
             mac: new DataCache(db, "data_mac", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
@@ -86,6 +87,27 @@ var MongoConnector = function (opts) {
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
+            
+            //An app is reported as a protocol
+            if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
+                var app_id = 0;
+                //HTTP hostname
+                if( msg[ 26 ] != undefined ){
+                    app_id = msg[ 26 ];
+                }
+                //SSL hostname
+                else if( msg[ 23 ] != undefined ){
+                    app_id = msg[ 23 ];
+                }
+                //server port
+                else if( msg[ COL.PORT_DEST ] != undefined )
+                    app_id = msg[ COL.PORT_DEST ];
+                
+                msg[ COL.APP_ID   ]  =       msg[ COL.APP_ID   ] + ":" + app_id;
+                msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
+            }else
+                msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ].toString();
+            
             self.dataCache.total.addMessage(    msg );
             self.dataCache.mac.addMessage(      msg );
             self.dataCache.ip.addMessage(       msg );
@@ -105,24 +127,17 @@ var MongoConnector = function (opts) {
             
             //add traffic for each app in the app_path
             var msg2 = msg;
-            //
-            if( dataAdaptor.ParentProtocol.indexOf( msg2[ COL.APP_ID   ]  ) > -1 ){
-                var port = 1;
-                if( msg2[ COL.PORT_DEST ] != undefined )
-                    port = msg2[ COL.PORT_DEST ];
-                msg2[ COL.APP_ID   ] =    -1 *  port;
-                msg2[ COL.APP_PATH ] += ".-" + port;
-            }
-            
             var arr = [];
             do{
                 arr.push( msg2 );
                 
                 index = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 if( index === -1 ) break; //root
+                //clone
                 msg2                  = JSON.parse(JSON.stringify( msg2 ))
+                msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index  );
+                index                 = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 msg2[ COL.APP_ID   ]  = msg2[ COL.APP_PATH ].substr( index + 1 );
-                msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index );
             }
             while( true );
             self.dataCache.app.addArray( arr );
@@ -307,7 +322,7 @@ var MongoConnector = function (opts) {
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
                 options.collection = "data_mac_" + "real"; //options.period_groupby;
-            else if (["network.user", "network.profile", "network.destination"].indexOf(options.id) > -1)
+            else if (["network.user", "network.profile", "network.destination", "network.detail"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
@@ -357,10 +372,52 @@ var MongoConnector = function (opts) {
                     function(el, index ){
                         groupby[ el ] = { "$sum" : "$" + el };
                 });
-                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC ].forEach(
+                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC, COL.MAC_SRC ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
+                self.queryDB(options.collection,
+                "aggregate", [
+                    {"$match": options.query},
+                    {"$group": groupby}
+                    ], callback, options.raw );
+                return;
+            }
+            
+            if (options.id === "network.detail") {
+                if( options.userData ){
+                    if( options.userData.ip )
+                        options.query[ COL.IP_SRC ]  = options.userData.ip;
+                    if( options.userData.ip_dest )
+                        options.query[ COL.IP_DEST ] = options.userData.ip_dest;
+                    if( options.userData.app_id ){
+                        options.query[ COL.APP_ID ] = options.userData.app_id.toString();
+                    }
+                }
+                
+                //id of group_by
+                var groupby = { "_id": "$" + COL.SESSION_ID };
+                //sumup
+                [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$sum" : "$" + el };
+                });
+                //init
+                [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.START_TIME ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+                var start = COL.IP_DEST;
+                for( var i=start; i< start + 17; i++){
+                    groupby[ i ] = {"$first": "$" + i};
+                }
+                
+                //last
+                [ COL.TIMESTAMP, COL.APP_PATH, COL.APP_ID].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$last" : "$" + el };
+                });
+                
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},

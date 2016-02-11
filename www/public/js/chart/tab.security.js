@@ -315,18 +315,19 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                 return;
             
             updateTotalVerdictDisplay();
-            var modal = '<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
-                        +'<div class="modal-dialog">'
-                        +'<div class="modal-content" style="width: 800px">'
-                        +'<div class="modal-header">'
-                        +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
-                        +'<h4 class="modal-title">Detail</h4>'
-                        +'</div>'
-                        +'<div class="modal-body code-json" id="detailItem"></div>'
-                        +'</div></div></div>';
-            
-            $("body").append( $(modal) );
-            
+            if( $("#modalWindow").length === 0 ){
+                var modal = '<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
+                            +'<div class="modal-dialog">'
+                            +'<div class="modal-content" style="width: 800px">'
+                            +'<div class="modal-header">'
+                            +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
+                            +'<h4 class="modal-title">Detail</h4>'
+                            +'</div>'
+                            +'<div class="modal-body code-json" id="detailItem"></div>'
+                            +'</div></div></div>';
+
+                $("body").append( $(modal) );
+            }
 
             table.on("draw.dt", function () {
                 var $div = $('.dataTables_scrollBody');

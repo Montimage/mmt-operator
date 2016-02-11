@@ -210,3 +210,14 @@ tr.selected a {
 .dataTable, .dataTables_filter, .dataTables_info{
     font-size: 12px;
 }
+
+a {
+    cursor: pointer;
+}
+
+.modal.modal-wide .modal-dialog {
+  width: 90%;
+}
+.modal-wide .modal-body {
+  overflow-y: auto;
+}

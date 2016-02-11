@@ -60,8 +60,8 @@ var MMTDrop = {
         DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
         DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
         START_TIME          : 16, /**< Index of the start timestamp of the flow */
-        IP_DEST             : 17, /**< Index of the IP address destination column */
-        IP_SRC              : 18, /**< Index of the IP address source column */
+        IP_SRC              : 17, /**< Index of the IP address source column */
+        IP_DEST             : 18, /**< Index of the IP address destination column */
         MAC_SRC             : 19, /**< Index of the MAC address source column */
         MAC_DEST            : 20, /**< Index of the MAC address destination column */
         SESSION_ID          : 21, //Identifier of the session or if the protocol does not have session its session id = 0 
