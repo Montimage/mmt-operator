@@ -1,7 +1,8 @@
 var moment = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
-var Window = require("./window.js");
-var config = require("../config.json");
+var Window  = require("./window.js");
+var config  = require("../config.json");
+var AppList = require("./app-list.js");
 
 var DataCache = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
@@ -29,6 +30,7 @@ var MongoConnector = function (opts) {
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb       = db;
+        self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
         
         //all columns of HTTP => they cover all columns of SSL,RTP et FTP
@@ -50,18 +52,14 @@ var MongoConnector = function (opts) {
                                //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
             
-            pure_app: new DataCache(db, "data_pure_app", 
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
-                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
-            
             session: new DataCache(db, "data_session", 
                                    //key
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.IP_SRC, COL.IP_DEST],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, 
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
                                    //set
-                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.PORT_SRC, COL.PORT_DEST],
+                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
                                   //init
                                init_set
                                   ),
@@ -75,6 +73,18 @@ var MongoConnector = function (opts) {
 
 
     self.lastTimestamp = 0;
+    
+    self.splitDomainName = function( domain_name ){
+        var index = domain_name.lastIndexOf(".");
+        if( index > -1 )
+            domain_name = domain_name.substr(0, index );
+        
+        index = domain_name.lastIndexOf(".");
+        if( index > -1 )
+            domain_name = domain_name.substr(index + 1);
+        
+        return domain_name;
+    }
 
     /**
      * Stock a report to database
@@ -87,31 +97,39 @@ var MongoConnector = function (opts) {
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
+            self.mdb.collection("real").insert( msg );
             
             //An app is reported as a protocol
             if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
-                var app_id = 0;
+                var format_type = msg[ 24 ];
+                var app_name    = "unknown";
+                //do not know
+                if( format_type === 0 && msg[ 27 ] != undefined  && msg[ 27 ]){
+                    app_name = self.splitDomainName( msg[ 27 ] );
+                }
                 //HTTP hostname
-                if( msg[ 26 ] != undefined ){
-                    app_id = msg[ 26 ];
+                else if( format_type === 1 && msg[ 30 ] != undefined  && msg[ 30 ] != ""){
+                    app_name = self.splitDomainName( msg[ 30 ] );
                 }
                 //SSL hostname
-                else if( msg[ 23 ] != undefined ){
-                    app_id = msg[ 23 ];
+                else if( format_type === 2 && msg[ 27 ] != undefined  && msg[ 27 ] != ""){
+                    app_name = self.splitDomainName( msg[ 27 ] );
                 }
-                //server port
+                //
                 else if( msg[ COL.PORT_DEST ] != undefined )
-                    app_id = msg[ COL.PORT_DEST ];
+                    //server_port
+                    app_name = msg[ COL.PORT_DEST ];
                 
-                msg[ COL.APP_ID   ]  =       msg[ COL.APP_ID   ] + ":" + app_id;
+                app_name = msg[ COL.APP_ID ] + ":" + app_name;
+                
+                msg[ COL.APP_ID   ]  =       self.appList.upsert( app_name ) ;
                 msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
             }else
-                msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ].toString();
+                msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
             
             self.dataCache.total.addMessage(    msg );
             self.dataCache.mac.addMessage(      msg );
             self.dataCache.ip.addMessage(       msg );
-            self.dataCache.pure_app.addMessage( msg );
             self.dataCache.session.addMessage(  msg );
             //add traffic for the other side (src <--> dest )
             /*
@@ -205,6 +223,10 @@ var MongoConnector = function (opts) {
             find_in_specific_table = true;
         }
         else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
+            if( options.userData.type === "evasion" ){
+                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
+            }else
+                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
             options.collection = "security";
             find_in_specific_table = true;
         }
@@ -321,7 +343,7 @@ var MongoConnector = function (opts) {
             else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
-                options.collection = "data_mac_" + "real"; //options.period_groupby;
+                options.collection = "data_mac";
             else if (["network.user", "network.profile", "network.destination", "network.detail"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
@@ -391,14 +413,14 @@ var MongoConnector = function (opts) {
                     if( options.userData.ip_dest )
                         options.query[ COL.IP_DEST ] = options.userData.ip_dest;
                     if( options.userData.app_id ){
-                        options.query[ COL.APP_ID ] = options.userData.app_id.toString();
+                        options.query[ COL.APP_ID ]  = parseInt( options.userData.app_id );
                     }
                 }
                 
                 //id of group_by
                 var groupby = { "_id": "$" + COL.SESSION_ID };
                 //sumup
-                [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME ].forEach(
+                [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$sum" : "$" + el };
                 });
@@ -407,8 +429,8 @@ var MongoConnector = function (opts) {
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
-                var start = COL.IP_DEST;
-                for( var i=start; i< start + 17; i++){
+                var start = COL.IP_SRC;
+                for( var i=start; i< start + 18; i++){
                     groupby[ i ] = {"$first": "$" + i};
                 }
                 
@@ -529,8 +551,13 @@ var MongoConnector = function (opts) {
 
 
     self.emptyDatabase = function (cb) {
+        self.appList.clear();
+        for( var i in self.dataCache )
+            self.dataCache[i].clear();
+        
         self.mdb.dropDatabase(function (err, doc) {
             self.lastTimestamp = 0;
+
             console.log("drop database!");
             //empty also mmt-bandwidth
             MongoClient.connect('mongodb://' + config.database_server + ':27017/mmt-bandwidth', function (err, db) {

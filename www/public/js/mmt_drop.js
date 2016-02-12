@@ -150,16 +150,16 @@ MMTDrop.constants = {
             MAC_SRC           : {id: 19, label: "MAC Destination"}, 
             /** Index of the MAC address source column */
             MAC_DEST          : {id: 20 , label: "MAC Source "},
-            SESSION_ID        : {id: 21 , label: ""},
-            PORT_DEST         : {id: 22 , label: ""},
-            PORT_SRC          : {id: 23 , label: ""},
+            SESSION_ID        : {id: 21 , label: "Session ID"},
+            PORT_DEST         : {id: 22 , label: "Port Destination"},
+            PORT_SRC          : {id: 23 , label: "Port Source"},
             
-            FORMAT_TYPE       : {id: 24 , label: ""},
+            FORMAT_TYPE       : {id: 24 , label: "Type"},
             
-            APP_FAMILY        : {id: 25 , label: ""},
-            CONTENT_CLASS     : {id: 26 , label: ""},
-            APP_NAME          : {id: 27 , label: ""},
-            CDN_FLAG          : {id: 28 , label: ""},
+            APP_FAMILY        : {id: 25 , label: "App Family"},
+            CONTENT_CLASS     : {id: 26 , label: "Content Class"},
+            APP_NAME          : {id: 27 , label: "App Name"},
+            CDN_FLAG          : {id: 28 , label: "CDN Flag"},
 		},
     
 		
@@ -492,16 +492,25 @@ MMTDrop.constants = {
 		 * @returns {string} Protocol name
 		 */
 		getProtocolNameFromID : function( app_id ) {
-			var protocolName;
-           
-            if( (typeof app_id == "string") && app_id.indexOf(":") > 0 ){
-                var str = app_id.split( ":" );
-                if( parseInt( str[1] ) === NaN )
-                    return str[1];
-                return  this.getProtocolNameFromID( str[0] ) + ":" + str[1];
-            }
             var id = parseInt( app_id );
-			protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'NaP';
+            
+			var protocolName = "NaP";
+            if( id > 0 )
+                protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'NaP';
+            else if( MMTDrop.constants.OtherProtocolsIDName && ( id in MMTDrop.constants.OtherProtocolsIDName)){
+                
+                protocolName = MMTDrop.constants.OtherProtocolsIDName[id];
+
+                var arr = protocolName.split(":");
+                if( isNaN( arr[1] ) ){
+                    protocolName = arr[1]; //domain name
+                }else{
+                    //parent: port_number
+                    protocolName = MMTDrop.constants.ProtocolsIDName[ arr[0] ] + ":" + arr[1];
+                }
+                    
+            }
+            
 			return protocolName;
 		},
 		
@@ -576,13 +585,14 @@ MMTDrop.constants = {
 		 * @returns {number} - category Id
 		 */
 		getCategoryIdFromAppId : function( appId ){
-            //appId = -TCP:PORT_NUMBER/DOMAIN
-            if( (typeof appId == "string") && appId[0] == "-" && appId.indexOf(":") > 0 ){
-                var str = appId.split( ":" );
-                //parent
-                appId = str[ 0 ];
-            }
             appId = parseInt( appId );
+            
+            if( appId < 0 && MMTDrop.constants.OtherProtocolsIDName ){
+                var val = MMTDrop.constants.OtherProtocolsIDName[ appId ];
+                if( val == undefined )
+                    return -1;
+                appId   = parseInt( val.split(":")[0] );
+            }
             
 			for (var i in MMTDrop.constants.CategoriesAppIdsMap){
 				var arr = MMTDrop.constants.CategoriesAppIdsMap[i];
@@ -1265,6 +1275,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
             _originalData = newData.data;
             _this.time    = newData.time;
+            MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
 
             if (typeof(dataProcessingFn) == "function"){
                 _originalData = dataProcessingFn( _originalData );
@@ -5160,12 +5171,11 @@ MMTDrop.chartFactory = {
 				var tbody = $('<tbody>');
 
 				//copy data to an array of array
-				var arrData = data;
-				for (var i in arrData){
-
+				for (var i in data){
+                    var msg = data[i]
 					//separate APP_PATH
-					var path = arrData[i][0];
-					var d = path.lastIndexOf(".");
+					var path = msg[0];
+					var d    = path.lastIndexOf(".");
 
 					var name = path;
 					var parent = null;
@@ -5174,18 +5184,41 @@ MMTDrop.chartFactory = {
 						parent = path.substring(0, d);
 					}
 					name = MMTDrop.constants.getProtocolNameFromID(name);
-
-					arrData[i][0] = {path: path, parent: parent, name: name};
+					msg[0] = {path: path, parent: parent, name: name};
 				}
 
-				//sort by path, then by name
-				arrData.sort(function (a, b){
-					if (a[0].parent === b[0].parent ){
-						return a[0].name.localeCompare( b[0].name );
+                for( var i in data ){
+                    var obj = data[i][0];
+                    obj.children = [];
+                    for( var j in data )
+                        if( obj.path == data[j][0].parent )
+                            obj.children.push( data[j] );
+                    
+                    obj.children.sort( function( a, b ){
+                        return a[0].name.localeCompare( b[0].name );
+                    });
+                }
+                
+                //flat
+                var arrData = [];
+                var flat_data = function( parent_path ){
+                    for( var i in data ){
+                        var msg = data[i];
+                        var obj = msg[0];
+                        //root
+                        if( obj.parent == parent_path && obj.isVisited !== true ){
+                            arrData.push( msg );
+                            obj.isVisited = true;
+                            for( var j in obj.children ){
+                                flat_data( obj.children[j][0].parent );
+                            }
+                        }
                     }
-					return a[0].path.localeCompare( b[0].path );
-				});
-
+                }
+                
+                flat_data( null );
+                
+                var no_columns = 0;
 				//add each element to a row
 				for (i in arrData) {
 					var msg = arrData[i];
@@ -5206,9 +5239,10 @@ MMTDrop.chartFactory = {
 						});
 
 					//first column
-					var row_name = $('<td>', {text: name});
+					var row_name = $('<td>', {text: name, title: name});
 					row_name.appendTo(row_tr);
 
+                    var count = 0;
 					for (var j = 1; j < msg.length; j++) {
 						if( option.columns[j].isMultiProbes == false){
 							var cell = $('<td>', {
@@ -5216,6 +5250,7 @@ MMTDrop.chartFactory = {
 								align: "right"
 							});
 							cell.appendTo(row_tr);
+                            count ++;
 						}else{
 							for( var k=0; k<option.columns[j].probes.length; k++){
 								var prob = option.columns[j].probes[k];
@@ -5228,11 +5263,15 @@ MMTDrop.chartFactory = {
 									align: "right"
 								});
 								cell.appendTo(row_tr);
+                                count ++;
 							}
 						}
 							
 					}
 					row_tr.appendTo(tbody);
+                            
+                    if( no_columns < count )
+                        no_columns = count;
 				}
 
 				tbody.appendTo(table);
@@ -5242,7 +5281,7 @@ MMTDrop.chartFactory = {
                     indent            : 10,
 					expandable        : true, 
 					initialState      : "expanded",	//expand all nodes
-					//clickableNodeNames: true
+					clickableNodeNames: true
 				};
                 
                 //console.log( chart_opt );
@@ -5250,6 +5289,24 @@ MMTDrop.chartFactory = {
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
 
                 table.treetable( chart_opt );
+                
+                table.no_columns = no_columns;
+                
+                table.updateSize = function(){
+                    
+                    var width = table.width();
+                    width -= no_columns * 100;
+                    width += "px";
+
+                    $("#" + elemID + "_treetable tbody tr td").css( "width", "100px" );
+                    $("#" + elemID + "_treetable thead tr th").css( "width", "100px" );
+                    
+                    $("#" + elemID + "_treetable tbody tr td:first-child").css( "width", width );
+                    $("#" + elemID + "_treetable thead tr th:first-child").css( "width", width );
+                };
+                table.updateSize();
+                
+                $(window).resize( table.updateSize );
                 
 				//when user click on a row
 				$("#" + elemID + "_treetable tbody tr td:not(:first-child)").click({
@@ -5291,7 +5348,8 @@ MMTDrop.chartFactory = {
 				
 				return table;
 			});
-
+            
+            
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'fa fa-table'});
 			};

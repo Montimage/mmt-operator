@@ -153,12 +153,10 @@ table.treetable {
 table.treetable thead {
     font-size: 12px;
     font-weight: bold;
-    width: 100%;
-    display: table;
+    display: block;
 }
 
 table.treetable  tbody{
-    width: 100%;
     max-height: 320px;
     min-height: 280px;
     overflow-y: auto;
@@ -169,16 +167,15 @@ table.treetable span.indenter{
     overflow-x: hidden;
 }
 table.treetable >tbody>tr>td:first-child {
-    width: 100%;
     cursor: default;
     overflow: hidden;
     white-space: nowrap;
+    display: block;
+    border-bottom: 0px;
+    border-right: 0px;
 }
-table.treetable>thead>tr>th:first-child {
-    width: 100%;
-}
+
 table.treetable>tbody>tr>td {
-    min-width: 100px;
     cursor: pointer;
     border-collapse: collapse;
     border: thin solid #efefef;
@@ -186,9 +183,7 @@ table.treetable>tbody>tr>td {
 table>tbody>tr:hover {
     text-decoration: underline;
 }
-table.treetable>thead>tr>th {
-    min-width: 100px;
-}
+
 
 tr.selected a {
     color: #fff;

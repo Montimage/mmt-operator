@@ -176,7 +176,7 @@ var ReportFactory = {
                     height -= widget.find(".filter-bar").outerHeight(true) + 65;
                     chart.css({
                         "max-height": height,
-                        "height": height
+                        "height"    : height
                     });
                 });
                 $widget.trigger("widget-resized", [$widget]);
@@ -278,7 +278,7 @@ var ReportFactory = {
                     }
                 },
             },
-            afterRender: function (_chart) {
+            afterEachRender: function (_chart) {
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
                 $widget.on("widget-resized", null, _chart.chart, function (event, widget) {

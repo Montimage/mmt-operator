@@ -25,12 +25,11 @@ function Cache ( option ) {
     var _mdb                    = option.database;
     var _lastUpdateTime         = 0;
     var _period_to_update_name  = option.period;
-    var _init_data_obj = null;
+    var _init_data_obj          = {};
     
     if( _period_to_update_name == "real" ){
         _period_to_update_value = 0;         //update immediately
         _retain_period         = 60*60*1000; //retain data of the last 60 minutes
-        _init_data_obj         = {};
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
         _retain_period         = 24*60*60*1000;   //retain data of the last day
@@ -40,10 +39,11 @@ function Cache ( option ) {
     }else if( _period_to_update_name == "day" ){
         _period_to_update_value = 24*60*60*1000;  //update each day
         _retain_period         = -1;              //retain all data
+    }else if( option.retain_period != undefined ){
+        _retain_period          = option.retain_period;
+        _period_to_update_value = 0;
+        _collection_name        = option.collection_name;
     }
-    
-    if( option.retain_period != undefined )
-        _retain_period = option.retain_period;
     
     this.data = [];
     this.getCollectionName = function(){
@@ -63,7 +63,7 @@ function Cache ( option ) {
         
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
             
-            if( _period_to_update_name !== "real" || result.deletedCount > 10 )
+            if( _period_to_update_name !== "real" )
                 console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
             
             if( cb != null ) cb( err, result.deletedCount );
@@ -170,10 +170,7 @@ function Cache ( option ) {
             var txt = JSON.stringify( key_obj );
             
             if (obj[txt] == undefined) {
-                obj[txt] = {};
-                for (var j in key_obj){
-                    obj[txt][j] = key_obj[j];
-                }
+                obj[txt] = key_obj;
             }
 
             var oo = obj[txt];
@@ -201,17 +198,20 @@ function Cache ( option ) {
                 var val = msg[ key ];
                 
                 //init for the data in a period: minute, hour, day, month, 
-                if( _period_to_update_name !== "real"){
+                if( _period_to_update_name !== "special"){
 
-                    if( oo[ key ] === undefined && val != undefined )
+                    if( oo[ key ] == undefined && val != undefined )
                         oo[ key ] = val;
                     
                 }else{
+                    if( _init_data_obj[ txt ] == undefined )
+                        _init_data_obj[ txt ] = {};
+                    
                     //init for the data in a real
-                    if( _init_data_obj[ key ] == undefined )
-                        _init_data_obj[ key ] = val;
-                    else
-                        oo[ key ] = _init_data_obj[ key ];
+                    if( _init_data_obj[txt][ key ] == undefined )
+                        _init_data_obj[txt][ key ] = val;
+                    
+                    oo[ key ] = _init_data_obj[txt][ key ];
                         
                 }
             }
@@ -244,12 +244,18 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
                 $init: $init_ids,
             }
         },
-        period: "real",
-        retain_period: retain_period
+        period: "real"
     }
+    var is_retain_all = (retain_period != undefined);
+    
+    if( is_retain_all ){
+        option[ "retain_period" ] = retain_period;
+        option[ "period"        ] = "special";
+    }
+    
     var _cache_real   = new Cache( option );
     
-    var is_retain_all = (retain_period != undefined);
+
     
     if( is_retain_all !== true ){
     
@@ -300,6 +306,16 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         _cache_day.flushDataToDatabase();
     };
     
+    
+    this.clear = function(){
+        _cache_real.clear();
+        if( _cache_minute )
+            _cache_minute.clear();
+        if( _cache_hour )
+            _cache_hour.clear();
+        if( _cache_day )
+            _cache_day.clear();
+    }
 }
 
 module.exports = DataCache;

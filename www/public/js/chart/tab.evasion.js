@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "security",
-        title: "Security Alerts",
+        title: "Evasion Alerts",
         x: 0,
         y: 7,
         width: 12,
@@ -31,7 +31,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     var database = new MMTDrop.Database({
         format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT,
         userData: {
-            type: "security"
+            type: "evasion"
         }
     }, null, false);
     

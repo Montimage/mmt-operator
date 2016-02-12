@@ -374,7 +374,9 @@ var MMTDrop = {
     ParentProtocol: [
         99,153,154,155,178,179,180,181,182,
         341,354,376,461,
-    ]
+    ],
+    ProtocolsIDName: {99: "ETH", 153: "HTTP", 154: "HTTP_CONNECT", 155: "HTTP_PROXY", 178: "IP", 179: "IP_IN_IP", 180: "IPP", 181: "IPSEC", 182: "IPV6", 341: "SSL", 354: "TCP", 376: "UDP", 461: "ETHERIP"
+    }
 };
 
 //array => object

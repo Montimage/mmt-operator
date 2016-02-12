@@ -172,7 +172,8 @@
 
 .mmt-verdict-label{
     font-size: 13px;
-    margin-top: 5px;
+    text-decoration:none;
+    display: inline-block;
 }
 #mmt-verdict-total{
     text-align: center;
@@ -190,6 +191,8 @@
     white-space: pre-wrap;
     width: 100%;
     text-align: left;
+    display: inline-block;
+    cursor: default;
 }
 
 .code-json number{

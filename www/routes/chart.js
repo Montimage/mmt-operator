@@ -42,6 +42,9 @@ router.get('/*', function(req, res, next) {
 */            'security':{
                 title:"Security"
             },
+            'evasion':{
+                title:"Evasion"
+            },
             'behavior':{
                 title:"Behavior"
             }
