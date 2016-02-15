@@ -49,12 +49,10 @@ router.process_message = function (db, message) {
             if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
-                console.log( message )
+                console.log( message );
                 return;
                 //console.log( mmtAdaptor.formatReportItem( msg ) );
-            }else{
             }
-
         }
 
         //TODO: to be remove, this chages probe ID, only for Thales demo

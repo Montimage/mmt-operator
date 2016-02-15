@@ -166,7 +166,7 @@ var MongoConnector = function (opts) {
 
         self.lastTimestamp = ts;
 
-        if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || msg.format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
+        if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
 
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);

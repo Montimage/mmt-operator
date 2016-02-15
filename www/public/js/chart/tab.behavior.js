@@ -30,6 +30,44 @@ var availableReports = {
     "createBandwidthReport": "Bandwidth"
 }
 
+/**
+ * split db.data into two parts having timestamp (1) same as the db.time.end and (2) the rest
+ */
+var getSplitData = function( db, type, id ){
+    var data_last = [], data_rest = [], all_data = [];
+    var lasttime  = db.time.begin;
+    var data      = db.data();
+    
+    for( var i in data ){
+        if( data[i][3] > lasttime )
+            lasttime = data[i][3];
+    }
+    lasttime -= 60*1000;
+    
+    for( var i in data ){
+        var msg = data[i];
+        if( type != undefined && msg[ 0 ] !== type )
+            continue;
+        
+        if( msg[ 3 ] > lasttime )
+            data_last.push( msg );
+        else
+            data_rest.push( msg );
+        all_data.push( msg );
+    }
+    
+    
+    //ensure the frais data are blinked only one time,
+    //for the next refresh, if there are no change in db.data() ==> no blink
+    var key = "lasttime_" + type + "_" + id;
+    var old = MMTDrop.tools.localStorage.get( key );
+    MMTDrop.tools.localStorage.set( key, {time: lasttime, length: all_data.length} );
+    
+    if( old == undefined || old.time != lasttime || all_data.length != old.length )
+        return {last: data_last, rest: data_rest };
+    
+    return {last: [], rest: all_data };
+}
 
 var modify_profile = function( msg ){
 	var old_verdict = msg[ MMTDrop.constants.BehaviourProfileColumn.VERDICT.id ];
@@ -44,7 +82,6 @@ var modify_profile = function( msg ){
 
 	msg[ MMTDrop.constants.BehaviourProfileColumn.VERDICT.id ] = new_verdict;
 }
-
 
 
 var modify_bandwidth = function( msg ){
@@ -442,7 +479,8 @@ var ReportFactory = {
             format: [MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT]
         });
         var COL = MMTDrop.constants.BehaviourProfileColumn;
-
+        var DATA_LAST = null;
+        
         var cLine = MMTDrop.chartFactory.createProfile({
             getData: {
                 getDataFn: function (db) {
@@ -485,16 +523,10 @@ var ReportFactory = {
                         }
 
                     }
-
-                    var data = db.data();
-                    var new_data = [];
-                    for (var i = 0; i < data.length; i++)
-                        if (data[i][0] === MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT)
-                            new_data.push(data[i]);
-
-
-                    data = new_data;
-                    var obj = MMTDrop.tools.splitData(data, COL.IP.id);
+                    var obj  = getSplitData( db, MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT, "profile" );
+                    DATA_LAST = obj.last;
+                    var data  = obj.rest; 
+                    obj = MMTDrop.tools.splitData(data, COL.IP.id);
                     //for each IP, we retain only the last category
                     for (var ip in obj) {
                         data = obj[ip];
@@ -519,6 +551,11 @@ var ReportFactory = {
                         }]
                     };
                 }
+            },
+            afterEachRender:function(){
+                setTimeout( function(){
+                    addMessages( DATA_LAST );
+                }, 2000);
             }
         });
 
@@ -527,22 +564,15 @@ var ReportFactory = {
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var data = db.data();
-                    var new_data = [];
-                    for (var i = 0; i < data.length; i++)
-                        if (data[i][0] === MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT)
-                            new_data.push(data[i]);
+                    var obj       = getSplitData( db, MMTDrop.constants.CsvFormat.BA_PROFILE_FORMAT );
+                    var new_data  = obj.rest; 
+
 
                         //desc of timestamp
                     new_data.sort(function (a, b) {
                         return a[COL.TIMESTAMP.id] - b[COL.TIMESTAMP.id];
                     });
 
-                    var old_data = MMTDrop.tools.localStorage.get("data-profile");
-                    MMTDrop.tools.localStorage.set("data-profile", new_data);
-                    if( old_data == null ){
-                        
-                    }
                     
                     for (var i = 0; i < new_data.length; i++ ) {
                         var msg  = new_data[i];
@@ -707,7 +737,8 @@ var ReportFactory = {
 
         //database.onMessage("ba_profile.report", 
        function addMessages(arr) {
-            for (var i = 0; i < arr.length; i++) {
+           if( arr == null ) return;
+           for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
 
                 if (msg[MMTDrop.constants.BehaviourProfileColumn.PROFILE_AFTER.id] == "null" ||
@@ -717,7 +748,7 @@ var ReportFactory = {
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
             }
-        }
+        };
         //);
 
         var report = new MMTDrop.Report(
@@ -767,7 +798,7 @@ var ReportFactory = {
         });
         var openingRow = null;
         var HISTORY = {};
-        
+        var DATA_LAST = [];
         var formatBandwidth = function( msg ){
             var txt = 100;
             var v1 = msg[COL.BW_BEFORE.id],
@@ -785,11 +816,9 @@ var ReportFactory = {
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var data = db.data();
-                    var new_data = [];
-                    for (var i = 0; i < data.length; i++)
-                        if (data[i][0] === MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT)
-                            new_data.push(data[i]);
+                    var obj      = getSplitData( db, MMTDrop.constants.CsvFormat.BA_BANDWIDTH_FORMAT, "bandwidth");
+                    DATA_LAST    = obj.last;
+                    var new_data = obj.rest;
 
                      //desc of timestamp
                     new_data.sort(function (a, b) {
@@ -833,6 +862,9 @@ var ReportFactory = {
                 "order": [[0, "desc"]],
             },
             afterEachRender: function (_chart) {
+                setTimeout(function(){
+                    addMessages( DATA_LAST );
+                }, 2000);
                 $('td:contains("CHANGE_BANDWIDTH")').parent().css("color", "red")
                 var table = _chart.chart;
                 table.DataTable().columns.adjust();
@@ -963,7 +995,8 @@ var ReportFactory = {
 
        //database.onMessage("ba_bandwidth.report", 
        function addMessages (arr) {
-            for (var i = 0; i < arr.length; i++) {
+           if( arr == null )return;
+           for (var i = 0; i < arr.length; i++) {
                 var msg = arr[i];
                 behaviourChange.data.push(msg);
                 behaviourChange.update();
