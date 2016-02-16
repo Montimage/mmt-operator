@@ -25,6 +25,7 @@ var MMTDrop = {
         BA_PROFILE_FORMAT       : 12,
         BA_BANDWIDTH_FORMAT     : 11,
         LICENSE                 : 30,
+        NDN_FORMAT              : 625,
     },
     
     isFlowStats : function ( format ) {
@@ -172,6 +173,31 @@ var MMTDrop = {
         MAC_ADDRESSES                   : 6,
         EXPIRY_DATE                     : 7
     },
+    NdnColumn : {
+			/** Index of the format id column */
+			FORMAT_ID            : 0  ,
+			PROBE_ID             : 1  ,
+			SOURCE_ID            : 2  ,
+			TIMESTAMP            : 3  ,
+			SESSION_ID           : 4  ,
+            MAC_SRC              : 5  ,
+            MAC_DEST             : 6  ,
+            NAME                 : 7  ,
+            IS_OVER_TCP          : 8  ,
+            IP_SRC               : 9  ,
+            IP_DEST              : 10 ,
+            PORT_SRC             : 11 ,
+            PORT_DEST            : 12 ,
+            DIRECTION            : 13 ,
+            NB_INTEREST_PACKET   : 14 ,
+            INTEREST_LIFETIME    : 15 ,
+            DATA_VOLUME_INTEREST : 16 ,
+			NDN_VOLUME_INTEREST  : 17 ,
+            NB_DATA_PACKET       : 18 ,
+            data_freshnessPeriod : 19 ,
+            DATA_VOLUME_DATA     : 20 ,
+			NDN_VOLUME_DATA      : 21 ,
+		},
     /**
      * Return the parent of the given protocol path. <br>
      * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
@@ -498,6 +524,7 @@ MMTDrop.formatMessage = function( message ){
     msg[ 3 ] = formatTime( msg[3] );
     //format
     switch( msg[0] ) {
+        case MMTDrop.CsvFormat.NDN_FORMAT :
         case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
         case MMTDrop.CsvFormat.WEB_APP_FORMAT :
         case MMTDrop.CsvFormat.SSL_APP_FORMAT :

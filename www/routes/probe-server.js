@@ -15,12 +15,13 @@ router.process_message = function (db, message) {
         if( msg === null )
             return;
         
+        var format = msg[0];
         
-        if (msg[4] == 0) {
+        if (msg[4] == 0 && format  === mmtAdaptor.CsvFormat.STATS_FORMAT) {
             console.log("[META  ] " + message);
             return;
         }
-        var format = msg[0];
+
         if (format == 99)
             return;
 

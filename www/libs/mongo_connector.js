@@ -98,6 +98,11 @@ var MongoConnector = function (opts) {
         if (self.mdb == null) return;
 
         var msg    = dataAdaptor.formatReportItem(message);
+        
+        var ts = msg[ TIMESTAMP ];
+
+        self.lastTimestamp = ts;
+        
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
@@ -187,12 +192,6 @@ var MongoConnector = function (opts) {
             }
         }
             
-
-        var ts = msg[ TIMESTAMP ];
-
-
-        self.lastTimestamp = ts;
-
         if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
 
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
@@ -216,6 +215,15 @@ var MongoConnector = function (opts) {
             }
             
             self.mdb.collection("license").insert(msg, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+            return;
+        }
+        
+        
+        //NDN protocol
+        if( format === 625){
+            self.mdb.collection("ndn").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
             return;
@@ -255,6 +263,10 @@ var MongoConnector = function (opts) {
             }else
                 options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
             options.collection = "security";
+            find_in_specific_table = true;
+        }else //NDN
+            if (options.format.indexOf( 625 ) >= 0 ) {
+            options.collection     = "ndn";
             find_in_specific_table = true;
         }
         

@@ -174,7 +174,9 @@ table.treetable >tbody>tr>td:first-child {
     border-bottom: 0px;
     border-right: 0px;
 }
-
+table.treetable >tbody>tr:last-child>td:first-child {
+    border-bottom: thin solid #efefef;
+}
 table.treetable>tbody>tr>td {
     cursor: pointer;
     border-collapse: collapse;
