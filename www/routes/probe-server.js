@@ -33,7 +33,7 @@ router.process_message = function (db, message) {
         
         if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) ) {
             //console.log("[DONT 2] " + message);
-            return;
+            //return;
         }
         
         if( format === 11) {
@@ -76,6 +76,7 @@ router.startListening = function (db, redis) {
     //*
     report_client.subscribe("security.report");
     report_client.subscribe("protocol.flow.stat");
+    report_client.subscribe("session.flow.report");
     //report_client.subscribe("protocol.stat");
     //report_client.subscribe("radius.report");
     //report_client.subscribe("microflows.report");

@@ -13,7 +13,7 @@ var CategoriesIdsMap = {
     8: 'CloudStorage',
     9: 'DirectDownloadLink',
     10: 'Network',
-    11: 'Social Network',
+    11: 'SocialNetwork',
     12: 'DataBase',
     13: 'CDN'
 };

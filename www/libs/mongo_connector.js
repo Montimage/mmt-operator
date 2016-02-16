@@ -27,16 +27,20 @@ var MongoConnector = function (opts) {
     var self = this;
     var COL = dataAdaptor.StatsColumnId;
     var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
+    var FLOW_SESSION_INIT_DATA = {};//init data of each session
+    
+    //all columns of HTTP => they cover all columns of SSL,RTP et FTP
+    var init_session_set = [];
+    for( var i=0; i<10; i++) init_session_set.push( COL.PORT_SRC + i + 1 );
+        init_session_set.push( COL.START_TIME );
+    
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
         self.mdb       = db;
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
         
-        //all columns of HTTP => they cover all columns of SSL,RTP et FTP
-        var init_set = [];
-        for( var i=0; i<10; i++) init_set.push( COL.PORT_SRC + i + 1 );
-        init_set.push( COL.START_TIME );
+
         
         
         self.dataCache = {
@@ -61,7 +65,7 @@ var MongoConnector = function (opts) {
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
                                   //init
-                               init_set
+                               init_session_set
                                   ),
             
             mac: new DataCache(db, "data_mac", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
@@ -97,7 +101,16 @@ var MongoConnector = function (opts) {
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
-            self.mdb.collection("real").insert( msg );
+            
+            //save init data of one session
+            var session_id = msg[ COL.SESSION_ID ];
+            if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined )
+                FLOW_SESSION_INIT_DATA[ session_id ] = msg;
+            else
+                for( var i in init_session_set ){
+                    var key    = init_session_set[ i ];
+                    msg[ key ] = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
+                }
             
             //An app is reported as a protocol
             if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
@@ -119,6 +132,9 @@ var MongoConnector = function (opts) {
                 else if( msg[ COL.PORT_DEST ] != undefined )
                     //server_port
                     app_name = msg[ COL.PORT_DEST ];
+                
+                if( app_name == 0 )
+                    console.log( msg );
                 
                 app_name = msg[ COL.APP_ID ] + ":" + app_name;
                 
@@ -159,7 +175,18 @@ var MongoConnector = function (opts) {
             }
             while( true );
             self.dataCache.app.addArray( arr );
+        }else if (format === 0 || format == 1 || format == 2){
+            //delete data when a session is expired
+            var session_id = msg[ 4 ];
+            if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
+                delete FLOW_SESSION_INIT_DATA[ session_id ];
+                console.log( "deleted session " + session_id );
+            }
+            else{
+                console.log( "unknown session " + session_id );
+            }
         }
+            
 
         var ts = msg[ TIMESTAMP ];
 

@@ -30,6 +30,16 @@ var availableReports = {
     "createBandwidthReport": "Bandwidth"
 }
 
+
+//set options of period
+MMTDrop.config.periodFilterOptions = [
+    { id: MMTDrop.constants.period.QUARTER_DAY, label: "Last 6 hours"   },
+    { id: MMTDrop.constants.period.HALF_DAY   , label: "Last 12 hours"  },
+    { id: MMTDrop.constants.period.DAY        , label: "Last 24 hours"  , selected: true },
+    { id: MMTDrop.constants.period.WEEK       , label: "Last 7 days"    },
+    { id: MMTDrop.constants.period.MONTH      , label: "Last 30 days"   },
+];
+
 /**
  * split db.data into two parts having timestamp (1) same as the db.time.end and (2) the rest
  */
@@ -344,10 +354,10 @@ function myGraph(domID, root) {
                     }, 500, "linear", function () {
                         $(this).animate({
                             opacity: 1
-                        }, 1000, "linear", function () {
+                        }, 500, "linear", function () {
                             $(this).animate({
                                 opacity: 0
-                            }, 1000, "linear", function () {
+                            }, 500, "linear", function () {
                                 $(this).animate({
                                     opacity: 1
                                 }, 300);
@@ -358,9 +368,9 @@ function myGraph(domID, root) {
                     setTimeout(function (arr, j, cat) {
                         arr.splice(j, 1);
                         _this.update(cat);
-                    }, 4000, arr, j, cat)
+                    }, 3000, arr, j, cat)
                     
-                    return 5000;
+                    return 4000;
                 }
             }
         }

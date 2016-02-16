@@ -8,11 +8,16 @@ function AppList( db ){
             db.collection( "app_list" ).insert({id: length, name: name}, function(err){
                 if (err ) console.error( err );
             });
+            
+            return length;
         }
-        return length;
+        
+        return obj[ name ];
+        
     };
     
     this.get = function( name ){
+        //get all;
         if( name == null ){
             var ret = {};
             for( var i in obj )

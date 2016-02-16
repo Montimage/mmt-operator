@@ -452,7 +452,7 @@ MMTDrop.constants = {
             12:'DataBase', 
             //13:'Remote', 14:'Misc', 
             15:'CDN',
-            16: 'Social Network'
+            16: 'SocialNetwork'
 		},
 
 		/**
@@ -903,7 +903,7 @@ MMTDrop.tools = function () {
 		var _prefix = function(){
 			//each page has a separated parameter
 			var pre = window.location.pathname;
-			//pre += window.location.search;
+			pre += window.location.search;
 			
 			return "mmtdrop." + pre + ".";
 		};
@@ -2415,13 +2415,19 @@ MMTDrop.filterFactory = {
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var options = [];
-    		options.push( { id: periods.MINUTE     , label: "Last 5 minutes" });
-			options.push( { id: periods.HOUR       , label: "Last hour"      });
-			options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
-			options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"   });
-			options.push( { id: periods.DAY        , label: "Last 24 hours"   , selected: true });
-			options.push( { id: periods.WEEK       , label: "Last 7 days"    });
-			options.push( { id: periods.MONTH      , label: "Last 30 days"   });
+            
+            
+            if( MMTDrop.config.periodFilterOptions != undefined)
+                options = MMTDrop.config.periodFilterOptions
+            else{
+                options.push( { id: periods.MINUTE     , label: "Last 5 minutes" });
+                options.push( { id: periods.HOUR       , label: "Last hour"      });
+                options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
+                options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"   });
+                options.push( { id: periods.DAY        , label: "Last 24 hours"   , selected: true });
+                options.push( { id: periods.WEEK       , label: "Last 7 days"    });
+                options.push( { id: periods.MONTH      , label: "Last 30 days"   });
+            }
 			//var otherOpt = { id: "00", label: "Other"};
 			
 			//options.push( otherOpt );
@@ -5504,10 +5510,16 @@ MMTDrop.chartFactory = {
 				}
 
 				tbody.appendTo(table);
+                var chart_option = {
+                    fixedHeader: {
+                        header: false,
+                        footer: true
+                    }
+                };
                 if( param.chart )
-                   table.dataTable( param.chart );
-                else
-				   table.dataTable();
+                   chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );
+
+               table.dataTable(chart_option);
 				
 				//when user click on a row
                 if (option.click) {

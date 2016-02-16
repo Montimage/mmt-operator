@@ -29,7 +29,7 @@ var arr = [
         x: 0,
         y: 9,
         width: 12,
-        height: 7,
+        height: 6,
         type: "warning",
         locked: true,
         userData: {
@@ -328,7 +328,7 @@ var ReportFactory = {
                     }
                 },
             },
-            //custom legend
+	                //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
@@ -469,6 +469,9 @@ var ReportFactory = {
 
                 table.DataTable().columns.adjust();
             },
+	    click: function(){
+	    console.log("click");
+	    },
             afterRender: function( _chart ){
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size

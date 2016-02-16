@@ -30,8 +30,6 @@ var availableReports = {
     "createTopProtocolReport": "Top Protocols",
 };
 
-MMTDrop.filterFactory.createFlowMetricFilter();
-
 
 function getHMTL( tag ){
     var html = tag[0];
