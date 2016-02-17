@@ -173,7 +173,7 @@ var MMTDrop = {
         MAC_ADDRESSES                   : 6,
         EXPIRY_DATE                     : 7
     },
-    NdnColumn : {
+    NdnColumnId : {
 			/** Index of the format id column */
 			FORMAT_ID            : 0  ,
 			PROBE_ID             : 1  ,
@@ -194,7 +194,7 @@ var MMTDrop = {
             DATA_VOLUME_INTEREST : 16 ,
 			NDN_VOLUME_INTEREST  : 17 ,
             NB_DATA_PACKET       : 18 ,
-            data_freshnessPeriod : 19 ,
+            DATA_FRESHNESS_PERIOD : 19 ,
             DATA_VOLUME_DATA     : 20 ,
 			NDN_VOLUME_DATA      : 21 ,
 		},
@@ -525,6 +525,7 @@ MMTDrop.formatMessage = function( message ){
     //format
     switch( msg[0] ) {
         case MMTDrop.CsvFormat.NDN_FORMAT :
+            break;
         case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
         case MMTDrop.CsvFormat.WEB_APP_FORMAT :
         case MMTDrop.CsvFormat.SSL_APP_FORMAT :

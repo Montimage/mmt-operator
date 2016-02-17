@@ -163,7 +163,7 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
             
             if( _period_to_update_name === "real" )
-                key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ] ;
+                key_obj[ TIMESTAMP ] = _lastUpdateTime; //msg[ TIMESTAMP ] ;
             else
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
             

@@ -385,19 +385,24 @@ MMTDrop.constants = {
         
             NB_INTEREST_PACKET       : {id: 14,  label: "Interest Packet"},
             INTEREST_LIFETIME        : {id: 15,  label: "Interest LifeTime"},
-            DATA_VOLUME_INTEREST     : {id: 16,  label: "Data Interest"},
-			NDN_VOLUME_INTEREST      : {id: 17,  label: "Volume Interest"},
+            DATA_VOLUME_INTEREST     : {id: 16,  label: "Interest Volume"},
+			NDN_VOLUME_INTEREST      : {id: 17,  label: "Interest Payload"},
              
-            NB_DATA_PACKET           : {id: 18,  label: ""},
-            data_freshnessPeriod     : {id: 19,  label: ""},
-            DATA_VOLUME_DATA         : {id: 20,  label: ""},
-			NDN_VOLUME_DATA          : {id: 21,  label: ""},
+            NB_DATA_PACKET           : {id: 18,  label: "Data Packet"},
+            DATA_FRESHNESS_PERIOD    : {id: 19,  label: "Data Freshness Period"},
+            DATA_VOLUME_DATA         : {id: 20,  label: "Data Volume"},
+			NDN_VOLUME_DATA          : {id: 21,  label: "Data Payload"},
 		},
         NdnMetricFilter : {
-			NB_INTEREST_PACKET       : {id: 14,  label: "Interest Packet"},
-            INTEREST_LIFETIME        : {id: 15,  label: "Interest LifeTime"},
-            DATA_VOLUME_INTEREST     : {id: 16,  label: "Data Interest"},
-			NDN_VOLUME_INTEREST      : {id: 17,  label: "Volume Interest"},
+            NB_INTEREST_PACKET       : {id: 14,  label: "Interest Packet"},
+            //INTEREST_LIFETIME        : {id: 15,  label: "Interest LifeTime"},
+            DATA_VOLUME_INTEREST     : {id: 16,  label: "Interest Volume"},
+			NDN_VOLUME_INTEREST      : {id: 17,  label: "Interest Payload"},
+             
+            NB_DATA_PACKET           : {id: 18,  label: "Data Packet"},
+            //DATA_FRESHNESS_PERIOD    : {id: 19,  label: "Data Freshness Period"},
+            DATA_VOLUME_DATA         : {id: 20,  label: "Data Volume"},
+			NDN_VOLUME_DATA          : {id: 21,  label: "Data Payload"},
 		},
     
 		/**
@@ -5518,66 +5523,69 @@ MMTDrop.chartFactory = {
 				});
                  */
 				//add each element to a row
-				for (var i in arrData) {
-					var msg = arrData[i];
+                if( param.chart && param.chart.deferRender === true)
+                    param.chart.data = arrData;
+                else
+                    for (var i in arrData) {
+                        var msg = arrData[i];
 
 
-					//root
-					var row_tr = $('<tr>', {
-					});
+                        //root
+                        var row_tr = $('<tr>', {
+                        });
 
 
-					//first column
-					var row_name = $('<td>', {
-                            style  : "cursor:pointer",
-                        	html   : msg[0] } );
+                        //first column
+                        var row_name = $('<td>', {
+                                style  : "cursor:pointer",
+                                html   : msg[0] } );
 
-					row_name.appendTo(row_tr);
+                        row_name.appendTo(row_tr);
 
-					for (var j = 1; j < msg.length; j++) {
-                        
-                        var align = "left";
-                        if( option.columns[j].align )
-                            align = option.columns[j].align;
-                        else
-                            if( MMTDrop.tools.isNumber( val ))
-                                align = "right";
-                        
-                        if( option.columns[j].isMultiProbes == false){
-                            var val = msg[j];
-                            var opt = {
-									html : val,
-								};
+                        for (var j = 1; j < msg.length; j++) {
 
-                                 
-							$('<td>', {
-									html : val,
-                                    align: align
-							}).appendTo(row_tr);
-                            
-						}else{
-							for( var k=0; k<option.columns[j].probes.length; k++){
-								var prob = option.columns[j].probes[k];
-								var val  = msg[j][ prob ];
-								if( val == undefined )
-									val = 0;
-								
+                            var align = "left";
+                            if( option.columns[j].align )
+                                align = option.columns[j].align;
+                            else
+                                if( MMTDrop.tools.isNumber( val ))
+                                    align = "right";
+
+                            if( option.columns[j].isMultiProbes == false){
+                                var val = msg[j];
+                                var opt = {
+                                        html : val,
+                                    };
+
+
                                 $('<td>', {
-									html : val,
-                                    align: align
-								}).appendTo(row_tr);
-							}
-						}
-					}
-					row_tr.appendTo(tbody);
-				}
+                                        html : val,
+                                        align: align
+                                }).appendTo(row_tr);
+
+                            }else{
+                                for( var k=0; k<option.columns[j].probes.length; k++){
+                                    var prob = option.columns[j].probes[k];
+                                    var val  = msg[j][ prob ];
+                                    if( val == undefined )
+                                        val = 0;
+
+                                    $('<td>', {
+                                        html : val,
+                                        align: align
+                                    }).appendTo(row_tr);
+                                }
+                            }
+                        }
+                        row_tr.appendTo(tbody);
+                    }
 
 				tbody.appendTo(table);
                 var chart_option = {
                     fixedHeader: {
-                        header: false,
+                        header: true,
                         footer: true
-                    }
+                    },
                 };
                 if( param.chart )
                    chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );

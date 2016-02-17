@@ -1,21 +1,52 @@
 var arr = [
     {
-        id: "top_user",
+        id: "top_name",
         title: "Top Names",
         x: 0,
         y: 0,
-        width: 12,
+        width: 6,
         height: 9,
         type: "info",
         userData: {
             fn: "createTopNameReport"
         },
     },
+    {
+        id: "top_user",
+        title: "Top Machines",
+        x: 6,
+        y: 0,
+        width: 6,
+        height: 9,
+        type: "warning",
+        userData: {
+            fn: "createTopMACReport"
+        },
+    },
 ];
 
 var availableReports = {
-    "createTopNameReport": "Top Names",
 };
+
+
+var param = MMTDrop.tools.getURLParameters();
+if( param.mac != undefined || param.name ){
+    var title = "MAC: " + param.mac;
+    if( param.name != undefined )
+        title = "Name: " + param.name;
+    arr = [{
+        id: "profile",
+        title: title,
+        x: 0,
+        y: 0,
+        width: 12,
+        height: 8,
+        type: "info",
+        userData: {
+            fn: "createDetailReport"
+        },
+    }];
+}
 
 
 function getHMTL( tag ){
@@ -27,351 +58,91 @@ function getHMTL( tag ){
 
 //create reports
 var ReportFactory = {
-    createDetailOfApplicationChart: function () {
-        var self    = this;
-        var COL     = MMTDrop.constants.StatsColumn;
-        var HTTP    = MMTDrop.constants.HttpStatsColumn;
-        var SSL     = MMTDrop.constants.TlsStatsColumn;
-        var RTP     = MMTDrop.constants.RtpStatsColumn;
-        var FORMAT  = MMTDrop.constants.CsvFormat;
-        var HISTORY = [];
-        var openingRow;
+    createDetailReport: function ( filter ) {
+        var self = this;
+        var db_param = {format: [625], userData: param, id:"ndn.detail" };
+        var isMAC    = param.mac !== undefined;
+        var database = new MMTDrop.Database( db_param );
+        var COL      = MMTDrop.constants.NdnColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    HISTORY = [];
-                    var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
-                                   {id: COL.IP_DEST.id   , label: "Server"    , align:"left"}];
-
-                    var colSum = [
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"  , align:"right"}, 
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download", align:"right"},
-                    ];
-                    var otherCols = [
-                        {id: HTTP.MIME_TYPE.id, label: "MIME"  , align:"left"},
-                        {id: HTTP.REFERER.id, label: "Referer"  , align:"left"},
-                    ];
-                    
-                    var havingAppPath = true;
-                    if( havingAppPath )
-                        columns.push( {id: COL.APP_PATH.id, label: "Path", align:"left"} );
-                    
                     var data = db.data();
                     
-                    var arr = [];
-                    var havingOther = false;
-                    
-                    for( var i in data){
-                        var msg     = data[i];
-
-                        var format  = msg [ COL.FORMAT_TYPE.id ];
-                        var obj     = {};
-                        HISTORY.push( msg );
-                        obj["index"] = HISTORY.length;
-                        
-                        obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
-                        obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[COL.APP_PATH.id] ) ;
-                        obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
-                        obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
-                        
-                        var host =  msg[ HTTP.HOSTNAME.id ];
-                        if( host == undefined || host == "" )
-                            host = msg[ SSL.SERVER_NAME.id ];
-                        
-                        
-                        if( host != undefined && host != ""){
-                            if( cTable.userData.ip_dest != undefined )
-                                obj[COL.IP_DEST.id]  = host;
-                            else
-                                obj[COL.IP_DEST.id]  = host  + " ("+ msg[COL.IP_DEST.id] +")";
-                        }else
-                            obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id]; // ip
-                        
-                        for( var j in colSum ){
-                                var val = msg[ colSum[j].id ];
-                                if( val == undefined )
-                                    val = 0;
-                            obj[ colSum[j].id ] = val;
-                        }
-                        
-                        for( var i in otherCols ){
-                            var c   = otherCols[i];
-                            var val = msg[ c.id ];
-                            if( val != undefined && val != ""){
-                                obj[ c.id ]  = val;
-                                c.havingData = true;
-                            }
-                        }
-                        
-                        arr.push( obj );
-                            
-                    }
-                    
-                    for( var i in otherCols ){
-                        var c = otherCols[i];
-                        if( c.havingData === true )
-                            colSum.push( c );
-                    }
-                    
-                    columns = columns.concat( colSum  );
-                    columns.unshift( {id: "index", label: ""});
-                    
-                    for( var i in arr ){
-                        arr[i][ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.UL_DATA_VOLUME.id ] );
-                        arr[i][ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.DL_DATA_VOLUME.id ] );
-                    }
-                    
-                    return {
-                        data: arr,
-                        columns: columns
-                    };
-                }
-            },
-            chart: {
-                //"scrollX": true,
-                //"scrollY": true,
-                dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
-            },
-            afterEachRender: function (_chart) {
-                // Add event listener for opening and closing details
-                _chart.chart.on('click', 'tr[role=row]', function () {
-                    var tr = $(this);
-                    var row = _chart.chart.api().row(tr);
-
-                    if (row.child.isShown()) {
-                        // This row is already open - close it
-                        row.child.hide();
-                        tr.removeClass('shown');
-                        openingRow = null;
-                    } else {
-                        //close the last opening
-                        if (openingRow) {
-                            openingRow.child.hide();
-                            $(openingRow.node()).removeClass('shown');
-                        }
-
-                        // Open this row
-                        var index = row.data()[0] - 1;
-                        var event = HISTORY[ index ];
-                        var format = event[ 24 ];
-                        var NEXT;
-                        if( format == FORMAT.WEB_APP_FORMAT ){
-                            NEXT = HTTP;
-                            event[ 24 ] = "HTTP";
-                        }else if( format == FORMAT.SSL_APP_FORMAT ){
-                            NEXT = SSL;
-                            event[ 24 ] = "SSL";
-                        }else if( format == FORMAT.RTP_APP_FORMAT ){
-                            NEXT = RTP;
-                            event[ 24 ] = "RTP";
-                        }
-                        var obj = {};
-                        for( var i in COL )
-                            if( event[ COL[i].id ] != undefined )
-                                obj[ COL[i].label ] = event[ COL[i].id ];
-                        
-                        for( var i in NEXT )
-                            obj[ NEXT[i].label ] = event[ NEXT[i].id ];
-
-                        var str = JSON.stringify(obj, function (key, val) {
-                            if (typeof val === "string")
-                                return "<string>" + val + "</string>";
-                            if (typeof val === "number")
-                                return " <number>" + val + "</number>";
-                            return val;
-                        })
-                        .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, ' "</string>')
-                        .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
-                        //.replace(/\"(.+)\":/g, "<label>$1</label> :")
-                        ;
-                        row.child('<div id="detailTest" class="code-json overflow-auto-xy"><ul>' + str + '</ul></div>').show();
-                        tr.addClass('shown');
-                        openingRow = row;
-                    }
-                    return false;
-                });
-            }
-        });
-        return cTable;
-    },
-    createApplicationReport: function (filter, ip) {
-        var self = this;
-        var db_param = {id: "network.profile" };
-        if( ip !== undefined )
-            db_param["userData"] = {ip: ip };
-        var database = MMTDrop.databaseFactory.createStatDB( db_param );
-        var COL      = MMTDrop.constants.StatsColumn;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        
-        var cPie = MMTDrop.chartFactory.createTable({
-            getData: {
-                getDataFn: function (db) {
-                    var data = db.data();
-                    //the first column is Timestamp, so I start from 1 instance of 0
-                    var columns = [COL.DATA_VOLUME, COL.PACKET_COUNT];
-                    
-                    var obj = MMTDrop.tools.sumByGroup( data, 
-                                                       [COL.DATA_VOLUME.id, COL.PACKET_COUNT.id], 
-                                                       COL.APP_ID.id );
-
-                    data = [];
-                    for (var cls in obj) {
-                        var o = obj[cls];
-                        var name = MMTDrop.constants.getProtocolNameFromID(cls);
-                        name = '<a onclick=loadDetail(null,'+ cls +')>' + name + '</a>'
-                        data.push( [0, name, 
-                                    o[COL.DATA_VOLUME.id], 
-                                    o[ COL.PACKET_COUNT.id ],
-                                    MMTDrop.constants.getCategoryNameFromID(MMTDrop.constants.getCategoryIdFromAppId( cls ))
-                                   ] )
-                    }
-
-                    //sort by data size
-                    data.sort(function (a, b) {
-                        return b[2] - a[2];
-                    });
-                    //index
-                    for( var i=0; i<data.length; i++ ){
-                        data[i][0] = (i+1);
-                        data[i][2] = MMTDrop.tools.formatDataVolume(   data[i][2] );
-                        data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
-                    }
-                    return {
-                        data: data,
-                        columns: [{id: 0, label: ""           , align: "left"}, 
-                                  {id: 1, label: "Application", align: "left"},
-                                  {id: 2, label: "Data       ", align: "right"},
-                                  {id: 3, label: "Packet"     , align: "right"},
-                                  {id: 4, label: "Profile"    , align: "right"}],
-                    };
-                }
-            },
-            chart: {
-                "paging": false,
-                "info"  : true,
-                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
-            },
-
-            //custom legend
-            afterEachRender: function (_chart) {
-                var chart = _chart.chart;
-                var legend = _chart.dataLegend;
-
-            }
-        });
-        //
-
-        var dataFlow = [{
-            object: fProbe,
-            effect: [{
-                object: cPie
-                    }]
-        }, ];
-
-        var report = new MMTDrop.Report(
-            // title
-            null,
-
-            // database
-            database,
-
-            // filers
-					[fProbe],
-
-            //charts
-					[
-                {
-                    charts: [cPie],
-                    width: 12
-                },
-					 ],
-
-            //order of data flux
-            dataFlow
-        );
-
-        return report;
-    },
-    createDestinationReport: function (filter, ip) {
-        var self = this;
-        var db_param = {id: "network.destination" };
-        if( ip !== undefined )
-            db_param["userData"] = {ip: ip };
-        var database = MMTDrop.databaseFactory.createStatDB( db_param );
-        var COL      = MMTDrop.constants.StatsColumn;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        
-        var cPie = MMTDrop.chartFactory.createTable({
-            getData: {
-                getDataFn: function (db) {
-                    var data = db.data();
                     var obj = {};
-
-                    for (var i=0; i<data.length; i++) {
-                        var msg  = data[i];
-                        var ip   = msg[ COL.IP_DEST.id ];
-                        var time = msg[ COL.TIMESTAMP.id ];
-                        
-                        ip = '<a onclick=loadDetail("'+ ip +'")>' + ip + '</a>'
-                        
-                        if( obj[ip] === undefined )
-                            obj[ ip ] = [
-                                0, //0: index
-                                ip,//1: ip
-                                0, //2: data
-                                0, //3: packet
-                                msg[ COL.START_TIME.id ], //4: start time
-                                time //5: last updated
-                            ];
-                        obj[ ip ][ 2 ] += msg[ COL.DATA_VOLUME.id];
-                        obj[ ip ][ 3 ] += msg[ COL.PACKET_COUNT.id ];
-                        
-                        if( obj[ ip ][ 4 ] > time )
-                            obj[ ip ][ 4 ] = time;
-                        if( obj[ ip ][ 5 ] < time )
-                            obj[ ip ][ 5 ] = time;
-                    }
-
-                    data = [];
-                    for( var i in obj )
-                        data.push( obj[i] );
-                    
-                    //sort by data size
-                    data.sort(function (a, b) {
-                        return b[2] - a[2];
-                    });
+                    var ID  = (isMAC ? COL.NAME: COL.MAC_SRC);
                     //index
                     for( var i=0; i<data.length; i++ ){
-                        data[i][0] = (i+1);
-                        data[i][2] = MMTDrop.tools.formatDataVolume( data[i][2] );
-                        data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
-                        data[i][4] = moment( data[i][4] ).format("YYYY/MM/DD HH:mm:ss");
-                        data[i][5] = moment( data[i][5] ).format("MM/DD HH:mm:ss");
-                    }
+                        var msg = data[i];
+                        var key = {id: msg[ ID.id ], mac_dest: msg[ COL.MAC_DEST.id ]};
+                        key     = JSON.stringify( key );
                         
-
+                        if( obj[ key ] == undefined )
+                            obj[ key ] = msg;
+                        else{
+                            for( var j=14; j<22; j++)
+                                obj[key][ j ] += msg[ j ];
+                        }
+                    }
+                    
+                    data = [];
+                    for( var i in obj ){
+                        obj[i][ 0 ] = data.length + 1;
+                        data.push( obj[i] );
+                    }
+                    
+                    var columns = [{id: 0, label: ""           , align: "left"}, 
+                                   {id: 7, label: "Name"       , align: "left"},
+                                   {id: 6, label: "MAC Destination"       , align: "left"},
+                                  ];
+                    if( ! isMAC )
+                        columns[1] = {id: 5, label: "MAC Source" , align: "right"};
+                    
+                    for(var i in COL )
+                        if( COL[i].id > 7 && COL[i].id != 13)
+                            columns.push( COL[i] );
+                    //data.length = 1000;
                     return {
-                        data: data,
-                        columns: [{id: 0, label: ""              , align: "left"}, 
-                                  {id: 1, label: "Destination IP", align: "left"},
-                                  {id: 2, label: "Data       "   , align: "right"},
-                                  {id: 3, label: "Packet"        , align: "right"},
-                                  {id: 4, label: "Start Time"    , align: "right"},
-                                  {id: 5, label: "Last Updated"  , align: "right"},
-                                 ],
+                        data   : data,
+                        columns: columns,
                     };
                 }
             },
             chart: {
-                "paging": false,
-                "info"  : true,
-                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+                "paging"     : true,
+                "info"       : true,
+                "deferRender": true,
+                "dom"   : '<"row"  <"col-md-6"><"col-md-6" f>> <"application-table overflow-auto-xy" t><"row" <"col-md-2" l> <"col-md-4" i><"col-md-6" p>> ',
             },
+
             //custom legend
             afterEachRender: function (_chart) {
-                var chart = _chart.chart;
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
+
+                var table = _chart.chart;
+                if( table === undefined ) return;
                 
+                table.DataTable().columns.adjust();
+
+                table.on("draw.dt", function () {
+                    var $div = $('.application-table');
+                    var h = $div.getWidgetContentOfParent().height() - 110;
+                    $div.css('height', h);
+                    $div.css('margin-top', 10);
+                    $div.css('margin-bottom', 10);
+                    $div.children().filter("table").css("border-top", "thin solid #ddd");
+                });
+                table.trigger("draw.dt");
+
+                //resize when changing window size
+                $widget.on("widget-resized", null, table, function (event, widget) {
+                    if (event.data){
+                        event.data.api().draw(false);
+                    }
+                });
+                $widget.trigger("widget-resized", [$widget]);
 
             }
         });
@@ -380,7 +151,7 @@ var ReportFactory = {
         var dataFlow = [{
             object: fProbe,
             effect: [{
-                object: cPie
+                object: cTable
                     }]
         }, ];
 
@@ -397,7 +168,7 @@ var ReportFactory = {
             //charts
 					[
                 {
-                    charts: [cPie],
+                    charts: [cTable],
                     width: 12
                 },
 					 ],
@@ -409,13 +180,20 @@ var ReportFactory = {
         return report;
     },
     
-    createTopNameReport: function (filter, userData) {
+    createTopNameReport: function (filter, isMAC) {
+        isMAC = (isMAC === true);
         var self = this;
-        var database = new MMTDrop.Database({format: [625]});
+        var db_option= {format: [625], id: "ndn.name"};
+        if( isMAC )
+            db_option.id = "ndn.mac";
+        
+        var database = new MMTDrop.Database( db_option );
         var COL      = MMTDrop.constants.NdnColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createNdnMetricFilter();
 
+        
+        
         var cPie = MMTDrop.chartFactory.createPie({
             getData: {
                 getDataFn: function (db) {
@@ -427,6 +205,7 @@ var ReportFactory = {
 
                     cPie.dataLegend = {
                         "dataTotal": 0,
+                        "ndnTotal" : 0,
                         "label"    : col.label,
                         "data"     : {}
                     };
@@ -436,18 +215,25 @@ var ReportFactory = {
                     for( var i=0; i< db_data.length; i++){
                         var val  = db_data[i][ col.id ];
                         var name = db_data[i][ COL.NAME.id ];
-                        var mac  = db_data[i][ COL.MAC_SRC.id ];
+                        if( isMAC )
+                            name = db_data[i][ COL.MAC_SRC.id ];
+                        var val2 = val;
+                        if( col.id < COL.NB_DATA_PACKET.id )
+                            val2  = db_data[i][ col.id + 4 ];
 
                         if( cPie.dataLegend.data[name] === undefined )
-                            cPie.dataLegend.data[name] = {mac: mac, val: 0};
+                            cPie.dataLegend.data[name] = {val2: 0, val: 0};
 
-                        cPie.dataLegend.data[name].val += val;
-                        cPie.dataLegend.dataTotal      += val;
+                        cPie.dataLegend.data[name].val  += val;
+                        cPie.dataLegend.data[name].val2 += val2;
+                        cPie.dataLegend.ndnTotal        += val;
+                        cPie.dataLegend.dataTotal       += val2;
                     }
                     for( var name in cPie.dataLegend.data )
                         data.push({
                             "key": name,
-                            "val": cPie.dataLegend.data[ name ].val
+                            "val": cPie.dataLegend.data[ name ].val,
+                            "val2": cPie.dataLegend.data[ name ].val2
                         });
                     
 
@@ -457,19 +243,19 @@ var ReportFactory = {
 
                     var top = 7;
                     if( data.length > top+1 && cPie.showAll !== true){
-                        var val = 0;
+                        var val = 0, val2 = 0;
                         
                         //update data
                         for (var i=top; i<data.length; i++ ){
                             var msg = data[i];
-                            val += msg.val;
-                            
+                            val  += msg.val;
+                            val2 += msg.val2;
                             //remove
                             delete( cPie.dataLegend.data[ msg.key ]);
                         }
                                             
                         //reset dataLegend
-                        cPie.dataLegend.data["Other"] = {mac: "", val: val};
+                        cPie.dataLegend.data["Other"] = {val2: val2, val: val};
                         
                         data[top] = {
                             key: "Other",
@@ -517,23 +303,26 @@ var ReportFactory = {
                 var $table = $("<table>", {
                     "class": "table table-bordered table-striped table-hover table-condensed"
                 });
+                var name = "Name";
+                if( isMAC )
+                    name = "MAC Address";
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='40%'>Name</th><th width='20%'>MAC</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='60%'>"+ name  +"</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
                         continue;
                     i++;
-                    var val = legend.data[key].val;
-                    var mac = legend.data[key].mac;
+                    var val   = legend.data[key].val;
+                    var val2  = legend.data[key].val2;
                     
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
 
                     $("<td>", {
-                            "class": "item-" + key,
+                            //"class": "item-" + key,
                             "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
+                            "style": "min-width: 30px; cursor: pointer",
                             "align": "right"
                         })
                         .css({
@@ -554,26 +343,26 @@ var ReportFactory = {
                     
                     var $label = $("<a>", {
                         text : key,
-                        title: "click to show detail of this user",
-                        href :"?ip=" + key
+                        title: "click to show detail of this " + (isMAC ? "name" : "machine"),
+                        href : (isMAC ? "?mac=": "?name=") + key
                     });
                     
-                    $("<td>", {align: "left"}).append($label).appendTo($tr);
-                    
-                    $("<td>", {
-                        "text" : mac,
-                        "align": "left"
-                    }).appendTo($tr);
-
+                    $("<td>", {align: "left"
+                        }).append($label).appendTo($tr);
                     
                     $("<td>", {
                         "text" : MMTDrop.tools.formatDataVolume( val ),
                         "align": "right"
                     }).appendTo($tr);
-
+                    /*
+                    $("<td>", {
+                        "text" : (val * 100 / val2).toFixed(2) + "%",
+                        "align": "right"
+                    }).appendTo($tr);
+                    */
                     $("<td>", {
                         "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                        "text": (val * 100 / legend.ndnTotal).toFixed(2) + "%"
 
                     }).appendTo($tr);
                 }
@@ -586,7 +375,8 @@ var ReportFactory = {
                     $tr = $("<tr>");
                     var key = "Other";
                     var val = legend.data[key].val;
-
+                    var val2 = legend.data[key].val2;
+                    
                     $("<td>", {
                             "class": "item-" + key,
                             "data-id": key,
@@ -623,16 +413,19 @@ var ReportFactory = {
                     
                     $("<td>").append( $a ).appendTo($tr);
                     
-                    $("<td>").appendTo($tr);
-                    
                     $("<td>", {
                         "align": "right",
                         "html":  MMTDrop.tools.formatDataVolume( val ),
                     }).appendTo($tr);
-
+                    /*
+                    $("<td>", {
+                        "text" : (val * 100 / val2).toFixed(2) + "%",
+                        "align": "right"
+                    }).appendTo($tr);
+                    */
                     $("<td>", {
                         "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                        "text": (val * 100 / legend.ndnTotal).toFixed(2) + "%"
 
                     }).appendTo($tr);
 
@@ -653,13 +446,15 @@ var ReportFactory = {
                         })
                     ).append(
                         $("<td>", {
-                        })
-                    ).append(
-                        $("<td>", {
                             "align": "right",
-                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
+                            "text": MMTDrop.tools.formatDataVolume( legend.ndnTotal )
                         })
-                    ).append(
+                    )/*.append(
+                        $("<td>", {
+                            "text" : (legend.ndnTotal * 100 / legend.dataTotal).toFixed(2) + "%",
+                            "align": "right"
+                        })
+                    )*/.append(
                         $("<td>", {
                             "align": "right",
                             "text": "100%"
@@ -670,7 +465,7 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom: "t",
-                    order: [[4, "desc"]]
+                    order: [[3, "desc"]]
                 });
             }
         });
@@ -709,107 +504,8 @@ var ReportFactory = {
         return report;
     },
     
-}
-
-var param = MMTDrop.tools.getURLParameters();
-if( param.ip != undefined ){
-    var ip = param.ip; //'<a href="?">'+ param.ip +'</a>'
-    arr = [{
-        id: "profile",
-        title: ip + " &gt; Profiles",
-        x: 0,
-        y: 0,
-        width: 5,
-        height: 10,
-        type: "info",
-        userData: {
-            fn: "createIPUserReport"
-        },
-    },{
-        id: "user",
-        title: ip + " &gt; Destinations",
-        x: 6,
-        y: 0,
-        width: 7,
-        height: 5,
-        type: "info",
-        userData: {
-            fn: "createIPDestinationReport"
-        },
-    },{
-        id: "app",
-        title: ip + " &gt; Protocols/Applications",
-        x: 6,
-        y: 6,
-        width: 7,
-        height: 5,
-        type: "info",
-        userData: {
-            fn: "createIPApplicationReport"
-        },
-    }];
+    createTopMACReport: function (filter) {
+        return this.createTopNameReport(filter, true);
+    },
     
-    ReportFactory.ip = param.ip;
-    ReportFactory.createIPUserReport = function( filter ){
-        var rep = this.createTopProtocolReport( filter, this.ip);
-        return rep;
-    };
-    
-    ReportFactory.createIPApplicationReport = function( filter ){
-        var rep = this.createApplicationReport( filter, this.ip);
-        return rep;
-    };
-    
-    ReportFactory.createIPDestinationReport = function( filter ){
-        var rep = this.createDestinationReport( filter, this.ip);
-        return rep;
-    }
-}
-
-var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail"});
-var cTable    = ReportFactory.createDetailOfApplicationChart();
-function loadDetail( ip_dest, app_id ){
-    if( param.ip == undefined )
-        return;
-    var userData = {
-        ip     : param.ip,
-        ip_dest: ip_dest,
-        app_id : app_id
-    };
-    if( ip_dest == undefined )
-        ip_dest = "";
-    else
-        ip_dest = ', <strong>IP destination: </strong>' + ip_dest;
-    
-    var app_name = "";
-    if( app_id )
-        app_name = ', <strong>Application:</strong> ' + MMTDrop.constants.getProtocolNameFromID( app_id );
-    
-    cTable.userData = userData;
-    
-    var period = fPeriod.selectedOption().id;
-    detail_db.reload({"userData": userData, "period": period}, function( new_data, table){
-        table.attachTo( detail_db, false );
-        table.renderTo( "popupTable" )
-        $("#detailItem").html('<strong>IP source:</strong> '+ param.ip + ip_dest + app_name );
-        $("#modalWindow").modal();
-    }, cTable);
-    
-    
-     if( $("#modalWindow").length === 0 ){
-        var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
-                    +'<div class="modal-dialog">'
-                    +'<div class="modal-content" >'
-                    +'<div class="modal-header">'
-                    +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
-                    +'<h4 class="modal-title">Detail</h4>'
-                    +'</div>'
-                    +'<div class="modal-body code-json">'
-                    +'<div id="detailItem"/>'
-                    +'<div id="popupTable"/>'
-                    +'</div>'
-                    +'</div></div></div>';
-
-        $("body").append( $(modal) );
-    }
 }

@@ -26,6 +26,7 @@ var MongoConnector = function (opts) {
 
     var self = this;
     var COL = dataAdaptor.StatsColumnId;
+    var NDN = dataAdaptor.NdnColumnId;
     var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
     
@@ -70,6 +71,14 @@ var MongoConnector = function (opts) {
             
             mac: new DataCache(db, "data_mac", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
+         
+            ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
+                                                NDN.MAC_SRC, NDN.NAME],
+                               //inc
+                              [NDN.NB_INTEREST_PACKET, NDN.INTEREST_LIFETIME, NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET, NDN.DATA_FRESHNESS_PERIOD, NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
+                              //set
+                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST]),
+            
         }
 
         console.log("Connected to Database");
@@ -223,9 +232,7 @@ var MongoConnector = function (opts) {
         
         //NDN protocol
         if( format === 625){
-            self.mdb.collection("ndn").insert(msg, function (err, records) {
-                if (err) console.error(err.stack);
-            });
+            self.dataCache.ndn.addMessage( msg );
             return;
         }
     };
@@ -254,7 +261,7 @@ var MongoConnector = function (opts) {
         var find_in_specific_table = false;
         
         if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {
-            options.collection = "behaviour";
+            options.collection     = "behaviour";
             find_in_specific_table = true;
         }
         else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
@@ -262,11 +269,7 @@ var MongoConnector = function (opts) {
                 options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
             }else
                 options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
-            options.collection = "security";
-            find_in_specific_table = true;
-        }else //NDN
-            if (options.format.indexOf( 625 ) >= 0 ) {
-            options.collection     = "ndn";
+            options.collection     = "security";
             find_in_specific_table = true;
         }
         
@@ -287,6 +290,8 @@ var MongoConnector = function (opts) {
             });
             return;
         }
+        
+        callback(null, ["tobe implemented"]);
     };
 
 
@@ -387,7 +392,13 @@ var MongoConnector = function (opts) {
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
-            else {
+            else if (["ndn.name", "ndn.mac", "ndn.detail"].indexOf(options.id) > -1){
+                options.collection = "data_ndn_" + options.period_groupby;
+                if( options.userData && options.userData.mac != undefined )
+                    options.query[ dataAdaptor.NdnColumnId.MAC_SRC  ] = options.userData.mac;
+                if( options.userData && options.userData.name != undefined )
+                    options.query[ dataAdaptor.NdnColumnId.NAME  ] = options.userData.name;
+            }else {
                 console.error("Not yet implemented for " + options.id);
                 callback(null, ["Not yet implemented"]);
                 return;
