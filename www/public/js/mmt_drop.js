@@ -5182,7 +5182,8 @@ MMTDrop.chartFactory = {
 					'id' : elemID + '_treetable',
 					'cellpadding' : 0,
 					'cellspacing' : 0,
-					'border'      : 0
+					'border'      : 0,
+
 				});
 
 				table.appendTo(treeWrapper);
@@ -5451,7 +5452,8 @@ MMTDrop.chartFactory = {
 					'cellpadding' : 0,
 					'cellspacing' : 0,
 					'border'      : 0,
-					'class'       : "table table-striped table-bordered table-condensed"
+					'class'       : "table table-striped table-bordered table-condensed",
+                    'width'       : "100%"
 				});
 
 				table.appendTo($('#' + elemID));

@@ -940,7 +940,7 @@ var ReportFactory = {
                         if (msg[0] != 100)
                             continue;
 
-                        var time = msg[COL.TIMESTAMP.id];
+                        var time  = msg[COL.TIMESTAMP.id];
                         var exist = true;
 
                         //data for this timestamp does not exist before

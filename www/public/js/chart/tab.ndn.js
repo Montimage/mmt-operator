@@ -83,7 +83,11 @@ var ReportFactory = {
                             obj[ key ] = msg;
                         else{
                             for( var j=14; j<22; j++)
-                                obj[key][ j ] += msg[ j ];
+                                //time
+                                if( (j == 15 || j == 19) && obj[key][ j ] < msg[ j ] )
+                                    obj[key][ j ] = msg[ j ];
+                                else
+                                    obj[key][ j ] += msg[ j ];
                         }
                     }
                     

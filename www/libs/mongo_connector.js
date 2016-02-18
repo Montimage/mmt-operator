@@ -41,7 +41,7 @@ var MongoConnector = function (opts) {
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
         
-
+        self.operatorStatus.set("start");
         
         
         self.dataCache = {
@@ -75,17 +75,26 @@ var MongoConnector = function (opts) {
             ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
                                                 NDN.MAC_SRC, NDN.NAME],
                                //inc
-                              [NDN.NB_INTEREST_PACKET, NDN.INTEREST_LIFETIME, NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET, NDN.DATA_FRESHNESS_PERIOD, NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
+                              [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
-                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST]),
+                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME]),
             
         }
 
         console.log("Connected to Database");
     });
 
+    self.operatorStatus = {
+        set: function( status ){
+            var date = (new Date()).getTime();
+            self.mdb.collection("operator").insert({time: date, status: status});
+        },
+        get: function( period, callback ){
+            self.mdb.collection("operator").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );
+        }
+    };
 
-    self.lastTimestamp = 0;
+    self.lastPacketTimestamp = 0;
     
     self.splitDomainName = function( domain_name ){
         var index = domain_name.lastIndexOf(".");
@@ -109,12 +118,11 @@ var MongoConnector = function (opts) {
         var msg    = dataAdaptor.formatReportItem(message);
         
         var ts = msg[ TIMESTAMP ];
-
-        self.lastTimestamp = ts;
         
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
+            self.lastPacketTimestamp = ts;
             
             //save init data of one session
             var session_id = msg[ COL.SESSION_ID ];
@@ -194,7 +202,7 @@ var MongoConnector = function (opts) {
             var session_id = msg[ 4 ];
             if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
                 delete FLOW_SESSION_INIT_DATA[ session_id ];
-                console.log( "deleted session " + session_id );
+                //console.log( "deleted session " + session_id );
             }
             else{
                 console.log( "unknown session " + session_id );
@@ -573,29 +581,34 @@ var MongoConnector = function (opts) {
      * @param {Callback} cb      [[Description]]
      */
     self.getLastTime = function (cb) {
-        if (self.mdb == null) return;
+        if (self.mdb == null){
+            cb("Error: database does not exist");
+            return;
+        } 
         
-        //if online analysis ==> lastime is the current time of operator machine
-        var time = (new Date()).getTime();
-        time -= config.probe_stats_period * 1000;
-        cb( null, time );
-        return;
-
-
-        if (self.lastTimestamp > 0) {
-            cb(null, self.lastTimestamp);
+        if( config.analysis_mode == "online"){
+            //if online analysis ==> lastime is the current time of operator machine
+            var time = (new Date()).getTime();
+            time -= config.probe_stats_period * 1000;
+            cb( null, time );
             return;
         }
 
-        self.mdb.collection("traffic").find({}).sort({
+
+        if (self.lastPacketTimestamp > 0) {
+            cb(null, self.lastPacketTimestamp);
+            return;
+        }
+
+        self.mdb.collection("data_total_real").find({}).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {
-                self.lastTimestamp = (new Date()).getTime();
+                self.lastPacketTimestamp = (new Date()).getTime();
             } else if (Array.isArray(doc) && doc.length > 0)
-                self.lastTimestamp = doc[0].time;
+                self.lastPacketTimestamp = doc[0][3];
 
-            cb(null, self.lastTimestamp);
+            cb(null, self.lastPacketTimestamp);
         });
     };
 
@@ -606,7 +619,7 @@ var MongoConnector = function (opts) {
             self.dataCache[i].clear();
         
         self.mdb.dropDatabase(function (err, doc) {
-            self.lastTimestamp = 0;
+            self.lastPacketTimestamp = 0;
 
             console.log("drop database!");
             //empty also mmt-bandwidth
@@ -619,6 +632,12 @@ var MongoConnector = function (opts) {
 
         });
     };
+    
+    
+    self.close = function( cb ){
+        self.operatorStatus.set("shutdown");
+        self.flushCache( cb );
+    }
 };
 
 module.exports = MongoConnector;

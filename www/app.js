@@ -39,7 +39,7 @@ else{
     
 
 var dbconnector = new dbc( {
-    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data'
+    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.analysis_mode
 });
 
 var app = express();
@@ -137,8 +137,9 @@ function exit(){
 //clean up
 function cleanup ( cb ){
     console.log( "\nCleaning up before exiting... ");
-    if( dbconnector )
-        dbconnector.flushCache( exit );
+    if( dbconnector ){
+        dbconnector.close( exit );
+    }
 };
 
 

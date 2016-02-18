@@ -63,7 +63,7 @@ function Cache ( option ) {
         
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
             
-            if( _period_to_update_name !== "real" )
+            if( _period_to_update_name !== "real" && result.deletedCount > 0 )
                 console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
             
             if( cb != null ) cb( err, result.deletedCount );
@@ -156,6 +156,11 @@ function Cache ( option ) {
         var key_id  = option.message_format.key;
         var data_id = option.message_format.data; 
         
+        var maxTime = 0;
+        for (var i in _this.data) 
+            if( _this.data[i][ TIMESTAMP ] > maxTime )
+                maxTime = _this.data[i][ TIMESTAMP ];
+        
         var obj = {};
         for (var i in _this.data) {
             var msg  = _this.data[i];
@@ -163,7 +168,7 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
             
             if( _period_to_update_name === "real" )
-                key_obj[ TIMESTAMP ] = _lastUpdateTime; //msg[ TIMESTAMP ] ;
+                key_obj[ TIMESTAMP ] = maxTime;
             else
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
             
