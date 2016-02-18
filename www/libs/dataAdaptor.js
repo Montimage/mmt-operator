@@ -518,7 +518,7 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
     var formatTime = function( ts ){
-        var time = Math.round( ts ) * 1000;    //remove millisecond
+        var time = Math.round( ts  * 1000 );
         
         return time;
     }
@@ -547,10 +547,10 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.LICENSE:
             msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] == formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
             break;
-        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
-        case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
+        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : 
+        case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : 
         default :
-            return null;
+            
     }
     return msg;
 }

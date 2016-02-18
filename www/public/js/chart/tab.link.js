@@ -144,8 +144,9 @@ var ReportFactory = {
                         "label"    : unit,
                         "data"     : {}
                     };
-                    
+                    //ETHERNET
                     var o = MMTDrop.tools.sumUp (obj["99"], colToSum.id);
+                    
                     if( o && o[ colToSum.id ])
                         cLine.dataLegend.dataTotal = o[ colToSum.id ];
                     else
@@ -170,9 +171,9 @@ var ReportFactory = {
                                     delete obj[ parent ];
                             }
                         //delete all applications (retain only protocols)
-                        var app = MMTDrop.constants.getAppIdFromPath( cls );
-                        if( MMTDrop.constants.PureProtocol.indexOf( app ) == -1 )
-                            delete obj[ cls ];
+                        //var app = MMTDrop.constants.getAppIdFromPath( cls );
+                        //if( MMTDrop.constants.PureProtocol.indexOf( app ) == -1 )
+                        //    delete obj[ cls ];
                     }
                     
                     //get total data of each app path

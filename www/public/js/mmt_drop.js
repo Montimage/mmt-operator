@@ -725,13 +725,13 @@ MMTDrop.tools = function () {
 
 
         //add first element if need
-        if( data.length == 0 || start_time < data[0][ time_id ]){
+        if( data.length == 0 || start_time < (data[0][ time_id ] - period_sampling) ){
             var zero = {};                    
             zero[time_id] = start_time;
             data.unshift(zero);
         }
         //add last element if need
-        if( data.length == 0 || end_time > data[ data.length - 1 ][ time_id ]){
+        if( data.length == 0 || end_time > (data[ data.length - 1 ][ time_id ] + period_sampling ) ){
             var zero = {};                    
             zero[time_id] = end_time;
             data.push(zero);
@@ -5584,10 +5584,7 @@ MMTDrop.chartFactory = {
 
 				tbody.appendTo(table);
                 var chart_option = {
-                    fixedHeader: {
-                        header: true,
-                        footer: true
-                    },
+                    //fixedHeader: true,
                 };
                 if( param.chart )
                    chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );

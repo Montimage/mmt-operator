@@ -12,7 +12,7 @@ router.get('/*', function(req, res, next) {
 	var id = req.params[0];
 	if( !id ){
 		res.redirect("/chart/link");
-        return;s
+        return;
     }
 	id = id.toLowerCase();
 	
@@ -55,9 +55,10 @@ router.get('/*', function(req, res, next) {
 	};
 	
 	var page = pages[ id ];
-	if( !page){
+	if( page == undefined ){
 		var err = new Error('Not Found');
 		err.status = 404;
+        throw err;
 	}else{
 		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true) });
     }

@@ -264,13 +264,21 @@ var ReportFactory = {
                 "paging": false,
                 "info"  : true,
                 "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+                "scrollY": true,
             },
 
             //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
-                var legend = _chart.dataLegend;
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
 
+                //resize when changing window size
+                $widget.on("widget-resized", function (event, widget) {
+                    var $div = widget.find(".dataTables_scrollBody");
+                    var h = $div.getWidgetContentOfParent().height() - 100;
+                    $div.css({'max-height' : h});
+                });
+                $widget.trigger("widget-resized", [$widget]);
             }
         });
         //
@@ -380,12 +388,22 @@ var ReportFactory = {
                 "paging": false,
                 "info"  : true,
                 "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+                "scrollY": "200px",
+                "scrollCollapse": true,
             },
             //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
-                
+                var $widget = $("#" + _chart.elemID).getWidgetParent();
 
+                //resize when changing window size
+                $widget.on("widget-resized", function (event, widget) {
+                    var $div = widget.find(".dataTables_scrollBody");
+                    var h = $div.getWidgetContentOfParent().height() - 100;
+                    $div.css({'max-height' : h});
+                });
+                $widget.trigger("widget-resized", [$widget]);
+                
             }
         });
         //
