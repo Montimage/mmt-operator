@@ -97,6 +97,7 @@ var MongoConnector = function (opts) {
     self.lastPacketTimestamp = 0;
     
     self.splitDomainName = function( domain_name ){
+        //"p01-btmmdns.icloud.com."
         var index = domain_name.lastIndexOf(".");
         if( index > -1 )
             domain_name = domain_name.substr(0, index );
@@ -405,7 +406,7 @@ var MongoConnector = function (opts) {
                 if( options.userData && options.userData.mac != undefined )
                     options.query[ dataAdaptor.NdnColumnId.MAC_SRC  ] = options.userData.mac;
                 if( options.userData && options.userData.name != undefined )
-                    options.query[ dataAdaptor.NdnColumnId.NAME  ] = options.userData.name;
+                    options.query[ dataAdaptor.NdnColumnId.NAME  ] = decodeURI( options.userData.name );
             }else {
                 console.error("Not yet implemented for " + options.id);
                 callback(null, ["Not yet implemented"]);
@@ -600,7 +601,7 @@ var MongoConnector = function (opts) {
             return;
         }
 
-        self.mdb.collection("data_total_real").find({}).sort({
+        self.mdb.collection("data_ndn_real").find({}).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {

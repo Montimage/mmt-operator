@@ -1,4 +1,4 @@
-"use strict";
+var config  = require("../config.json");
 
 /**
  * @param   {Object} option
@@ -18,6 +18,8 @@
  * @returns {[[Type]]} [[Description]]
  */
 function Cache ( option ) {
+"use strict";
+    
     var _period_to_update_value = 0;
     var _retain_period          = -1;
     var _collection_name        = option.collection_name + "_" + option.period;
@@ -28,7 +30,7 @@ function Cache ( option ) {
     var _init_data_obj          = {};
     
     if( _period_to_update_name == "real" ){
-        _period_to_update_value = 0;         //update immediately
+        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
         _retain_period         = 60*60*1000; //retain data of the last 60 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
@@ -95,11 +97,29 @@ function Cache ( option ) {
     this.addMessage = function ( msg, cb ) {
         //clone object;
         msg    = JSON.parse(JSON.stringify( msg ));
+        
         var ts = msg[ TIMESTAMP ];
         
-        _this.data.push( msg );
         
-        //need messages arrive in time order
+        if( _collection_name == "data_ndn_real" ){
+            _this.data.push( msg );
+            var data = _this.flushDataToDatabase();
+            _this.removeOldDataFromDatabase( ts );
+            
+            _lastUpdateTime = ts;
+            if( cb != null ) cb( data );
+            return;
+        }
+        
+        
+        //a message that comes in a period that was updated
+        //update it directly in db
+        if( ts < _lastUpdateTime ){
+            console.log("wrong order!!!!!");
+            return;
+        }
+        
+        //need messages arrive in time order???
         if( ts - _lastUpdateTime > _period_to_update_value ){
             var data = [];
             if( _lastUpdateTime !== 0 ){
@@ -110,6 +130,8 @@ function Cache ( option ) {
             _lastUpdateTime = ts;
             if( cb != null ) cb( data );
         }
+        
+        _this.data.push( msg );
     };
     
     this.addArray = function (arr, cb ) {
@@ -124,8 +146,8 @@ function Cache ( option ) {
             console.log( _this.data );
         var ts   = last[ TIMESTAMP ];
         
-        //need messages arrive in time order
-        if( ts - _lastUpdateTime > _period_to_update_value ){
+        //need messages arrive in time order???
+        if( ts - _lastUpdateTime >= _period_to_update_value ){
             var data = [];
             if( _lastUpdateTime !== 0 )
                 data = _this.flushDataToDatabase();
@@ -167,7 +189,7 @@ function Cache ( option ) {
             
             var key_obj  = copyObject( msg, key_id );
             
-            if( _period_to_update_name === "real" )
+            if( _period_to_update_name === "real" || _period_to_update_name === "special")
                 key_obj[ TIMESTAMP ] = maxTime;
             else
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
@@ -228,7 +250,7 @@ function Cache ( option ) {
         for (var i in obj)
             arr.push(obj[i]);
         
-        if( _period_to_update_name !== "real")
+        if( _period_to_update_name !== "real" && _this.data.length > 1)
             console.log( "[" + _period_to_update_name + "] compress " + _this.data.length +  " records ===> " + arr.length);
         
         return arr;

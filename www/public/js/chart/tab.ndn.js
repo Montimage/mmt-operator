@@ -29,11 +29,16 @@ var availableReports = {
 };
 
 
-var param = MMTDrop.tools.getURLParameters();
+var url = window.location.href.slice(window.location.href.indexOf('?') + 1);
+var index = url.indexOf("=")
+var param = {};
+param[ url.substr(0, index) ] = url.substr(index+1);
+
+
 if( param.mac != undefined || param.name ){
     var title = "MAC: " + param.mac;
     if( param.name != undefined )
-        title = "Name: " + param.name;
+        title = "Name: " + decodeURI( param.name );
     arr = [{
         id: "profile",
         title: title,
@@ -84,9 +89,9 @@ var ReportFactory = {
                         else{
                             for( var j=14; j<22; j++)
                                 //time
-                                if( (j == 15 || j == 19) && obj[key][ j ] < msg[ j ] )
+                                if( j == 14 || j == 18 ){
                                     obj[key][ j ] = msg[ j ];
-                                else
+                                }else
                                     obj[key][ j ] += msg[ j ];
                         }
                     }
@@ -348,7 +353,7 @@ var ReportFactory = {
                     var $label = $("<a>", {
                         text : key,
                         title: "click to show detail of this " + (isMAC ? "name" : "machine"),
-                        href : (isMAC ? "?mac=": "?name=") + key
+                        href : (isMAC ? "?mac=": "?name=") + encodeURI(key)
                     });
                     
                     $("<td>", {align: "left"
