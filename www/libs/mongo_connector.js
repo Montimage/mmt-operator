@@ -199,6 +199,7 @@ var MongoConnector = function (opts) {
             while( true );
             self.dataCache.app.addArray( arr );
         }else if (format === 0 || format == 1 || format == 2){
+            self.lastPacketTimestamp = ts;
             //delete data when a session is expired
             var session_id = msg[ 4 ];
             if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
@@ -211,7 +212,7 @@ var MongoConnector = function (opts) {
         }
             
         if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
-
+            self.lastPacketTimestamp = ts;
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -219,7 +220,7 @@ var MongoConnector = function (opts) {
         }
         
         if ( format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
-
+            self.lastPacketTimestamp = ts;
             self.mdb.collection("security").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -227,6 +228,7 @@ var MongoConnector = function (opts) {
         }
         
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
+            self.lastPacketTimestamp = ts;
             if( self.startProbeTime == undefined ){
                 self.startProbeTime = msg[ TIMESTAMP ];
                 console.log("The last runing probe is " + (new Date( self.startProbeTime )));
@@ -241,6 +243,7 @@ var MongoConnector = function (opts) {
         
         //NDN protocol
         if( format === 625){
+            self.lastPacketTimestamp = ts;
             self.dataCache.ndn.addMessage( msg );
             return;
         }
@@ -587,7 +590,7 @@ var MongoConnector = function (opts) {
             return;
         } 
         
-        if( config.analysis_mode == "online"){
+        if( config.probe_analysis_mode == "online"){
             //if online analysis ==> lastime is the current time of operator machine
             var time = (new Date()).getTime();
             time -= config.probe_stats_period * 1000;
@@ -601,7 +604,7 @@ var MongoConnector = function (opts) {
             return;
         }
 
-        self.mdb.collection("data_ndn_real").find({}).sort({
+        self.mdb.collection("data_traffic_real").find({}).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {
@@ -609,7 +612,7 @@ var MongoConnector = function (opts) {
             } else if (Array.isArray(doc) && doc.length > 0)
                 self.lastPacketTimestamp = doc[0][3];
 
-            cb(null, self.lastPacketTimestamp);
+            cb(null, self.lastPacketTimestamp - config.probe_stats_period * 1000);
         });
     };
 

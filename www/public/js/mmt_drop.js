@@ -737,24 +737,31 @@ MMTDrop.tools = function () {
             data.push(zero);
         }
         
-        var len = data.length;
-        var arr = [];
-        var lastTS;
-        for (var i = 0; i < len; i++) {
-            var ts = data[i][time_id];
-            if (lastTS === undefined)
-                lastTS = ts;
+        var len    = data.length;
+        var arr    = [];
+        var lastTS = start_time;
 
-            while (ts - lastTS > period_sampling * 1.5) {
+        while( lastTS <= end_time ){
+            lastTS += period_sampling;
+            
+            var existPoint = false;
+            for (var i = 0; i < len; i++) {
+                var ts = data[i][time_id];
+                
+                if( ts <= lastTS && ts > lastTS - period_sampling ){
+                    existPoint       = true;
+                    data[i][time_id] = lastTS;
+                    arr.push(data[i]);
+                }
+            }
+            
+            if ( !existPoint ) {
                 var zero = {};
-                lastTS += period_sampling;
                 zero[time_id] = lastTS;
                 arr.push(zero);
             }
-
-            lastTS = ts;
-            arr.push(data[i]);
         }
+
         return arr;
     };
     
@@ -4386,6 +4393,8 @@ MMTDrop.Chart = function(option, renderFn){
             
             if( obj.height )
                 opt.height = obj.height;
+            if( obj.addZeroPoints )
+                opt.addZeroPoints = obj.addZeroPoints;
 		}
 
 		//copy data to an array of array containing only data to show
@@ -4977,43 +4986,95 @@ MMTDrop.chartFactory = {
 					}
 				}
 				
-				//sort by the first column
+				//sort by the first column (time)
 				arrData.sort( function (a, b){
 					return a[0] - b[0];
 				});
 				
 				var obj = [];
 				var n   = columns.length;
-                if( n > 5 ){
-                    //alert("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                    //n = 5;
+                if( n > 10 ){
+                    console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+                    n = 10;
                 }
-				//the first column is timestamp
-                var lastTS = 0;
-				for (var i=0; i<arrData.length; i++){
-					var x = new Date( parseInt(arrData[i][0]) );
-					
-					for( var j=1; j<n; j++){
-						
-						var val = arrData[i][j];
-						if( val === undefined )
-							//continue;
-                            val = 0;
-						
-						if( obj[j] === undefined ){
-							obj[j]     = ["x-" + columns[j].label];
-							obj[j+n-1] = [ columns[j].label];
-						}
-						
-						obj[j].push( x );        //x
-						obj[j+n-1].push( val );  //y
-							
-					}
-				}
+
+                //header
+                for( var j=1; j<n; j++){
+                    obj[j]     = ["x-" + columns[j].label];
+                    obj[j+n-1] = [ columns[j].label];
+                }
+                
+                if( option.addZeroPoints ){
+                    var time   = option.addZeroPoints.time;
+                    var period = option.addZeroPoints.sample_period;
+                    //the first column is timestamp
+                    var begin  = 0, end = 0;
+                    if( arrData[0] ){
+                        begin = arrData[0][0];
+                        end = arrData[ arrData.length - 1][0];
+                    }
+                    if( time.begin &&  time.begin <= begin )
+                        begin = time.begin;
+                    if( time.end &&  time.end >= end )
+                        end = time.end;
+                    
+                    var lastTS = begin;
+                    while( lastTS <= end ){
+                        lastTS += period;
+                        var exist = false;
+                       
+                        //cumulate data in this period: ((lastTS - period), lastTS]
+                        var data  = [];
+                        for( var j=1; j<n; j++)
+                            data[j] = 0;
+                        
+                        for (var i=0; i<arrData.length; i++){
+                            //the first column is timestamp
+                            var ts = parseInt(arrData[i][0]);
+                            //omit the elements outside the period
+                            if( ts > lastTS || ts <= lastTS - period )
+                                continue;
+
+                            exist = true;
+                            for( var j=1; j<n; j++)
+                                if( arrData[i][j] != undefined )
+                                    data[j] += arrData[i][j];
+                        }
+                        
+                        //add this data if having data
+                        //- else add zero point only for period inside [begin, end]
+                        if( lastTS <= end || exist){
+                            var time = new Date( lastTS );
+                            for( var j=1; j<n; j++){
+                                obj[j].push( time );           //x
+                                obj[j+n-1].push( data[ j ] );  //y
+                            }
+                        }
+                    }
+                }
+                else{
+                    for (var i=0; i<arrData.length; i++){
+                        //the first column is timestamp
+                        var x = new Date( parseInt(arrData[i][0]) );
+
+                        for( var j=1; j<n; j++){
+                            var val = arrData[i][j];
+                            if( val === undefined )
+                                //continue;
+                                val = 0;
+
+                            obj[j].push( x );        //x
+                            obj[j+n-1].push( val );  //y
+
+                        }
+                    }
+                }
 				//as j starts from 1 ==> obj starts from 1
 				// I will remove the first index of obj
 				obj.shift();
 				
+
+                
 				var ylabel = option.ylabel;
                 var height = 200;
                 if( option.height )

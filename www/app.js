@@ -39,7 +39,7 @@ else{
     
 
 var dbconnector = new dbc( {
-    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.analysis_mode
+    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.probe_analysis_mode
 });
 
 var app = express();

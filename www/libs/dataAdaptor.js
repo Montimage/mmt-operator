@@ -517,7 +517,7 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
     var formatTime = function( ts ){
-        var time = Math.round( ts  * 1000 );
+        var time = Math.round( ts )  * 1000 ; //round to second
         
         return time;
     }

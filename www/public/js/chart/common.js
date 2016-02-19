@@ -159,11 +159,6 @@ $(function () {
     });
     
     
-    if( MMTDrop.tools.localStorage.get("reload") == 1 ){
-        //MMTDrop.tools.localStorage.remove("reload");
-        //loading.onHide();
-    }
-
     var reloadCount = 0;
     var auto_reload_timer = null;
     function start_auto_reload_timer(){
@@ -190,6 +185,7 @@ $(function () {
     $("#isAutoReloadChk").change( function(){
         var is_on = $(this).is(":checked");
         console.log( "autoReload: " + is_on );
+        MMTDrop.tools.localStorage.set("autoreload", is_on);
         if( is_on ){
             start_auto_reload_timer();
         }else{
@@ -197,5 +193,13 @@ $(function () {
         }
     });
 
-    $("#isAutoReloadChk").trigger("change");
+    
+    var checked = MMTDrop.tools.localStorage.get("autoreload");
+    //checkbox default is "true"
+    if(  checked !== true ){
+        $("#isAutoReloadChk").prop("checked", false);
+    }else
+        //checkbox is already checked ==> trigger its event
+        $("#isAutoReloadChk").trigger("change");
+
 });

@@ -214,9 +214,6 @@ var ReportFactory = {
                     var time_id = 3;
                     var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
         
-                    arr = MMTDrop.tools.addZeroPointsToData( arr, period_sampling, time_id, db.time.begin, db.time.end );
-                   
-                    
                     var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
                     for (var i = 0; i < header.length; i++) {
                         var path = header[i];
@@ -234,7 +231,12 @@ var ReportFactory = {
                         data: arr,
                         columns: columns,
                         ylabel : fMetric.selectedOption().label + " (total)",
-                        height : height
+                        height : height,
+                        addZeroPoints:{
+                            time_id       : 3,
+                            time          : db.time,
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                        },
                     };
                 },
             },

@@ -227,6 +227,7 @@ var ReportFactory = {
                     for( var i in columns )
                         cLine.dataLegend.data[ columns[i].label ] = columns[i].value;
                     
+                    
                     data = {};
                     for (var cls in obj) {
                         var o = obj[cls];
@@ -268,17 +269,22 @@ var ReportFactory = {
                         data[t][TIME.id] = parseInt(t);
 
 
-                    var arr = self.addZeroPoints(data, db.time.begin, db.time.end);
+                    //var arr = self.addZeroPoints(data, db.time.begin, db.time.end);
 
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height = $widget.find(".grid-stack-item-content").innerHeight();
                         height -= $widget.find(".filter-bar").outerHeight(true) + 15;
                     
                     return {
-                        data   : arr,
+                        data   : data,
                         columns: columns,
                         ylabel : ylabel,
-                        height : height
+                        height : height,
+                        addZeroPoints:{
+                            time_id       : 3,
+                            time          : db.time,
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                        },
                     };
                 }
             },
@@ -932,14 +938,15 @@ var ReportFactory = {
                     } else
                         cols.push(col);
 
-                    var obj = {};
+                    var obj  = {};
                     var data = db.data();
+                    
                     for (var i in data) {
-                        var msg = data[i];
+                        var msg   = data[i];
                         var proto = msg[COL.APP_ID.id];
 
-                        if (msg[0] != 100)
-                            continue;
+                        //if (msg[0] != 100)
+                        //    continue;
 
                         var time  = msg[COL.TIMESTAMP.id];
                         var exist = true;
@@ -954,6 +961,10 @@ var ReportFactory = {
 
                         for (var j in cols) {
                             var id = cols[j].id;
+                            
+                            if( msg[id] == undefined )
+                                msg[id] = 0;
+                            
                             if (exist)
                                 obj[time][id] += msg[id] / period;
                             else
@@ -961,19 +972,22 @@ var ReportFactory = {
                         }
                     }
 
-                    var arr = _this.addZeroPoints(obj, db.time.begin, db.time.end );
-
                     cols.unshift(COL.TIMESTAMP);
                     
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
-                    var height = $widget.find(".grid-stack-item-content").innerHeight();
-                    height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                    var height  = $widget.find(".grid-stack-item-content").innerHeight();
+                    height     -= $widget.find(".filter-bar").outerHeight(true) + 15;
                     
                     return {
-                        data: arr,
-                        columns: cols,
-                        ylabel: ylabel,
-                        height: height
+                        data    : obj,
+                        columns : cols,
+                        ylabel  : ylabel,
+                        height  : height,
+                        addZeroPoints:{
+                            time_id       : 3,
+                            time          : db.time,
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                        },
                     };
                 }
             },

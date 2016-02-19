@@ -30,7 +30,7 @@ function Cache ( option ) {
     var _init_data_obj          = {};
     
     if( _period_to_update_name == "real" ){
-        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
+        _period_to_update_value = 0/*update immediately*/; //config.probe_stats_period*1000;         //each 5 seconds, for example
         _retain_period         = 60*60*1000; //retain data of the last 60 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
@@ -99,10 +99,10 @@ function Cache ( option ) {
         msg    = JSON.parse(JSON.stringify( msg ));
         
         var ts = msg[ TIMESTAMP ];
+        _this.data.push( msg );
         
-        
-        if( _collection_name == "data_ndn_real" ){
-            _this.data.push( msg );
+        //only for ndn offline
+        if( _collection_name === "data_ndn_real" ){
             var data = _this.flushDataToDatabase();
             _this.removeOldDataFromDatabase( ts );
             
@@ -110,14 +110,15 @@ function Cache ( option ) {
             if( cb != null ) cb( data );
             return;
         }
+        //end NDN
         
         
         //a message that comes in a period that was updated
         //update it directly in db
-        if( ts < _lastUpdateTime ){
-            console.log("wrong order!!!!!");
-            return;
-        }
+        //if( ts <= _lastUpdateTime ){
+        //    console.log("wrong order!!!!!");
+            //return;
+        //}
         
         //need messages arrive in time order???
         if( ts - _lastUpdateTime > _period_to_update_value ){
@@ -128,10 +129,9 @@ function Cache ( option ) {
             _this.removeOldDataFromDatabase( ts );
             
             _lastUpdateTime = ts;
+            
             if( cb != null ) cb( data );
         }
-        
-        _this.data.push( msg );
     };
     
     this.addArray = function (arr, cb ) {
@@ -147,7 +147,7 @@ function Cache ( option ) {
         var ts   = last[ TIMESTAMP ];
         
         //need messages arrive in time order???
-        if( ts - _lastUpdateTime >= _period_to_update_value ){
+        if( ts - _lastUpdateTime > _period_to_update_value ){
             var data = [];
             if( _lastUpdateTime !== 0 )
                 data = _this.flushDataToDatabase();
@@ -178,11 +178,6 @@ function Cache ( option ) {
         var key_id  = option.message_format.key;
         var data_id = option.message_format.data; 
         
-        var maxTime = 0;
-        for (var i in _this.data) 
-            if( _this.data[i][ TIMESTAMP ] > maxTime )
-                maxTime = _this.data[i][ TIMESTAMP ];
-        
         var obj = {};
         for (var i in _this.data) {
             var msg  = _this.data[i];
@@ -190,7 +185,7 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
             
             if( _period_to_update_name === "real" || _period_to_update_name === "special")
-                key_obj[ TIMESTAMP ] = maxTime;
+                key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ];
             else
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
             
