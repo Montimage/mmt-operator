@@ -1331,8 +1331,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         var onSuccess = function( newData ){
                             console.log("  - got " + newData.data.length + " elements");
 
-            _originalData = newData.data;
-            _this.time    = newData.time;
+            _originalData     = newData.data;
+            _this.time        = newData.time;
+            _this.probeStatus = newData.probeStatus;
             MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
 
             if (typeof(dataProcessingFn) == "function"){
@@ -5005,15 +5006,16 @@ MMTDrop.chartFactory = {
                 }
                 
                 if( option.addZeroPoints ){
-                    var time   = option.addZeroPoints.time;
-                    var period = option.addZeroPoints.sample_period;
+                    var time        = option.addZeroPoints.time;
+                    var period      = option.addZeroPoints.sample_period;
+                    var probeStatus = option.addZeroPoints.probeStatus;
                     //the first column is timestamp
                     var begin  = 0, end = 0;
                     if( arrData[0] ){
                         begin = arrData[0][0];
-                        end = arrData[ arrData.length - 1][0];
+                        end   = arrData[ arrData.length - 1][0];
                     }
-                    if( time.begin &&  time.begin <= begin )
+                    if( time.begin &&  (time.begin <= begin || begin == 0) )
                         begin = time.begin;
                     if( time.end &&  time.end >= end )
                         end = time.end;
@@ -5044,10 +5046,23 @@ MMTDrop.chartFactory = {
                         //add this data if having data
                         //- else add zero point only for period inside [begin, end]
                         if( lastTS <= end || exist){
+                            var probeRunningInThisPeriod = false;
+                            if( exist )
+                                probeRunningInThisPeriod = true;
+                            else
+                                for( var j in probeStatus )
+                                    if( probeStatus[j].start <= lastTS && lastTS <= probeStatus[j].last_update ){
+                                        probeRunningInThisPeriod = true;
+                                        break;
+                                    }
+                            
                             var time = new Date( lastTS );
                             for( var j=1; j<n; j++){
-                                obj[j].push( time );           //x
-                                obj[j+n-1].push( data[ j ] );  //y
+                                obj[j].push( time );               //x
+                                if( probeRunningInThisPeriod )
+                                    obj[j+n-1].push( data[ j ] );  //y
+                                else
+                                    obj[j+n-1].push( null );  //y
                             }
                         }
                     }

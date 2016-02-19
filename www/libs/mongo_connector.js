@@ -84,16 +84,45 @@ var MongoConnector = function (opts) {
         console.log("Connected to Database");
     });
 
-    self.operatorStatus = {
-        set: function( status ){
-            var date = (new Date()).getTime();
-            self.mdb.collection("operator").insert({time: date, status: status});
+    self.probeStatus = {
+        set: function( last_update ){
+            if( self.startProbeTime == undefined ){
+                //useful when no element in collection "probe_status"
+                self.startProbeTime = last_update;
+                self.mdb.collection("probe_status").find({}).sort({"start": -1}).toArray( function( err, arr){
+                    if( err || arr.length == 0 )
+                        return;
+                    
+                    self.startProbeTime = arr[0].start;
+                    var start           = self.startProbeTime;
+                
+                    self.mdb.collection("probe_status").update( {start: start}, {last_update: last_update});
+                } );
+                
+                return;
+            }
+            
+            var start = self.startProbeTime;
+            
+            self.mdb.collection("probe_status").update( {start: start}, {start: start, last_update: last_update}, {upsert: true});
         },
         get: function( period, callback ){
-            self.mdb.collection("operator").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );
+            self.mdb.collection("probe_status").find(
+                //TODO: not need to get all history of probe
+                //{start: {$gte : period.begin}, last_update: { $lte: period.end}}
+            ).toArray( callback );
         }
     };
 
+    self.operatorStatus = {
+        set: function( status ){
+            var date = (new Date()).getTime();
+            self.mdb.collection("operator_status").insert({time: date, status: status});
+        },
+        get: function( period, callback ){
+            self.mdb.collection("operator_status").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );
+        }
+    };
     self.lastPacketTimestamp = 0;
     
     self.splitDomainName = function( domain_name ){
@@ -228,16 +257,22 @@ var MongoConnector = function (opts) {
         }
         
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
-            self.lastPacketTimestamp = ts;
-            if( self.startProbeTime == undefined ){
-                self.startProbeTime = msg[ TIMESTAMP ];
+            if( self.startProbeTime == undefined  || self.startProbeTime < ts){
+                self.startProbeTime = ts;
                 console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+                
+                self.probeStatus.set( ts );
             }
             
             self.mdb.collection("license").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
             return;
+        }
+        
+        
+        if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
+            self.probeStatus.set( ts );
         }
         
         

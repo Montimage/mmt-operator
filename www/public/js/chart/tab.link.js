@@ -94,7 +94,7 @@ var ReportFactory = {
         var _this    = this;
         var self     = this;
         var COL      = MMTDrop.constants.StatsColumn;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol"});
+        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol", userData : {getProbeStatus: true} });
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         
@@ -283,7 +283,8 @@ var ReportFactory = {
                         addZeroPoints:{
                             time_id       : 3,
                             time          : db.time,
-                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                            probeStatus   : db.probeStatus
                         },
                     };
                 }
@@ -699,7 +700,7 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
-        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic"});
+        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic", userData:{getProbeStatus: true}});
         var rep = _this.createTrafficReport(fProbe, database, true);
 
         var COL = MMTDrop.constants.StatsColumn;
@@ -986,7 +987,8 @@ var ReportFactory = {
                         addZeroPoints:{
                             time_id       : 3,
                             time          : db.time,
-                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                            probeStatus  : db.probeStatus
                         },
                     };
                 }

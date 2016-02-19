@@ -138,11 +138,18 @@ router.get('/*', function (req, res, next) {
 			//res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");
             var obj = {
-                data     : data,
-                time     : op.time,
-                protocols: dbconnector.appList.get()
+                data        : data,
+                time        : op.time,
+                protocols   : dbconnector.appList.get(),
             }
-			res.send( obj );
+            
+            if( op.userData != undefined && op.userData.getProbeStatus ){
+                dbconnector.probeStatus.get( op.time, function(err, arr){
+                    obj.probeStatus = arr;
+                    res.send( obj );
+                })
+            }else
+                res.send( obj );
 		});
     };
 
