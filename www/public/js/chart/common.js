@@ -185,7 +185,7 @@ $(function () {
     $("#isAutoReloadChk").change( function(){
         var is_on = $(this).is(":checked");
         console.log( "autoReload: " + is_on );
-        MMTDrop.tools.localStorage.set("autoreload", is_on);
+        MMTDrop.tools.localStorage.set("autoreload", is_on, false);
         if( is_on ){
             start_auto_reload_timer();
         }else{
@@ -194,7 +194,7 @@ $(function () {
     });
 
     
-    var checked = MMTDrop.tools.localStorage.get("autoreload");
+    var checked = MMTDrop.tools.localStorage.get("autoreload", false);
     //checkbox default is "true"
     if(  checked !== true ){
         $("#isAutoReloadChk").prop("checked", false);

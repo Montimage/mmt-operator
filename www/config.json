@@ -3,8 +3,8 @@
     "redis_server": "192.168.0.7",
     "data_folder": "/Users/nhnghia/temps/share_vbox/probe-output/",
     "delete_data": true,
-    "input_mode": "redis",
-    "analysis_mode": "online",
+    "input_mode": "file",
+    "probe_analysis_mode": "online",
     "local_network": [{
             "ip": "192.0.0.0",
             "mask": "255.0.0.0"

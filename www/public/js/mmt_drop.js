@@ -958,10 +958,11 @@ MMTDrop.tools = function () {
 
 
 	_this.localStorage = function (){
-		var _prefix = function(){
+		var _prefix = function( useFullURI ){
 			//each page has a separated parameter
 			var pre = window.location.pathname;
-			pre += window.location.search;
+            if( useFullURI )
+                pre += window.location.search;
 			
 			return "mmtdrop." + pre + ".";
 		};
@@ -980,13 +981,14 @@ MMTDrop.tools = function () {
 			_storage = window.fakeStorage;
 		}
 
-		var _get = function (key){;
-
-			return JSON.parse(_storage.getItem(_prefix() + key));
+		var _get = function (key, useFullURI){
+            useFullURI = (useFullURI !== false );
+			return JSON.parse(_storage.getItem(_prefix(useFullURI) + key));
 		};
 
-		var _set = function(key, value){
-			_storage.setItem(_prefix() + key, JSON.stringify(value));
+		var _set = function(key, value, useFullURI){
+            useFullURI = (useFullURI !== false );
+			_storage.setItem(_prefix(useFullURI) + key, JSON.stringify(value));
 		};
 
 		var _remove = function (key){
@@ -2193,7 +2195,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
 			
 			//save the current selected index
-			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption);
+			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
 			
             for (var i in _afterChangeCallbacks){
                 var callback = _afterChangeCallbacks[i];
@@ -2224,7 +2226,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
             //check if the defaultOption is in the current option list
 		    for (var i in _option){
 			    if (opt.id == _option[i].id){
-                    MMTDrop.tools.localStorage.set(param.id, _option[i]);
+                    MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
     				break;
     			}
 	    	}
@@ -2275,7 +2277,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			opt.appendTo(filter);
 		}
 		
-		var defaultOption = MMTDrop.tools.localStorage.get(param.id);
+		var defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
 		var isExist = false;
 		
 		//check if the defaultOption is in the current option list
@@ -2507,9 +2509,10 @@ MMTDrop.filterFactory = {
 			
 			//options.push( otherOpt );
 			var filter =  new MMTDrop.Filter({
-				id      : filterID,
-				label   : "Period",
-				options : options,
+				id        : filterID,
+				label     : "Period",
+				options   : options,
+                useFullURI: false,
 			}, 
 
 			function (val, db){
@@ -2532,6 +2535,9 @@ MMTDrop.filterFactory = {
                                 return;
                             if( filter.otherOpt.id == undefined )
                                 filter.option().push( filter.otherOpt );
+                            
+                            d1 = moment(d1).startOf("day").valueOf();
+                            d2 = moment(d2).startOf("day").valueOf() + (24*60*60*1000 - 1);
                             
                             filter.otherOpt.id    = JSON.stringify({begin: d1, end: d2});
                             
@@ -2556,7 +2562,8 @@ MMTDrop.filterFactory = {
              */
             filter.getSamplePeriodTotal = function(){
                 var period = 1;
-                switch (this.selectedOption().id ){
+                var sel    = this.selectedOption().id;
+                switch ( sel ){
                     case MMTDrop.constants.period.MINUTE : 
                         period = 5*60//5 min
                         break;
@@ -2578,6 +2585,9 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.period.MONTH : 
                         period = 30*24*60*60;    //30 days
                         break;
+                    default:
+                        sel = JSON.parse( sel );
+                        period = (sel.end - sel.begin)/1000;
                 }
                 return period;
             };
@@ -2588,7 +2598,8 @@ MMTDrop.filterFactory = {
              */
             filter.getDistanceBetweenToSamples = function(){
                 var period = 1;
-                switch (this.selectedOption().id ){
+                var sel    = this.selectedOption().id;
+                switch ( sel ){
                     case MMTDrop.constants.period.MINUTE : 
                     case MMTDrop.constants.period.HOUR   :
                         period = MMTDrop.config.probe_stats_period;
@@ -2604,13 +2615,16 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.period.MONTH : 
                         period = 24*60*60;    //each day
                         break;
+                    default:
+                        period = 24*60*60;
                 }
                 return period;
             }
             
             filter.getTimeFormat = function(){
                 var format = "YYYY/MM/DD HH:mm";
-                switch (this.selectedOption().id ){
+                var sel    = this.selectedOption().id;
+                switch ( sel ){
                     case MMTDrop.constants.period.MINUTE : 
                     case MMTDrop.constants.period.HOUR :
                         format = "HH:mm:ss";
@@ -2628,6 +2642,8 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.period.MONTH : 
                         format = "YYYY/MM/DD";    //each day
                         break;
+                    default:
+                        format = "YYYY/MM/DD";    //each day
                 }
                 return format;
             }
@@ -5020,7 +5036,13 @@ MMTDrop.chartFactory = {
                     if( time.end &&  time.end >= end )
                         end = time.end;
                     
-                    var lastTS = begin;
+                    if( (end - begin) / period > 2000 ){
+                        console.log( "too long");
+                        begin = end - 2000 * period ;
+                    }
+                    
+                    var lastTS    = begin;
+                    var firstNull = true;
                     while( lastTS <= end ){
                         lastTS += period;
                         var exist = false;
@@ -5034,7 +5056,7 @@ MMTDrop.chartFactory = {
                             //the first column is timestamp
                             var ts = parseInt(arrData[i][0]);
                             //omit the elements outside the period
-                            if( ts > lastTS || ts <= lastTS - period )
+                            if( ts > lastTS || (ts <= lastTS - period && ts != begin) )
                                 continue;
 
                             exist = true;
@@ -5057,12 +5079,21 @@ MMTDrop.chartFactory = {
                                     }
                             
                             var time = new Date( lastTS );
+
                             for( var j=1; j<n; j++){
                                 obj[j].push( time );               //x
-                                if( probeRunningInThisPeriod )
+                                if( probeRunningInThisPeriod ){
                                     obj[j+n-1].push( data[ j ] );  //y
-                                else
-                                    obj[j+n-1].push( null );  //y
+                                    firstNull = true;
+                                }else{
+                                    if( firstNull )
+                                        obj[j+n-1].push( 0 );       //y ==> down to Zero
+                                    else
+                                        obj[j+n-1].push( null );       //y ==> no data
+                                    
+                                    if( j == n-1 )
+                                        firstNull = false;
+                                }
                             }
                         }
                     }
@@ -5132,6 +5163,8 @@ MMTDrop.chartFactory = {
                     else return " " + v;
                 }
 				
+                var radius = (type === "scatter" )? 3 : 1;
+                
 		        var chart_opt = {
 		        		bindto : "#" + elemID,
 		        		data : {
@@ -5147,6 +5180,7 @@ MMTDrop.chartFactory = {
                         size:{
                             height: height  
                         },
+                        
 		        		axis: {
 		        			x: {
 		        				type: "timeseries",
@@ -5158,15 +5192,21 @@ MMTDrop.chartFactory = {
 		        	            }
 		        			},
 		        			y: {
-		        				label: ylabel,
-                                count: 10,
+		        				label: {
+                                    text: ylabel,
+                                    //position: "outer-top"
+                                },
 		        				min: 0,
 		        				padding: {
                                   top: 10,
-                                  bottom: 10
+                                  bottom: 2
                                 },
 		        				tick: {
-		        					format: MMTDrop.tools.formatDataVolume
+		        					format: function( v ) {
+                                        if( v < 0 ) return 0;
+                                        return MMTDrop.tools.formatDataVolume( v );
+                                    },
+                                    count: 5,
 		        				}
 		        			}
 		        		},
@@ -5185,7 +5225,7 @@ MMTDrop.chartFactory = {
 		        		},
 		        		point: {
 		        			//show: false,
-		        			r: (type === "scatter")? 3 : 1,
+		        			r: 1,
 		        			focus: {
 		        			    expand: {
 		        			    	r: 5
@@ -5193,7 +5233,7 @@ MMTDrop.chartFactory = {
 		        			}
 		        		},
 		        		line: {
-		      	    	  connectNull: true
+		      	    	  connectNull: false 
 		      	    	},
 		      	    	zoom: {
 		      	          enabled: true,
@@ -5203,6 +5243,12 @@ MMTDrop.chartFactory = {
 		        //console.log( chart_opt );
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+                
+                if( obj[0] && obj[0].length <= 2 ){
+                    chart_opt.point.r   = 3;
+                    delete(chart_opt.data.type);
+                    delete(chart_opt.data.types);
+                }
 		        var chart = c3.generate( chart_opt );
 		        return chart;
 			});

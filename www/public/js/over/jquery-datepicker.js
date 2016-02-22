@@ -10,7 +10,7 @@ $.datepicker._updateDatepicker = function( inst ) {
 
 
 function DatePicker(selector, callback) {
-	var cur = prv = (new Date()).getTime();
+	var cur = prv = (new Date()).getTime() - 24*60*60*1000; //-1d
     
 
 	var $container = $('<div>', {"class": "date-picker"});
@@ -31,8 +31,8 @@ function DatePicker(selector, callback) {
 		//buttonImageOnly: true,
 		showAnim: "slideDown",
 		dateFormat: "dd/mm/yy",
-		maxDate: "0d",
-		defaultDate: "0d",
+		maxDate: "-1d",
+		defaultDate: "-1d",
 		closeText: "Close",
 		numberOfMonths: 2,
 		showButtonPanel: true,

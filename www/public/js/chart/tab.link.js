@@ -311,15 +311,6 @@ var ReportFactory = {
                             format: _this.formatTime
                         }
                     },
-                    y: {
-                        tick: {
-                            count: 5
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 0
-                        }
-                    }
                 },
                 grid: {
                     x: {
@@ -1001,15 +992,6 @@ var ReportFactory = {
                 color: {
                     pattern: ['orange', 'green', 'blue']
                 },
-                point: {
-                    //show: false,
-                    r: 0,
-                    focus: {
-                        expand: {
-                            r: 5
-                        }
-                    }
-                },
                 grid: {
                     x: {
                         show: false
@@ -1024,16 +1006,6 @@ var ReportFactory = {
                             format: _this.formatTime,
                         }
                     },
-                    y: {
-                        tick: {
-                            count: 5,
-                            //format: MMTDrop.tools.formatDataVolume
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 0
-                        },
-                    }
                 },
                 zoom: {
                     enabled: false,
