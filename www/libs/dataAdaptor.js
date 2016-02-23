@@ -26,6 +26,7 @@ var MMTDrop = {
         BA_BANDWIDTH_FORMAT     : 11,
         LICENSE                 : 30,
         NDN_FORMAT              : 625,
+        DUMMY_FORMAT            : 200,
     },
     
     isFlowStats : function ( format ) {

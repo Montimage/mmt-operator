@@ -94,7 +94,7 @@ var ReportFactory = {
         var _this    = this;
         var self     = this;
         var COL      = MMTDrop.constants.StatsColumn;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol"});
+        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol", userData : {getProbeStatus: true} });
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         
@@ -283,7 +283,8 @@ var ReportFactory = {
                         addZeroPoints:{
                             time_id       : 3,
                             time          : db.time,
-                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                            probeStatus   : db.probeStatus
                         },
                     };
                 }
@@ -310,15 +311,6 @@ var ReportFactory = {
                             format: _this.formatTime
                         }
                     },
-                    y: {
-                        tick: {
-                            count: 5
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 0
-                        }
-                    }
                 },
                 grid: {
                     x: {
@@ -699,7 +691,7 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
-        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic"});
+        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic", userData:{getProbeStatus: true}});
         var rep = _this.createTrafficReport(fProbe, database, true);
 
         var COL = MMTDrop.constants.StatsColumn;
@@ -986,7 +978,8 @@ var ReportFactory = {
                         addZeroPoints:{
                             time_id       : 3,
                             time          : db.time,
-                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                            probeStatus  : db.probeStatus
                         },
                     };
                 }
@@ -998,15 +991,6 @@ var ReportFactory = {
                 },
                 color: {
                     pattern: ['orange', 'green', 'blue']
-                },
-                point: {
-                    //show: false,
-                    r: 0,
-                    focus: {
-                        expand: {
-                            r: 5
-                        }
-                    }
                 },
                 grid: {
                     x: {
@@ -1022,16 +1006,6 @@ var ReportFactory = {
                             format: _this.formatTime,
                         }
                     },
-                    y: {
-                        tick: {
-                            count: 5,
-                            //format: MMTDrop.tools.formatDataVolume
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 0
-                        },
-                    }
                 },
                 zoom: {
                     enabled: false,

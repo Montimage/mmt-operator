@@ -33,7 +33,7 @@ var ReportFactory = {
     createNodeReport: function ( fPeriod ) {
         var _this    = this;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var database = MMTDrop.databaseFactory.createStatDB({id : "dpi"});
+        var database = MMTDrop.databaseFactory.createStatDB({id : "dpi", userData: {getProbeStatus: true}});
         var COL      = MMTDrop.constants.StatsColumn;
         
         var cTree    = MMTDrop.chartFactory.createTree({
@@ -235,7 +235,8 @@ var ReportFactory = {
                         addZeroPoints:{
                             time_id       : 3,
                             time          : db.time,
-                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples()
+                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                            probeStatus   : db.probeStatus
                         },
                     };
                 },
@@ -244,30 +245,12 @@ var ReportFactory = {
                 data:{
                     type: "step"
                 },
-                point: {
-                    //show: false,
-                    r: 0,
-                    focus: {
-                        expand: {
-                            r: 5
-                        }
-                    }
-                },
                 axis: {
                     x: {
                         tick: {
                             format: _this.formatTime
                         }
                     },
-                    y: {
-                        tick: {
-                            count: 5
-                        },
-                        padding: {
-                            top: 10,
-                            bottom: 0
-                        }
-                    }
                 },
                 grid: {
                     x: {

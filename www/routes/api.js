@@ -62,17 +62,15 @@ router.get('/*', function (req, res, next) {
 
     var getOptionsByPeriod2 = function (period) {
         var retval = {
-            collection: 'traffic_min',
-            time: {begin : period.begin, end: period.end}
+            collection     : 'traffic_day',
+            time           : {begin : period.begin, end: period.end},
+            period_groupby : 'day',
         };
         
-        var interval = period.end - period.begin;
-        if( interval == 0)
-            retval.time.end += 24*60*60*1000; 
-        else if ( interval < 7*24*60*60*1000 ) 
-            retval.collection = 'traffic_hour';
-        else
-            retval.collection = 'traffic_day';
+        var now = (new Date()).getTime();
+        if( retval.time.end > now )
+            retval.time.end = now;
+        
         return retval;
     }
 
@@ -138,25 +136,40 @@ router.get('/*', function (req, res, next) {
 			//res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");
             var obj = {
-                data     : data,
-                time     : op.time,
-                protocols: dbconnector.appList.get()
+                data        : data,
+                time        : op.time,
+                protocols   : dbconnector.appList.get(),
             }
-			res.send( obj );
+            
+            if( op.userData != undefined && op.userData.getProbeStatus ){
+                dbconnector.probeStatus.get( op.time, function(err, arr){
+                    obj.probeStatus = [];
+                    for( var i in arr )
+                        obj.probeStatus.push( {
+                            start      : arr[i].start,
+                            last_update: arr[i].last_update
+                        } )
+                    res.send( obj );
+                })
+            }else
+                res.send( obj );
 		});
     };
+    
+    if( options.time.begin === undefined )//interval
+        dbconnector.getLastTime(function(err, time){
+            if( err )
+                return next(err);
 
-    dbconnector.getLastTime(function(err, time){
-        if( err )
-            return next(err);
+            console.log("lastime: " + time + " " + (new Date(time)).toTimeString() );
 
-        console.log("lastime: " + time + " " + (new Date(time)).toTimeString() );
+            var inteval  = options.time;
+            options.time = {begin: time - inteval, end: time };
 
-        var inteval = options.time;
-        options.time = {begin: time - inteval, end: time };
-
+            queryData( options );
+        });
+    else
         queryData( options );
-	});
 });
 
 module.exports = router;
