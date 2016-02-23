@@ -97,6 +97,7 @@ Grid.load_grid = function (serialized_data, grid_stack) {
                 if (conf == false) return;
 
                 grid.remove_widget(el);
+                window.location.reload();
 
             }
         });

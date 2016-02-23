@@ -60,7 +60,7 @@ router.get('/*', function(req, res, next) {
 		err.status = 404;
         throw err;
 	}else{
-		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true) });
+		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true), licence_remain_days: 10 });
     }
 });
 

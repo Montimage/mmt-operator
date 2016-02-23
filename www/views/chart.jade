@@ -102,15 +102,9 @@ block content
                         span.onoffswitch-inner
                         span.onoffswitch-switch
 
-    //#info-alert
-        .alert.alert-danger.alert-dismissible( role="alert" )
-            button.close( type="button", data-dismiss="alert", aria-label="Close")
-                span( aria-hidden="true" ) &times;
-            strong Better check yourself, you're not looking too good.
-
-
     #waiting.center-block.loading
         i.fa.fa-refresh.fa-spin.fa-4x
+        
     #content
         script(type='text/javascript').
             MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
@@ -120,7 +114,7 @@ block content
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
         
-        
+    //This modal is used for creating a new report
     #modal.modal.fade
         .modal-dialog
             .modal-content

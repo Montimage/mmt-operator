@@ -154,7 +154,8 @@ $(function () {
         Grid.add_widget(node);
         Grid.save_grid();
 
-        renderReport(node);
+        window.location.reload();
+        //renderReport(node);
 
     });
     

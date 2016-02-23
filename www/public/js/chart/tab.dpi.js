@@ -236,7 +236,7 @@ var ReportFactory = {
                             time_id       : 3,
                             time          : db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-                            probeStatus   : db.probeStatus
+                            probeStatus   : db.probeStatus,
                         },
                     };
                 },

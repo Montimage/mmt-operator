@@ -370,24 +370,21 @@ var MMTDrop = {
         }
         return false;  
     },
+    
     inverseStatDirection: function( msg ){
+        var swap = function( id_1, id_2){
+            var tmp   = msg[id_1];
+            msg[id_1] = msg[id_2];
+            msg[id_2] = tmp;
+        };
         var COL       = this.StatsColumnId;
-        //Permute DL <--> UL
-        var tmp = msg[COL.IP_SRC];
-        //change direction
-        msg[COL.IP_SRC]  = msg[COL.IP_DEST];
-        msg[COL.IP_DEST] = tmp;
-
-        tmp = msg[COL.MAC_SRC];
-        //change direction
-        msg[COL.MAC_SRC]  = msg[COL.MAC_DEST];
-        msg[COL.MAC_DEST] = tmp;
+        swap( COL.IP_SRC  ,  COL.IP_DEST );
+        swap( COL.MAC_SRC ,  COL.MAC_DEST );
+        swap( COL.PORT_SRC,  COL.PORT_DEST );
+        swap( COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
+        swap( COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
+        swap( COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
         
-        for(var i=0; i<2; i++){
-            tmp                           = msg[ COL.UL_DATA_VOLUME + i ];
-            msg[ COL.UL_DATA_VOLUME + i ] = msg[ COL.DL_DATA_VOLUME + i ];
-            msg[ COL.DL_DATA_VOLUME + i ] = tmp;
-        }
         return msg;
     },
     

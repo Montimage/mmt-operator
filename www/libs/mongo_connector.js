@@ -148,11 +148,19 @@ var MongoConnector = function (opts) {
         var msg    = dataAdaptor.formatReportItem(message);
         
         var ts = msg[ TIMESTAMP ];
+        if( self.startProbeTime == undefined )
+            self.startProbeTime = ts;
+        
         
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
             self.lastPacketTimestamp = ts;
+            
+            //group msg by each period
+            var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
+            msg[ TIMESTAMP ] = self.startProbeTime + mod * (config.probe_stats_period * 1000 );
+            
             
             //save init data of one session
             var session_id = msg[ COL.SESSION_ID ];
@@ -199,20 +207,19 @@ var MongoConnector = function (opts) {
             self.dataCache.mac.addMessage(      msg );
             self.dataCache.ip.addMessage(       msg );
             self.dataCache.session.addMessage(  msg );
+            
             //add traffic for the other side (src <--> dest )
-            /*
-            var msg2 = dataAdaptor.inverseStatDirection( message );
-            msg2     = dataAdaptor.formatReportItem( msg2 );
+            var msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
+            msg2     = dataAdaptor.inverseStatDirection( msg2 );
             //only if it is local
             if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
                 self.dataCache.ip.addMessage( msg2 );
             }
             
             self.dataCache.mac.addMessage( msg2 );
-            */
             
             //add traffic for each app in the app_path
-            var msg2 = msg;
+            msg2 = msg;
             var arr = [];
             do{
                 arr.push( msg2 );
@@ -220,7 +227,7 @@ var MongoConnector = function (opts) {
                 index = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 if( index === -1 ) break; //root
                 //clone
-                msg2                  = JSON.parse(JSON.stringify( msg2 ))
+                msg2                  = JSON.parse(JSON.stringify( msg2 )); //clone
                 msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index  );
                 index                 = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 msg2[ COL.APP_ID   ]  = msg2[ COL.APP_PATH ].substr( index + 1 );

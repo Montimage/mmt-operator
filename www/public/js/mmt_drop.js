@@ -782,7 +782,7 @@ MMTDrop.tools = function () {
         if (v >= 1000000)
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
-            return Math.round(v / 1000) + "K";
+            return (v / 1000).toFixed(2) + "K";
         return Math.round(v);
     };
     
@@ -5002,8 +5002,11 @@ MMTDrop.chartFactory = {
 						arrData.push( arr );
 					}
 				}
-				
+
 				//sort by the first column (time)
+                for( var i in arrData )
+                    arrData[i][ 0 ] = parseInt( arrData[i][ 0 ] );
+
 				arrData.sort( function (a, b){
 					return a[0] - b[0];
 				});
@@ -5052,19 +5055,30 @@ MMTDrop.chartFactory = {
                         for( var j=1; j<n; j++)
                             data[j] = 0;
                         
+                        var ts = 0;
                         for (var i=0; i<arrData.length; i++){
                             //the first column is timestamp
-                            var ts = parseInt(arrData[i][0]);
                             //omit the elements outside the period
-                            if( ts > lastTS || (ts <= lastTS - period && ts != begin) )
+                            if( arrData[i][0] > lastTS && arrData[i][0] != begin){//as arrData is sorted by inc. of ts
+                                //console.log("break");
+                                break;
+                            }
+                            // for the first interaval: [ (lastTS - period), lastTS ]
+                            if( arrData[i][0] <= lastTS - period && arrData[i][0] != begin )
                                 continue;
-
+                            
+                            ts = arrData[i][0];
+                            //console.log( ts );
                             exist = true;
                             for( var j=1; j<n; j++)
                                 if( arrData[i][j] != undefined )
                                     data[j] += arrData[i][j];
                         }
                         
+                        //timestamp is the one of a report if the report exist
+                        //otherwise, it is fixed by the moment of refreshing the web page
+                        if( exist && lastTS <= end)
+                            lastTS = ts;
                         //add this data if having data
                         //- else add zero point only for period inside [begin, end]
                         if( lastTS <= end || exist){
@@ -5089,7 +5103,7 @@ MMTDrop.chartFactory = {
                                     if( firstNull )
                                         obj[j+n-1].push( 0 );       //y ==> down to Zero
                                     else
-                                        obj[j+n-1].push( null );       //y ==> no data
+                                        obj[j+n-1].push( null );    //y ==> no data
                                     
                                     if( j == n-1 )
                                         firstNull = false;

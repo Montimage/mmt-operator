@@ -39,7 +39,7 @@ var arr = [
 ];
 
 var availableReports = {
-    "createNodeReport"    : "Nodes",
+    //"createNodeReport"    : "Nodes",
     "createProtocolReport": "Protocols ",
     "createTrafficReport" : "Traffic"
 }
