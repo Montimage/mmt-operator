@@ -87,7 +87,7 @@ var ReportFactory = {
                         if( obj[ key ] == undefined )
                             obj[ key ] = msg;
                         else{
-                            for( var j=14; j<22; j++)
+                            for( var j=13; j<22; j++)
                                 //time
                                 if( j == 14 || j == 18 ){
                                     obj[key][ j ] = msg[ j ];
@@ -110,7 +110,7 @@ var ReportFactory = {
                         columns[1] = {id: 5, label: "MAC Source" , align: "right"};
                     
                     for(var i in COL )
-                        if( COL[i].id > 7 && COL[i].id != 13)
+                        if( COL[i].id > 7 && COL[i].id != 12)
                             columns.push( COL[i] );
                     //data.length = 1000;
                     return {

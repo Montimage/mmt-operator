@@ -87,6 +87,7 @@ router.startListening = function (db, redis) {
     report_client.subscribe("rtp.flow.report");
     
     report_client.subscribe("behaviour.report");
+    report_client.subscribe("ndn.report");
     //*/
 
     report_client.on('message', function (channel, message) {
