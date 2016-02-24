@@ -115,14 +115,13 @@ var ReportFactory = {
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-                    var period = fPeriod.getDistanceBetweenToSamples();
+                    var period = fPeriod.getDistanceBetweenToSamples() * 1.0;
 
                     var ylabel = col.label;
                     var unit   = "";
 
                     if (col.id === COL.PACKET_COUNT.id) {
-                        period = 1; //donot change the total number
-                        ylabel += " (total)";
+                        ylabel += " (per second)";
                         unit   = "Packet Count";
                     } else if (col.id === COL.ACTIVE_FLOWS.id) {
                         ylabel += " (per second)";
@@ -909,8 +908,7 @@ var ReportFactory = {
                     var ylabel = col.label;
 
                     if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id) {
-                        period = 1; //donot change the total number      
-                        ylabel += " (total)";
+                        ylabel += " (per second)";
                     } else if (col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id) {
                         ylabel += " (per second)";
                     } else {

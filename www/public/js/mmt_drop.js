@@ -5019,9 +5019,9 @@ MMTDrop.chartFactory = {
                 }
 
                 //header
+                obj[0] = ["x"];    //ox
                 for( var j=1; j<n; j++){
-                    obj[j]     = ["x-" + columns[j].label];
-                    obj[j+n-1] = [ columns[j].label];
+                    obj[j] = [ columns[j].label];
                 }
                 
                 if( option.addZeroPoints ){
@@ -5092,18 +5092,16 @@ MMTDrop.chartFactory = {
                                         break;
                                     }
                             
-                            var time = new Date( lastTS );
-
+                            obj[0].push( new Date( lastTS ) );               //x
                             for( var j=1; j<n; j++){
-                                obj[j].push( time );               //x
                                 if( probeRunningInThisPeriod ){
-                                    obj[j+n-1].push( data[ j ] );  //y
+                                    obj[j].push( data[ j ] );  //y
                                     firstNull = true;
                                 }else{
                                     if( firstNull )
-                                        obj[j+n-1].push( 0 );       //y ==> down to Zero
+                                        obj[j].push( 0 );       //y ==> down to Zero
                                     else
-                                        obj[j+n-1].push( null );    //y ==> no data
+                                        obj[j].push( null );    //y ==> no data
                                     
                                     if( j == n-1 )
                                         firstNull = false;
@@ -5131,7 +5129,7 @@ MMTDrop.chartFactory = {
                 }
 				//as j starts from 1 ==> obj starts from 1
 				// I will remove the first index of obj
-				obj.shift();
+				//obj.shift();
 				
 
                 
@@ -5139,12 +5137,6 @@ MMTDrop.chartFactory = {
                 var height = 200;
                 if( option.height )
                     height = option.height;
-				
-				//pair y==>x
-				var xs = {};
-				for (var j=1; j<columns.length; j++){
-					xs[columns[j].label] = "x-" + columns[j].label;
-				}
 				
 				var groups = [];
 				for (var j=1; j<columns.length; j++){
@@ -5182,14 +5174,14 @@ MMTDrop.chartFactory = {
 		        var chart_opt = {
 		        		bindto : "#" + elemID,
 		        		data : {
-		        			xs: xs,
+                            x      : "x",
 		        			columns: obj,
 		        			type   : (type === "scatter")? type:  "",
 		        			types  : types,
 		        			groups : [ groups ],
                             //order  : 'desc' // stack order by sum of values descendantly. this is default.
                             //order: 'asc'  // stack order by sum of values ascendantly.
-                            order: null   // stack order by data definition.
+                            order: null,   // stack order by data definition.}
 		        		},
                         size:{
                             height: height  
@@ -5227,7 +5219,8 @@ MMTDrop.chartFactory = {
 		        		tooltip:{
 		        			format: {
 		        				title: MMTDrop.tools.formatDateTime
-		        			}
+		        			},
+                            grouped: true
 		        		},
 		        		grid: {
 		        			x: {
@@ -5264,7 +5257,7 @@ MMTDrop.chartFactory = {
                     delete(chart_opt.data.types);
                 }
 		        var chart = c3.generate( chart_opt );
-		        return chart;
+                return chart;
 			});
 
 			chart.getIcon = function(){

@@ -197,7 +197,7 @@ $(function () {
     
     var checked = MMTDrop.tools.localStorage.get("autoreload", false);
     //checkbox default is "true"
-    if(  checked !== true ){
+    if(  checked === false ){
         $("#isAutoReloadChk").prop("checked", false);
     }else
         //checkbox is already checked ==> trigger its event
