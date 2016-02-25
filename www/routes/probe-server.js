@@ -17,27 +17,33 @@ router.process_message = function (db, message) {
         
         var format = msg[0];
         
-        if (msg[4] == 0 && format  === mmtAdaptor.CsvFormat.STATS_FORMAT) {
-            console.log("[META  ] " + message);
-            return;
-        }
-
         if (format == 99)
             return;
 
-        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT &&
-            //mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
-            msg[ COL.IP_SRC ] == "undefined"){
-            console.log("[DONT 1] " + message);
+        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
+            if (msg[4] == 0) {
+                console.log("[META  ] " + message);
+                return;
+            }
+            
+            if( msg[ COL.IP_SRC ] == "undefined" ){
+                console.log("[DONT 1] " + message);
+                return;
+            }
+            
+            if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+                console.log("[DONT KNOW DIRECTION] " + message);
+                return;
+            }
+        }
+        
+        if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT 
+             || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT 
+             || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
             return;
         }
         
-        if ((format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT) ) {
-            //console.log("[DONT 2] " + message);
-            //return;
-        }
-        
-        if( format === 11) {
+        if( format === mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) {
             if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ||
               msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                 console.log( message )
@@ -46,7 +52,7 @@ router.process_message = function (db, message) {
             }
         }
 
-        if( format === 12 ){
+        if( format === mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT ){
             if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){

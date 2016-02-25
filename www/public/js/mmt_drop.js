@@ -783,7 +783,8 @@ MMTDrop.tools = function () {
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
             return (v / 1000).toFixed(2) + "K";
-        return Math.round(v);
+        
+        return v.toFixed(2) ;//Math.round(v);
     };
     
     _this.formatLocaleNumber = function( v ){

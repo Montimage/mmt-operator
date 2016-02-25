@@ -339,6 +339,8 @@ var MMTDrop = {
             return msg;
         
         var COL       = this.StatsColumnId;
+        if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
+            return msg;
         
         if( this.isLocalIP( msg[COL.IP_SRC] )  )
             return msg;

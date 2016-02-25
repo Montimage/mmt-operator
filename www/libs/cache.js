@@ -65,8 +65,8 @@ function Cache ( option ) {
         
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
             
-            if( _period_to_update_name !== "real" && result.deletedCount > 0 )
-                console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
+            //if( _period_to_update_name !== "real" && result.deletedCount > 0 )
+                //console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
             
             if( cb != null ) cb( err, result.deletedCount );
         });
@@ -82,8 +82,9 @@ function Cache ( option ) {
         }
         
         _mdb.collection( _collection_name ).insert( data, function( err, result){
-            if( _period_to_update_name !== "real")
-                console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            //if( _period_to_update_name !== "real")
+                //console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            
             if( err ){
                 console.error( err );
                 console.log( result );
@@ -97,7 +98,7 @@ function Cache ( option ) {
     this.addMessage = function ( msg, cb ) {
         //clone object;
         msg    = JSON.parse(JSON.stringify( msg ));
-        
+
         var ts = msg[ TIMESTAMP ];
         _this.data.push( msg );
         
@@ -121,9 +122,9 @@ function Cache ( option ) {
         //}
         
         //need messages arrive in time order???
-        if( ts - _lastUpdateTime > _period_to_update_value ){
+        if( ts - _lastUpdateTime > _period_to_update_value || _period_to_update_value == 0 ){
             var data = [];
-            if( _lastUpdateTime !== 0 ){
+            if( _lastUpdateTime !== 0  || _period_to_update_value == 0){
                  data = _this.flushDataToDatabase();
             }
             _this.removeOldDataFromDatabase( ts );
@@ -147,9 +148,9 @@ function Cache ( option ) {
         var ts   = last[ TIMESTAMP ];
         
         //need messages arrive in time order???
-        if( ts - _lastUpdateTime > _period_to_update_value ){
+        if( ts - _lastUpdateTime > _period_to_update_value || _period_to_update_value == 0 ){
             var data = [];
-            if( _lastUpdateTime !== 0 )
+            if( _lastUpdateTime !== 0  || _period_to_update_value == 0)
                 data = _this.flushDataToDatabase();
             
             _lastUpdateTime = ts;      
@@ -245,8 +246,8 @@ function Cache ( option ) {
         for (var i in obj)
             arr.push(obj[i]);
         
-        if( _period_to_update_name !== "real" && _this.data.length > 1)
-            console.log( "[" + _period_to_update_name + "] compress " + _this.data.length +  " records ===> " + arr.length);
+        //if( _period_to_update_name !== "real" && _this.data.length > 1)
+            //console.log( "[" + _period_to_update_name + "] compress " + _this.data.length +  " records ===> " + arr.length);
         
         return arr;
     };

@@ -49,9 +49,7 @@ var MongoConnector = function (opts) {
             total: new DataCache(db, "data_total", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS], []),
             
-            ip: new DataCache(db, "data_ip", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
-                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME, COL.MAC_SRC]),
-            
+            //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             app: new DataCache(db, "data_app", 
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.APP_PATH, COL.APP_ID],
                                //inc
@@ -59,7 +57,7 @@ var MongoConnector = function (opts) {
             
             session: new DataCache(db, "data_session", 
                                    //key
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID,  COL.IP_SRC],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, 
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
@@ -205,15 +203,15 @@ var MongoConnector = function (opts) {
             
             self.dataCache.total.addMessage(    msg );
             self.dataCache.mac.addMessage(      msg );
-            self.dataCache.ip.addMessage(       msg );
             self.dataCache.session.addMessage(  msg );
             
             //add traffic for the other side (src <--> dest )
             var msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
             msg2     = dataAdaptor.inverseStatDirection( msg2 );
             //only if it is local
+            //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
             if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
-                self.dataCache.ip.addMessage( msg2 );
+                self.dataCache.session.addMessage(  msg2 );
             }
             
             self.dataCache.mac.addMessage( msg2 );
