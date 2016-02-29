@@ -136,6 +136,10 @@ var MongoConnector = function (opts) {
         return domain_name;
     }
 
+    update_packet_timestamp = function( ts ){
+        if( self.lastPacketTimestamp < ts )
+            self.lastPacketTimestamp = ts;
+    }
     /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
@@ -153,12 +157,12 @@ var MongoConnector = function (opts) {
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100){
-            self.lastPacketTimestamp = ts;
             
             //group msg by each period
             var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
             msg[ TIMESTAMP ] = self.startProbeTime + mod * (config.probe_stats_period * 1000 );
-            
+
+            update_packet_timestamp( msg[ TIMESTAMP ] );
             
             //save init data of one session
             var session_id = msg[ COL.SESSION_ID ];
@@ -232,8 +236,9 @@ var MongoConnector = function (opts) {
             }
             while( true );
             self.dataCache.app.addArray( arr );
+
         }else if (format === 0 || format == 1 || format == 2){
-            self.lastPacketTimestamp = ts;
+            update_packet_timestamp( ts );
             //delete data when a session is expired
             var session_id = msg[ 4 ];
             if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
@@ -246,7 +251,7 @@ var MongoConnector = function (opts) {
         }
             
         if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
-            self.lastPacketTimestamp = ts;
+            update_packet_timestamp( ts );
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -254,7 +259,7 @@ var MongoConnector = function (opts) {
         }
         
         if ( format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
-            self.lastPacketTimestamp = ts;
+            update_packet_timestamp( ts );
             self.mdb.collection("security").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -283,7 +288,7 @@ var MongoConnector = function (opts) {
         
         //NDN protocol
         if( format === 625){
-            self.lastPacketTimestamp = ts;
+            update_packet_timestamp( ts );
             self.dataCache.ndn.addMessage( msg );
             return;
         }
@@ -645,7 +650,7 @@ var MongoConnector = function (opts) {
         }
 
         self.mdb.collection("data_total_real").find({}).sort({
-            "_id": -1
+            "3": -1 //timestamp
         }).limit(1).toArray(function (err, doc) {
             if (err) {
                 console.err( err );

@@ -159,10 +159,6 @@ function Cache ( option ) {
             if( _lastUpdateTime !== 0  || _period_to_update_value == 0)
                 data = _this.flushDataToDatabase();
             
-            _lastUpdateTime = ts;      
-            
-            if( cb != null ) cb( data );
-            
             //in realtime update, only delete data each 5 minute
             if( _period_to_update_value == 0 && ts - _lastUpdateTime > 5*60*1000 ){
             	_this.removeOldDataFromDatabase( ts );
@@ -171,6 +167,8 @@ function Cache ( option ) {
             	_this.removeOldDataFromDatabase( ts );
             	_lastUpdateTime = ts;
             } 
+            
+            if( cb != null ) cb( data );
         }
     }
     
