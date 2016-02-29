@@ -5252,7 +5252,13 @@ MMTDrop.chartFactory = {
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
                 
-                if( obj[0] && obj[0].length <= 2 ){
+                var nb_real_points = 0;
+                if( obj[1] )
+                    for( var i = 0; i<obj[0].length; i++)
+                        if( obj[1][i] != null )
+                            nb_real_points ++;
+                    
+                if( nb_real_points <= 3 ){
                     chart_opt.point.r   = 3;
                     delete(chart_opt.data.type);
                     delete(chart_opt.data.types);

@@ -644,15 +644,19 @@ var MongoConnector = function (opts) {
             return;
         }
 
-        self.mdb.collection("data_traffic_real").find({}).sort({
+        self.mdb.collection("data_total_real").find({}).sort({
             "_id": -1
         }).limit(1).toArray(function (err, doc) {
             if (err) {
+                console.err( err );
                 self.lastPacketTimestamp = (new Date()).getTime();
             } else if (Array.isArray(doc) && doc.length > 0)
                 self.lastPacketTimestamp = doc[0][3];
 
-            cb(null, self.lastPacketTimestamp - config.probe_stats_period * 1000);
+
+            //as this is in offline mode => do not need to (- config.probe_stats_period * 1000)
+            //=> get the reports imediately whe they are availables
+            cb(null, self.lastPacketTimestamp ) ;
         });
     };
 

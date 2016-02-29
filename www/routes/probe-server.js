@@ -17,8 +17,10 @@ router.process_message = function (db, message) {
         
         var format = msg[0];
         
-        if (format == 99)
+        if (format == 99){
+            console.log( message );
             return;
+        }
 
         if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
             if (msg[4] == 0) {
