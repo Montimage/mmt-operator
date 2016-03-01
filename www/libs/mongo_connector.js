@@ -47,7 +47,7 @@ var MongoConnector = function (opts) {
         self.dataCache = {
             
             total: new DataCache(db, "data_total", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
-                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS], []),
+                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT], []),
             
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             app: new DataCache(db, "data_app", 
@@ -134,12 +134,46 @@ var MongoConnector = function (opts) {
             domain_name = domain_name.substr(index + 1);
         
         return domain_name;
-    }
+    };
 
-    update_packet_timestamp = function( ts ){
+    var update_packet_timestamp = function( ts ){
         if( self.lastPacketTimestamp < ts )
             self.lastPacketTimestamp = ts;
+    };
+    
+    var update_proto_name = function( msg ){
+        //An app is reported as a protocol
+        if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
+            var format_type = msg[ 24 ];
+            var app_name    = "unknown";
+            //do not know
+            if( format_type === 0 && msg[ 27 ] != undefined  && msg[ 27 ]){
+                app_name = self.splitDomainName( msg[ 27 ] );
+            }
+            //HTTP hostname
+            else if( format_type === 1 && msg[ 30 ] != undefined  && msg[ 30 ] != ""){
+                app_name = self.splitDomainName( msg[ 30 ] );
+            }
+            //SSL hostname
+            else if( format_type === 2 && msg[ 27 ] != undefined  && msg[ 27 ] != ""){
+                app_name = self.splitDomainName( msg[ 27 ] );
+            }
+            //
+            else if( msg[ COL.PORT_DEST ] != undefined )
+                //server_port
+                app_name = msg[ COL.PORT_DEST ];
+
+            if( app_name == 0 )
+                console.log( msg );
+
+            app_name = msg[ COL.APP_ID ] + ":" + app_name;
+
+            msg[ COL.APP_ID   ]  =       self.appList.upsert( app_name ) ;
+            msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
+        }else
+            msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
+    
     /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
@@ -147,8 +181,8 @@ var MongoConnector = function (opts) {
     self.addProtocolStats = function (message) {
         if (self.mdb == null) return;
 
-        var msg    = dataAdaptor.formatReportItem(message);
-        
+        var msg = dataAdaptor.formatReportItem(message);
+        var msg2;
         var ts = msg[ TIMESTAMP ];
         if( self.startProbeTime == undefined )
             self.startProbeTime = ts;
@@ -156,7 +190,7 @@ var MongoConnector = function (opts) {
         
         var format = msg[ FORMAT_ID ];
         
-        if ( format === 100){
+        if ( format === 100 || format === 99 ){
             
             //group msg by each period
             var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
@@ -164,61 +198,37 @@ var MongoConnector = function (opts) {
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
             
-            //save init data of one session
-            var session_id = msg[ COL.SESSION_ID ];
-            if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined )
-                FLOW_SESSION_INIT_DATA[ session_id ] = msg;
-            else
-                for( var i in init_session_set ){
-                    var key    = init_session_set[ i ];
-                    msg[ key ] = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
-                }
+            self.dataCache.total.addMessage(   msg );
             
-            //An app is reported as a protocol
-            if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
-                var format_type = msg[ 24 ];
-                var app_name    = "unknown";
-                //do not know
-                if( format_type === 0 && msg[ 27 ] != undefined  && msg[ 27 ]){
-                    app_name = self.splitDomainName( msg[ 27 ] );
-                }
-                //HTTP hostname
-                else if( format_type === 1 && msg[ 30 ] != undefined  && msg[ 30 ] != ""){
-                    app_name = self.splitDomainName( msg[ 30 ] );
-                }
-                //SSL hostname
-                else if( format_type === 2 && msg[ 27 ] != undefined  && msg[ 27 ] != ""){
-                    app_name = self.splitDomainName( msg[ 27 ] );
-                }
-                //
-                else if( msg[ COL.PORT_DEST ] != undefined )
-                    //server_port
-                    app_name = msg[ COL.PORT_DEST ];
+            if( format === 100 ){
+                //save init data of one session
+                var session_id = msg[ COL.SESSION_ID ];
+                if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined )
+                    FLOW_SESSION_INIT_DATA[ session_id ] = msg;
+                else
+                    for( var i in init_session_set ){
+                        var key    = init_session_set[ i ];
+                        msg[ key ] = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
+                    }
+
+                update_proto_name( msg );
                 
-                if( app_name == 0 )
-                    console.log( msg );
+                self.dataCache.session.addMessage( msg );
+                self.dataCache.mac.addMessage(     msg );
                 
-                app_name = msg[ COL.APP_ID ] + ":" + app_name;
+                //add traffic for the other side (src <--> dest )
+                msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
+                msg2 = dataAdaptor.inverseStatDirection( msg2 );
+                //only if it is local
+                //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
+                if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
+                    self.dataCache.session.addMessage(  msg2 );
+                }
+
+                self.dataCache.mac.addMessage( msg2 );
                 
-                msg[ COL.APP_ID   ]  =       self.appList.upsert( app_name ) ;
-                msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
-            }else
-                msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
-            
-            self.dataCache.total.addMessage(    msg );
-            self.dataCache.mac.addMessage(      msg );
-            self.dataCache.session.addMessage(  msg );
-            
-            //add traffic for the other side (src <--> dest )
-            var msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
-            msg2     = dataAdaptor.inverseStatDirection( msg2 );
-            //only if it is local
-            //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
-            if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
-                self.dataCache.session.addMessage(  msg2 );
             }
             
-            self.dataCache.mac.addMessage( msg2 );
             
             //add traffic for each app in the app_path
             msg2 = msg;
@@ -236,6 +246,7 @@ var MongoConnector = function (opts) {
             }
             while( true );
             self.dataCache.app.addArray( arr );
+            
 
         }else if (format === 0 || format == 1 || format == 2){
             update_packet_timestamp( ts );

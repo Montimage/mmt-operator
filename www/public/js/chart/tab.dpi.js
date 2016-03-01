@@ -33,7 +33,7 @@ var ReportFactory = {
     createNodeReport: function ( fPeriod ) {
         var _this    = this;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var database = MMTDrop.databaseFactory.createStatDB({id : "dpi", userData: {getProbeStatus: true}});
+        var database = new MMTDrop.Database({format: [99,100], id : "dpi", userData: {getProbeStatus: true}});
         var COL      = MMTDrop.constants.StatsColumn;
         
         var cTree    = MMTDrop.chartFactory.createTree({

@@ -48,6 +48,7 @@ var app = express();
 var socketio = require('socket.io')();
 app.socketio        = socketio;
 probeRoute.socketio = socketio;
+probeRoute.config   = config;
 
 var redis = require("redis");
 

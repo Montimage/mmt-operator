@@ -94,7 +94,7 @@ var ReportFactory = {
         var _this    = this;
         var self     = this;
         var COL      = MMTDrop.constants.StatsColumn;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "link.protocol", userData : {getProbeStatus: true} });
+        var database = new MMTDrop.Database({format: [99,100], id: "link.protocol", userData : {getProbeStatus: true} });
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         
@@ -157,7 +157,7 @@ var ReportFactory = {
                         var count = 0;
                         for( var i=0; i<cls.length; i++)
                             if( cls[ i ] === '.') count ++;
-                        if( count >= 4 || count === 0 ){
+                        if( count >= 4 ){
                             delete obj[ cls ];
                             continue;
                         }
@@ -338,10 +338,13 @@ var ReportFactory = {
                 $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
-                    if (key == "Other")
+                    var val = legend.data[key];
+                    
+                    //there are at least 2
+                    if (key == "Other" && val < legend.dataTotal )
                         continue;
                     i++;
-                    var val = legend.data[key];
+
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
 
@@ -383,7 +386,7 @@ var ReportFactory = {
                 //footer of table
                 var $tfoot = $("<tfoot>");
 
-                if (legend.data["Other"] != undefined) {
+                if (legend.data["Other"] != undefined && legend.dataTotal > legend.data["Other"]) {
                     i++;
                     $tr = $("<tr>");
                     var key = "Other";
@@ -432,7 +435,9 @@ var ReportFactory = {
                     $("<tr>", {
                         "class": 'success'
                     }).append(
-                        $("<td>")
+                        $("<td>", {
+                            text: i
+                        })
                     ).append(
                         $("<td>", {
                             "text": "Total"
@@ -690,7 +695,7 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
-        var database = MMTDrop.databaseFactory.createStatDB({id:"link.traffic", userData:{getProbeStatus: true}});
+        var database = new MMTDrop.Database({format:[99,100], id:"link.traffic", userData:{getProbeStatus: true}});
         var rep = _this.createTrafficReport(fProbe, database, true);
 
         var COL = MMTDrop.constants.StatsColumn;
@@ -928,6 +933,8 @@ var ReportFactory = {
                     } else
                         cols.push(col);
 
+                    cols.push( {label: "No-IP", id: col.id} );
+                    
                     var obj  = {};
                     var data = db.data();
                     
@@ -954,6 +961,9 @@ var ReportFactory = {
                             
                             if( msg[id] == undefined )
                                 msg[id] = 0;
+                            
+                            if( cols[j].label == "No-IP" && msg[0] == 100 )
+                                continue;
                             
                             if (exist)
                                 obj[time][id] += msg[id] / period;
@@ -988,7 +998,7 @@ var ReportFactory = {
                     type: "step"
                 },
                 color: {
-                    pattern: ['orange', 'green', 'blue']
+                    pattern: ['orange', 'green', 'gray']
                 },
                 grid: {
                     x: {

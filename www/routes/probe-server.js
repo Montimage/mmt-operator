@@ -1,6 +1,5 @@
 var fs               = require('fs');
 var mmtAdaptor       = require('../libs/dataAdaptor');
-var config           = require("../config.json");
 var LineByLineReader = require('line-by-line');
 
 var CURRENT_PROFILE = {};
@@ -17,9 +16,11 @@ router.process_message = function (db, message) {
         
         var format = msg[0];
         
-        if (format == 99){
-            console.log( message );
-            return;
+        if (format == mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
+            if( router.config.only_ip_session === true ){
+                //console.log( message );
+                return;
+            }
         }
 
         if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
@@ -68,7 +69,6 @@ router.process_message = function (db, message) {
         if( format == mmtAdaptor.CsvFormat.LICENSE ){
             var alert       = null;
             var expire_time = (new Date( msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE] )).toString();
-            
             switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ]){
                 case 1:
                     alert = {type: "error", html: "Buy license for this device!"};

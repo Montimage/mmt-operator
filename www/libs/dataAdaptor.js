@@ -20,6 +20,7 @@ var MMTDrop = {
         RTP_APP_FORMAT          : 3/**< RTP flow report format id */,
         MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
         RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
+        NO_SESSION_STATS_FORMAT : 99,
         STATS_FORMAT            : 100/**< Statistics format id */,
         SECURITY_FORMAT         : 10,
         BA_PROFILE_FORMAT       : 12,
@@ -393,7 +394,7 @@ var MMTDrop = {
     //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
     PureProtocol :  [
         30,81,82,85,99,117,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
-        231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,
+        231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,625
     ],
     /*
 ARP
@@ -422,6 +423,7 @@ MMS
 MPEG
 NETBIOS
 NFS
+NDN
 POP
 POPS
 RTP
@@ -544,7 +546,7 @@ MMTDrop.formatMessage = function( message ){
                 return null;
             break;
         case MMTDrop.CsvFormat.LICENSE:
-            msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] == formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
+            msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] = formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
             break;
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : 
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : 

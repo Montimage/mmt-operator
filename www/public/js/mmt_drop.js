@@ -5046,7 +5046,7 @@ MMTDrop.chartFactory = {
                     }
                     
                     var lastTS    = begin;
-                    var firstNull = true;
+                    var firstNull = false;
                     while( lastTS <= end ){
                         lastTS += period;
                         var exist = false;
@@ -5060,7 +5060,7 @@ MMTDrop.chartFactory = {
                         for (var i=0; i<arrData.length; i++){
                             //the first column is timestamp
                             //omit the elements outside the period
-                            if( arrData[i][0] > lastTS && arrData[i][0] != begin){//as arrData is sorted by inc. of ts
+                            if( arrData[i][0] > lastTS && arrData[i][0] != begin){//as arrData is sorted by asc. of ts
                                 //console.log("break");
                                 break;
                             }
@@ -5078,7 +5078,7 @@ MMTDrop.chartFactory = {
                         
                         //timestamp is the one of a report if the report exist
                         //otherwise, it is fixed by the moment of refreshing the web page
-                        if( exist && lastTS <= end)
+                        if( exist && lastTS <= end && lastTS != ts + period && ts > begin )
                             lastTS = ts;
                         //add this data if having data
                         //- else add zero point only for period inside [begin, end]
@@ -5258,7 +5258,7 @@ MMTDrop.chartFactory = {
                         if( obj[1][i] != null )
                             nb_real_points ++;
                     
-                if( nb_real_points <= 3 ){
+                if( nb_real_points <= 2 ){
                     chart_opt.point.r   = 3;
                     delete(chart_opt.data.type);
                     delete(chart_opt.data.types);
