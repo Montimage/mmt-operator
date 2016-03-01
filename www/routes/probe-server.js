@@ -1,6 +1,6 @@
-var fs = require('fs');
-var mmtAdaptor = require('../libs/dataAdaptor');
-var config = require("../config.json");
+var fs               = require('fs');
+var mmtAdaptor       = require('../libs/dataAdaptor');
+var config           = require("../config.json");
 var LineByLineReader = require('line-by-line');
 
 var CURRENT_PROFILE = {};
@@ -64,12 +64,40 @@ router.process_message = function (db, message) {
             }
         }
 
-        //TODO: to be remove, this chages probe ID, only for Thales demo
+
+        if( format == mmtAdaptor.CsvFormat.LICENSE ){
+            var alert       = null;
+            var expire_time = (new Date( msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE] )).toString();
+            
+            switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ]){
+                case 1:
+                    alert = {type: "error", html: "Buy license for this device!"};
+                    break;
+                case 2:
+                    alert = {type: "error", html: "License expired on <br/>" + expire_time};
+                    break;
+                case 3:
+                    alert = {type: "danger", html: "License will expire on <br/>" + expire_time};
+                    break;
+                case 4:
+                    alert = {type: "danger", html: "License file was modified!"};
+                    break;
+                case 5:
+                    alert = {type: "danger", html: "License file does not exist!"};
+                    break;
+                case 6:
+                    alert = {type: "success", html: "License will expire on <br/>" + expire_time};
+                    break;
+            }
+            if( alert != null)
+                router.socketio.emit("log", alert)
+        }
+        
+         //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
         
         if (db && msg)
             db.addProtocolStats(msg, function (err, err_msg) {});
-
 
     } catch (err) {
         console.error("Error when processing the message: $" + message + "$");

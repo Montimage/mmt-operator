@@ -21,7 +21,7 @@ app.set('port', port);
 
 var server = http.createServer(app);
 
-var io = app.io;
+var io = app.socketio;
 if( io )
     io.listen( server );
 /**

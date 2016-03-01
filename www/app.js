@@ -42,12 +42,12 @@ var dbconnector = new dbc( {
     connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.probe_analysis_mode
 });
 
+dbconnector.config = config;
 var app = express();
 
-var io = require('socket.io')();
-
-app.io = io;
-
+var socketio = require('socket.io')();
+app.socketio        = socketio;
+probeRoute.socketio = socketio;
 
 var redis = require("redis");
 
