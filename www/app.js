@@ -7,15 +7,18 @@ var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
 var compress        = require('compression');
 
+var config          = require("./config.json");
+
 var routes          = require('./routes/index');
 var chartRoute      = require('./routes/chart');
 var api             = require('./routes/api');
-
 var probeRoute      = require('./routes/probe-server.js');
 
 var mmtAdaptor      = require('./libs/dataAdaptor');
 var dbc             = require('./libs/mongo_connector');
-var config          = require("./config.json");
+var AdminDB         = require('./libs/admin_db');
+var Probe           = require('./libs/probe');
+
 
 var REDIS_STR = "redis",
     FILE_STR  = "file";
@@ -43,12 +46,32 @@ var dbconnector = new dbc( {
 });
 
 dbconnector.config = config;
-var app = express();
 
+var dbadmin = new AdminDB( 'mongodb://'+ config.database_server +':27017/mmt-admin' );
+var probe   = new Probe( config.probe_analysis_mode );
+
+var app = express();
 var socketio = require('socket.io')();
 app.socketio        = socketio;
-probeRoute.socketio = socketio;
-probeRoute.config   = config;
+
+probeRoute.socketio    = socketio;
+probeRoute.config      = config;
+probeRoute.dbconnector = dbconnector;
+probeRoute.dbadmin     = dbadmin;
+
+routes.socketio        = socketio;
+routes.config          = config;
+routes.dbconnector     = dbconnector;
+routes.dbadmin         = dbadmin;
+routes.probe           = probe;
+
+chartRoute.socketio    = socketio;
+chartRoute.config      = config;
+chartRoute.dbconnector = dbconnector;
+
+api.socketio           = socketio;
+api.config             = config;
+api.dbconnector        = dbconnector;
 
 var redis = require("redis");
 
@@ -96,6 +119,53 @@ app.use('/chart/', chartRoute);
 api.dbconnector = dbconnector;
 app.use('/traffic', api);
 
+function license_alert(){
+    dbadmin.getLicense( function( err, doc){
+        if( err || doc.length == 0 )
+            return;
+        var msg = doc[0];
+        
+
+        var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
+        var now = (new Date()).getTime();
+        console.log( "time", ts - now );
+        if( ts - now <= 15*24*60*60*1000 ){ //15day
+            var alert       = null;        
+            var expire_time = (new Date( ts )).toString();
+            switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
+                case 1:
+                    alert = {type: "error", html: "Buy license for this device!"};
+                    break;
+                case 2:
+                    alert = {type: "error", html: "License expired on <br/>" + expire_time};
+                    break;
+                case 3:
+                    alert = {type: "danger", html: "License will expire on <br/>" + expire_time};
+                    break;
+                case 4:
+                    alert = {type: "danger", html: "License file was modified!"};
+                    break;
+                case 5:
+                    alert = {type: "danger", html: "License file does not exist!"};
+                    break;
+                case 6:
+                    alert = {type: "success", html: "License will expire on <br/>" + expire_time};
+                    break;
+            }
+            
+            if( ts - now <= 5*24*60*60*1000 )
+                alert.type = "error";
+            
+            if( alert != null)
+                socketio.emit("log", alert);
+        }
+        
+        var interval = 60*60*1000;//check each hour
+        setTimeout( license_alert, interval );
+    });
+}
+license_alert();
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
@@ -103,30 +173,28 @@ app.use(function(req, res, next) {
   next(err);
 });
 
-// error handlers
-
-// development error handler
-// will print stacktrace
-if (config.is_in_debug_mode === true) {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
-    });
-  });
-}
-
-// production error handler
-// no stacktraces leaked to user
+// error handler
 app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
+    console.error( err );
+    
+    res.status(err.status || 500);
+    if(config.is_in_debug_mode !== true)
+        err.stack = {};
+
+    res.render('error', {message: err.message, error: err} );
 });
 
+process.on('uncaughtException', function (err) {
+    console.log('Caught exception: ' + err.message );
+    //console.error( err );
+    
+    if( err.response ){
+        if(config.is_in_debug_mode !== true)
+            err.stack = {};
+
+        err.response.render('error', {message: err.message, error: err} );
+    }
+});
 
 function exit(){
     setTimeout( function(){

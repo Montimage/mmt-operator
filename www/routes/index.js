@@ -1,9 +1,36 @@
-var mongo = require('mongodb').MongoClient,
-    format = require('util').format;
+var mongo         = require('mongodb').MongoClient,
+    format        = require('util').format,
+    dataAdaptor   = require('../libs/dataAdaptor'),
+    HttpException = require('../libs/HttpException');
 
 var express = require('express');
-var router = express.Router();
+var router  = express.Router();
 
+router.mdb = null;
+var connect_to_db = function( cb ){
+    if( router.mdb != null ){
+        cb( null, router.mdb );
+        return;
+    }
+    mongo.connect(router.dbConnectionString, function (err, db){
+       if(!err)
+           router.mdb = db;
+        cb( err, db );
+    });
+};
+
+var is_loggedin = function( req, res, redirect_url){
+    return true;
+    if (req.session.loggedin == undefined) {
+        if( redirect_url != undefined )
+            res.redirect( redirect_url );
+        else
+            res.redirect( "/" );
+        
+        return false;
+    }
+    return true;
+};
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -26,7 +53,7 @@ router.post("/", function (req, res, next) {
     var user = req.body.username;
     var pass = req.body.password;
 
-    mongo.connect(router.dbConnectionString, function (err, db) {
+    connect_to_db(function (err, db) {
         if (err) throw err;
         db.collection("admin").find({
             username: user
@@ -84,10 +111,7 @@ router.get("/logout", function (req, res, next) {
 
 
 router.get("/change-password", function (req, res, next) {
-    if (req.session.loggedin == undefined) {
-        res.redirect("/");
-        return;
-    }
+    if( !is_loggedin(req, res) ) return;
 
     res.render('change-password', {
         title: 'Change password',
@@ -97,16 +121,13 @@ router.get("/change-password", function (req, res, next) {
 
 
 router.post("/change-password", function (req, res, next) {
-    if (req.session.loggedin == undefined) {
-        res.redirect("/");
-        return;
-    }
+    if( !is_loggedin(req, res) ) return;
     
     var user = req.session.loggedin.username;
     var pass = req.body.password;
     var pass1 = req.body.password1;
 
-    mongo.connect(router.dbConnectionString, function (err, db) {
+    connect_to_db(function (err, db) {
         if (err) throw err;
         db.collection("admin").find({
             username: user
@@ -156,25 +177,53 @@ router.post("/change-password", function (req, res, next) {
 
 
 router.get("/profile", function (req, res, next) {
-    if (req.session.loggedin == undefined) {
-        res.redirect("/");
-        return;
-    }
+    if( !is_loggedin(req, res) ) return;
+    
+    router.dbadmin.getLicense( function( err, doc){
+        if( err ) throw err;
+        if( doc.length == 0 ) throw new HttpException(req, res, "Not found");
+        var li = doc[0];
+        
+        res.render('profile', {
+            title     : 'Profile',
+            clientID  : "admin",
+            deviceID  : li[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
+            expiredOn : (new Date(li[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
+        });
+    } );
+    
+});
+router.post("/profile", function (req, res, next) {
+    if( !is_loggedin(req, res) ) return;
 
-    res.render('profile', {
-        title: 'Profile',
-        clientID: "admin",
-        startOn: (new Date()).toDateString(),
-        expiredOn: (new Date()).toDateString()
-    });
+    var license = req.body.serialKey;
+    if( license )
+        router.probe.updateLicense( license, function( error, stdout, stderr ){
+            console.log( stdout );
+            console.log( stderr );
+            if (error !== null) {
+              console.log( error );
+            }
+        } );
+    
+    router.dbadmin.getLicense( function( err, doc){
+        if( err ) throw err;
+        if( doc.length == 0 ) throw new HttpException(req, res, "Not found license");
+        var li = doc[0];
+        
+        res.render('profile', {
+            title     : 'Profile',
+            clientID  : "admin",
+            deviceID  : li[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
+            expiredOn : (new Date(li[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
+            message   : "License was updated!"
+        });
+    } );
 });
 
 
 router.get("/setting", function (req, res, next) {
-    if (req.session.loggedin == undefined) {
-        res.redirect("/");
-        return;
-    }
+    if( !is_loggedin(req, res) ) return;
 
     res.render('setting', {
         title: 'Setting'
@@ -182,10 +231,8 @@ router.get("/setting", function (req, res, next) {
 });
 
 router.post("/setting", function (req, res, next) {
-    if (req.session.loggedin == undefined) {
-        res.redirect("/");
-        return;
-    }
+    if( !is_loggedin(req, res) ) return;
+    
     var action = req.body.action;
     if( action == "empty_database" ){
         router.dbconnector.emptyDatabase(

@@ -67,30 +67,9 @@ router.process_message = function (db, message) {
 
 
         if( format == mmtAdaptor.CsvFormat.LICENSE ){
-            var alert       = null;
-            var expire_time = (new Date( msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE] )).toString();
-            switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ]){
-                case 1:
-                    alert = {type: "error", html: "Buy license for this device!"};
-                    break;
-                case 2:
-                    alert = {type: "error", html: "License expired on <br/>" + expire_time};
-                    break;
-                case 3:
-                    alert = {type: "danger", html: "License will expire on <br/>" + expire_time};
-                    break;
-                case 4:
-                    alert = {type: "danger", html: "License file was modified!"};
-                    break;
-                case 5:
-                    alert = {type: "danger", html: "License file does not exist!"};
-                    break;
-                case 6:
-                    alert = {type: "success", html: "License will expire on <br/>" + expire_time};
-                    break;
-            }
-            if( alert != null)
-                router.socketio.emit("log", alert)
+            
+            if( router.dbadmin )
+                router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
         }
         
          //TODO: to be remove, this chages probe ID, only for Thales demo
@@ -111,10 +90,11 @@ router.process_message = function (db, message) {
 router.startListening = function (db, redis) {
     var report_client = redis.createClient();
     //*
+    report_client.subscribe("license.stat");
     report_client.subscribe("security.report");
     report_client.subscribe("protocol.flow.stat");
     report_client.subscribe("session.flow.report");
-    //report_client.subscribe("protocol.stat");
+    report_client.subscribe("protocol.stat");
     //report_client.subscribe("radius.report");
     //report_client.subscribe("microflows.report");
     report_client.subscribe("flow.report");

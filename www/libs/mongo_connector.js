@@ -1,20 +1,11 @@
-var moment = require('moment');
+var moment      = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
-var Window  = require("./window.js");
-var config  = require("../config.json");
-var AppList = require("./app-list.js");
+var Window      = require("./window.js");
+var AppList     = require("./app-list.js");
 
-var DataCache = require("./cache.js");
+var DataCache   = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
-    format = require('util').format;
-
-//cache size
-var MAX_LENGTH = 1000000;
-
-//cache size from config.js
-if (config.buffer_socketio.max_length_size)
-    MAX_LENGTH = parseInt(config.buffer_socketio.max_length_size);
-
+    format      = require('util').format;
 
 var MongoConnector = function (opts) {
     this.mdb = null;
@@ -193,8 +184,8 @@ var MongoConnector = function (opts) {
         if ( format === 100 || format === 99 ){
             
             //group msg by each period
-            var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
-            msg[ TIMESTAMP ] = self.startProbeTime + mod * (config.probe_stats_period * 1000 );
+            var mod = Math.ceil( (ts - self.startProbeTime) / (self.config.probe_stats_period * 1000) );
+            msg[ TIMESTAMP ] = self.startProbeTime + mod * ( self.config.probe_stats_period * 1000 );
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
             
@@ -284,10 +275,6 @@ var MongoConnector = function (opts) {
                 
                 self.probeStatus.set( ts );
             }
-            
-            self.mdb.collection("license").insert(msg, function (err, records) {
-                if (err) console.error(err.stack);
-            });
             return;
         }
         
@@ -646,10 +633,10 @@ var MongoConnector = function (opts) {
             return;
         } 
         
-        if( config.probe_analysis_mode == "online"){
+        if( self.config.probe_analysis_mode == "online"){
             //if online analysis ==> lastime is the current time of operator machine
             var time = (new Date()).getTime();
-            time -= config.probe_stats_period * 1000;
+            time -= self.config.probe_stats_period * 1000;
             cb( null, time );
             return;
         }
@@ -670,7 +657,7 @@ var MongoConnector = function (opts) {
                 self.lastPacketTimestamp = doc[0][3];
 
 
-            //as this is in offline mode => do not need to (- config.probe_stats_period * 1000)
+            //as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
             //=> get the reports imediately whe they are availables
             cb(null, self.lastPacketTimestamp ) ;
         });
@@ -687,7 +674,7 @@ var MongoConnector = function (opts) {
 
             console.log("drop database!");
             //empty also mmt-bandwidth
-            MongoClient.connect('mongodb://' + config.database_server + ':27017/mmt-bandwidth', function (err, db) {
+            MongoClient.connect('mongodb://' + self.config.database_server + ':27017/mmt-bandwidth', function (err, db) {
                 if (!err)
                     db.dropDatabase(function (err, doc) {
                         cb(err);
