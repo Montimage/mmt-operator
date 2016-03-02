@@ -2,6 +2,7 @@ var moment      = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
 var Window      = require("./window.js");
 var AppList     = require("./app-list.js");
+var ipLib       = require("ip");
 
 var DataCache   = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
@@ -115,6 +116,10 @@ var MongoConnector = function (opts) {
     self.lastPacketTimestamp = 0;
     
     self.splitDomainName = function( domain_name ){
+        //192.168.0.7
+        if( ipLib.isV4Format( domain_name) || ipLib.isV6Format( domain_name) )
+            return domain_name;
+        
         //"p01-btmmdns.icloud.com."
         var index = domain_name.lastIndexOf(".");
         if( index > -1 )
