@@ -188,7 +188,7 @@ var ReportFactory = {
                         columns.push({
                             id: cls,
                             label: name,
-                            type: "area-step-stack",
+                            type: "area-stack",
                             value: total
                         });
                     }
@@ -995,7 +995,7 @@ var ReportFactory = {
 
             chart: {
                 data:{
-                    type: "step"
+                    type: "line"//step
                 },
                 color: {
                     pattern: ['orange', 'green', 'gray']

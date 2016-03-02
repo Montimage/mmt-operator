@@ -243,7 +243,7 @@ var ReportFactory = {
             },
             chart: {
                 data:{
-                    type: "step"
+                    type: "line"
                 },
                 axis: {
                     x: {
