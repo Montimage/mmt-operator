@@ -10,6 +10,7 @@ var COL = mmtAdaptor.StatsColumnId;
 router.process_message = function (db, message) {
     //console.log( message );
     try {
+        message = message.replace(/\(null\)/g, 'null');
         var msg = mmtAdaptor.formatMessage( message );
         if( msg === null )
             return;

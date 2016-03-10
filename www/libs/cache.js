@@ -331,7 +331,10 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     this.flushDataToDatabase = function(){
         if( is_retain_all === true ) return;
         
-        var arr = _cache_minute.flushDataToDatabase();
+        var arr = _cache_real.flushDataToDatabase();
+        
+        _cache_minute.addArray( arr );
+        arr = _cache_minute.flushDataToDatabase();
         
         _cache_hour.addArray( arr );
         arr = _cache_hour.flushDataToDatabase();
