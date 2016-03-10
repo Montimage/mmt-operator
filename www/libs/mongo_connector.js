@@ -338,11 +338,11 @@ var MongoConnector = function (opts) {
             return;
         }
         
-        if( options.period_groupby == "real") {
+        /*if( options.period_groupby == "real") {
             self.getCurrentProtocolStats(options, callback);
             return;
         }
-        
+        */
         
         if (options.id !== undefined ) {
             self.flushCache(function () {

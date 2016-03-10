@@ -30,7 +30,7 @@ function Cache ( option ) {
     var _init_data_obj          = {};
     
     if( _period_to_update_name == "real" ){
-        _period_to_update_value = 0/*update immediately*/; //config.probe_stats_period*1000;         //each 5 seconds, for example
+        _period_to_update_value = 60*1000; //each min//config.probe_stats_period*5*1000;         //each 25 seconds, for example
         _retain_period         = 60*60*1000; //retain data of the last 60 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute

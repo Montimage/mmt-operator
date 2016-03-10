@@ -121,14 +121,15 @@ var ReportFactory = {
                     var unit   = "";
 
                     if (col.id === COL.PACKET_COUNT.id) {
-                        ylabel += " (per second)";
+                        ylabel += " (pps)";
                         unit   = "Packet Count";
                     } else if (col.id === COL.ACTIVE_FLOWS.id) {
-                        ylabel += " (per second)";
                         unit   = "Flow Count";
+                        ylabel += " (total)";
+                        period  = 1;
                     } else {
                         period /= 8; //  bit/second
-                        ylabel += " (bit/second)";
+                        ylabel += " (bps)";
                         if( col.id === COL.DATA_VOLUME.id )
                             unit = "Data (Byte)";
                         else
@@ -913,12 +914,13 @@ var ReportFactory = {
                     var ylabel = col.label;
 
                     if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id) {
-                        ylabel += " (per second)";
+                        ylabel += " (pps)";
                     } else if (col.id === MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id) {
-                        ylabel += " (per second)";
+                        ylabel += " (total)";
+                        period  = 1;
                     } else {
                         period /= 8; //  bit/second
-                        ylabel += " (bit/second)";
+                        ylabel += " (bps)";
                     }
 
                     if (col.id !== COL.ACTIVE_FLOWS.id) {
