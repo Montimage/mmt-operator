@@ -479,12 +479,6 @@ MMTDrop.constants = {
 			FLOW_DURATION  : {id: 105, label:"Flow duration"}
 		},
 		
-        //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
-        PureProtocol :  [
-            30,81,82,85,99,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
-            231,241,247,272,273,298,299,314,322,323,324,325,339,340,341,354,357,358,363,376,388,461,
-        ],
-
 		/**
 		 * A table of Protocol-Id : Name 
 		 */

@@ -468,17 +468,17 @@ var MongoConnector = function (opts) {
                 //get total data of each app
                 self.queryTop( options, {
                     group_by        : COL.APP_PATH,
-                    size            : 8,
-                    filter          : function( id ){
-                        if( id == null )
+                    size            : 12,
+                    filter          : function( path ){
+                        if( path == null )
                             return false;
-                        if( id === "99" )//ethernet: total
+                        if( path === "99" )//ethernet: total
                             return true;
                         //maxi 3
-                        if( dataAdaptor.getAppLevelFromPath( id ) > 4 )
+                        if( dataAdaptor.getAppLevelFromPath( path ) > 4 )
                             return false;
                         
-                        var app  = dataAdaptor.getAppIdFromPath( id ) ;
+                        var app  = dataAdaptor.getAppIdFromPath( path ) ;
                         if( app < 0 )//an app being child of a protocol is not classified but we know its port
                             return true; 
                         //add only protocol, not application

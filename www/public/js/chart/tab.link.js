@@ -396,23 +396,23 @@ var ReportFactory = {
                     $("<td>", {
                             "class": "item-" + key,
                             "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
+                            "style": "width: 30px",
                             "align": "right"
                         })
                         //.css({
                         //    "background-color": chart.color(key)
                         //})
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
-                        .on('click', function () {
-                            var id = $(this).data("id");
-                            chart.toggle(id);
-                            //$(this).css("background-color", chart.color(id) );
-                        })
+                        //.on('mouseover', function () {
+                        //    chart.focus($(this).data("id"));
+                        //})
+                        //.on('mouseout', function () {
+                        //    chart.revert();
+                        //})
+                        //.on('click', function () {
+                        //    var id = $(this).data("id");
+                        //    chart.toggle(id);
+                        //    //$(this).css("background-color", chart.color(id) );
+                        //})
                         .appendTo($tr);
 
                     $("<td>Other</td>") .appendTo($tr);
