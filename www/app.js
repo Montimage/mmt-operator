@@ -1,4 +1,4 @@
-var VERSION         = "v0.5.0b-1571535";
+var VERSION         = "v0.5.0b-605cbf4";
 
 var express         = require('express');
 var session         = require('express-session')
@@ -60,7 +60,7 @@ console.error = function( err ){
     console.log( err.stack );
 }
 
-
+console.log( "node version: %s, platform: %s", process.version, process.platform );
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 

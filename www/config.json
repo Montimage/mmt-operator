@@ -29,5 +29,6 @@
         "flush_to_client_period": 3
     },
     "port_number" : 8080,
-    "log_folder"  : "log"
+    "log_folder"  : "log",
+    "is_in_debug_mode" : true
 }
