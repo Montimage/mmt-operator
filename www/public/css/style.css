@@ -1,0 +1,220 @@
+/*
+ * Base structure
+ */
+
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+    padding-top: 100px;
+    background-color: #ddd;
+}
+
+/*
+ * Global add-ons
+ */
+.sub-header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+.filter-container{
+    min-width: 100px;
+    max-width: 200px;
+    margin-right: 10px;
+}
+
+
+/*
+ * Sidebar
+ */
+
+/* Hide for mobile, show later */
+.sidebar {
+    display: none;
+}
+
+.overflow-auto-xy{
+    overflow-x: auto;
+    overflow-y: auto;
+}
+.overflow-auto-x{
+    overflow-x: auto;
+}
+.overflow-auto-y{
+    overflow-y: auto;
+}
+.row-cursor-pointer tr{
+    cursor: pointer
+}
+@media ( min-width : 768px) {
+    .sidebar {
+        position: fixed;
+        top: 51px;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        display: block;
+        padding: 20px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        /* Scrollable contents if viewport is shorter than content. */
+        background-color: #f5f5f5;
+        border-right: 1px solid #eee;
+    }
+}
+
+/* Sidebar navigation */
+.nav-sidebar {
+    margin-right: -21px; /* 20px padding + 1px border */
+    margin-bottom: 20px;
+    margin-left: -20px;
+}
+
+.navbar-nav>li>a {
+    margin-right:  10px;
+    margin-left:   10px;
+    padding-left:  10px;
+    padding-right: 10px;
+}
+
+.navbar-nav>.active>a {
+    color: #fff;
+    background-color: #428bca;
+    font-weight: bold;
+}
+
+.navbar-nav>li>a:hover:before {
+    -webkit-transform: scale(1, 1);
+    -ms-transform: scale(1, 1);
+    transform: scale(1, 1);
+}
+.navbar-nav>li>a:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 2px;
+    width: 100%;
+    height: 2px;
+    background-color: white;
+
+    -webkit-transition: 300ms;
+    transition: 300ms;
+    
+    -webkit-transform: scale(0, 1);
+    -ms-transform: scale(0, 1);
+    transform: scale(0, 1);
+
+    -webkit-transform-origin: 0 50%;
+    -ms-transform-origin: 0 50%;
+    transform-origin: 0 50%;
+}
+/*
+ * Main content
+ */
+.main {
+    padding: 20px;
+}
+
+@media ( min-width : 768px) {
+    .main {
+        padding-right: 40px;
+        padding-left: 40px;
+    }
+}
+
+.main .page-header {
+    margin-top: 0;
+}
+
+/*
+ * Placeholder dashboard ideas
+ */
+.placeholders {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.placeholders h4 {
+    margin-bottom: 0;
+}
+
+.placeholder {
+    margin-bottom: 20px;
+}
+
+.placeholder img {
+    display: inline-block;
+    border-radius: 50%;
+}
+
+table.treetable {
+    margin: 0;
+    font-size: 12px;
+}
+
+table.treetable thead {
+    font-size: 12px;
+    font-weight: bold;
+    display: block;
+}
+
+table.treetable  tbody{
+    max-height: 320px;
+    min-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: block;
+}
+table.treetable span.indenter{
+    overflow-x: hidden;
+}
+table.treetable >tbody>tr>td:first-child {
+    cursor: default;
+    overflow: hidden;
+    white-space: nowrap;
+    display: block;
+    border-bottom: 0px;
+    border-right: 0px;
+}
+table.treetable >tbody>tr:last-child>td:first-child {
+    border-bottom: thin solid #efefef;
+}
+table.treetable>tbody>tr>td {
+    cursor: pointer;
+    border-collapse: collapse;
+    border: thin solid #efefef;
+}
+table>tbody>tr:hover {
+    text-decoration: underline;
+}
+
+
+tr.selected a {
+    color: #fff;
+}
+.brillance{
+    
+}
+
+.c3-area {
+    opacity: 0.8;
+}
+.c3-line {
+    stroke-width: 2px;
+}
+
+.c3-axis-y-label{
+}
+
+.dataTable, .dataTables_filter, .dataTables_info{
+    font-size: 12px;
+}
+
+a {
+    cursor: pointer;
+}
+
+.modal.modal-wide .modal-dialog {
+  width: 90%;
+}
+.modal-wide .modal-body {
+  overflow-y: auto;
+}

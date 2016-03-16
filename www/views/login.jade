@@ -1,0 +1,14 @@
+extends user-layout
+
+block body
+    form( method="POST", action="/" )
+        .form-group
+            label( for="username" ) Username
+            input.form-control( required, type="text", id="username", name="username", placeholder="")
+        .form-group
+            label( for="password" ) Password
+            input.form-control( required, type="password", id="password", name="password", placeholder="")
+        .form-group
+            button.btn.btn-success.btn-block( type="submit" ) Login
+    script(type='text/javascript').
+        $("#username").focus();

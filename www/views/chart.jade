@@ -1,0 +1,146 @@
+extends layout
+
+block header
+    link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.theme.default.css')
+    link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.css')
+    script( type='text/javascript', src ='/lib/jquery-treetable/jquery.treetable.js')
+    
+    link( rel='stylesheet',         href='/lib/datatables/media/css/dataTables.bootstrap.css')
+    script( type='text/javascript', src ='/lib/datatables/media/js/jquery.dataTables.js')
+    script( type='text/javascript', src ='/lib/datatables/media/js/dataTables.bootstrap.js')
+    //script( type='text/javascript', src ='/lib/datatables-fixedheader/js/dataTables.fixedHeader.js')
+
+    //- script( type='text/javascript', src='/lib/highcharts/highcharts.js')
+    //- script( type='text/javascript', src='/lib/highcharts/highcharts-exporting.js')
+
+    //- Load c3.css
+    link( rel="stylesheet", href='/lib/c3/c3.min.css')
+    
+    script( type='text/javascript', src='/lib/moment/moment.js', charset='utf-8')
+    
+    //- Load d3.js and c3.js
+    script( type='text/javascript', src='/lib/d3/d3.js', charset='utf-8')
+    script( type='text/javascript', src='/lib/c3/c3.min.js')
+
+    script( type='text/javascript', src='/lib/lodash/lodash.js')
+    
+    link( rel="stylesheet",         href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
+    script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
+    
+    link( rel="stylesheet",         href='/lib/gridstack/dist/gridstack.css')
+    script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
+
+    script( type='text/javascript', src="/lib/sweetalert/dist/sweetalert.min.js" )
+    link( rel="stylesheet",         href="/lib/sweetalert/dist/sweetalert.css" )
+
+    // highcharts
+    script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
+    
+    //override
+    script( type='text/javascript', src='/js/over/jquery-datepicker.js')
+    
+    
+    link( rel='stylesheet',         href='/css/chart.css')
+    script( type='text/javascript', src= '/js/grid.js')
+    script( type='text/javascript', src= '/js/event.js')
+    
+    script( type='text/javascript', src= '/js/mmt_drop.js')
+    
+    script( type='text/javascript', src= '/js/chart/pre-common.js')
+    //script that configures the content of the grid
+    script( type='text/javascript', src= '/js/chart/tab.#{ page_id }.js')
+    //script render the reports based on the configuration above
+    script( type='text/javascript', src= '/js/chart/common.js')
+    
+block content
+    #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
+        .container-fluid
+            .navbar-header
+                button.navbar-toggle( type="button" data-toggle="collapse" data-target=".navbar-collapse")
+                    span.sr-only Toggle navigation
+                    each val in [1, 2, 3]
+                        span.icon-bar
+                a.navbar-brand( href="/") MMT-NM
+            .navbar-collapse.collapse
+                ul.nav.navbar-nav.navbar-right
+                    each val, index in pages
+                        if( index === page_id )
+                            li.active
+                                a( href="/chart/#{index}" )= val.title
+                        else
+                            li
+                                a( href="/chart/#{index}" )= val.title
+                    li.dropdown
+                        a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") 
+                            span.glyphicon.glyphicon-user
+                        ul.dropdown-menu
+                            li: a( href="/profile" ) Profile
+                            li: a( href="/change-password" ) Change password
+                            li.divider( role="separator" )
+                            li: a( href="/setting" ) Setting
+                            li.divider( role="separator" )
+                            li: a( href="/logout" ) Logout
+                            
+    #toolbar
+        ul.nav.navbar-nav
+            li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
+                span.glyphicon.glyphicon-plus
+            li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
+                span.glyphicon.glyphicon-trash
+
+        #toolbar-box
+        
+        .auto-reload-button
+            .input-group.input-group-sm
+                span.input-group-addon Auto reload
+                .onoffswitch
+                    input.onoffswitch-checkbox#isAutoReloadChk(type="checkbox", name="isAutoReloadChk",checked)
+                    label.onoffswitch-label(for="isAutoReloadChk")
+                        span.onoffswitch-inner
+                        span.onoffswitch-switch
+
+    #waiting.center-block.loading
+        i.fa.fa-refresh.fa-spin.fa-4x
+        
+    #content
+        script(type='text/javascript').
+            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
+            window.alert = function( txt ) {
+                sweetAlert("", txt);
+            }
+        .grid-stack
+        //the grid will be rendered here by javasript grid.js!
+        
+    //This modal is used for creating a new report
+    #modal.modal.fade
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    button.close(type="button", data-dismiss="modal", aria-label="Close" )
+                        span( aria-hidden="true") &times;
+                    h4.modal-title Select a report 
+                .modal-body.container-fluid
+                    .row
+                        .col-md-10.col-md-offset-1
+                            form.form-horizontal
+                                .form-group
+                                    label.control-label(for="reportList") Report 
+                                    select#reportList.form-control( name="reportList")
+                                .form-group
+                                    label.control-label(for="reportTitle") Title
+                                    input#reportTitle.form-control( name="reportTitle", placeholder="")
+                                .form-group
+                                    label.control-label(style="padding-right: 50px") Color
+                                    input#reportColor( type="text", style="display: none" )
+                                    .btn-group( role="group", aria-label="Border color" )
+                                        button.btn.btn-default( type="button", data-type="default") &nbsp;
+                                        button.btn.btn-primary( type="button", data-type="primary") &nbsp;
+                                        button.btn.btn-success( type="button", data-type="success") &nbsp;
+                                        button.btn.btn-info(    type="button", data-type="info")    &nbsp;
+                                        button.btn.btn-warning( type="button", data-type="warning") &nbsp;
+                                        button.btn.btn-danger(  type="button", data-type="danger")  &nbsp;
+                                    
+                            
+                .modal-footer
+                    button#doneBtn.btn.btn-primary( type="button") Done
+        

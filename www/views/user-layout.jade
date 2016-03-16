@@ -1,0 +1,13 @@
+extends layout
+
+block content
+    .container
+        .row
+            .col-md-4.col-md-offset-4
+                a( href="/" )
+                    img( src="/img/montimage.png", style="width: 100%; margin-bottom: 20px; border-radius: 5px" ).img-responsive
+                .panel.panel-info
+                    .panel-body
+                        if( locals.message )
+                            p.text-danger( style="padding: 10px") #{ message }
+                        block body

@@ -1,0 +1,18 @@
+extends user-layout
+
+block body
+    form( method="POST" )
+        .form-group
+            label( for="clientID" ) Client ID 
+            input.form-control( type="text", id="clientID", name="clientID", value="#{ clientID }", disabled)
+        .form-group
+            label( for="deviceID" ) Device ID 
+            input.form-control( type="text", id="deviceID", name="deviceID", value="#{ deviceID }", disabled)
+        .form-group
+            label( for="expiredOn" ) Licence expires on
+            input.form-control( type="text", id="expiredOn", name="expiredOn", value="#{ expiredOn }", disabled)
+        .form-group
+            label( for="serialKey" ) Update the licence key
+            input.form-control( required, type="text", id="serialKey", name="serialKey")
+        .form-group
+            button.btn.btn-success.btn-block( type="submit" ) Update

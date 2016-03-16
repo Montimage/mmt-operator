@@ -1,0 +1,44 @@
+doctype html
+html
+  head
+    meta( name="viewport", content="width=device-width, initial-scale=1")
+    if( locals.title )
+        title #{title} - MMT-NM
+    else
+        title MMT
+
+    script( type='text/javascript', src='/lib/jquery/dist/jquery.min.js')
+    
+    link( rel='stylesheet',         href='/lib/bootstrap/dist/css/bootstrap.min.css')
+    script( type='text/javascript', src ='/lib/bootstrap/dist/js/bootstrap.min.js')
+    
+    link( rel="stylesheet", href='/lib/font-awesome/css/font-awesome.min.css')
+
+    script( type='text/javascript', src ='/lib/jquery-validation/dist/jquery.validate.min.js')
+    
+    script( type='text/javascript', src ='/lib/alertify.js/lib/alertify.min.js')
+    link( rel="stylesheet",         href='/lib/alertify.js/themes/alertify.core.css')
+    link( rel="stylesheet",         href='/lib/alertify.js/themes/alertify.bootstrap.css')
+    
+    script( type='text/javascript', src ='/socket.io/socket.io.js')
+    script( type='text/javascript', src ='/js/alert.js')
+    
+    block header
+    
+    link(rel='stylesheet', href='/css/style.css')
+    
+    block stylesheets
+        
+    block javascripts
+        
+  body
+    if( !locals.is_in_debug_mode )
+        script(type='text/javascript').
+            console.log = function( obj ){};
+    script(type='text/javascript').
+        var id = window.location.pathname;
+        if( id !== "login" && id !== "logout"  && id !== "" )
+            try{
+                MMTDrop.tools.cookie.set("current_url", id, 1);
+            }catch( ex ){ console.log( ex ); }
+    block content

@@ -1,0 +1,17 @@
+extends user-layout
+
+block body
+    form( id="actionFrm", method="POST" )
+        input( type="hidden", name="action", id="actionInput" )
+    
+    form()
+        .form-group
+            label( for="clientID" ) Empty database
+            button.btn.btn-danger.btn-block( type="button", id="emptyBtn" ) Empty Database 
+    script(type='text/javascript').
+        $("#emptyBtn").on( "click", function(){
+            if( confirm( "Are you sure to empty the current database? " )){
+                $("#actionInput").val( "empty_database" );
+                $("#actionFrm").submit();
+            }
+        });
