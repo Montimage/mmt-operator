@@ -1,3 +1,5 @@
+var VERSION         = "v0.5.0b-1571535";
+
 var express         = require('express');
 var session         = require('express-session')
 var path            = require('path');
@@ -22,8 +24,7 @@ var dbc             = require('./libs/mongo_connector');
 var AdminDB         = require('./libs/admin_db');
 var Probe           = require('./libs/probe');
 
-var VERSION         = "v0.5.0b-ae0b339";
-
+config.version = VERSION;
 //config parser
 var REDIS_STR = "redis",
     FILE_STR  = "file";

@@ -186,7 +186,7 @@ router.get("/profile", function (req, res, next) {
         
         res.render('profile', {
             title     : 'Profile',
-            clientID  : "admin",
+            version   : router.config.version,
             deviceID  : li[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
             expiredOn : (new Date(li[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
         });
