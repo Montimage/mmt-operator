@@ -2,10 +2,13 @@ var express         = require('express');
 var session         = require('express-session')
 var path            = require('path');
 var favicon         = require('serve-favicon');
-var logger          = require('morgan');
+var morgan          = require('morgan');
 var cookieParser    = require('cookie-parser');
 var bodyParser      = require('body-parser');
 var compress        = require('compression');
+var util            = require('util');
+var moment          = require('moment');
+var fs              = require('fs');
 
 var config          = require("./config.json");
 
@@ -19,27 +22,50 @@ var dbc             = require('./libs/mongo_connector');
 var AdminDB         = require('./libs/admin_db');
 var Probe           = require('./libs/probe');
 
+var VERSION         = "v0.5.0b-ae0b339";
 
+//config parser
 var REDIS_STR = "redis",
     FILE_STR  = "file";
 
 if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
     config.input_mode = FILE_STR;
 
-console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
+if( isNaN( config.port_number ) || config.port_number < 0 )
+    config.port_number = 80;
 
-if( config.is_in_debug_mode !== true ){
-    console.log = function( obj ){};
-}
-else{
-    console.old_log = console.log;
-    console.log  = function(){
-        var d = (new Date());
-        console.old_log( d.getTime() + " " + d.toLocaleTimeString());
-        console.old_log( arguments );
-    }
-}
+if( config.log_folder == undefined )
+    config.log_folder = __dirname + '/log';
+
+
+// ensure log directory exists
+fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
+//overwrite console.log
+var logFile   = fs.createWriteStream(config.log_folder + '/' + (moment().format("YYYY-MM-DD")) +'.log', { flags: 'a' });
+var logStdout = process.stdout;
+
+console.logStdout = console.log;
+
+console.log = function () {
+    var prefix = moment().format("h:mm:ss") + " " ;
+    if( config.is_in_debug_mode === true  )
+        logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
     
+    logFile.write( prefix + util.format.apply(null, arguments) + '\n');
+}
+
+console.error = function( err ){
+    console.log( arguments );
+    console.log( err.stack );
+}
+
+
+
+console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
+
+console.log( "configuration: " + JSON.stringify( config, null, "   " ) );    
+
+
 
 var dbconnector = new dbc( {
     connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.probe_analysis_mode
@@ -51,6 +77,8 @@ var dbadmin = new AdminDB( 'mongodb://'+ config.database_server +':27017/mmt-adm
 var probe   = new Probe( config.probe_analysis_mode );
 
 var app = express();
+app.config = config;
+
 var socketio = require('socket.io')();
 app.socketio        = socketio;
 
@@ -95,14 +123,20 @@ app.set('view engine', 'jade');
 // uncomment after placing your favicon in /public
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress()); 
-//app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 30*24*60*60*1000,    //30 day
     lastModified: true
 }));
+//log http req/res
+morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
+app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]', 
+               {stream: logFile
+               }
+              )
+       );
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.use(session({
     cookie: { maxAge: 4*60*60*1000 }, //4h
@@ -185,8 +219,7 @@ app.use(function(err, req, res, next) {
 });
 
 process.on('uncaughtException', function (err) {
-    console.log('Caught exception: ' + err.message );
-    //console.error( err );
+    console.error( err );
     
     if( err.response ){
         if(config.is_in_debug_mode !== true)
@@ -199,13 +232,15 @@ process.on('uncaughtException', function (err) {
 function exit(){
     setTimeout( function(){
         console.log("bye!\n");
+        console.logStdout("Bye!\n");
         process.exit(1);
     }, 2000 );
 }
 
 //clean up
 function cleanup ( cb ){
-    console.log( "\nCleaning up before exiting... ");
+    console.log( "Cleaning up before exiting... ");
+    console.logStdout( "\nCleaning up before exiting ... ");
     if( dbconnector ){
         dbconnector.close( exit );
     }

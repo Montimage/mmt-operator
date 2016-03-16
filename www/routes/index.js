@@ -54,12 +54,12 @@ router.post("/", function (req, res, next) {
     var pass = req.body.password;
 
     connect_to_db(function (err, db) {
-        if (err) throw err;
+        if (err) throw new HttpException(req, res, err);
         db.collection("admin").find({
             username: user
         }).toArray(
             function (err, doc) {
-                if (err) throw err;
+                if (err) throw new HttpException(req, res, err);;
                 
                 var loginOK = false;
                 

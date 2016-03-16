@@ -299,9 +299,10 @@ var MongoConnector = function (opts) {
 
 
     self.flushCache = function (cb) {
-        for( var key in self.dataCache ){
-            self.dataCache[ key ].flushDataToDatabase();
-        }
+        if( self.mdb )
+            for( var key in self.dataCache ){
+                self.dataCache[ key ].flushDataToDatabase();
+            }
         
         if (cb) cb();
 
@@ -371,7 +372,7 @@ var MongoConnector = function (opts) {
             var end_ts = (new Date()).getTime();
             var ts     = end_ts - start_ts;
 
-            console.log("\n got " + doc.length + " records, took " + ts + " ms");
+            console.log("got " + doc.length + " records, took " + ts + " ms");
 
             if (raw === undefined || raw === true) {
                 var data = [];
