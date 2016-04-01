@@ -1,4 +1,4 @@
-var VERSION         = "v0.5.0b-605cbf4";
+var VERSION         = "v0.5.0b-7dbacad";
 
 var express         = require('express');
 var session         = require('express-session')
@@ -53,11 +53,21 @@ console.log = function () {
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
     
     logFile.write( prefix + util.format.apply(null, arguments) + '\n');
+    
 }
 
 console.error = function( err ){
+    if( err == undefined ) return;
     console.log( arguments );
     console.log( err.stack );
+}
+
+console.debug = function( msg ){
+    try{
+        throw new Error( msg );
+    }catch( err ){
+        console.logStdout( err.stack );
+    }
 }
 
 console.log( "node version: %s, platform: %s", process.version, process.platform );
@@ -122,7 +132,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
-app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress()); 
 app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 30*24*60*60*1000,    //30 day
@@ -131,7 +141,7 @@ app.use(express.static(path.join(__dirname, 'public'),{
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]', 
-               {stream: logFile
+               {stream: (config.is_in_debug_mode === true )? logStdout : logFile
                }
               )
        );
@@ -155,11 +165,11 @@ api.dbconnector = dbconnector;
 app.use('/traffic', api);
 
 function license_alert(){
-    dbadmin.getLicense( function( err, doc){
-        if( err || doc.length == 0 )
-            return;
-        var msg = doc[0];
-        
+    dbadmin.getLicense( function( err, msg){
+        if( err || msg == null ){
+            //TODO
+            //throw new Error("No License");
+        } 
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
@@ -191,8 +201,10 @@ function license_alert(){
             if( ts - now <= 5*24*60*60*1000 )
                 alert.type = "error";
             
-            if( alert != null)
+            if( alert != null){
                 socketio.emit("log", alert);
+                console.log( alert );
+            }
         }
         
         var interval = 60*60*1000;//check each hour

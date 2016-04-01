@@ -38,18 +38,21 @@ var MongoConnector = function (opts) {
         
         self.dataCache = {
             
-            total: new DataCache(db, "data_total", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
+            total: new DataCache(db, "data_total", 
+                                 //key
+                                 [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
+                                 //inc
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT], []),
             
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             app: new DataCache(db, "data_app", 
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID, COL.APP_PATH, COL.APP_ID],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
                                //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME]),
             
             session: new DataCache(db, "data_session", 
                                    //key
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID,  COL.IP_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID,  COL.IP_SRC, COL.THREAD_NUMBER],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, 
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
@@ -69,8 +72,8 @@ var MongoConnector = function (opts) {
                               //set
                               [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME]),
             
-        }
-
+        };
+        
         console.log("Connected to Database");
     });
 
@@ -310,7 +313,6 @@ var MongoConnector = function (opts) {
 
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
-
         options.query = {};
         options.query[ TIMESTAMP ] = {
                 '$gte': options.time.begin,
@@ -346,22 +348,25 @@ var MongoConnector = function (opts) {
         */
         
         if (options.id !== undefined ) {
-            self.flushCache(function () {
-                self.getCurrentProtocolStats(options, callback);
-            });
+            self.getCurrentProtocolStats(options, callback);
             return;
         }
         
         callback(null, ["tobe implemented"]);
     };
 
-
+    
     // Do a query on database. Action can be "find", "aggregate", ...
-    self.queryDB = function (collection, action, query, callback, raw) {
-        console.log(action, " on [", collection, "] query : ", JSON.stringify(query));
+    self.queryDB = function (collection, action, query, callback, raw, projection) {
+        console.log(action, " on [", collection, "] query : ", JSON.stringify(query), ",", JSON.stringify(projection) );
 
         var start_ts = (new Date()).getTime();
-        var cursor = self.mdb.collection(collection)[action](query);
+        var cursor   = null;
+        if( projection == undefined )
+            cursor = self.mdb.collection(collection)[action](query);
+        else
+            cursor = self.mdb.collection(collection)[action](query, projection);
+    
 
         cursor.toArray(function (err, doc) {
             if (err) {
@@ -382,7 +387,6 @@ var MongoConnector = function (opts) {
                     //    record.time = record.last_time;
 
                     record = dataAdaptor.reverseFormatReportItem(doc[i]);
-
                     data.push(record);
                 }
 
@@ -393,14 +397,14 @@ var MongoConnector = function (opts) {
             } else {
                 callback(null, doc);
             }
-
         });
     }
 
     self.queryTop = function (options, total, callback) {
         var groupby = { "_id": "$" + total.group_by }; //"$path",
 
-        [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach( function(el, index ){
+        //, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS
+        [ COL.DATA_VOLUME ].forEach( function(el, index ){
             groupby[ el ] = { "$sum" : "$" + el };
         });
     
@@ -431,7 +435,8 @@ var MongoConnector = function (opts) {
                     "$in": top_list
                 };
 
-                self.queryDB(options.collection, "find", options.query, callback, options.raw);
+                
+                self.queryDB(options.collection, "find", options.query, callback, options.raw, options.projection);
             }, false);
     };
     
@@ -441,11 +446,11 @@ var MongoConnector = function (opts) {
          * @param {[[Type]]} callback [[Description]]
          */
     self.getCurrentProtocolStats = function (options, callback) {
-
         if (options.id !== "") {
-            if (["link.protocol", "dpi"].indexOf(options.id) > -1)
+            
+            if (["link.protocol", "dpi"].indexOf(options.id) > -1){
                 options.collection = "data_app_" + options.period_groupby;
-            else if (["link.traffic"].indexOf(options.id) > -1)
+            }else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
                 options.collection = "data_mac";
@@ -464,7 +469,24 @@ var MongoConnector = function (opts) {
                 callback(null, ["Not yet implemented"]);
                 return;
             }
-
+            
+            //flush caches to DB before query
+            for( var i in self.dataCache ){
+                var cache = self.dataCache[ i ];
+                if( options.collection.indexOf( cache.option.collection_name ) == 0 ){
+                    cache.flushCaches( options.period_groupby );
+                    break;//only one collection concernts to this query
+                }
+            }
+            
+            //projection
+            if (["link.protocol", "dpi"].indexOf(options.id) > -1){
+                options.projection = {};
+                [0,1,2,3, COL.APP_PATH, COL.APP_ID, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ] .forEach( 
+                    function (el, index){ options.projection[ el ] = 1; }
+                );
+            }
+            
             if (options.id === "link.protocol") {
                 //get total data of each app
                 self.queryTop( options, {
@@ -493,8 +515,12 @@ var MongoConnector = function (opts) {
             
             
             if( options.id === "link.nodes" ){
-                options.query[ TIMESTAMP ]['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
-                
+                if( self.config.probe_analysis_mode == "online"){
+                    options.query[ TIMESTAMP ]['$gte'] = (self.startProbeTime == undefined) ? self.startTime : self.startProbeTime;
+                    self.queryDB(options.collection, "find", options.query, callback, options.raw);
+                    return;
+                }
+                //offline: last packet timestamp
                 self.queryDB(options.collection, "find", options.query, callback, options.raw);
                 return;
             }
@@ -551,7 +577,7 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$last" : "$" + el };
                 });
                 
-                self.queryDB(options.collection,
+                    self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
                     {"$group": groupby}
@@ -626,6 +652,43 @@ var MongoConnector = function (opts) {
             }
         }
         
+        if( options.id  == "ndn.name" ){
+                               //inc
+             var groupby = { "_id": {name: "$" + NDN.NAME, probe: "$" + COL.PROBE_ID } };
+            [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA ].forEach(
+                function(el, index ){
+                    groupby[ el ] = { "$sum" : "$" + el };
+            });
+            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.NAME ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+            self.queryDB(options.collection,
+            "aggregate", [
+                {"$match": options.query},
+                {"$group": groupby}
+                ], callback, options.raw );
+            return;
+        }
+        
+        if( options.id  == "ndn.mac" ){
+                               //inc
+             var groupby = { "_id": {name: "$" + NDN.MAC_SRC, probe: "$" + COL.PROBE_ID } };
+            [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA ].forEach(
+                function(el, index ){
+                    groupby[ el ] = { "$sum" : "$" + el };
+            });
+            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.MAC_SRC ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+            self.queryDB(options.collection,
+            "aggregate", [
+                {"$match": options.query},
+                {"$group": groupby}
+                ], callback, options.raw );
+            return;
+        }
         self.queryDB(options.collection, "find", options.query, callback, options.raw);
     };
 
@@ -685,6 +748,8 @@ var MongoConnector = function (opts) {
                     db.dropDatabase(function (err, doc) {
                         cb(err);
                     });
+                else
+                    cb( err );
             });
 
         });

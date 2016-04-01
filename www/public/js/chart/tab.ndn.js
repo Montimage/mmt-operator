@@ -409,14 +409,15 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show all clients",
+                        href: "#showAllClients",
                         title: "click to show all clients",
                         text: "Other",
                         
                     });
-                    $a.on("click", function(){
-                       _chart.showAll = true;
-                       _chart.redraw(); 
+                    $a.on("click", function( event ){
+                        event.preventDefault();
+                       //_chart.showAll = true;
+                       //_chart.redraw(); 
                         return false;
                     });
                     

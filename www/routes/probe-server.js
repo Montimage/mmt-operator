@@ -1,4 +1,5 @@
 var fs               = require('fs');
+var path             = require('path');
 var mmtAdaptor       = require('../libs/dataAdaptor');
 var LineByLineReader = require('line-by-line');
 
@@ -58,7 +59,7 @@ router.process_message = function (db, message) {
 
         if( format === mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT ){
             if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
-                 || msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
+                 //|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
                 console.log( message );
                 return;
@@ -66,6 +67,10 @@ router.process_message = function (db, message) {
             }
         }
 
+        //replace pcap filename ../test_files/exemple_pcap_60.pcap
+        if( router.config.probe_analysis_mode == "offline" ){
+            msg[ 2 ] = path.basename( msg[2] );
+        }
 
         if( format == mmtAdaptor.CsvFormat.LICENSE ){
             
@@ -75,6 +80,9 @@ router.process_message = function (db, message) {
         
          //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
+        
+        //to test mult-probe
+        //msg[1] = Math.random() > 0.5 ? 1 : 0;
         
         if (db && msg)
             db.addProtocolStats(msg, function (err, err_msg) {});
@@ -115,6 +123,9 @@ router.startListening = function (db, redis) {
 
 
 router.startListeningAtFolder = function (db, folder_path) {
+    //load list of read csv file from db
+    var read_files = null;
+    
     if (folder_path.charAt(folder_path.length - 1) != "/")
         folder_path += "/";
 
@@ -131,10 +142,18 @@ router.startListeningAtFolder = function (db, folder_path) {
         lr.on('end', function () {
             // All lines are read, file is closed now.
             //remove data file
-            fs.unlinkSync( file_name );
-            //remove semaphore file
-            fs.unlinkSync( file_name + ".sem" );
-            cb( totalLines );
+            if( router.config.delete_data ){
+                fs.unlinkSync( file_name );
+                //remove semaphore file
+                fs.unlinkSync( file_name + ".sem" );
+                cb( totalLines );
+            }
+            else{
+                read_files.push( file_name );
+                router.dbadmin.mdb.collection("read-files").insert( {"file_name": file_name}, function(){
+                    cb( totalLines );
+                });
+            }
         });
     };
 
@@ -146,6 +165,10 @@ router.startListeningAtFolder = function (db, folder_path) {
         var arr = [];
         for (var i in files) {
             var file_name = files[i];
+            //file was read
+            if( router.config.delete_data !== true )
+                if( read_files.indexOf( dir + file_name ) > -1 )
+                    continue;
             //need to end with csv
             if (file_name.match(/csv$/i) == null)
                 continue;
@@ -189,7 +212,27 @@ router.startListeningAtFolder = function (db, folder_path) {
         });
     };
 
-    setTimeout( process_folder, 2000);
+    //need to delete .csv and .sem files after reading
+    if( router.config.delete_data ){
+        setTimeout( process_folder, 2000);
+    }else{
+        var start_process = function(){
+        router.dbadmin.connect( function( err, mdb ) {
+            if( err ){
+                throw new Error( "Cannot connect to mongoDB" );
+                process.exit(0);
+            }
+            mdb.collection("read-files").find().toArray( function(err, doc){
+                read_files = [];
+                for(var i in doc)
+                    read_files.push( doc[i].file_name );
+                process_folder();
+            });
+        });
+    };
+
+    setTimeout( start_process, 2000);
+    }
 }
 
 module.exports = router;

@@ -1,6 +1,5 @@
 var express = require('express');
 var router  = express.Router();
-var config  = require("../config.json");
 
 router.get('/*', function(req, res, next) {
     
@@ -30,7 +29,7 @@ router.get('/*', function(req, res, next) {
 /*			'application' : {
 				title: "Application"
 			},
-			'internet' : {
+/*			'internet' : {
 				title: "Internet"
 			},
 			'voip' : {
@@ -50,6 +49,9 @@ router.get('/*', function(req, res, next) {
             },
             'ndn':{
                 title: "NDN"
+            },
+            'video':{
+                title: "Video QoS"
             }
         
 	};
@@ -60,7 +62,11 @@ router.get('/*', function(req, res, next) {
 		err.status = 404;
         throw err;
 	}else{
-		res.render("chart", { title: page.title, page_id: id, pages: pages, probe_stats_period: config.probe_stats_period, is_in_debug_mode: (config.is_in_debug_mode === true), licence_remain_days: 10 });
+		res.render("chart", { title: page.title, page_id: id, pages: pages, 
+                             probe_stats_period  : router.config.probe_stats_period, 
+                             probe_analysis_mode : router.config.probe_analysis_mode,
+                             is_in_debug_mode    : (router.config.is_in_debug_mode === true), 
+                             licence_remain_days : 10 });
     }
 });
 

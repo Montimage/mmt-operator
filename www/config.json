@@ -1,8 +1,8 @@
 {
     "database_server": "localhost",
-    "redis_server": "192.168.0.7",
+    "redis_server": "192.168.0.80",
     "data_folder": "/Users/nhnghia/temps/share_vbox/probe-output/",
-    "delete_data": true,
+    "delete_data": false,
     "input_mode": "redis",
     "probe_analysis_mode": "online",
     "local_network": [{
@@ -28,7 +28,7 @@
         "max_length_size": 500000,
         "flush_to_client_period": 3
     },
-    "port_number" : 8080,
+    "port_number" : 80,
     "log_folder"  : "log",
     "is_in_debug_mode" : true
 }

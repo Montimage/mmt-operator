@@ -19,11 +19,13 @@ var config  = require("../config.json");
  */
 function Cache ( option ) {
 "use strict";
+    var _this                   = this;
+    var TIMESTAMP               = 3; //index of timestamp
     
     var _period_to_update_value = 0;
     var _retain_period          = -1;
     var _collection_name        = option.collection_name + "_" + option.period;
-    var _this                   = this;
+
     var _mdb                    = option.database;
     var _lastUpdateTime         = 0;
     var _period_to_update_name  = option.period;
@@ -43,16 +45,29 @@ function Cache ( option ) {
         _retain_period         = -1;              //retain all data
     }else if( option.retain_period != undefined ){
         _retain_period          = option.retain_period;
-        _period_to_update_value = 0;
+        _period_to_update_value = 60*1000;
         _collection_name        = option.collection_name;
     }
     
+
+    this.getLastUpdateTime = function(){
+        return _lastUpdateTime;
+    }
     this.data = [];
     this.getCollectionName = function(){
         return _collection_name;
     };
     
     this.removeOldDataFromDatabase = function( ts, cb ){
+        /*
+        //TODO to remove
+        if( this.removecount == undefined )
+            this.removecount = 1;
+        else
+            this.removecount ++;
+        _retain_period = -1;
+        */
+        
         //retain all
         if( _retain_period === -1 ){
             if( cb != null ) cb(null, 0);
@@ -66,7 +81,7 @@ function Cache ( option ) {
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
             
             //if( _period_to_update_name !== "real" && result.deletedCount > 0 )
-                //console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
+            //console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
             
             if( cb != null ) cb( err, result.deletedCount );
         });
@@ -76,20 +91,32 @@ function Cache ( option ) {
         var data = _getData();
         _this.clear();
         
+        //TODO to remove
+        /*
+        if( this.flushcount == undefined ){
+            this.flushcount = 1;
+            setTimeout( function(){
+                console.log("flush %d, remove %d", _this.flushcount, _this.removecount );
+            }, 10*1000);
+        }else
+            this.flushcount ++;
+        //data.length = 1;
+        */
+        
         if( data.length === 0 ){
-            if( cb ) cb( null, 0 );
+            if( cb ) cb( null, data );
             return data;
         }
         
         _mdb.collection( _collection_name ).insert( data, function( err, result){
             //if( _period_to_update_name !== "real")
-                //console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
             
             if( err ){
                 console.error( err );
                 console.log( result );
             }
-            if( cb ) cb( err, result );
+            if( cb ) cb( err, data );
         } );
         
         return data;
@@ -149,8 +176,6 @@ function Cache ( option ) {
         
         //get time of the last element in the array
         var last = _this.data[ _this.data.length - 1 ];
-        if( last == null )
-            console.log( _this.data );
         var ts   = last[ TIMESTAMP ];
         
         //need messages arrive in time order???
@@ -172,10 +197,36 @@ function Cache ( option ) {
         }
     }
     
+    /**
+     * Update data from cache to mongodb, and delete old data in mongodb
+     * @param   {Callback} cb( data )
+     * @returns {Array} array of data inserted into mongodb
+     */
+    this.updateDataBase = function( cb ){
+        var data = [];
+        //update immediately
+        if (( _period_to_update_value == 0 ) || 
+            ( ts - _lastUpdateTime > _period_to_update_value && _lastUpdateTime !== 0 )){
+            data = _this.flushDataToDatabase();
+            _lastUpdateTime = ts;
+        }
+        
+            //in realtime update, only delete data each 5 minute
+            if( _period_to_update_value == 0 && ts - _lastUpdateTime > 5*60*1000 ){
+            	_this.removeOldDataFromDatabase( ts );
+            	
+            }else{
+            	_this.removeOldDataFromDatabase( ts );
+            	_lastUpdateTime = ts;
+            }
+            
+        if( cb != null ) cb( data );
+        return data;
+    }
+    
     this.clear = function () {
         this.data = [];
     };
-    var TIMESTAMP = 3;
     
     var _getData = function () {
         
@@ -258,7 +309,8 @@ function Cache ( option ) {
             arr.push(obj[i]);
         
         //if( _period_to_update_name !== "real" && _this.data.length > 1)
-            //console.log( "[" + _period_to_update_name + "] compress " + _this.data.length +  " records ===> " + arr.length);
+        if( arr.length > 0 )
+            console.log( "[" + _collection_name + "] compress " + _this.data.length +  " records ===> " + arr.length);
         
         return arr;
     };
@@ -266,6 +318,8 @@ function Cache ( option ) {
 
 
 var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids, $init_ids, retain_period ){
+    "use strict";
+    var self = this;
     
     var option = {
         database: mongodb,
@@ -280,6 +334,8 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         },
         period: "real"
     }
+    this.option = option;
+    
     var is_retain_all = (retain_period != undefined);
     
     if( is_retain_all ){
@@ -288,8 +344,6 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     }
     
     var _cache_real   = new Cache( option );
-    
-
     
     if( is_retain_all !== true ){
     
@@ -303,8 +357,11 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         var _cache_day    = new Cache( option );
     
     }
+   
+    this.havingMessage = false;
     
     this.addMessage = function( msg ){
+        self.havingMessage = true;
         _cache_real.addMessage( msg, function( arr_1 ){
             if( is_retain_all === true ) return;
             
@@ -317,6 +374,7 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         };
     
     this.addArray = function( arr ){
+        self.havingMessage = true;
         _cache_real.addArray( arr, function( arr_1 ){
             if( is_retain_all === true ) return;
             
@@ -328,8 +386,13 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         } );
     };
     
-    this.flushDataToDatabase = function(){
-        if( is_retain_all === true ) return;
+    this.flushDataToDatabase = function( cb ){
+        if( !self.havingMessage || is_retain_all === true ) {
+            if( cb ) cb();
+            return;
+        }
+        
+        self.havingMessage = false;
         
         var arr = _cache_real.flushDataToDatabase();
         
@@ -341,8 +404,35 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         
         _cache_day.addArray( arr );
         _cache_day.flushDataToDatabase();
+        
+        if( cb ) cb();
     };
     
+    this.flushCaches = function( level ){
+        //flush immediately
+        if( is_retain_all === true )
+            return _cache_real.flushDataToDatabase();
+        
+        
+        var arr = [];
+        if( level == "real" || level == "minute" || level == "hour" || level == "day"){
+                arr = _cache_real.flushDataToDatabase();
+                _cache_minute.addArray( arr );
+        }
+        if( level == "minute" || level == "hour" || level == "day"){
+                arr = _cache_minute.flushDataToDatabase();
+                _cache_hour.addArray( arr );
+        }
+        if( level == "hour" || level == "day"){
+                arr = _cache_hour.flushDataToDatabase();
+                _cache_day.addArray( arr );
+        }
+        if( level == "day"){
+                _cache_day.flushDataToDatabase();
+        }
+        
+        return arr;
+    }
     
     this.clear = function(){
         _cache_real.clear();
@@ -353,6 +443,10 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         if( _cache_day )
             _cache_day.clear();
     }
+    
+    setInterval( function(){
+        self.flushCaches( "real" );
+    }, 30*1000 );//each 30 seconds
 }
 
 module.exports = DataCache;

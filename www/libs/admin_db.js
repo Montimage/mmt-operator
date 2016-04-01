@@ -2,6 +2,8 @@ var MongoClient = require('mongodb').MongoClient;
 
 function AdminDB( connectString ) {
     var self = this;
+    self._cache = {};
+    
     this.connect = function (callback) {
         if (self.mdb) {
             callback(null, self.mdb);
@@ -46,6 +48,10 @@ function AdminDB( connectString ) {
     
     
     this.getLicense = function ( callback ) {
+        if( self._cache.license != undefined ){
+            callback( null, self._cache.license );
+            return;
+        }
         self.connect(function (err, db) {
             if (err) {
                 callback(err);
@@ -54,11 +60,20 @@ function AdminDB( connectString ) {
 
             db.collection("license").find({}).sort({
                 "_id": -1 //last inserted
-            }).limit(1).toArray( callback );
+            }).limit(1).toArray( function( err, doc){
+                if( err || doc.length != 1){
+                    callback( err );
+                    return;
+                }
+                self._cache.license = doc[0];
+                callback( null, self._cache.license );
+            } );
         });
     };
     
     this.insertLicense = function ( license, callback ) {
+        self._cache.license = license;
+        
         self.connect(function (err, db) {
             if (err) {
                 callback(err);

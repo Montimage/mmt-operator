@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "Traffic",
+        title: "Bitrate",
         x: 0,
         y: 0,
         width: 12,
@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "protocol",
-        title: "Protocols",
+        title: "Quality",
         x: 0,
         y: 4,
         width: 12,
@@ -22,19 +22,6 @@ var arr = [
         userData: {
             fn: "createProtocolReport"
         },
-    },
-    {
-        id: "node",
-        title: "Nodes",
-        x: 0,
-        y: 9,
-        width: 12,
-        height: 6,
-        type: "warning",
-        locked: true,
-        userData: {
-            fn: "createNodeReport"
-        }
     }
 ];
 
@@ -935,8 +922,7 @@ var ReportFactory = {
                     } else
                         cols.push(col);
 
-                    if( col.id !== MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id )
-                        cols.push( {label: "No-IP", id: col.id} );
+                    cols.push( {label: "No-IP", id: col.id} );
                     
                     var obj  = {};
                     var data = db.data();

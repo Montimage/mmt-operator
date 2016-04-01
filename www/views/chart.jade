@@ -101,13 +101,12 @@ block content
 
     #waiting.center-block.loading
         i.fa.fa-refresh.fa-spin.fa-4x
+        noscript 
+            h2 Javascript is disabled. Please enable it!
         
     #content
         script(type='text/javascript').
-            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
-            window.alert = function( txt ) {
-                sweetAlert("", txt);
-            }
+            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period }, probe_analysis_mode : "#{ probe_analysis_mode }" });
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
         

@@ -70,6 +70,7 @@ var MMTDrop = {
         SESSION_ID          : 21, //Identifier of the session or if the protocol does not have session its session id = 0 
         PORT_DEST           : 22, //Server port number (0 if transport protocol is session less like ICMP)
         PORT_SRC            : 23, //Client port number (0 if transport protocol is session less like ICMP) 
+        THREAD_NUMBER       : 24,
     },
     
     SecurityColumnId           : {
@@ -173,7 +174,9 @@ var MMTDrop = {
         LICENSE_INFO_ID                 : 4, /**< Index of the application id column */
         NUMBER_OF_MAC                   : 5,
         MAC_ADDRESSES                   : 6,
-        EXPIRY_DATE                     : 7
+        EXPIRY_DATE                     : 7,
+        VERSION_PROBE                   : 8,
+        VERSION_SDK                     : 9, 
     },
     NdnColumnId : {
 			/** Index of the format id column */

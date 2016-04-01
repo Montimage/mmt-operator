@@ -1,5 +1,5 @@
 var express = require('express');
-var router = express.Router();
+var router  = express.Router();
 
 router.get('/*', function (req, res, next) {
     var dbconnector = router.dbconnector;
@@ -130,27 +130,36 @@ router.get('/*', function (req, res, next) {
     var queryData = function( op ){
         dbconnector.getProtocolStats(op, function(err, data) {
 			if (err) {
-				return next(err);
+                res.send( err );
+				return;
 			}
 			//this allow a req coming from a different domain
 			//res.setHeader("Access-Control-Allow-Origin", "*");
 			res.setHeader("Content-Type", "application/json");
             var obj = {
-                data        : data,
-                time        : op.time,
-                protocols   : dbconnector.appList.get(),
+                data : data,
+                time : op.time,
             }
             
-            if( op.userData != undefined && op.userData.getProbeStatus ){
-                dbconnector.probeStatus.get( op.time, function(err, arr){
-                    obj.probeStatus = [];
-                    for( var i in arr )
-                        obj.probeStatus.push( {
-                            start      : arr[i].start,
-                            last_update: arr[i].last_update
-                        } )
-                    res.send( obj );
-                })
+            if( op.userData != undefined ){
+                //attach list of applications detected by oprator (name of website)
+                if( op.userData.getAppList )
+                    obj.protocols  = dbconnector.appList.get();
+                
+                //probe status
+                if( op.userData.getProbeStatus ){
+                    dbconnector.probeStatus.get( op.time, function(err, arr){
+                        obj.probeStatus = [];
+                        for( var i in arr )
+                            obj.probeStatus.push( {
+                                start      : arr[i].start,
+                                last_update: arr[i].last_update
+                            } )
+                        res.send( obj );
+                    });
+                }
+                else
+                   res.send( obj ); 
             }else
                 res.send( obj );
 		});

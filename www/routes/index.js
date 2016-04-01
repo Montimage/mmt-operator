@@ -20,7 +20,7 @@ var connect_to_db = function( cb ){
 };
 
 var is_loggedin = function( req, res, redirect_url){
-    return true;
+    //return true;
     if (req.session.loggedin == undefined) {
         if( redirect_url != undefined )
             res.redirect( redirect_url );
@@ -179,16 +179,14 @@ router.post("/change-password", function (req, res, next) {
 router.get("/profile", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
     
-    router.dbadmin.getLicense( function( err, doc){
-        if( err ) throw err;
-        if( doc.length == 0 ) throw new HttpException(req, res, "Not found");
-        var li = doc[0];
+    router.dbadmin.getLicense( function( err, msg){
+        if( err ) throw new HttpException(req, res, "Not found");
         
         res.render('profile', {
             title     : 'Profile',
-            version   : router.config.version,
-            deviceID  : li[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
-            expiredOn : (new Date(li[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
+            version   : router.config.version + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK],
+            deviceID  : msg[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
+            expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
         });
     } );
     
@@ -206,16 +204,14 @@ router.post("/profile", function (req, res, next) {
             }
         } );
     
-    router.dbadmin.getLicense( function( err, doc){
-        if( err ) throw err;
-        if( doc.length == 0 ) throw new HttpException(req, res, "Not found license");
-        var li = doc[0];
+    router.dbadmin.getLicense( function( err, msg){
+        if( err ) throw new HttpException(req, res, err);
         
         res.render('profile', {
             title     : 'Profile',
             clientID  : "admin",
-            deviceID  : li[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
-            expiredOn : (new Date(li[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
+            deviceID  : msg[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
+            expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
             message   : "License was updated!"
         });
     } );

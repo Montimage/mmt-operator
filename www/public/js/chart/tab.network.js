@@ -145,6 +145,7 @@ var ReportFactory = {
                 //"scrollX": true,
                 //"scrollY": true,
                 dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
+                deferRender: true,
             },
             afterEachRender: function (_chart) {
                 // Add event listener for opening and closing details
@@ -167,17 +168,17 @@ var ReportFactory = {
                         // Open this row
                         var index = row.data()[0] - 1;
                         var event = HISTORY[ index ];
-                        var format = event[ 24 ];
+                        var format = event[ COL.FORMAT_TYPE.id ];
                         var NEXT;
                         if( format == FORMAT.WEB_APP_FORMAT ){
                             NEXT = HTTP;
-                            event[ 24 ] = "HTTP";
+                            event[ COL.FORMAT_TYPE.id ] = "HTTP";
                         }else if( format == FORMAT.SSL_APP_FORMAT ){
                             NEXT = SSL;
-                            event[ 24 ] = "SSL";
+                            event[ COL.FORMAT_TYPE.id ] = "SSL";
                         }else if( format == FORMAT.RTP_APP_FORMAT ){
                             NEXT = RTP;
-                            event[ 24 ] = "RTP";
+                            event[ COL.FORMAT_TYPE.id ] = "RTP";
                         }
                         var obj = {};
                         for( var i in COL )
@@ -212,7 +213,7 @@ var ReportFactory = {
         var self = this;
         var db_param = {id: "network.profile" };
         if( ip !== undefined )
-            db_param["userData"] = {ip: ip };
+            db_param["userData"] = {ip: ip, getAppList : true };
         var database = MMTDrop.databaseFactory.createStatDB( db_param );
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
@@ -1097,7 +1098,7 @@ if( param.ip != undefined ){
     }
 }
 
-var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail"});
+var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail", userData: {getAppList: true}});
 var cTable    = ReportFactory.createDetailOfApplicationChart();
 function loadDetail( ip_dest, app_id ){
     if( param.ip == undefined )

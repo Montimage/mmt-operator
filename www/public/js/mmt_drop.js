@@ -58,9 +58,37 @@ MMTDrop.config = {
 		 * Chart render: "highchart", "c3js"
 		 */
 		render: "highchart",
+        db_timeout: 15*1000, //timeout for database
 };
 
 
+MMTDrop.alert = {
+    error: function( msg, delay ){
+        //avoid two consecutif identique alerts
+        var now = (new Date()).getTime();
+        
+        if( this._lastAlert 
+           && this._lastAlert.msg == msg 
+           && this._lastAlert.delay == delay 
+           && this._lastAlert.time >= now - 100 )
+            return;
+        
+        this._lastAlert = {
+            msg  : msg,
+            delay: delay,
+            time : now
+        };
+        
+        if( delay == undefined )
+            delay = 0;
+
+            //defined in pre-commond.js to show a loading popup
+        if( loading )
+            loading.onHide();
+        
+        alertify.log( msg, "error",  delay);
+    }
+}    
 /**
  * Constants using in the library.
  * It contains mainly constants for data format.
@@ -153,13 +181,13 @@ MMTDrop.constants = {
             SESSION_ID        : {id: 21 , label: "Session ID"},
             PORT_DEST         : {id: 22 , label: "Port Destination"},
             PORT_SRC          : {id: 23 , label: "Port Source"},
+            THREAD_NUMBER     : {id: 24 , label: "Thread Number"},
+            FORMAT_TYPE       : {id: 25 , label: "Type"},
             
-            FORMAT_TYPE       : {id: 24 , label: "Type"},
-            
-            APP_FAMILY        : {id: 25 , label: "App Family"},
-            CONTENT_CLASS     : {id: 26 , label: "Content Class"},
-            APP_NAME          : {id: 27 , label: "App Name"},
-            CDN_FLAG          : {id: 28 , label: "CDN Flag"},
+            APP_FAMILY        : {id: 26 , label: "App Family"},
+            CONTENT_CLASS     : {id: 27 , label: "Content Class"},
+            APP_NAME          : {id: 28 , label: "App Name"},
+            CDN_FLAG          : {id: 29 , label: "CDN Flag"},
 		},
     
 		
@@ -168,21 +196,21 @@ MMTDrop.constants = {
 		 */
 		HttpStatsColumn : {
 			/** Response time of the last Request/Reply of the flow */
-			RESPONSE_TIME      : {id: 27, label:"Response Time"},
+			RESPONSE_TIME      : {id: 28, label:"Response Time"},
 			/** Index of the HTTP transactions count (req/res number) column */
-			TRANSACTIONS_COUNT : {id: 28, label:"Transaction Count"},
+			TRANSACTIONS_COUNT : {id: 29, label:"Transaction Count"},
 			/** 
 			 * Index of the interaction time (between client and server) column.
 			 * This is the time between the first request and the lest response. 
 			 * If this is zero then the flow has one request reply.
 			 */
-			INTERACTION_TIME   : {id: 29, label:"Interaction Time"},
+			INTERACTION_TIME   : {id: 30, label:"Interaction Time"},
 			/** Index of the hostname column */
-			HOSTNAME     : {id: 30, label:"Hostname"},
+			HOSTNAME     : {id: 31, label:"Hostname"},
 			/** Index of the MIME type column */
-			MIME_TYPE    : {id: 31, label:"MIME Type"},
+			MIME_TYPE    : {id: 32, label:"MIME Type"},
 			/** Index of the Referer column. Referrer as reported in the HTTP header */
-			REFERER      : {id: 32, label:"Referer"},
+			REFERER      : {id: 33, label:"Referer"},
 			/** Index of the device and operating system ids column.
 			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.). 
 			 * These are derived from the user agent.
@@ -194,7 +222,7 @@ MMTDrop.constants = {
 			 * Will not be present in HTTPS flows. 
 			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
 			 */
-			CDN_FLAG     : {id: 33, label:"CDN Flag"},
+			CDN_FLAG     : {id: 34, label:"CDN Flag"},
 		},
 
 		/**
@@ -204,7 +232,7 @@ MMTDrop.constants = {
 			/** Servername as reported in the SSL/TLS negotiation. 
 			 * It is not always possible to extract this field. will be empty in that case. 
 			 */
-			SERVER_NAME : {id: 27, label:"Server Name"},
+			SERVER_NAME : {id: 28, label:"Server Name"},
 			/**
 			 * 0: CDN not detected (This does not mean it is not used :)). 
 			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
@@ -212,7 +240,7 @@ MMTDrop.constants = {
 			 * 2: CDN delivery, the application name should identify the application. 
 			 * However, we might see Akamai as application. In this case, skip it.
 			 */
-			CDN_FLAG    : {id: 28, label:"CDN Flag"},
+			CDN_FLAG    : {id: 29, label:"CDN Flag"},
 		},
 
 		/**
@@ -220,12 +248,12 @@ MMTDrop.constants = {
 		 */
 		RtpStatsColumn : {
 			/** Global packet loss rate of the flow */
-			PACKET_LOSS_RATE       : {id: 27, label:"Packet Loss Rate"},
+			PACKET_LOSS_RATE       : {id: 28, label:"Packet Loss Rate"},
 			/** Average packet loss burstiness of the flow */
-			PACKET_LOSS_BURSTINESS : {id: 28, label:"Packet Loss Burstiness"},
+			PACKET_LOSS_BURSTINESS : {id: 29, label:"Packet Loss Burstiness"},
 			/** Maximum jitter value for the flow */
-			MAX_JITTER             : {id: 29, label:"Max Jitter"},
-			ORDER_ERROR            : {id: 20, label:"Order Error"},
+			MAX_JITTER             : {id: 30, label:"Max Jitter"},
+			ORDER_ERROR            : {id: 31, label:"Order Error"},
 		},
         /**
 		 * Data format description for statistic reports of FTP protocol
@@ -352,7 +380,9 @@ MMTDrop.constants = {
         TIMESTAMP               : {id: 3, label:"Timestamp"},
         NUMBER_OF_MAC           : {id: 5, lable: ""},
         MAC_ADDRESSES           : {id: 6, lable: ""},
-        EXPIRY_DATE             : {id: 7, lable: ""}
+        EXPIRY_DATE             : {id: 7, lable: ""},
+        VERSION_PROBE           : {id: 8, label: ""},
+        VERSION_SDK             : {id: 9, label: ""},
     },
     NdnColumn : {
 			/** Index of the format id column */
@@ -1345,7 +1375,18 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         };
         
         
-        _get (_param, {success: onSuccess.bind( this )} );
+        _get (_param, {
+            success: onSuccess.bind( this ),
+            error  : function( xhr, status, msg){
+                if( status == "timeout")
+                    msg = "Connection timeout";
+                else
+                    msg = "Cannot connect to database server";
+                
+                MMTDrop.alert.error( msg, 10*1000 );
+                //throw new Error( msg );
+            }
+        } );
         
 	};
 
@@ -1506,11 +1547,16 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 				dataType : "json",
 				data     : param,
 				cache    : false,
-
+                timeout  : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 5000, //5 seconds
 				error    : callback.error, // (xhr, status, error),
 				success  : function(data) {
 					callback.success(data);
-				}
+				},
+                /*
+                statusCode: {
+                    404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
+                    500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
+                }*/
 			});
 			return;
 		}
@@ -4631,7 +4677,13 @@ MMTDrop.chartFactory = {
 					series.push( serie );
 				}
 				
-				for (var i=0; i<arrData.length; i++){
+                var len = arrData.length;
+                if( len > 20 ){
+                    arrData.length = len = 20;
+                    MMTDrop.alert.error("Pie chart draws only the first 20 elements");
+                }
+                
+				for (var i=0; i<len; i++){
 					var msg = arrData[i];
 
 					var name = msg[0];
@@ -4653,12 +4705,26 @@ MMTDrop.chartFactory = {
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
                 var chart = c3.generate( chart_opt );
+                chart.color = function( key ){
+                    if( chart.colors == undefined )
+                        chart.colors = chart.data.colors();
+                    var c = chart.colors[ key ];
+                    if( c )
+                        return c;
+                    return "#FFF";
+                }
+                
+                
+                
                 return chart;
 			});
 
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'fa fa-pie-chart'});
 			};
+            
+            
+            
 			return chart;
 		},
 
@@ -5011,7 +5077,8 @@ MMTDrop.chartFactory = {
 				var obj = [];
 				var n   = columns.length;
                 if( n > 10 ){
-                    console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+                    //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+                    MMTDrop.alert.error("Line chart draws only the first 10 elements");
                     n = 10;
                 }
 
@@ -5197,7 +5264,7 @@ MMTDrop.chartFactory = {
 		        			y: {
 		        				label: {
                                     text: ylabel,
-                                    //position: "outer-top"
+                                    position: "outer-top"
                                 },
 		        				min: 0,
 		        				padding: {
