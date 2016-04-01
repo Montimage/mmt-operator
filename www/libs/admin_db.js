@@ -3,6 +3,7 @@ var MongoClient = require('mongodb').MongoClient;
 function AdminDB( connectString ) {
     var self = this;
     self._cache = {};
+    self.connectString = connectString;
     
     this.connect = function (callback) {
         if (self.mdb) {

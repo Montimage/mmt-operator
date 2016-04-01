@@ -2,6 +2,7 @@ var VERSION         = "v0.5.0b-7dbacad";
 
 var express         = require('express');
 var session         = require('express-session')
+const MongoStore    = require('connect-mongo')(session);
 var path            = require('path');
 var favicon         = require('serve-favicon');
 var morgan          = require('morgan');
@@ -152,7 +153,13 @@ app.use(cookieParser());
 app.use(session({
     cookie: { maxAge: 4*60*60*1000 }, //4h
     secret: 'mmt2montimage',    //hash code to generate cookie
-    resave: true, saveUninitialized: true
+    resave: true, saveUninitialized: true,
+    store : new MongoStore({
+        url       : dbadmin.connectString,
+        touchAfter: 60, //lazy session update, time period in seconds
+        collection: "_expressjs_session",
+        ttl       : 14 * 24 * 60 * 60 // = 14 days. Default
+    })
 }))
 
 
