@@ -434,6 +434,22 @@ MMTDrop.constants = {
             DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
 			NDN_VOLUME_DATA          : {id: 20,  label: "Data Payload"},
 		},
+
+        OTTQoSColumn: {
+            FORMAT_ID                   : {id: 0 , label: "" },
+			PROBE_ID                    : {id: 1 , label: "" },
+			SOURCE_ID                   : {id: 2 , label: "" },
+			TIMESTAMP                   : {id: 3 , label: "" },
+            VIDEO_URI                   : {id: 4 , label: "" },
+            VIDEO_QUALITY               : {id: 5 , label: "Video Quality" },
+            NETWORK_BITRATE             : {id: 6 , label: "Network Bitrate" },
+            VIDEO_BITRATE               : {id: 7 , label: "Video Bitrate" },
+            TOTAL_VIDEO_DURATION        : {id: 8 , label: "" },
+            TOTAL_VIDEO_DOWNLOAD        : {id: 9 , label: "" },
+            RETRANSMISSION_COUNT        : {id: 10, label: "Retransmision" },
+            OUT_OF_ORDER                : {id: 11, label: "Out-of-order" },
+            PROBABILITY_BUFFERING       : {id: 12, label: "Probability Buffering" }
+        },
     
 		/**
 		 * Mapping between RTP meric IDs and metric names
@@ -3246,17 +3262,17 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 			filters[i].attachTo(database);
 
 
-		//filter for the first element that is either a filter or a chart
-		var filter = MMTDrop.tools.getFirstElement(dataFlow);
-		if(!filter)
-			return;
-		if( filter.autoTrigger === true ){
-	    	filter = filter.object;
-		    if (filter instanceof MMTDrop.Filter)
-			    filter.filter();
-    		else if(filter)
-	    		filter.renderTo( filter.htmlID, database.data() );
-        
+        for( var i in dataFlow ){
+            //filter for the element that is either a filter or a chart
+            var elem = dataFlow[ i ];
+            if( elem.autoTrigger === true ){
+                var obj = elem.object;
+                if (obj instanceof MMTDrop.Filter)
+                    obj.filter();
+                else if(obj)
+                    obj.renderTo( obj.htmlID, database.data() );
+
+            }
         }
         
         //after render
@@ -5178,15 +5194,15 @@ MMTDrop.chartFactory = {
                     for (var i=0; i<arrData.length; i++){
                         //the first column is timestamp
                         var x = new Date( parseInt(arrData[i][0]) );
-
+                        obj[0].push( x );        //x
+                        
                         for( var j=1; j<n; j++){
                             var val = arrData[i][j];
                             if( val === undefined )
                                 //continue;
                                 val = 0;
 
-                            obj[j].push( x );        //x
-                            obj[j+n-1].push( val );  //y
+                            obj[j].push( val );  //y
 
                         }
                     }

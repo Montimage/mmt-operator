@@ -286,6 +286,13 @@ var MongoConnector = function (opts) {
             return;
         }
         
+         if ( format === dataAdaptor.CsvFormat.OTT_QOS) {
+            update_packet_timestamp( ts );
+            self.mdb.collection("ott_qos").insert(msg, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+            return;
+        }
         
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
             self.probeStatus.set( ts );
@@ -333,6 +340,10 @@ var MongoConnector = function (opts) {
             }else
                 options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
             options.collection     = "security";
+            find_in_specific_table = true;
+        }
+        else if (options.format.indexOf(dataAdaptor.CsvFormat.OTT_QOS) >= 0 ) {
+            options.collection     = "ott_qos";
             find_in_specific_table = true;
         }
         

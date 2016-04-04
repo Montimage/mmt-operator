@@ -89,17 +89,19 @@ $(function () {
             for( var i=0; i<reports.length; i++ ){
 
                 reports[ i ].database.reload({ period :  opt.id}, function(new_data, rep){
-                    var filter = MMTDrop.tools.getFirstElement(rep.dataFlow);
-                    if(!filter) return;
+                    //for each element in dataFlow array
+                    for( var j in rep.dataFlow ){
+                        var filter = rep.dataFlow[ j ];
+                        if(!filter) return;
 
-                    filter = filter.object;
-                    if (filter instanceof MMTDrop.Filter)
-                        filter.filter();
-                    else if( filter ){ //chart
-                        filter.attachTo( rep.database );
-                        filter.redraw();
+                        filter = filter.object;
+                        if (filter instanceof MMTDrop.Filter)
+                            filter.filter();
+                        else if( filter ){ //chart
+                            filter.attachTo( rep.database );
+                            filter.redraw();
+                        }
                     }
-
                 }, reports[ i ]);
             }
         }catch ( err ){

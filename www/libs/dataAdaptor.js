@@ -28,6 +28,7 @@ var MMTDrop = {
         LICENSE                 : 30,
         NDN_FORMAT              : 625,
         DUMMY_FORMAT            : 200,
+        OTT_QOS                 : 70
     },
     
     isFlowStats : function ( format ) {
@@ -202,6 +203,21 @@ var MMTDrop = {
             DATA_VOLUME_DATA     : 19 ,
 			NDN_VOLUME_DATA      : 20 ,
 		},
+    OTTQoSColumnId: {
+            FORMAT_ID                   : 0  ,
+			PROBE_ID                    : 1  ,
+			SOURCE_ID                   : 2  ,
+			TIMESTAMP                   : 3  ,
+            VIDEO_URI                   : 4,
+            VIDEO_QUALITY               : 5,
+            NETWORK_BITRATE             : 6,
+            VIDEO_BITRATE               : 7,
+            TOTAL_VIDEO_DURATION        : 8,
+            TOTAL_VIDEO_DOWNLOAD        : 9,
+            RETRANSMISSION_COUNT        : 10,
+            OUT_OF_ORDER                : 11,
+            PROBABILITY_BUFFERING       : 12
+    },
     /**
      * Return the parent of the given protocol path. <br>
      * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
