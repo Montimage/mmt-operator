@@ -33,11 +33,12 @@ var ReportFactory = {
     
 
     createQoSReport: function (fProbe) {
-       
+        fPeriod.hide();
         var _this = this;
         var COL = MMTDrop.constants.OTTQoSColumn;        
         var database = new MMTDrop.Database({format : 70, userData : { getProbeStatus: true } });
-
+        var last_message = null;
+        
         var createLineChart = function( columns, height, label, get_avg, opt ){
             //default chart options
             if( height  == undefined ) height  = 200;
@@ -45,7 +46,7 @@ var ReportFactory = {
             if( get_avg == undefined ) get_avg = false;
             var chart_opt = {
                     data:{
-                        type: "spline"//step
+                        type: "step"//step
                     },
                     color: {
                         pattern: ['orange', 'green']
@@ -78,7 +79,7 @@ var ReportFactory = {
                         format: {
                             title:  function( x ) {
                                 //only fire for the active chart
-                                if( _this.activeChart == chart )
+                                if( _this.activeChart == chart && x )
                                     _this.showAllTooltip( x );
                                 
                                 return _this.formatTime( x );
@@ -92,10 +93,10 @@ var ReportFactory = {
                         top: 20
                     },
                     onmouseover: function(){
-                        _this.activeChart = chart;
+                        //_this.activeChart = chart;
                     },
                     onmouseout: function(){
-                        _this.hideAllTooltip();
+                        //_this.hideAllTooltip();
                     }
                 };
             //override default options by the one given by user
@@ -154,31 +155,65 @@ var ReportFactory = {
                                 }
                         }
                         
+                        //addd zero-point
+                        var end   = db.time.end;
+                        var begin = db.time.begin;
+                        if( begin < end - 5*60*1000 )
+                            begin = end - 5*60*1000;
+                        
+                        var last_val = {};
+                        for( var time=begin; time<=end; time += 1000 ){
+                            for (var j in cols) {
+                                var id = cols[j].id;
+                                if( obj[time] == undefined ){
+                                    obj[time] = {};
+                                    obj[time][ COL.TIMESTAMP.id ] = time;
+                                }
+                                if( obj[time][id] == undefined ){
+                                    if( id == COL.PROBABILITY_BUFFERING.id || id == COL.VIDEO_QUALITY.id || id == COL.NETWORK_BITRATE.id || id == COL.VIDEO_BITRATE.id)
+                                        obj[time][id] = last_val[ id ];
+                                    else if ( id == COL.RETRANSMISSION_COUNT.id || id == COL.OUT_OF_ORDER.id )
+                                        obj[time][id] = 0;
+                                }else
+                                    last_val[id] = obj[time][id];
+                            }
+                            
+                            if( last_message == undefined || last_message[ COL.TIMESTAMP.id ] <= time )
+                                last_message = MMTDrop.tools.mergeObjects( last_message, obj[ time ] );
+                        }
+                        
                         //add timestamp as the first column
                         cols.unshift(COL.TIMESTAMP);
 
-                        return {
+                        var val = {
                             data    : obj,
                             columns : cols,
                             ylabel  : label,
-                            height  : height,
+                            height  : height
                         };
+                        return val;
                     }
                 },
                 chart: chart_opt
             });
+            chart._COLS = columns;
             return chart;
         }
 
-        var cLine    = createLineChart( [ COL.NETWORK_BITRATE, COL.VIDEO_BITRATE ] );
+        var cLine    = createLineChart( [ COL.NETWORK_BITRATE, COL.VIDEO_BITRATE], 200, "Bitrate (kbps)",true, {
+            axis : {y : { tick: { format: function( v ){ 
+                return Math.round( v/1000 ); 
+                //return MMTDrop.tools.formatDataVolume( v );
+            }}}}
+        } );
         var cQuality = createLineChart( [ COL.VIDEO_QUALITY], 200, "Quality", true, {
-            data:  { type: "area-spline"},
+            data:  { type: "area-step"},
             color: { pattern: ["#33CCCC"] },
             line:  { connectNull: true },
             axis:  { y: {max: 5, min: 0, padding: {top: 0} } }
         } );
-        var cBuffer  = createLineChart( [ COL.PROBABILITY_BUFFERING], 200, "(%)", true, {
-            data:  { type: "area-spline"},
+        var cBuffer  = createLineChart( [ COL.PROBABILITY_BUFFERING], 200, "Probability buffering (%)", true, {
+            data:  { type: "area-step"},
             color: { pattern: ["#CC99CC"] },
             axis:  { y: {max: 100, min: 0, padding: {top: 0} } }
         } );
@@ -197,7 +232,7 @@ var ReportFactory = {
                 if( c != _this.activeChart ){
                     try{
                         c.chart.tooltip.show( {x: x} );
-                    }catch( err ){ console.error( err );}
+                    }catch( err ){}
                 }
             }
         };
@@ -205,9 +240,68 @@ var ReportFactory = {
         _this.hideAllTooltip = function(){
             for( var i in chart_groups ){
                 var c = chart_groups[i];
-                c.chart.tooltip.hide();
+                try{
+                    c.chart.tooltip.hide();
+                }catch( ex ){}
             }
-        }
+        };
+        
+        //add one report on the charts
+        var addReport = function( msg ){
+            if( msg[3] <= last_message[3] )
+                return;
+            if( last_message == undefined )
+                last_message = msg;
+            //show only last minute (to override performance pb)
+            if( msg[3] - last_message[ 3 ] > 60*1000 )
+                last_message[3] = msg[3] - 60*1000;
+            
+            var getSpace = function( id ){
+                var arr = [];
+                for( var i= last_message[3] + 1000; i<=msg[3] - 1000; i += 1000)
+                    if( id == 3 )//time
+                        arr.push( i );
+                    else
+                        arr.push( last_message[ id ] );
+                arr.push( msg[ id ] );
+                return arr;
+            }
+            
+            //timestamp
+            var col_time = ["x"];
+            var tmp      = getSpace( 3 );
+            for( var i in tmp )
+                col_time.push( new Date( tmp[i] ));
+            
+            for( var i in chart_groups ){
+                var chart   = chart_groups[i];
+                
+                var columns = [ col_time ];
+                for( var j in chart._COLS ){
+                    var c = chart._COLS[j];
+                    tmp   = getSpace( c.id );
+                    tmp.unshift( c.label );//add label
+                    
+                    columns.push( tmp );
+                }
+                //load new data on the chart
+                chart.chart.flow({
+                    columns: columns
+                });
+            }
+            
+            last_message = msg;
+        };
+       
+        
+        window._load = addReport;
+        
+        //update report received from server
+        setTimeout( function(){
+            //io().on('qos',  addReport );
+        }, 2000)
+        
+        
         
         var dataFlow = [{ object: cLine }, { object: cQuality }, {object: cBuffer}, {object: cError}];
 
@@ -244,3 +338,5 @@ var ReportFactory = {
         return report;
     },
 }
+
+

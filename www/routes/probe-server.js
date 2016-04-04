@@ -8,6 +8,30 @@ var CURRENT_PROFILE = {};
 var router = {};
 var COL = mmtAdaptor.StatsColumnId;
 
+//this is for Video QoS
+var qos_reports = [];
+function send_to_client( msg ){
+    qos_reports.push( msg );
+}
+
+setInterval( function(){
+    if( qos_reports.length == 0 )
+        return;
+    //avg
+    for( var j=1; j<qos_reports.length; j++)
+        for( var i=4; i<13;i++ )
+            qos_reports[0][i] += qos_reports[j][i];
+
+    for( var i=4; i<13;i++ )
+        if( i != 9 || i != 10 )
+            qos_reports[0][i] /= qos_reports.length;
+
+    router.socketio.emit( "qos", qos_reports[0] );
+
+    qos_reports = [];
+}, 1000);
+//end Video QoS
+
 router.process_message = function (db, message) {
     //console.log( message );
     try {
@@ -84,6 +108,12 @@ router.process_message = function (db, message) {
         //to test mult-probe
         //msg[1] = Math.random() > 0.5 ? 1 : 0;
         
+        
+        if( format == mmtAdaptor.CsvFormat.OTT_QOS ){
+            send_to_client( msg );
+        }
+        
+        
         if (db && msg)
             db.addProtocolStats(msg, function (err, err_msg) {});
 
@@ -113,6 +143,7 @@ router.startListening = function (db, redis) {
     
     report_client.subscribe("behaviour.report");
     report_client.subscribe("ndn.report");
+    report_client.subscribe("OTT.flow.report");
     //*/
 
     report_client.on('message', function (channel, message) {

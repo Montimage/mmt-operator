@@ -916,6 +916,10 @@ MMTDrop.tools = function () {
 	 * @memberof! MMTDrop.tools
 	 */
 	 _this.mergeObjects = function( obj1, obj2 ){
+         if( obj2 == undefined )
+             return obj1;
+         else if (obj1 == undefined )
+             return obj2;
 		//obj1 = MMTDrop.tools.cloneData( obj1 );
 		for (var p in obj2) {
 			try {
