@@ -75,6 +75,11 @@ router.get('/*', function (req, res, next) {
     }
 
     var period = req.query.period || PERIOD.MINUTE;
+    
+    //QoSVideo
+    if( req.query.format == 70 )
+        period = PERIOD.MINUTE;
+    
     if( period.indexOf("begin") > -1 && period.indexOf("end") > -1 )
         period = JSON.parse( period );
     

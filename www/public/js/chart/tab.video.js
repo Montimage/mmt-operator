@@ -33,6 +33,7 @@ var ReportFactory = {
     
 
     createQoSReport: function (fProbe) {
+        fProbe.selectedOption({id: MMTDrop.constants.period.MINUTE});
         fPeriod.hide();
         var _this = this;
         var COL = MMTDrop.constants.OTTQoSColumn;        
