@@ -251,6 +251,8 @@ var ReportFactory = {
         var addReport = function( msg ){
             if( msg[3] <= last_message[3] )
                 return;
+            
+            msg[ COL.PROBABILITY_BUFFERING.id ] *= 100;
             if( last_message == undefined )
                 last_message = msg;
             //show only last minute (to override performance pb)
@@ -258,12 +260,13 @@ var ReportFactory = {
                 last_message[3] = msg[3] - 60*1000;
             
             var getSpace = function( id ){
-                var arr = [];
+                var arr  = [];
                 for( var i= last_message[3] + 1000; i<=msg[3] - 1000; i += 1000)
                     if( id == 3 )//time
                         arr.push( i );
                     else
                         arr.push( last_message[ id ] );
+                //add the last val
                 arr.push( msg[ id ] );
                 return arr;
             }
@@ -290,7 +293,6 @@ var ReportFactory = {
                     columns: columns
                 });
             }
-            
             last_message = msg;
         };
        
@@ -299,7 +301,7 @@ var ReportFactory = {
         
         //update report received from server
         setTimeout( function(){
-            //io().on('qos',  addReport );
+            io().on('qos',  addReport );
         }, 2000)
         
         
