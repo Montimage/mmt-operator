@@ -84,9 +84,17 @@ router.get('/*', function (req, res, next) {
         period = JSON.parse( period );
     
 	var options;
-    if( period.begin != undefined && period.end != undefined)
-        options = getOptionsByPeriod2(period) ;
-    else
+    if( period.begin != undefined && period.end != undefined){
+        
+        if( req.query.period_groupby ){
+            //override by user; default = day (when user select an interval between two date)
+            options = getOptionsByPeriod( req.query.period_groupby ) ;
+            options.time = period;
+            period  = req.query.period_groupby;
+            console.log( req.query );
+        }else
+            options = getOptionsByPeriod2(period) ;
+    }else
         options = getOptionsByPeriod(period);
 
 	//default values
@@ -131,8 +139,36 @@ router.get('/*', function (req, res, next) {
     
     if( req.query.userData )
         options.userData = req.query.userData;
-
+    
     var queryData = function( op ){
+         /*Get status of the system*/
+        if( options.id == "status" ){
+            //this allow a req coming from a different domain
+            //res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Content-Type", "application/json");
+            var obj = {
+                time      : op.time,
+                //attach list of applications detected by oprator (name of website)
+                protocols : dbconnector.appList.get(),
+                data      : []
+            };
+
+            //probe status: stat_time, stop_time
+            dbconnector.probeStatus.get( op.time, function(err, arr){
+                obj.probeStatus = [];
+                if( !err )
+                    for( var i in arr )
+                        obj.probeStatus.push( {
+                            start      : arr[i].start,
+                            last_update: arr[i].last_update
+                        } );
+                res.send( obj );
+            });
+            return;
+        }
+        /*end status*/
+
+        
         dbconnector.getProtocolStats(op, function(err, data) {
 			if (err) {
                 res.send( err );
@@ -145,28 +181,7 @@ router.get('/*', function (req, res, next) {
                 data : data,
                 time : op.time,
             }
-            
-            if( op.userData != undefined ){
-                //attach list of applications detected by oprator (name of website)
-                if( op.userData.getAppList )
-                    obj.protocols  = dbconnector.appList.get();
-                
-                //probe status
-                if( op.userData.getProbeStatus ){
-                    dbconnector.probeStatus.get( op.time, function(err, arr){
-                        obj.probeStatus = [];
-                        for( var i in arr )
-                            obj.probeStatus.push( {
-                                start      : arr[i].start,
-                                last_update: arr[i].last_update
-                            } )
-                        res.send( obj );
-                    });
-                }
-                else
-                   res.send( obj ); 
-            }else
-                res.send( obj );
+            res.send( obj );
 		});
     };
     

@@ -83,12 +83,6 @@ var ReportFactory = {
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
     
-    //add zero to the period having no data 
-    addZeroPoints: function (data, start_time, end_time) {
-        var time_id = 3;
-        var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-        return MMTDrop.tools.addZeroPointsToData( data, period_sampling, time_id, start_time, end_time );
-    },
 
     createProtocolReport: function (fPeriod) {
         var _this    = this;
@@ -284,7 +278,7 @@ var ReportFactory = {
                             time_id       : 3,
                             time          : db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-                            probeStatus   : db.probeStatus
+                            probeStatus   : status_db.probeStatus
                         },
                     };
                 }
@@ -990,7 +984,7 @@ var ReportFactory = {
                             time_id       : 3,
                             time          : db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-                            probeStatus  : db.probeStatus
+                            probeStatus  : status_db.probeStatus
                         },
                     };
                 }

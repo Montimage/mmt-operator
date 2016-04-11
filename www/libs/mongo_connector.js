@@ -136,8 +136,11 @@ var MongoConnector = function (opts) {
     };
 
     var update_packet_timestamp = function( ts ){
-        if( self.lastPacketTimestamp < ts )
+        if( self.lastPacketTimestamp < ts ){
             self.lastPacketTimestamp = ts;
+            //update status of probe ==> it is alive
+            self.probeStatus.set( ts );
+        }
     };
     
     var update_proto_name = function( msg ){

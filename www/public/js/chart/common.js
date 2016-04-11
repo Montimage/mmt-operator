@@ -37,6 +37,9 @@ ReportFactory = MMTDrop.reportFactory;
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var reports = [];
+//this database is reload firstly when a page is loaded
+//this db contains status of probe, interval to get data of reports
+var status_db = new MMTDrop.Database({id: "status"});
 
 $(function () {
     'use strict'
@@ -83,12 +86,15 @@ $(function () {
     }
 
 
-    fPeriod.onFilter( function( opt ){
-        console.log("fProbe filtering");
-        try{
-            for( var i=0; i<reports.length; i++ ){
 
-                reports[ i ].database.reload({ period :  opt.id}, function(new_data, rep){
+    //reload databases of reports
+    var reloadReports = function( data, group_by ){
+        try{
+            var period_str = {begin: status_db.time.begin, end: status_db.time.end};
+            period_str = JSON.stringify( period_str );//adapt to period filter mmt_drop.js:2065
+            
+            for( var i=0; i<reports.length; i++ ){
+                reports[ i ].database.reload( {period: period_str, period_groupby: group_by} , function(new_data, rep){
                     //for each element in dataFlow array
                     for( var j in rep.dataFlow ){
                         var filter = rep.dataFlow[ j ];
@@ -107,6 +113,11 @@ $(function () {
         }catch ( err ){
             loading.onHide();
         }
+    }
+    
+    fPeriod.onFilter( function( opt ){
+        console.log("fProbe filtering");
+        status_db.reload({ period: opt.id }, reloadReports, opt.id );
     });
     
     //fire the chain of filters
