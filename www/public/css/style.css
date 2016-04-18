@@ -44,6 +44,34 @@ body {
 .row-cursor-pointer tr{
     cursor: pointer
 }
+
+.row-cursor-default tr{
+    cursor: default
+}
+
+.table-inside-table{
+    padding: 2px;
+}
+.table-inside-table, .table-inside-table thead{
+    background-color: #5cb85c;
+}
+
+.table-inside-table table{
+    border-color: #5cb85c;
+}
+.table-inside-table td{
+    max-width: 300px;
+}
+.dataTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    -ms-text-overflow: ellipsis;
+}
+.dataTable td:hover{
+    overflow: visible; 
+}
 @media ( min-width : 768px) {
     .sidebar {
         position: fixed;

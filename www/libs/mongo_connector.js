@@ -24,8 +24,9 @@ var MongoConnector = function (opts) {
     
     //all columns of HTTP => they cover all columns of SSL,RTP et FTP
     var init_session_set = [];
-    for( var i=0; i<10; i++) init_session_set.push( COL.PORT_SRC + i + 1 );
-        init_session_set.push( COL.START_TIME );
+    for( var i=0; i<20; i++) 
+        init_session_set.push( COL.THREAD_NUMBER + i + 1 );
+    init_session_set.push( COL.START_TIME );
     
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
@@ -193,7 +194,10 @@ var MongoConnector = function (opts) {
         var format = msg[ FORMAT_ID ];
         
         if ( format === 100 || format === 99 ){
-            
+            msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
+            //as 2 threads may produce a same session_ID for 2 different sessions
+            //this ensures that session_id is unique
+            msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
             //group msg by each period
             var mod = Math.ceil( (ts - self.startProbeTime) / (self.config.probe_stats_period * 1000) );
             msg[ TIMESTAMP ] = self.startProbeTime + mod * ( self.config.probe_stats_period * 1000 );
@@ -581,7 +585,7 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
                 var start = COL.IP_SRC;
-                for( var i=start; i< start + 18; i++){
+                for( var i=start; i< start + 23; i++){
                     groupby[ i ] = {"$first": "$" + i};
                 }
                 

@@ -171,8 +171,8 @@ MMTDrop.constants = {
             /** Index of the start timestamp of the flow */
             START_TIME        : {id: 16, label: "Start Time"}, 
             
-            IP_SRC           : {id: 17, label: "IP Destination"}, 
-            IP_DEST          : {id: 18, label: "IP Source "} ,            
+            IP_SRC           : {id: 17, label: "IP Source"}, 
+            IP_DEST          : {id: 18, label: "IP Destination"} ,            
             
             /** Index of the MAC address source column */
             MAC_SRC           : {id: 19, label: "MAC Destination"}, 
@@ -222,7 +222,11 @@ MMTDrop.constants = {
 			 * Will not be present in HTTPS flows. 
 			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
 			 */
-			CDN_FLAG     : {id: 34, label:"CDN Flag"},
+			CDN_FLAG     : {id: 34, label: "CDN Flag"},
+            URI          : {id: 35, label: "URI"},
+            METHOD       : {id: 36, label: "Method"},
+            RESPONSE     : {id: 37, label: "Response"}
+            
 		},
 
 		/**
@@ -1038,8 +1042,9 @@ MMTDrop.tools = function () {
 			_storage.setItem(_prefix(useFullURI) + key, JSON.stringify(value));
 		};
 
-		var _remove = function (key){
-			_storage.removeItem(_prefix() + key);
+		var _remove = function (key, useFullURI){
+            useFullURI = (useFullURI !== false );
+			_storage.removeItem(_prefix(useFullURI) + key);
 		};
 
 		return {
@@ -1382,8 +1387,10 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
             _originalData     = newData.data;
             _this.time        = newData.time;
-            _this.probeStatus = newData.probeStatus;
-            MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
+            if( newData.probeStatus )
+                _this.probeStatus = newData.probeStatus;
+            if( newData.protocols )
+                MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
 
             if (typeof(dataProcessingFn) == "function"){
                 _originalData = dataProcessingFn( _originalData );

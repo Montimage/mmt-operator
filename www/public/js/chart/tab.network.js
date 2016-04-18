@@ -40,7 +40,7 @@ function getHMTL( tag ){
 
 //create reports
 var ReportFactory = {
-    createDetailOfApplicationChart: function () {
+    createDetailOfApplicationChart2: function () {
         var self    = this;
         var COL     = MMTDrop.constants.StatsColumn;
         var HTTP    = MMTDrop.constants.HttpStatsColumn;
@@ -62,13 +62,13 @@ var ReportFactory = {
                         {id: COL.DL_DATA_VOLUME.id, label: "Download", align:"right"},
                     ];
                     var otherCols = [
-                        {id: HTTP.MIME_TYPE.id, label: "MIME"  , align:"left"},
-                        {id: HTTP.REFERER.id, label: "Referer"  , align:"left"},
+                        { id: HTTP.URI.id     , label: HTTP.URI.label},
+                        { id: HTTP.METHOD.id  , label: HTTP.METHOD.label},
+                        { id: HTTP.RESPONSE.id, label: HTTP.RESPONSE.label},
+                        {id: HTTP.MIME_TYPE.id, label: "MIME"     , align:"left"},
+                        {id: HTTP.REFERER.id  , label: "Referer"  , align:"left"},
                     ];
                     
-                    var havingAppPath = true;
-                    if( havingAppPath )
-                        columns.push( {id: COL.APP_PATH.id, label: "Path", align:"left"} );
                     
                     var data = db.data();
                     
@@ -84,7 +84,6 @@ var ReportFactory = {
                         obj["index"] = HISTORY.length;
                         
                         obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
-                        obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[COL.APP_PATH.id] ) ;
                         obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
                         obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
                         
@@ -94,10 +93,7 @@ var ReportFactory = {
                         
                         
                         if( host != undefined && host != ""){
-                            if( cTable.userData.ip_dest != undefined )
                                 obj[COL.IP_DEST.id]  = host;
-                            else
-                                obj[COL.IP_DEST.id]  = host  + " ("+ msg[COL.IP_DEST.id] +")";
                         }else
                             obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id]; // ip
                         
@@ -123,8 +119,13 @@ var ReportFactory = {
                     
                     for( var i in otherCols ){
                         var c = otherCols[i];
-                        if( c.havingData === true )
+                        if( c.havingData === true ){
                             colSum.push( c );
+                            //default value for the rows that have not data of this c
+                            for( var j in arr )
+                                if( arr[j][ c.id ] == undefined )
+                                    arr[j][ c.id ] = "";
+                        }
                     }
                     
                     columns = columns.concat( colSum  );
@@ -142,6 +143,151 @@ var ReportFactory = {
                 }
             },
             chart: {
+                "paging": false,
+                "info"  : true,
+                "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
+                "scrollY": "200px",
+                "scrollCollapse": true,
+                //"scrollX": true,
+                //"scrollY": true,
+                deferRender: true,
+            },
+        });
+        return cTable;
+    },
+
+    /**
+     * 
+     * @param   {[[Type]]}              group_by either IP_DEST or APP_PATH
+     * @returns {object|string|boolean} [[Description]]
+     */
+    createDetailOfApplicationChart: function ( ) {
+        var self    = this;
+        var COL     = MMTDrop.constants.StatsColumn;
+        var HTTP    = MMTDrop.constants.HttpStatsColumn;
+        var SSL     = MMTDrop.constants.TlsStatsColumn;
+        var RTP     = MMTDrop.constants.RtpStatsColumn;
+        var FORMAT  = MMTDrop.constants.CsvFormat;
+        var HISTORY = {};
+        var openingRow;
+        
+        var cTable = MMTDrop.chartFactory.createTable({
+            getData: {
+                getDataFn: function (db) {
+                    //reset 
+                    HISTORY    = {};
+                    openingRow = {};
+                    
+                    var col_key  = {id: COL.IP_DEST.id,  label: "Server" };
+                    if( cTable.userData.ip_dest != undefined )
+                        col_key  = {id: COL.APP_PATH.id, label: "App/protocol Path"};
+                    
+                    var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
+                                   {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
+                                   col_key
+                                   ];
+
+                    var colSum = [
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"  , align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download", align:"right"},
+                        {id: COL.DATA_VOLUME.id   , label: "Total"   , align:"right"},
+                    ];
+                    
+                    
+                    var data = db.data();
+                    
+                    var arr = [];
+                    var havingOther = false;
+                    var updateIP2Name = function( obj, msg ){
+                        if( obj.__needUpdateIP2Name == undefined )
+                            return;
+                        
+                        var host =  msg[ HTTP.HOSTNAME.id ];
+                        if( host == undefined || host == "" )
+                            host = msg[ SSL.SERVER_NAME.id ];
+                        if( host != undefined && host != ""){
+                            obj[COL.IP_DEST.id]  = obj[COL.IP_DEST.id] + " (" + host  + ")" ;
+                            delete( obj.__needUpdateIP2Name );
+                        }
+                    }
+                    
+                    for( var i in data){
+                        var msg     = data[i];
+                        var time    = msg[ COL.START_TIME.id ];
+                        var key_val = msg [ col_key.id ];
+                        if( HISTORY[ key_val ] == undefined ){
+                            HISTORY[ key_val ] = {
+                                data  : {
+                                    __key : key_val
+                                },
+                                detail: [],
+                            };
+                            //update
+                            var obj = HISTORY[ key_val ].data;
+                            obj[ col_key.id ] = msg[ col_key.id ];
+                            
+                            //IP
+                            if( col_key.id == COL.IP_DEST.id ){
+                                obj.__needUpdateIP2Name = true;
+                                updateIP2Name( obj, msg );
+                            }else
+                                obj[ col_key.id ] =  MMTDrop.constants.getPathFriendlyName( obj[ col_key.id ] );
+                                
+                            
+                            obj[ COL.START_TIME.id ] = time;
+                            obj[ "LastUpdated" ]     = time;
+                            
+                            for (var j in colSum )
+                                obj[ colSum[j].id ] = msg[ colSum[j].id ];
+                        }
+                        else{
+                            var obj = HISTORY[ key_val ].data;
+                            if( col_key.id == COL.IP_DEST.id )
+                                updateIP2Name( obj, msg );
+                            
+                            if( obj[ COL.START_TIME.id ] >  time ) obj[ COL.START_TIME.id ] = time;
+                            if( obj[ "LastUpdated" ] < time )      obj[ "LastUpdated" ]     = time;
+                            
+                            for (var j in colSum )
+                                obj[ colSum[j].id ] += msg[ colSum[j].id ] ;
+                            
+                        }
+                        
+                        HISTORY[ key_val ].detail.push( msg );
+                    }
+                        
+                    var arr = [];
+                    for( var i in HISTORY )
+                        arr.push( HISTORY[i].data );
+                    
+                    arr.sort( function( a, b){
+                        return b[ COL.DATA_VOLUME.id ] -  a[ COL.DATA_VOLUME.id ];
+                    });
+                    
+                    //format data
+                    for( var i=0; i<arr.length; i++ ){
+                        var obj = arr[i];
+                        obj.index = i+1;
+                        
+                        HISTORY[ i ] = HISTORY[ obj.__key ];
+                        
+                        obj[ COL.START_TIME.id ]    = moment( obj[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                        obj[ "LastUpdated" ]        = moment( obj["LastUpdated"] )    .format("YYYY/MM/DD HH:mm:ss");
+                        obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.UL_DATA_VOLUME.id] );
+                        obj[ COL.DL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.DL_DATA_VOLUME.id] );
+                        obj[ COL.DATA_VOLUME.id]    = MMTDrop.tools.formatDataVolume( obj[ COL.DATA_VOLUME.id]    );
+                        
+                    }
+                    columns = columns.concat( colSum  );
+                    columns.unshift( {id: "index", label: ""});
+                    
+                    return {
+                        data: arr,
+                        columns: columns
+                    };
+                }
+            },
+            chart: {
                 //"scrollX": true,
                 //"scrollY": true,
                 dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
@@ -149,59 +295,40 @@ var ReportFactory = {
             },
             afterEachRender: function (_chart) {
                 // Add event listener for opening and closing details
-                _chart.chart.on('click', 'tr[role=row]', function () {
-                    var tr = $(this);
-                    var row = _chart.chart.api().row(tr);
-
+                _chart.chart.on('click', 'tbody tr[role=row]', function () {
+                    var tr       = $(this);
+                    var row      = _chart.chart.api().row(tr);
+                    var row_data = row.data();
+                    if( row_data == undefined )
+                        return;
+                    
+                    var index = row_data[0] - 1;
+                    
+                    if (openingRow && openingRow.index == index) 
+                        return;
+                    
                     if (row.child.isShown()) {
                         // This row is already open - close it
-                        row.child.hide();
-                        tr.removeClass('shown');
-                        openingRow = null;
+                        //row.child.hide();
+                        //tr.removeClass('shown');
+                        //openingRow = null;
                     } else {
-                        //close the last opening
-                        if (openingRow) {
-                            openingRow.child.hide();
-                            $(openingRow.node()).removeClass('shown');
+                        //close the last opening, that is different with the current one
+                        if (openingRow.row ) {
+                            openingRow.row.child.hide();
+                            $(openingRow.row.node()).removeClass('shown');
                         }
 
                         // Open this row
-                        var index = row.data()[0] - 1;
-                        var event = HISTORY[ index ];
-                        var format = event[ COL.FORMAT_TYPE.id ];
-                        var NEXT;
-                        if( format == FORMAT.WEB_APP_FORMAT ){
-                            NEXT = HTTP;
-                            event[ COL.FORMAT_TYPE.id ] = "HTTP";
-                        }else if( format == FORMAT.SSL_APP_FORMAT ){
-                            NEXT = SSL;
-                            event[ COL.FORMAT_TYPE.id ] = "SSL";
-                        }else if( format == FORMAT.RTP_APP_FORMAT ){
-                            NEXT = RTP;
-                            event[ COL.FORMAT_TYPE.id ] = "RTP";
-                        }
-                        var obj = {};
-                        for( var i in COL )
-                            if( event[ COL[i].id ] != undefined )
-                                obj[ COL[i].label ] = event[ COL[i].id ];
                         
-                        for( var i in NEXT )
-                            obj[ NEXT[i].label ] = event[ NEXT[i].id ];
-
-                        var str = JSON.stringify(obj, function (key, val) {
-                            if (typeof val === "string")
-                                return "<string>" + val + "</string>";
-                            if (typeof val === "number")
-                                return " <number>" + val + "</number>";
-                            return val;
-                        })
-                        .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, ' "</string>')
-                        .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
-                        //.replace(/\"(.+)\":/g, "<label>$1</label> :")
-                        ;
-                        row.child('<div id="detailTest" class="code-json overflow-auto-xy"><ul>' + str + '</ul></div>').show();
+                        row.child('<div id="detailTable" class="code-json overflow-auto-xy">----</div>').show();
                         tr.addClass('shown');
-                        openingRow = row;
+
+                        openingRow = {row: row, index: index};
+                        
+                        var data = HISTORY[ index ].detail;
+                        cDetailTable2.database.data( data );
+                        cDetailTable2.renderTo("detailTable")
                     }
                     return false;
                 });
@@ -1053,7 +1180,7 @@ if( param.ip != undefined ){
         y: 0,
         width: 5,
         height: 10,
-        type: "info",
+        type: "danger",
         userData: {
             fn: "createIPUserReport"
         },
@@ -1061,7 +1188,7 @@ if( param.ip != undefined ){
         id: "user",
         title: ip + " &gt; Destinations",
         x: 6,
-        y: 0,
+        y: 6,
         width: 7,
         height: 5,
         type: "info",
@@ -1072,10 +1199,10 @@ if( param.ip != undefined ){
         id: "app",
         title: ip + " &gt; Protocols/Applications",
         x: 6,
-        y: 6,
+        y: 0,
         width: 7,
         height: 5,
-        type: "info",
+        type: "success",
         userData: {
             fn: "createIPApplicationReport"
         },
@@ -1100,6 +1227,10 @@ if( param.ip != undefined ){
 
 var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail", userData: {getAppList: true}});
 var cTable    = ReportFactory.createDetailOfApplicationChart();
+
+var cDetailTable2 = ReportFactory.createDetailOfApplicationChart2();
+cDetailTable2.attachTo( new MMTDrop.Database(), false );
+
 function loadDetail( ip_dest, app_id ){
     if( param.ip == undefined )
         return;
@@ -1119,8 +1250,11 @@ function loadDetail( ip_dest, app_id ){
     
     cTable.userData = userData;
     
-    var period = fPeriod.selectedOption().id;
-    detail_db.reload({"userData": userData, "period": period}, function( new_data, table){
+    var group_by = fPeriod.selectedOption().id;
+    var period   = {begin: status_db.time.begin, end: status_db.time.end};
+    period = JSON.stringify( period );
+    
+    detail_db.reload({"userData": userData, "period": period, period_groupby: group_by}, function( new_data, table){
         table.attachTo( detail_db, false );
         table.renderTo( "popupTable" )
         $("#detailItem").html('<strong>IP source:</strong> '+ param.ip + ip_dest + app_name );
