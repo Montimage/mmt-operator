@@ -25,7 +25,7 @@ var arr = [
     },
     {
         id: "node",
-        title: "Nodes in the last minute",
+        title: "Active Nodes",
         x: 0,
         y: 9,
         width: 12,
