@@ -4454,6 +4454,7 @@ MMTDrop.Chart = function(option, renderFn){
                             val = $this.children( opt.attr.children ).attr( opt.attr.att );
                         else
                             val = $this.text();
+                        $this.attr("title", val);
                         $this.css( "background-size",  val + " 3px");
                         });
                 }, 2000, _option.bgPercentage);

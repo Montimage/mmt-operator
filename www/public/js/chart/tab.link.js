@@ -941,6 +941,7 @@ var ReportFactory = {
                         cols.push(col);
 
                     if( col.id !== MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id )
+                        //total is no-ip for report-id = 99
                         cols.push( {label: "No-IP", id: col.id} );
                     
                     var obj  = {};
@@ -949,9 +950,6 @@ var ReportFactory = {
                     for (var i in data) {
                         var msg   = data[i];
                         var proto = msg[COL.APP_ID.id];
-
-                        //if (msg[0] != 100)
-                        //    continue;
 
                         var time  = msg[COL.TIMESTAMP.id];
                         var exist = true;
@@ -970,8 +968,10 @@ var ReportFactory = {
                             if( msg[id] == undefined )
                                 msg[id] = 0;
                             
-                            if( cols[j].label == "No-IP" && msg[0] == 100 )
+                            if( cols[j].label == "No-IP" && msg[0] == 100 ){
+                                if( ! exist ) obj[time][id] = 0;
                                 continue;
+                            }
                             
                             if (exist)
                                 obj[time][id] += msg[id] / period;
