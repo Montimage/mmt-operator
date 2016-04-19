@@ -72,6 +72,21 @@ body {
 .dataTable td:hover{
     overflow: visible; 
 }
+
+
+.bg-img-1-red-pixel{
+    /*1 red pixel*/
+    background-image: url(data:image/gif;base64,R0lGODlhAQABAPAAAP8AAP///yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==);
+    background-size: 0px 3px; /*your percentage is the first one (width), second one (100%) is for height*/
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    color: #000;
+    transition:         background-size 1s ease-out;
+    -moz-transition:    background-size 1s ease-out;
+    -ms-transition:     background-size 1s ease-out;
+    -o-transition:      background-size 1s ease-out;
+    -webkit-transition: background-size 1s ease-out;
+}
 @media ( min-width : 768px) {
     .sidebar {
         position: fixed;

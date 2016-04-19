@@ -4,7 +4,7 @@ var arr = [
         title: "Top Users",
         x: 0,
         y: 0,
-        width: 6,
+        width: 4,
         height: 9,
         type: "info",
         userData: {
@@ -12,13 +12,25 @@ var arr = [
         },
     },
     {
-        id: "top_proto",
+        id: "top_profile",
         title: "Top Profiles",
-        x: 6,
+        x: 4,
         y: 0,
-        width: 6,
+        width: 4,
         height: 9,
         type: "success",
+        userData: {
+            fn: "createTopProfileReport"
+        },
+    },
+    {
+        id: "top_proto",
+        title: "Top Protocols/Applications",
+        x: 8,
+        y: 0,
+        width: 4,
+        height: 9,
+        type: "warning",
         userData: {
             fn: "createTopProtocolReport"
         },
@@ -349,6 +361,10 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
+                    var total = {
+                        data: 0,
+                        packet: 0
+                    }
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [COL.DATA_VOLUME, COL.PACKET_COUNT];
                     
@@ -362,10 +378,11 @@ var ReportFactory = {
                         var name = MMTDrop.constants.getProtocolNameFromID(cls);
                         name = '<a onclick=loadDetail(null,'+ cls +')>' + name + '</a>'
                         data.push( [0, name, 
-                                    o[COL.DATA_VOLUME.id], 
+                                    o[ COL.DATA_VOLUME.id ], 
                                     o[ COL.PACKET_COUNT.id ],
                                     MMTDrop.constants.getCategoryNameFromID(MMTDrop.constants.getCategoryIdFromAppId( cls ))
                                    ] )
+                        total.data += o[ COL.DATA_VOLUME.id ];
                     }
 
                     //sort by data size
@@ -375,7 +392,12 @@ var ReportFactory = {
                     //index
                     for( var i=0; i<data.length; i++ ){
                         data[i][0] = (i+1);
-                        data[i][2] = MMTDrop.tools.formatDataVolume(   data[i][2] );
+                        data[i][2] = '<span title="'+ 
+                            MMTDrop.tools.formatPercentage( data[i][2] / total.data ) 
+                            +'">' + 
+                            MMTDrop.tools.formatDataVolume( data[i][2] )
+                            + '</span>';
+                        
                         data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
                     }
                     return {
@@ -391,10 +413,18 @@ var ReportFactory = {
             chart: {
                 "paging": false,
                 "info"  : true,
-                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"tbl-proto-app-report" t>',
                 "scrollY": true,
             },
-
+            bgPercentage:{
+                table : ".tbl-proto-app-report table",
+                column: 3, //index of column, start from 1
+                css   : "bg-img-1-red-pixel",
+                attr  : {
+                    children : "span",
+                    att : "title"
+                }
+            },
             //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
@@ -456,7 +486,11 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var data = db.data();
                     var obj = {};
-
+                    var total = {
+                        packet: 0,
+                        data  : 0
+                    }
+            
                     for (var i=0; i<data.length; i++) {
                         var msg  = data[i];
                         var ip   = msg[ COL.IP_DEST.id ];
@@ -476,6 +510,9 @@ var ReportFactory = {
                         obj[ ip ][ 2 ] += msg[ COL.DATA_VOLUME.id];
                         obj[ ip ][ 3 ] += msg[ COL.PACKET_COUNT.id ];
                         
+                        total.data    += msg[ COL.DATA_VOLUME.id];
+                        total.packet  += msg[ COL.PACKET_COUNT.id ];
+                        
                         if( obj[ ip ][ 4 ] > time )
                             obj[ ip ][ 4 ] = time;
                         if( obj[ ip ][ 5 ] < time )
@@ -493,8 +530,15 @@ var ReportFactory = {
                     //index
                     for( var i=0; i<data.length; i++ ){
                         data[i][0] = (i+1);
-                        data[i][2] = MMTDrop.tools.formatDataVolume( data[i][2] );
+                        data[i][2] = '<span title="'+ 
+                            MMTDrop.tools.formatPercentage( data[i][2] / total.data ) 
+                            +'">' + 
+                            MMTDrop.tools.formatDataVolume( data[i][2] )
+                            + '</span>';
+                        
                         data[i][3] = MMTDrop.tools.formatLocaleNumber( data[i][3] );
+                        
+                        
                         data[i][4] = moment( data[i][4] ).format("YYYY/MM/DD HH:mm:ss");
                         data[i][5] = moment( data[i][5] ).format("MM/DD HH:mm:ss");
                     }
@@ -515,9 +559,18 @@ var ReportFactory = {
             chart: {
                 "paging": false,
                 "info"  : true,
-                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"application-table" t>',
+                "dom"   : '<"row" <"col-md-6" i><"col-md-6" f>> <"tbl-destination-report" t>',
                 "scrollY": "200px",
                 "scrollCollapse": true,
+            },
+            bgPercentage:{
+                table : ".tbl-destination-report table",
+                column: 3, //index of column, start from 1
+                css   : "bg-img-1-red-pixel",
+                attr  : {
+                    children : "span",
+                    att : "title"
+                }
             },
             //custom legend
             afterEachRender: function (_chart) {
@@ -567,7 +620,7 @@ var ReportFactory = {
 
         return report;
     },
-    createTopProtocolReport: function (filter, ip) {
+    createTopProfileReport: function (filter, ip) {
         var self = this;
         var db_param = {id: "network.profile" };
         if( ip !== undefined )
@@ -672,14 +725,18 @@ var ReportFactory = {
                     }
                 }
             },
-
+            bgPercentage:{
+                table : ".tbl-top-profiles",
+                column: 4, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
             //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-condensed"
+                    "class": "table table-bordered table-striped table-condensed tbl-top-profiles"
                 });
                 $table.appendTo($("#" + _chart.elemID));
                 $("<thead><tr><th></th><th width='50%'>Profile</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
@@ -886,7 +943,7 @@ var ReportFactory = {
 
                     cPie.dataLegend = {
                         "dataTotal": 0,
-                        "label"    : col.label,
+                        "label"    : col.label.substr(0, col.label.indexOf(" ")),
                         "data"     : {}
                     };
 
@@ -967,14 +1024,18 @@ var ReportFactory = {
                     }
                 }
             },
-
+            bgPercentage:{
+                table : ".tbl-top-users",
+                column: 5, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
             //custom legend
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
+                    "class": "table table-bordered table-striped table-hover table-condensed tbl-top-users"
                 });
                 $table.appendTo($("#" + _chart.elemID));
                 $("<thead><tr><th></th><th width='40%'>Client IP</th><th width='20%'>MAC</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
@@ -1030,9 +1091,10 @@ var ReportFactory = {
                         "align": "right"
                     }).appendTo($tr);
 
+                    var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                        "text" : percent 
 
                     }).appendTo($tr);
                 }
@@ -1089,9 +1151,10 @@ var ReportFactory = {
                         "html":  MMTDrop.tools.formatDataVolume( val ),
                     }).appendTo($tr);
 
+                    var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                        "text" : percent 
 
                     }).appendTo($tr);
 
@@ -1129,7 +1192,7 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom: "t",
-                    order: [[4, "desc"]]
+                    order: [[4, "desc"]],
                 });
             }
         });
@@ -1168,6 +1231,311 @@ var ReportFactory = {
         return report;
     },
     
+    createTopProtocolReport: function (filter, ip) {
+        var self = this;
+        var db_param = {id: "network.profile" };
+        if( ip !== undefined )
+            db_param["userData"] = {ip: ip };
+        var database = MMTDrop.databaseFactory.createStatDB( db_param );
+        var COL      = MMTDrop.constants.StatsColumn;
+        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
+        var fMetric  = MMTDrop.filterFactory.createMetricFilter();
+
+        var cPie = MMTDrop.chartFactory.createPie({
+            getData: {
+                getDataFn: function (db) {
+                    var col = fMetric.selectedOption();
+
+                    var data = [];
+                    //the first column is Timestamp, so I start from 1 instance of 0
+                    var columns = [];
+
+                    var obj = db.stat.splitDataByApp();
+
+                    cPie.dataLegend = {
+                        "dataTotal": 0,
+                        "label"    : col.label.substr(0, col.label.indexOf(" ")),
+                        "data"     : {}
+                    };
+
+                    var total = 0;
+
+                    for (var cls in obj) {
+                        var o = obj[cls];
+                        //sumup by col.id 
+                        o = MMTDrop.tools.sumUp(o, col.id);
+
+                        var v = o[col.id];
+                        if( v === 0 || v === undefined ) continue;
+
+                        var name = MMTDrop.constants.getProtocolNameFromID(cls);
+
+                        data.push({
+                            "key": name,
+                            "val": v
+                        });
+
+                        cPie.dataLegend.data[name] = v;
+                        cPie.dataLegend.dataTotal += v;
+                    }
+
+                    
+                    data.sort(function (a, b) {
+                        return b.val - a.val;
+                    });
+
+                    var top = 7;
+                    if( data.length > top+1 && cPie.showAll !== true && ip == undefined ){
+                        var val = 0;
+                        
+                        //update data
+                        for (var i=top; i<data.length; i++ ){
+                            var msg = data[i];
+                            val += msg.val;
+                        }
+                                                
+                        data[top] = {
+                            key: "Other",
+                            val: val
+                        };
+                        data.length = top+1;
+                        
+                        //reset dataLegend
+                        cPie.dataLegend.data = {};
+                        for (var i = 0; i < data.length; i++) {
+                            var o = data[i];
+                            cPie.dataLegend.data[o.key] = o.val;
+                        }
+                    }
+                    
+                    return {
+                        data: data,
+                        columns: [{
+                            "id": "key",
+                            label: ""
+                        }, {
+                            "id": "val",
+                            label: ""
+                        }],
+                    };
+                }
+            },
+            chart: {
+                size: {
+                    height: 300
+                },
+                legend: {
+                    hide: true,
+                },
+                data: {
+                    onclick: function( d, i ){
+                        var id = d.id;
+                        if( id === "Other") return;
+                        
+                        var _chart = cPie.chart;
+                    }
+                }
+            },
+            bgPercentage:{
+                table : ".tbl-top-proto",
+                column: 4, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
+            //custom legend
+            afterEachRender: function (_chart) {
+                var chart = _chart.chart;
+                var legend = _chart.dataLegend;
+
+                var $table = $("<table>", {
+                    "class": "table table-bordered table-striped table-condensed tbl-top-proto"
+                });
+                $table.appendTo($("#" + _chart.elemID));
+                $("<thead><tr><th></th><th width='50%'>Protocol/Application</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
+                var i = 0;
+                for (var key in legend.data) {
+                    if( key == "Other")
+                        continue;
+                    
+                    i++;
+                    var val = legend.data[key];
+                    var $tr = $("<tr>");
+                    $tr.appendTo($table);
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right"
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            var id = $(this).data("id");
+                            chart.toggle(id);
+                            //$(this).css("background-color", chart.color(id) );
+                        })
+                        .appendTo($tr);
+                    $("<td>", {
+                        "text": key
+                    }).appendTo($tr);
+
+                    var $a = $("<a>", {
+                        href : "?show detail of this class",
+                        title: "click to show detail of this class",
+                        text : MMTDrop.tools.formatDataVolume( val ),
+                        
+                    });
+                    $a.on("click", null, key, function( event ){
+                        event.preventDefault();
+                        var id = event.data;
+                        
+                        if( ip )
+                            location.href = "?profile=" + id + "&ip = " + ip;
+                        else
+                            location.href = "?profile=" + id;
+                        return false;
+                    });
+                    
+                    $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+                    }).appendTo($tr);
+                }
+                var $tfoot = $("<tfoot>");
+
+                if (legend.data["Other"] != undefined) {
+                    i++;
+                    $tr = $("<tr>");
+                    var key = "Other";
+                    var val = legend.data[key];
+
+                    $("<td>", {
+                            "class": "item-" + key,
+                            "data-id": key,
+                            "style": "width: 30px; cursor: pointer",
+                            "align": "right"
+                        })
+                        .css({
+                            "background-color": chart.color(key)
+                        })
+                        .on('mouseover', function () {
+                            chart.focus($(this).data("id"));
+                        })
+                        .on('mouseout', function () {
+                            chart.revert();
+                        })
+                        .on('click', function () {
+                            var id = $(this).data("id");
+                            chart.toggle(id);
+                            //$(this).css("background-color", chart.color(id) );
+                        })
+                        .appendTo($tr);
+
+                    var $a = $("<a>", {
+                        href: "?show all classes",
+                        title: "click to show all classes",
+                        text: "Other",
+                        
+                    });
+                    $a.on("click", function(){
+                       _chart.showAll = true;
+                       _chart.redraw(); 
+                        return false;
+                    });
+                    
+                    $("<td>").append( $a ).appendTo($tr);
+
+                    
+                    $("<td>", {
+                        "align": "right",
+                        "html" :  MMTDrop.tools.formatDataVolume( val )
+                    }).appendTo($tr);
+
+                    $("<td>", {
+                        "align": "right",
+                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
+
+                    }).appendTo($tr);
+
+                    $tfoot.append($tr).appendTo($table);
+                }
+                
+                $tfoot.append(
+                    $("<tr>", {
+                        "class": 'success'
+                    }).append(
+                        $("<td>", {
+                            "align": "center",
+                            "text": i
+                        })
+                    ).append(
+                        $("<td>", {
+                            "text": "Total"
+                        })
+                    ).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
+                        })
+                    ).append(
+                        $("<td>", {
+                            "align": "right",
+                            "text": "100%"
+                        })
+                    )
+                ).appendTo($table);
+
+                $table.dataTable({
+                    paging: false,
+                    dom: "t",
+                    order: [[3, "desc"]]
+                });
+            }
+        });
+        //
+
+        var dataFlow = [{object:fProbe,
+                         effect:[{
+                object: fMetric,
+                effect: [{
+                    object: cPie
+                }]
+        }, ] }];
+
+        var report = new MMTDrop.Report(
+            // title
+            null,
+
+            // database
+            database,
+
+            // filers
+					[fProbe, fMetric],
+
+            //charts
+					[
+                {
+                    charts: [cPie],
+                    width: 12
+                },
+					 ],
+
+            //order of data flux
+            dataFlow
+        );
+
+        return report;
+    },
+
 }
 
 var param = MMTDrop.tools.getURLParameters();
@@ -1210,7 +1578,7 @@ if( param.ip != undefined ){
     
     ReportFactory.ip = param.ip;
     ReportFactory.createIPUserReport = function( filter ){
-        var rep = this.createTopProtocolReport( filter, this.ip);
+        var rep = this.createTopProfileReport( filter, this.ip);
         return rep;
     };
     

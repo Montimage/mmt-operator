@@ -833,6 +833,11 @@ MMTDrop.tools = function () {
         return v.toFixed(2) ;//Math.round(v);
     };
     
+    _this.formatPercentage = function( v ){
+        v *= 100;
+        return v.toFixed(2) + "%";
+    }
+    
     _this.formatLocaleNumber = function( v ){
         return v.toLocaleString();
     }
@@ -3292,6 +3297,9 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
                 var obj = _this.callback[i];
                 obj.callback( obj.data, _this );
             }
+        
+        
+        
 	};
 };
 
@@ -4425,6 +4433,33 @@ MMTDrop.Chart = function(option, renderFn){
             if( MMTDrop.tools.isFunction( afterRender )  ){
                 afterRender( _this );
             }
+            
+            
+            if( _option.bgPercentage ){
+                setTimeout( function( opt ){
+                    $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
+                        var $this = $(this);
+                        $this.addClass( opt.css );
+                        });
+                }, 1000, _option.bgPercentage);
+
+                //aimation
+                //change background-size 
+                setTimeout( function( opt ){
+                    $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
+                        var $this = $(this);
+                        var val = 0;
+                        if( opt.attr )
+                            val = $this.children( opt.attr.children ).attr( opt.attr.att );
+                        else
+                            val = $this.text();
+                        $this.css( "background-size",  val + " 3px");
+                        });
+                }, 2000, _option.bgPercentage);
+                
+                
+            }
+            
 		}else
 			throw new Error ("No render function is defined");
 	};
@@ -5831,6 +5866,10 @@ MMTDrop.chartFactory = {
                             option.click( this );
                         }
                     });
+                }
+                var bg = option.pecentageBackground;
+                if( bg ){
+                    
                 }
 				return table;
 			});

@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "protocol",
-        title: "Protocols",
+        title: "Top Protocols",
         x: 0,
         y: 4,
         width: 12,
@@ -25,7 +25,7 @@ var arr = [
     },
     {
         id: "node",
-        title: "Nodes",
+        title: "Nodes in the last minute",
         x: 0,
         y: 9,
         width: 12,
@@ -327,7 +327,7 @@ var ReportFactory = {
                 var legend = _chart.dataLegend;
                 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
+                    "class": "table table-bordered table-striped table-hover table-condensed tbl-node-legend"
                 });
 
                 $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
@@ -372,11 +372,13 @@ var ReportFactory = {
                         "text": MMTDrop.tools.formatDataVolume(val)
                     }).appendTo($tr);
 
+                    var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text": (val * 100 / legend.dataTotal).toFixed(2) + "%"
+                        "text" : percent 
 
                     }).appendTo($tr);
+
                 }
                 //footer of table
                 var $tfoot = $("<tfoot>");
@@ -417,11 +419,13 @@ var ReportFactory = {
                         "html": MMTDrop.tools.formatDataVolume(val)
                     }).appendTo($tr);
 
+                    var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text": (val * 100 / legend.dataTotal).toFixed(2) + "%"
+                        "text" : percent 
 
                     }).appendTo($tr);
+
 
                     $tfoot.append($tr).appendTo($table);
                 }
@@ -467,9 +471,16 @@ var ReportFactory = {
 
                 table.DataTable().columns.adjust();
             },
+        /*    
 	    click: function(){
-	    console.log("click");
+            //console.log("click");
 	    },
+        */
+            bgPercentage:{
+                table : ".tbl-node-legend",
+                column: 4, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
             afterRender: function( _chart ){
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
@@ -615,7 +626,7 @@ var ReportFactory = {
                                   {id:"Out Bytes"       , label:"Out Bytes"       , align:"right"},
                                   {id:"Total Bytes"     , label:"Total Bytes"     , align:"right"},
                                   {id:"StartTime"       , label:"Start Time"      , align:"right"},
-                                  {id:"LastTime", label:"Last Update Time", align:"right"},];
+                                  {id:"LastTime", label:"Last Updated", align:"right"},];
                     return {
                         data: arr,
                         columns: columns
@@ -624,7 +635,7 @@ var ReportFactory = {
             },
             chart: {
                 "order": [[0, "asc"]],
-                dom: "f<'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
+                dom: "<'row' <'col-sm-6' i><'col-sm-6' f>> <'dataTables_scrollBody overflow-auto-xy't><'row'<'col-sm-3'l><'col-sm-9'p>>",
             },
             afterEachRender: function (_chart) {
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
