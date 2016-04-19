@@ -4,7 +4,7 @@ var arr = [
         title: "Top Users",
         x: 0,
         y: 0,
-        width: 4,
+        width: 6,
         height: 9,
         type: "info",
         userData: {
@@ -14,15 +14,16 @@ var arr = [
     {
         id: "top_profile",
         title: "Top Profiles",
-        x: 4,
+        x: 6,
         y: 0,
-        width: 4,
+        width: 6,
         height: 9,
         type: "success",
         userData: {
             fn: "createTopProfileReport"
         },
     },
+    /*
     {
         id: "top_proto",
         title: "Top Protocols/Applications",
@@ -35,6 +36,7 @@ var arr = [
             fn: "createTopProtocolReport"
         },
     },
+    */
 ];
 
 var availableReports = {
@@ -316,14 +318,14 @@ var ReportFactory = {
                     
                     var index = row_data[0] - 1;
                     
-                    if (openingRow && openingRow.index == index) 
-                        return;
+                    //if (openingRow && openingRow.index == index) 
+                    //    return;
                     
                     if (row.child.isShown()) {
                         // This row is already open - close it
-                        //row.child.hide();
-                        //tr.removeClass('shown');
-                        //openingRow = null;
+                        row.child.hide();
+                        tr.removeClass('shown');
+                        openingRow = {};
                     } else {
                         //close the last opening, that is different with the current one
                         if (openingRow.row ) {

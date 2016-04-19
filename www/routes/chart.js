@@ -8,14 +8,14 @@ var all_pages = {
         'network' : {
             title: "Network"
         },
+		'application' : {
+            title: "Application"
+        },
         'dpi':
         {
             title: "DPI"
         },
-/*			'application' : {
-            title: "Application"
-        },
-		'internet' : {
+/*		'internet' : {
             title: "Internet"
         },
         'voip' : {

@@ -69,9 +69,6 @@ body {
     -o-text-overflow: ellipsis;
     -ms-text-overflow: ellipsis;
 }
-.dataTable td:hover{
-    overflow: visible; 
-}
 
 
 .bg-img-1-red-pixel{

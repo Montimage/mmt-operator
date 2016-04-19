@@ -149,6 +149,7 @@ var MongoConnector = function (opts) {
         if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
             var format_type = msg[ 24 ];
             var app_name    = "unknown";
+            /*
             //do not know
             if( format_type === 0 && msg[ 27 ] != undefined  && msg[ 27 ]){
                 app_name = self.splitDomainName( msg[ 27 ] );
@@ -162,7 +163,10 @@ var MongoConnector = function (opts) {
                 app_name = self.splitDomainName( msg[ 27 ] );
             }
             //
-            else if( msg[ COL.PORT_DEST ] != undefined )
+            else
+                */
+                if( msg[ COL.PORT_DEST ] != undefined )
+                
                 //server_port
                 app_name = msg[ COL.PORT_DEST ];
 

@@ -704,8 +704,9 @@ MMTDrop.constants = {
 		 * @returns {string} Protocol Name
 		 */
 		getCategoryNameFromID : function(id) {
-			var protocolName;
-			protocolName = ( id in MMTDrop.constants.CategoriesIdsMap) ? MMTDrop.constants.CategoriesIdsMap[id] : 'NaP';
+			var protocolName = "Network";
+			if ( id in MMTDrop.constants.CategoriesIdsMap) 
+                protocolName = MMTDrop.constants.CategoriesIdsMap[id] ;
 			return protocolName;
 		},
 
