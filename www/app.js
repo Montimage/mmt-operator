@@ -1,4 +1,4 @@
-var VERSION         = "v0.5.0b-4938da8";
+var VERSION         = "v0.5.0-9c15f16";
 
 var express         = require('express');
 var session         = require('express-session')
