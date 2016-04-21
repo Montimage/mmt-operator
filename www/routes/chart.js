@@ -33,13 +33,13 @@ var all_pages = {
         'behavior':{
             title:"Behavior"
         },
+*/
         'ndn':{
             title: "NDN"
         },
         'video':{
             title: "Video QoS"
         }
-*/
 };
 
 router.get('/*', function(req, res, next) {
