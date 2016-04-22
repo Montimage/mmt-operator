@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 9,
+        height: 6,
         type: "success",
         userData: {
             fn: "createResponseTimeReport"
@@ -95,7 +95,7 @@ var ReportFactory = {
                         data    : db.data(),
                         columns : cols,
                         ylabel  : "Time(ms)",
-                        height  : 270,
+                        height  : 320,
                         addZeroPoints_:{
                             time_id       : 3,
                             time          : db.time,
@@ -107,6 +107,9 @@ var ReportFactory = {
             },
 
             chart: {
+                padding:{
+                    top: 20,
+                },
                 data:{
                     type: "line",
                     axes:{
@@ -181,11 +184,14 @@ var ReportFactory = {
                     var data = db.data(); 
                     for( var i in data ){
                         var msg = data[i];
+                        //this happens when cTable is drawn >= 2 times
+                        if( msg.__formated === true ) continue;
+                        
                         msg[ COL.TIMESTAMP.id ]    = _this.formatTime( new Date( msg[ COL.TIMESTAMP.id ] ) );
                         msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
+                        msg.__formated = true;
                     }
-                        
                     return {
                         data    : data,
                         columns : cols
@@ -217,10 +223,7 @@ var ReportFactory = {
             // charts
 					[
                 {
-                    charts: [cLine],
-                    width: 12
-                },{
-                    charts: [cTable],
+                    charts: [cLine, cTable],
                     width: 12
                 },
 					 ],

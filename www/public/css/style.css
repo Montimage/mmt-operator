@@ -265,13 +265,13 @@ a {
 }
 
 .c3-chart-line {
-    -webkit-opacity: 0;
-    -webkit-animation-name    : draw_c3j_line; 
-    -webkit-animation-duration: 2s;  
+    opacity: 0;
+    animation-name    : draw_c3j_line; 
+    animation-duration: 2s;  
     
-    -webkit-animation-fill-mode: forwards;
-    -webkit-animation-iteration-count: 1; 
-    -webkit-animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1; 
+    animation-timing-function: ease-out;
 }
 
 @keyframes draw_c3j_line {
@@ -284,19 +284,19 @@ a {
 
 
 .c3-chart-arc {
-    -webkit-opacity: 0;
-    -webkit-animation-name    : draw_c3j_arc; 
-    -webkit-animation-duration: 2s;  
-    -webkit-
-    -webkit-animation-fill-mode: forwards;
-    -webkit-animation-iteration-count: 1; 
-    -webkit-animation-timing-function: ease-out;
+    opacity: 0;
+    animation-name    : draw_c3j_arc; 
+    animation-duration: 2s;  
+    
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1; 
+    animation-timing-function: ease-out;
     
     -webkit-transform-origin:center center;
 }
 
 @keyframes draw_c3j_arc {
-    0%    { opacity: 0}
+    0%    { opacity: 0 }
     40%   { opacity: 0;   transform: scale(0,0);}
     80%   { opacity: 0.4; transform: scale(1,1);}
     100%  { opacity: 1;}
