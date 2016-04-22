@@ -72,6 +72,18 @@ var MMTDrop = {
         PORT_DEST           : 22, //Server port number (0 if transport protocol is session less like ICMP)
         PORT_SRC            : 23, //Client port number (0 if transport protocol is session less like ICMP) 
         THREAD_NUMBER       : 24,
+        RTT                 : 25,
+        RTT_MIN_SERVER      : 26,
+        RTT_MIN_CLIENT      : 27,
+        RTT_MAX_SERVER      : 28,
+        RTT_MAX_CLIENT      : 29,
+        RTT_AVG_SERVER      : 30,
+        RTT_AVG_CLIENT      : 31,
+        FORMAT_TYPE         : 32, //0: default, 1: http, 2: tls, 3: rtp
+        APP_FAMILY          : 33,
+        CONTENT_CLASS       : 34,
+        APP_NAME            : 35,
+        CDN_FLAG            : 36,
     },
     
     SecurityColumnId           : {
@@ -146,14 +158,16 @@ var MMTDrop = {
     },
     
     HttpStatsColumnId : {
-        RESPONSE_TIME       : 0, /**< Index of the response time column */
-        TRANSACTIONS_COUNT  : 1, /**< Index of the HTTP transactions count (req/res number) column */
-        INTERACTION_TIME    : 2, /**< Index of the interaction time (between client and server) column */
-        HOSTNAME            : 3, /**< Index of the hostname column */
-        MIME_TYPE           : 4, /**< Index of the MIME type column */
-        REFERER             : 5, /**< Index of the Referer column */
-        DEVICE_OS_ID        : 6, /**< Index of the device and operating system ids column */
-        CDN_FLAG            : 7, /**< Index of the is CDN delivered column */
+        RESPONSE_TIME       : 35, /**< Index of the response time column */
+        TRANSACTIONS_COUNT  : 36, /**< Index of the HTTP transactions count (req/res number) column */
+        INTERACTION_TIME    : 37, /**< Index of the interaction time (between client and server) column */
+        HOSTNAME            : 38, /**< Index of the hostname column */
+        MIME_TYPE           : 39, /**< Index of the MIME type column */
+        REFERER             : 40, /**< Index of the Referer column */
+        CDN_FLAG            : 41, /**< Index of the is CDN delivered column */
+        URI: 42,
+        METHOD: 43,
+        RESPONSE: 44
     },
     
     TlsStatsColumnId : {

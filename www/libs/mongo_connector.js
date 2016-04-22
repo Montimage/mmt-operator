@@ -43,7 +43,11 @@ var MongoConnector = function (opts) {
                                  //key
                                  [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID], 
                                  //inc
-                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT], []),
+                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
+                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER], 
+                                 []),
             
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             app: new DataCache(db, "data_app", 
@@ -53,7 +57,7 @@ var MongoConnector = function (opts) {
             
             session: new DataCache(db, "data_session", 
                                    //key
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.SESSION_ID,  COL.IP_SRC, COL.THREAD_NUMBER],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, 
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
@@ -63,7 +67,8 @@ var MongoConnector = function (opts) {
                                init_session_set
                                   ),
             
-            mac: new DataCache(db, "data_mac", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
+            mac: new DataCache(db, "data_mac", 
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
          
             ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
@@ -147,7 +152,7 @@ var MongoConnector = function (opts) {
     var update_proto_name = function( msg ){
         //An app is reported as a protocol
         if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
-            var format_type = msg[ 24 ];
+            var format_type = msg[ COL.FORMAT_TYPE ];
             var app_name    = "unknown";
             /*
             //do not know
@@ -589,7 +594,7 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
                 var start = COL.IP_SRC;
-                for( var i=start; i< start + 23; i++){
+                for( var i=start; i< start + 30; i++){
                     groupby[ i ] = {"$first": "$" + i};
                 }
                 

@@ -701,7 +701,7 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
-        var database = new MMTDrop.Database({format:[99,100], id:"link.traffic", userData:{getProbeStatus: true}});
+        var database = new MMTDrop.Database({id:"link.traffic", format:[99,100]});
         var rep = _this.createTrafficReport(fProbe, database, true);
 
         var COL = MMTDrop.constants.StatsColumn;

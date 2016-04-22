@@ -182,12 +182,23 @@ MMTDrop.constants = {
             PORT_DEST         : {id: 22 , label: "Port Destination"},
             PORT_SRC          : {id: 23 , label: "Port Source"},
             THREAD_NUMBER     : {id: 24 , label: "Thread Number"},
-            FORMAT_TYPE       : {id: 25 , label: "Type"},
             
-            APP_FAMILY        : {id: 26 , label: "App Family"},
-            CONTENT_CLASS     : {id: 27 , label: "Content Class"},
-            APP_NAME          : {id: 28 , label: "App Name"},
-            CDN_FLAG          : {id: 29 , label: "CDN Flag"},
+            RTT               : {id: 25 , label: "RTT"},
+            
+            RTT_MIN_SERVER    : {id: 26 , label: "RTT min Server"},
+            RTT_MIN_CLIENT    : {id: 27 , label: "RTT min Client"},
+            RTT_MAX_SERVER    : {id: 28 , label: "RTT min Server"},
+            RTT_MAX_CLIENT    : {id: 29 , label: "RTT min Client"},
+            RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
+            RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
+            
+            
+            FORMAT_TYPE       : {id: 32 , label: "Type"},
+            
+            APP_FAMILY        : {id: 33 , label: "App Family"},
+            CONTENT_CLASS     : {id: 34 , label: "Content Class"},
+            APP_NAME          : {id: 35 , label: "App Name"},
+            CDN_FLAG          : {id: 36 , label: "CDN Flag"},
 		},
     
 		
@@ -196,21 +207,21 @@ MMTDrop.constants = {
 		 */
 		HttpStatsColumn : {
 			/** Response time of the last Request/Reply of the flow */
-			RESPONSE_TIME      : {id: 28, label:"Response Time"},
+			RESPONSE_TIME      : {id: 35, label:"Response Time"},
 			/** Index of the HTTP transactions count (req/res number) column */
-			TRANSACTIONS_COUNT : {id: 29, label:"Transaction Count"},
+			TRANSACTIONS_COUNT : {id: 36, label:"Transaction Count"},
 			/** 
 			 * Index of the interaction time (between client and server) column.
 			 * This is the time between the first request and the lest response. 
 			 * If this is zero then the flow has one request reply.
 			 */
-			INTERACTION_TIME   : {id: 30, label:"Interaction Time"},
+			INTERACTION_TIME   : {id: 37, label:"Interaction Time"},
 			/** Index of the hostname column */
-			HOSTNAME     : {id: 31, label:"Hostname"},
+			HOSTNAME     : {id: 38, label:"Hostname"},
 			/** Index of the MIME type column */
-			MIME_TYPE    : {id: 32, label:"MIME Type"},
+			MIME_TYPE    : {id: 39, label:"MIME Type"},
 			/** Index of the Referer column. Referrer as reported in the HTTP header */
-			REFERER      : {id: 33, label:"Referer"},
+			REFERER      : {id: 40, label:"Referer"},
 			/** Index of the device and operating system ids column.
 			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.). 
 			 * These are derived from the user agent.
@@ -222,10 +233,10 @@ MMTDrop.constants = {
 			 * Will not be present in HTTPS flows. 
 			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
 			 */
-			CDN_FLAG     : {id: 34, label: "CDN Flag"},
-            URI          : {id: 35, label: "URI"},
-            METHOD       : {id: 36, label: "Method"},
-            RESPONSE     : {id: 37, label: "Response"}
+			CDN_FLAG     : {id: 41, label: "CDN Flag"},
+            URI          : {id: 42, label: "URI"},
+            METHOD       : {id: 43, label: "Method"},
+            RESPONSE     : {id: 44, label: "Response"}
             
 		},
 
@@ -236,7 +247,7 @@ MMTDrop.constants = {
 			/** Servername as reported in the SSL/TLS negotiation. 
 			 * It is not always possible to extract this field. will be empty in that case. 
 			 */
-			SERVER_NAME : {id: 28, label:"Server Name"},
+			SERVER_NAME : {id: 35, label:"Server Name"},
 			/**
 			 * 0: CDN not detected (This does not mean it is not used :)). 
 			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
@@ -244,7 +255,7 @@ MMTDrop.constants = {
 			 * 2: CDN delivery, the application name should identify the application. 
 			 * However, we might see Akamai as application. In this case, skip it.
 			 */
-			CDN_FLAG    : {id: 29, label:"CDN Flag"},
+			CDN_FLAG    : {id: 36, label:"CDN Flag"},
 		},
 
 		/**
@@ -252,12 +263,12 @@ MMTDrop.constants = {
 		 */
 		RtpStatsColumn : {
 			/** Global packet loss rate of the flow */
-			PACKET_LOSS_RATE       : {id: 28, label:"Packet Loss Rate"},
+			PACKET_LOSS_RATE       : {id: 35, label:"Packet Loss Rate"},
 			/** Average packet loss burstiness of the flow */
-			PACKET_LOSS_BURSTINESS : {id: 29, label:"Packet Loss Burstiness"},
+			PACKET_LOSS_BURSTINESS : {id: 36, label:"Packet Loss Burstiness"},
 			/** Maximum jitter value for the flow */
-			MAX_JITTER             : {id: 30, label:"Max Jitter"},
-			ORDER_ERROR            : {id: 31, label:"Order Error"},
+			MAX_JITTER             : {id: 37, label:"Max Jitter"},
+			ORDER_ERROR            : {id: 38, label:"Order Error"},
 		},
         /**
 		 * Data format description for statistic reports of FTP protocol
@@ -593,9 +604,9 @@ MMTDrop.constants = {
 		getProtocolNameFromID : function( app_id ) {
             var id = parseInt( app_id );
             
-			var protocolName = "NaP";
+			var protocolName = "Unknown";
             if( id > 0 )
-                protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'NaP';
+                protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'Unknown';
             else if( MMTDrop.constants.OtherProtocolsIDName && ( id in MMTDrop.constants.OtherProtocolsIDName)){
                 
                 protocolName = MMTDrop.constants.OtherProtocolsIDName[id];

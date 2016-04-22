@@ -61,14 +61,28 @@
     top: 40%;
 }
 #toolbar-box{
-    padding-right: 2px;
-    padding-top: 2px;
 }
 #toolbar button{
     border-radius: 0px !important;
     border: 0px;
     border-right: 1px solid #ccc;
 }
+
+#toolbar-gauges{
+    float: left;
+    margin-left: 100px;
+    height: 32px;
+    padding-right: 2px;
+    padding-top: 2px;
+}
+
+#toolbar-gauges li{
+    border: 0px !important;
+    width: 50px;
+    text-align: center;
+    margin: 5px auto;
+}
+
 .grid-stack-item-header{
     border-width: 1px;
     border-style: solid;
@@ -257,4 +271,22 @@
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
     right: 0px; 
+}
+
+
+
+
+.chart-gauge {}
+
+.chart-filled {
+    fill: #07B810; 
+}
+
+.chart-empty {
+    fill: #dedede;
+}
+
+.needle,
+.needle-center {
+    fill: #464A4F;
 }
