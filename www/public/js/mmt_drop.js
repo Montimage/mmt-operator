@@ -437,8 +437,9 @@ MMTDrop.constants = {
             DATA_FRESHNESS_PERIOD    : {id: 18,  label: "Data Freshness Period"},
             DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
 			NDN_VOLUME_DATA          : {id: 20,  label: "Data Payload"},
-			NDN_MAX_RESPONSED_TIME          : {id: 21,  label: "MAX RT"},
-			NDN_MIN_RESPONSED_TIME          : {id: 22,  label: "MIN RT"},
+			NDN_MAX_RESPONSED_TIME          : {id: 21,  label: "MAX RT(ms)"},
+			NDN_MIN_RESPONSED_TIME          : {id: 22,  label: "MIN RT(ms)"},
+			NDN_AVR_RESPONSED_TIME          : {id: 23,  label: "AVR RT(ms)"},
 		},
         NdnMetricFilter : {
             NB_INTEREST_PACKET       : {id: 13,  label: "Interest Packet"},

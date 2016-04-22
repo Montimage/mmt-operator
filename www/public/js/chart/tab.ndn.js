@@ -87,9 +87,9 @@ var ReportFactory = {
                         if( obj[ key ] == undefined )
                             obj[ key ] = msg;
                         else{
-                            for( var j=13; j<22; j++)
+                            for( var j=13; j<24; j++)
                                 //time
-                                if( j == 14 || j == 18 ){
+                                if( j == 14 || j == 18 || j == 21 || j==22 || j==23){
                                     obj[key][ j ] = msg[ j ];
                                 }else
                                     obj[key][ j ] += msg[ j ];
