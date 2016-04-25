@@ -27,7 +27,6 @@ var ReportFactory = {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
         var fApp  = MMTDrop.filterFactory.createMetricFilter();
-        var database2 = MMTDrop.databaseFactory.createStatDB({id: "link.traffic"});
         
         var database = new MMTDrop.Database({id: "link.traffic", format: [100]}, function( data ){
             //group by timestamp

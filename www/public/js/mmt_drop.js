@@ -5213,7 +5213,7 @@ MMTDrop.chartFactory = {
                             //console.log( ts );
                             exist = true;
                             for( var j=1; j<n; j++)
-                                if( arrData[i][j] != undefined )
+                                if( arrData[i][j] !== undefined )
                                     data[j] += arrData[i][j];
                         }
                         

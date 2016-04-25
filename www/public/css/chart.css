@@ -24,6 +24,7 @@
     position: fixed;
     top: 51px;
     z-index: 1000;
+    padding-top: 2px;
 }
 #alert{
     border-bottom: 1px solid #ccc;

@@ -263,11 +263,14 @@ function Cache ( option ) {
             //increase
             for (var j in data_id['$inc']){
                 var key = data_id['$inc'][ j ];
+                var val = msg[ key ];
+                if( val == undefined  || typeof val  != "number" )
+                    val = 0;
                 
                 if (oo[ key ] == undefined)
-                    oo[ key ]  = msg[  key ];
+                    oo[ key ]  = val;
                 else
-                    oo[ key ] += msg[ key ];
+                    oo[ key ] += val;
             }
             
             //set

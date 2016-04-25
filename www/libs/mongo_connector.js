@@ -17,8 +17,9 @@ var MongoConnector = function (opts) {
     opts.connectString = opts.connectString || 'mongodb://127.0.0.1:27017/MMT';
 
     var self = this;
-    var COL = dataAdaptor.StatsColumnId;
-    var NDN = dataAdaptor.NdnColumnId;
+    var COL  = dataAdaptor.StatsColumnId;
+    var HTTP = dataAdaptor.HttpStatsColumnId;
+    var NDN  = dataAdaptor.NdnColumnId;
     var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
     
@@ -46,7 +47,8 @@ var MongoConnector = function (opts) {
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER], 
+                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                 HTTP.RESPONSE_TIME], 
                                  []),
             
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
@@ -66,7 +68,8 @@ var MongoConnector = function (opts) {
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER],
+                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                 HTTP.RESPONSE_TIME],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
                                   //init

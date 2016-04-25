@@ -26,13 +26,13 @@ var ReportFactory = {
     createResponseTimeReport: function (filter) {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
+        var HTTP  = MMTDrop.constants.HttpStatsColumn;
         var fApp  = MMTDrop.filterFactory.createMetricFilter();
-        var database2 = MMTDrop.databaseFactory.createStatDB({id: "link.traffic"});
         
         var database = new MMTDrop.Database({id: "link.traffic", format: [100]}, function( data ){
             //group by timestamp
             var obj  = {};
-            var cols = [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER ];
+            var cols = [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME ];
             for (var i in data) {
                 var msg   = data[i];
 
@@ -50,7 +50,8 @@ var ReportFactory = {
 
 
                 for (var j in cols) {
-                    obj[time][ cols[j].id ] += msg[ cols[j].id ];
+                    if( msg[ cols[j].id ] != undefined )
+                        obj[time][ cols[j].id ] += msg[ cols[j].id ];
                 }
             }
 
@@ -70,13 +71,77 @@ var ReportFactory = {
                 data[i][0] = i+1;
                 //avg of 1 session
                 var val = data[i][ COL.ACTIVE_FLOWS.id ] * 1000; //micro second => milli second
-                data[i].ART                      = 0;
+                data[i][ HTTP.RESPONSE_TIME.id ] = (data[i][ HTTP.RESPONSE_TIME.id ] / val).toFixed(2);
                 data[i][ COL.RTT.id ]            = (data[i][ COL.RTT.id ]            / val).toFixed(2);
                 data[i].DTT                      = ((data[i][ COL.RTT_AVG_SERVER.id ] + data[i][ COL.RTT_AVG_CLIENT.id ])/val).toFixed( 2 );
                 data[i][ COL.RTT_AVG_SERVER.id ] = (data[i][ COL.RTT_AVG_SERVER.id ] / val).toFixed(2);
                 data[i][ COL.RTT_AVG_CLIENT.id ] = (data[i][ COL.RTT_AVG_CLIENT.id ] / val).toFixed(2);
             }
-            return data;
+            
+
+            //add zero points for the timestamp that have no data
+            var start_time = status_db.time.begin,
+                end_time   = status_db.time.end,
+                period_sampling = fPeriod.getDistanceBetweenToSamples() * 1000,
+                time_id = 3;
+            
+            //check whenever probe runing at the moment ts
+            var inActivePeriod = function( ts ){
+                for( var t in status_db.probeStatus )
+                    if( status_db.probeStatus[t].start <= ts && ts <= status_db.probeStatus[t].last_update )
+                        return true;
+                return false;
+            }
+            
+            var createZeroPoint = function( ts ){
+                var zero = {};
+                zero[ time_id ] = ts;
+                
+                var default_value = null;
+                
+                if( inActivePeriod( ts ) )
+                    default_value = 0;
+                
+                for( var c in cols )
+                    zero[ cols[c].id ] = default_value;
+
+                zero.DTT = default_value;
+                zero.ART = default_value;
+
+                return zero;
+            }
+            
+            //add first element if need
+            if( data.length == 0 || start_time < (data[0][ time_id ] - period_sampling) )
+                data.unshift( createZeroPoint( start_time ) );
+
+            //add last element if need
+            if( data.length == 0 || end_time > (data[ data.length - 1 ][ time_id ] + period_sampling ) )
+                data.push( createZeroPoint( end_time ) );
+
+            var len    = data.length;
+            var arr    = [];
+            var lastTS = start_time;
+
+            while( lastTS <= end_time ){
+                lastTS += period_sampling;
+
+                var existPoint = false;
+                for (var i = 0; i < len; i++) {
+                    var ts = data[i][time_id];
+
+                    if( lastTS - period_sampling < ts && ts <= lastTS){
+                        existPoint = true;
+                        arr.push( data[i] );
+                    }
+                }
+
+                if ( !existPoint ) 
+                    arr.push( createZeroPoint( lastTS ) );
+            }
+
+            
+            return arr;
         });
         
         //line chart on the top
@@ -84,11 +149,11 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var cols = [ COL.TIMESTAMP, 
-                                {id: COL.RTT.id        , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
-                                {id: "DTT"             , label: "Data Transfer Time (DTT)"    , type: "area-stack"},
-                                {id: "ART"             , label: "App Response Time (ART)"     , type: "area-stack"},
+                                {id: COL.RTT.id            , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
+                                {id: "DTT"                 , label: "Data Transfer Time (DTT)"    , type: "area-stack"},
+                                {id: HTTP.RESPONSE_TIME.id , label: "App Response Time (ART)"     , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
-                                {id: COL.DATA_VOLUME.id, label: "Data Rate"                   , type: "line"}
+                                {id: COL.DATA_VOLUME.id    , label: "Data Rate"                   , type: "line"}
                                ];
                     
                     return {
@@ -146,7 +211,12 @@ var ReportFactory = {
                                 if( v < 0 ) return 0;
                                 return MMTDrop.tools.formatDataVolume( v );
                             }
-                        }
+                        },
+                        min: 0,
+                        padding: {
+                          top: 10,
+                          bottom: 2
+                        },
                     }
                 },
                 zoom: {
@@ -178,7 +248,7 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var cols = [ {id: 0, label:""}, 
                                 {id: COL.TIMESTAMP.id      , label: "Time"             , align: "left"}, 
-                                {id: "ART"                 , label: "ART (ms)"         , align: "right"},
+                                {id: HTTP.RESPONSE_TIME.id , label: "ART (ms)"         , align: "right"},
                                 {id: "DTT"                 , label: "DTT (ms)"         , align: "right"},
                                 {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms)"  , align: "right"},
                                 {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms)"  , align: "right"},
@@ -187,8 +257,12 @@ var ReportFactory = {
                                 {id: COL.PACKET_COUNT.id   , label: "Packet Rate (pps)", align: "right"},
                                 {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"  , align: "right"}];
                     var data = db.data(); 
+                    var arr  = [];
                     for( var i in data ){
                         var msg = data[i];
+                        if( msg[0] == undefined )
+                            continue;
+                        
                         //this happens when cTable is drawn >= 2 times
                         if( msg.__formated === true ) continue;
                         
@@ -202,9 +276,11 @@ var ReportFactory = {
                         if( flows > 0 )
                             msg[ COL.ACTIVE_FLOWS.id ] = '<a href="application/transaction?time='+ time +'" onmouseover=_showCLineTooltip('+ time +') onmouseout=_hideCLineTooltip()>' + flows + '</a>';
                         msg.__formated = true;
+                        
+                        arr.push( msg );
                     }
                     return {
-                        data    : data,
+                        data    : arr,
                         columns : cols
                     };
                 }
