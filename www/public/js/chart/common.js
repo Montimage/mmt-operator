@@ -44,6 +44,12 @@ var status_db = new MMTDrop.Database({id: "status"});
 $(function () {
     'use strict'
     
+    if( typeof arr === "undefined" ){
+        console.error("No Reports are defined!");
+        $("#waiting").hide();
+        return;
+    }
+    
     $("#waiting").on("click", function(){
             $("#waiting").hide();
     });
