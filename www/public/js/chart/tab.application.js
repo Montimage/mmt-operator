@@ -23,7 +23,12 @@ var ReportFactory = {
     formatTime : function( date ){
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
-    createResponseTimeReport: function (filter) {
+    
+    formatRTT : function( time ){
+        return (time/1000).toFixed( 2 );
+    },
+    
+    createResponseTimeReport: function (fPeriod) {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
         var HTTP  = MMTDrop.constants.HttpStatsColumn;
@@ -32,7 +37,7 @@ var ReportFactory = {
         var database = new MMTDrop.Database({id: "link.traffic", format: [100]}, function( data ){
             //group by timestamp
             var obj  = {};
-            var cols = [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME ];
+            var cols = [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ];
             for (var i in data) {
                 var msg   = data[i];
 
@@ -64,6 +69,7 @@ var ReportFactory = {
                 return a[ COL.TIMESTAMP.id ] - b[ COL.TIMESTAMP.id ];
             })
             
+            var time_interval = fPeriod.getDistanceBetweenToSamples();
             
             //format data
             for( var i=0; i<data.length; i++ ){
@@ -71,11 +77,17 @@ var ReportFactory = {
                 data[i][0] = i+1;
                 //avg of 1 session
                 var val = data[i][ COL.ACTIVE_FLOWS.id ] * 1000; //micro second => milli second
-                data[i][ HTTP.RESPONSE_TIME.id ] = (data[i][ HTTP.RESPONSE_TIME.id ] / val).toFixed(2);
                 data[i][ COL.RTT.id ]            = (data[i][ COL.RTT.id ]            / val).toFixed(2);
                 data[i].DTT                      = ((data[i][ COL.RTT_AVG_SERVER.id ] + data[i][ COL.RTT_AVG_CLIENT.id ])/val).toFixed( 2 );
                 data[i][ COL.RTT_AVG_SERVER.id ] = (data[i][ COL.RTT_AVG_SERVER.id ] / val).toFixed(2);
                 data[i][ COL.RTT_AVG_CLIENT.id ] = (data[i][ COL.RTT_AVG_CLIENT.id ] / val).toFixed(2);
+                
+                
+                val = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; //micro second => milli second
+                if( val != 0 )
+                    data[i][ HTTP.RESPONSE_TIME.id ] = (data[i][ HTTP.RESPONSE_TIME.id ] / val).toFixed(2);
+                
+                data[i][ COL.DATA_VOLUME.id ]    = data[i][ COL.DATA_VOLUME.id ] * 8 / time_interval;
             }
             
 
@@ -174,6 +186,9 @@ var ReportFactory = {
                     type: "line",
                     axes:{
                         "Data Rate": "y2"
+                    },
+                    onclick: function( d, element ){
+                        loadDetail( d.x.getTime() );
                     }
                 },
                 color: {
@@ -229,6 +244,12 @@ var ReportFactory = {
                     }
                 },
             },
+            afterRender: function(){
+                if( ! $("#__cust__style").length )
+                    $('<style id="__cust__style" type="text/css">\
+.c3-circle{cursor:pointer} \
+</style>').appendTo("head");
+            }
                 
         });
         
@@ -274,7 +295,7 @@ var ReportFactory = {
                         
                         var flows = msg[ COL.ACTIVE_FLOWS.id ];
                         if( flows > 0 )
-                            msg[ COL.ACTIVE_FLOWS.id ] = '<a href="application/transaction?time='+ time +'" onmouseover=_showCLineTooltip('+ time +') onmouseout=_hideCLineTooltip()>' + flows + '</a>';
+                            msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick=loadDetail('+ time +')>' + msg[ COL.TIMESTAMP.id ] + '</a>';
                         msg.__formated = true;
                         
                         arr.push( msg );
@@ -288,8 +309,21 @@ var ReportFactory = {
             chart:{
                 "order": [0, "asc"],
                 dom: "<t><'row'<'col-sm-3'i><'col-sm-9'p>>",
-            }
+            },
+            afterEachRender: function (_chart) {
+                // Add event listener for opening and closing details
+                _chart.chart.on('mouseover', 'tbody tr[role=row]', function () {
+                    var ts  = $(this).find('a').data("timestamp");
+                    if ( ts )
+                        _showCLineTooltip( ts );
+                    return false;
+                });
                 
+                _chart.chart.on('mouseout', 'tbody', function () {
+                    _hideCLineTooltip()
+                    return false;
+                });
+            }
         });
         
         var dataFlow = [
@@ -325,4 +359,358 @@ var ReportFactory = {
         return report;
     },
     
+    createDetailChart : function( ){
+         var self    = this;
+        var COL     = MMTDrop.constants.StatsColumn;
+        var HTTP    = MMTDrop.constants.HttpStatsColumn;
+        var SSL     = MMTDrop.constants.TlsStatsColumn;
+        var RTP     = MMTDrop.constants.RtpStatsColumn;
+        var FORMAT  = MMTDrop.constants.CsvFormat;
+        var HISTORY = {};
+        var openingRow;
+        
+        return MMTDrop.chartFactory.createTable({
+            getData: {
+                getDataFn: function (db) {
+                    //reset 
+                    HISTORY    = {};
+                    openingRow = {};
+                    
+                    var col_key  = {id: COL.IP_DEST.id,  label: "Server" };
+                        //col_key  = {id: COL.APP_PATH.id, label: "App/protocol Path"};
+                    
+                    var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
+                                   {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
+                                   col_key
+                                   ];
+
+                    var colSum = [
+                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},
+                        {id: "DTT"                 , label: "DTT (ms)"       , align: "right"},
+                        {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT(ms)"  , align:"right"},
+                        {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT(ms)" , align:"right"},
+                        {id: COL.RTT.id            , label: "NRT(ms)"        , align:"right"},
+                        {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id , label: "Download (B)"   , align:"right"},
+                        {id: COL.DATA_VOLUME.id    , label: "Total (B)"      , align:"right"},
+                        {id: COL.ACTIVE_FLOWS.id   , label: "Transaction"    , align:"right"},
+                    ];
+                    
+                    
+                    var data = db.data();
+                    
+                    var arr = [];
+                    var havingOther = false;
+                    var updateIP2Name = function( obj, msg ){
+                        if( obj.__needUpdateIP2Name == undefined )
+                            return;
+                        
+                        var host =  msg[ HTTP.HOSTNAME.id ];
+                        if( host == undefined || host == "" )
+                            host = msg[ SSL.SERVER_NAME.id ];
+                        if( host != undefined && host != ""){
+                            obj[COL.IP_DEST.id]  = obj[COL.IP_DEST.id] + " (" + host  + ")" ;
+                            delete( obj.__needUpdateIP2Name );
+                        }
+                    }
+                    
+                    for( var i in data){
+                        var msg = data[i];
+                        var start_time  = msg[ COL.START_TIME.id ];
+                        var last_update = msg[ COL.TIMESTAMP.id ];
+                        
+                        if( last_update < start_time )
+                            last_update = start_time;
+                        
+                        var key_val = msg [ col_key.id ];
+                        if( HISTORY[ key_val ] == undefined ){
+                            HISTORY[ key_val ] = {
+                                data  : {
+                                    __key : key_val
+                                },
+                                detail: [],
+                            };
+                            //update
+                            var obj = HISTORY[ key_val ].data;
+                            obj[ col_key.id ] = msg[ col_key.id ];
+                            
+                            //IP
+                            if( col_key.id == COL.IP_DEST.id ){
+                                obj.__needUpdateIP2Name = true;
+                                updateIP2Name( obj, msg );
+                            }else
+                                obj[ col_key.id ] =  MMTDrop.constants.getPathFriendlyName( obj[ col_key.id ] );
+                                
+                            
+                            obj[ COL.START_TIME.id ] = start_time;
+                            obj[ "LastUpdated" ]     = last_update;
+                            
+                            for (var j in colSum )
+                                obj[ colSum[j].id ] = msg[ colSum[j].id ];
+
+                        }
+                        else{
+                            var obj = HISTORY[ key_val ].data;
+                            if( col_key.id == COL.IP_DEST.id )
+                                updateIP2Name( obj, msg );
+                            
+                            if( obj[ COL.START_TIME.id ] >  start_time ) obj[ COL.START_TIME.id ] = start_time;
+                            if( obj[ "LastUpdated" ] < last_update )     obj[ "LastUpdated" ]     = last_update;
+                            
+                            for (var j in colSum )
+                                obj[ colSum[j].id ] += msg[ colSum[j].id ] ;
+                            
+                        }
+                        
+                        HISTORY[ key_val ].detail.push( msg );
+                    }
+                        
+                    var arr = [];
+                    for( var i in HISTORY )
+                        arr.push( HISTORY[i].data );
+                    
+                    arr.sort( function( a, b){
+                        return b[ COL.DATA_VOLUME.id ] -  a[ COL.DATA_VOLUME.id ];
+                    });
+                    
+                    //format data
+                    for( var i=0; i<arr.length; i++ ){
+                        var obj = arr[i];
+                        obj.index = i+1;
+                        
+                        HISTORY[ i ] = HISTORY[ obj.__key ];
+                        
+                        obj[ COL.START_TIME.id ]    = moment( obj[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                        obj[ "LastUpdated" ]        = moment( obj["LastUpdated"] )    .format("YYYY/MM/DD HH:mm:ss");
+                        obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.UL_DATA_VOLUME.id] );
+                        obj[ COL.DL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.DL_DATA_VOLUME.id] );
+                        obj[ COL.DATA_VOLUME.id]    = MMTDrop.tools.formatDataVolume( obj[ COL.DATA_VOLUME.id]    );
+                        
+                        obj.DTT = self.formatRTT( obj[ COL.RTT_AVG_CLIENT.id ] + obj[ COL.RTT_AVG_SERVER.id ] );
+                        
+                        obj[ HTTP.RESPONSE_TIME.id ] = self.formatRTT( obj[ HTTP.RESPONSE_TIME.id ] );
+                        obj[ COL.RTT_AVG_CLIENT.id ] = self.formatRTT( obj[ COL.RTT_AVG_CLIENT.id ] );
+                        obj[ COL.RTT_AVG_SERVER.id ] = self.formatRTT( obj[ COL.RTT_AVG_SERVER.id ] );
+                        obj[ COL.RTT.id ] = self.formatRTT( obj[ COL.RTT.id ] );
+                        
+                        obj[ col_key.id ] = "<a>" + obj[ col_key.id ] + "</a>"; 
+                        
+                    }
+                    columns = columns.concat( colSum  );
+                    columns.unshift( {id: "index", label: ""});
+                    
+                    return {
+                        data: arr,
+                        columns: columns
+                    };
+                }
+            },
+            chart: {
+                //"scrollX": true,
+                //"scrollY": true,
+                dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><t><'row'<'col-sm-3'i><'col-sm-9'p>>",
+                deferRender: true,
+                order: [[4, "desc"]]
+            },
+            afterEachRender: function (_chart) {
+                // Add event listener for opening and closing details
+                _chart.chart.on('click', 'tbody tr[role=row] td a', function () {
+                    var tr       = $(this).parent().parent();
+                    var row      = _chart.chart.api().row(tr);
+                    var row_data = row.data();
+                    if( row_data == undefined )
+                        return;
+                    
+                    var index = row_data[0] - 1;
+                    
+                    //if (openingRow && openingRow.index == index) 
+                    //    return;
+                    
+                    if (row.child.isShown()) {
+                        // This row is already open - close it
+                        row.child.hide();
+                        tr.removeClass('shown');
+                        openingRow = {};
+                    } else {
+                        //close the last opening, that is different with the current one
+                        if (openingRow.row ) {
+                            openingRow.row.child.hide();
+                            $(openingRow.row.node()).removeClass('shown');
+                        }
+
+                        // Open this row
+                        
+                        row.child('<div id="detailTable" class="code-json overflow-auto-xy">----</div>').show();
+                        tr.addClass('shown');
+
+                        openingRow = {row: row, index: index};
+                        
+                        var data = HISTORY[ index ].detail;
+                        cDetailTable2.database.data( data );
+                        cDetailTable2.renderTo("detailTable")
+                    }
+                    return false;
+                });
+            }
+        });
+    },
+
+    createDetailOfApplicationChart2: function () {
+        var self    = this;
+        var COL     = MMTDrop.constants.StatsColumn;
+        var HTTP    = MMTDrop.constants.HttpStatsColumn;
+        var SSL     = MMTDrop.constants.TlsStatsColumn;
+        var RTP     = MMTDrop.constants.RtpStatsColumn;
+        var FORMAT  = MMTDrop.constants.CsvFormat;
+        var openingRow;
+        
+        return MMTDrop.chartFactory.createTable({
+            getData: {
+                getDataFn: function (db) {
+                    var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
+                                   {id: COL.IP_SRC.id    , label: "Client"    , align:"left"},
+                                   {id: COL.APP_PATH.id  , label: "Proto/App Path"    , align:"left"},
+                                  ];
+
+                    var colSum = [
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"         , align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download"       , align:"right"},
+                        {id: HTTP.RESPONSE_TIME.id, label: "ART (ms)"       , align:"right"},
+                        {id: COL.RTT_AVG_SERVER.id, label: "Server DTT (ms)", align:"right"},
+                        {id: COL.RTT_AVG_CLIENT.id, label: "Client DTT (ms)", align:"right"},
+                        {id: COL.RTT.id           , label: "NRT (ms)"       , align:"right"},
+                    ];
+                    var otherCols = [
+                        { id: HTTP.URI.id      , label: HTTP.URI.label},
+                        { id: HTTP.METHOD.id   , label: HTTP.METHOD.label},
+                        { id: HTTP.RESPONSE.id , label: HTTP.RESPONSE.label},
+                        { id: HTTP.MIME_TYPE.id, label: "MIME"     , align:"left"},
+                        { id: HTTP.REFERER.id  , label: "Referer"  , align:"left"},
+                    ];
+                    
+                    
+                    var data = db.data();
+                    
+                    var arr = [];
+                    var havingOther = false;
+                    
+                    for( var i in data){
+                        var msg     = data[i];
+
+                        var format  = msg [ COL.FORMAT_TYPE.id ];
+                        var obj     = {};
+                        obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                        obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
+                        obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
+                        obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
+                        obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id]; // ip
+                        
+                        for( var j in colSum ){
+                                var val = msg[ colSum[j].id ];
+                                if( val == undefined )
+                                    val = 0;
+                            obj[ colSum[j].id ] = val;
+                        }
+                        
+                        for( var i in otherCols ){
+                            var c   = otherCols[i];
+                            var val = msg[ c.id ];
+                            if( val != undefined && val != ""){
+                                obj[ c.id ]  = val;
+                                c.havingData = true;
+                            }
+                        }
+                        
+                        arr.push( obj );
+                            
+                    }
+                    
+                    for( var i in otherCols ){
+                        var c = otherCols[i];
+                        if( c.havingData === true ){
+                            colSum.push( c );
+                            //default value for the rows that have not data of this c
+                            for( var j in arr )
+                                if( arr[j][ c.id ] == undefined )
+                                    arr[j][ c.id ] = "";
+                        }
+                    }
+                    
+                    columns = columns.concat( colSum  );
+                    columns.unshift( {id: "index", label: ""});
+                    
+                    for( var i=0; i<arr.length; i++ ){
+                        arr[i][ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.UL_DATA_VOLUME.id ] );
+                        arr[i][ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.DL_DATA_VOLUME.id ] );
+                        arr[i].index = i+1;
+                        
+                        arr[i][ HTTP.RESPONSE_TIME.id ] = self.formatRTT( arr[i][ HTTP.RESPONSE_TIME.id ] );
+                        arr[i][ COL.RTT_AVG_CLIENT.id ] = self.formatRTT( arr[i][ COL.RTT_AVG_CLIENT.id ] );
+                        arr[i][ COL.RTT_AVG_SERVER.id ] = self.formatRTT( arr[i][ COL.RTT_AVG_SERVER.id ] );
+                        arr[i][ COL.RTT.id ] = self.formatRTT( arr[i][ COL.RTT.id ] );
+                    }
+                    
+                    return {
+                        data: arr,
+                        columns: columns
+                    };
+                }
+            },
+            chart: {
+                "paging": false,
+                "info"  : true,
+                "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
+                "scrollY": "200px",
+                "scrollCollapse": true,
+                //"scrollX": true,
+                //"scrollY": true,
+                deferRender: true,
+            },
+        });
+    },
+
+}
+
+
+var detail_db    = MMTDrop.databaseFactory.createStatDB({id: "network.detail"});
+var cTableDetail = ReportFactory.createDetailChart();
+
+var cDetailTable2 = ReportFactory.createDetailOfApplicationChart2();
+cDetailTable2.attachTo( new MMTDrop.Database(), false );
+
+function loadDetail( timestamp ){
+    if( timestamp == undefined )
+        return;
+    
+    
+    var group_by = fPeriod.selectedOption().id;
+    var period   = {begin: timestamp, end: timestamp};
+    period = JSON.stringify( period );
+    
+    var time_str = moment( timestamp ).format("YYYY/MM/DD HH:mm:ss");
+    
+    detail_db.reload({"period": period, period_groupby: group_by}, function( new_data, table){
+        table.attachTo( detail_db, false );
+        table.renderTo( "popupTable" )
+        $("#detailItem").html('<strong>Timestamp: </strong> '+ time_str +' ');
+        $("#modalWindow").modal();
+    }, cTableDetail);
+    
+    
+     if( $("#modalWindow").length === 0 ){
+        var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
+                    +'<div class="modal-dialog">'
+                    +'<div class="modal-content" >'
+                    +'<div class="modal-header">'
+                    +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
+                    +'<h4 class="modal-title">Detail</h4>'
+                    +'</div>'
+                    +'<div class="modal-body code-json">'
+                    +'<div id="detailItem"/>'
+                    +'<div id="popupTable"/>'
+                    +'</div>'
+                    +'</div></div></div>';
+
+        $("body").append( $(modal) );
+    }
 }

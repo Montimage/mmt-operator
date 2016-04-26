@@ -48,7 +48,8 @@ var MongoConnector = function (opts) {
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                  COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME], 
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT
+                                 ], 
                                  []),
             
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
@@ -69,7 +70,7 @@ var MongoConnector = function (opts) {
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                  COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME],
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
                                   //init
@@ -225,6 +226,10 @@ var MongoConnector = function (opts) {
             self.dataCache.total.addMessage(   msg );
             
             if( format === 100 ){
+                //HTTP
+                if( msg[ COL.FORMAT_TYPE ] == 1 )
+                    msg[ HTTP.TRANSACTIONS_COUNT ] = 1;
+                
                 //save init data of one session
                 var session_id = msg[ COL.SESSION_ID ];
                 if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined )

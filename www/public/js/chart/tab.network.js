@@ -1595,7 +1595,7 @@ if( param.ip != undefined ){
     }
 }
 
-var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail", userData: {getAppList: true}});
+var detail_db = MMTDrop.databaseFactory.createStatDB({id: "network.detail"});
 var cTable    = ReportFactory.createDetailOfApplicationChart();
 
 var cDetailTable2 = ReportFactory.createDetailOfApplicationChart2();

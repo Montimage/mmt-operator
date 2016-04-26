@@ -5827,9 +5827,17 @@ MMTDrop.chartFactory = {
 				});
                  */
 				//add each element to a row
-                if( param.chart && param.chart.deferRender === true)
+                if( param.chart && param.chart.deferRender === true){
                     param.chart.data = arrData;
-                else
+                    param.chart.columns = [];
+                    
+                    for( var i in option.columns )
+                        if( option.columns[i].align === "right" )
+                            param.chart.columns.push( {className: "text-right"} );
+                        else
+                            param.chart.columns.push( [] );
+                    
+                }else
                     for (var i in arrData) {
                         var msg = arrData[i];
 
