@@ -56,15 +56,18 @@ router.get('/*', function(req, res, next) {
     path  = url.parse( path ).pathname;
     
     var id = path;
+    
+    if( !id ){
+		res.redirect("/chart/link");
+        return;
+    }
+    
     if( path.indexOf("/") > -1 ){
         id   = path.substr( 0, path.indexOf("/")); //e.g. application
     }else
         path = null;
     
-	if( !id ){
-		res.redirect("/chart/link");
-        return;
-    }
+	
 	id = id.toLowerCase();
 	
     if( router.pages == undefined ){

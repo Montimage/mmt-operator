@@ -32,12 +32,12 @@ var ReportFactory = {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
         var HTTP  = MMTDrop.constants.HttpStatsColumn;
-        var fApp  = MMTDrop.filterFactory.createMetricFilter();
+        var fApp  = MMTDrop.filterFactory.createAppFilter();
         
         var database = new MMTDrop.Database({id: "link.traffic", format: [100]}, function( data ){
             //group by timestamp
             var obj  = {};
-            var cols = [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ];
+            var cols = [ COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ];
             for (var i in data) {
                 var msg   = data[i];
 
@@ -87,7 +87,12 @@ var ReportFactory = {
                 if( val != 0 )
                     data[i][ HTTP.RESPONSE_TIME.id ] = (data[i][ HTTP.RESPONSE_TIME.id ] / val).toFixed(2);
                 
+                //% of payload
+                data[i][ COL.PAYLOAD_VOLUME.id ] = data[i][ COL.PAYLOAD_VOLUME.id ] * 100 / data[i][ COL.DATA_VOLUME.id ];
+                //bit per second
                 data[i][ COL.DATA_VOLUME.id ]    = data[i][ COL.DATA_VOLUME.id ] * 8 / time_interval;
+                //pps
+                data[i][ COL.PACKET_COUNT.id ]   = data[i][ COL.PACKET_COUNT.id ] / time_interval;
             }
             
 
@@ -269,14 +274,16 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var cols = [ {id: 0, label:""}, 
                                 {id: COL.TIMESTAMP.id      , label: "Time"             , align: "left"}, 
-                                {id: HTTP.RESPONSE_TIME.id , label: "ART (ms)"         , align: "right"},
-                                {id: "DTT"                 , label: "DTT (ms)"         , align: "right"},
-                                {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms)"  , align: "right"},
-                                {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms)"  , align: "right"},
-                                {id: COL.RTT.id            , label: "NRT (ms)"         , align: "right"},
-                                {id: COL.ACTIVE_FLOWS.id   , label: "Transactions"     , align: "right"},
+                                {id: HTTP.RESPONSE_TIME.id , label: "ART (ms/trans.)"         , align: "right"},
+                                {id: "DTT"                 , label: "DTT (ms/p)"         , align: "right"},
+                                {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms/p)"  , align: "right"},
+                                {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms/p)"  , align: "right"},
+                                {id: COL.RTT.id            , label: "NRT (ms/p)"         , align: "right"},
+                                {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Transactions"     , align: "right"},
+                                {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"     , align: "right"},
                                 {id: COL.PACKET_COUNT.id   , label: "Packet Rate (pps)", align: "right"},
-                                {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"  , align: "right"}];
+                                {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"  , align: "right"},
+                                {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"          , align: "right"},];
                     var data = db.data(); 
                     var arr  = [];
                     for( var i in data ){
@@ -288,14 +295,18 @@ var ReportFactory = {
                         if( msg.__formated === true ) continue;
                         
                         var time = msg[ COL.TIMESTAMP.id ];
+
+                        msg[ COL.TIMESTAMP.id ] = _this.formatTime( new Date( time ) );
+                        //user can see in detail if this row has data
+                        if( msg[ COL.DATA_VOLUME.id ] > 0 )
+                            msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick=loadDetail('+ time +')>' + msg[ COL.TIMESTAMP.id ] + '</a>';
                         
-                        msg[ COL.TIMESTAMP.id ]    = _this.formatTime( new Date( msg[ COL.TIMESTAMP.id ] ) );
+
                         msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         
-                        var flows = msg[ COL.ACTIVE_FLOWS.id ];
-                        if( flows > 0 )
-                            msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick=loadDetail('+ time +')>' + msg[ COL.TIMESTAMP.id ] + '</a>';
+                        msg[ COL.PAYLOAD_VOLUME.id ] =  Math.round(msg[ COL.PAYLOAD_VOLUME.id ]) + "%";
+                        
                         msg.__formated = true;
                         
                         arr.push( msg );
@@ -308,7 +319,12 @@ var ReportFactory = {
             },
             chart:{
                 "order": [0, "asc"],
-                dom: "<t><'row'<'col-sm-3'i><'col-sm-9'p>>",
+                dom: "<'tbl-resp-time-report' t><'row'<'col-sm-3'i><'col-sm-9'p>>",
+            },
+            bgPercentage:{
+                table : ".tbl-resp-time-report",
+                column: 12, //index of column, start from 1
+                css   : "bg-img-1-red-pixel",
             },
             afterEachRender: function (_chart) {
                 // Add event listener for opening and closing details
@@ -326,10 +342,7 @@ var ReportFactory = {
             }
         });
         
-        var dataFlow = [
-            {object: fApp,
-             effect: [{object: cLine}, {object: cTable}]
-            }];
+        var dataFlow = [{object: cLine}, {object: cTable}];
 
         var report = new MMTDrop.Report(
             // title
@@ -385,15 +398,17 @@ var ReportFactory = {
                                    ];
 
                     var colSum = [
-                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},
+                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},                        
                         {id: "DTT"                 , label: "DTT (ms)"       , align: "right"},
                         {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT(ms)"  , align:"right"},
                         {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT(ms)" , align:"right"},
                         {id: COL.RTT.id            , label: "NRT(ms)"        , align:"right"},
+                        {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Transaction"    , align:"right"},
+                        {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"    , align:"right"},
                         {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"}, 
                         {id: COL.DL_DATA_VOLUME.id , label: "Download (B)"   , align:"right"},
                         {id: COL.DATA_VOLUME.id    , label: "Total (B)"      , align:"right"},
-                        {id: COL.ACTIVE_FLOWS.id   , label: "Transaction"    , align:"right"},
+                        {id: COL.PACKET_COUNT.id   , label: "Packets"        , align:"right"},
                     ];
                     
                     
@@ -573,12 +588,12 @@ var ReportFactory = {
                                   ];
 
                     var colSum = [
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"         , align:"right"}, 
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download"       , align:"right"},
                         {id: HTTP.RESPONSE_TIME.id, label: "ART (ms)"       , align:"right"},
                         {id: COL.RTT_AVG_SERVER.id, label: "Server DTT (ms)", align:"right"},
                         {id: COL.RTT_AVG_CLIENT.id, label: "Client DTT (ms)", align:"right"},
                         {id: COL.RTT.id           , label: "NRT (ms)"       , align:"right"},
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"         , align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download"       , align:"right"},
                     ];
                     var otherCols = [
                         { id: HTTP.URI.id      , label: HTTP.URI.label},
