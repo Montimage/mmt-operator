@@ -274,19 +274,20 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var cols = [ {id: 0, label:""}, 
-                                {id: COL.TIMESTAMP.id      , label: "Time"             , align: "left"}, 
-                                {id: HTTP.RESPONSE_TIME.id , label: "ART (ms/trans.)"         , align: "right"},
+                                {id: COL.TIMESTAMP.id      , label: "Time"               , align: "left"}, 
+                                {id: HTTP.RESPONSE_TIME.id , label: "ART (ms/trans.)"    , align: "right"},
                                 {id: "DTT"                 , label: "DTT (ms/p)"         , align: "right"},
                                 {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms/p)"  , align: "right"},
                                 {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms/p)"  , align: "right"},
                                 {id: COL.RTT.id            , label: "NRT (ms/p)"         , align: "right"},
                                 {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Transactions"     , align: "right"},
-                                {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"     , align: "right"},
-                                {id: COL.PACKET_COUNT.id   , label: "Packet Rate (pps)", align: "right"},
-                                {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"  , align: "right"},
-                                {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"          , align: "right"},];
+                                {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"       , align: "right"},
+                                {id: COL.PACKET_COUNT.id   , label: "Packet Rate (pps)"  , align: "right"},
+                                {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"    , align: "right"},
+                                {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"           , align: "right"},];
                     var data = db.data(); 
                     var arr  = [];
+                    var app_id = parseInt( fApp.selectedOption().id );
                     for( var i in data ){
                         var msg = data[i];
                         if( msg[0] == undefined )
@@ -299,8 +300,10 @@ var ReportFactory = {
 
                         msg[ COL.TIMESTAMP.id ] = _this.formatTime( new Date( time ) );
                         //user can see in detail if this row has data
-                        if( msg[ COL.DATA_VOLUME.id ] > 0 )
-                            msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick=loadDetail('+ time +')>' + msg[ COL.TIMESTAMP.id ] + '</a>';
+                        if( msg[ COL.DATA_VOLUME.id ] > 0 ){
+                            var load_fn = 'loadDetail('+ time +','+ app_id +')';
+                            msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick='+ load_fn +'>' + msg[ COL.TIMESTAMP.id ] + '</a>';
+                        }
                         
 
                         msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
@@ -350,7 +353,7 @@ var ReportFactory = {
             //load data corresponding to the selected app
             var group_by = fPeriod.selectedOption().id;
             var period   = JSON.stringify( status_db.time );
-            var db_options = {period: period, period_groupby: group_by, userData : { app: parseInt( opt.id )} };
+            var db_options = {period: period, period_groupby: group_by, userData : { app_id: parseInt( opt.id )} };
             
             database.reload( db_options, function(data, chartList){
                 for( var i in chartList){
@@ -421,7 +424,7 @@ var ReportFactory = {
                         {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT(ms)"  , align:"right"},
                         {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT(ms)" , align:"right"},
                         {id: COL.RTT.id            , label: "NRT(ms)"        , align:"right"},
-                        {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Transaction"    , align:"right"},
+                        {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."    , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"    , align:"right"},
                         {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"}, 
                         {id: COL.DL_DATA_VOLUME.id , label: "Download (B)"   , align:"right"},
@@ -610,8 +613,11 @@ var ReportFactory = {
                         {id: COL.RTT_AVG_SERVER.id, label: "Server DTT (ms)", align:"right"},
                         {id: COL.RTT_AVG_CLIENT.id, label: "Client DTT (ms)", align:"right"},
                         {id: COL.RTT.id           , label: "NRT (ms)"       , align:"right"},
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"         , align:"right"}, 
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download"       , align:"right"},
+                        {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."    , align:"right"},
+                        {id: COL.ACTIVE_FLOWS.id  , label: "Active Flows"   , align:"right"},
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"     , align:"right"}, 
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)"   , align:"right"},
+                        
                     ];
                     var otherCols = [
                         { id: HTTP.URI.id      , label: HTTP.URI.label},
@@ -711,7 +717,7 @@ var cTableDetail = ReportFactory.createDetailChart();
 var cDetailTable2 = ReportFactory.createDetailOfApplicationChart2();
 cDetailTable2.attachTo( new MMTDrop.Database(), false );
 
-function loadDetail( timestamp ){
+function loadDetail( timestamp, app_id ){
     if( timestamp == undefined )
         return;
     
@@ -721,8 +727,11 @@ function loadDetail( timestamp ){
     period = JSON.stringify( period );
     
     var time_str = moment( timestamp ).format("YYYY/MM/DD HH:mm:ss");
+    var userData = null;
+    if( app_id )
+        userData = {app_id : app_id};
     
-    detail_db.reload({"period": period, period_groupby: group_by}, function( new_data, table){
+    detail_db.reload({"period": period, period_groupby: group_by, userData : userData }, function( new_data, table){
         table.attachTo( detail_db, false );
         table.renderTo( "popupTable" )
         $("#detailItem").html('<strong>Timestamp: </strong> '+ time_str +' ');

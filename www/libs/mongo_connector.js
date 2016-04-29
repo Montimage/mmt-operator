@@ -25,9 +25,13 @@ var MongoConnector = function (opts) {
     
     //all columns of HTTP => they cover all columns of SSL,RTP et FTP
     var init_session_set = [];
-    for( var i=0; i<20; i++) 
-        init_session_set.push( COL.THREAD_NUMBER + i + 1 );
+    for( var i = COL.FORMAT_TYPE ; i <= HTTP.RESPONSE; i++){
+        //exclude set
+        if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ].indexOf( i ) == -1 )
+            init_session_set.push( i );
+    }
     init_session_set.push( COL.START_TIME );
+    
     
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
@@ -218,6 +222,7 @@ var MongoConnector = function (opts) {
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            
             //group msg by each period
             var mod = Math.ceil( (ts - self.startProbeTime) / (self.config.probe_stats_period * 1000) );
             msg[ TIMESTAMP ] = self.startProbeTime + mod * ( self.config.probe_stats_period * 1000 );
@@ -228,8 +233,11 @@ var MongoConnector = function (opts) {
             
             if( format === 100 ){
                 //HTTP
-                if( msg[ COL.FORMAT_TYPE ] == 1 )
+                if( msg[ COL.FORMAT_TYPE ] == 1 ){
                     msg[ HTTP.TRANSACTIONS_COUNT ] = 1;
+                    //each HTTP report is a unique session (1 request - 1 resp if it has)
+                    msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.TIMESTAMP ];
+                }
                 
                 //save init data of one session
                 var session_id = msg[ COL.SESSION_ID ];
@@ -237,8 +245,10 @@ var MongoConnector = function (opts) {
                     FLOW_SESSION_INIT_DATA[ session_id ] = msg;
                 else
                     for( var i in init_session_set ){
-                        var key    = init_session_set[ i ];
-                        msg[ key ] = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
+                        var key = init_session_set[ i ];
+                        var val = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
+                        if( val != undefined )
+                            msg[ key ] = val;
                     }
 
                 update_proto_name( msg );
@@ -516,9 +526,9 @@ var MongoConnector = function (opts) {
             }
             else if (["app.responsetime"].indexOf( options.id ) > - 1){
                 //when we need detail of one app
-                if( options.userData && options.userData.app && options.userData.app != 0 ){
-                    options.collection = "data_app_" + options.period_groupby;
-                    options.query[ COL.APP_ID ] = parseInt( options.userData.app );
+                if( options.userData && options.userData.app_id && options.userData.app_id != 0 ){
+                    options.collection          = "data_app_" + options.period_groupby;
+                    options.query[ COL.APP_ID ] = parseInt( options.userData.app_id );
                 }else
                     options.collection = "data_total_" + options.period_groupby;
             }
