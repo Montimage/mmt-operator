@@ -32,9 +32,10 @@ var ReportFactory = {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
         var HTTP  = MMTDrop.constants.HttpStatsColumn;
-        var fApp  = MMTDrop.filterFactory.createAppFilter();
+        var fApp  = MMTDrop.filterFactory.createAppFilter();        
+        var appList_db = MMTDrop.databaseFactory.createStatDB({id:"app.list"});
         
-        var database = new MMTDrop.Database({id: "link.traffic", format: [100]}, function( data ){
+        var database = new MMTDrop.Database({id: "app.responsetime", format: [100]}, function( data ){
             //group by timestamp
             var obj  = {};
             var cols = [ COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS, COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER, HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ];
@@ -160,7 +161,7 @@ var ReportFactory = {
             
             return arr;
         });
-        
+                
         //line chart on the top
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
@@ -339,17 +340,33 @@ var ReportFactory = {
                     _hideCLineTooltip()
                     return false;
                 });
-            }
+            },
         });
         
-        var dataFlow = [{object: cLine}, {object: cTable}];
+        cLine.attachTo( database, false );
+        cTable.attachTo( database, false );
+        //when use change app filter
+        fApp.onFilter( function( opt ){
+            //load data corresponding to the selected app
+            var group_by = fPeriod.selectedOption().id;
+            var period   = JSON.stringify( status_db.time );
+            var db_options = {period: period, period_groupby: group_by, userData : { app: parseInt( opt.id )} };
+            
+            database.reload( db_options, function(data, chartList){
+                for( var i in chartList){
+                    chartList[i].redraw();
+                }
+            }, [cLine, cTable]);
+        })
+        
+        var dataFlow = [{object: fApp} ];
 
         var report = new MMTDrop.Report(
             // title
             null,
 
             // database
-            database,
+            appList_db,
 
             // filers
 					[fApp],
@@ -369,6 +386,7 @@ var ReportFactory = {
             //order of data flux
             dataFlow
         );
+        
         return report;
     },
     
@@ -687,7 +705,7 @@ var ReportFactory = {
 }
 
 
-var detail_db    = MMTDrop.databaseFactory.createStatDB({id: "network.detail"});
+var detail_db    = MMTDrop.databaseFactory.createStatDB({id: "app.detail"});
 var cTableDetail = ReportFactory.createDetailChart();
 
 var cDetailTable2 = ReportFactory.createDetailOfApplicationChart2();

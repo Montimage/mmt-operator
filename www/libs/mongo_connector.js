@@ -59,7 +59,8 @@ var MongoConnector = function (opts) {
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER]),
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
             
             session: new DataCache(db, "data_session", 
                                    //key
@@ -351,11 +352,18 @@ var MongoConnector = function (opts) {
     //flush caches before quering
     self.getProtocolStats = function (options, callback) {
         options.query = {};
-        options.query[ TIMESTAMP ] = {
-                '$gte': options.time.begin,
-                '$lte': options.time.end
-        };
-        options.query[ FORMAT_ID ] = {$in: options.format };
+        if( options.time.begin == options.time.end )
+            options.query[ TIMESTAMP ] = options.time.begin;
+        else
+            options.query[ TIMESTAMP ] = {
+                    '$gte': options.time.begin,
+                    '$lte': options.time.end
+            };
+
+        if( options.format.length == 1)
+            options.query[ FORMAT_ID ] = options.format[0];
+        else if( options.format.length > 1)
+            options.query[ FORMAT_ID ] = {$in: options.format };
             
 
         var find_in_specific_table = false;
@@ -495,7 +503,7 @@ var MongoConnector = function (opts) {
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
                 options.collection = "data_mac";
-            else if (["network.user", "network.profile", "network.destination", "network.detail"].indexOf(options.id) > -1)
+            else if (["network.user", "network.profile", "network.destination", "network.detail", "app.detail", "app.list"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
@@ -505,7 +513,16 @@ var MongoConnector = function (opts) {
                     options.query[ dataAdaptor.NdnColumnId.MAC_SRC  ] = options.userData.mac;
                 if( options.userData && options.userData.name != undefined )
                     options.query[ dataAdaptor.NdnColumnId.NAME  ] = decodeURI( options.userData.name );
-            }else {
+            }
+            else if (["app.responsetime"].indexOf( options.id ) > - 1){
+                //when we need detail of one app
+                if( options.userData && options.userData.app && options.userData.app != 0 ){
+                    options.collection = "data_app_" + options.period_groupby;
+                    options.query[ COL.APP_ID ] = parseInt( options.userData.app );
+                }else
+                    options.collection = "data_total_" + options.period_groupby;
+            }
+            else {
                 console.error("Not yet implemented for " + options.id);
                 callback(null, ["Not yet implemented"]);
                 return;
@@ -584,7 +601,7 @@ var MongoConnector = function (opts) {
                 return;
             }
             
-            if (options.id === "network.detail") {
+            if (options.id === "network.detail" || options.id === "app.detail") {
                 if( options.userData ){
                     if( options.userData.ip )
                         options.query[ COL.IP_SRC ]  = options.userData.ip;
@@ -626,7 +643,7 @@ var MongoConnector = function (opts) {
                 return;
             }
             
-            if (options.id === "network.profile") {
+            if (options.id === "network.profile" || options.id === "app.list") {
                 if( options.userData ){
                     if( options.userData.ip )
                         options.query[ COL.IP_SRC ] = options.userData.ip;
@@ -730,6 +747,7 @@ var MongoConnector = function (opts) {
                 ], callback, options.raw );
             return;
         }
+        
         self.queryDB(options.collection, "find", options.query, callback, options.raw);
     };
 
