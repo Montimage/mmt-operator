@@ -273,7 +273,10 @@ var MongoConnector = function (opts) {
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
                 msg2 = dataAdaptor.inverseStatDirection( msg2 );
-                
+                //we must not increase number of active flows
+                msg2[ COL.ACTIVE_FLOWS ] = 0;
+                msg2[ HTTP.TRANSACTIONS_COUNT ] = 0;
+                msg2[ HTTP.RESPONSE_TIME ] = 0;
                 //only if it is local
                 //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
                 if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
