@@ -676,7 +676,7 @@ var ReportFactory = {
                     });
 
                     var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true && ip == undefined ){
+                    if( data.length > top+2 && cPie.showAll !== true && ip == undefined ){
                         var val = 0;
                         
                         //update data
@@ -974,7 +974,14 @@ var ReportFactory = {
                     });
 
                     var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true){
+                    
+                    
+                    if( cPie.showAll === true && data.length >= 200 ){
+                        top = 200;
+                        cPie.showAll = false;
+                    }
+                    
+                    if( data.length > top+2 && cPie.showAll !== true){
                         var val = 0;
                         
                         //update data
@@ -1132,19 +1139,23 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
-                    var $a = $("<a>", {
-                        href: "?show all clients",
-                        title: "click to show all clients",
-                        text: "Other",
-                        
-                    });
-                    $a.on("click", function(){
-                       _chart.showAll = true;
-                       _chart.redraw(); 
-                        return false;
-                    });
-                    
-                    $("<td>").append( $a ).appendTo($tr);
+                    if( i <= 10 ){
+                        var $a = $("<a>", {
+                            href: "?show all clients",
+                            title: "click to show all clients",
+                            text: "Other",
+
+                        });
+                        $a.on("click", function(){
+                           _chart.showAll = true;
+                           _chart.redraw(); 
+                            return false;
+                        });
+
+                        $("<td>").append( $a ).appendTo($tr);
+                    }
+                    else
+                        $("<td>").append("Other").appendTo($tr);
                     
                     $("<td>").appendTo($tr);
                     
@@ -1195,6 +1206,8 @@ var ReportFactory = {
                     paging: false,
                     dom: "t",
                     order: [[4, "desc"]],
+                    "scrollY": "260px",
+                    "scrollCollapse": true,
                 });
             }
         });
