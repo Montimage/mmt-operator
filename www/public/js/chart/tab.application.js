@@ -49,6 +49,7 @@ var ReportFactory = {
                 if (obj[time] == undefined) {
                     var o = {};
                     o[COL.TIMESTAMP.id] = time;
+                    //init
                     for( var j in cols )
                         o[ cols[j].id ] = 0;
                     obj[time] = o;
@@ -276,15 +277,17 @@ var ReportFactory = {
                     var cols = [ {id: 0, label:""}, 
                                 {id: COL.TIMESTAMP.id      , label: "Time"               , align: "left"}, 
                                 {id: HTTP.RESPONSE_TIME.id , label: "ART (ms/trans.)"    , align: "right"},
-                                {id: "DTT"                 , label: "DTT (ms/p)"         , align: "right"},
-                                {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms/p)"  , align: "right"},
-                                {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms/p)"  , align: "right"},
-                                {id: COL.RTT.id            , label: "NRT (ms/p)"         , align: "right"},
-                                {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Transactions"     , align: "right"},
+                                {id: "DTT"                 , label: "DTT (ms/flow)"         , align: "right"},
+                                {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms/flow)"  , align: "right"},
+                                {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms/flow)"  , align: "right"},
+                                {id: COL.RTT.id            , label: "NRT (ms/flow)"         , align: "right"},
+                                {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."     , align: "right"},
                                 {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"       , align: "right"},
                                 {id: COL.PACKET_COUNT.id   , label: "Packet Rate (pps)"  , align: "right"},
                                 {id: COL.DATA_VOLUME.id    , label: "Data Rate (bps)"    , align: "right"},
-                                {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"           , align: "right"},];
+                                 {id: "packet_size"        , label: "Packet Size (B)"    , align: "right"},
+                                {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"           , align: "right"},
+                               ];
                     var data = db.data(); 
                     var arr  = [];
                     var app_id = parseInt( fApp.selectedOption().id );
@@ -306,6 +309,8 @@ var ReportFactory = {
                         }
                         
 
+                        msg["packet_size"] = (msg[ COL.DATA_VOLUME.id ] / msg[ COL.PACKET_COUNT.id ]).toFixed(2);
+                        
                         msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         
@@ -327,7 +332,7 @@ var ReportFactory = {
             },
             bgPercentage:{
                 table : ".tbl-resp-time-report",
-                column: 12, //index of column, start from 1
+                column: 13, //index of column, start from 1
                 css   : "bg-img-1-red-pixel",
             },
             afterEachRender: function (_chart) {
@@ -605,6 +610,8 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
                                    {id: COL.IP_SRC.id    , label: "Client"    , align:"left"},
+                                   {id: COL.PORT_SRC.id  , label: "Src. Port" , align:"right"},
+                                   {id: COL.PORT_DEST.id  , label: "Dst. Port" , align:"right"},
                                    {id: COL.APP_PATH.id  , label: "Proto/App Path"    , align:"left"},
                                   ];
 
@@ -643,6 +650,8 @@ var ReportFactory = {
                         obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
                         obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
                         obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id]; // ip
+                        obj[ COL.PORT_SRC.id ]      = msg[ COL.PORT_SRC.id ];
+                        obj[ COL.PORT_DEST.id ]      = msg[ COL.PORT_DEST.id ];
                         
                         for( var j in colSum ){
                                 var val = msg[ colSum[j].id ];

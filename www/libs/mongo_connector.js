@@ -190,8 +190,8 @@ var MongoConnector = function (opts) {
                 //server_port
                 app_name = msg[ COL.PORT_DEST ];
 
-            if( app_name == 0 )
-                console.log( msg );
+            //if( app_name == 0 )
+            //    console.log( msg );
 
             app_name = msg[ COL.APP_ID ] + ":" + app_name;
 
@@ -219,6 +219,7 @@ var MongoConnector = function (opts) {
         
         if ( format === 100 || format === 99 ){
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
+            
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
@@ -231,10 +232,10 @@ var MongoConnector = function (opts) {
             
             self.dataCache.total.addMessage(   msg );
             
+            //session
             if( format === 100 ){
                 //HTTP
                 if( msg[ COL.FORMAT_TYPE ] == 1 ){
-                    msg[ HTTP.TRANSACTIONS_COUNT ] = 1;
                     //each HTTP report is a unique session (1 request - 1 resp if it has)
                     msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.TIMESTAMP ];
                 }
