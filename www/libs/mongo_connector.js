@@ -66,6 +66,16 @@ var MongoConnector = function (opts) {
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                  HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
             
+            ip: new DataCache(db, "data_ip", 
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
+                               //inc
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
+            
+            
             session: new DataCache(db, "data_session", 
                                    //key
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
@@ -253,21 +263,27 @@ var MongoConnector = function (opts) {
                     }
 
                 update_proto_name( msg );
-                
+                //each session
                 self.dataCache.session.addMessage( msg );
+                //for each MAC SRC
                 self.dataCache.mac.addMessage(     msg );
+                //for each IP src
+                self.dataCache.ip.addMessage(      msg );
                 
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
                 msg2 = dataAdaptor.inverseStatDirection( msg2 );
+                
                 //only if it is local
                 //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
                 if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
                     self.dataCache.session.addMessage(  msg2 );
+                    //for each ip dest
+                    self.dataCache.ip.addMessage(  msg2 );
                 }
 
+                //for eac mac dest
                 self.dataCache.mac.addMessage( msg2 );
-                
             }
             
             
@@ -514,7 +530,9 @@ var MongoConnector = function (opts) {
                 options.collection = "data_total_" + options.period_groupby;
             else if (["link.nodes"].indexOf(options.id) > -1)
                 options.collection = "data_mac";
-            else if (["network.user", "network.profile", "network.destination", "network.detail", "app.detail", "app.list"].indexOf(options.id) > -1)
+            else if (["network.user"].indexOf(options.id) > -1)
+                options.collection = "data_ip_" + options.period_groupby;
+            else if (["network.profile","network.detail", "network.destination",  "app.detail", "app.list"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";

@@ -35,7 +35,7 @@ setInterval( function(){
 router.process_message = function (db, message) {
     //console.log( message );
     try {
-        message = message.replace(/\(null\)/g, 'null');
+        //message = message.replace(/\(null\)/g, 'null');
         var msg = mmtAdaptor.formatMessage( message );
         if( msg === null )
             return;
@@ -237,14 +237,20 @@ router.startListeningAtFolder = function (db, folder_path) {
 
         isPrintedMessage = false;
         console.log("\nProcessing  file [" + file_name + "]");
-        process_file(file_name, function ( total ) {
-            console.log(" ==> DONE ("+ total +" lines)");
+        try{
+            process_file(file_name, function ( total ) {
+                console.log(" ==> DONE ("+ total +" lines)");
+                process_folder();
+            });
+        }catch( ex ){
+            console.error( ex );
             process_folder();
-        });
+        }
     };
 
     //need to delete .csv and .sem files after reading
     if( router.config.delete_data ){
+        //start after 2 seconds
         setTimeout( process_folder, 2000);
     }else{
         var start_process = function(){
