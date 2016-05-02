@@ -291,12 +291,13 @@ var ReportFactory = {
                     var data = db.data(); 
                     var arr  = [];
                     var app_id = parseInt( fApp.selectedOption().id );
+                    var index = 0;
                     for( var i=0; i<data.length; i++ ){
                         var msg = data[i];
                         if( msg[0] == undefined )
                             continue;
                         
-                        msg[0] = (i+1);
+                        msg[0] = ++index;
                         
                         //this happens when cTable is drawn >= 2 times
                         if( msg.__formated === true ) continue;

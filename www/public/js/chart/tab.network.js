@@ -1206,7 +1206,7 @@ var ReportFactory = {
                     paging: false,
                     dom: "t",
                     order: [[4, "desc"]],
-                    "scrollY": "260px",
+                    "scrollY": "240px",
                     "scrollCollapse": true,
                 });
             }

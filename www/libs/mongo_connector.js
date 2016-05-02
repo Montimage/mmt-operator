@@ -622,10 +622,16 @@ var MongoConnector = function (opts) {
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
+                
+                //desc
+                var sort = {}; sort[ COL.PAYLOAD_VOLUME ] = -1;
+                
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
-                    {"$group": groupby}
+                    {"$group": groupby},
+                    {"$sort" : sort},
+                    {"$limit": 500}
                     ], callback, options.raw );
                 return;
             }
@@ -690,10 +696,14 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
                 
+                //desc
+                var sort = {}; sort[ COL.PAYLOAD_VOLUME ] = -1;
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
-                    {"$group": groupby}
+                    {"$group": groupby},
+                    {"$sort" : sort},
+                    {"$limit": 5000}
                     ], callback, options.raw );
                 return;
             }
@@ -714,10 +724,16 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
                 groupby[ COL.TIMESTAMP ] = {"$last" : "$" + COL.TIMESTAMP };
+                
+                //desc
+                var sort = {}; sort[ COL.PAYLOAD_VOLUME ] = -1;
+                
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
-                    {"$group": groupby}
+                    {"$group": groupby},
+                    {"$sort" : sort},
+                    {"$limit": 5000}
                     ], callback, options.raw );
                 return;
             }
