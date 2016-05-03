@@ -26,6 +26,7 @@ var all_pages = {
         'video' : {
             title: "Video"
         },
+*/        
             'security':{
             title:"Security"
         },
@@ -41,7 +42,6 @@ var all_pages = {
         'video':{
             title: "Video QoS"
         }
-*/
 };
 
 router.get('/*', function(req, res, next) {

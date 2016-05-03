@@ -385,7 +385,7 @@ var MMTDrop = {
     },
     
     isLocalIP : function( ip ){
-        if( ip === undefined || ip === "undefined")
+        if( ip == undefined || ip === "undefined" || ip === "null")
             return false;
         
         if( this._localIPs === undefined ){

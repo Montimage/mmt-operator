@@ -287,6 +287,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     var cTable = MMTDrop.chartFactory.createTable({
         getData: {
             getDataFn: function (db) {
+                //reset data cache
+                reset();
                 var arr = db.data();
                 for (var i in arr)
                     appendData( arr[i] );

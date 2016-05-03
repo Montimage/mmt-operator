@@ -42,7 +42,10 @@ body {
     overflow-y: auto;
 }
 .row-cursor-pointer tr{
-    cursor: pointer
+    cursor: pointer;
+}
+.row-cursor-pointer tbody>tr:hover{
+    color: #428bca;
 }
 
 .row-cursor-default tr{

@@ -73,7 +73,9 @@ var MongoConnector = function (opts) {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                               //set
+                               [COL.MAC_SRC]),
             
             
             session: new DataCache(db, "data_session", 

@@ -58,8 +58,6 @@ function separate_repport_100( msg ){
     //clone msg
     for( var i=0; i< msg.length; i++ )
         msg2.push( msg[ i ] );
-    console.log( JSON.stringify(msg))
-    console.log( JSON.stringify(msg2) );
     
     //uplink
     msg[ PATH_INDEX ] = UP_PATH;
@@ -79,9 +77,6 @@ function separate_repport_100( msg ){
     msg2[ COL.DATA_VOLUME ]    = msg2[ COL.DL_DATA_VOLUME ];
     msg2[ COL.PAYLOAD_VOLUME ] = msg2[ COL.DL_PAYLOAD_VOLUME ];
     msg2[ COL.PACKET_COUNT ]   = msg2[ COL.DL_PACKET_COUNT ];
-    
-    console.log( JSON.stringify(msg))
-    console.log( JSON.stringify(msg2) );
     
     return [msg, msg2];
 }
@@ -111,21 +106,21 @@ router.process_message = function (db, message) {
                 return;
             }
             
-            if( msg[ COL.IP_SRC ] == "undefined" ){
-                console.log("[DONT 1] " + message);
-                return;
-            }
-            
-            /*
-            if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
-                console.log("[DONT KNOW DIRECTION] " + message);
-                return;
-            }
-            */
-            
             var arr = separate_repport_100( msg );
-            for( var i in arr )
-                db.addProtocolStats(arr[i], function (err, err_msg) {});
+            for( var i in arr ){
+                msg = arr[ i ];
+                if( msg[ COL.IP_SRC ] == "undefined" ){
+                    console.log("[DONT 1] " + message);
+                    continue;
+                }
+
+
+                if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+                    console.log("[DONT KNOW DIRECTION] " + message);
+                    continue;
+                }
+                db.addProtocolStats( msg, function (err, err_msg) {});
+            }
             return;
         }
         

@@ -59,7 +59,7 @@ $(function () {
         throw new Error("Need to defined fPeriod filter")
     }
 
-    fProbe.renderTo("toolbar-box");
+    //fProbe.renderTo("toolbar-box");
     
     fPeriod.renderTo("toolbar-box");
     fPeriod.onChange( loading.onShowing  );
