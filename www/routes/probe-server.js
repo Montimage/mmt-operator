@@ -32,7 +32,63 @@ setInterval( function(){
 }, 1000);
 //end Video QoS
 
+/**
+* in the probe version 98f750c, on May 03 2016
+* report id = 100 has 2 protocol path: one for uplink, one for down link
+* this function will device a report into 2 reports as before: 
+*/
+function separate_repport_100( msg ){
+    var UP_PATH = msg[ 5 ], DOWN_PATH = msg[ 6 ];
+    var PATH_INDEX = 5;
+    
+    //remove one path
+    msg.splice( 5, 1 );
+    if( UP_PATH == DOWN_PATH || UP_PATH == "" )
+        return [ msg ];
+    else if( DOWN_PATH == "" ){
+        msg[ PATH_INDEX ] = UP_PATH;
+        return [ msg ];
+    }
+    
+    //update start time
+    msg[ COL.START_TIME ] = Math.round( msg[ COL.START_TIME ] *  1000 );
+    msg[ COL.START_TIME - 1 ] /= 1000;//this was multipled by dataAdaptor.formatMessge
+                                            
+    var msg2 = [];
+    //clone msg
+    for( var i=0; i< msg.length; i++ )
+        msg2.push( msg[ i ] );
+    console.log( JSON.stringify(msg))
+    console.log( JSON.stringify(msg2) );
+    
+    //uplink
+    msg[ PATH_INDEX ] = UP_PATH;
+    msg[ COL.DL_DATA_VOLUME ]    = 0;
+    msg[ COL.DL_PAYLOAD_VOLUME ] = 0;
+    msg[ COL.DL_PACKET_COUNT ]   = 0;
+    msg[ COL.DATA_VOLUME ]    = msg[ COL.UL_DATA_VOLUME ];
+    msg[ COL.PAYLOAD_VOLUME ] = msg[ COL.UL_PAYLOAD_VOLUME ];
+    msg[ COL.PACKET_COUNT ]   = msg[ COL.UL_PACKET_COUNT ];
+    
+    //down link
+    msg2[ COL.SESSION_ID ] += "-";
+    msg2[ PATH_INDEX ] = DOWN_PATH;
+    msg2[ COL.UL_DATA_VOLUME ]    = 0;
+    msg2[ COL.UL_PAYLOAD_VOLUME ] = 0;
+    msg2[ COL.UL_PACKET_COUNT ]   = 0;
+    msg2[ COL.DATA_VOLUME ]    = msg2[ COL.DL_DATA_VOLUME ];
+    msg2[ COL.PAYLOAD_VOLUME ] = msg2[ COL.DL_PAYLOAD_VOLUME ];
+    msg2[ COL.PACKET_COUNT ]   = msg2[ COL.DL_PACKET_COUNT ];
+    
+    console.log( JSON.stringify(msg))
+    console.log( JSON.stringify(msg2) );
+    
+    return [msg, msg2];
+}
+
 router.process_message = function (db, message) {
+    if( ! db ) return;
+    
     //console.log( message );
     try {
         //message = message.replace(/\(null\)/g, 'null');
@@ -60,10 +116,17 @@ router.process_message = function (db, message) {
                 return;
             }
             
+            /*
             if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
                 console.log("[DONT KNOW DIRECTION] " + message);
                 return;
             }
+            */
+            
+            var arr = separate_repport_100( msg );
+            for( var i in arr )
+                db.addProtocolStats(arr[i], function (err, err_msg) {});
+            return;
         }
         
         if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT 
@@ -220,22 +283,14 @@ router.startListeningAtFolder = function (db, folder_path) {
         return arr[0];
     };
     
-    var isPrintedMessage = false;
 
     var process_folder = function () {
         var file_name = get_csv_file( folder_path );
         if (file_name == null) {
-            if ( !isPrintedMessage ) {
-                isPrintedMessage = true;
-                process.stdout.write("\nWaiting for data in the folder [" + folder_path + "] ");
-            }else{
-                process.stdout.write(".");
-            }
             setTimeout(process_folder, 1500);
             return;
         }
 
-        isPrintedMessage = false;
         console.log("\nProcessing  file [" + file_name + "]");
         try{
             process_file(file_name, function ( total ) {
@@ -248,27 +303,28 @@ router.startListeningAtFolder = function (db, folder_path) {
         }
     };
 
+    process.stdout.write("\nWaiting for data in the folder [" + folder_path + "] ...\n");
     //need to delete .csv and .sem files after reading
     if( router.config.delete_data ){
         //start after 2 seconds
         setTimeout( process_folder, 2000);
     }else{
         var start_process = function(){
-        router.dbadmin.connect( function( err, mdb ) {
-            if( err ){
-                throw new Error( "Cannot connect to mongoDB" );
-                process.exit(0);
-            }
-            mdb.collection("read-files").find().toArray( function(err, doc){
-                read_files = [];
-                for(var i in doc)
-                    read_files.push( doc[i].file_name );
-                process_folder();
+            router.dbadmin.connect( function( err, mdb ) {
+                if( err ){
+                    throw new Error( "Cannot connect to mongoDB" );
+                    process.exit(0);
+                }
+                mdb.collection("read-files").find().toArray( function(err, doc){
+                    read_files = [];
+                    for(var i in doc)
+                        read_files.push( doc[i].file_name );
+                    process_folder();
+                });
             });
-        });
-    };
+        };
 
-    setTimeout( start_process, 2000);
+        setTimeout( start_process, 2000);
     }
 }
 

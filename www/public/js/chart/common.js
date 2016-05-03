@@ -36,6 +36,7 @@ for (var i in ReportFactory)
 ReportFactory = MMTDrop.reportFactory;
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var reports = [];
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
@@ -58,10 +59,11 @@ $(function () {
         throw new Error("Need to defined fPeriod filter")
     }
 
-
+    fProbe.renderTo("toolbar-box");
+    
     fPeriod.renderTo("toolbar-box");
     fPeriod.onChange( loading.onShowing  );
-
+    
     var renderReport = function (node) {
         try {
             var key = node.userData.fn;
