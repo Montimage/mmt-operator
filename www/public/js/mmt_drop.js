@@ -5164,9 +5164,9 @@ MMTDrop.chartFactory = {
 				
 				var obj = [];
 				var n   = columns.length;
-                if( n > 10 ){
+                if( n > 11 ){
                     //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                    MMTDrop.alert.error("Line chart draws only the first 10 elements");
+                    MMTDrop.alert.error("Line chart draws only the first 10 elements", 10);
                     n = 10;
                 }
 
@@ -5714,6 +5714,12 @@ MMTDrop.chartFactory = {
 							var id = this.dataset["ttId"];//data-tt-id
 							arr.push( id );
 						});
+                        
+                        if( arr.length > 10 ){
+                            arr.length = 10;
+                            $(this).parent().removeClass("selected");
+                        }
+                        
                         MMTDrop.tools.localStorage.set("tree-selected-ids-" + elemID, arr );
 						option.click( arr, this );
 					}

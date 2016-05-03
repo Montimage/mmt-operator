@@ -529,7 +529,7 @@ var MongoConnector = function (opts) {
     self.getCurrentProtocolStats = function (options, callback) {
         if (options.id !== "") {
             
-            if (["link.protocol", "dpi"].indexOf(options.id) > -1){
+            if (["link.protocol", "dpi.app", "dpi.detail"].indexOf(options.id) > -1){
                 options.collection = "data_app_" + options.period_groupby;
             }else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
@@ -572,7 +572,7 @@ var MongoConnector = function (opts) {
             }
             
             //projection
-            if (["link.protocol", "dpi"].indexOf(options.id) > -1){
+            if (["link.protocol", "dpi.app", "dpi.detail"].indexOf(options.id) > -1){
                 options.projection = {};
                 [0,1,2,3, COL.APP_PATH, COL.APP_ID, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ] .forEach( 
                     function (el, index){ options.projection[ el ] = 1; }
@@ -641,7 +641,23 @@ var MongoConnector = function (opts) {
                 return;
             }
             
-            if (options.id === "network.detail" || options.id === "app.detail") {
+            if ( options.id === "dpi.detail") {
+                if( options.userData ){
+                    if( options.userData.app_path ){
+                        
+                        if( Array.isArray( options.userData.app_path ))
+                            options.query[ COL.APP_PATH ]  = {'$in' : options.userData.app_path};
+                        else
+                            options.query[ COL.APP_PATH ]  = options.userData.app_path;
+                        
+                        self.queryDB( options.collection, "find", options.query, callback, options.raw );
+                        return;
+                    }
+                }
+                callback(null, "need app_path");
+            }
+            
+            if (options.id === "network.detail" || options.id === "app.detail" ) {
                 if( options.userData ){
                     if( options.userData.ip )
                         options.query[ COL.IP_SRC ]  = options.userData.ip;
@@ -683,7 +699,7 @@ var MongoConnector = function (opts) {
                 return;
             }
             
-            if (options.id === "network.profile" || options.id === "app.list") {
+            if (options.id === "network.profile" || options.id === "app.list" || options.id === "dpi.app") {
                 if( options.userData ){
                     if( options.userData.ip )
                         options.query[ COL.IP_SRC ] = options.userData.ip;

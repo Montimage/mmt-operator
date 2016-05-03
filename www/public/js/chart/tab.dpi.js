@@ -33,7 +33,8 @@ var ReportFactory = {
     createNodeReport: function ( fPeriod ) {
         var _this    = this;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var database = new MMTDrop.Database({format: [99,100], id : "dpi", userData: {getProbeStatus: true, getAppList: true}});
+        var detail_db= new MMTDrop.Database({id : "dpi.detail", format: [99,100], userData: {}});
+        var database = new MMTDrop.Database({id : "dpi.app", format: [99,100]});
         var COL      = MMTDrop.constants.StatsColumn;
         
         var cTree    = MMTDrop.chartFactory.createTree({
@@ -142,23 +143,31 @@ var ReportFactory = {
 
                 }
             },
-            click: function (e) {
-                if (Array.isArray(e) == false)
+            click: function ( app_path_arr ) {
+                if (Array.isArray( app_path_arr ) == false)
                     return;
-
-                var data = database.stat.filter([{
-                    id: COL.APP_PATH.id,
-                    data: e
-                }], cTree.data);
-                var oldData = database.data();
-
-                //set new data for cLine
-                database.data(data);
-                cLine.attachTo(database);
-                cLine.redraw();
-
-                //reset
-                database.data(oldData);
+                
+                //clear the chart
+                if( app_path_arr.length == 0 ){
+                    detail_db.data([]);
+                    cLine.attachTo( detail_db );
+                    cLine.redraw();
+                    return;
+                }
+                
+                if( app_path_arr.length > 10 ){
+                    app_path_arr.length = 10;
+                }
+                
+                //load data corresponding to the selected app
+                var group_by = fPeriod.selectedOption().id;
+                var period   = JSON.stringify( status_db.time );
+                var db_options = {period: period, period_groupby: group_by, userData : { app_path: app_path_arr} };
+                
+                detail_db.reload( db_options, function( new_data ){
+                    cLine.attachTo( detail_db );
+                    cLine.redraw();
+                } );
             },
             afterEachRender: function (_chart) {
                 //show total of detected protocol/app
