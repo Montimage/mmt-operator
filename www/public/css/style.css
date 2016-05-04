@@ -49,7 +49,11 @@ body {
 }
 
 .row-cursor-default tr{
-    cursor: default
+    cursor: default;
+    color: black;
+}
+.row-cursor-default tbody>tr:hover{
+    color: black;
 }
 
 .table-inside-table{
@@ -140,7 +144,7 @@ body {
 
     -webkit-transition: 300ms;
     transition: 300ms;
-    
+
     -webkit-transform: scale(0, 1);
     -ms-transform: scale(0, 1);
     transform: scale(0, 1);
@@ -234,7 +238,7 @@ tr.selected a {
     color: #fff;
 }
 .brillance{
-    
+
 }
 
 .c3-area {
@@ -269,11 +273,11 @@ a {
 
 .c3-chart-line {
     opacity: 0;
-    animation-name    : draw_c3j_line; 
-    animation-duration: 2s;  
-    
+    animation-name    : draw_c3j_line;
+    animation-duration: 2s;
+
     animation-fill-mode: forwards;
-    animation-iteration-count: 1; 
+    animation-iteration-count: 1;
     animation-timing-function: ease-out;
 }
 
@@ -288,13 +292,13 @@ a {
 
 .c3-chart-arc {
     opacity: 0;
-    animation-name    : draw_c3j_arc; 
-    animation-duration: 2s;  
-    
+    animation-name    : draw_c3j_arc;
+    animation-duration: 2s;
+
     animation-fill-mode: forwards;
-    animation-iteration-count: 1; 
+    animation-iteration-count: 1;
     animation-timing-function: ease-out;
-    
+
     -webkit-transform-origin:center center;
 }
 

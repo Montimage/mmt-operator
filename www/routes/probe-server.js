@@ -38,11 +38,18 @@ setInterval( function(){
 * this function will device a report into 2 reports as before: 
 */
 function separate_repport_100( msg ){
+    if( msg[0] !== 100 ) return [];
+    
     var UP_PATH = msg[ 5 ], DOWN_PATH = msg[ 6 ];
     var PATH_INDEX = 5;
     
-    //remove one path
+    //remove one path: UP_PATH, retain DOWN_PATH
     msg.splice( 5, 1 );
+    
+    //update start time
+    msg[ COL.START_TIME ] = Math.round( msg[ COL.START_TIME ] *  1000 );
+    msg[ COL.START_TIME - 1 ] /= 1000;//this was multipled by dataAdaptor.formatMessge
+    
     if( UP_PATH == DOWN_PATH || UP_PATH == "" )
         return [ msg ];
     else if( DOWN_PATH == "" ){
@@ -50,10 +57,19 @@ function separate_repport_100( msg ){
         return [ msg ];
     }
     
-    //update start time
-    msg[ COL.START_TIME ] = Math.round( msg[ COL.START_TIME ] *  1000 );
-    msg[ COL.START_TIME - 1 ] /= 1000;//this was multipled by dataAdaptor.formatMessge
-                                            
+    
+    //retain the path having more information
+    //not relevance 
+    if( mmtAdaptor.getAppLevelFromPath( UP_PATH ) > mmtAdaptor.getAppLevelFromPath( DOWN_PATH )){
+        msg[ PATH_INDEX ] = UP_PATH;
+        return [ msg ];
+    }
+    return [msg];
+    
+    
+    
+    
+    
     var msg2 = [];
     //clone msg
     for( var i=0; i< msg.length; i++ )

@@ -1,4 +1,4 @@
-/** 
+/**
  *  MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -26,7 +26,7 @@ MMTDrop.object = {};
 
 /**
  * Set global options
- * 
+ *
  * probe_stats_period: number
  * format_payload: boolean
  */
@@ -53,7 +53,7 @@ MMTDrop.config = {
 				useUTC : false
 			}
 		},
-		
+
 		/**
 		 * Chart render: "highchart", "c3js"
 		 */
@@ -66,29 +66,29 @@ MMTDrop.alert = {
     error: function( msg, delay ){
         //avoid two consecutif identique alerts
         var now = (new Date()).getTime();
-        
-        if( this._lastAlert 
-           && this._lastAlert.msg == msg 
-           && this._lastAlert.delay == delay 
+
+        if( this._lastAlert
+           && this._lastAlert.msg == msg
+           && this._lastAlert.delay == delay
            && this._lastAlert.time >= now - 100 )
             return;
-        
+
         this._lastAlert = {
             msg  : msg,
             delay: delay,
             time : now
         };
-        
+
         if( delay == undefined )
             delay = 0;
 
             //defined in pre-commond.js to show a loading popup
         if( loading )
             loading.onHide();
-        
+
         alertify.log( msg, "error",  delay);
     }
-}    
+}
 /**
  * Constants using in the library.
  * It contains mainly constants for data format.
@@ -113,7 +113,7 @@ MMTDrop.constants = {
 			RADIUS_REPORT_FORMAT : 9,
 			/** Statistics format id */
 			STATS_FORMAT : 100,
-            
+
             SECURITY_FORMAT: 10,
             BA_PROFILE_FORMAT: 12,
             BA_BANDWIDTH_FORMAT: 11
@@ -121,14 +121,14 @@ MMTDrop.constants = {
 
 		/**
 		 *  Data format description for statistic reports.
-		 *   
-		 *  The flow data columns contain common columns (id from 0 to 3) for the different applications, and, 
-		 *  specific per application columns (it is not necessary to report Host name, 
+		 *
+		 *  The flow data columns contain common columns (id from 0 to 3) for the different applications, and,
+		 *  specific per application columns (it is not necessary to report Host name,
 		 *  or Response time, etc. if they are not available for that application
 		 */
 		StatsColumn : {
 			/** Index of the format id column */
-			FORMAT_ID         : {id: 0,  label: "Format"}, 
+			FORMAT_ID         : {id: 0,  label: "Format"},
 			/** Index of the probe id column */
 			PROBE_ID          : {id: 1,  label: "Probe"},
 			/** Index of the data source id column */
@@ -137,15 +137,15 @@ MMTDrop.constants = {
 			TIMESTAMP         : {id: 3,  label: "Timestamp"},
 			/** Index of the application id column */
 			APP_ID            : {id: 4,  label: "App"},
-			/** 
+			/**
 			 * Index of the application path column
-			 * 
-			 * An application might have different statistics entries. 
-			 * Example: Facebook might have two entries one with path eth.ip.tcp.http.fb 
-			 * while the second with path eth.ip.tcp.ssl.fb. 
-			 * This is completely normal. 
-			 * It allows to build a hierarchical view on the protocol statistics. 
-			 * 
+			 *
+			 * An application might have different statistics entries.
+			 * Example: Facebook might have two entries one with path eth.ip.tcp.http.fb
+			 * while the second with path eth.ip.tcp.ssl.fb.
+			 * This is completely normal.
+			 * It allows to build a hierarchical view on the protocol statistics.
+			 *
 			 */
 			APP_PATH          : {id: 5,  label: "App Path"},
 			/** Index of the active flows column */
@@ -169,39 +169,39 @@ MMTDrop.constants = {
 			/** Index of the packet count column */
 			DL_PACKET_COUNT   : {id: 15, label: "DL Packet Count"},
             /** Index of the start timestamp of the flow */
-            START_TIME        : {id: 16, label: "Start Time"}, 
-            
-            IP_SRC           : {id: 17, label: "IP Source"}, 
-            IP_DEST          : {id: 18, label: "IP Destination"} ,            
-            
+            START_TIME        : {id: 16, label: "Start Time"},
+
+            IP_SRC           : {id: 17, label: "IP Source"},
+            IP_DEST          : {id: 18, label: "IP Destination"} ,
+
             /** Index of the MAC address source column */
-            MAC_SRC           : {id: 19, label: "MAC Destination"}, 
+            MAC_SRC           : {id: 19, label: "MAC Destination"},
             /** Index of the MAC address source column */
             MAC_DEST          : {id: 20 , label: "MAC Source "},
             SESSION_ID        : {id: 21 , label: "Session ID"},
             PORT_DEST         : {id: 22 , label: "Port Destination"},
             PORT_SRC          : {id: 23 , label: "Port Source"},
             THREAD_NUMBER     : {id: 24 , label: "Thread Number"},
-            
+
             RTT               : {id: 25 , label: "RTT"},
-            
+
             RTT_MIN_SERVER    : {id: 26 , label: "RTT min Server"},
             RTT_MIN_CLIENT    : {id: 27 , label: "RTT min Client"},
             RTT_MAX_SERVER    : {id: 28 , label: "RTT min Server"},
             RTT_MAX_CLIENT    : {id: 29 , label: "RTT min Client"},
             RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
             RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
-            
-            
+
+
             FORMAT_TYPE       : {id: 32 , label: "Type"},
-            
+
             APP_FAMILY        : {id: 33 , label: "App Family"},
             CONTENT_CLASS     : {id: 34 , label: "Content Class"},
             APP_NAME          : {id: 35 , label: "App Name"},
             CDN_FLAG          : {id: 36 , label: "CDN Flag"},
 		},
-    
-		
+
+
 		/**
 		 * Data format description for statistic reports of HTTP protocol
 		 */
@@ -210,9 +210,9 @@ MMTDrop.constants = {
 			RESPONSE_TIME      : {id: 35, label:"Response Time"},
 			/** Index of the HTTP transactions count (req/res number) column */
 			TRANSACTIONS_COUNT : {id: 36, label:"Transaction Count"},
-			/** 
+			/**
 			 * Index of the interaction time (between client and server) column.
-			 * This is the time between the first request and the lest response. 
+			 * This is the time between the first request and the lest response.
 			 * If this is zero then the flow has one request reply.
 			 */
 			INTERACTION_TIME   : {id: 37, label:"Interaction Time"},
@@ -223,36 +223,36 @@ MMTDrop.constants = {
 			/** Index of the Referer column. Referrer as reported in the HTTP header */
 			REFERER      : {id: 40, label:"Referer"},
 			/** Index of the device and operating system ids column.
-			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.). 
+			 * It is concatenated between device identifier (PC, mobile, tablet, etc.) and Operating system identifier (Win, Linux, Android, etc.).
 			 * These are derived from the user agent.
 			 */
 			//DEVICE_OS_ID : {id: 6, label:"Device OS ID"},
-			/** Index of the is CDN delivered column 
-			 * 0: CDN not detected (This does not mean it is not used :)). 
-			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
-			 * Will not be present in HTTPS flows. 
+			/** Index of the is CDN delivered column
+			 * 0: CDN not detected (This does not mean it is not used :)).
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application.
+			 * Will not be present in HTTPS flows.
 			 * 2: CDN delivery, the application name should identify the application. However, we might see Akamai as application. In this case, skip it.
 			 */
 			CDN_FLAG     : {id: 41, label: "CDN Flag"},
             URI          : {id: 42, label: "URI"},
             METHOD       : {id: 43, label: "Method"},
             RESPONSE     : {id: 44, label: "Response"}
-            
+
 		},
 
 		/**
 		 * Data format description for statistic reports of TLS protocol
 		 */
 		TlsStatsColumn : {
-			/** Servername as reported in the SSL/TLS negotiation. 
-			 * It is not always possible to extract this field. will be empty in that case. 
+			/** Servername as reported in the SSL/TLS negotiation.
+			 * It is not always possible to extract this field. will be empty in that case.
 			 */
 			SERVER_NAME : {id: 35, label:"Server Name"},
 			/**
-			 * 0: CDN not detected (This does not mean it is not used :)). 
-			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application. 
-			 * Will not be present in HTTPS flows. 
-			 * 2: CDN delivery, the application name should identify the application. 
+			 * 0: CDN not detected (This does not mean it is not used :)).
+			 * 1: 1 means CDN flags identified in the message. The referrer should identify the application.
+			 * Will not be present in HTTPS flows.
+			 * 2: CDN delivery, the application name should identify the application.
 			 * However, we might see Akamai as application. In this case, skip it.
 			 */
 			CDN_FLAG    : {id: 36, label:"CDN Flag"},
@@ -274,16 +274,20 @@ MMTDrop.constants = {
 		 * Data format description for statistic reports of FTP protocol
 		 */
 		FtpStatsColumn : {
-			
+				CONNNECTION_TYPE : {id: 34, label: "Connection Type"},
+				USERNAME         : {id: 35, label: "Username"},
+				PASSWORD         : {id: 36, label: "Password"},
+				FILE_SIZE        : {id: 37, label: "File Size"},
+				FILE_NAME        : {id: 38, label: "File Name"}
 		},
 
 		/**
 		 * Data format description for Radius reports
 		 */
 		RadiusStatsColumn: {
-			
+
 		},
-    
+
     BehaviourBandWidthColumn: {
         /** Index of the format id column */
         FORMAT_ID               : {id: 0, label:"Format"} ,
@@ -338,7 +342,7 @@ MMTDrop.constants = {
         HISTORY                 : {id: 8, label: "History"},
         VERDICT_COUNT           : {id: 9, label: "Count"},
     },
-    
+
 		/**
 		 * Micro-flows statistics reports
 		 */
@@ -368,7 +372,7 @@ MMTDrop.constants = {
 			 */
 			UL_VOLUME_COUNT: {id: 5, label: "UL Volume Count"}
 		},
-		
+
 		/**
 		 * RTP flow metrics
 		 */
@@ -383,7 +387,7 @@ MMTDrop.constants = {
 			QUALITY_INDEX     : "Quality Index",
 		},
 
-    
+
     LicenseColumnId           : {
          /** Index of the format id column */
         FORMAT_ID               : {id: 0, label:"Format"} ,
@@ -401,7 +405,7 @@ MMTDrop.constants = {
     },
     NdnColumn : {
 			/** Index of the format id column */
-			FORMAT_ID         : {id: 0,  label: "Format"}, 
+			FORMAT_ID         : {id: 0,  label: "Format"},
 			/** Index of the probe id column */
 			PROBE_ID          : {id: 1,  label: "Probe"},
 			/** Index of the data source id column */
@@ -410,29 +414,29 @@ MMTDrop.constants = {
 			TIMESTAMP         : {id: 3,  label: "Timestamp"},
 			/** Index of the application id column */
 			SESSION_ID        : {id: 4,  label: "App"},
-            
+
             /** Index of the MAC address source column */
-            MAC_SRC           : {id: 5, label: "MAC Destination"}, 
+            MAC_SRC           : {id: 5, label: "MAC Destination"},
             /** Index of the MAC address source column */
             MAC_DEST          : {id: 6 , label: "MAC Source "},
-        
+
             NAME              : {id: 7,  label: "Name"},
-        
+
             IS_OVER_TCP       : {id: 8,  label: "Over TCP"},
-        
-            IP_SRC            : {id: 9, label: "IP Destination"}, 
-            IP_DEST           : {id: 10, label: "IP Source "} ,            
-            
+
+            IP_SRC            : {id: 9, label: "IP Destination"},
+            IP_DEST           : {id: 10, label: "IP Source "} ,
+
             PORT_SRC          : {id: 11 , label: "Port Source"},
             PORT_DEST         : {id: 12 , label: "Port Destination"},
-        
+
             //DIRECTION         : {id: 13,  label: "Direction"},
-        
+
             NB_INTEREST_PACKET       : {id: 13,  label: "Interest Packet"},
             INTEREST_LIFETIME        : {id: 14,  label: "Interest LifeTime"},
             DATA_VOLUME_INTEREST     : {id: 15,  label: "Interest Volume"},
 			NDN_VOLUME_INTEREST      : {id: 16,  label: "Interest Payload"},
-             
+
             NB_DATA_PACKET           : {id: 17,  label: "Data Packet"},
             DATA_FRESHNESS_PERIOD    : {id: 18,  label: "Data Freshness Period"},
             DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
@@ -446,7 +450,7 @@ MMTDrop.constants = {
             INTEREST_LIFETIME        : {id: 14,  label: "Interest LifeTime"},
             DATA_VOLUME_INTEREST     : {id: 15,  label: "Interest Volume"},
 			NDN_VOLUME_INTEREST      : {id: 16,  label: "Interest Payload"},
-             
+
             NB_DATA_PACKET           : {id: 17,  label: "Data Packet"},
             DATA_FRESHNESS_PERIOD    : {id: 18,  label: "Data Freshness Period"},
             DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
@@ -468,7 +472,7 @@ MMTDrop.constants = {
             OUT_OF_ORDER                : {id: 11, label: "Out-of-order" },
             PROBABILITY_BUFFERING       : {id: 12, label: "Probability Buffering" }
         },
-    
+
 		/**
 		 * Mapping between RTP meric IDs and metric names
 		 */
@@ -490,61 +494,61 @@ MMTDrop.constants = {
 
 		/**
 		 * Flow metric
-		 * 
+		 *
 		 * This will be represented as options of flow metric filters created by {@link MMTDrop.filterFactory.createFlowMetricFilter}
-		 * 
+		 *
 		 */
 		FlowMetricFilter : {
 			/** Data volume.
-			 * 
+			 *
 			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
 			 */
 			DATA_VOLUME    : {id: 101, label:"Data volume"},
 			/** Number of packets.
-			 * 
+			 *
 			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
 			 */
 			PACKET_COUNT   : {id: 102, label:"Packet count"},
 			/** Payload volume.
-			 * 
+			 *
 			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
 			 */
 			PAYLOAD_VOLUME : {id: 103, label:"Payload volume"},
 			/** Number of active flows
-			 * 
+			 *
 			 * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
 			 */
 			ACTIVE_FLOWS   : {id: 104, label:"Flow count"},
-			
+
 			/** Number of upload packets
-			 * 
+			 *
 			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
 			 */
 			UL_PACKET_COUNT: {id: 12, label:"UL Packet count"},
 			/** Number of download packets
-			 * 
+			 *
 			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
 			 */
 			DL_PACKET_COUNT: {id: 13, label:"DL Packet count"},
 			/** Upload data volume
-			 * 
+			 *
 			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
 			 */
 			UL_DATA_VOLUME : {id: 14, label:"UL Data volume"},
 			/** Download data volume
-			 * 
+			 *
 			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
 			 */
 			DL_DATA_VOLUME : {id: 15, label:"DL Data volume"},
 			/** Duration of flow
-			 * 
+			 *
 			 * This column is the one from {@link MMTDrop.constants.FlowStatsColum}
 			 */
 			FLOW_DURATION  : {id: 105, label:"Flow duration"}
 		},
-		
+
 		/**
-		 * A table of Protocol-Id : Name 
+		 * A table of Protocol-Id : Name
 		 */
 		ProtocolsIDName: {
             "-1": "_other",
@@ -558,10 +562,10 @@ MMTDrop.constants = {
 		 * A table of Category-Id : Name
 		 */
 		CategoriesIdsMap: {
-			0:'All', 1:'Web', 2:'P2P', 3:'Gaming', 4:'Streaming', 5:'Conversational', 6:'Mail', 7:'FileTransfer', 8:'CloudStorage', 9:'DirectDownloadLink', 10:'Network', 
-            //11:'Tunnelling', 
-            12:'DataBase', 
-            //13:'Remote', 14:'Misc', 
+			0:'All', 1:'Web', 2:'P2P', 3:'Gaming', 4:'Streaming', 5:'Conversational', 6:'Mail', 7:'FileTransfer', 8:'CloudStorage', 9:'DirectDownloadLink', 10:'Network',
+            //11:'Tunnelling',
+            12:'DataBase',
+            //13:'Remote', 14:'Misc',
             15:'CDN',
             16: 'SocialNetwork'
 		},
@@ -604,12 +608,12 @@ MMTDrop.constants = {
 		 */
 		getProtocolNameFromID : function( app_id ) {
             var id = parseInt( app_id );
-            
+
 			var protocolName = "Unknown";
             if( id > 0 )
                 protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'Unknown';
             else if( MMTDrop.constants.OtherProtocolsIDName && ( id in MMTDrop.constants.OtherProtocolsIDName)){
-                
+
                 protocolName = MMTDrop.constants.OtherProtocolsIDName[id];
 
                 var arr = protocolName.split(":");
@@ -619,12 +623,12 @@ MMTDrop.constants = {
                     //parent: port_number
                     protocolName = MMTDrop.constants.ProtocolsIDName[ arr[0] ] + ":" + arr[1];
                 }
-                    
+
             }
-            
+
 			return protocolName;
 		},
-		
+
 		/**
 		  * Return the path friendly name.
 		  * @param {string} path application protocol path (given by application IDs)
@@ -634,7 +638,7 @@ MMTDrop.constants = {
 			 var name = [];
 			 for( var i=0; i<id.length; i++)
 				 name.push( MMTDrop.constants.getProtocolNameFromID( id[i] ) );
-			 
+
 			 return name.join("/");
 		 },
 
@@ -648,7 +652,7 @@ MMTDrop.constants = {
 			 var n = path.lastIndexOf(".");
 			 if (n == -1) {
 				 return ".";
-			 } 
+			 }
 			var p = path.substring(0, n);
 			return p;
 		 },
@@ -667,7 +671,7 @@ MMTDrop.constants = {
 			 var child = path.substring(n + 1);
 			 return child;
 		 },
-		 
+
 		 /**
 		  * Returns the application id given the application path.
 		  * @param {string} path - application protocol path
@@ -682,11 +686,11 @@ MMTDrop.constants = {
 		 /**
 		  * Returns the root application id given the application path.
 		  * @param {string} path - application protocol path
-		  * @returns {string} root 
+		  * @returns {string} root
 		  */
 		 getRootAppId : function(path) {
 			 var n = path.toString().indexOf(".");
-			 if (n == -1) 
+			 if (n == -1)
 				 return path;
 			 return path.toString().substring(0, n);
 		 },
@@ -697,14 +701,14 @@ MMTDrop.constants = {
 		 */
 		getCategoryIdFromAppId : function( appId ){
             appId = parseInt( appId );
-            
+
             if( appId < 0 && MMTDrop.constants.OtherProtocolsIDName ){
                 var val = MMTDrop.constants.OtherProtocolsIDName[ appId ];
                 if( val == undefined )
                     return -1;
                 appId   = parseInt( val.split(":")[0] );
             }
-            
+
 			for (var i in MMTDrop.constants.CategoriesAppIdsMap){
 				var arr = MMTDrop.constants.CategoriesAppIdsMap[i];
 				if (arr.indexOf( appId ) > -1)
@@ -719,19 +723,19 @@ MMTDrop.constants = {
 		 */
 		getCategoryNameFromID : function(id) {
 			var protocolName = "Network";
-			if ( id in MMTDrop.constants.CategoriesIdsMap) 
+			if ( id in MMTDrop.constants.CategoriesIdsMap)
                 protocolName = MMTDrop.constants.CategoriesIdsMap[id] ;
 			return protocolName;
 		},
 
 		/**
 		 * List of period Id.
-		 * 
+		 *
 		 * This will be used as:
-		 * 
+		 *
 		 * * options of period filters created by {@link MMTDrop.filterFactory.createPeriodFilter}.
 		 * * period parameter of {@link MMTDrop.Database}
-		 *   
+		 *
 		 */
 		period : {
 			MINUTE      : "minute",
@@ -746,7 +750,7 @@ MMTDrop.constants = {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-//Add some methods to general object 
+//Add some methods to general object
 
 //Do not add this prototype to Object.prototype. They may be called incidentally.
 //These methodes can be fired automatically in some object (e.g., by: for var k in obj)
@@ -759,14 +763,14 @@ MMTDrop.constants = {
  */
 MMTDrop.tools = function () {
     var _this = {}; //this = Window when this inside function(){ ... }();
-    
+
     /**
      * add zero points
      * @param   {Array}    data       [[Description]]
      * @param   {Number} period_sampling  interval between 2 consecutif samples (in millisecond)
      * @param   {Number} period_total     total intervals (in millisecond)
      * @param   {Number} time_id    column id of timestamp (=3 normally)
-     *                                
+     *
      * @returns {Array} [[Description]]
      */
     _this.addZeroPointsToData = function (data, period_sampling, time_id, start_time, end_time) {
@@ -787,35 +791,35 @@ MMTDrop.tools = function () {
 
         //add first element if need
         if( data.length == 0 || start_time < (data[0][ time_id ] - period_sampling) ){
-            var zero = {};                    
+            var zero = {};
             zero[time_id] = start_time;
             data.unshift(zero);
         }
         //add last element if need
         if( data.length == 0 || end_time > (data[ data.length - 1 ][ time_id ] + period_sampling ) ){
-            var zero = {};                    
+            var zero = {};
             zero[time_id] = end_time;
             data.push(zero);
         }
-        
+
         var len    = data.length;
         var arr    = [];
         var lastTS = start_time;
 
         while( lastTS <= end_time ){
             lastTS += period_sampling;
-            
+
             var existPoint = false;
             for (var i = 0; i < len; i++) {
                 var ts = data[i][time_id];
-                
+
                 if( ts <= lastTS && ts > lastTS - period_sampling ){
                     existPoint       = true;
                     data[i][time_id] = lastTS;
                     arr.push(data[i]);
                 }
             }
-            
+
             if ( !existPoint ) {
                 var zero = {};
                 zero[time_id] = lastTS;
@@ -825,50 +829,50 @@ MMTDrop.tools = function () {
 
         return arr;
     };
-    
+
     _this.random = function( n ){
         return Math.round(Math.random()* n);
     }
     /**
-     * 
+     *
      * @param   {[[integer]]} value
-     * @returns {[[string]]} 
+     * @returns {[[string]]}
      */
     _this.formatDataVolume = function (v) {
         if( MMTDrop.config.format_payload !== true )
             return Math.round(v);
-        
+
         if (v >= 1000000000)
             return (v / 1000000000).toFixed(2) + "G";
         if (v >= 1000000)
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
             return (v / 1000).toFixed(2) + "K";
-        
+
         return v.toFixed(2) ;//Math.round(v);
     };
-    
+
     _this.formatPercentage = function( v ){
         v *= 100;
         return v.toFixed(2) + "%";
     }
-    
+
     _this.formatLocaleNumber = function( v ){
         return v.toLocaleString();
     }
-    
+
     /**
      * Get date and time string from a date object
-     * @param   {Date} 
-     * @returns {string} 
+     * @param   {Date}
+     * @returns {string}
      */
     _this.formatDateTime = function (v, withMillisecond) {
         return v.toLocaleString();
-       /* 
+       /*
         var milli = "";
         if( withMillisecond === true )
             milli = "." + ("00" + v.getMilliseconds()).slice(-3);
-        
+
         var time = v.getFullYear();
             time += "-" + ("0" + (v.getMonth() + 1)).slice(-2);
             time += "-" + ("0" + v.getDate()).slice(-2);
@@ -877,11 +881,11 @@ MMTDrop.tools = function () {
             time += ":" + ("0" + v.getSeconds()).slice(-2);
             time += milli ;
 
-        
+
         return time;
         */
     };
-    
+
     _this.printStack = function(){
         try{
             throw new Error( "Get Stack" );
@@ -889,7 +893,7 @@ MMTDrop.tools = function () {
             console.log( err.stack );
         }
     }
-    
+
 	/**
 	 * Convert an object to an array
 	 * @param {Object} obj - object tobe converted
@@ -903,10 +907,10 @@ MMTDrop.tools = function () {
 		});
 	};
 
-    
+
 	/**
 	 * Check whether a value existing in an array
-	 * @param {object} val 
+	 * @param {object} val
 	 * @param {Array} arr
 	 * @returns <code>true</code> if <code>val</code> existing in <code>arr</code>, otherwise <code>false</code>
 	 */
@@ -917,7 +921,7 @@ MMTDrop.tools = function () {
 		}
 		return -1;
 	};
-	
+
 	/**
 	 * Get the first element of an Object or Array
 	 * @param {object} obj
@@ -988,7 +992,7 @@ MMTDrop.tools = function () {
             }
             return _data;
         }
-         
+
 		var seen = [];
 //		return JSON.parse( JSON.stringify (obj));
 		var str = JSON.stringify(obj, function(key, val) {
@@ -1003,7 +1007,7 @@ MMTDrop.tools = function () {
 	};
 
 	var _uniqueNumber = 0;
-	
+
 	/**
 	 * Get an unique number.
 	 * This counter will be reseted when the page loaded. It starts from 1.
@@ -1034,10 +1038,10 @@ MMTDrop.tools = function () {
 			var pre = window.location.pathname;
             if( useFullURI )
                 pre += window.location.search;
-			
+
 			return "mmtdrop." + pre + ".";
 		};
-		
+
 		var _storage = window.localStorage;
 
 //		check if browser supports localStorage
@@ -1074,7 +1078,7 @@ MMTDrop.tools = function () {
 		};
 	}();
 
-    
+
     _this.cookie = {
         set: function(name, value, days) {
             var expires;
@@ -1130,7 +1134,7 @@ MMTDrop.tools = function () {
 
 	/**
 	 * Split data into n array, each array contains only element having the same value of the @{col}th column
-	 * 
+	 *
 	 * @param {Array} data - is an array of array
 	 * @param {number} col - is a key of an element of @{data}
 	 * @returns {{string : Array}}
@@ -1211,7 +1215,7 @@ MMTDrop.tools = function () {
 				if ((colSums.length === 1 && colSums[0] != key) || MMTDrop.tools.inArray(key, colSums) == -1)
 					continue;
 				var val = msg[key];
-				
+
 				if ( val == null)
 					continue;
 
@@ -1223,7 +1227,7 @@ MMTDrop.tools = function () {
 						obj[key] = [];
 				}
 
-				
+
 				if (isNumber)
 					obj[key] += parseInt( val ); //store only the total of values
 				else
@@ -1245,36 +1249,36 @@ MMTDrop.tools = function () {
 	 _this.sumByGroup = function(data, colsSum, colGroup){
 		return _this.sumByGroups( data, colsSum, [colGroup]);
 	};
-	
+
 	/**
 	 * Sum up element of {@link Data} by group, sub group, ... and so more
 	 * @param {Data} data
 	 * @param {Index[]} colsToSum list of column Ids to sumup
 	 * @param {Index[]} colsToGroup list of column Ids to group by
-	 * @return {Data} data 
+	 * @return {Data} data
 	 * @alias sumByGroups
 	 * @memberof! MMTDrop.tools
 	 */
 	 _this.sumByGroups = function( data, colsToSum, colsToGroup){
 		if (colsToSum == null)
 			throw new Error("Need one column tobe sumUp");
-		
+
 		if( Array.isArray( colsToGroup ) == false || colsToGroup.length == 0 )
 			return _this.sumUp( data, colsToSum );
-		
+
 		colsToGroup = colsToGroup.slice(0);	//clone colsToGroup
 		var col = colsToGroup.shift();	    //remove the first elem
-		
+
 		var obj = _this.splitData( data, col );
 		for (var i in obj){
 			var o = obj[i];
-			
+
 			obj[i] = _this.sumByGroups(o, colsToSum, colsToGroup);
 		}
 
 		return obj;
 	};
-	
+
 
 	/**
 	 * Sum data by group and subgroup
@@ -1291,8 +1295,8 @@ MMTDrop.tools = function () {
 
 		return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
 	};
-    
-    
+
+
     _this.getURLParameters  = function(){
         var vars = {}, hash;
         var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
@@ -1317,9 +1321,9 @@ MMTDrop.tools = function () {
 /**
  * @class
  * A class representing data getting from server
- * @param {DatabaseParam} param  
- * @param {DatabaseProcessFn} [dataProcessingFn=null] - processing data  
- * @param {boolean} [isAutoLoad=false] auto load data for the first call of <code>data()</code> 
+ * @param {DatabaseParam} param
+ * @param {DatabaseProcessFn} [dataProcessingFn=null] - processing data
+ * @param {boolean} [isAutoLoad=false] auto load data for the first call of <code>data()</code>
  * @constructor
  */
 MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
@@ -1327,7 +1331,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     if( MMTDrop.object.database == undefined )
          MMTDrop.object.database = [];
      MMTDrop.object.database.push( this );
-    
+
 	//this an abstract class
 	//if (this.constructor === MMTDrop.Database){
 	//	throw new Error("Cannot instantiate abstract class MMTDrop.Database\n" +
@@ -1335,7 +1339,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	//}
 	if( isAutoLoad ==undefined )
 		isAutoLoad = false;
-	
+
 	var _serverURL = MMTDrop.config.serverURL || "http://localhost:8088";
 	if (_serverURL.substring(_serverURL.length - 1, 1) === "/")
 		_serverURL += "traffic/data";
@@ -1348,11 +1352,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	var _this = this;		//pointer using in private methods
 
     var _reloadCallback = []; //list of functions being called after db reloaded
-    
+
     this.afterReload = function( cb ){
         _reloadCallback.push( cb );
     }
-    
+
     this.delete = function(){
         _data = [];
         _originalData = [];
@@ -1361,7 +1365,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         if( _sockets )
             for( var i in _sockets)
             _sockets[i].disconnect();
-        
+
         var db = MMTDrop.object.database;
         for( var i in db )
             if( db[i] == this ){
@@ -1385,7 +1389,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		_data = val;
 		return this;
 	};
-    
+
     this.time = {
         begin: 0,
         end  : 0
@@ -1394,9 +1398,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     var isFirstTime = true;
 	/**
 	 * Reload data from MMT-Operator.
-	 * @param {DatabaseParam} [new_param=null] - a new parameter of database. 
+	 * @param {DatabaseParam} [new_param=null] - a new parameter of database.
 	 * The new parameter will merge with the current one of the database.
-	 * @see {@link MMTDrop.tools#mergeObjects} 
+	 * @see {@link MMTDrop.tools#mergeObjects}
 	 */
 	this.reload = function(new_param, callback, user_data){
 		if (new_param)
@@ -1425,13 +1429,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
             }
 
             this.reset();
-            
+
             if( callback ) callback( _originalData, user_data );
             for( var i in _reloadCallback )
                 _reloadCallback[i]( _originalData, user_data );
         };
-        
-        
+
+
         _get (_param, {
             success: onSuccess.bind( this ),
             error  : function( xhr, status, msg){
@@ -1439,12 +1443,12 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
                     msg = "Connection timeout";
                 else
                     msg = "Cannot connect to database server";
-                
+
                 MMTDrop.alert.error( msg, 10*1000 );
                 //throw new Error( msg );
             }
         } );
-        
+
 	};
 
 	/**
@@ -1456,20 +1460,20 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		}
 	};
 
-	
+
 	var _callbacks = {};
 	var _sockets    = {};
-	
+
 	/**
 	 * Register a callback when receiving a new message in realtime from MMT-Operator.
-	 * 
-	 * @param {function} callback The callback will be passed two paramenters: the received message and the <code>userData</code> 
+	 *
+	 * @param {function} callback The callback will be passed two paramenters: the received message and the <code>userData</code>
 	 * @param {object} userData
 	 */
 	this.onMessage = function( channel, callback, userData ){
         if( channel == null )
             channel = "protocol.flow.stat";
-        
+
         if( _callbacks[ channel ]  == undefined )
                 _callbacks[ channel ] = [];
         else{
@@ -1478,13 +1482,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
             //io was created before
             return;
         }
-        
+
 		if(MMTDrop.tools.isFunction( callback )){
 			_callbacks[ channel ].push( {callback: callback, data: userData} );
         }
         else
             return;
-        
+
 		if( _sockets[ channel ] == null){
 			var socket = new io.connect(MMTDrop.config.serverURL);
 			socket.emit("subscribe", channel );
@@ -1495,7 +1499,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 				//_originalData.push( msg );
                 _originalData = _originalData.concat( msg );
                 _data = _data.concat( msg );
-				
+
                 var cb = _callbacks[ channel ];
 				//fire callbacks
 				for( var i=0; i<cb.length; i++){
@@ -1506,7 +1510,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
             _sockets[ channel ] = socket;
 		}
 	};
-	
+
 	/**
 	 * Statistic
 	 * @type {object}
@@ -1516,11 +1520,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 		/**
 		 * Group data by probeID
-		 * @alias stat.splitDataByProbe 
+		 * @alias stat.splitDataByProbe
 		 * @memberof! MMTDrop.Database#
 		 */
 		stat.splitDataByProbe = function(){
-			return MMTDrop.tools.splitData( _this.data(), 
+			return MMTDrop.tools.splitData( _this.data(),
 					MMTDrop.constants.StatsColumn.PROBE_ID.id);
 		};
 
@@ -1532,15 +1536,15 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		 * @memberof! MMTDrop.Database#
 		 */
 		stat.getProbes = function(){
-			var obj = MMTDrop.tools.splitData( _this.data(), 
+			var obj = MMTDrop.tools.splitData( _this.data(),
 					MMTDrop.constants.StatsColumn.PROBE_ID.id);
 			return Object.keys( obj );
 		};
-		
+
 		/**
 		 * Filter out data that do not satisfy some criteria.
 		 * This function does not change data <code>Database.data()</code>
-		 * @param {Array.<{id: Value, data: object[]}>} criteria List of criteria to retain data. 
+		 * @param {Array.<{id: Value, data: object[]}>} criteria List of criteria to retain data.
 		 * It states that each element <code>msg</code> of <code>Database.data()</code> having <code>msg[id]</code> equals to
 		 * one of element in <code>data</code>.
 		 * @return {Data} data after filtering out.
@@ -1567,7 +1571,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 			}
 			return arr;
 		};
-		
+
 		return stat;
 	}();
 
@@ -1575,7 +1579,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 	/*
 	 * Get data from MMT-Operator
-	 * 
+	 *
 	 * @param param = {
 	 *            format: {99, 0, 1, 2, 3}, //default: 99 <br/> probe : set of
 	 *            number // any <br/> source: set of text // any <br/> period:
@@ -1593,7 +1597,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 *             returns
 	 * {@link data} after getting them from database<br/>. The return data is an
 	 *         object. Each key-value is a pair of probeID and its data.
-	 * 
+	 *
 	 */
 	function _get(param, callback) {
 		// asyn
@@ -1642,7 +1646,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 /**
  * Create new instances of {@link MMTDrop.Database}.
- * 
+ *
  * Add some special processing depending on kinds of data format, see {@link MMTDrop.constants.CsvFormat}.
  * @namespace
  */
@@ -1661,12 +1665,12 @@ MMTDrop.databaseFactory = {
 
 			var db = new MMTDrop.Database(param, function (data){
                     return data;
-			}, 
+			},
 			isAutoLoad);
-    
-        
+
+
             db.stat.sumDataByParent = function( ){
-            	
+
                 var data = db.data();
                 //how data is processed for stat
                 var COL = MMTDrop.constants.StatsColumn;
@@ -1681,11 +1685,11 @@ MMTDrop.databaseFactory = {
                     probe = msg[ COL.PROBE_ID.id ];
                     src   = msg[ COL.SOURCE_ID.id ];
                     path  = msg[ COL.APP_PATH.id ];
-                    
+
                     if( obj[ts]                    === undefined ) obj[ts]                    = {};
                     if( obj[ts][probe]             === undefined ) obj[ts][probe]             = {};
                     if( obj[ts][probe][src]        === undefined ) obj[ts][probe][src]        = {};
-                    
+
                     if( obj[ts][probe][src][path]  === undefined ) obj[ts][probe][src][path]  = msg;
                     else{
                         ms = obj[ts][probe][src][path];
@@ -1693,13 +1697,13 @@ MMTDrop.databaseFactory = {
                             ms[ colsToSum[j] ] += msg[ colsToSum[j] ];
                     }
                 }
-                
+
                 for (var time in obj)
                     for (var probe in obj[time])
                         for (var src in obj[time][probe]) {
                             data = obj[time][probe][src];
 
-                            //STEP 1. 
+                            //STEP 1.
                             var hasChildren = {};
 
                             var keys = Object.keys(data); //keys is a set of APP_PATH
@@ -1791,7 +1795,7 @@ MMTDrop.databaseFactory = {
                             }
                 return data;
             }
-            
+
 
 			/**
 			 * Change path of application Ids to path of application names
@@ -1819,7 +1823,7 @@ MMTDrop.databaseFactory = {
 				return MMTDrop.tools.splitData(db.data(), MMTDrop.constants.StatsColumn.APP_ID.id);
 			};
 
-			
+
 			/**
 			 * Get set of AppID
 			 */
@@ -1828,16 +1832,16 @@ MMTDrop.databaseFactory = {
 				var keys = Object.keys( obj );
 				return keys;
 			};
-			
+
 			/**
-			 * Get set of class Ids  
+			 * Get set of class Ids
 			 */
 			db.stat.getAppClasses = function(){
 				var obj = db.stat.splitDataByClass();
 				var keys = Object.keys( obj );
 				return keys;
 			};
-			
+
 			/**
 			 * Get categories in database
 			 */
@@ -1858,24 +1862,24 @@ MMTDrop.databaseFactory = {
 
 				return obj;
 			};
-			
+
 			/**
 			 * Create data for Timeline chart
 			 * @param {Index} col - column to be calculated
 			 * @param {boolean} [isAppPath=true]   - labeling of series by app name or path name
 			 * @param {boolean} [isInAppMode=true] - a threshold to decide show a serie for each probe of total data or
 			 * a serie for each app (or path) of each probe
-			 * @return {ChartData} 
+			 * @return {ChartData}
 			 */
 			db.stat.getDataTimeForChart = function( col, isAppPath, isInAppMode){
-				
+
 				col = col || MMTDrop.constants.StatsColumn.PACKET_COUNT;
 
 				var label = col.label;
 				col       = col.id;
 
 				var group = {id: MMTDrop.constants.StatsColumn.APP_ID.id, label: "Name"};
-				
+
 				if( isAppPath == null || isAppPath ){
 					group = {id: MMTDrop.constants.StatsColumn.APP_PATH.id, label: "Name"};
 					isAppPath = true;
@@ -1885,29 +1889,29 @@ MMTDrop.databaseFactory = {
 
 				if( isInAppMode == null)
 					isInAppMode = true;
-				
-				
+
+
 				//splite data by probes
 				//probes is an object each key is a probeId and value of key is msg containing this probeId
 				var probes = db.stat.getProbes();
 				var noProbe = probes.length;              //numbere of Probe
-				
+
 				var header = [];
 				var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
 				var arr    = [];
 
-				//If there are more than 1 apps && 1 probes 
+				//If there are more than 1 apps && 1 probes
 				// ==> show a line of total for each probe
 				//       install of showing a line for each app of each probe
 				if( isInAppMode == false ){
-					
+
 					var obj = MMTDrop.tools.sumByGroups(
 							db.data(),
 							[col],
 							[MMTDrop.constants.StatsColumn.TIMESTAMP.id,
 							MMTDrop.constants.StatsColumn.PROBE_ID.id]
 					);
-					
+
 					if( noProbe == 1)
 						columns.push( {id: col, label: "Probe " + probes[0]});
 					else
@@ -1924,12 +1928,12 @@ MMTDrop.databaseFactory = {
 								oo[ col ][ probe ] = obj[time][probe][col];
 							else
 								oo[ col ] = obj[time][probe][col];
-						
+
 						arr.push( oo );
 					}
 				}
 				else{
-					
+
 					var obj = MMTDrop.tools.sumByGroups(
 							db.data(),
 							[col],
@@ -1938,8 +1942,8 @@ MMTDrop.databaseFactory = {
 							 group.id,
 							 MMTDrop.constants.StatsColumn.PROBE_ID.id]
 					);
-					
-					
+
+
 					for( var time in obj ){
 						var oo = {};
 						//the first column is timestamp
@@ -1958,11 +1962,11 @@ MMTDrop.databaseFactory = {
 									appName = MMTDrop.constants.getProtocolNameFromID( app );
 
 								if( noProbe > 1 )
-									columns.push( {id: key, label: appName, probes: probes});	
+									columns.push( {id: key, label: appName, probes: probes});
 								else
 									columns.push( {id: key, label: appName});
 							}
-							
+
 							oo[key] = {};
 							for( var probe in obj[ time ][ app ])
 								if( noProbe == 1)
@@ -1976,7 +1980,7 @@ MMTDrop.databaseFactory = {
 
 				return {data: arr, columns: columns, ylabel: label, probes: probes};
 			};
-			
+
 			/**
 			 * Create data for Table/Tree/Pie/Bar/ charts
 			 * @param {Index[]} cols - columns tobe calculated
@@ -1991,33 +1995,33 @@ MMTDrop.databaseFactory = {
 				}
 
 				var group = {id: MMTDrop.constants.StatsColumn.APP_ID.id, label: "Name"};
-				
+
 				if( isAppPath == null || isAppPath ){
 					group = {id: MMTDrop.constants.StatsColumn.APP_PATH.id, label: "Name"};
 					isAppPath = true;
 				}
 				else
 					isAppPath = false;
-				
+
 				var label = "";
 				if( args.length == 1)
 					label = args[0].label;
-				
-				//id of columns tobe sumUp 
+
+				//id of columns tobe sumUp
 				var cols = [];
 				for( var i in args )
 					cols.push( args[i].id );
-				
-				var obj = MMTDrop.tools.sumByGroups( db.data(), 
+
+				var obj = MMTDrop.tools.sumByGroups( db.data(),
 						cols,
 						[group.id,
 						 MMTDrop.constants.StatsColumn.PROBE_ID.id]);
-				
+
 				//splite data by probes
 				//probes is an object each key is a probeId and value of key is msg containing this probeId
 				var probes = db.stat.getProbes();
 				var nProbe = probes.length;
-				
+
 				var data = [];
 				for( var app in obj){
 					var o = {};
@@ -2025,18 +2029,18 @@ MMTDrop.databaseFactory = {
 						o[group.id] = app;
 					else
 						o[group.id] = MMTDrop.constants.getProtocolNameFromID( app );
-					
+
 					var isZero = true;
-					
+
 					for( var i in args){
 						var oo = {};
 						var temp = 0;
 						for( var prob in obj[app] ){
 							temp = obj[app][prob][ args[i].id ];
-							
+
 							if( !isNaN(temp) && parseInt(temp) != 0 )
 								isZero = false;
-							
+
 							oo[prob] = temp;
 						}
 						//asign to value if there is only one probe
@@ -2045,14 +2049,14 @@ MMTDrop.databaseFactory = {
 						else
 							o[ args[i].id ] = oo;
 					}
-					
+
 					//only add the item o if there data number != 0
 					if( isZero == false)
 						data.push( o );
 				}
 				//columns to show. The first column is APP_PATH
 				var columns = [ group ];
-				
+
 				for( var i in args ){
 					if( nProbe == 1)
 						columns.push( args[i] );
@@ -2060,10 +2064,10 @@ MMTDrop.databaseFactory = {
 						columns.push( {id: args[i].id, label: args[i].label, probes: probes } );
 					}
 				}
-				
+
 				return {data: data, columns: columns, probes: probes, ylabel: label};
 			};
-			
+
 			return db;
 		},
 
@@ -2087,24 +2091,24 @@ MMTDrop.databaseFactory = {
 					var msg = {};
 					for( var j in data[i])
 						msg[j] = data[i][j];
-					
+
 					//add some other properties
 					msg[ COL.PAYLOAD_VOLUME.id ] =
 						msg[ COL.DATA_VOLUME.id ] = msg[ FLOW.UL_DATA_VOLUME.id ]  + msg[ FLOW.DL_DATA_VOLUME.id ];
-					
+
 					msg[ COL.PACKET_COUNT.id ]   = msg[ FLOW.UL_PACKET_COUNT.id ] + msg[ FLOW.DL_PACKET_COUNT.id ];
-					
+
 					msg[ COL.FLOW_DURATION.id ]= msg[ FLOW.START_TIME.id ] - msg[ FLOW.TIMESTAMP.id ];
-					
+
 					//TODO
 					//msg[ COL.ACTIVE_FLOWS.id ] = ?
 					arr.push( msg );
 				}
 				return arr;
 			}, isAutoLoad);
-			
+
             /**
-			 * Get set of class Ids  
+			 * Get set of class Ids
 			 */
 			db.stat.getAppClasses = function(){
 				var obj = db.stat.splitDataByClass();
@@ -2133,49 +2137,49 @@ MMTDrop.databaseFactory = {
 
 				return obj;
 			};
-            
+
 			db.stat.getTimePointsForChart = function( col, sorted ){
 				var COL = MMTDrop.constants.FlowStatsColumn;
-				
+
 				sorted = (sorted === true) ? true : false; //do not sort by default
 
 				var label = col.label;
 				col = col.id;
-				
+
 				var probes  = db.stat.getProbes();
 				var noProbes= probes.length;
-				
-				var obj = MMTDrop.tools.sumByGroups( db.data(), 
-								[col], 
+
+				var obj = MMTDrop.tools.sumByGroups( db.data(),
+								[col],
 								[COL.TIMESTAMP.id, COL.PROBE_ID.id] );
 				var arr = [];
 				for( var time in obj){
 					var oo = {};
 					oo[COL.TIMESTAMP.id] = parseInt( time );
-					
+
 					oo[col] = {};
 					for( var probe in obj[time] )
 						if( noProbes == 1 )
-							oo[col] =  obj[time][probe][col]; 
+							oo[col] =  obj[time][probe][col];
 						else
 							oo[col][probe] =  obj[time][probe][col];
-					
+
 					arr.push( oo );
 				}
-				
+
 				var columns = [COL.TIMESTAMP];
 				if( noProbes == 1)
 					columns.push( {id: col, label: "Probe " + probes[0]} );
 				else
 					columns.push( {id: col, label: "Probe", probes: probes} );
-				
+
 				return {data: arr, columns: columns, ylabel: label, probes: probes};
 			};
-			
+
 			db.stat.getFlowDensityForChart = function( col ){
 				var label = col.label;
 				col       = col.id;
-				
+
 				var data    = db.data();
 				var arr     = [];
 				var columns = [{id: 0, label: label}];
@@ -2187,18 +2191,18 @@ MMTDrop.databaseFactory = {
 						return a[col] - b[col];
 					} );
 					var flowcount = data.length;
-					
+
 					for( var i=0; i<flowcount; i++){
 						var oo = {};
 						oo[0]  = data[i][col];
-						oo[probe]= 100*i/flowcount; 
+						oo[probe]= 100*i/flowcount;
 						arr.push( oo );
 					}
 				}
-				
+
 				return {data: arr, columns: columns, ylabel: "%"};
 			};
-			
+
 			return db;
 		},
 };
@@ -2213,17 +2217,17 @@ MMTDrop.databaseFactory = {
 ///////////////////////////////////////////////////////////////////////////////////////////
 /**
  * @class
- * Filter data before visualizing them by {@link MMTDrop.Chart} 
- * 
- * @param {FilterParam} param  
- * @param {function} filterFn  This function defines how database is filtered. 
- * It takes the form <code>callback(sel, db)</code>: 
+ * Filter data before visualizing them by {@link MMTDrop.Chart}
+ *
+ * @param {FilterParam} param
+ * @param {function} filterFn  This function defines how database is filtered.
+ * It takes the form <code>callback(sel, db)</code>:
  * with <code>sel</code> typed of {@link Index} is current selected option and
  * <code>db</code> typed of {@link MMTDrop.Database} is a database the filter attached to.
- * 
+ *
  * @param {function} [prepareDataFn=null] This function may be usedful for caching data
- * when an option being selected again. That is, instead of re-calculate/filter database 
- * we cache data that were filtered at the first time of selecting the option and reuse for next times.  
+ * when an option being selected again. That is, instead of re-calculate/filter database
+ * we cache data that were filtered at the first time of selecting the option and reuse for next times.
  * This is called when calling <code>.filter()</code>.
  * @constructor
  */
@@ -2232,7 +2236,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     if( MMTDrop.object.filter == undefined )
          MMTDrop.object.filter = [];
      MMTDrop.object.filter.push( this );
-    
+
 	var _currentSelectedOption = null;
 	var _onFilterCallbacks = [];
     var _onChangeCallbacks = [];
@@ -2245,11 +2249,11 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     this.getId = function(){
         return param.id;
     }
-    
+
     this.hide = function(){
         $("#" + param.id + "_container").hide();
     }
-    
+
     this.show = function(){
         $("#" + param.id + "_container").show();
     }
@@ -2271,12 +2275,12 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		var filter =     $('<select>',{class: "form-control",     id  : param.id});
 
         this.select = filter;
-        
+
 		span.appendTo( fdiv );
 		filter.appendTo( fdiv );
 		fdiv.appendTo(fcontainer);
 		fcontainer.appendTo($('#' + elemID));
-        
+
         _this.domElement = fcontainer;
 		//add a list of options to the filter
 		_this.option( param.options );
@@ -2289,19 +2293,19 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
                 var callback = _onChangeCallbacks[i];
                 callback[0](_currentSelectedOption, _database, callback[1]);
             }
-            
+
 			_currentSelectedOption = _option[this.selectedIndex]; 	//the selected option of the filter
-			
+
 			console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
-			
+
 			//save the current selected index
 			MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
-			
+
             for (var i in _afterChangeCallbacks){
                 var callback = _afterChangeCallbacks[i];
                 callback[0](_currentSelectedOption, _database, callback[1]);
             }
-            
+
 			//applying the filter to the current selection
             setTimeout( function(){
     			_filter();
@@ -2330,18 +2334,18 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     				break;
     			}
 	    	}
-            
-            
+
+
         }
 		return this;
 	};
-	
+
 	/**
 	 * Get list of options of the filter
 	 * @returns {Index[]} lst
 	 *//**
 	 * Set a new list of options of the filter
-	 * @param {Index[]} lst 
+	 * @param {Index[]} lst
 	 * @returns [MMTDrop.Filter] this
 	 */
 	this.option = function( val ){
@@ -2367,7 +2371,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			console.log(" There are no options in the filter " + param.id);
 			return;
 		}
-        
+
 		//create list of options
 		for (var i in _option){
 			var opt = $('<option>', {
@@ -2376,10 +2380,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 			});
 			opt.appendTo(filter);
 		}
-		
+
 		var defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
 		var isExist = false;
-		
+
 		//check if the defaultOption is in the current option list
 		for (var i in _option){
 			if (defaultOption != null && defaultOption.id == _option[i].id){
@@ -2397,7 +2401,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
                     break;
                 }
 			}
-            
+
             if( isExist == false )
                 for (var i in _option){
                     defaultOption = _option[i];
@@ -2421,7 +2425,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 	/**
 	 * Register a callback after the filter filters out data.
 	 * User can register more than one callback.
-	 * @param {function} callback It takes the form 
+	 * @param {function} callback It takes the form
 	 * <code>callback(sel, db, userData)</code> where: <code>sel</code> is the current selected option,
 	 * <code>db</code> is database after filtering.
 	 * @param {object} userData It will be passed as the last parameter of <code>callback</code>.
@@ -2435,7 +2439,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 		if (MMTDrop.tools.isFunction(callback))
 			_onChangeCallbacks.push ([callback, obj]);
 	};
-    
+
     this.afterChanged = function (callback, obj){
 		if (MMTDrop.tools.isFunction(callback))
 			_afterChangeCallbacks.push ([callback, obj]);
@@ -2452,7 +2456,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
 	function _filter(){
 		if (MMTDrop.tools.isFunction(filterFn)){
-			if (_database != null && 
+			if (_database != null &&
 					_currentSelectedOption != null){
 
                 if( _database.data )
@@ -2472,14 +2476,14 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
                 }, 0, callback, _currentSelectedOption, _database);
 			}
 		}
-		else 
+		else
 			throw new Error ("You need to implement how it filters data");
 	};
-    
+
     this.delete = function(){
         //unregistred the callbacks
         _onFilterCallbacks = [];
-        
+
         //remove from list of filter objects
         var ft = MMTDrop.object.filter;
         for( var i in ft)
@@ -2489,7 +2493,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
             }
         if( _this.domElement )
             _this.domElement.remove();
-        
+
     }
 };
 
@@ -2498,7 +2502,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
  * @namespace
  */
 MMTDrop.filterFactory = {
-		
+
 		/**
 		 * Create a filter metric for flow statistic.
 		 * The list of options is defined by {@link MMTDrop.constants.FlowMetricFilter}.
@@ -2510,7 +2514,7 @@ MMTDrop.filterFactory = {
 			var options = [];
 			for (var i in cols)
 				options.push({id: cols[i].id, label: cols[i].label});
-			 
+
 			var filter =  new MMTDrop.Filter({
 				id      : "flow_metric_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Flows",
@@ -2527,7 +2531,7 @@ MMTDrop.filterFactory = {
 			var options = [];
 			for (var i in cols)
 				options.push({id: cols[i].id, label: cols[i].label});
-			 
+
 			var filter =  new MMTDrop.Filter({
 				id      : "flow_metric_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Metric",
@@ -2560,7 +2564,7 @@ MMTDrop.filterFactory = {
 				id      : "metric_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Metric",
 				options : options,
-			}, 
+			},
 			function (val, db){
 				//how it filters database when the current selected option is @{val}
 
@@ -2572,7 +2576,7 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.StatsColumn.PAYLOAD_VOLUME:
                     case MMTDrop.constants.StatsColumn.DATA_VOLUME:
                         return "B";
-                        
+
                     case MMTDrop.constants.StatsColumn.PACKET_COUNT:
                     case MMTDrop.constants.StatsColumn.ACTIVE_FLOWS:
                         return "";
@@ -2581,7 +2585,7 @@ MMTDrop.filterFactory = {
 			return filter;
 		},
 
-		
+
 		/**
 		 * Create a period filter for any database.
 		 * This filter will <code>reload</code> its database with a new <code>period</code> parameter, see {@link MMTDrop.Database#reload}.
@@ -2592,8 +2596,8 @@ MMTDrop.filterFactory = {
 			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var options = [];
-            
-            
+
+
             if( MMTDrop.config.periodFilterOptions != undefined)
                 options = MMTDrop.config.periodFilterOptions
             else{
@@ -2606,28 +2610,28 @@ MMTDrop.filterFactory = {
                 options.push( { id: periods.MONTH      , label: "Last 30 days"   });
             }
 			//var otherOpt = { id: "00", label: "Other"};
-			
+
 			//options.push( otherOpt );
 			var filter =  new MMTDrop.Filter({
 				id        : filterID,
 				label     : "Period",
 				options   : options,
                 useFullURI: false,
-			}, 
+			},
 
 			function (val, db){
 			});
-			
+
             filter.otherOpt = {};
-            
+
 			filter._renderTo = filter.renderTo;
 			filter.renderTo = function( elemID ){
 				filter._renderTo( elemID );
-				
-				
+
+
 				var $cal = $('<div id="'+ filterID +'-datepicker" class="datepicker-icon input-group-addon"> <span class="glyphicon glyphicon-calendar"/></div>');
 				$cal.appendTo( $("#" + filterID + "_container .input-group") );
-				
+
 				$cal.on("click", function(){
                     if( filter.datepicker == undefined )
 					    filter.datepicker = new DatePicker( "#" + filterID + "-datepicker", function( d1, d2 ){
@@ -2635,16 +2639,16 @@ MMTDrop.filterFactory = {
                                 return;
                             if( filter.otherOpt.id == undefined )
                                 filter.option().push( filter.otherOpt );
-                            
+
                             d1 = moment(d1).startOf("day").valueOf();
                             d2 = moment(d2).startOf("day").valueOf() + (24*60*60*1000 - 1);
-                            
+
                             filter.otherOpt.id    = JSON.stringify({begin: d1, end: d2});
-                            
+
                             d1 = (new Date(d1)).toLocaleDateString();
                             d2 = (new Date(d2)).toLocaleDateString();
                             filter.otherOpt.label = d1 + " - " + d2;
-                            
+
                             filter.selectedOption( filter.otherOpt );
                             filter.redraw();
                             //fire the filter on this option
@@ -2652,10 +2656,10 @@ MMTDrop.filterFactory = {
     					} );
                     filter.datepicker.show();
 				});
-				
-				
+
+
 			};
-            
+
             /**
              * Get the total interval
              * @returns {[[Type]]} [[Description]]
@@ -2664,7 +2668,7 @@ MMTDrop.filterFactory = {
                 var period = 1;
                 var sel    = this.selectedOption().id;
                 switch ( sel ){
-                    case MMTDrop.constants.period.MINUTE : 
+                    case MMTDrop.constants.period.MINUTE :
                         period = 5*60//5 min
                         break;
                     case MMTDrop.constants.period.HOUR :
@@ -2676,13 +2680,13 @@ MMTDrop.filterFactory = {
                     case MMTDrop.constants.period.HALF_DAY :
                         period = 12*60*60;    //12 hours
                         break;
-                    case MMTDrop.constants.period.DAY : 
+                    case MMTDrop.constants.period.DAY :
                         period = 24*60*60;    //24 hours
                         break;
-                    case MMTDrop.constants.period.WEEK : 
+                    case MMTDrop.constants.period.WEEK :
                         period = 7*24*60*60;    //7 days
                         break;
-                    case MMTDrop.constants.period.MONTH : 
+                    case MMTDrop.constants.period.MONTH :
                         period = 30*24*60*60;    //30 days
                         break;
                     default:
@@ -2691,7 +2695,7 @@ MMTDrop.filterFactory = {
                 }
                 return period;
             };
-            
+
             /**
              * get the interval between two consecutive samples
              * @returns {Number} second
@@ -2700,19 +2704,19 @@ MMTDrop.filterFactory = {
                 var period = 1;
                 var sel    = this.selectedOption().id;
                 switch ( sel ){
-                    case MMTDrop.constants.period.MINUTE : 
+                    case MMTDrop.constants.period.MINUTE :
                     case MMTDrop.constants.period.HOUR   :
                         period = MMTDrop.config.probe_stats_period;
                         break;
                     case MMTDrop.constants.period.QUARTER_DAY :
                     case MMTDrop.constants.period.HALF_DAY    :
-                    case MMTDrop.constants.period.DAY         : 
-                        period = 60;    //each minute 
+                    case MMTDrop.constants.period.DAY         :
+                        period = 60;    //each minute
                         break;
-                    case MMTDrop.constants.period.WEEK : 
+                    case MMTDrop.constants.period.WEEK :
                         period = 60*60;    //each hour
                         break;
-                    case MMTDrop.constants.period.MONTH : 
+                    case MMTDrop.constants.period.MONTH :
                         period = 24*60*60;    //each day
                         break;
                     default:
@@ -2720,12 +2724,12 @@ MMTDrop.filterFactory = {
                 }
                 return period;
             }
-            
+
             filter.getTimeFormat = function(){
                 var format = "YYYY/MM/DD HH:mm";
                 var sel    = this.selectedOption().id;
                 switch ( sel ){
-                    case MMTDrop.constants.period.MINUTE : 
+                    case MMTDrop.constants.period.MINUTE :
                     case MMTDrop.constants.period.HOUR :
                         format = "HH:mm:ss";
                         break;
@@ -2733,13 +2737,13 @@ MMTDrop.filterFactory = {
                         format = "HH:mm";    //each minute
                         break;
                     case MMTDrop.constants.period.HALF_DAY    :
-                    case MMTDrop.constants.period.DAY         : 
-                        format = "MM/DD HH:mm";    //each minute 
+                    case MMTDrop.constants.period.DAY         :
+                        format = "MM/DD HH:mm";    //each minute
                         break;
-                    case MMTDrop.constants.period.WEEK : 
+                    case MMTDrop.constants.period.WEEK :
                         format = "YYYY/MM/DD HH[h]";    //each hour
                         break;
-                    case MMTDrop.constants.period.MONTH : 
+                    case MMTDrop.constants.period.MONTH :
                         format = "YYYY/MM/DD";    //each day
                         break;
                     default:
@@ -2747,20 +2751,20 @@ MMTDrop.filterFactory = {
                 }
                 return format;
             }
-            
+
 			return filter;
 		},
 
 		/**
 		 * Create a probe filter.
 		 * This filter retains in database only element having <code>PROBE_ID.id</code> equals to <code>id</code> of the current selected option.
-		 * The list of options is automatically updated by probe Ids existing in <code>database</code> its attached to. 
+		 * The list of options is automatically updated by probe Ids existing in <code>database</code> its attached to.
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createProbeFilter : function(){
 			var probeID = "probe_filter" + MMTDrop.tools.getUniqueNumber();
 
-			//create a list of options 
+			//create a list of options
 			var options = [{id: 0, label: "All"}];
 			var data = {};
 
@@ -2771,7 +2775,7 @@ MMTDrop.filterFactory = {
 			}, function (val, db){
 				//show data from probeID = val (val.value=0 ==> any)
 				db.data( data[val.id] );
-			}, 
+			},
 			//cache data
 			function (db){
 				//update the list of probes when database changing
@@ -2816,19 +2820,19 @@ MMTDrop.filterFactory = {
 		createAppFilter : function(){
 			var filterID = "app_filter" + MMTDrop.tools.getUniqueNumber();
 
-			//create a list of options 
+			//create a list of options
 			var data = {};
 			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
 				label   : "App",
 				options : options,
-			}, 
+			},
 			function (val, db){
 				//how filtering data
 				if (data[val.id] != null)
 					db.data( data[val.id] );
-			}, 
+			},
 			function (db){
 				//update the list of probes when database changing
 				console.log("  - update list of App when DB loaded");
@@ -2837,13 +2841,13 @@ MMTDrop.filterFactory = {
 				//to speedup, data are splited into groupes having the same AppID
 				data     = db.stat.splitDataByApp();
 				var keys = Object.keys(data);
-				
+
 				//when an app is selected, its children are also selected
 				for( var i=0; i<keys.length; i++){
 					var arr = data[ keys[i] ];
-					
+
 					var obj = MMTDrop.tools.splitData( arr, MMTDrop.constants.StatsColumn.APP_PATH.id );
-					
+
 					for( var path in obj){
 						var parentKey = MMTDrop.constants.getParentPath( path );
 						var parentApp       = MMTDrop.constants.getAppIdFromPath( parentKey );
@@ -2881,23 +2885,23 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createUserFilter : function(  ){
-            
-            
+
+
 			var filterID = "user_filter" + MMTDrop.tools.getUniqueNumber();
-        
-			//create a list of options 
+
+			//create a list of options
 			var data = {};
 			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
 				label   : "Users",
 				options : options,
-			}, 
+			},
 			function (val, db){
 				//how filtering data
 				if (data[val.id] != null)
 					db.data( data[val.id] );
-			}, 
+			},
 			function (db){
 				//update the list of probes when database changing
 				console.log("  - update list of User when DB loaded");
@@ -2906,7 +2910,7 @@ MMTDrop.filterFactory = {
 				//to speedup, data are splited into groupes having the same AppID
 				data = db.data();
                 var user_col_id = MMTDrop.constants.StatsColumn.IP_SRC.id;
-                
+
                 var format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
                 if( data[0] )
                     format = data[0][0];
@@ -2914,10 +2918,10 @@ MMTDrop.filterFactory = {
                   ||format == MMTDrop.constants.CsvFormat.WEB_APP_FORMAT
                   ||format == MMTDrop.constants.CsvFormat.SSL_APP_FORMAT )
                     user_col_id = MMTDrop.constants.FlowStatsColumn.CLIENT_ADDR.id;
-                
+
                 data = MMTDrop.tools.splitData( data, user_col_id );
 				var keys = Object.keys(data);
-				
+
 				//All
 				data[0] = db.data();
 
@@ -2946,19 +2950,19 @@ MMTDrop.filterFactory = {
 		createClassFilter : function(){
 			var filterID = "class_filter" + MMTDrop.tools.getUniqueNumber();
 
-			//create a list of options 
+			//create a list of options
 			var data = {};
 			var options = [{id: 0, label: "All"}];
 			var filter =  new MMTDrop.Filter({
 				id      : filterID,
 				label   : "Profile",
 				options : options,
-			}, 
+			},
 			function (val, db){
 				//how filtering data
 				if (data[val.id] != null)
 					db.data( data[val.id] );
-			}, 
+			},
 			function (db){
 				//update the list of probes when database changing
 				console.log("  - update list of Class when DB loaded");
@@ -2993,7 +2997,7 @@ MMTDrop.filterFactory = {
 		 */
 		createDataTypeFilter : function(){
 			var csv = MMTDrop.constants.CsvFormat;
-			//create a list of options 
+			//create a list of options
 			var data = {};
 			var options = [{id: csv.STATS_FORMAT,            label: "Protocol"},
 			               {id: csv.DEFAULT_APP_FORMAT,      label: "Flow"},
@@ -3007,9 +3011,9 @@ MMTDrop.filterFactory = {
 				id      : "data_type_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Format",
 				options : options,
-			}, 
+			},
 			function (val, db){
-				//how it filters database when the current selected option is @{val}	
+				//how it filters database when the current selected option is @{val}
 				//It reloads data from MMT-Operator
 				var param = {format:val.id};
 				db.reload(param);
@@ -3019,25 +3023,25 @@ MMTDrop.filterFactory = {
 
 			return filter;
 		},
-    
-        
+
+
         createDirectionFilter: function( withAll ){
             if( withAll == undefined )
                withAll = true;
-               
+
             var options = [{id: 0,  label: "All"},
                            {id: 1,  label: "Inbound"},
                            {id: -1, label: "Outbound"}];
             if( !withAll )
                 options.shift();
-            
+
             var filter =  new MMTDrop.Filter({
 				id      : "direction_filter" + MMTDrop.tools.getUniqueNumber(),
 				label   : "Direction",
 				options : options,
-			}, 
+			},
 			function (val, db){
-				//how it filters database when the current selected option is @{val}	
+				//how it filters database when the current selected option is @{val}
 				//It reloads data from MMT-Operator
 				//console.log("Got " + db.data().length + " from DB");
 			});
@@ -3056,9 +3060,9 @@ MMTDrop.filterFactory = {
 /**
  * @class
  * Report
- * 
+ *
  * @param {string} title - title of report
- * @param {MMTDrop.Database} database 
+ * @param {MMTDrop.Database} database
  * @param {MMTDrop.Filter[]} filters - list of filters
  * @param {Array.<{charts: MMTDrop.Chart[], width: number}>} groupCharts - groups of charts
  * @param {DataFlow} dataFlow - flow of data
@@ -3074,7 +3078,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	 * @type {MMTDrop.Chart[]}
 	 */
 	this.activeCharts = [];
-	
+
 	var _this = this;
     _this.database    = database;
 	_this.title       = title;
@@ -3083,26 +3087,26 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
     _this.dataFlow    = dataFlow;
     _this.charts      = [];
     _this.callback    = [];
-    
+
     for( var i in groupCharts ){
         var charts = groupCharts[i].charts;
         _this.charts = _this.charts.concat( charts );
     }
-        
-    
+
+
     this.delete = function(){
         _this.charts = [];
         _this.callback = [];
-        
+
         var re = MMTDrop.object.report;
         for( var i in re )
             if( re[i] == _this ){
                 re.splice( i, 1 );
                 break;
             }
-        
+
     }
-    
+
 	/**
 	 * Register triggers
 	 * @param {DataFlow} filter - object tobe registed. {object: obj, effect: [o1, o2]}
@@ -3131,7 +3135,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 				if (o instanceof MMTDrop.Filter){
 					o.filter();
 				}else{
-					//o.option = 
+					//o.option =
 					//only active chart is rendered
 					if ( o.isVisible() )
 						o.redraw();
@@ -3159,16 +3163,16 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 	 */
 	this.renderTo = function(elemID){
         var $elemID = $('#' + elemID);
-        
+
         if( $elemID.length == 0 ){
             console.warn( " I cannot find a DOM element ["+ elemID +"] to render report.");
             return;
         }
-        
+
 		_this.activeCharts = [];
 
         $elemID.html('');
-		
+
 		var rootDiv = $('<div>', {'class' : 'container-fluid'});
         rootDiv.appendTo( $elemID );
 		//draw header
@@ -3178,8 +3182,8 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 				'class': 'row'
 			});
 			report_header.appendTo(rootDiv);
-			
-			var report_title = $('<h1>', {'class': 'page-header', 
+
+			var report_title = $('<h1>', {'class': 'page-header',
 				'style': 'margin-bottom: 10px;', 'text': title});
 			report_title.appendTo(report_header);
 			*/
@@ -3189,12 +3193,12 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 		//draw filter
 		var filter_bar = $('<div>', {'class' : 'row filter-bar'});
 		filter_bar.appendTo(rootDiv);
-		
+
 		var filterID = elemID + "_filters";
-		var control_row = $('<div>', {'class': 'col-md-12', 
+		var control_row = $('<div>', {'class': 'col-md-12',
 			'style': 'margin-bottom: 10px;', id: filterID});
 		control_row.appendTo(filter_bar);
-		
+
 
 		//render from left-right: filters[0] on the left
 		for (var i = filters.length - 1; i>= 0; i--)
@@ -3209,7 +3213,7 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 		//list of chart buttons
 		for (var i=0; i<groupCharts.length; i++){
 
-			//width of each group is maximal 12 (cols) 
+			//width of each group is maximal 12 (cols)
 			var colDiv = $('<div>', {
 				'class': 'col-md-' + ((groupCharts[i].width > 12) ? 12: groupCharts[i].width)
 			});
@@ -3244,17 +3248,17 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 
 					if( j==0 )
 						btn.addClass("active");
-					
+
 					btn.click({chart: j, group: i, report: _this}, function (e){
 						e.preventDefault();
-						
+
 						var lastBtn = $('#btn_group_' + e.data.group + " .active");
 						lastBtn.each( function(){
 							$(this).removeClass("active");
 						});
-						
+
 						$(this).addClass("active");
-						
+
 						var charts = groupCharts[e.data.group].charts;
 						//inactive the older chart in the group
 						var oldChart = e.data.report.activeCharts[e.data.group];
@@ -3262,14 +3266,14 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 							oldChart.isVisible( false );
 							oldChart.clean();
 						}
-					    
+
 						//set active and render it
 						var chart = charts[e.data.chart];
 						chart.isVisible( true );
 						chart.redraw();
-						
+
 						e.data.report.activeCharts[e.data.group] = chart;
-						//chart.data is a copy of database.data at the moment its filter filters out 
+						//chart.data is a copy of database.data at the moment its filter filters out
 						//chart.data is assigned to database.data in _registTrigger function
 					});
 				}
@@ -3315,22 +3319,22 @@ MMTDrop.Report = function(title, database, filters, groupCharts, dataFlow){
 
             }
         }
-        
+
         //after render
         if( _this.callback.length > 0)
             for( var i=0; i<_this.callback.length; i++){
                 var obj = _this.callback[i];
                 obj.callback( obj.data, _this );
             }
-        
-        
-        
+
+
+
 	};
 };
 
 
 /**
- * A namespace to create several kinds of reports. 
+ * A namespace to create several kinds of reports.
  * @namespace
  */
 MMTDrop.reportFactory = {
@@ -3341,10 +3345,10 @@ MMTDrop.reportFactory = {
 		createRealtimeReport : function(){
 			var database = MMTDrop.databaseFactory.createStatDB({
 			}, true);
-			
+
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fMetric	= MMTDrop.filterFactory.createMetricFilter();
-			
+
 			var cLine   = MMTDrop.chartFactory.createTimeline({
 				getData: {
 					getDataFn : function( db ){
@@ -3352,57 +3356,57 @@ MMTDrop.reportFactory = {
 						return db.stat.getDataTimeForChart(col, false, fProbe.selectedOption().id != 0);
 					}
 				}});
-			
-			
+
+
 			//add data to chart each second (rather than add immediatlly after receiving data)
 			//this will avoid that two data are added very closely each
-			
+
 			var newData = {};
 			var lastAddMoment = 0;
-			
+
 			var appendMsg = function( msg ){
 				//console.log( msg );
 				var chart = cLine.chart;
 				if( chart == undefined )
 					return;
-				
-				//the chart cLine in 
+
+				//the chart cLine in
 				//- probeMode if it shows total data of each probe
 				//- appMode   if it shows data of each app in a probe
 				var probeId = fProbe.selectedOption().id;
 				var isInProbeMode = probeId == 0;
-				
+
 				//receive msg of a probe different with the one beeing showing
-				if( ! isInProbeMode && 
+				if( ! isInProbeMode &&
 						probeId != msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ]){
 					console.log( " donot concern");
 					return;
 				}
-				
+
 				var serieName  = msg[ MMTDrop.constants.StatsColumn.APP_ID.id ];
 				serieName = MMTDrop.constants.getProtocolNameFromID( serieName );
-				
+
 				if( isInProbeMode )
 					serieName = "Probe-" + msg[ MMTDrop.constants.StatsColumn.PROBE_ID.id ];
-			
-				
+
+
 				var time = msg[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] + 0;
 				var val  = msg[ fMetric.selectedOption().id ];
-				
+
 				if( newData[serieName] === undefined )
 					newData[serieName] = 0;
-				
+
 				newData[serieName] += val;
-				
+
 				//update to chart each x seconds
 				if( time - lastAddMoment > 2000 ){
 					//chart.zoom.enable( false );
-					
+
 					var date = new Date( time );
 					var xs = chart.xs();
-					
+
 					var cols = [];
-					
+
 					var newXS = {};
 					var needLoad = false;
 					var keys = [];
@@ -3411,55 +3415,55 @@ MMTDrop.reportFactory = {
 						keys.push( s );	//list of apps will be appended data
 						cols.push( [s, newData[s]] );
 						cols.push( ["x-"+s, date] );
-						
+
 						if( xs[ s ] == undefined){
 							newXS[ s ] = "x-" + s;
 							needLoad = true;
 						}
 					}
-					
+
 					//load new pair nameY: nameX
 					if( needLoad )
 						chart.load({
 							xs: newXS
 						});
-					
-					
+
+
 					chart.flow( {
 						columns: cols,
 						length: 0,
 						done: function(){
 							//console.log( chart.xs()["nghia"] );
 						}} );
-					
+
 					//highlight the update
 					chart.focus( keys );
 
-					
+
 					var minX = date.getTime() - 1000*60*10;   //10 min
-					
+
 					var data = chart.data.shown();
-					
+
 					//set null to all points outside the chart
 					for( var i in data ){
 			            var obj = data[i];
-			            
+
 			            for( var j in obj.values ){
 			            	var p = obj.values[j];
-			            	
+
 			            	if( p.x && p.x.getTime() < minX ){
 			            		p.value = null;
 			            		p.x = null;
 			            	}
 			            }
 			        }
-					
+
 					//remove a target when all its data are null
 					var idsToRemove = [];
 					for( var i in data ){
 						var id = data[i].id ;
 						var arr = chart.data.values( id);
-						
+
 						var isNull = true;
 						for( var j=0; j< arr.length; j++ )
 							if( arr[j] !== null ){
@@ -3469,26 +3473,26 @@ MMTDrop.reportFactory = {
 						if( isNull  )
 							idsToRemove.push( id );
 					}
-					
-					
+
+
 					if( idsToRemove.length > 0){
 						  chart.unload( idsToRemove );
 						  console.log( "To remove: " + JSON.stringify( idsToRemove ) );
 					}
-					
+
 					//reset newData
 					newData = {};
 					lastAddMoment = time;
 				}
 			};
-			
-		
+
+
 			database.onMessage( function( msg ){
 				if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
 					return;
 				appendMsg( msg );
 			});
-			
+
 			var report = new MMTDrop.Report(
 					//title
 					"Dashboard",
@@ -3503,19 +3507,19 @@ MMTDrop.reportFactory = {
 					[{charts: [cLine], width: 12}],
 
 					 //order of data flux
-					 [{object: fProbe, 
+					 [{object: fProbe,
 						       effect:[ {object: fMetric, effect: [{object: cLine, effect:[]} ]}]}]
-					   
+
 			);
-			
+
 			//resetTimer();
-			
+
 			return report;
 		},
-		
+
 		createActiveConnectionReport : function(){
 			var COL = MMTDrop.constants.FlowStatsColumn;
-			
+
 			var database = new MMTDrop.Database({
 				//probe : [10],
 				format: MMTDrop.constants.CsvFormat.DEFAULT_APP_FORMAT,
@@ -3523,12 +3527,12 @@ MMTDrop.reportFactory = {
 			}, function (data) {
 				return data;
 			}, true);
-			
+
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var actApps = {};
-			
+
 			var cTable= MMTDrop.chartFactory.createTable({
-				getData: { 
+				getData: {
 					getDataFn: function( db ){
 						var data = MMTDrop.tools.splitData(db.data(), COL.APP_NAME.id);
 						var arr = [];
@@ -3536,22 +3540,22 @@ MMTDrop.reportFactory = {
 							var flows = data[i];
 							var flow = flows[0];
 							var app  = MMTDrop.constants.getProtocolNameFromID( i );
-							arr.push([ 
+							arr.push([
 							           app,
 							           flow[COL.CLIENT_ADDR.id],
 							           flow[COL.SERVER_ADDR.id],
 							           new Date(flow[COL.START_TIME.id])
 							        ]);
-							
+
 							actApps[ "<a>" + app + "</a>" ] = flow[COL.TIMESTAMP.id];
 						}
-						return {data: arr, 
-							columns: [{id: 0, label:"Name"}, {id: 1, label: "Source"}, 
+						return {data: arr,
+							columns: [{id: 0, label:"Name"}, {id: 1, label: "Source"},
 							          {id: 2, label: "Destination"}, {id: 3, label: "Start time"}]};
 					},
 				}
 			});
-			
+
 			var dataFlow = [ {
 							object : fProbe,
 							effect : [ {
@@ -3578,24 +3582,24 @@ MMTDrop.reportFactory = {
 					 //order of data flux
 					 dataFlow
 			);
-			
-			
+
+
 			database.onMessage( function( msg ){
 				if( msg[COL.FORMAT_ID.id ] == MMTDrop.constants.CsvFormat.STATS_FORMAT )
 					return;
 				var app = msg[ COL.APP_NAME.id ];
 				app = MMTDrop.constants.getProtocolNameFromID( app );
 				app = "<a>" + app + "</a>";
-				
+
 		        var src = msg[COL.CLIENT_ADDR.id];
 				var dst = msg[COL.SERVER_ADDR.id];
 				var ts  = msg[COL.START_TIME.id] * 1000;
 				ts = new Date(ts);
 				var arr = [app, src, dst, ts];
-				
+
 				actApps[app] = msg[COL.TIMESTAMP.id];
 				console.log( actApps[ app ] );
-				
+
 				var isExist = false;
 				var tbl = cTable.chart.dataTable();
 				var data = tbl.fnGetData();
@@ -3607,13 +3611,13 @@ MMTDrop.reportFactory = {
 						break;
 					}
 				}
-				
+
 				if( !isExist ){
 					tbl.fnAddData( arr );
 					console.log( "Add " + arr );
 				}
 			});
-			
+
 			//remove old app
 			setInterval(function(){
 				var ts = (new Date()).getTime();
@@ -3622,7 +3626,7 @@ MMTDrop.reportFactory = {
 						actApps[i] = null;
 					}
 				}
-				
+
 				var tbl = cTable.chart.dataTable();
 				var data = tbl.fnGetData();
 				for( var i=0; i<data.length; i++){
@@ -3633,10 +3637,10 @@ MMTDrop.reportFactory = {
 					}
 				}
 			}, 10000);
-			
+
 			return report;
 		},
-		
+
 		/**
 		 * Create a report representing the hierarchy of protocols
 		 * @returns {MMTDrop.Report} report
@@ -3659,38 +3663,38 @@ MMTDrop.reportFactory = {
 				click: function( e ){
 					if( Array.isArray( e ) == false)
 						return;
-					
+
 					var data = database.stat.filter([{id: COL.APP_PATH.id, data: e}]);
 					var oldData = database.data();
-				
+
 					//set new data for cLine
 					database.data( data );
 					cLine.attachTo( database );
 					cLine.redraw();
-					
+
 					//reset
 					database.data( oldData );
 				}
 			});
-			
+
 			var cLine = MMTDrop.chartFactory.createTimeline({
 				//columns: [MMTDrop.constants.StatsColumn.APP_PATH]
 				getData:{
 					getDataFn   : function( db){
 						var colToSum   = fMetric.selectedOption().id;
-						var colsToGroup=[MMTDrop.constants.StatsColumn.TIMESTAMP.id, 
+						var colsToGroup=[MMTDrop.constants.StatsColumn.TIMESTAMP.id,
 						                 MMTDrop.constants.StatsColumn.APP_PATH.id];
-						
+
 						var data = db.data();
 						data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
-						
+
 						var arr    = [];
 						var header = [];
-						
+
 						for( var time in data){
 							var o = {};
 							o[MMTDrop.constants.StatsColumn.TIMESTAMP.id] = time;
-							
+
 							var msg = data[time];
 							for( var path in msg ){
 								o[path] = msg[path][colToSum];
@@ -3712,12 +3716,12 @@ MMTDrop.reportFactory = {
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
-			
+
 			//redraw cLine when changing fMetric
 			fMetric.onFilter( function(){
 				cLine.redraw();
 			});
-			
+
 			var dataFlow = [ {
 				object : fPeriod,
 				effect : [ {
@@ -3750,7 +3754,7 @@ MMTDrop.reportFactory = {
 			);
 			return report;
 		},
-		
+
 		/**
 		 * Create a report representing the cateogries of protocols
 		 * @returns {MMTDrop.Report} report
@@ -3765,7 +3769,7 @@ MMTDrop.reportFactory = {
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
 			var fClass  = MMTDrop.filterFactory.createClassFilter();
-			
+
 			var chartOption = {
 					getData: {
 						getDataFn : function( db ){
@@ -3774,17 +3778,17 @@ MMTDrop.reportFactory = {
 							if( fClass.selectedOption().id != 0){
 								return obj;
 							}
-							
+
 							//if the selected option of fClass is all classes
 							//do not show details, but total of each class
 							//obj = {data: data, columns: columns, probes: probes, ylabel: label};
 							var arr = [];
-							
+
 							var data = db.stat.splitDataByClass();
 							for (var cls in data){
 								var ar = data[cls];
 								var name = MMTDrop.constants.getCategoryNameFromID( cls );
-								
+
 								var oo = {};
 								if( obj.probes.length > 1){
 									var o = MMTDrop.tools.splitData(ar, MMTDrop.constants.StatsColumn.PROBE_ID.id);
@@ -3798,16 +3802,16 @@ MMTDrop.reportFactory = {
 								}
 								arr.push( [name, oo] );
 							}
-							
+
 							return {
-								data   : arr, 
-								columns: [{id:0, label:"Class"}, {id:1, label:col.label, probes: obj.probes}], 
-								probes : obj.probes, 
+								data   : arr,
+								columns: [{id:0, label:"Class"}, {id:1, label:col.label, probes: obj.probes}],
+								probes : obj.probes,
 								ylabel :obj.ylabel};
 						}
 					}
 			};
-			
+
 			var cBar  = MMTDrop.chartFactory.createBar(chartOption);
 			var cPie  = MMTDrop.chartFactory.createPie(chartOption);
 
@@ -3851,24 +3855,24 @@ MMTDrop.reportFactory = {
 			);
 			return report;
 		},
-		
+
 		/**
-		 * Create a deail report of protocols 
+		 * Create a deail report of protocols
 		 * @returns {MMTDrop.Report} report
 		 */
 		createApplicationReport : function(){
 			var COL = MMTDrop.constants.StatsColumn;
-			
+
 			var database = MMTDrop.databaseFactory.createStatDB({
 				//probe : [10]
 			});
-			
+
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fApp    = MMTDrop.filterFactory.createAppFilter();
 			var fMetric	 = MMTDrop.filterFactory.createMetricFilter();
-			
-			
+
+
 			var chartOption = {
 					getData: {
 						getDataFn: function( db, cols ){
@@ -3877,7 +3881,7 @@ MMTDrop.reportFactory = {
 							//all app
 							if( app.id == 0 || db.stat.getAppIDs().length == 1)
 								return db.stat.getDataTableForChart( cols, false);
-							
+
 							var obj = db.stat.getDataTableForChart( cols, true);
 							for( var i in obj.data){
 								var msg  = obj.data[i];
@@ -3898,11 +3902,11 @@ MMTDrop.reportFactory = {
 						}
 					}
 				};
-			
+
 			var cBar  = MMTDrop.chartFactory.createBar(chartOption);
 			var cPie  = MMTDrop.chartFactory.createPie(chartOption);
 			var cTable= MMTDrop.chartFactory.createTable({
-				getData: { 
+				getData: {
 					getDataFn: function( db ){
 						var cols = [{id: COL.PACKET_COUNT.id,   label: "Packets"},
 				                    {id: COL.DATA_VOLUME.id,    label: "Data"},
@@ -3919,17 +3923,17 @@ MMTDrop.reportFactory = {
 						var noApp = db.stat.getAppIDs().length;
 						var col = fMetric.selectedOption();
 						var app = fApp.selectedOption();
-						
+
 						if( noApp == 1 || app.id == 0)
 							return db.stat.getDataTimeForChart( col, false, false );
-						
+
 						var obj = db.stat.getDataTimeForChart( col, true, true );
-						
+
 						for( var i=1; i<obj.columns.length; i++){
 							var msg  = obj.columns[i];
 							var path = msg.label;
 							var arr  = path.split(".");
-							
+
 							path = "";
 							for( var j=arr.length-1; j>=0; j--){
 								if( path == "")
@@ -3940,31 +3944,31 @@ MMTDrop.reportFactory = {
 									break;
 							}
 							msg.label = path;	//donot need add its grand father name
-							
+
 							//not root
 							if (path.indexOf("/") > 1){
 								obj.columns[i].type = "area";	//area-spline
 							}
 						}
-						
+
 						//app UDP may come from IP.UDP or IPv6.UDP
 						var colsToRemove = {};
-						
+
 						for( var i=1; i<obj.columns.length; i++){
 							if( colsToRemove[i] )
 								continue;
-							
+
 							var id_i = obj.columns[i].id;
-							
+
 							for(var j=i+1; j<obj.columns.length; j++)
 								if( obj.columns[i].label === obj.columns[j].label){
 									colsToRemove[j] = true;
-									
+
 									var id_j = obj.columns[j].id;
-									
+
 									for( var k in obj.data ){
 										var arr = obj.data[k];
-										
+
 										if( arr[ id_i ] != undefined && arr[id_j] != undefined)
 											arr[id_i] += arr[id_j];
 										else if( arr[id_j] != undefined )
@@ -3972,16 +3976,16 @@ MMTDrop.reportFactory = {
 									}
 								}
 						}
-						
+
 						//the first column is Timestamp
 						var cols = [ obj.columns[0] ];
-						
+
 						for( var i=1; i<obj.columns.length; i++)
 							if( colsToRemove[i] == undefined)
 								cols.push( obj.columns[i] );
-						
+
 						obj.columns = cols;
-						
+
 						//
 						for( var k in obj.data ){
 							var arr = obj.data[k];
@@ -3989,12 +3993,12 @@ MMTDrop.reportFactory = {
 								if( cols[i].type === "area" && arr[ cols[i].id ] == undefined)
 									arr[ cols[i].id ] = 0;
 						}
-						
+
 						return obj;
 					}
 				}
 			});
-			
+
 			var dataFlow = [ {
 						object : fPeriod,
 						effect : [ {
@@ -4032,7 +4036,7 @@ MMTDrop.reportFactory = {
 			return report;
 		},
 
-		
+
 		/**
 		 * Create a report represeting a cloud of traffic
 		 * @returns {MMTDrop.Report} report
@@ -4041,21 +4045,21 @@ MMTDrop.reportFactory = {
 			var database = MMTDrop.databaseFactory.createFlowDB({
 				//probe : [10]
 			});
-			
+
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fMetric	 = MMTDrop.filterFactory.createFlowMetricFilter();
-			
+
 			var cLine = MMTDrop.chartFactory.createScatter({
 				getData: {
 					getDataFn: function( db ){
 						var col = fMetric.selectedOption();
-						
+
 						return db.stat.getTimePointsForChart(col);
 					}
 				}
 			});
-			
+
 			var dataFlow = [ {
 						object : fPeriod,
 						effect : [ {
@@ -4087,8 +4091,8 @@ MMTDrop.reportFactory = {
 			);
 			return report;
 		},
-		
-		
+
+
 		/**
 		 * Create a report representing the density of traffic
 		 * @returns {MMTDrop.Report} report
@@ -4097,21 +4101,21 @@ MMTDrop.reportFactory = {
 			var database = MMTDrop.databaseFactory.createFlowDB({
 				//probe : [10]
 			});
-			
+
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 			var fMetric	 = MMTDrop.filterFactory.createFlowMetricFilter();
-			
+
 			var cLine = MMTDrop.chartFactory.createXY({
 				getData: {
 					getDataFn: function( db ){
 						var col = fMetric.selectedOption();
-						
+
 						return db.stat.getFlowDensityForChart(col);
 					}
 				}
 			});
-			
+
 			var dataFlow = [ {
 						object : fPeriod,
 						effect : [ {
@@ -4143,7 +4147,7 @@ MMTDrop.reportFactory = {
 			);
 			return report;
 		},
-		
+
 		/**
 		 * Create a report representing the density of traffic
 		 * @returns {MMTDrop.Report} report
@@ -4152,7 +4156,7 @@ MMTDrop.reportFactory = {
 			var database = new MMTDrop.Database({}, function( data ){
 				return data;
 			}, false);
-			
+
 			var fType   = MMTDrop.filterFactory.createDataTypeFilter();
 			var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 			var fProbe  = MMTDrop.filterFactory.createProbeFilter();
@@ -4170,7 +4174,7 @@ MMTDrop.reportFactory = {
 			}, function( sel, db ){
 				console.log( "filltered");
 			});
-			
+
 			var con = MMTDrop.constants;
 			//update list of matrix of X and Y when fType change
 			fType.onFilter( function( sel, db ){
@@ -4191,13 +4195,13 @@ MMTDrop.reportFactory = {
 				}else if( format == con.CsvFormat.MICROFLOWS_STATS_FORMAT ){
 					matrix = con.MicroflowStatsColumn;
 				}
-				
+
 				//add radical of sub-reports
-				if( format == con.CsvFormat.SSL_APP_FORMAT || 
+				if( format == con.CsvFormat.SSL_APP_FORMAT ||
 						format == con.CsvFormat.WEB_APP_FORMAT ||
 						format == con.CsvFormat.RTP_APP_FORMAT){
 					var arr = MMTDrop.tools.object2Array( con.FlowStatsColumn );
-					
+
 					var n = arr.length;
 					for( var i in matrix ){
 						var o = matrix[i];
@@ -4205,29 +4209,29 @@ MMTDrop.reportFactory = {
 					}
 					matrix = arr;
 				}
-				
+
 				//remove the first option: Format
 				matrix = matrix.slice(1);
 				fMatrixX.option( matrix );
-				
+
 				//remove the first option: Probe
 				matrix = matrix.slice(1);
 				fMatrixY.option( matrix );
-				
+
 				fMatrixX.redraw();
 				fMatrixY.redraw();
-				
+
 				fMatrixX.filter();
 				fMatrixY.filter();
 			} );
-			
+
 			//paramter of charts
 			var chartParam = {
 					getData: {
 						getDataFn: function( db ){
 							var colX = fMatrixX.selectedOption();
 							var colY = fMatrixY.selectedOption();
-							
+
 							var obj = MMTDrop.tools.splitData( db.data(), colX.id );
 							var arr = [];
 							for( var x in obj ){
@@ -4236,27 +4240,27 @@ MMTDrop.reportFactory = {
 								var y = o[colY.id];
 								if( typeof(y) == "object" )
 									y = JSON.stringify( y );
-								
+
 								arr.push( [x, y] );
 							}
-							return {data: arr, 
+							return {data: arr,
 								columns: [{id: 0, label: colX.label}, {id: 1, label: colY.label}],
 								ylabel : colY.label};
 						}
 					}
 			};
-			
+
 			var cLine  = MMTDrop.chartFactory.createXY(chartParam);
 			var cTable = MMTDrop.chartFactory.createTable( chartParam );
 			var cBar   = MMTDrop.chartFactory.createBar(chartParam);
 			var cPie   = MMTDrop.chartFactory.createPie(chartParam);
-			
+
 			var dataFlow = [ { object: fType,    effect: [{object: fProbe}]},
 			                 { object: fPeriod,  effect: [{object: fProbe}]},
-			                 { object: fMatrixX, effect: [{object: cLine}, {object: cTable}, {object: cBar}, {object: cPie}]}, 
+			                 { object: fMatrixX, effect: [{object: cLine}, {object: cTable}, {object: cBar}, {object: cPie}]},
 			                 { object: fMatrixY, effect: [{object: cLine}, {object: cTable}, {object: cBar}, {object: cPie}]}];
 
-			
+
 			var report = new MMTDrop.Report(
 					// title
 					"Customization Report",
@@ -4299,7 +4303,7 @@ MMTDrop.Chart = function(option, renderFn){
     if( MMTDrop.object.chart == undefined )
          MMTDrop.object.chart = [];
      MMTDrop.object.chart.push( this );
-    
+
 	var _option = {
 			title : "",
 			getData  : {
@@ -4318,13 +4322,13 @@ MMTDrop.Chart = function(option, renderFn){
 	var _isVisible = true;
 
     this.delete = function(){
-        
+
     }
 	/**
 	 * Get the visibility property of the chart
 	 * @returns {boolean}
 	 *//**
-	 * Set the visibility property of the chart. 
+	 * Set the visibility property of the chart.
 	 * The chart will be redraw when it become visible.
 	 * @param {boolean} val
 	 */
@@ -4343,12 +4347,12 @@ MMTDrop.Chart = function(option, renderFn){
 	/**
 	 * Attach the chart to a database.
 	 * @param {MMTDrop.Database} db
-	 * @param {boolean} [isCloneData=true] - clone data of database. 
-	 * <br/> The <code>redraw</code> method will display database on the chart. 
+	 * @param {boolean} [isCloneData=true] - clone data of database.
+	 * <br/> The <code>redraw</code> method will display database on the chart.
 	 * Database can be changed before <code>redraw</code> beeing called.
-	 * If this parameter is <code>true</code>, the chart will show data of <code>db</code> at 
+	 * If this parameter is <code>true</code>, the chart will show data of <code>db</code> at
 	 * the moment of this method beeing called by preserving a copy of data.
-	 * Otherwise, the chart will show data of database ah the moment of <code>redraw</code> method beeing called. 
+	 * Otherwise, the chart will show data of database ah the moment of <code>redraw</code> method beeing called.
 	 */
 	this.attachTo = function ( db, isCloneData){
 		if (db == null)
@@ -4356,18 +4360,18 @@ MMTDrop.Chart = function(option, renderFn){
 
 		_database = db;
 		_data     = db.data();
-		
+
 		_isCopyData = isCloneData == undefined ? true: false;
 		if( _isCopyData ){
 			_data = MMTDrop.tools.cloneData( _data );
         }
         _this.database = _database;
 	};
-	
-	
+
+
 	/**
 	 * Set option property of the chart
-	 * @param {ChartParam} val - a new option will merge with the current option 
+	 * @param {ChartParam} val - a new option will merge with the current option
 	 * @see {@link MMTDrop.tools#mergeObject}
 	 *//**
 	 * Get option property
@@ -4401,7 +4405,7 @@ MMTDrop.Chart = function(option, renderFn){
 	/**
 	 * Redraw the chart.
 	 * This should be called to redraw the chart when:
-	 * 
+	 *
 	 * * a new option is updated by <code>.option(opt)</code>
 	 * * attaching to a new database by <code>.attachedTo(db)</code>
 	 * * its database being changed by a filter
@@ -4411,13 +4415,13 @@ MMTDrop.Chart = function(option, renderFn){
 			return;
 
 		console.log("rendering chart ..."  + _option.title);
-		
+
 		if (_elemID == null){
 			console.log("   no HTML element");
 			return;
 		}
 
-		
+
 		_this.clean();
 
 		if (MMTDrop.tools.isFunction(renderFn)){
@@ -4426,15 +4430,15 @@ MMTDrop.Chart = function(option, renderFn){
                 _option.beforeRender( _this );
                 _option.beforeRender = null;
             }
-            
+
             if( MMTDrop.tools.isFunction( _option.beforeEachRender )  ){
                 _option.beforeEachRender( _this );
                 _option.beforeEachRender = null;
             }
-            
+
 			//opt can be changed in this function
 			var data = _prepareData( _option, _data, _this.database );
-			
+
 			if( _option.columns.length == 0){
 				//throw new Error("   no columns to render" );
                 console.log( " no column to render ");
@@ -4442,24 +4446,24 @@ MMTDrop.Chart = function(option, renderFn){
 			else if( data.length == 0){
 				//$("#" + _elemID).html('<div class="center-block text-warning" style="text-align:center">No data available</div>');
                 console.log( "no data" );
-			} 
+			}
             this.chart = renderFn(_elemID, _option, data);
-            
+
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );
                 _option.afterRender = null;
             }
-            
+
             if( MMTDrop.tools.isFunction( _option.afterEachRender )  ){
                 _option.afterEachRender( _this );
             }
-            
+
             var afterRender = (((MMTDrop.callback) || {}).chart || {}).afterRender;
             if( MMTDrop.tools.isFunction( afterRender )  ){
                 afterRender( _this );
             }
-            
-            
+
+
             if( _option.bgPercentage ){
                 setTimeout( function( opt ){
                     $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
@@ -4469,7 +4473,7 @@ MMTDrop.Chart = function(option, renderFn){
                 }, 1000, _option.bgPercentage);
 
                 //aimation
-                //change background-size 
+                //change background-size
                 setTimeout( function( opt ){
                     $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
                         var $this = $(this);
@@ -4482,10 +4486,10 @@ MMTDrop.Chart = function(option, renderFn){
                         $this.css( "background-size",  val + " 3px");
                         });
                 }, 2000, _option.bgPercentage);
-                
-                
+
+
             }
-            
+
 		}else
 			throw new Error ("No render function is defined");
 	};
@@ -4511,34 +4515,34 @@ MMTDrop.Chart = function(option, renderFn){
 			var arg = opt.getData.getDataArgs;
 			if (MMTDrop.tools.isFunction( arg ))
 				arg =  arg();
-			
-			var obj; 
+
+			var obj;
 			if( _isCopyData ){
 				//as _database.data() can be changed its content
 				// but we want to draw the chart with the data got at the moment of executing this.attachTo
 				var oldData = db.data();	//a copy of current data of _database
 				db.data( _data );		//set database to the moment this.attachTo
-			
+
 				obj = opt.getData.getDataFn( db, arg );
-			
+
 				db.data( oldData );		//reset to its data
 			}
 			else
 				obj = opt.getData.getDataFn( db, arg );
-			
+
 			if( obj == null){
 				throw new Error("The return data from 'getDataFn' does not correct.\n" + opt.getData.getDataFn);
 			}
 			data = obj.data;
-			
+
 			//override _option.columns
 			if( Array.isArray(obj.columns) && obj.columns.length > 0){
 				opt.columns = obj.columns;
 			}
-			
+
 			if( obj.ylabel )
 				opt.ylabel = obj.ylabel;
-            
+
             if( obj.height )
                 opt.height = obj.height;
             if( obj.addZeroPoints )
@@ -4577,7 +4581,7 @@ MMTDrop.chartFactory = {
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
 			var chart = new MMTDrop.Chart( _param,
-					
+
 					function (elemID, option, data){
 				//flat data: retain the first columns
 				//the next ones are of each probe
@@ -4591,10 +4595,10 @@ MMTDrop.chartFactory = {
 								probes.push( prob );
 						}
 				}
-				
+
 				var columns = option.columns;
 				var arrData     = data;
-				
+
 				if( probes.length > 1){
 					columns = [];
 					columns.push( option.columns[0]  );
@@ -4619,9 +4623,9 @@ MMTDrop.chartFactory = {
 						arrData.push( arr );
 					}
 				}
-				
-				
-				
+
+
+
 				var ylabel = (columns.length == 2) ? columns[1].label : option.ylabel;
 				var categories = [];
 
@@ -4644,7 +4648,7 @@ MMTDrop.chartFactory = {
 							label: ylabel,
 							tick: {
 								format: function( val ){
-									return val; 
+									return val;
 								}
 							}
 						}
@@ -4672,7 +4676,7 @@ MMTDrop.chartFactory = {
 			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
-			var chart = new MMTDrop.Chart( _param, 
+			var chart = new MMTDrop.Chart( _param,
 					function (elemID, option, data){
 				//
 
@@ -4688,10 +4692,10 @@ MMTDrop.chartFactory = {
 								probes.push( prob );
 						}
 				}
-				
+
 				var columns = option.columns;
 				var arrData     = data;
-				
+
 				if( probes.length > 1){
 					columns = [];
 					columns.push( option.columns[0]  );
@@ -4716,42 +4720,42 @@ MMTDrop.chartFactory = {
 						arrData.push( arr );
 					}
 				}
-				
+
 				var series = [];
-				
+
 				if( columns.length < 2 )
 					throw new Error( "  no columns to show in pie chart" );
-				
+
 				//init series from 1th column
 				var nSeries = columns.length - 1;
-				
+
 				var nRow   =  Math.ceil(nSeries / 2);//two columns
 				var height = 90 / nRow;
 				var space  = 10 / nRow;
-				
+
 				for (var j=1; j<columns.length; j++){
 					var x    = "50%";
 					var y    = "50%";
 					var size = height/2 + "%";
 					var row  = Math.ceil(j/2);
 					y = row*(height + space) - height/2 + "%";
-					
+
 					if( nSeries > 1){
 						if( j % 2 == 1)
 							x = "20%";
 						else
 							x = "80%";
 					}
-					
-					
+
+
 					var serie = {
-							name  : columns[j].label, 
+							name  : columns[j].label,
 							data  : [],
 							center: [ x, y],
 							size  : size,
 							showInLegend: j > 1 ? false : true,
 						} ;
-					
+
 					if (nSeries > 1)
 						serie.title = {
 				            align: 'center',
@@ -4761,16 +4765,16 @@ MMTDrop.chartFactory = {
 				            verticalAlign: 'top',
 				            y: -80
 				        };
-					
+
 					series.push( serie );
 				}
-				
+
                 var len = arrData.length;
                 if( len > 20 ){
                     arrData.length = len = 20;
                     MMTDrop.alert.error("Pie chart draws only the first 20 elements");
                 }
-                
+
 				for (var i=0; i<len; i++){
 					var msg = arrData[i];
 
@@ -4788,7 +4792,7 @@ MMTDrop.chartFactory = {
 			        			columns: arrData,
 			        			type: "pie"
 			        		},
-			        		
+
 			        };
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
@@ -4801,18 +4805,18 @@ MMTDrop.chartFactory = {
                         return c;
                     return "#FFF";
                 }
-                
-                
-                
+
+
+
                 return chart;
 			});
 
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'fa fa-pie-chart'});
 			};
-            
-            
-            
+
+
+
 			return chart;
 		},
 
@@ -4846,10 +4850,10 @@ MMTDrop.chartFactory = {
 								probes.push( prob );
 						}
 				}
-				
+
 				var columns = option.columns;
 				var arrData     = data;
-				
+
 				if( probes.length > 1){
 					columns = [];
 					columns.push( option.columns[0]  );
@@ -4877,8 +4881,8 @@ MMTDrop.chartFactory = {
 						arrData.push( arr );
 					}
 				}
-				
-				
+
+
 				//the first column is timestamp
 				for (var i=0; i<arrData.length; i++)
 					arrData[i][0] = parseInt(arrData[i][0]);
@@ -4891,7 +4895,7 @@ MMTDrop.chartFactory = {
                 var height = option.height;
                 if( height === undefined )
                     height = 200;
-                
+
 				var ylabel = option.ylabel;
 				var series = [];
 
@@ -4899,9 +4903,9 @@ MMTDrop.chartFactory = {
 				//type: areaspline, line
 				for (var j=1; j<columns.length; j++){
 					var obj =  {name:columns[j].label, data : [] };
-					
+
                     if( columns[j].type == "area-stack" ){
-                        obj.type  = "area";                        
+                        obj.type  = "area";
                     }
                     else if( columns[j].type == "area-step-stack" ){
                         obj.step  = true;
@@ -4910,11 +4914,11 @@ MMTDrop.chartFactory = {
                     obj.step  = true;
 					series.push( obj );
 				}
-				
+
 				//set data for each serie
 				for (var i=0; i<arrData.length; i++){
 					var msg = arrData[i];
-					
+
 					//the first column is categorie, the next ones are series
 					for (var j=1; j<msg.length; j++){
 						if( msg[j] == undefined){
@@ -4924,16 +4928,16 @@ MMTDrop.chartFactory = {
 						series[j-1].data.push([ msg[0], msg[j] ]);
 					}
 				}
-				
+
 				var isTimeLine = (type == undefined || type === "timeline" || type === "scatter");
-				
+
 				var chartOption = {
 						chart : {
 							renderTo    : elemID,
 							//type        : type || 'spline',
 							zoomType    : 'xy',
 							spacingTop  :30,
-							spacingRight:30,             
+							spacingRight:30,
                             height      : height,
 						},
 						navigation:{
@@ -4950,8 +4954,8 @@ MMTDrop.chartFactory = {
 								align: 'right',
 								x: -40,
 								verticalAlign: 'top',
-								y: 20                              
-							}       
+								y: 20
+							}
 						},
 						xAxis : {
 							maxZoom:isTimeLine? 15000 : 1, // 15seconds
@@ -5038,7 +5042,7 @@ MMTDrop.chartFactory = {
 								shadow: false,
 								states: {
 									hover: {
-										lineWidth: 2 
+										lineWidth: 2
 									}
 								},
 								events : {
@@ -5058,14 +5062,14 @@ MMTDrop.chartFactory = {
 								},
 								events : {
 									click : option.click,
-								},      
+								},
 							},
 						},
-						series : series 
+						series : series
 				};
 
 				var hightChart = new Highcharts.Chart(chartOption);
-                
+
                 hightChart.color = function( k ){
                     var series = this.series;
                     for( var i in series )
@@ -5087,15 +5091,15 @@ MMTDrop.chartFactory = {
                 hightChart.resize = function( size ){
                     this.setSize( size.width, size.height );
                 }
-                
+
 				return hightChart;
 			});
 
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'glyphicons-chart'});
 			};
-            
-            
+
+
 			return chart;
 		},
 		/**
@@ -5122,10 +5126,10 @@ MMTDrop.chartFactory = {
 								probes.push( prob );
 						}
 				}
-				
+
 				var columns = option.columns;
 				var arrData = data;
-				
+
 				if( probes.length > 1){
 					columns = [];
 					columns.push( option.columns[0]  );
@@ -5161,7 +5165,7 @@ MMTDrop.chartFactory = {
 				arrData.sort( function (a, b){
 					return a[0] - b[0];
 				});
-				
+
 				var obj = [];
 				var n   = columns.length;
                 if( n > 11 ){
@@ -5175,7 +5179,7 @@ MMTDrop.chartFactory = {
                 for( var j=1; j<n; j++){
                     obj[j] = [ columns[j].label];
                 }
-                
+
                 if( option.addZeroPoints ){
                     var time        = option.addZeroPoints.time;
                     var period      = option.addZeroPoints.sample_period;
@@ -5190,23 +5194,23 @@ MMTDrop.chartFactory = {
                         begin = time.begin;
                     if( time.end &&  time.end >= end )
                         end = time.end;
-                    
+
                     if( (end - begin) / period > 2000 ){
                         console.log( "too long");
                         begin = end - 2000 * period ;
                     }
-                    
+
                     var lastTS    = begin;
                     var firstNull = false;
                     while( lastTS <= end ){
                         lastTS += period;
                         var exist = false;
-                       
+
                         //cumulate data in this period: ((lastTS - period), lastTS]
                         var data  = [];
                         for( var j=1; j<n; j++)
                             data[j] = 0;
-                        
+
                         var ts = 0;
                         for (var i=0; i<arrData.length; i++){
                             //the first column is timestamp
@@ -5218,7 +5222,7 @@ MMTDrop.chartFactory = {
                             // for the first interaval: [ (lastTS - period), lastTS ]
                             if( arrData[i][0] <= lastTS - period && arrData[i][0] != begin )
                                 continue;
-                            
+
                             ts = arrData[i][0];
                             //console.log( ts );
                             exist = true;
@@ -5226,7 +5230,7 @@ MMTDrop.chartFactory = {
                                 if( arrData[i][j] !== undefined )
                                     data[j] += arrData[i][j];
                         }
-                        
+
                         //timestamp is the one of a report if the report exist
                         //otherwise, it is fixed by the moment of refreshing the web page
                         if( exist && lastTS <= end && lastTS != ts + period && ts > begin )
@@ -5243,7 +5247,7 @@ MMTDrop.chartFactory = {
                                         probeRunningInThisPeriod = true;
                                         break;
                                     }
-                            
+
                             obj[0].push( new Date( lastTS ) );               //x
                             for( var j=1; j<n; j++){
                                 if( probeRunningInThisPeriod ){
@@ -5254,7 +5258,7 @@ MMTDrop.chartFactory = {
                                         obj[j].push( 0 );       //y ==> down to Zero
                                     else
                                         obj[j].push( null );    //y ==> no data
-                                    
+
                                     if( j == n-1 )
                                         firstNull = false;
                                 }
@@ -5267,7 +5271,7 @@ MMTDrop.chartFactory = {
                         //the first column is timestamp
                         var x = new Date( parseInt(arrData[i][0]) );
                         obj[0].push( x );        //x
-                        
+
                         for( var j=1; j<n; j++){
                             var val = arrData[i][j];
                             if( val === undefined )
@@ -5282,14 +5286,14 @@ MMTDrop.chartFactory = {
 				//as j starts from 1 ==> obj starts from 1
 				// I will remove the first index of obj
 				//obj.shift();
-				
 
-                
+
+
 				var ylabel = option.ylabel;
                 var height = 200;
                 if( option.height )
                     height = option.height;
-				
+
 				var groups = [];
 				for (var j=1; j<columns.length; j++){
 					//not root
@@ -5311,18 +5315,18 @@ MMTDrop.chartFactory = {
 					if( columns[j].type )
 						types[ columns[j].label ] = columns[j].type;
 				}
-				
-				
+
+
 				var isTimeLine = (type == undefined || type === "timeseries" || type === "scatter");
-                
+
                 var formatNumber = function( v ){
                     if( v == 0)
                         return "";
                     else return " " + v;
                 }
-				
+
                 var radius = (type === "scatter" )? 3 : 1;
-                
+
 		        var chart_opt = {
 		        		bindto : "#" + elemID,
 		        		data : {
@@ -5336,9 +5340,9 @@ MMTDrop.chartFactory = {
                             order: null,   // stack order by data definition.}
 		        		},
                         size:{
-                            height: height  
+                            height: height
                         },
-                        
+
 		        		axis: {
 		        			x: {
 		        				type: "timeseries",
@@ -5417,7 +5421,7 @@ MMTDrop.chartFactory = {
 		        			}
 		        		},
 		        		line: {
-		      	    	  connectNull: false 
+		      	    	  connectNull: false
 		      	    	},
 		      	    	zoom: {
 		      	          enabled: true,
@@ -5427,13 +5431,13 @@ MMTDrop.chartFactory = {
 		        //console.log( chart_opt );
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
-                
+
                 var nb_real_points = 0;
                 if( obj[1] )
                     for( var i = 0; i<obj[0].length; i++)
                         if( obj[1][i] != null )
                             nb_real_points ++;
-                    
+
                 if( nb_real_points <= 2 ){
                     chart_opt.point.r   = 3;
                     delete(chart_opt.data.type);
@@ -5480,13 +5484,13 @@ MMTDrop.chartFactory = {
 
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
-			var chart = new MMTDrop.Chart( _param, 
+			var chart = new MMTDrop.Chart( _param,
 					function (elemID, option, data){
 
 				//render to elemID
 				var treeWrapper = $('<div>', {
-					'class' : 'report-element-tree'                                         
-				});         
+					'class' : 'report-element-tree'
+				});
 
 				treeWrapper.appendTo($('#' + elemID));
 
@@ -5505,9 +5509,9 @@ MMTDrop.chartFactory = {
 				var thead = $('<thead>');
 				var tr = $('<tr>');
 				var th;
-				
+
 				var isMultiProbes = false;
-				
+
 				var th0 = null;
 				for (var i = 0; i < option.columns.length; i++) {
 					th = $('<th>', {
@@ -5515,29 +5519,29 @@ MMTDrop.chartFactory = {
 					});
 					if( i== 0 )
 						th0 = th;
-					
-					option.columns[i].isMultiProbes = (Array.isArray(option.columns[i].probes) == true 
+
+					option.columns[i].isMultiProbes = (Array.isArray(option.columns[i].probes) == true
 							&& (option.columns[i].probes.length > 0)) ;
-					
+
 					if( option.columns[i].isMultiProbes ){
 						th.attr('colspan',  option.columns[i].probes.length);
 						th.css("text-align", "center");
 						isMultiProbes = true;
 					}
-					
+
 					th.appendTo(tr);
 				}
-				
+
 				if( isMultiProbes > 0 && th0 != null)
 					th0.attr("rowspan", 2);
-				
+
 				tr.appendTo(thead);
 				thead.appendTo(table);
-				
+
 				//sub header
 				if( isMultiProbes > 0){
 					tr = $('<tr>');
-					
+
 					for (var i = 0; i < option.columns.length; i++) {
 						if( option.columns[i].isMultiProbes ){
 							for( var j=0; j<option.columns[i].probes.length; j++ ){
@@ -5552,7 +5556,7 @@ MMTDrop.chartFactory = {
 					tr.appendTo(thead);
 					thead.appendTo(table);
 				}
-				
+
 
 				//body of table
 				var tbody = $('<tbody>');
@@ -5580,12 +5584,12 @@ MMTDrop.chartFactory = {
                     for( var j in data )
                         if( obj.path == data[j][0].parent )
                             obj.children.push( data[j] );
-                    
+
                     obj.children.sort( function( a, b ){
                         return a[0].name.localeCompare( b[0].name );
                     });
                 }
-                
+
                 //flat
                 var arrData = [];
                 var flat_data = function( parent_path ){
@@ -5602,9 +5606,9 @@ MMTDrop.chartFactory = {
                         }
                     }
                 }
-                
+
                 flat_data( null );
-                
+
                 var no_columns = 0;
 				//add each element to a row
 				for (i in arrData) {
@@ -5644,7 +5648,7 @@ MMTDrop.chartFactory = {
 								var val  = msg[j][ prob ];
 								if( val == undefined )
 									val = 0;
-								
+
 								var cell = $('<td>', {
 									text : val,
 									align: "right"
@@ -5653,10 +5657,10 @@ MMTDrop.chartFactory = {
                                 count ++;
 							}
 						}
-							
+
 					}
 					row_tr.appendTo(tbody);
-                            
+
                     if( no_columns < count )
                         no_columns = count;
 				}
@@ -5666,40 +5670,40 @@ MMTDrop.chartFactory = {
 				//convert table to tree
 				var chart_opt = {
                     indent            : 10,
-					expandable        : true, 
+					expandable        : true,
 					initialState      : "expanded",	//expand all nodes
 					clickableNodeNames: true
 				};
-                
+
                 //console.log( chart_opt );
                 if( param.chart )
                     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
 
                 table.treetable( chart_opt );
-                
+
                 table.no_columns = no_columns;
-                
+
                 table.updateSize = function(){
-                    
+
                     var width = table.width();
                     width -= no_columns * 100;
                     width += "px";
 
                     $("#" + elemID + "_treetable tbody tr td").css( "width", "100px" );
                     $("#" + elemID + "_treetable thead tr th").css( "width", "100px" );
-                    
+
                     $("#" + elemID + "_treetable tbody tr td:first-child").css( "width", width );
                     $("#" + elemID + "_treetable thead tr th:first-child").css( "width", width );
                 };
                 table.updateSize();
-                
+
                 $(window).resize( table.updateSize );
-                
+
 				//when user click on a row
 				$("#" + elemID + "_treetable tbody tr td:not(:first-child)").click({
 					chart : this
 				}, function(e) {
-                    
+
 					//note:  this = selected row
 					// Highlight selected row, if it was hightlight => un hightlight it
 					$(this).parent().toggleClass("selected");
@@ -5714,12 +5718,12 @@ MMTDrop.chartFactory = {
 							var id = this.dataset["ttId"];//data-tt-id
 							arr.push( id );
 						});
-                        
+
                         if( arr.length > 10 ){
                             arr.length = 10;
                             $(this).parent().removeClass("selected");
                         }
-                        
+
                         MMTDrop.tools.localStorage.set("tree-selected-ids-" + elemID, arr );
 						option.click( arr, this );
 					}
@@ -5732,17 +5736,17 @@ MMTDrop.chartFactory = {
                 else{
                     for( var i=0; i<preSelected.length; i++)
                         $("#" + elemID + "_treetable tbody tr[data-tt-Id='"+ preSelected[i] +"']").toggleClass("selected");
-                    
+
                     //if user regist to handle click event ==> give him the control
 					if (option.click)
 						option.click( preSelected );
-                                     
+
                 }
-				
+
 				return table;
 			});
-            
-            
+
+
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'fa fa-table'});
 			};
@@ -5760,7 +5764,7 @@ MMTDrop.chartFactory = {
 			var _param = {};
 			_param = MMTDrop.tools.mergeObjects( _param, param );
 
-			var chart = new MMTDrop.Chart(_param, 
+			var chart = new MMTDrop.Chart(_param,
 					//render function
 					function (elemID, option, data){
 				//render to elemID
@@ -5781,9 +5785,9 @@ MMTDrop.chartFactory = {
 				var thead = $('<thead>');
 				var tr = $('<tr>');
 				var th;
-				
+
 				var isMultiProbes = false;
-				
+
 				var th0 = null;
 				for (var i = 0; i < option.columns.length; i++) {
 					th = $('<th>', {
@@ -5797,20 +5801,20 @@ MMTDrop.chartFactory = {
 						isMultiProbes = true;
 						th.attr('colspan',  option.columns[i].probes.length);
 					}
-					
+
 					th.appendTo(tr);
 				}
-				
+
 				if( isMultiProbes > 0 && th0 != null)
 					th0.attr("rowspan", 2);
-				
+
 				tr.appendTo(thead);
 				thead.appendTo(table);
-				
+
 				//sub header
 				if( isMultiProbes > 0){
 					tr = $('<tr>');
-					
+
 					for (var i = 0; i < option.columns.length; i++) {
 						if( option.columns[i].isMultiProbes ){
 							for( var j=0; j<option.columns[i].probes.length; j++ ){
@@ -5825,7 +5829,7 @@ MMTDrop.chartFactory = {
 					tr.appendTo(thead);
 					thead.appendTo(table);
 				}
-				
+
 
 				//body of table
 				var tbody = $('<tbody>');
@@ -5846,13 +5850,13 @@ MMTDrop.chartFactory = {
                 if( param.chart && param.chart.deferRender === true){
                     param.chart.data = arrData;
                     param.chart.columns = [];
-                    
+
                     for( var i in option.columns )
                         if( option.columns[i].align === "right" )
                             param.chart.columns.push( {className: "text-right"} );
                         else
                             param.chart.columns.push( [] );
-                    
+
                 }else
                     for (var i in arrData) {
                         var msg = arrData[i];
@@ -5916,7 +5920,7 @@ MMTDrop.chartFactory = {
                    chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );
 
                table.dataTable(chart_option);
-				
+
 				//when user click on a row
                 if (option.click) {
                     $("#" + elemID + "_table tbody tr").click({
@@ -5934,13 +5938,13 @@ MMTDrop.chartFactory = {
                 }
                 var bg = option.pecentageBackground;
                 if( bg ){
-                    
+
                 }
 				return table;
 			});
 
             chart.update = function( msg ){
-                    
+
             };
 			chart.getIcon = function(){
 				return $('<i>', {'class': 'fa fa-table'});
@@ -5968,10 +5972,10 @@ MMTDrop.chartFactory = {
  * @property {string} label
  * @property {Index[]} options List of options
  * @property {function} [onchange=null]
- * <br/> If {param.onchange} function is defined, it will handle the changing. 
- * <br/> If the function return <code>true</code>, the default actions 
- * <br/>   (store the change to localStorage, apply the change to its attached database) 
- * <br/>   are then executed. 
+ * <br/> If {param.onchange} function is defined, it will handle the changing.
+ * <br/> If the function return <code>true</code>, the default actions
+ * <br/>   (store the change to localStorage, apply the change to its attached database)
+ * <br/>   are then executed.
  */
 
 /**
@@ -5982,7 +5986,7 @@ MMTDrop.chartFactory = {
  * @property click -
  * @property {ChartPrepreData} getData.getDataFn - a
  * @property {Object} getData.getDataArgs - an argument to be passed to getData.getDataFn
- * @property {Index[]} columns - columns tobe shown. 
+ * @property {Index[]} columns - columns tobe shown.
 
  */
 
@@ -5998,13 +6002,13 @@ MMTDrop.chartFactory = {
  * Render a chart
  * @callback ChartRenderFn
  * @param {string} elemID - id of HTML element on which the chart is rendered
- * @param {ChartParam} option - option 
+ * @param {ChartParam} option - option
  * @param {Array} data - data to show
  */
 
 /**
  * Data getting from MMT-Operator
- * <br> Each element of Data is an array. 
+ * <br> Each element of Data is an array.
  *  The elements in the array are depended on its kind and defined by either by:
  * <br> - {@link MMTDrop.constants.StatsColumn}
  * <br> - {@link MMTDrop.constants.FlowStatsColumn}
@@ -6015,12 +6019,12 @@ MMTDrop.chartFactory = {
  */
 
 /**
- * Parameters using to get data from MMT-Operator 
+ * Parameters using to get data from MMT-Operator
  * @example
  * {period: "minute", format: 99, source: ["eth0"], probe: [1,2], raw: true}
- * 
+ *
  * @typedef {Object} DatabaseParam
- * @property {MMTDrop.constants.period} [period=MINUTE] - 
+ * @property {MMTDrop.constants.period} [period=MINUTE] -
  * @property {MMTDrop.constants.CsvFormat} [format=99] - kind of data
  * @property {Array.<string>} [source=[]] - source
  * @property {Array.<number>} [probe=[]] - probe Id
@@ -6037,7 +6041,7 @@ MMTDrop.chartFactory = {
 /**
  * Data to render to a chart
  *<br/> - The first column = X value, cateogrie (), first column of TableChart
- *<br/> - The next columns = Y values, 
+ *<br/> - The next columns = Y values,
  * @typedef {Array} ChartData
  */
 ///////////////////////////////////////////////////////////////////////////////////////////

@@ -23,18 +23,18 @@ var ReportFactory = {
     formatTime : function( date ){
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
-    
+
     formatRTT : function( time ){
         return (time/1000).toFixed( 2 );
     },
-    
+
     createResponseTimeReport: function (fPeriod) {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
         var HTTP  = MMTDrop.constants.HttpStatsColumn;
-        var fApp  = MMTDrop.filterFactory.createAppFilter();        
+        var fApp  = MMTDrop.filterFactory.createAppFilter();
         var appList_db = MMTDrop.databaseFactory.createStatDB({id:"app.list"});
-        
+
         var database = new MMTDrop.Database({id: "app.responsetime", format: [100]}, function( data ){
             //group by timestamp
             var obj  = {};
@@ -70,9 +70,9 @@ var ReportFactory = {
             data.sort( function( a, b){
                 return a[ COL.TIMESTAMP.id ] - b[ COL.TIMESTAMP.id ];
             })
-            
+
             var time_interval = fPeriod.getDistanceBetweenToSamples();
-            
+
             //format data
             for( var i=0; i<data.length; i++ ){
                 //add index
@@ -83,12 +83,12 @@ var ReportFactory = {
                 data[i].DTT                      = ((data[i][ COL.RTT_AVG_SERVER.id ] + data[i][ COL.RTT_AVG_CLIENT.id ])/val).toFixed( 2 );
                 data[i][ COL.RTT_AVG_SERVER.id ] = (data[i][ COL.RTT_AVG_SERVER.id ] / val).toFixed(2);
                 data[i][ COL.RTT_AVG_CLIENT.id ] = (data[i][ COL.RTT_AVG_CLIENT.id ] / val).toFixed(2);
-                
-                
+
+
                 val = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; //micro second => milli second
                 if( val != 0 )
                     data[i][ HTTP.RESPONSE_TIME.id ] = (data[i][ HTTP.RESPONSE_TIME.id ] / val).toFixed(2);
-                
+
                 //% of payload
                 data[i][ COL.PAYLOAD_VOLUME.id ] = data[i][ COL.PAYLOAD_VOLUME.id ] * 100 / data[i][ COL.DATA_VOLUME.id ];
                 //bit per second
@@ -96,14 +96,14 @@ var ReportFactory = {
                 //pps
                 data[i][ COL.PACKET_COUNT.id ]   = data[i][ COL.PACKET_COUNT.id ] / time_interval;
             }
-            
+
 
             //add zero points for the timestamp that have no data
             var start_time = status_db.time.begin,
                 end_time   = status_db.time.end,
                 period_sampling = fPeriod.getDistanceBetweenToSamples() * 1000,
                 time_id = 3;
-            
+
             //check whenever probe runing at the moment ts
             var inActivePeriod = function( ts ){
                 for( var t in status_db.probeStatus )
@@ -111,16 +111,16 @@ var ReportFactory = {
                         return true;
                 return false;
             }
-            
+
             var createZeroPoint = function( ts ){
                 var zero = {};
                 zero[ time_id ] = ts;
-                
+
                 var default_value = null;
-                
+
                 if( inActivePeriod( ts ) )
                     default_value = 0;
-                
+
                 for( var c in cols )
                     zero[ cols[c].id ] = default_value;
 
@@ -129,7 +129,7 @@ var ReportFactory = {
 
                 return zero;
             }
-            
+
             //add first element if need
             if( data.length == 0 || start_time < (data[0][ time_id ] - period_sampling) )
                 data.unshift( createZeroPoint( start_time ) );
@@ -155,30 +155,30 @@ var ReportFactory = {
                     }
                 }
 
-                if ( !existPoint ) 
+                if ( !existPoint )
                     arr.push( createZeroPoint( lastTS ) );
             }
 
-            
+
             return arr;
         });
-                
+
         //line chart on the top
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
                 getDataFn: function (db) {
-                    var cols = [ COL.TIMESTAMP, 
+                    var cols = [ COL.TIMESTAMP,
                                 {id: COL.RTT.id            , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
                                 {id: "DTT"                 , label: "Data Transfer Time (DTT)"    , type: "area-stack"},
                                 {id: HTTP.RESPONSE_TIME.id , label: "App Response Time (ART)"     , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
                                 {id: COL.DATA_VOLUME.id    , label: "Data Rate"                   , type: "line"}
                                ];
-                    
+
                     return {
                         data    : db.data(),
                         columns : cols,
-                        ylabel  : "Time(ms)",
+                        ylabel  : "Time (ms)",
                         height  : 270,
                     };
                 }
@@ -215,7 +215,7 @@ var ReportFactory = {
                     y: {
                           tick:{
                               //override the default format
-                              format: function( v ){ 
+                              format: function( v ){
                                   if( v < 0 ) return 0;
                                   return  v.toFixed(2);
                               }
@@ -257,9 +257,9 @@ var ReportFactory = {
 .c3-circle{cursor:pointer} \
 </style>').appendTo("head");
             }
-                
+
         });
-        
+
         //show tooltip when user moves mouse over one row off cTable
         window._showCLineTooltip = function ( time ){
             if( cLine )
@@ -274,8 +274,8 @@ var ReportFactory = {
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var cols = [ {id: 0, label:""}, 
-                                {id: COL.TIMESTAMP.id      , label: "Time"               , align: "left"}, 
+                    var cols = [ {id: 0, label:""},
+                                {id: COL.TIMESTAMP.id      , label: "Time"               , align: "left"},
                                 {id: HTTP.RESPONSE_TIME.id , label: "ART (ms/trans.)"    , align: "right"},
                                 {id: "DTT"                 , label: "DTT (ms/flow)"         , align: "right"},
                                 {id: COL.RTT_AVG_SERVER.id , label: "Server DTT (ms/flow)"  , align: "right"},
@@ -288,7 +288,7 @@ var ReportFactory = {
                                  {id: "packet_size"        , label: "Packet Size (B)"    , align: "right"},
                                 {id: COL.PAYLOAD_VOLUME.id , label: "%Payload"           , align: "right"},
                                ];
-                    var data = db.data(); 
+                    var data = db.data();
                     var arr  = [];
                     var app_id = parseInt( fApp.selectedOption().id );
                     var index = 0;
@@ -296,12 +296,12 @@ var ReportFactory = {
                         var msg = data[i];
                         if( msg[0] == undefined )
                             continue;
-                        
+
                         msg[0] = ++index;
-                        
+
                         //this happens when cTable is drawn >= 2 times
                         if( msg.__formated === true ) continue;
-                        
+
                         var time = msg[ COL.TIMESTAMP.id ];
 
                         msg[ COL.TIMESTAMP.id ] = _this.formatTime( new Date( time ) );
@@ -310,17 +310,17 @@ var ReportFactory = {
                             var load_fn = 'loadDetail('+ time +','+ app_id +')';
                             msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick='+ load_fn +'>' + msg[ COL.TIMESTAMP.id ] + '</a>';
                         }
-                        
+
 
                         msg["packet_size"] = (msg[ COL.DATA_VOLUME.id ] / msg[ COL.PACKET_COUNT.id ]).toFixed(2);
-                        
+
                         msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
-                        
+
                         msg[ COL.PAYLOAD_VOLUME.id ] =  Math.round(msg[ COL.PAYLOAD_VOLUME.id ]) + "%";
-                        
+
                         msg.__formated = true;
-                        
+
                         arr.push( msg );
                     }
                     return {
@@ -346,14 +346,14 @@ var ReportFactory = {
                         _showCLineTooltip( ts );
                     return false;
                 });
-                
+
                 _chart.chart.on('mouseout', 'tbody', function () {
                     _hideCLineTooltip()
                     return false;
                 });
             },
         });
-        
+
         cLine.attachTo( database, false );
         cTable.attachTo( database, false );
         //when use change app filter
@@ -362,14 +362,14 @@ var ReportFactory = {
             var group_by = fPeriod.selectedOption().id;
             var period   = JSON.stringify( status_db.time );
             var db_options = {period: period, period_groupby: group_by, userData : { app_id: parseInt( opt.id )} };
-            
+
             database.reload( db_options, function(data, chartList){
                 for( var i in chartList){
                     chartList[i].redraw();
                 }
             }, [cLine, cTable]);
         })
-        
+
         var dataFlow = [{object: fApp} ];
 
         var report = new MMTDrop.Report(
@@ -397,10 +397,10 @@ var ReportFactory = {
             //order of data flux
             dataFlow
         );
-        
+
         return report;
     },
-    
+
     createDetailChart : function( ){
          var self    = this;
         var COL     = MMTDrop.constants.StatsColumn;
@@ -410,45 +410,45 @@ var ReportFactory = {
         var FORMAT  = MMTDrop.constants.CsvFormat;
         var HISTORY = {};
         var openingRow;
-        
+
         return MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    //reset 
+                    //reset
                     HISTORY    = {};
                     openingRow = {};
-                    
+
                     var col_key  = {id: COL.IP_DEST.id,  label: "Server" };
                         //col_key  = {id: COL.APP_PATH.id, label: "App/protocol Path"};
-                    
+
                     var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
                                    {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
                                    col_key
                                    ];
 
                     var colSum = [
-                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},                        
+                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},
                         {id: "DTT"                 , label: "DTT (ms)"       , align: "right"},
                         {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT(ms)"  , align:"right"},
                         {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT(ms)" , align:"right"},
                         {id: COL.RTT.id            , label: "NRT(ms)"        , align:"right"},
                         {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."    , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"    , align:"right"},
-                        {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"}, 
+                        {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"},
                         {id: COL.DL_DATA_VOLUME.id , label: "Download (B)"   , align:"right"},
                         {id: COL.DATA_VOLUME.id    , label: "Total (B)"      , align:"right"},
                         {id: COL.PACKET_COUNT.id   , label: "Packets"        , align:"right"},
                     ];
-                    
-                    
+
+
                     var data = db.data();
-                    
+
                     var arr = [];
                     var havingOther = false;
                     var updateIP2Name = function( obj, msg ){
                         if( obj.__needUpdateIP2Name == undefined )
                             return;
-                        
+
                         var host =  msg[ HTTP.HOSTNAME.id ];
                         if( host == undefined || host == "" )
                             host = msg[ SSL.SERVER_NAME.id ];
@@ -457,15 +457,15 @@ var ReportFactory = {
                             delete( obj.__needUpdateIP2Name );
                         }
                     }
-                    
+
                     for( var i in data){
                         var msg = data[i];
                         var start_time  = msg[ COL.START_TIME.id ];
                         var last_update = msg[ COL.TIMESTAMP.id ];
-                        
+
                         if( last_update < start_time )
                             last_update = start_time;
-                        
+
                         var key_val = msg [ col_key.id ];
                         if( HISTORY[ key_val ] == undefined ){
                             HISTORY[ key_val ] = {
@@ -477,18 +477,18 @@ var ReportFactory = {
                             //update
                             var obj = HISTORY[ key_val ].data;
                             obj[ col_key.id ] = msg[ col_key.id ];
-                            
+
                             //IP
                             if( col_key.id == COL.IP_DEST.id ){
                                 obj.__needUpdateIP2Name = true;
                                 updateIP2Name( obj, msg );
                             }else
                                 obj[ col_key.id ] =  MMTDrop.constants.getPathFriendlyName( obj[ col_key.id ] );
-                                
-                            
+
+
                             obj[ COL.START_TIME.id ] = start_time;
                             obj[ "LastUpdated" ]     = last_update;
-                            
+
                             for (var j in colSum )
                                 obj[ colSum[j].id ] = msg[ colSum[j].id ];
 
@@ -497,52 +497,52 @@ var ReportFactory = {
                             var obj = HISTORY[ key_val ].data;
                             if( col_key.id == COL.IP_DEST.id )
                                 updateIP2Name( obj, msg );
-                            
+
                             if( obj[ COL.START_TIME.id ] >  start_time ) obj[ COL.START_TIME.id ] = start_time;
                             if( obj[ "LastUpdated" ] < last_update )     obj[ "LastUpdated" ]     = last_update;
-                            
+
                             for (var j in colSum )
                                 obj[ colSum[j].id ] += msg[ colSum[j].id ] ;
-                            
+
                         }
-                        
+
                         HISTORY[ key_val ].detail.push( msg );
                     }
-                        
+
                     var arr = [];
                     for( var i in HISTORY )
                         arr.push( HISTORY[i].data );
-                    
+
                     arr.sort( function( a, b){
                         return b[ COL.DATA_VOLUME.id ] -  a[ COL.DATA_VOLUME.id ];
                     });
-                    
+
                     //format data
                     for( var i=0; i<arr.length; i++ ){
                         var obj = arr[i];
                         obj.index = i+1;
-                        
+
                         HISTORY[ i ] = HISTORY[ obj.__key ];
-                        
+
                         obj[ COL.START_TIME.id ]    = moment( obj[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
                         obj[ "LastUpdated" ]        = moment( obj["LastUpdated"] )    .format("YYYY/MM/DD HH:mm:ss");
                         obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.UL_DATA_VOLUME.id] );
                         obj[ COL.DL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.DL_DATA_VOLUME.id] );
                         obj[ COL.DATA_VOLUME.id]    = MMTDrop.tools.formatDataVolume( obj[ COL.DATA_VOLUME.id]    );
-                        
+
                         obj.DTT = self.formatRTT( obj[ COL.RTT_AVG_CLIENT.id ] + obj[ COL.RTT_AVG_SERVER.id ] );
-                        
+
                         obj[ HTTP.RESPONSE_TIME.id ] = self.formatRTT( obj[ HTTP.RESPONSE_TIME.id ] );
                         obj[ COL.RTT_AVG_CLIENT.id ] = self.formatRTT( obj[ COL.RTT_AVG_CLIENT.id ] );
                         obj[ COL.RTT_AVG_SERVER.id ] = self.formatRTT( obj[ COL.RTT_AVG_SERVER.id ] );
                         obj[ COL.RTT.id ] = self.formatRTT( obj[ COL.RTT.id ] );
-                        
-                        obj[ col_key.id ] = "<a>" + obj[ col_key.id ] + "</a>"; 
-                        
+
+                        obj[ col_key.id ] = "<a>" + obj[ col_key.id ] + "</a>";
+
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
-                    
+
                     return {
                         data: arr,
                         columns: columns
@@ -564,12 +564,12 @@ var ReportFactory = {
                     var row_data = row.data();
                     if( row_data == undefined )
                         return;
-                    
+
                     var index = row_data[0] - 1;
-                    
-                    //if (openingRow && openingRow.index == index) 
+
+                    //if (openingRow && openingRow.index == index)
                     //    return;
-                    
+
                     if (row.child.isShown()) {
                         // This row is already open - close it
                         row.child.hide();
@@ -583,12 +583,12 @@ var ReportFactory = {
                         }
 
                         // Open this row
-                        
+
                         row.child('<div id="detailTable" class="code-json overflow-auto-xy">----</div>').show();
                         tr.addClass('shown');
 
                         openingRow = {row: row, index: index};
-                        
+
                         var data = HISTORY[ index ].detail;
                         cDetailTable2.database.data( data );
                         cDetailTable2.renderTo("detailTable")
@@ -607,7 +607,7 @@ var ReportFactory = {
         var RTP     = MMTDrop.constants.RtpStatsColumn;
         var FORMAT  = MMTDrop.constants.CsvFormat;
         var openingRow;
-        
+
         return MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
@@ -625,9 +625,9 @@ var ReportFactory = {
                         {id: COL.RTT.id           , label: "NRT (ms)"       , align:"right"},
                         {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."    , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id  , label: "Active Flows"   , align:"right"},
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"     , align:"right"}, 
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"     , align:"right"},
                         {id: COL.DL_DATA_VOLUME.id, label: "Download (B)"   , align:"right"},
-                        
+
                     ];
                     var otherCols = [
                         { id: HTTP.URI.id      , label: HTTP.URI.label},
@@ -636,13 +636,13 @@ var ReportFactory = {
                         { id: HTTP.MIME_TYPE.id, label: "MIME"     , align:"left"},
                         { id: HTTP.REFERER.id  , label: "Referer"  , align:"left"},
                     ];
-                    
-                    
+
+
                     var data = db.data();
-                    
+
                     var arr = [];
                     var havingOther = false;
-                    
+
                     for( var i in data){
                         var msg     = data[i];
 
@@ -655,14 +655,14 @@ var ReportFactory = {
                         obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id]; // ip
                         obj[ COL.PORT_SRC.id ]      = msg[ COL.PORT_SRC.id ];
                         obj[ COL.PORT_DEST.id ]      = msg[ COL.PORT_DEST.id ];
-                        
+
                         for( var j in colSum ){
                                 var val = msg[ colSum[j].id ];
                                 if( val == undefined )
                                     val = 0;
                             obj[ colSum[j].id ] = val;
                         }
-                        
+
                         for( var i in otherCols ){
                             var c   = otherCols[i];
                             var val = msg[ c.id ];
@@ -671,11 +671,11 @@ var ReportFactory = {
                                 c.havingData = true;
                             }
                         }
-                        
+
                         arr.push( obj );
-                            
+
                     }
-                    
+
                     for( var i in otherCols ){
                         var c = otherCols[i];
                         if( c.havingData === true ){
@@ -686,21 +686,21 @@ var ReportFactory = {
                                     arr[j][ c.id ] = "";
                         }
                     }
-                    
+
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
-                    
+
                     for( var i=0; i<arr.length; i++ ){
                         arr[i][ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.UL_DATA_VOLUME.id ] );
                         arr[i][ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.DL_DATA_VOLUME.id ] );
                         arr[i].index = i+1;
-                        
+
                         arr[i][ HTTP.RESPONSE_TIME.id ] = self.formatRTT( arr[i][ HTTP.RESPONSE_TIME.id ] );
                         arr[i][ COL.RTT_AVG_CLIENT.id ] = self.formatRTT( arr[i][ COL.RTT_AVG_CLIENT.id ] );
                         arr[i][ COL.RTT_AVG_SERVER.id ] = self.formatRTT( arr[i][ COL.RTT_AVG_SERVER.id ] );
                         arr[i][ COL.RTT.id ] = self.formatRTT( arr[i][ COL.RTT.id ] );
                     }
-                    
+
                     return {
                         data: arr,
                         columns: columns
@@ -732,25 +732,25 @@ cDetailTable2.attachTo( new MMTDrop.Database(), false );
 function loadDetail( timestamp, app_id ){
     if( timestamp == undefined )
         return;
-    
-    
+
+
     var group_by = fPeriod.selectedOption().id;
     var period   = {begin: timestamp, end: timestamp};
     period = JSON.stringify( period );
-    
+
     var time_str = moment( timestamp ).format("YYYY/MM/DD HH:mm:ss");
     var userData = null;
     if( app_id )
         userData = {app_id : app_id};
-    
+
     detail_db.reload({"period": period, period_groupby: group_by, userData : userData }, function( new_data, table){
         table.attachTo( detail_db, false );
         table.renderTo( "popupTable" )
         $("#detailItem").html('<strong>Timestamp: </strong> '+ time_str +' ');
         $("#modalWindow").modal();
     }, cTableDetail);
-    
-    
+
+
      if( $("#modalWindow").length === 0 ){
         var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
                     +'<div class="modal-dialog">'
