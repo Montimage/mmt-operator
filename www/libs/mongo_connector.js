@@ -20,18 +20,18 @@ var MongoConnector = function (opts) {
     var COL  = dataAdaptor.StatsColumnId;
     var HTTP = dataAdaptor.HttpStatsColumnId;
     var NDN  = dataAdaptor.NdnColumnId;
+    var FTP  = dataAdaptor.FtpStatsColumnId;
+
     var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
 
     //all columns of HTTP => they cover all columns of SSL,RTP et FTP
     var init_session_set = [];
-    for( var i = COL.FORMAT_TYPE ; i <= HTTP.RESPONSE; i++){
+    for( var i = COL.FORMAT_TYPE ; i <= FTP.FILE_NAME; i++){
         //exclude set
         if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ].indexOf( i ) == -1 )
             init_session_set.push( i );
     }
-    init_session_set.push( {key: HTTP.RESPONSE_TIME,      if: { col: COL.FORMAT_TYPE, notEqual: 1 }} );
-    init_session_set.push( {key: HTTP.TRANSACTIONS_COUNT, if: { col: COL.FORMAT_TYPE, notEqual: 1 }} );
     init_session_set.push( COL.START_TIME );
 
 
@@ -89,8 +89,8 @@ var MongoConnector = function (opts) {
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                  COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 {key: HTTP.RESPONSE_TIME,      if: {col: COL.FORMAT_TYPE, equal: 1}},
-                                 {key: HTTP.TRANSACTIONS_COUNT, if: {col: COL.FORMAT_TYPE, equal: 1}}
+                                 HTTP.RESPONSE_TIME,
+                                 HTTP.TRANSACTIONS_COUNT,
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
@@ -691,7 +691,7 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
                 var start = COL.IP_SRC;
-                for( var i=start; i< start + 30; i++){
+                for( var i=start; i<= FTP.FILE_NAME; i++){
                     groupby[ i ] = {"$first": "$" + i};
                 }
 
@@ -701,8 +701,8 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$last" : "$" + el };
                 });
 
-                    self.queryDB(options.collection,
-                "aggregate", [
+                self.queryDB(options.collection,
+                  "aggregate", [
                     {"$match": options.query},
                     {"$group": groupby}
                     ], callback, options.raw );

@@ -162,7 +162,7 @@ var ReportFactory = {
                             colSum.push( c );
                             //default value for the rows that have not data of this c
                             for( var j in arr )
-                                if( arr[j][ c.id ] == undefined || arr[j][ c.id ] == "(null)" )
+                                if( arr[j][ c.id ] == undefined || arr[j][ c.id ] == "null" || arr[j][ c.id ] == "(null)" )
                                     arr[j][ c.id ] = "";
                         }
                     }
@@ -196,10 +196,9 @@ var ReportFactory = {
                 }
             },
             chart: {
-                "paging": false,
+                "paging": true,
                 "info"  : true,
-                "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
-                "scrollY": "200px",
+                "dom"   : '<"detail-table table-inside-table row-cursor-default" t><<"col-sm-3"i><"col-sm-9"p>>',
                 "scrollCollapse": true,
                 //"scrollX": true,
                 //"scrollY": true,

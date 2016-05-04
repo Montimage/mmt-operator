@@ -32,83 +32,18 @@ setInterval( function(){
 }, 1000);
 //end Video QoS
 
-/**
-* in the probe version 98f750c, on May 03 2016
-* report id = 100 has 2 protocol path: one for uplink, one for down link
-* this function will device a report into 2 reports as before: 
-*/
-function separate_repport_100( msg ){
-    if( msg[0] !== 100 ) return [];
-    
-    var UP_PATH = msg[ 5 ], DOWN_PATH = msg[ 6 ];
-    var PATH_INDEX = 5;
-    
-    //remove one path: UP_PATH, retain DOWN_PATH
-    msg.splice( 5, 1 );
-    
-    //update start time
-    msg[ COL.START_TIME ] = Math.round( msg[ COL.START_TIME ] *  1000 );
-    msg[ COL.START_TIME - 1 ] /= 1000;//this was multipled by dataAdaptor.formatMessge
-    
-    if( UP_PATH == DOWN_PATH || UP_PATH == "" )
-        return [ msg ];
-    else if( DOWN_PATH == "" ){
-        msg[ PATH_INDEX ] = UP_PATH;
-        return [ msg ];
-    }
-    
-    
-    //retain the path having more information
-    //not relevance 
-    if( mmtAdaptor.getAppLevelFromPath( UP_PATH ) > mmtAdaptor.getAppLevelFromPath( DOWN_PATH )){
-        msg[ PATH_INDEX ] = UP_PATH;
-        return [ msg ];
-    }
-    return [msg];
-    
-    
-    
-    
-    
-    var msg2 = [];
-    //clone msg
-    for( var i=0; i< msg.length; i++ )
-        msg2.push( msg[ i ] );
-    
-    //uplink
-    msg[ PATH_INDEX ] = UP_PATH;
-    msg[ COL.DL_DATA_VOLUME ]    = 0;
-    msg[ COL.DL_PAYLOAD_VOLUME ] = 0;
-    msg[ COL.DL_PACKET_COUNT ]   = 0;
-    msg[ COL.DATA_VOLUME ]    = msg[ COL.UL_DATA_VOLUME ];
-    msg[ COL.PAYLOAD_VOLUME ] = msg[ COL.UL_PAYLOAD_VOLUME ];
-    msg[ COL.PACKET_COUNT ]   = msg[ COL.UL_PACKET_COUNT ];
-    
-    //down link
-    msg2[ COL.SESSION_ID ] += "-";
-    msg2[ PATH_INDEX ] = DOWN_PATH;
-    msg2[ COL.UL_DATA_VOLUME ]    = 0;
-    msg2[ COL.UL_PAYLOAD_VOLUME ] = 0;
-    msg2[ COL.UL_PACKET_COUNT ]   = 0;
-    msg2[ COL.DATA_VOLUME ]    = msg2[ COL.DL_DATA_VOLUME ];
-    msg2[ COL.PAYLOAD_VOLUME ] = msg2[ COL.DL_PAYLOAD_VOLUME ];
-    msg2[ COL.PACKET_COUNT ]   = msg2[ COL.DL_PACKET_COUNT ];
-    
-    return [msg, msg2];
-}
-
 router.process_message = function (db, message) {
     if( ! db ) return;
-    
+
     //console.log( message );
     try {
         //message = message.replace(/\(null\)/g, 'null');
         var msg = mmtAdaptor.formatMessage( message );
         if( msg === null )
             return;
-        
+
         var format = msg[0];
-        
+
         if (format == mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
             if( router.config.only_ip_session === true ){
                 //console.log( message );
@@ -121,31 +56,23 @@ router.process_message = function (db, message) {
                 console.log("[META  ] " + message);
                 return;
             }
-            
-            var arr = separate_repport_100( msg );
-            for( var i in arr ){
-                msg = arr[ i ];
-                if( msg[ COL.IP_SRC ] == "undefined" ){
-                    console.log("[DONT 1] " + message);
-                    continue;
-                }
 
-
-                if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
-                    console.log("[DONT KNOW DIRECTION] " + message);
-                    continue;
-                }
-                db.addProtocolStats( msg, function (err, err_msg) {});
+            if( msg[ COL.IP_SRC ] == "undefined" ){
+                console.log("[DONT 1] " + message);
+                return;
             }
-            return;
+            if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+                console.log("[DONT KNOW DIRECTION] " + message);
+                return;
+            }
         }
-        
-        if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT 
-             || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT 
+
+        if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
+             || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT
              || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
             return;
         }
-        
+
         if( format === mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) {
             if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ||
               msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
@@ -171,23 +98,23 @@ router.process_message = function (db, message) {
         }
 
         if( format == mmtAdaptor.CsvFormat.LICENSE ){
-            
+
             if( router.dbadmin )
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
         }
-        
+
          //TODO: to be remove, this chages probe ID, only for Thales demo
         //msg[1] = "Sodium";
-        
+
         //to test mult-probe
         //msg[1] = Math.random() > 0.5 ? 1 : 0;
-        
-        
+
+
         if( format == mmtAdaptor.CsvFormat.OTT_QOS ){
             send_to_client( msg );
         }
-        
-        
+
+
         if (db && msg)
             db.addProtocolStats(msg, function (err, err_msg) {});
 
@@ -214,7 +141,7 @@ router.startListening = function (db, redis) {
     report_client.subscribe("web.flow.report");
     report_client.subscribe("ssl.flow.report");
     report_client.subscribe("rtp.flow.report");
-    
+
     report_client.subscribe("behaviour.report");
     report_client.subscribe("ndn.report");
     report_client.subscribe("OTT.flow.report");
@@ -230,14 +157,14 @@ router.startListening = function (db, redis) {
 router.startListeningAtFolder = function (db, folder_path) {
     //load list of read csv file from db
     var read_files = null;
-    
+
     if (folder_path.charAt(folder_path.length - 1) != "/")
         folder_path += "/";
 
     var process_file = function (file_name, cb) {
         var lr = new LineByLineReader(file_name);
         var totalLines = 0;
-        
+
         lr.on('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
             router.process_message(db, "[" + line + "]");
@@ -287,13 +214,13 @@ router.startListeningAtFolder = function (db, folder_path) {
 
         if( arr.length == 0 )
             return null;
-        
+
         //sort by ascending of file name
         arr = arr.sort();
-        
+
         return arr[0];
     };
-    
+
 
     var process_folder = function () {
         var file_name = get_csv_file( folder_path );

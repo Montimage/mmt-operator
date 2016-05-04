@@ -270,12 +270,14 @@ function Cache ( option ) {
             //increase
             for (var j in data_id['$inc']){
                 var key = data_id['$inc'][ j ];
+                /*
                 if( typeof key == "object"){
                   //check if the condition is ok
                   if( ! compare( msg, key ) )
                     continue;
                   key = key.key;
                 }
+                */
 
                 var val = msg[ key ];
                 if( val == undefined  || typeof val  != "number" )
@@ -290,12 +292,15 @@ function Cache ( option ) {
             //set
             for (var j in data_id['$set']){
                 var key = data_id['$set'][ j ];
+
+                /*
                 if( typeof key == "object"){
                   //check if the condition is ok
                   if( ! compare( msg, key ) )
                     continue;
                   key = key.key;
                 }
+                */
 
                 if( msg[key] != undefined )
                     oo[ key ] = msg[ key ];
@@ -304,13 +309,15 @@ function Cache ( option ) {
             //init
             for( var j in data_id["$init"] ){
                 var key = data_id["$init"][ j ];
+                /*
                 if( typeof key == "object"){
                   //check if the condition is ok
                   if( ! compare( msg, key ) )
                     continue;
                   key = key.key;
                 }
-
+                */
+                
                 var val = msg[ key ];
 
                 //init for the data in a period: minute, hour, day, month,
