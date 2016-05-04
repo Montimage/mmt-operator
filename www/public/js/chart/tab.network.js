@@ -177,7 +177,7 @@ var ReportFactory = {
                         msg[ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DL_DATA_VOLUME.id ] );
 
                         //FTP
-                        if( type === 4 ){
+                        if( msg[ COL.FORMAT_TYPE.id ] === 4 ){
                           if( msg[ FTP.CONNNECTION_TYPE.id ] == 1 )
                             msg[ FTP.CONNNECTION_TYPE.id ] = "Connection";
                           else
