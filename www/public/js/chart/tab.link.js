@@ -82,7 +82,7 @@ var ReportFactory = {
     formatTime : function( date ){
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
-    
+
 
     createProtocolReport: function (fPeriod) {
         var _this    = this;
@@ -91,7 +91,7 @@ var ReportFactory = {
         var database = new MMTDrop.Database({format: [99,100], id: "link.protocol", userData : {getProbeStatus: true, getAppList: true} });
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        
+
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             name = name.replace("ETHERNET", "ETH");
@@ -140,23 +140,23 @@ var ReportFactory = {
                     };
                     //ETHERNET
                     var o = MMTDrop.tools.sumUp (obj["99"], colToSum.id);
-                    
+
                     if( o && o[ colToSum.id ])
                         cLine.dataLegend.dataTotal = o[ colToSum.id ];
                     else
                         cLine.dataLegend.dataTotal = 0;
-                    
+
                     //filter key
                     for (var cls in obj) {
                         //remove all keys having level > 4, ETHENET.IP.TCP.HTTP.GOOGLE
                         var count = 0;
                         for( var i=0; i<cls.length; i++)
                             if( cls[ i ] === '.') count ++;
-                        if( count >= 4 ){
+                        if( count >= 5 ){
                             delete obj[ cls ];
                             continue;
                         }
-                        
+
                         //delete all parent of the current path "cls"
                         for( var i=0; i<cls.length; i++)
                             if( cls[ i ] === '.'){
@@ -169,17 +169,17 @@ var ReportFactory = {
                         //if( MMTDrop.constants.PureProtocol.indexOf( app ) == -1 )
                         //    delete obj[ cls ];
                     }
-                    
+
                     //get total data of each app path
                     for (var cls in obj) {
                         var o = obj[cls];
                         var name = setName( cls );
                         var total = 0;
-                    
+
                         //sumup by time
                         o = MMTDrop.tools.sumUp(o, colToSum.id);
                         total = o[ colToSum.id ]
-                        
+
                         columns.push({
                             id: cls,
                             label: name,
@@ -200,7 +200,7 @@ var ReportFactory = {
                     if (columns.length > top) {
 
                         columns.splice(top, columns.length - top);
-                        
+
                         //other
                         var val = 0;
                         for (var i = 0; i < columns.length; i++)
@@ -216,21 +216,21 @@ var ReportFactory = {
                         if( val < cLine.dataLegend.dataTotal )
                              cLine.dataLegend.data[ "Other" ] = cLine.dataLegend.dataTotal - val;
                     }
-                    
+
                     //update legend
                     for( var i in columns )
                         cLine.dataLegend.data[ columns[i].label ] = columns[i].value;
-                    
-                    
+
+
                     data = {};
                     for (var cls in obj) {
                         var o = obj[cls];
                         var name = setName( cls );
-                        
+
                         if( cLine.dataLegend.data[ name ] === undefined )
                             //cls = "other";
                             continue;
-                        
+
                         //sumup by time
                         o = MMTDrop.tools.sumByGroup(o, colToSum.id, TIME.id);
                         for (var t in o) {
@@ -253,7 +253,7 @@ var ReportFactory = {
                     columns.sort(function (a, b) {
                         return a.value < b.value;
                     });
-                    
+
                     //the first column is timestamp
                     columns.unshift(TIME);
 
@@ -268,7 +268,7 @@ var ReportFactory = {
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height = $widget.find(".grid-stack-item-content").innerHeight();
                         height -= $widget.find(".filter-bar").outerHeight(true) + 15;
-                    
+
                     return {
                         data   : data,
                         columns: columns,
@@ -325,7 +325,7 @@ var ReportFactory = {
             afterEachRender: function (_chart) {
                 var chart = _chart.chart;
                 var legend = _chart.dataLegend;
-                
+
                 var $table = $("<table>", {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-node-legend"
                 });
@@ -334,7 +334,7 @@ var ReportFactory = {
                 var i = 0;
                 for (var key in legend.data) {
                     var val = legend.data[key];
-                    
+
                     //there are at least 2
                     if (key == "Other" && val < legend.dataTotal )
                         continue;
@@ -375,7 +375,7 @@ var ReportFactory = {
                     var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text" : percent 
+                        "text" : percent
 
                     }).appendTo($tr);
 
@@ -422,7 +422,7 @@ var ReportFactory = {
                     var percent = MMTDrop.tools.formatPercentage(val / legend.dataTotal);
                     $("<td>", {
                         "align": "right",
-                        "text" : percent 
+                        "text" : percent
 
                     }).appendTo($tr);
 
@@ -452,17 +452,17 @@ var ReportFactory = {
                             "text": "100%"
                         })
                     )).appendTo($table);
-                
-                
+
+
                 var legendId = _chart.elemID + "-legend";
-                
+
                 $("#"+ legendId).remove();
                 $("#" + _chart.elemID).parent().parent().parent().append(
                     $('<div class="col-md-4 overflow-auto-xy" id="' + legendId + '"/>')
                 );
                 $table.appendTo($("#" + legendId));
-                
-                
+
+
                 var table = $table.dataTable({
                     paging: false,
                     dom: "t",
@@ -471,7 +471,7 @@ var ReportFactory = {
 
                 table.DataTable().columns.adjust();
             },
-        /*    
+        /*
 	    click: function(){
             //console.log("click");
 	    },
@@ -547,11 +547,11 @@ var ReportFactory = {
                     var obj = {};
                     for (var i in data) {
                         var msg = data[i];
-                        
+
                         var time = msg[COL.TIMESTAMP.id];
-                        
+
                         var mac  = msg[COL.MAC_SRC.id];
-                        
+
                         if (obj[mac] == undefined) {
                             obj[mac] = {
                                 "Probe ID"          : msg[COL.PROBE_ID.id],
@@ -567,22 +567,22 @@ var ReportFactory = {
                         }
                         if( obj[mac]["LastTime"] < time )
                             obj[mac]["LastTime"] = time;
-                        
+
                         if( obj[mac]["StartTime"] == undefined )
                             obj[mac]["StartTime"] = time;
-                            
+
                         if( obj[mac]["StartTime"] > time )
                             obj[mac]["StartTime"] = time;
-                        
+
                         if( time < lastMinute )
                             continue;
-                        
+
                         /*
                         if( DETAIL[ mac ] == undefined )
                             DETAIL[ mac ] = [];
                         DETAIL[ mac ].push( msg );
                         */
-                        
+
                         //calculate only data from the last minute
                         obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
                         obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
@@ -597,7 +597,7 @@ var ReportFactory = {
                         if( obj[i]["LastTime"] >= last5Minute )
                             arr.push( obj[i] );
                     }
-                    
+
                     arr.sort(function (a, b) {
                         return b["Total Bytes"] - a["Total Bytes"];
                     });
@@ -607,7 +607,7 @@ var ReportFactory = {
 
                     //Format data
                     for (var i in obj) {
-                        //convert to time string    
+                        //convert to time string
                         obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
                         obj[i]["LastTime"]    = moment(obj[i]["LastTime"]).format( "MM/DD HH:mm:ss" );
                         obj[i]["In Frames"]   = MMTDrop.tools.formatLocaleNumber(obj[i]["In Frames"]);
@@ -642,7 +642,7 @@ var ReportFactory = {
 
                 var table = _chart.chart;
                 if( table === undefined ) return;
-                
+
                 table.DataTable().columns.adjust();
 
                 table.on("draw.dt", function () {
@@ -662,7 +662,7 @@ var ReportFactory = {
                     }
                 });
                 $widget.trigger("widget-resized", [$widget]);
-                
+
                 //add a separator
                 $widget.css({"margin-top": "20px"});
                 $widget.before('<div style="margin: 0; height: '
@@ -817,7 +817,7 @@ var ReportFactory = {
 
                 var max_Ox = max_time;
 
-                //add some zero points 
+                //add some zero points
                 var new_keys = [];
                 for (var i in keys) {
                     var time = keys[i];
@@ -943,10 +943,10 @@ var ReportFactory = {
                     if( col.id !== MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id )
                         //total is no-ip for report-id = 99
                         cols.push( {label: "No-IP", id: col.id} );
-                    
+
                     var obj  = {};
                     var data = db.data();
-                    
+
                     for (var i in data) {
                         var msg   = data[i];
                         var proto = msg[COL.APP_ID.id];
@@ -964,15 +964,15 @@ var ReportFactory = {
 
                         for (var j in cols) {
                             var id = cols[j].id;
-                            
+
                             if( msg[id] == undefined )
                                 msg[id] = 0;
-                            
+
                             if( cols[j].label == "No-IP" && msg[0] == 100 ){
                                 if( ! exist ) obj[time][id] = 0;
                                 continue;
                             }
-                            
+
                             if (exist)
                                 obj[time][id] += msg[id] / period;
                             else
@@ -981,11 +981,11 @@ var ReportFactory = {
                     }
 
                     cols.unshift(COL.TIMESTAMP);
-                    
+
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height  = $widget.find(".grid-stack-item-content").innerHeight();
                     height     -= $widget.find(".filter-bar").outerHeight(true) + 15;
-                    
+
                     return {
                         data    : obj,
                         columns : cols,

@@ -1,4 +1,4 @@
-var VERSION         = "v0.5.0-9c15f16";
+var VERSION         = "v0.5.0-a6cd9d0";
 
 var express         = require('express');
 var session         = require('express-session')
@@ -52,9 +52,9 @@ console.log = function () {
     var prefix = moment().format("h:mm:ss") + " " ;
     if( config.is_in_debug_mode === true  )
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
-    
+
     logFile.write( prefix + util.format.apply(null, arguments) + '\n');
-    
+
 }
 
 console.error = function( err ){
@@ -75,7 +75,7 @@ console.log( "node version: %s, platform: %s", process.version, process.platform
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 
-console.log( "configuration: " + JSON.stringify( config, null, "   " ) );    
+console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
 
 
 
@@ -134,14 +134,14 @@ app.set('view engine', 'jade');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-//app.use(compress()); 
+//app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 30*24*60*60*1000,    //30 day
     lastModified: true
 }));
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
-app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]', 
+app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',
                {stream: (config.is_in_debug_mode === true )? logStdout : logFile
                }
               )
@@ -176,13 +176,13 @@ function license_alert(){
         if( err || msg == null ){
             //TODO
             //throw new Error("No License");
-        } 
+        }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
         console.log( "time", ts - now );
         if( ts - now <= 15*24*60*60*1000 ){ //15day
-            var alert       = null;        
+            var alert       = null;
             var expire_time = (new Date( ts )).toString();
             switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
                 case 1:
@@ -204,16 +204,16 @@ function license_alert(){
                     alert = {type: "success", html: "License will expire on <br/>" + expire_time};
                     break;
             }
-            
+
             if( ts - now <= 5*24*60*60*1000 )
                 alert.type = "error";
-            
+
             if( alert != null){
                 socketio.emit("log", alert);
                 console.log( alert );
             }
         }
-        
+
         var interval = 60*60*1000;//check each hour
         setTimeout( license_alert, interval );
     });
@@ -230,7 +230,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
     console.error( err );
-    
+
     res.status(err.status || 500);
     if(config.is_in_debug_mode !== true)
         err.stack = {};
@@ -240,7 +240,7 @@ app.use(function(err, req, res, next) {
 
 process.on('uncaughtException', function (err) {
     console.error( err );
-    
+
     if( err.response ){
         if(config.is_in_debug_mode !== true)
             err.stack = {};
@@ -269,7 +269,7 @@ function cleanup ( cb ){
 
 process.on('SIGINT',function(){
     try{
-          cleanup();      
+          cleanup();
     }catch( err ){
         console.error( err );
         exit();

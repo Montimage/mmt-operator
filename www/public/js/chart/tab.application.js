@@ -708,13 +708,12 @@ var ReportFactory = {
                 }
             },
             chart: {
-                "paging": false,
+                "paging": true,
                 "info"  : true,
-                "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
-                "scrollY": "200px",
+                "dom"   : '<"detail-table table-inside-table row-cursor-default" t><<"col-sm-3"i><"col-sm-3"f><"col-sm-6"p>>',
+                "scrollY": "290px",
                 "scrollCollapse": true,
                 //"scrollX": true,
-                //"scrollY": true,
                 deferRender: true,
             },
         });

@@ -107,7 +107,6 @@ var ReportFactory = {
                         var format  = msg [ COL.FORMAT_TYPE.id ];
                         var obj     = {};
                         HISTORY.push( msg );
-                        obj["index"] = HISTORY.length;
 
                         obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
                         obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
@@ -170,9 +169,14 @@ var ReportFactory = {
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
 
-                    for( var i in arr ){
-                      var msg = arr[i];
+                    //sort by Download
+                    arr.sort( function( a, b ){
+                      return b[ COL.DL_DATA_VOLUME.id ] -  a[ COL.DL_DATA_VOLUME.id ];
+                    })
 
+                    for( var i=0; i<arr.length; i++ ){
+                      var msg = arr[i];
+                        msg.index = (i+1);
                         msg[ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.UL_DATA_VOLUME.id ] );
                         msg[ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DL_DATA_VOLUME.id ] );
 
@@ -198,7 +202,7 @@ var ReportFactory = {
             chart: {
                 "paging": true,
                 "info"  : true,
-                "dom"   : '<"detail-table table-inside-table row-cursor-default" t><<"col-sm-3"i><"col-sm-9"p>>',
+                "dom"   : '<"detail-table table-inside-table row-cursor-default" t><<"col-sm-3"i><"col-sm-3"f><"col-sm-6"p>>',
                 "scrollCollapse": true,
                 //"scrollX": true,
                 //"scrollY": true,
