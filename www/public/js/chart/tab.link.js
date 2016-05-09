@@ -206,7 +206,8 @@ var ReportFactory = {
                         for (var i = 0; i < columns.length; i++)
                             val += columns[i].value;
 
-                        cLine.dataLegend.data[ "Other" ] = cLine.dataLegend.dataTotal - val;
+                        if( val < cLine.dataLegend.dataTotal )
+                          cLine.dataLegend.data[ "Other" ] = cLine.dataLegend.dataTotal - val;
                     }else{
                         //other
                         var val = 0;
