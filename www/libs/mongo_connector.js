@@ -42,8 +42,6 @@ var MongoConnector = function (opts) {
         self.startTime = (new Date()).getTime();
 
         self.operatorStatus.set("start");
-
-
         self.dataCache = {
 
             total: new DataCache(db, "data_total",
@@ -85,6 +83,7 @@ var MongoConnector = function (opts) {
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
+                                 COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
@@ -246,17 +245,24 @@ var MongoConnector = function (opts) {
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
 
+            if( format === 100 ){
+              //HTTP
+              if( msg[ COL.FORMAT_TYPE ] == 1 ){
+                  //each HTTP report is a unique session (1 request - 1 resp if it has)
+                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.REQUEST_ID ];
+                  if( msg[ HTTP.FRAGMENTATION ] == 0 ){
+                    msg[ COL.ACTIVE_FLOWS ] = 0;
+                  }
+              }
+            }
+
             self.dataCache.total.addMessage(   msg );
 
             //session
             if( format === 100 ){
-                //HTTP
-                if( msg[ COL.FORMAT_TYPE ] == 1 ){
-                    //each HTTP report is a unique session (1 request - 1 resp if it has)
-                    msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.TIMESTAMP ];
-                }
 
                 //save init data of one session
+                /*
                 var session_id = msg[ COL.SESSION_ID ];
                 //if init session or timeout
                 if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined ||  ts - FLOW_SESSION_INIT_DATA[ session_id ][ TIMESTAMP ] > 1000*60*60 )
@@ -271,6 +277,7 @@ var MongoConnector = function (opts) {
                             msg[ key ] = val;
                     }
                 }
+                */
 
                 update_proto_name( msg );
                 //each session
@@ -681,7 +688,8 @@ var MongoConnector = function (opts) {
                 //id of group_by
                 var groupby = { "_id": "$" + COL.SESSION_ID };
                 //sumup
-                [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME ].forEach(
+                [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
+                   COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$sum" : "$" + el };
                 });

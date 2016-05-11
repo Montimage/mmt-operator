@@ -179,7 +179,7 @@ var ReportFactory = {
                         data    : db.data(),
                         columns : cols,
                         ylabel  : "Time (ms)",
-                        height  : 270,
+                        height  : $( document ).width() > 1600 ? 270 : 250,
                     };
                 }
             },
@@ -254,7 +254,8 @@ var ReportFactory = {
             afterRender: function(){
                 if( ! $("#__cust__style").length )
                     $('<style id="__cust__style" type="text/css">\
-.c3-circle{cursor:pointer} \
+.c3-circle {cursor:pointer !important;} \
+.c3-event-rect-{cursor:pointer} \
 </style>').appendTo("head");
             }
 

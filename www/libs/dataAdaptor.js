@@ -123,7 +123,10 @@ var MMTDrop = {
         CDN_FLAG           : 58, /**< Index of the is CDN delivered column */
         URI                : 59,
         METHOD             : 60,
-        RESPONSE           : 61
+        RESPONSE           : 61,
+        CONTENT_LENGTH     : 62,
+        FRAGMENTATION      : 63,
+        REQUEST_ID         : 64
     },
 
     TlsStatsColumnId : {

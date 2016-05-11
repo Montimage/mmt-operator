@@ -74,15 +74,17 @@ var ReportFactory = {
                                   COL.APP_PATH];
 
                     var colSum = [
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"  , align:"right"},
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download", align:"right"},
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"  , align:"right"},
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)", align:"right"},
                     ];
                     var HTTPCols = [
+                        { id: HTTP.CONTENT_LENGTH.id, label: "File Size (B)", align: "right"},
                         { id: HTTP.URI.id      , label: HTTP.URI.label},
                         { id: HTTP.METHOD.id   , label: HTTP.METHOD.label},
                         { id: HTTP.RESPONSE.id , label: HTTP.RESPONSE.label},
                         { id: HTTP.MIME_TYPE.id, label: "MIME"     , align:"left"},
                         { id: HTTP.REFERER.id  , label: "Referer"  , align:"left"},
+
                     ];
                     var SSLCols = [];
                     var RTPCols = [ SSL.SERVER_NAME ];
@@ -109,10 +111,8 @@ var ReportFactory = {
                         HISTORY.push( msg );
 
                         obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
-                        obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
-                        obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
                         obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
-
+                        obj[ COL.FORMAT_TYPE.id ]   = msg[ COL.FORMAT_TYPE.id ];
                         var host =  "";
                         if( type == 0 )
                           type = msg[ COL.FORMAT_TYPE.id ];
@@ -180,8 +180,12 @@ var ReportFactory = {
                         msg[ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.UL_DATA_VOLUME.id ] );
                         msg[ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DL_DATA_VOLUME.id ] );
 
+                        //HTTP
+                        if( msg[ COL.FORMAT_TYPE.id ] == 1 ){
+                            msg[ HTTP.CONTENT_LENGTH.id ] = MMTDrop.tools.formatDataVolume( msg[ HTTP.CONTENT_LENGTH.id ] );
+                        }
                         //FTP
-                        if( msg[ COL.FORMAT_TYPE.id ] === 4 ){
+                        else if( msg[ COL.FORMAT_TYPE.id ] === 4 ){
                           if( msg[ FTP.CONNNECTION_TYPE.id ] == 1 )
                             msg[ FTP.CONNNECTION_TYPE.id ] = "Connection";
                           else
@@ -191,11 +195,22 @@ var ReportFactory = {
                           if( msg[FTP.USERNAME.id] == 0 ) msg[FTP.USERNAME.id] = "";
                           if( msg[FTP.PASSWORD.id] == 0 ) msg[FTP.PASSWORD.id] = "";
                         }
+
                     }
+                    if( arr.length > 10 )
+                      return {
+                          data: arr,
+                          columns: columns,
+                      };
 
                     return {
                         data: arr,
-                        columns: columns
+                        columns: columns,
+                        chart: {
+                          "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
+                          "scrollCollapse": true,
+                          deferRender: true,
+                        }
                     };
                 }
             },
@@ -244,9 +259,9 @@ var ReportFactory = {
                                    ];
 
                     var colSum = [
-                        {id: COL.UL_DATA_VOLUME.id, label: "Upload"  , align:"right"},
-                        {id: COL.DL_DATA_VOLUME.id, label: "Download", align:"right"},
-                        {id: COL.DATA_VOLUME.id   , label: "Total"   , align:"right"},
+                        {id: COL.UL_DATA_VOLUME.id, label: "Upload (B)"  , align:"right"},
+                        {id: COL.DL_DATA_VOLUME.id, label: "Download (B)", align:"right"},
+                        {id: COL.DATA_VOLUME.id   , label: "Total (B)"   , align:"right"},
                     ];
 
 
@@ -273,8 +288,7 @@ var ReportFactory = {
                     }
 
                     for( var i in data){
-                        var msg     = data[i];
-                        var time    = msg[ COL.START_TIME.id ];
+                        var msg      = data[i];
                         var key_val = msg [ col_key.id ];
                         if( HISTORY[ key_val ] == undefined ){
                             HISTORY[ key_val ] = {
@@ -295,8 +309,8 @@ var ReportFactory = {
                                 obj[ col_key.id ] =  MMTDrop.constants.getPathFriendlyName( obj[ col_key.id ] );
 
 
-                            obj[ COL.START_TIME.id ] = time;
-                            obj[ "LastUpdated" ]     = time;
+                            obj[ COL.START_TIME.id ] = msg[ COL.START_TIME.id ];
+                            obj[ "LastUpdated" ]     = msg[ COL.TIMESTAMP.id ];
 
                             for (var j in colSum )
                                 obj[ colSum[j].id ] = msg[ colSum[j].id ];
@@ -306,8 +320,10 @@ var ReportFactory = {
                             if( col_key.id == COL.IP_DEST.id )
                                 updateIP2Name( obj, msg );
 
-                            if( obj[ COL.START_TIME.id ] >  time ) obj[ COL.START_TIME.id ] = time;
-                            if( obj[ "LastUpdated" ] < time )      obj[ "LastUpdated" ]     = time;
+                            if( obj[ COL.START_TIME.id ] > msg[ COL.START_TIME.id ] )
+                              obj[ COL.START_TIME.id ] = msg[ COL.START_TIME.id ];
+                            if( obj[ "LastUpdated" ] < msg[ COL.TIMESTAMP.id ] )
+                              obj[ "LastUpdated" ] = msg[ COL.TIMESTAMP.id ];
 
                             for (var j in colSum )
                                 obj[ colSum[j].id ] += msg[ colSum[j].id ] ;

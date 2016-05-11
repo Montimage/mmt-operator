@@ -119,7 +119,7 @@ router.process_message = function (db, message) {
             db.addProtocolStats(msg, function (err, err_msg) {});
 
     } catch (err) {
-        console.error("Error when processing the message: $" + message + "$");
+        //console.error("Error when processing the message: $" + message + "$");
         console.error(err.stack);
         //process.exit(0);
     }

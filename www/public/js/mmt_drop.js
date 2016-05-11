@@ -232,7 +232,8 @@ MMTDrop.constants = {
 			CDN_FLAG     : {id: 58, label: "CDN Flag"},
       URI          : {id: 59, label: "URI"},
       METHOD       : {id: 60, label: "Method"},
-      RESPONSE     : {id: 61, label: "Response"}
+      RESPONSE     : {id: 61, label: "Response"},
+			CONTENT_LENGTH: {id: 62, label: "Content length"},
 
 		},
 
@@ -4548,6 +4549,9 @@ MMTDrop.Chart = function(option, renderFn){
                 opt.height = obj.height;
             if( obj.addZeroPoints )
                 opt.addZeroPoints = obj.addZeroPoints;
+			//dynamically create option for rendering chart
+			if( obj.chart )
+				opt.chart = MMTDrop.tools.mergeObjects( opt.chart, obj.chart );
 		}
 
 		//copy data to an array of array containing only data to show
