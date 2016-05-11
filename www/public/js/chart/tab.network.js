@@ -182,7 +182,11 @@ var ReportFactory = {
 
                         //HTTP
                         if( msg[ COL.FORMAT_TYPE.id ] == 1 ){
+                          if( msg[ HTTP.CONTENT_LENGTH.id ] > 0 )
                             msg[ HTTP.CONTENT_LENGTH.id ] = MMTDrop.tools.formatDataVolume( msg[ HTTP.CONTENT_LENGTH.id ] );
+                          else {
+                            msg[ HTTP.CONTENT_LENGTH.id ] = "";
+                          }
                         }
                         //FTP
                         else if( msg[ COL.FORMAT_TYPE.id ] === 4 ){
@@ -195,7 +199,6 @@ var ReportFactory = {
                           if( msg[FTP.USERNAME.id] == 0 ) msg[FTP.USERNAME.id] = "";
                           if( msg[FTP.PASSWORD.id] == 0 ) msg[FTP.PASSWORD.id] = "";
                         }
-
                     }
                     if( arr.length > 10 )
                       return {
