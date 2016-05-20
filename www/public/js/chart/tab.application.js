@@ -428,11 +428,11 @@ var ReportFactory = {
                                    ];
 
                     var colSum = [
-                        {id: HTTP.RESPONSE_TIME.id , label: "ART(ms)"        , align:"right"},
+                        {id: HTTP.RESPONSE_TIME.id , label: "ART (ms)"        , align:"right"},
                         {id: "DTT"                 , label: "DTT (ms)"       , align: "right"},
-                        {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT(ms)"  , align:"right"},
-                        {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT(ms)" , align:"right"},
-                        {id: COL.RTT.id            , label: "NRT(ms)"        , align:"right"},
+                        {id: COL.RTT_AVG_SERVER.id , label: "Servr DTT (ms)"  , align:"right"},
+                        {id: COL.RTT_AVG_CLIENT.id , label: "Client DTT (ms)" , align:"right"},
+                        {id: COL.RTT.id            , label: "NRT (ms)"        , align:"right"},
                         {id: HTTP.TRANSACTIONS_COUNT.id   , label: "HTTP Trans."    , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id   , label: "Active Flows"    , align:"right"},
                         {id: COL.UL_DATA_VOLUME.id , label: "Upload (B)"     , align:"right"},
@@ -440,7 +440,6 @@ var ReportFactory = {
                         {id: COL.DATA_VOLUME.id    , label: "Total (B)"      , align:"right"},
                         {id: COL.PACKET_COUNT.id   , label: "Packets"        , align:"right"},
                     ];
-
 
                     var data = db.data();
 
@@ -701,11 +700,25 @@ var ReportFactory = {
                         arr[i][ COL.RTT_AVG_SERVER.id ] = self.formatRTT( arr[i][ COL.RTT_AVG_SERVER.id ] );
                         arr[i][ COL.RTT.id ] = self.formatRTT( arr[i][ COL.RTT.id ] );
                     }
-
+                  if( arr.length > 10 )
                     return {
                         data: arr,
                         columns: columns
                     };
+                  else {
+                    return {
+                        data: arr,
+                        columns: columns,
+                        chart: {
+                          "paging": false,
+                          "info"  : false,
+                          //do not need paging
+                          "dom"   : '<"detail-table table-inside-table row-cursor-default" t>',
+                          "scrollCollapse": true,
+                          deferRender: true,
+                        }
+                    };
+                  }
                 }
             },
             chart: {
@@ -738,7 +751,8 @@ function loadDetail( timestamp, app_id ){
     var period   = {begin: timestamp, end: timestamp};
     period = JSON.stringify( period );
 
-    var time_str = moment( timestamp ).format("YYYY/MM/DD HH:mm:ss");
+    var time_str     = moment( timestamp ).format("YYYY/MM/DD HH:mm:ss");
+    var end_time_str = moment( timestamp + (fPeriod.getDistanceBetweenToSamples() - 1) * 1000 ).format("YYYY/MM/DD HH:mm:ss");
     var userData = null;
     if( app_id )
         userData = {app_id : app_id};
@@ -746,7 +760,7 @@ function loadDetail( timestamp, app_id ){
     detail_db.reload({"period": period, period_groupby: group_by, userData : userData }, function( new_data, table){
         table.attachTo( detail_db, false );
         table.renderTo( "popupTable" )
-        $("#detailItem").html('<strong>Timestamp: </strong> '+ time_str +' ');
+        $("#detailItem").html('<strong>Interval: </strong> from '+ time_str +', to ' + end_time_str);
         $("#modalWindow").modal();
     }, cTableDetail);
 

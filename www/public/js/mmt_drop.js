@@ -13,11 +13,12 @@ var MMTDrop = {
 		VERSION : "1.0.0"
 };
 
-Highcharts.setOptions({
-	global: {
-		useUTC: false
-	}
-});
+if( typeof Highcharts !== "undefined" )
+	Highcharts.setOptions({
+		global: {
+			useUTC: false
+		}
+	});
 
 (function(MMTDrop){
 'use strict';

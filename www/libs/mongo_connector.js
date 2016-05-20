@@ -398,72 +398,46 @@ var MongoConnector = function (opts) {
 
     };
 
-    //flush caches before quering
-    self.getProtocolStats = function (options, callback) {
-        options.query = {};
-        if( options.time.begin == options.time.end )
-            options.query[ TIMESTAMP ] = options.time.begin;
-        else
-            options.query[ TIMESTAMP ] = {
-                    '$gte': options.time.begin,
-                    '$lte': options.time.end
-            };
-
-        if( options.format.length == 1)
-            options.query[ FORMAT_ID ] = options.format[0];
-        else if( options.format.length > 1)
-            options.query[ FORMAT_ID ] = {$in: options.format };
-
-
-        var find_in_specific_table = false;
-
-        if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {
-            options.collection     = "behaviour";
-            find_in_specific_table = true;
-        }
-        else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
-            if( options.userData.type === "evasion" ){
-                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
-            }else
-                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
-            options.collection     = "security";
-            find_in_specific_table = true;
-        }
-        else if (options.format.indexOf(dataAdaptor.CsvFormat.OTT_QOS) >= 0 ) {
-            options.collection     = "ott_qos";
-            find_in_specific_table = true;
-        }
-
-        if( find_in_specific_table ){
-            self.queryDB(options.collection, "find", options.query, callback, options.raw);
-            return;
-        }
-
-        /*if( options.period_groupby == "real") {
-            self.getCurrentProtocolStats(options, callback);
-            return;
-        }
-        */
-
-        if (options.id !== undefined ) {
-            self.getCurrentProtocolStats(options, callback);
-            return;
-        }
-
-        callback(null, ["tobe implemented"]);
-    };
-
-
     // Do a query on database. Action can be "find", "aggregate", ...
-    self.queryDB = function (collection, action, query, callback, raw, projection) {
-        console.log(action, " on [", collection, "] query : ", JSON.stringify(query), ",", JSON.stringify(projection) );
+    self.queryDB = function (collection, action, query, callback, raw) {
+        console.log(action, " on [", collection, "] query : ", JSON.stringify(query) );
+
+        //flush caches to DB before query
+        for( var i in self.dataCache ){
+            var cache = self.dataCache[ i ];
+            if( collection.indexOf( cache.option.collection_name ) == 0 ){
+              //data_total_real => real
+              cache.flushCaches( collection.split("_")[2] );
+              break;//only one collection concernts to this query
+            }
+        }
 
         var start_ts = (new Date()).getTime();
-        var cursor   = null;
-        if( projection == undefined )
-            cursor = self.mdb.collection(collection)[action](query);
-        else
-            cursor = self.mdb.collection(collection)[action](query, projection);
+        var cursor   = {};
+        if( action == "aggregate" )
+          cursor = self.mdb.collection(collection).aggregate(query);
+        //query of "find" uses the format of "aggreate": $match, $project, $limit, $sort
+        else if ( action == "find" ){
+          var old_query = query;
+          query = {};
+          for( var i in old_query ){
+            var obj = old_query[i];//{$match: {}}
+            for( var key in obj )
+              query[ key ] = obj[ key ];
+          }
+
+          if( query.$limit == undefined || query.$limit > 5000 )
+            query.$limit = 5000;
+
+          if( query.$project )
+            cursor = self.mdb.collection(collection).find( query.$match, query.$project );
+          else
+            cursor = self.mdb.collection(collection).find( query.$match);
+          cursor = cursor.limit( query.$limit );
+          
+          if( query.$sort )
+            cursor = cursor.sort( query.$sort );
+        }
 
 
         cursor.toArray(function (err, doc) {
@@ -579,14 +553,7 @@ var MongoConnector = function (opts) {
                 return;
             }
 
-            //flush caches to DB before query
-            for( var i in self.dataCache ){
-                var cache = self.dataCache[ i ];
-                if( options.collection.indexOf( cache.option.collection_name ) == 0 ){
-                    cache.flushCaches( options.period_groupby );
-                    break;//only one collection concernts to this query
-                }
-            }
+
 
             //projection
             if (["link.protocol", "dpi.app", "dpi.detail"].indexOf(options.id) > -1){

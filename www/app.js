@@ -1,4 +1,4 @@
-var VERSION         = "v0.5.0-4b76871";
+const VERSION         = "v0.5.0-4b76871";
 
 var express         = require('express');
 var session         = require('express-session')
@@ -169,7 +169,7 @@ app.use('/', routes);
 app.use('/chart/', chartRoute);
 
 api.dbconnector = dbconnector;
-app.use('/traffic', api);
+app.use('/api', api);
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
