@@ -10,7 +10,7 @@
  */
 var MMTDrop = {
 		//The version of the MMTDrop library.
-		VERSION : "1.0.0"
+		VERSION : "1.1.0"
 };
 
 if( typeof Highcharts !== "undefined" )
@@ -748,6 +748,7 @@ MMTDrop.constants = {
 			DAY         : "day",
 			WEEK        : "week",
 			MONTH       : "month",
+			YEAR 			  : "year"
 		},
 };
 
@@ -1345,9 +1346,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 	var _serverURL = MMTDrop.config.serverURL || "http://localhost:8088";
 	if (_serverURL.substring(_serverURL.length - 1, 1) === "/")
-		_serverURL += "traffic/data";
+		_serverURL += "api";
 	else
-		_serverURL += "/traffic/data";
+		_serverURL += "/api";
 
 	var _param = param || {};
 	var _data = [];		    //it is data getting from MMT-Operator and it can    be modified during using of this object
@@ -1578,7 +1579,61 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		return stat;
 	}();
 
+	function _get(param, callback) {
+		var url = _serverURL;
+		//old
+		if( param.collection == undefined ){
+			return _ajax( url, param, "GET", callback );
+		}
 
+		//new
+		if( param.action == undefined ){
+			throw new Error("action is not defined");
+			return;
+		}
+		var group_by = "";
+		if( param.no_group == undefined )
+			switch ( param.period_groupby ) {
+				case MMTDrop.constants.period.MINUTE:
+					group_by = "_real";
+					break;
+				case MMTDrop.constants.period.HOUR:
+					group_by = "_real";
+					break;
+				case MMTDrop.constants.period.HALF_DAY:
+					group_by = "_minute";
+					break;
+				case MMTDrop.constants.period.DAY:
+					group_by = "_minute";
+					break;
+				case MMTDrop.constants.period.WEEK:
+					group_by = "_hour";
+					break;
+				case MMTDrop.constants.period.MONTH:
+					group_by = "_hour";
+					break;
+				case MMTDrop.constants.period.YEAR:
+					group_by = "_day";
+					break;
+				default:
+			}
+
+		//data_ip + "_" + real
+		url += "/" + param.collection + group_by + "/" + param.action;
+		if( param.raw )
+			url += "?raw";
+
+		var query = [];
+		if( param.query != undefined )
+			query = param.query.slice(0);
+
+		if( param.period )
+			query.unshift( {"$match" : {3: {"$gte": param.period.begin, "$lt" : param.period.end }}} );
+
+		//need for "POST"
+		query = JSON.stringify( query );
+		_ajax(url, query, "POST", callback);
+	}
 
 	/*
 	 * Get data from MMT-Operator
@@ -1602,25 +1657,30 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 *         object. Each key-value is a pair of probeID and its data.
 	 *
 	 */
-	function _get(param, callback) {
+
+	function _ajax( url, query, method, callback ){
 		// asyn
 		if (callback) {
 			$.ajax({
-				url      : _serverURL,
-				type     : "GET",
-				dataType : "json",
-				data     : param,
-				cache    : false,
-                timeout  : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 5000, //5 seconds
-				error    : callback.error, // (xhr, status, error),
-				success  : function(data) {
+				url        : url,
+				type       : method,
+				dataType   : "json",
+				contentType: "application/json",
+				data       : query,
+				cache      : (method == "GET" ? true: false),
+        timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
+				error      : callback.error, // (xhr, status, error),
+				success    : function(data) {
 					callback.success(data);
 				},
-                /*
-                statusCode: {
-                    404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
-                    500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
-                }*/
+        statusCode: {
+						//acces denied
+						403 : function (){
+							document.location.href = "/";
+						},
+            404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
+            500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
+        }
 			});
 			return;
 		}
@@ -1628,12 +1688,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 		var data = {};
 		$.ajax({
-			url  : _serverURL,
-			type : "GET",
+			url  : url,
+			type : method,
 			dataType : "json",
-			data  : param,
-			cache : false,
+			data  : query,
+			cache : (method == "GET" ? true: false),
 			async : false,
+			timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
 			error : function(xhr, status, error) {
 				throw new Error("Cannot get data from database. " + error);
 				return null;

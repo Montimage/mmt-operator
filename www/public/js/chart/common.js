@@ -29,7 +29,7 @@ MMTDrop.setOptions({
 
 if( ReportFactory === undefined )
     var ReportFactory = {};
-    
+
 for (var i in ReportFactory)
         MMTDrop.reportFactory[i] = ReportFactory[i];
 
@@ -40,30 +40,30 @@ var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var reports = [];
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
-var status_db = new MMTDrop.Database({id: "status"});
+var status_db = new MMTDrop.Database({collection: "status"});
 
 $(function () {
     'use strict'
-    
+
     if( typeof arr === "undefined" ){
         console.error("No Reports are defined!");
         $("#waiting").hide();
         return;
     }
-    
+
     $("#waiting").on("click", function(){
             $("#waiting").hide();
     });
-    
+
     if (fPeriod == undefined) {
         throw new Error("Need to defined fPeriod filter")
     }
 
     //fProbe.renderTo("toolbar-box");
-    
+
     fPeriod.renderTo("toolbar-box");
     fPeriod.onChange( loading.onShowing  );
-    
+
     var renderReport = function (node) {
         try {
             var key = node.userData.fn;
@@ -75,11 +75,11 @@ $(function () {
                     reports.push( rep );
                 }
             }
-            
+
             //loading is defined in each tab
             if( loading )
                 loading.totalChart ++;
-            
+
         } catch (ex) {
             console.error("Error when rending report [" + key + "] to the DOM [" + node.id + "]");
             console.error(ex.stack);
@@ -98,11 +98,8 @@ $(function () {
     //reload databases of reports
     var reloadReports = function( data, group_by ){
         try{
-            var period_str = {begin: status_db.time.begin, end: status_db.time.end};
-            period_str = JSON.stringify( period_str );//adapt to period filter mmt_drop.js:2065
-            
             for( var i=0; i<reports.length; i++ ){
-                reports[ i ].database.reload( {period: period_str, period_groupby: group_by} , function(new_data, rep){
+                reports[ i ].database.reload( {period: status_db.time, period_groupby: group_by} , function(new_data, rep){
                     //for each element in dataFlow array
                     for( var j in rep.dataFlow ){
                         var filter = rep.dataFlow[ j ];
@@ -122,18 +119,16 @@ $(function () {
             loading.onHide();
         }
     }
-    
+
     fPeriod.onFilter( function( opt ){
         console.log("fProbe filtering");
-        status_db.reload({ period: opt.id }, reloadReports, opt.id );
+        status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
     });
-    
+
     //fire the chain of filters
     setTimeout( function(){
-        fPeriod.filter(); 
+        fPeriod.filter();
     }, 0 );
-
-
 
     //update the modal show list of reports to user
     var $modal = $("#modal");
@@ -183,8 +178,8 @@ $(function () {
         //renderReport(node);
 
     });
-    
-    
+
+
     var reloadCount = 0;
     var auto_reload_timer = null;
     function start_auto_reload_timer(){
@@ -197,17 +192,17 @@ $(function () {
         auto_reload_timer = setInterval( function(){
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
-            
+
             if( reloadCount >= 10 ){
                 location.reload();
                 throw new Error("Stop");
             }
-            
+
             loading.onShowing();
             fPeriod.filter();
-        }, p);   
+        }, p);
     }
-    
+
     $("#isAutoReloadChk").change( function(){
         var is_on = $(this).is(":checked");
         console.log( "autoReload: " + is_on );
@@ -219,7 +214,7 @@ $(function () {
         }
     });
 
-    
+
     var checked = MMTDrop.tools.localStorage.get("autoreload", false);
     //checkbox default is "true"
     if(  checked === false ){

@@ -1,7 +1,7 @@
 {
-    "database_server": "192.168.0.7",
-    "redis_server": "192.168.0.7",
-    "data_folder": "/Users/nhnghia/temps/share_vbox/probe-output/",
+    "database_server": "localhost",
+    "redis_server": "localhost",
+    "data_folder": "/opt/mmt/results/reports_online/",
     "delete_data": true,
     "input_mode": "file",
     "probe_analysis_mode": "online",
@@ -21,6 +21,9 @@
             "mask": "10"
         },{
             "ip"  : "0.0.0.0",
+            "mask": "255.255.255.255"
+        },{
+            "ip"  : "127.0.0.1",
             "mask": "255.255.255.255"
         }],
     "probe_stats_period": 5,

@@ -398,6 +398,55 @@ var MongoConnector = function (opts) {
 
     };
 
+    //flush caches before quering
+    self.getProtocolStats = function (options, callback) {
+
+        options.query = {};
+        options.query[ TIMESTAMP ] = {
+                '$gte': options.time.begin,
+                '$lte': options.time.end
+        };
+        if( options.format.length > 1 )
+          options.query[ FORMAT_ID ] = {$in: options.format };
+        else
+          options.query[ FORMAT_ID ] = options.format[0];
+
+        var find_in_specific_table = false;
+
+        if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {
+            options.collection     = "behaviour";
+            find_in_specific_table = true;
+        }
+        else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
+            if( options.userData.type === "evasion" ){
+                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
+            }else
+                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
+            options.collection     = "security";
+            find_in_specific_table = true;
+        }
+
+        if( find_in_specific_table ){
+            self.queryDB(options.collection, "find", options.query, callback, options.raw);
+            return;
+        }
+
+        /*if( options.period_groupby == "real") {
+            self.getCurrentProtocolStats(options, callback);
+            return;
+        }
+        */
+
+        if (options.id !== undefined ) {
+            self.flushCache(function () {
+                self.getCurrentProtocolStats(options, callback);
+            });
+            return;
+        }
+
+        callback(null, ["tobe implemented"]);
+    };
+
     // Do a query on database. Action can be "find", "aggregate", ...
     self.queryDB = function (collection, action, query, callback, raw) {
         console.log(action, " on [", collection, "] query : ", JSON.stringify(query) );
@@ -418,6 +467,12 @@ var MongoConnector = function (opts) {
           cursor = self.mdb.collection(collection).aggregate(query);
         //query of "find" uses the format of "aggreate": $match, $project, $limit, $sort
         else if ( action == "find" ){
+
+          //older: query is a $match expression
+          if( query.constructor !== Array)
+            query = [{$match: query}];
+          //end older
+
           var old_query = query;
           query = {};
           for( var i in old_query ){
@@ -434,7 +489,7 @@ var MongoConnector = function (opts) {
           else
             cursor = self.mdb.collection(collection).find( query.$match);
           cursor = cursor.limit( query.$limit );
-          
+
           if( query.$sort )
             cursor = cursor.sort( query.$sort );
         }
@@ -464,7 +519,7 @@ var MongoConnector = function (opts) {
 
                 ts = (new Date()).getTime() - end_ts;
 
-                console.log("converted " + doc.length + " records, took " + ts + " ms\n");
+                console.log("converted " + doc.length + " records, took " + ts + " ms");
                 callback(null, data);
             } else {
                 callback(null, doc);
@@ -629,9 +684,12 @@ var MongoConnector = function (opts) {
                 if( options.userData ){
                     if( options.userData.app_path ){
 
-                        if( Array.isArray( options.userData.app_path ))
+                        if( Array.isArray( options.userData.app_path )){
+                          if( options.userData.app_path.length > 1 )
                             options.query[ COL.APP_PATH ]  = {'$in' : options.userData.app_path};
-                        else
+                          else
+                            options.query[ COL.APP_PATH ]  = options.userData.app_path[ 0 ];
+                        }else
                             options.query[ COL.APP_PATH ]  = options.userData.app_path;
 
                         self.queryDB( options.collection, "find", options.query, callback, options.raw );

@@ -88,7 +88,26 @@ var ReportFactory = {
         var _this    = this;
         var self     = this;
         var COL      = MMTDrop.constants.StatsColumn;
-        var database = new MMTDrop.Database({format: [99,100], id: "link.protocol", userData : {getProbeStatus: true, getAppList: true} });
+        //mongoDB aggregate
+        var group = { _id : {} };
+
+        [ COL.TIMESTAMP.id , COL.APP_PATH.id ].forEach( function( el, index){
+          group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+          group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.TIMESTAMP.id ,COL.APP_PATH.id, COL.FORMAT_ID.id ].forEach( function( el, index){
+          group[ el ] = {"$first" : "$"+ el};
+        } );
+
+        var match = {};
+        //get maximum of 5 levels: eth.vlan.ip.tcp.http
+        //I need eth (99) to get the total
+        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,4}$", "$options" : ""};
+        var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",
+          query: [{"$match": match}, {"$group" : group}]});
+
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
 
@@ -277,7 +296,7 @@ var ReportFactory = {
                         height : height,
                         addZeroPoints:{
                             time_id       : 3,
-                            time          : db.time,
+                            time          : status_db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
                             probeStatus   : status_db.probeStatus
                         },
@@ -537,13 +556,13 @@ var ReportFactory = {
     createNodeReport: function (fProbe) {
         var DETAIL = {};//data detail of each MAC
         var COL = MMTDrop.constants.StatsColumn;
-        var database = MMTDrop.databaseFactory.createStatDB({id: "link.nodes"});
+        var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true});
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
-                    var lastMinute  = db.time.end -   60*1000;
-                    var last5Minute = db.time.end - 5*60*1000;
+                    var lastMinute  = status_db.time.end -   60*1000;
+                    var last5Minute = status_db.time.end - 5*60*1000;
 
                     var obj = {};
                     for (var i in data) {
@@ -702,10 +721,23 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function (fProbe) {
         var _this = this;
-        var database = new MMTDrop.Database({id:"link.traffic", format:[99,100]});
+        var COL = MMTDrop.constants.StatsColumn;
+        var group = { _id : {} };
+        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
+          group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.UL_PACKET_COUNT.id, COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id ].forEach( function( el, index){
+          group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
+          group[ el ] = {"$first" : "$"+ el};
+        } );
+        var database = new MMTDrop.Database({collection: "data_total", action: "aggregate",
+          query: [{"$group" : group}]});
+
         var rep = _this.createTrafficReport(fProbe, database, true);
 
-        var COL = MMTDrop.constants.StatsColumn;
+
         var cLine = rep.groupCharts[0].charts[0];
         var fMetric = rep.filters[0];
 
@@ -994,7 +1026,7 @@ var ReportFactory = {
                         height  : height,
                         addZeroPoints:{
                             time_id       : 3,
-                            time          : db.time,
+                            time          : status_db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
                             probeStatus   : status_db.probeStatus
                         },
