@@ -193,6 +193,7 @@ MMTDrop.constants = {
       RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
       RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
       FORMAT_TYPE       : {id: 32 , label: "Type"},
+      SRC_LOCATION      : {id: 33, label: "Source Location"} 
 		},
 
 

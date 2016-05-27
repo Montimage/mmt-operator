@@ -4,6 +4,8 @@ var Window      = require("./window.js");
 var AppList     = require("./app-list.js");
 var ipLib       = require("ip");
 
+// var ip2loc      = require("");
+
 var DataCache   = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
     format      = require('util').format;
@@ -33,7 +35,6 @@ var MongoConnector = function (opts) {
             init_session_set.push( i );
     }
     init_session_set.push( COL.START_TIME );
-
 
     MongoClient.connect(opts.connectString, function (err, db) {
         if (err) throw err;
@@ -67,7 +68,7 @@ var MongoConnector = function (opts) {
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
 
             ip: new DataCache(db, "data_ip",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC,
                                //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
@@ -75,7 +76,7 @@ var MongoConnector = function (opts) {
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                //set
-                               [COL.MAC_SRC]),
+                               [COL.MAC_SRC]]),
 
 
             session: new DataCache(db, "data_session",
@@ -92,7 +93,7 @@ var MongoConnector = function (opts) {
                                  HTTP.TRANSACTIONS_COUNT,
                                ],
                                    //set
-                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST],
+                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION],
                                   //init
                                init_session_set
                                   ),
@@ -583,6 +584,8 @@ var MongoConnector = function (opts) {
                 options.collection = "data_mac";
             else if (["network.user"].indexOf(options.id) > -1)
                 options.collection = "data_ip_" + options.period_groupby;
+            else if (["network.country"].indexOf(options.id) > -1)
+                options.collection = "data_session_" + options.period_groupby;
             else if (["network.profile","network.detail", "network.destination",  "app.detail", "app.list"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
@@ -798,6 +801,31 @@ var MongoConnector = function (opts) {
                     {"$group": groupby},
                     {"$sort" : sort},
                     {"$limit": 5000}
+                    ], callback, options.raw );
+                return;
+            }
+
+            if (options.id === "network.country"){
+                var groupby = { "_id": "$" + COL.SRC_LOCATION };
+                [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$sum" : "$" + el };
+                });
+                // [ COL.SRC_LOCATION, COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC, COL.MAC_SRC ].forEach(
+                [ COL.SRC_LOCATION, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC, COL.MAC_SRC ].forEach(
+                    function(el, index ){
+                        groupby[ el ] = { "$first" : "$" + el };
+                });
+
+                //desc
+                var sort = {}; sort[ COL.SRC_LOCATION ] = -1;
+
+                self.queryDB(options.collection,
+                "aggregate", [
+                    {"$match": options.query},
+                    {"$group": groupby},
+                    {"$sort" : sort},
+                    {"$limit": 500}
                     ], callback, options.raw );
                 return;
             }

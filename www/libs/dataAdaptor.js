@@ -1,5 +1,24 @@
 var ipLib  = require("ip");
 var config = require("../config.json");
+var maxmind = require('maxmind');
+var ipToCountry = maxmind.open('./../tools/GeoIp/GeoLite2-Country.mmdb', {
+    cache: {
+        max: 1000, // max items in cache
+        maxAge: 1000 * 60 * 60 // life time in milliseconds
+    }
+});
+
+ipToCountry._get = function( ip ){
+  var loc = ipToCountry.get( ip );
+  if (loc){
+    return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
+    console.log(loc);
+  }else if(MMTDrop.isLocalIP(ip)){
+    return "Local"
+  }else{
+    return "Unknown";
+  }  
+}
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -69,6 +88,8 @@ var MMTDrop = {
         RTT_AVG_SERVER      : 30,
         RTT_AVG_CLIENT      : 31,
         FORMAT_TYPE         : 32, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
+        SRC_LOCATION        : 33,
+        DST_LOCATION        : 34
     },
 
     SecurityColumnId           : {
@@ -589,6 +610,8 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.STATS_FORMAT :
             msg = format_session_report( msg );
             msg[ MMTDrop.StatsColumnId.START_TIME ] = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
+            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:

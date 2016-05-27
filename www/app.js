@@ -167,9 +167,10 @@ routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-ad
 routes.dbconnector        = dbconnector;
 app.use('/', routes);
 app.use('/chart/', chartRoute);
-
+app.use('/ip', require("./routes/ip2loc.js"))
 api.dbconnector = dbconnector;
 app.use('/api', api);
+
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
