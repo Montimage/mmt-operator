@@ -37,13 +37,14 @@ block header
     //script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
 
     //override
+    script( type='text/javascript', src='/js/over/jquery-override.js')
     script( type='text/javascript', src='/js/over/jquery-datepicker.js')
-
+    script( type='text/javascript', src= '/js/waiting.js')
     script( type='text/javascript', src= '/js/grid.js')
     script( type='text/javascript', src= '/js/event.js')
 
     script( type='text/javascript', src= '/js/mmt_drop.js')
-
+    
     script( type='text/javascript', src= '/js/chart/pre-common.js')
     //script that configures the content of the grid
     if( pathname == null )
@@ -70,10 +71,10 @@ block content
                     each val, index in pages
                         if( index === page_id )
                             li.active
-                                a( href="/chart/#{index}" )= val.title
+                                a( href="/chart/#{ index }#{ query_string }" )= val.title
                         else
                             li
-                                a( href="/chart/#{index}" )= val.title
+                                a( href="/chart/#{ index }#{ query_string }" )= val.title
                     li.dropdown
                         a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")
                             span.glyphicon.glyphicon-user
@@ -87,11 +88,14 @@ block content
 
     #toolbar
         ul.nav.navbar-nav
+            li: button#exportBtn.btn.btn-default.btn-block( title="Export graphs to images")
+                span.glyphicon.glyphicon-import
+                
             li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
                 span.glyphicon.glyphicon-plus
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
-
+            
         #toolbar-box
 
         //#toolbar-gauges

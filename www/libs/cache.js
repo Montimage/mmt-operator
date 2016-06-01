@@ -110,7 +110,7 @@ function Cache ( option ) {
 
         _mdb.collection( _collection_name ).insert( data, function( err, result){
             //if( _period_to_update_name !== "real")
-            console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            //console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
 
             if( err ){
                 console.error( err );
@@ -317,7 +317,7 @@ function Cache ( option ) {
                   key = key.key;
                 }
                 */
-                
+
                 var val = msg[ key ];
 
                 //init for the data in a period: minute, hour, day, month,

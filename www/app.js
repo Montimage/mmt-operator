@@ -171,6 +171,7 @@ app.use('/ip', require("./routes/ip2loc.js"))
 api.dbconnector = dbconnector;
 app.use('/api', api);
 
+app.use("/info/os", require("./routes/info/os"));
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){

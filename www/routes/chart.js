@@ -26,7 +26,7 @@ var all_pages = {
         'video' : {
             title: "Video"
         },
-*/        
+*/
             'security':{
             title:"Security"
         },
@@ -45,46 +45,56 @@ var all_pages = {
 };
 
 router.get('/*', function(req, res, next) {
-    
+
     if( req.session.loggedin == undefined ){
         res.redirect("/");
         return;
     }
-    
-    
+
+
 	var path = req.params[0];   //e.g. application/detail?time=1461574741511
     path  = url.parse( path ).pathname;
-    
+
     var id = path;
-    
+
     if( !id ){
 		res.redirect("/chart/link");
         return;
     }
-    
+
     if( path.indexOf("/") > -1 ){
         id   = path.substr( 0, path.indexOf("/")); //e.g. application
     }else
         path = null;
-    
-	
+
+
 	id = id.toLowerCase();
-	
+
     if( router.pages == undefined ){
         router.pages = all_pages;
     }
-	
+  var query_string = [];
+  if( req.query[ "period" ])
+    query_string.push( "period=" + req.query[ "period" ] );
+  if( req.query[ "probe_id" ])
+    query_string.push( "probe_id=" + req.query[ "probe_id" ] );
+  if( query_string.length > 0 )
+    query_string = "?" + query_string.join("&");
+  else
+    query_string = "";
+
 	var page = router.pages[ id ];
 	if( page == undefined ){
 		var err = new Error('Not Found');
         err.status = 404;
         throw err;
 	}else{
-		res.render("chart", { title: page.title, page_id: id, pages: router.pages, 
+		res.render("chart", { title: page.title, page_id: id, pages: router.pages,
                              pathname : path,
-                             probe_stats_period  : router.config.probe_stats_period, 
+                             query_string        : query_string,
+                             probe_stats_period  : router.config.probe_stats_period,
                              probe_analysis_mode : router.config.probe_analysis_mode,
-                             is_in_debug_mode    : (router.config.is_in_debug_mode === true), 
+                             is_in_debug_mode    : (router.config.is_in_debug_mode === true),
                              licence_remain_days : 10 });
     }
 });

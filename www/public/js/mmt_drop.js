@@ -1581,43 +1581,38 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	}();
 
 	function _get(param, callback) {
-		var url = _serverURL;
-		//old
-		if( param.collection == undefined ){
-			return _ajax( url, param, "GET", callback );
-		}
-
-		//new
-		if( param.action == undefined ){
-			throw new Error("action is not defined");
-			return;
-		}
-		var group_by = "";
-		if( param.no_group == undefined )
-			switch ( param.period_groupby ) {
-				case MMTDrop.constants.period.MINUTE:
-					group_by = "_real";
-					break;
-				case MMTDrop.constants.period.HOUR:
-					group_by = "_real";
-					break;
-				case MMTDrop.constants.period.HALF_DAY:
-					group_by = "_minute";
-					break;
-				case MMTDrop.constants.period.DAY:
-					group_by = "_minute";
-					break;
-				case MMTDrop.constants.period.WEEK:
-					group_by = "_hour";
-					break;
-				case MMTDrop.constants.period.MONTH:
-					group_by = "_hour";
-					break;
-				case MMTDrop.constants.period.YEAR:
-					group_by = "_day";
-					break;
-				default:
+			var url = _serverURL;
+			//old
+			if( param.collection == undefined ){
+				return _ajax( url, param, "GET", callback );
 			}
+
+			//new
+			if( param.action == undefined ){
+				throw new Error("action is not defined");
+				return;
+			}
+			var group_by = "";
+			if( param.no_group == undefined )
+				switch ( param.period_groupby ) {
+					case MMTDrop.constants.period.MINUTE:
+					case MMTDrop.constants.period.HOUR:
+						group_by = "_real";
+						break;
+					case MMTDrop.constants.period.HALF_DAY:
+					case MMTDrop.constants.period.QUARTER_DAY:
+					case MMTDrop.constants.period.DAY:
+						group_by = "_minute";
+						break;
+					case MMTDrop.constants.period.WEEK:
+					case MMTDrop.constants.period.MONTH:
+						group_by = "_hour";
+						break;
+					case MMTDrop.constants.period.YEAR:
+						group_by = "_day";
+						break;
+					default:
+				}
 
 		//data_ip + "_" + real
 		url += "/" + param.collection + group_by + "/" + param.action;
@@ -1707,6 +1702,8 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 		});
 		return data;
 	};
+
+	this.ajax = _ajax;
 };
 
 /**
