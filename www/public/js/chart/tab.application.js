@@ -363,6 +363,9 @@ var ReportFactory = {
             var group_by = fPeriod.selectedOption().id;
             var period   = JSON.stringify( status_db.time );
             var db_options = {period: period, period_groupby: group_by, userData : { app_id: parseInt( opt.id )} };
+            var probe_id = MMTDrop.tools.getURLParameters().probe_id;
+            if( probe_id != undefined )
+              db_options.probe = [ parseInt( probe_id ) ];
 
             database.reload( db_options, function(data, chartList){
                 for( var i in chartList){

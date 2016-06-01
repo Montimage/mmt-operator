@@ -38,6 +38,7 @@ ReportFactory = MMTDrop.reportFactory;
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var reports = [];
+var COL     = MMTDrop.constants.StatsColumn;
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
 var status_db = new MMTDrop.Database({collection: "status"});
@@ -97,9 +98,21 @@ $(function () {
 
     //reload databases of reports
     var reloadReports = function( data, group_by ){
+        var probe_id = MMTDrop.tools.getURLParameters().probe_id;
         try{
             for( var i=0; i<reports.length; i++ ){
-                reports[ i ].database.reload( {period: status_db.time, period_groupby: group_by} , function(new_data, rep){
+              var param = reports[ i ].database.param;
+              var param = {period: status_db.time, period_groupby: group_by};
+              if( probe_id != undefined ){
+                param.probe = [ parseInt( probe_id ) ];
+
+                var $match = {};
+                $match[ COL.PROBE_ID.id ] =  parseInt( probe_id ) ;
+                param.query = [{$match: $match}];
+              }
+
+
+              reports[ i ].database.reload( param , function(new_data, rep){
                     //for each element in dataFlow array
                     for( var j in rep.dataFlow ){
                         var filter = rep.dataFlow[ j ];
@@ -117,12 +130,17 @@ $(function () {
             }
         }catch ( err ){
             loading.onHide();
+            console.error( err );
         }
     }
 
     fPeriod.onFilter( function( opt ){
         console.log("fProbe filtering");
-        status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
+        var period = MMTDrop.tools.getURLParameters().period;
+        if( period == undefined )
+          status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
+        else
+          status_db.reload({ action: period }, reloadReports, opt.id );
     });
 
     //fire the chain of filters

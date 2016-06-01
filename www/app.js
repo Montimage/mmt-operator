@@ -171,6 +171,8 @@ app.use('/chart/', chartRoute);
 api.dbconnector = dbconnector;
 app.use('/api', api);
 
+app.use("/info/os", require("./routes/info/os"));
+
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){

@@ -408,9 +408,14 @@ var MongoConnector = function (opts) {
         };
         if( options.format.length > 1 )
           options.query[ FORMAT_ID ] = {$in: options.format };
-        else
+        else if( options.format.length == 1 )
           options.query[ FORMAT_ID ] = options.format[0];
 
+        if( options.probe.length > 1 )
+          options.query[ PROBE_ID ] = {$in: options.probe };
+        else if( options.probe.length == 1 )
+          options.query[ PROBE_ID ] = options.probe[0];
+          
         var find_in_specific_table = false;
 
         if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {

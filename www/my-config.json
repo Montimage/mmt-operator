@@ -1,9 +1,9 @@
 {
     "database_server": "localhost",
     "redis_server": "192.168.0.7",
-    "data_folder": "/opt/mmt/results/reports_online/",
+    "data_folder": "/Users/nhnghia/temps/share_vbox/probe-output/",
     "delete_data": true,
-    "input_mode": "redis",
+    "input_mode": "file",
     "probe_analysis_mode": "online",
     "local_network": [{
             "ip": "192.0.0.0",
@@ -31,7 +31,7 @@
         "max_length_size": 500000,
         "flush_to_client_period": 3
     },
-    "port_number" : 8001,
+    "port_number" : 80,
     "log_folder"  : "log",
     "is_in_debug_mode" : true
 }
