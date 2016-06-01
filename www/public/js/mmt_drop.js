@@ -426,7 +426,7 @@ MMTDrop.constants = {
 
             NAME              : {id: 7,  label: "Name"},
 
-            IS_OVER_TCP       : {id: 8,  label: "Over TCP"},
+            IS_OVER_TCP       : {id: 8,  label: "Parent Protocol"},
 
             IP_SRC            : {id: 9, label: "IP Destination"},
             IP_DEST           : {id: 10, label: "IP Source "} ,
