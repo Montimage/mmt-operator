@@ -1,22 +1,10 @@
 var arr = [
     {
-        id: "top_user",
-        title: "Top Users",
-        x: 0,
-        y: 0,
-        width: 4,
-        height: 9,
-        type: "info",
-        userData: {
-            fn: "createTopUserReport"
-        },
-    },
-    {
         id: "top_profile",
-        title: "Top Profiles",
-        x: 4,
+        title: "SLA/Top Profiles",
+        x: 6,
         y: 0,
-        width: 4,
+        width: 6,
         height: 9,
         type: "success",
         userData: {
@@ -25,12 +13,12 @@ var arr = [
     },
     {
         id: "top_location",
-        title: "Top Geo Locations",
-        x: 8,
+        title: "SLA/Top Geo Locations",
+        x: 0,
         y: 0,
-        width: 4,
+        width: 6,
         height: 9,
-        type: "info",
+        type: "success",
         userData: {
             fn: "createTopLocationReport"
         },

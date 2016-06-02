@@ -74,6 +74,10 @@ $(function () {
                 if (rep) {
                     rep.renderTo(node.id + "-content");
                     reports.push( rep );
+                }else{
+                  //rep is not a real report (it could be a form, ...)
+                  //=> hide loading icon
+                  loading.onHide();
                 }
             }
 
@@ -98,6 +102,10 @@ $(function () {
 
     //reload databases of reports
     var reloadReports = function( data, group_by ){
+      //there are no reports
+      if (reports.length == 0 ){
+        loading.onHide();
+      }else{
         var probe_id = MMTDrop.tools.getURLParameters().probe_id;
         try{
             for( var i=0; i<reports.length; i++ ){
@@ -132,6 +140,7 @@ $(function () {
             loading.onHide();
             console.error( err );
         }
+      }//end if
     }
 
     fPeriod.onFilter( function( opt ){

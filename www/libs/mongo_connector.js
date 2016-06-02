@@ -68,7 +68,7 @@ var MongoConnector = function (opts) {
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
 
             ip: new DataCache(db, "data_ip",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC,
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
                                //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
@@ -76,7 +76,7 @@ var MongoConnector = function (opts) {
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                //set
-                               [COL.MAC_SRC]]),
+                               [COL.MAC_SRC]),
 
 
             session: new DataCache(db, "data_session",
@@ -101,14 +101,18 @@ var MongoConnector = function (opts) {
             mac: new DataCache(db, "data_mac",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
-
+            //for DOCTOR project
+            //TODO to remove
             ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
                                                 NDN.MAC_SRC, NDN.NAME],
                                //inc
                               [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
                               [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME,21,22,23]),
-
+            //MUSA project
+            //TODO to remove
+            avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
+                              [4] ),
         };
 
         console.log("Connected to Database");
@@ -386,6 +390,12 @@ var MongoConnector = function (opts) {
             self.dataCache.ndn.addMessage( msg );
             return;
         }
+
+        //MUSA project
+        if( format === 50 ){
+          self.dataCache.avail.addMessage( msg );
+          return;
+        }
     };
 
 
@@ -416,7 +426,7 @@ var MongoConnector = function (opts) {
           options.query[ PROBE_ID ] = {$in: options.probe };
         else if( options.probe.length == 1 )
           options.query[ PROBE_ID ] = options.probe[0];
-          
+
         var find_in_specific_table = false;
 
         if (options.format.indexOf(dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT) >= 0 || options.format.indexOf(dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) >= 0 ) {
@@ -675,14 +685,10 @@ var MongoConnector = function (opts) {
                         groupby[ el ] = { "$first" : "$" + el };
                 });
 
-                //desc
-                var sort = {}; sort[ COL.PAYLOAD_VOLUME ] = -1;
-
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
                     {"$group": groupby},
-                    {"$sort" : sort},
                     {"$limit": 500}
                     ], callback, options.raw );
                 return;
@@ -811,25 +817,21 @@ var MongoConnector = function (opts) {
             }
 
             if (options.id === "network.country"){
-                var groupby = { "_id": "$" + COL.SRC_LOCATION };
+                var groupby = { "_id": "$" + COL.DST_LOCATION };
                 [ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$sum" : "$" + el };
                 });
                 // [ COL.SRC_LOCATION, COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC, COL.MAC_SRC ].forEach(
-                [ COL.SRC_LOCATION, COL.SOURCE_ID, COL.TIMESTAMP, COL.IP_SRC, COL.MAC_SRC ].forEach(
+                [ COL.SRC_LOCATION, COL.DST_LOCATION, COL.SOURCE_ID, COL.TIMESTAMP ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
-
-                //desc
-                var sort = {}; sort[ COL.SRC_LOCATION ] = -1;
 
                 self.queryDB(options.collection,
                 "aggregate", [
                     {"$match": options.query},
                     {"$group": groupby},
-                    {"$sort" : sort},
                     {"$limit": 500}
                     ], callback, options.raw );
                 return;

@@ -71,6 +71,15 @@ console.debug = function( msg ){
     }
 }
 
+var redis = require("redis");
+//override redis with the given information: host, port
+redis._createClient = redis.createClient;
+redis.createClient  = function(){
+  if( config.redis_server.port == undefined )
+    config.redis_server.port = 6379;
+  return redis._createClient(config.redis_server.port, config.redis_server.host, {});
+}
+
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
@@ -113,20 +122,17 @@ api.socketio           = socketio;
 api.config             = config;
 api.dbconnector        = dbconnector;
 
-var redis = require("redis");
-
 if( config.input_mode == REDIS_STR ){
-    redis._createClient = redis.createClient;
-    redis.createClient = function(){
-        return redis._createClient(6379, config.redis_server, {});
-    }
-
     probeRoute.startListening(dbconnector, redis);
 }
 else{
     probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
 }
 
+
+//active checking for MUSA
+//TODO to remove in final product
+require("./libs/active_check.js").start( redis, dbconnector );
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

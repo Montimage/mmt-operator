@@ -1,9 +1,12 @@
 {
     "database_server": "localhost",
-    "redis_server": "192.168.0.7",
-    "data_folder": "/opt/mmt/results/reports_online/",
+    "redis_server": {
+      "host" : "localhost",
+      "port" : 6379
+    },
+    "data_folder": "/Users/nhnghia/temps/share_vbox/report/",
     "delete_data": true,
-    "input_mode": "redis",
+    "input_mode": "file",
     "probe_analysis_mode": "online",
     "local_network": [{
             "ip": "192.0.0.0",

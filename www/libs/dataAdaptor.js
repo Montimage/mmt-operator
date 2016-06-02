@@ -1,7 +1,7 @@
 var ipLib  = require("ip");
 var config = require("../config.json");
 var maxmind = require('maxmind');
-var ipToCountry = maxmind.open('./../tools/GeoIp/GeoLite2-Country.mmdb', {
+var ipToCountry = maxmind.open('./data/GeoLite2-Country.mmdb', {
     cache: {
         max: 1000, // max items in cache
         maxAge: 1000 * 60 * 60 // life time in milliseconds
@@ -12,12 +12,11 @@ ipToCountry._get = function( ip ){
   var loc = ipToCountry.get( ip );
   if (loc){
     return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
-    console.log(loc);
-  }else if(MMTDrop.isLocalIP(ip)){
-    return "Local"
+  }else if(MMTDrop.isLocalIP( ip )){
+    return "_local"
   }else{
-    return "Unknown";
-  }  
+    return "_unknown";
+  }
 }
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
@@ -609,7 +608,7 @@ MMTDrop.formatMessage = function( message ){
             //main report
         case MMTDrop.CsvFormat.STATS_FORMAT :
             msg = format_session_report( msg );
-            msg[ MMTDrop.StatsColumnId.START_TIME ] = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
+            msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
             msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             break;

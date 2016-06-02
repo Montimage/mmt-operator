@@ -193,7 +193,8 @@ MMTDrop.constants = {
       RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
       RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
       FORMAT_TYPE       : {id: 32 , label: "Type"},
-      SRC_LOCATION      : {id: 33, label: "Source Location"} 
+      SRC_LOCATION      : {id: 33, label: "Source"},
+      DST_LOCATION      : {id: 34, label: "Destination"}
 		},
 
 
@@ -1138,6 +1139,106 @@ MMTDrop.tools = function () {
 	};
 
 	/**
+	 * create DOM object and its children using jQuery
+	 * @param  {[type]} config
+	 *  {
+	 *  	type : "<form>",
+	 *  	attr: {
+	 *  		action: "",
+	 *  		method: "get"
+	 *  	},
+	 *  	children: [
+	 *  		{
+	 *  			type: "<file>",
+	 *  			attr: {
+	 *  			}
+	 *  		},
+	 *  		{
+	 *  			type: "<button>"",
+	 *  			attr: {
+	 *  				text : "Upload",
+	 *  				class: "btn btn-primary"
+	 *  			}
+	 *  	]
+	 *  }
+	 * @return {[type]}        [description]
+	 */
+	_this.createDOM = function( config ){
+		if( config == undefined )
+			return null;
+
+		//create the object
+		var $obj = $( config.type, config.attr );
+
+		//create children and append to $obj
+		for( var i in config.children ){
+			var $o = _this.createDOM( config.children[ i ] );
+			if( $o != undefined )
+				$obj.append( $o  )
+		}
+		return $obj;
+	};
+
+
+	/**
+	 * create form and its children using jQuery
+	 * @param  {[type]} config
+	 *  {
+	 *  	type : "<form>",
+	 *  	attr: {
+	 *  		action: "",
+	 *  		method: "get"
+	 *  	},
+	 *  	children: [
+	 *  		{
+	 *  			type: "<input>",
+	 *  			label: "Select file",
+	 *  			attr: {
+	 *  			}
+	 *  		},
+	 *  		{
+	 *  			type: "<button>"",
+	 *  			label: "Select file",
+	 *  			attr: {
+	 *  				text : "Upload",
+	 *  				class: "btn btn-primary"
+	 *  			}
+	 *  	]
+	 *  }
+	 * @return {[type]}        [description]
+	 */
+	_this._domElementCount = 0;
+	_this.createForm = function( config ){
+		//create the object
+		var $obj;
+		if( config.label == undefined )
+		 	$obj = $( config.type, config.attr );
+		else{
+			if( config.attr.id == undefined )
+				config.attr.id = "_" + (++ _this._domElementCount);
+
+			$obj = $("<div>", {
+				"class" : "form-group"
+			})
+				.append( $("<label>", {
+					"class":"col-sm-2 control-label",
+					"for"  : config.attr.id,
+					"text" : config.label
+				}))
+				.append( $( config.type, config.attr ));
+		}
+
+		//create children and append to $obj
+		for( var i in config.children ){
+			var $o = _this.createForm( config.children[ i ] );
+			if( $o != undefined )
+				$obj.append( $o  )
+		}
+		return $obj;
+	};
+
+
+	/**
 	 * Split data into n array, each array contains only element having the same value of the @{col}th column
 	 *
 	 * @param {Array} data - is an array of array
@@ -1301,18 +1402,107 @@ MMTDrop.tools = function () {
 		return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
 	};
 
+	/**
+	 * Get an object representing the parameters of the current url
+	 * @return {[type]} [description]
+	 */
+  _this.getURLParameters  = function(){
+      var vars = {}, hash;
+      var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+      for(var i = 0; i < hashes.length; i++){
+          hash = hashes[i].split('=');
+          vars[hash[0]] = hash[1];
+      }
+      return vars;
+  };
 
-    _this.getURLParameters  = function(){
-        var vars = {}, hash;
-        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
-        for(var i = 0; i < hashes.length; i++){
-            hash = hashes[i].split('=');
-            vars[hash[0]] = hash[1];
-        }
-        return vars;
+	_this.getQueryString = function( param, add_query_str ){
+		var obj = _this.getURLParameters();
+		var arr = [];
 
-    };
+		//get all parameters
+		if( param == undefined || param.length == 0 ){
+			param = [];
+			for( var k in obj )
+				param.push( k );
+		}
+		for( var i=0; i<param.length; i++ ){
+			var val = obj[ param[i] ];
+			if( val != undefined )
+				arr.push( param[i] + "=" +  val);
+		}
 
+		if( add_query_str !== undefined && add_query_str !== "" )
+			arr.push( add_query_str )
+
+		if( arr.length > 0 )
+			arr = "?" + arr.join("&");
+		else
+			arr = "";
+		return arr;
+	};
+
+	_this.gotoURL = function( url, options ){
+		if( options.param )
+			url += _this.getQueryString( options.param );
+
+		document.location.href = url;
+	};
+
+	_this.ajax =	function( url, data, method, callback ){
+		//convert to string for POST request
+		if( method == "POST")
+			if( typeof data == "object" )
+				data = JSON.stringify( data );
+
+			// asyn
+			if (callback) {
+				$.ajax({
+					url        : url,
+					type       : method,
+					dataType   : "json",
+					contentType: "application/json",
+					data       : data,
+					cache      : (method == "GET" ? true: false),
+	        timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
+					error      : callback.error, // (xhr, status, error),
+					success    : function(data) {
+						callback.success(data);
+					},
+	        statusCode: {
+							//acces denied
+							403 : function (){
+								document.location.href = "/";
+							},
+	            404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
+	            500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
+	        }
+				});
+				return;
+			}
+
+
+			var data = {};
+			$.ajax({
+				url  : url,
+				type : method,
+				dataType : "json",
+				contentType: "application/json",
+				data  : data,
+				cache : (method == "GET" ? true: false),
+				async : false,
+				timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
+				error : function(xhr, status, error) {
+					throw new Error("Cannot get data from database. " + error);
+					return null;
+				},
+				success : function(d) {
+					data = d;
+
+				}
+			});
+			return data;
+		};
 	return _this;
 }();
 
@@ -1584,7 +1774,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 			var url = _serverURL;
 			//old
 			if( param.collection == undefined ){
-				return _ajax( url, param, "GET", callback );
+				return MMTDrop.tools.ajax( url, param, "GET", callback );
 			}
 
 			//new
@@ -1628,7 +1818,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
 		//need for "POST"
 		query = JSON.stringify( query );
-		_ajax(url, query, "POST", callback);
+		MMTDrop.tools.ajax(url, query, "POST", callback);
 	}
 
 	/*
@@ -1653,57 +1843,6 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 	 *         object. Each key-value is a pair of probeID and its data.
 	 *
 	 */
-
-	function _ajax( url, query, method, callback ){
-		// asyn
-		if (callback) {
-			$.ajax({
-				url        : url,
-				type       : method,
-				dataType   : "json",
-				contentType: "application/json",
-				data       : query,
-				cache      : (method == "GET" ? true: false),
-        timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
-				error      : callback.error, // (xhr, status, error),
-				success    : function(data) {
-					callback.success(data);
-				},
-        statusCode: {
-						//acces denied
-						403 : function (){
-							document.location.href = "/";
-						},
-            404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
-            500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
-        }
-			});
-			return;
-		}
-
-
-		var data = {};
-		$.ajax({
-			url  : url,
-			type : method,
-			dataType : "json",
-			data  : query,
-			cache : (method == "GET" ? true: false),
-			async : false,
-			timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
-			error : function(xhr, status, error) {
-				throw new Error("Cannot get data from database. " + error);
-				return null;
-			},
-			success : function(d) {
-				data = d;
-
-			}
-		});
-		return data;
-	};
-
-	this.ajax = _ajax;
 };
 
 /**
@@ -2655,7 +2794,8 @@ MMTDrop.filterFactory = {
 		 * @returns {MMTDrop.Filter} filter
 		 */
 		createPeriodFilter : function(){
-			var filterID    = "period_filter" + MMTDrop.tools.getUniqueNumber();
+			//one period for any pages
+			var filterID    = "period_filter";// + MMTDrop.tools.getUniqueNumber();
             var periods     = MMTDrop.constants.period;
             var options = [];
 
@@ -2665,9 +2805,9 @@ MMTDrop.filterFactory = {
             else{
                 options.push( { id: periods.MINUTE     , label: "Last 5 minutes" });
                 options.push( { id: periods.HOUR       , label: "Last hour"      });
-                options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
-                options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"   });
-                options.push( { id: periods.DAY        , label: "Last 24 hours"   , selected: true });
+                options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours", selected: true });
+                options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"  });
+                options.push( { id: periods.DAY        , label: "Last 24 hours"  });
                 options.push( { id: periods.WEEK       , label: "Last 7 days"    });
                 options.push( { id: periods.MONTH      , label: "Last 30 days"   });
             }

@@ -41,6 +41,9 @@ var all_pages = {
         },
         'video':{
             title: "Video QoS"
+        },
+        'sla' : {
+        	title: "SLA"
         }
 };
 
@@ -73,11 +76,15 @@ router.get('/*', function(req, res, next) {
     if( router.pages == undefined ){
         router.pages = all_pages;
     }
+  //maintain query string between pages
   var query_string = [];
-  if( req.query[ "period" ])
-    query_string.push( "period=" + req.query[ "period" ] );
-  if( req.query[ "probe_id" ])
-    query_string.push( "probe_id=" + req.query[ "probe_id" ] );
+  var arr = ["period", "probe_id", "app_id"];
+  for( var i in arr ){
+    var el = arr[ i ];
+    if( req.query[ el ] != undefined )
+      query_string.push( el + "=" + req.query[ el ] );
+  };
+
   if( query_string.length > 0 )
     query_string = "?" + query_string.join("&");
   else

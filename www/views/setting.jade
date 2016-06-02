@@ -1,59 +1,17 @@
-extends layout
+extends user-layout
 
-block header
-    link( rel='stylesheet',         href='/lib/datatables/media/css/dataTables.bootstrap.css')
-    script( type='text/javascript', src ='/lib/datatables/media/js/jquery.dataTables.js')
-    script( type='text/javascript', src ='/lib/datatables/media/js/dataTables.bootstrap.js')
-
-    script( type='text/javascript', src='/lib/moment/moment.js', charset='utf-8')
-
-    script( type='text/javascript', src='/lib/lodash/lodash.js')
-
-    link( rel="stylesheet",         href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
-    script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
-
-    link( rel="stylesheet",         href='/lib/gridstack/dist/gridstack.css')
-    script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
-
-    script( type='text/javascript', src="/lib/sweetalert/dist/sweetalert.min.js" )
-    link( rel="stylesheet",         href="/lib/sweetalert/dist/sweetalert.css" )
-
-    //override
-    script( type='text/javascript', src='/js/over/jquery-override.js')
-    script( type='text/javascript', src='/js/over/jquery-datepicker.js')
+block body
+    form( id="actionFrm", method="POST" )
+        input( type="hidden", name="action", id="actionInput" )
     
-    script( type='text/javascript', src= '/js/waiting.js')
-    script( type='text/javascript', src= '/js/grid.js')
-    script( type='text/javascript', src= '/js/event.js')
-
-    script( type='text/javascript', src= '/js/mmt_drop.js')
-
-    script( type='text/javascript', src= '/js/tooltip.js')
-
-block content
-    #toolbar
-        ul.nav.navbar-nav
-            li: button#exportBtn.btn.btn-default.btn-block( title="Export graphs to images")
-                span.glyphicon.glyphicon-import
-            li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
-                span.glyphicon.glyphicon-trash
-            
-        #toolbar-box
-
-        .auto-reload-button
-            .input-group.input-group-sm
-                span.input-group-addon Auto reload
-                .onoffswitch
-                    input.onoffswitch-checkbox#isAutoReloadChk(type="checkbox", name="isAutoReloadChk",checked)
-                    label.onoffswitch-label(for="isAutoReloadChk")
-                        span.onoffswitch-inner
-                        span.onoffswitch-switch
-
-    #waiting.center-block.loading
-        i.fa.fa-refresh.fa-spin.fa-4x
-        noscript
-            h2 Javascript is disabled. Please enable it!
-
-    #content
-        .grid-stack
-        //the grid will be rendered here by javasript grid.js!
+    form()
+        .form-group
+            label( for="clientID" ) Empty database
+            button.btn.btn-danger.btn-block( type="button", id="emptyBtn" ) Empty Database 
+    script(type='text/javascript').
+        $("#emptyBtn").on( "click", function(){
+            if( confirm( "Are you sure to empty the current database? " )){
+                $("#actionInput").val( "empty_database" );
+                $("#actionFrm").submit();
+            }
+        });
