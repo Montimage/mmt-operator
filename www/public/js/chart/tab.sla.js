@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 6,
+        height: 8,
         type: "success",
         userData: {
             fn: "createUploadForm"
@@ -22,7 +22,7 @@ var availableReports = {
 
 var ReportFactory = {
 	createUploadForm: function( fPeriod ){
-
+    var COL = MMTDrop.constants.StatsColumn;
     //UPDATE VALUE OF METRIX AFTER REDERING
     var isFirstUpdate = true;
     var updateValue = function (){
@@ -31,6 +31,7 @@ var ReportFactory = {
         status_db.afterReload( updateValue );
         isFirstUpdate = false;
       }
+
       /*
       $("#header").html(" (from "
                         +  moment(new Date( status_db.time.begin )).format("YYYY-MM-DD HH:mm:ss")
@@ -44,20 +45,18 @@ var ReportFactory = {
         var metricName = this.dataset["metricname"];
         switch (metricName) {
           case "rtt":
-            getRTT( this );
+            getData( this, "data_session", COL.RTT.id);
             break;
           case "availability":
-            getAvailability( this );
+            getData( this, "availability", 4);
             break;
           case "location":
-            getLocation( this );
+            getData( this, "data_session", COL.DST_LOCATION.id);
             break;
           default:
         }
       } );
     }
-
-    var COL = MMTDrop.constants.StatsColumn;
 
     function getQuery( col_id, el ){
       var obj  = el.dataset;
@@ -81,40 +80,13 @@ var ReportFactory = {
       return { query: [ {"$match" : $match}, {"$group": $group}], period_groupby: fPeriod.selectedOption().id };
     }
 
-    var rtt_db = new MMTDrop.Database({collection: "data_session", action: "aggregate", raw: true});
+    var total_db = new MMTDrop.Database({collection: "__", action: "aggregate", raw: true});
 
-    function getRTT( el ){
+    function getData( el, collection, col_id ){
       //get number of alerts from database
-      rtt_db.reload( getQuery( COL.RTT_AVG_CLIENT.id, el ), function( data ){
-        var val = 0;
-        if( data.length > 0 )
-          val = data[0].count;
-
-        $(el).html( '<span class="badge">' + val + '</span>' );
-      });
-    }
-
-    //availability
-    var avail_db = new MMTDrop.Database({collection: "availability", action: "aggregate", raw: true});
-
-    function getAvailability( el ){
-      //get number of alerts from database
-      avail_db.reload( getQuery( 4, el ), function( data ){
-        var val = 0;
-        if( data.length > 0 )
-          val = data[0].count;
-
-        $(el).html( '<span class="badge">' + val + '</span>' );
-      });
-    }
-
-
-    //location
-    var loc_db = new MMTDrop.Database({collection: "data_session", action: "aggregate", raw: true});
-
-    function getLocation( el ){
-      //get number of alerts from database
-      loc_db.reload( getQuery( COL.DST_LOCATION.id, el ), function( data ){
+      var param = getQuery( col_id, el );
+      param.collection = collection;
+      total_db.reload( param, function( data ){
         var val = 0;
         if( data.length > 0 )
           val = data[0].count;
@@ -127,10 +99,20 @@ var ReportFactory = {
 
     //REDNER TABLE OF METRIX
     var app_id = MMTDrop.tools.getURLParameters().app_id;
+    if( app_id == undefined )
+        app_id = "_undefined";
     //reder table of components and their metrics
     var loadForm = function( obj ){
       var table_rows = [];
 
+      //get number
+      var getNumberOfSelectedMetrics = function( sele ){
+        var count = 0;
+        for( var me in sele )
+          if( sele[ me ].enable )
+            count ++;
+        return count;
+      }
       //get either "metric" or "compoent" having the given id
       var getObject = function( label, id ){
         for( var i=0; i<obj[ label ].length; i++ )
@@ -161,8 +143,22 @@ var ReportFactory = {
         //each row for metric
         var j = 0;
         for( var me_id in selMetrics ){
+          var me  = getObject("metrics", me_id );
+          if( me == undefined ){
+            if( comp.metrics )
+              for( var k=0; k<comp.metrics.length; k++ )
+                if( comp.metrics[k].id == me_id ){
+                  me = comp.metrics[k];
+                  break;
+                }
+          }
+          var sel = selMetrics[ me_id ];
+
+          if( sel == null || sel.enable == false )
+            continue;
+
           j++;
-          var me = getObject("metrics", me_id );
+
           row = {
             type    : "<tr>",
             children: []
@@ -172,7 +168,7 @@ var ReportFactory = {
             row.children.push({
               type : "<td>",
               attr : {
-                rowspan : MMTDrop.tools.object2Array(selMetrics).length
+                rowspan : getNumberOfSelectedMetrics( selMetrics )
               }
             })
           }
@@ -184,6 +180,7 @@ var ReportFactory = {
               width: "30%",
             }
           })
+
           //alert
           row.children.push({
             type     : "<td>",
@@ -205,7 +202,7 @@ var ReportFactory = {
                   "data-compid"     : comp.id,
                   "data-metricid"   : me.id,
                   "data-metricname" : me.name,
-                  "data-value"      : me.alert,
+                  "data-value"      : sel.alert,
                   "html"            : '<i class = "fa fa-refresh fa-spin fa-fw"/>'
                 }
               }]
@@ -232,7 +229,7 @@ var ReportFactory = {
                   "data-compid"     : comp.id,
                   "data-metricid"   : me.id,
                   "data-metricname" : me.name,
-                  "data-value"      : me.violation,
+                  "data-value"      : sel.violation,
                   "html"            : '<i class = "fa fa-refresh fa-spin fa-fw"/>'
                 }
               }]
@@ -252,7 +249,7 @@ var ReportFactory = {
                 class   : "btn btn-info",
                 type    : "button",
                 text    : "Report",
-                href    : '/chart/sla/'+ me.name + MMTDrop.tools.getQueryString( ["app_id"], "probe_id=" + comp.id )
+                onclick : "window._gotoURL( '" + me.name + "',"+ comp.id +" )"
               }
             }]
           });
@@ -305,10 +302,19 @@ var ReportFactory = {
         //does not exist ?
         if( obj == undefined )
           MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
+        //there exists an application but user has not yet selected which metrics
+        else if( obj.selectedMetric == undefined )
+          MMTDrop.tools.gotoURL("/chart/sla/metric", {param:["app_id"]});
         else{
           loadForm( obj );
         }
       }
     } );
+
+
+    window._gotoURL = function( name, probe_id ){
+      MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
+        MMTDrop.tools.getQueryString( ["app_id"], "probe_id=" + probe_id + "&period_id=" + fPeriod.selectedOption().id ) );
+    }
 	}
 }

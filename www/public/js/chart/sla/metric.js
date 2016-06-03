@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 6,
+        height: 9,
         type: "success",
         userData: {
             fn: "createMetricReport"
@@ -19,285 +19,341 @@ var availableReports = {}
 
 var ReportFactory = {
   createMetricReport: function ( fPeriod ) {
+    fPeriod.hide();
+    fAutoReload.hide();
+
     var _this    = this;
-    var components = [
-      {id: "0", title: "JPlanner", url: "192.168.0.8"},
-      {id: "1", title: "CEC", url: "192.168.0.9"},
-    ];
+    var app_id = MMTDrop.tools.getURLParameters().app_id;
+    if( app_id == undefined )
+        app_id = "_undefined";
 
-    var metrics = [
-      {id: "1", name: "availability", alert: "= 0", violation: "= 0", title: "Availability" },
-      {id: "2", name: "rtt", alert: ">= 200", violation: ">= 300 ", title: "Response Time" },
-      {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location" },
-    ];
+    //RENDER TABLE
+    var renderTable = function ( obj ){
+      //this is used when use submit the form
+      window._mmt = obj;
 
-    window._mmt = {
-      components : components,
-      metrics    : metrics,
-    }
+      var init_components = obj.components,
+          init_metrics    = obj.metrics;
 
-    var table_rows = [{
-      type    : "<thead>",
-      children: [{
-        type     : "<tr>",
-        children : [{
-          type : "<th>",
-        },{
-          type : "<th>",
-          attr : {
-            text : "Alerts"
-          }
-        },{
-          type : "<th>",
-          attr : {
-            text : "Violations"
-          }
-        },{
-          type : "<th>",
-          attr : {
-            text : "Priority"
-          }
-        },{
-          type : "<th>",
-          attr : {
-            text : "Enable"
-          }
-        }]
-      }]
-    }];
-    for( var i=0; i<components.length; i++){
-      var comp = components[ i ];
-      var $row = {
-        type    : "<tr>",
+      var table_rows = [{
+        type    : "<thead>",
         children: [{
-          type :  "<td>",
-          attr : {
-            colspan : 5,
-            style   : "font-weight: bold",
-            text    : comp.title + " ("+ comp.url +")"
-          }
+          type     : "<tr>",
+          children : [{
+            type : "<th>",
+          },{
+            type : "<th>",
+            attr : {
+              text : "Metrics"
+            }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Alerts"
+            }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Violations"
+            }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Priority"
+            }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Enable"
+            }
+          }]
         }]
-      };
-
-      //first row for component's title
-      table_rows.push( $row );
-
-      //each row for metric
-      for( var j=0; j<metrics.length; j++ ){
-        var me = metrics[ j ];
-        row = {
+      }];
+      for( var i=0; i<init_components.length; i++){
+        var comp = init_components[ i ];
+        var $row = {
           type    : "<tr>",
-          children: []
+          children: [{
+            type :  "<td>",
+            attr : {
+              colspan : 6,
+              style   : "font-weight: bold",
+              text    : comp.title + " ("+ comp.url +")"
+            }
+          }]
         };
-        //first column
-        if( j == 0 )
+
+        //first row for component's title
+        table_rows.push( $row );
+
+
+        //common metrics
+        var metrics = init_metrics.slice( 0 );
+        //private metrics of each component
+        if( comp.metrics )
+          metrics = metrics.concat( comp.metrics.slice( 0 ) );
+
+        //each row for a metric
+        for( var j=0; j<metrics.length; j++ ){
+          var me = metrics[ j ];
+          row = {
+            type    : "<tr>",
+            children: []
+          };
+          //first column
+          if( j == 0 )
+            row.children.push({
+              type : "<td>",
+              attr : {
+                rowspan : metrics.length
+              }
+            })
+
+          //title
           row.children.push({
-            type : "<td>",
-            attr : {
-              rowspan : metrics.length
+            type  : "<td>",
+            attr  : {
+              text : me.title
             }
-          })
-        //alert
-        row.children.push({
-          type     : "<td>",
-          children : [{
-            type : "<input>",
-            attr : {
-              id      : "alert-" + comp.id + "-" + me.id,
-              class   : "form-control",
-              type    : "text",
-              required: true,
-              value   : me.alert
-            }
-          }]
-        });
-        //violation
-        row.children.push({
-          type     : "<td>",
-          children : [{
-            type : "<input>",
-            attr : {
-              id      : "violation-" + comp.id + "-" + me.id,
-              class   : "form-control",
-              type    : "text",
-              required: true,
-              value   : me.violation
-            }
-          }]
-        });
-        //priority
-        row.children.push({
-          type     : "<td>",
-          children : [{
-            type : "<select>",
-            attr : {
-              id      : "priority-" + comp.id + "-" + me.id,
-              class   : "form-control",
-              required: true,
-            },
+          });
+
+          //alert
+          row.children.push({
+            type     : "<td>",
             children : [{
-              type : "<option>",
+              type : "<input>",
               attr : {
-                value : 0,
-                text  : "High"
-              }
-            },{
-              type : "<option>",
-              attr : {
-                value : 1,
-                text  : "Default"
-              }
-            },{
-              type : "<option>",
-              attr : {
-                value : 2,
-                text  : "Low"
+                id      : "alert-" + comp.id + "-" + me.id,
+                class   : "form-control",
+                type    : "text",
+                required: true,
+                value   : me.alert
               }
             }]
-          }]
-        });
-        //enable/disable
-        row.children.push({
-          type     : "<td>",
-          children : [{
-            type : "<div>",
-            attr : {
-              class   : "onoffswitch",
-              style   : "margin: 0 auto"
-            },
+          });
+          //violation
+          row.children.push({
+            type     : "<td>",
             children : [{
-              type    : "<input>",
-              attr    : {
-                id      : "enable-" + comp.id + "-" + me.id,
-                class   : "onoffswitch-checkbox",
-                type    : "checkbox",
-                checked : true
+              type : "<input>",
+              attr : {
+                id      : "violation-" + comp.id + "-" + me.id,
+                class   : "form-control",
+                type    : "text",
+                required: true,
+                value   : me.violation
               }
-            },{
-              type    : "<label>",
-              attr    : {
-                class   : "onoffswitch-label",
-                for     : "enable-" + comp.id + "-" + me.id,
+            }]
+          });
+          //priority
+          row.children.push({
+            type     : "<td>",
+            children : [{
+              type : "<select>",
+              attr : {
+                id      : "priority-" + comp.id + "-" + me.id,
+                class   : "form-control",
+                required: true,
               },
-              children  : [{
-                type  : "<span>",
-                attr  : {
-                  class : "onoffswitch-inner"
+              children : [{
+                type : "<option>",
+                attr : {
+                  value : 0,
+                  text  : "High"
                 }
               },{
-                type  : "<span>",
-                attr  : {
-                  class : "onoffswitch-switch"
+                type : "<option>",
+                attr : {
+                  value : 1,
+                  text  : "Default"
+                }
+              },{
+                type : "<option>",
+                attr : {
+                  value : 2,
+                  text  : "Low"
                 }
               }]
             }]
-          }]
-        });
-        //detail
-        /*
-        row.children.push({
-          type     : "<td>",
-          attr     : {
-            align : "center"
-          },
-          children : [{
-            type : "<button>",
-            attr : {
-              id      : "btnCancel",
-              class   : "btn btn-info",
-              type    : "button",
-              text    : "Report",
-              onclick : 'MMTDrop.tools.gotoURL("/chart/sla/'+ me.name +'", {param: ["app_id", "probe_id"] } )'
-            }
-          }]
-        });
-        */
-        table_rows.push( row );
+          });
+          //enable/disable
+          row.children.push({
+            type     : "<td>",
+            children : [{
+              type : "<div>",
+              attr : {
+                class   : "onoffswitch",
+                style   : "margin: 0 auto"
+              },
+              children : [{
+                type    : "<input>",
+                attr    : {
+                  id      : "enable-" + comp.id + "-" + me.id,
+                  class   : "onoffswitch-checkbox",
+                  type    : "checkbox",
+                  checked : (me.name == "" ? false: true)//TODO to enable
+                }
+              },{
+                type    : "<label>",
+                attr    : {
+                  class   : "onoffswitch-label",
+                  for     : "enable-" + comp.id + "-" + me.id,
+                },
+                children  : [{
+                  type  : "<span>",
+                  attr  : {
+                    class : "onoffswitch-inner"
+                  }
+                },{
+                  type  : "<span>",
+                  attr  : {
+                    class : "onoffswitch-switch"
+                  }
+                }]
+              }]
+            }]
+          });
+          table_rows.push( row );
+        }
       }
-    }
 
-    var form_config = {
-      type  : "<div>",
-      attr  : {
-        class  : "col-md-10 col-md-offset-1",
-        style  : "margin-top: 20px"
-      },
-      children : [{
-        type     : "<form>",
+      var form_config = {
+        type  : "<div>",
+        attr  : {
+          class  : "col-md-10 col-md-offset-1",
+          style  : "margin-top: 20px, padding-bottom: 20px"
+        },
         children : [{
-          type     : "<table>",
-          attr     : {
-            class : "table table-striped table-bordered table-condensed dataTable no-footer"
-          },
-          children : table_rows
-        },{
-          type: "<div>",
-          children : [
-            {
-              type: "<button>",
-              attr: {
-                class   : "btn btn-danger",
-                type    : "button",
-                text    : "Submit",
-                onclick : "window._checkSubmit()",
-              }
-            },{
-              type: "<button>",
-              attr: {
-                id      : "btnReset",
-                class   : "btn btn-success",
-                style   : "margin-left: 30px",
-                type    : "reset",
-                text    : "Reset",
-              }
-            },{
-              type: "<a>",
-              attr: {
-                id      : "btnCancel",
-                class   : "btn btn-success pull-right",
-                style   : "margin-left: 30px",
-                text    : "Cancel",
-                href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id"])
-              }
-            }
-          ]
+          type     : "<form>",
+          children : [{
+            type     : "<table>",
+            attr     : {
+              class : "table table-striped table-bordered table-condensed dataTable no-footer",
+              id    : "tblData"
+            },
+            children : table_rows
+          },{
+            type: "<div>",
+            children : [
+              {
+                type: "<button>",
+                attr: {
+                  class   : "btn btn-danger",
+                  type    : "button",
+                  text    : "Submit",
+                  onclick : "window._checkSubmit()",
+                }
+              },{
+                type: "<a>",
+                attr: {
+                  class   : "btn btn-success",
+                  style   : "margin-left: 30px",
+                  text    : "Reset",
+                  onclick : "window._loadSelectedMetrics()"
+                }
+              },{
+                type: "<a>",
+                attr: {
+                  class   : "btn btn-warning pull-right",
+                  style   : "margin-left: 30px",
+                  text    : "Upload new SLA",
+                  href    : '/chart/sla/upload' + MMTDrop.tools.getQueryString(["app_id"])
+                }
+              },{
+                type: "<button>",
+                attr: {
+                  class   : "btn btn-primary pull-right",
+                  style   : "margin-left: 30px",
+                  type    : "reset",
+                  text    : "Reset to Initial Value",
+                }
+              },{
+                type: "<a>",
+                attr: {
+                  class   : "btn btn-success pull-right",
+                  style   : "margin-left: 30px",
+                  text    : "Cancel",
+                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id"])
+                }
+              },
+            ]
+          }]
         }]
-      }]
-    };
+      };
 
-    $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
+      $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
+      window._loadSelectedMetrics();
+    }//end rederTable function
 
-    window._checkSubmit = function(){
-      var app_id = MMTDrop.tools.getURLParameters().app_id;
+
+    //load the previously selected values to the form
+    window._loadSelectedMetrics = function(){
       var obj = window._mmt;
-      obj.app_id = app_id;
-      obj._id    = app_id;
-      obj.selectedMetric = {};
+      if( obj.selectedMetric == undefined )
+        return;
+
       for( var i=0; i<obj.components.length; i++){
         var comp = obj.components[ i ];
-        var selectedMetrics = {};
-        for( var j=0; j<obj.metrics.length; j++ ){
-          var me = obj.metrics[ j ];
-          var id = comp.id + "-" + me.id;
-          var isEnable = $("#enable-" + id).is(":checked");
-          if( !isEnable )
+        //common metrics
+        var metrics = obj.metrics.slice( 0 );
+        //private metrics of each component
+        if( comp.metrics )
+          metrics = metrics.concat( comp.metrics.slice( 0 ) )
+
+
+        for( var j=0; j<metrics.length; j++ ){
+          var me  = metrics[ j ];
+          var sel = obj.selectedMetric[ comp.id ];
+          if( sel != undefined )
+            sel = sel[ me.id ];
+          if( sel == undefined )
             continue;
 
-          selectedMetrics[ me.id ] = {
+          var id = comp.id + "-" + me.id;
+
+          $("#alert-"     + id).val( sel.alert     ),
+          $("#violation-" + id).val( sel.violation ),
+          $("#priority-"  + id).val( sel.priority  ),
+          $("#enable-"    + id).prop( "checked", sel.enable )
+        }
+      }
+    }//end load the previously selected values to the form
+
+
+
+    //SUBMIT FORM
+    window._checkSubmit = function(){
+      var obj = window._mmt;
+
+      var selectedMetric = {};
+      for( var i=0; i<obj.components.length; i++){
+        var comp = obj.components[ i ];
+        //selected metrics of the compoment comp
+        selectedMetric[ comp.id ] = {};
+
+        //common metrics
+        var metrics = obj.metrics.slice( 0 );
+        //private metrics of each component
+        if( comp.metrics )
+          metrics = metrics.concat( comp.metrics.slice( 0 ) )
+
+        for( var j=0; j<metrics.length; j++ ){
+          var me = metrics[ j ];
+          var id = comp.id + "-" + me.id;
+
+          selectedMetric[ comp.id ][ me.id ] = {
             alert     : $("#alert-" + id).val(),
             violation : $("#violation-" + id).val(),
-            priority  : $("#priority-" + id).val()
+            priority  : $("#priority-" + id).val(),
+            enable    : $("#enable-" + id).is(":checked")
           };
-
         }
-        obj.selectedMetric[ comp.id ] = selectedMetrics;
       }
       //save to db
       MMTDrop.tools.ajax("/api/metrics/update", {
         "$match"   : {"_id" : app_id},
-        "$data"    : obj,
-        "$options" : {
-          upsert : true
+        "$data"    : {
+          "$set" : {selectedMetric : selectedMetric}
         }
       },
       "POST",
@@ -306,12 +362,27 @@ var ReportFactory = {
         error   : function(){
           console.error( "AJAX Error" )
         },
-        success : function(){
+        success : function( ){
           MMTDrop.tools.gotoURL("/chart/sla", {param : ["app_id"]} )
         }
       })
 
       return false;
-    }
+    }//END SUBMIT FORM
+
+
+    //LOAD METRIX FROM DATABASE
+    MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
+      error  : function(){},
+      success: function( data ){
+        var obj = data.data[0];
+        //does not exist ?
+        if( obj == undefined )
+          MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
+        else
+          renderTable( obj );
+      }
+    } );
+    //end LOADING METRIX
   },
 }

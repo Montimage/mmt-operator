@@ -31,9 +31,9 @@ function checkAvailability( redis, dbconnector ){
   var publisher = redis.createClient();
   //
   var comp_arr = [
-    {id: "0", title: "Comp 1", url: "http://192.168.0.7"},
-    {id: "1", title: "Comp 2", url: "http://192.168.0.2"},
-    {id: "2", title: "Comp 3", url: "http://192.168.0.3"}
+    {id: "0", url: "http://192.168.0.7"},
+    {id: "1", url: "http://192.168.0.2"},
+    {id: "2", url: "http://192.168.0.3"}
   ];
 
   for( var i in comp_arr ){

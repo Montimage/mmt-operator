@@ -1443,7 +1443,7 @@ MMTDrop.tools = function () {
 	};
 
 	_this.gotoURL = function( url, options ){
-		if( options.param )
+		if( options && options.param )
 			url += _this.getQueryString( options.param );
 
 		document.location.href = url;
@@ -2811,6 +2811,16 @@ MMTDrop.filterFactory = {
                 options.push( { id: periods.WEEK       , label: "Last 7 days"    });
                 options.push( { id: periods.MONTH      , label: "Last 30 days"   });
             }
+			var period_id_preselected_from_url = MMTDrop.tools.getURLParameters().period_id;
+			if( period_id_preselected_from_url )
+				for( var i=0; i<options.length; i++ ){
+					//delete default selected
+					if( options[i].selected == true )
+						delete( options[i].selected )
+					if( options[i].id ==  period_id_preselected_from_url ){
+						options[i].selected = true;
+					}
+				}
 			//var otherOpt = { id: "00", label: "Other"};
 
 			//options.push( otherOpt );

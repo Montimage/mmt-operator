@@ -43,6 +43,13 @@ var COL     = MMTDrop.constants.StatsColumn;
 //this db contains status of probe, interval to get data of reports
 var status_db = new MMTDrop.Database({collection: "status"});
 
+var fAutoReload = {
+  hide : function(){
+    $("#autoReload").hide();
+    $("#isAutoReloadChk").prop("checked", false);
+  }
+};
+
 $(function () {
     'use strict'
 
@@ -59,6 +66,11 @@ $(function () {
     if (fPeriod == undefined) {
         throw new Error("Need to defined fPeriod filter")
     }
+    //init toolbar-box
+    if( arr.length == 1 )
+      $("#deleteBtn").hide();
+    if( MMTDrop.tools.object2Array(availableReports).length == 0 )
+      $("#addBtn").hide();
 
     //fProbe.renderTo("toolbar-box");
 
@@ -229,7 +241,6 @@ $(function () {
             fPeriod.filter();
         }, p);
     }
-
     $("#isAutoReloadChk").change( function(){
         var is_on = $(this).is(":checked");
         console.log( "autoReload: " + is_on );
@@ -249,5 +260,4 @@ $(function () {
     }else
         //checkbox is already checked ==> trigger its event
         $("#isAutoReloadChk").trigger("change");
-
 });
