@@ -210,6 +210,10 @@ var MMTDrop = {
       DATA_FRESHNESS_PERIOD : 18 ,
       DATA_VOLUME_DATA      : 19 ,
 			NDN_VOLUME_DATA       : 20 ,
+      NDN_MAX_RESPONSED_TIME   : 21,
+			NDN_MIN_RESPONSED_TIME   : 22,
+			NDN_AVR_RESPONSED_TIME   : 23,
+			IFA 										 : 24,
 		},
     OTTQoSColumnId: {
       FORMAT_ID                   : 0  ,
@@ -388,7 +392,7 @@ var MMTDrop = {
             return false;
         if( this._localCacheIPs == undefined )
           this._localCacheIPs = {};
-          
+
         //check in the cache
         if( this._localCacheIPs[ ip ] !== undefined )
           return this._localCacheIPs[ ip ];

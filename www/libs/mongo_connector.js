@@ -108,7 +108,7 @@ var MongoConnector = function (opts) {
                                //inc
                               [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
-                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME,21,22,23]),
+                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME, NDN.NDN_MAX_RESPONSED_TIME, NDN.NDN_MIN_RESPONSED_TIME, NDN.NDN_AVR_RESPONSED_TIME, NDN.IFA]),
             //MUSA project
             //TODO to remove
             avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
@@ -884,6 +884,9 @@ var MongoConnector = function (opts) {
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
+            [ NDN.IFA ].forEach( function( el, index ){
+                groupby[ el ] = {"$last" : "$" + el};
+            })
             self.queryDB(options.collection,
             "aggregate", [
                 {"$match": options.query},
