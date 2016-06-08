@@ -238,8 +238,10 @@ var ReportFactory = {
                         var name = db_data[i][ COL.NAME.id ];
                         if( isMAC )
                             name = db_data[i][ COL.MAC_SRC.id ];
-                        if( fn )
+                        if( fn ){
                           name = fn( name );
+                          if(name == null) continue;
+                        }
 
                         var val2 = db_data[i][ COL.IFA.id ];
 
@@ -545,10 +547,44 @@ var ReportFactory = {
         //parse host from a name (eGW/GET/http://www.yahoo.com//0)
         //==> retun www.yahoo.com
         function( name ){
-          var d = name.indexOf("http://");
-          if( d == -1 )
-            return name;
-          name = name.substring( d + 7 );
+            var len = 0;
+          var d = name.indexOf("GET/");
+          len = "GET/".length;
+          if( d == -1 ){
+            d = name.indexOf("POST/");
+            len = "POST/".length;
+          }
+
+          if( d == -1 ){
+            d = name.indexOf("HEAD/");
+            len = "HEAD/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("PUT/");
+            len = "PUT/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("DELETE/");
+            len = "DELETE/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("OPTIONS/");
+            len = "OPTIONS/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("TRACE/");
+            len = "TRACE/".length;
+          }
+
+          if( d == -1 ){
+            d = name.indexOf("CONNECT/");
+            len = "CONNECT/".length;
+          }
+
+          if( d == -1){
+            return null;
+          }
+          name = name.substring( d + len );
           d = name.indexOf("/");
           if( d == -1 )
             return name;
