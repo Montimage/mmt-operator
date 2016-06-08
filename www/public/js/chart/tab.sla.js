@@ -80,6 +80,8 @@ var ReportFactory = {
       return { query: [ {"$match" : $match}, {"$group": $group}], period_groupby: fPeriod.selectedOption().id };
     }
 
+    window._getQueryParam = getQuery;
+
     var total_db = new MMTDrop.Database({collection: "__", action: "aggregate", raw: true});
 
     function getData( el, collection, col_id ){
@@ -291,6 +293,17 @@ var ReportFactory = {
       $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
       //after redering the table, update their values (#alert, #violation)
       setTimeout( updateValue, 1000);
+
+      //on click
+      $(".alerts").each( function( index, el ){
+
+        $(el).parent().onclick = function(){
+            var $this = $(this);
+            if( $this.text() == 0 )
+              return;
+            alert("click")
+        }
+      } );
     }
     //END RENDERING
 

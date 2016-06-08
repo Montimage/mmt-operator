@@ -88,7 +88,8 @@ var MMTDrop = {
         RTT_AVG_CLIENT      : 31,
         FORMAT_TYPE         : 32, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
         SRC_LOCATION        : 33,
-        DST_LOCATION        : 34
+        DST_LOCATION        : 34,
+        IP_SRC_INIT_CONNECTION  : 35, //0: if IP_SRC is init connection, else 1 ( IP_DEST initilizes connection)
     },
 
     SecurityColumnId           : {
@@ -377,9 +378,20 @@ var MMTDrop = {
         return null;
     },
 
+    /**
+     * check whether an IP is in the list of local ips networks
+     * @param  {[type]} ip [description]
+     * @return {[boolean]}
+     */
     isLocalIP : function( ip ){
         if( ip == undefined || ip === "undefined" || ip === "null")
             return false;
+        if( this._localCacheIPs == undefined )
+          this._localCacheIPs = {};
+          
+        //check in the cache
+        if( this._localCacheIPs[ ip ] !== undefined )
+          return this._localCacheIPs[ ip ];
 
         if( this._localIPs === undefined ){
             var rootsIP = [];
@@ -394,9 +406,12 @@ var MMTDrop = {
 
         for( var i in this._localIPs ){
             var lo = this._localIPs[ i ];
-            if( ipLib.mask( ip, lo.mask ) == lo.root )
-                return true;
+            if( ipLib.mask( ip, lo.mask ) == lo.root ){
+              this._localCacheIPs[ ip ] = true;
+              return true;
+            }
         }
+        this._localCacheIPs[ ip ] = false;
         return false;
     },
 
@@ -413,6 +428,7 @@ var MMTDrop = {
         swap( COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
         swap( COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
         swap( COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
+        swap( COL.SRC_LOCATION,      COL.DST_LOCATION );
 
         return msg;
     },
