@@ -329,7 +329,7 @@ var ReportFactory = {
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
+                    "class": "table table-bordered table-striped table-hover table-condensed tbl-legend"
                 });
                 var name = "Name";
                 if( isMAC )
@@ -499,7 +499,12 @@ var ReportFactory = {
                     dom: "t",
                     order: [[3, "desc"]]
                 });
-            }
+            },
+            bgPercentage:{
+                table : ".tbl-legend",
+                column: 4, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
         });
         //
 
