@@ -421,16 +421,16 @@ MMTDrop.constants = {
       SESSION_ID        : {id: 4,  label: "App"},
 
 			/** Index of the MAC address source column */
-			MAC_SRC           : {id: 5, label: "MAC Destination"},
+			MAC_SRC           : {id: 5, label: "MAC Source"},
 			/** Index of the MAC address source column */
-			MAC_DEST          : {id: 6 , label: "MAC Source "},
+			MAC_DEST          : {id: 6 , label: "MAC Destination"},
 
 			NAME              : {id: 7,  label: "Name"},
 
 			IS_OVER_TCP       : {id: 8,  label: "Parent Protocol"},
 
-			IP_SRC            : {id: 9, label: "IP Destination"},
-			IP_DEST           : {id: 10, label: "IP Source "} ,
+			IP_SRC            : {id: 9, label: "IP Source"},
+			IP_DEST           : {id: 10, label: "IP Destination"} ,
 
 			PORT_SRC          : {id: 11 , label: "Port Source"},
 			PORT_DEST         : {id: 12 , label: "Port Destination"},
