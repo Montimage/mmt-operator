@@ -1210,31 +1210,41 @@ MMTDrop.tools = function () {
    */
   _this._domElementCount = 0;
   _this.createForm = function( config ){
-    //create the object
-    var $obj;
-    if( config.label == undefined )
-       $obj = $( config.type, config.attr );
-    else{
+    if( config.label != undefined  ){
+      if( config.attr == undefined )
+        config.attr = {};
+
       if( config.attr.id == undefined )
         config.attr.id = "_" + (++ _this._domElementCount);
+      if( config.attr.class == undefined )
+        config.attr.class = "form-control";
+    }
 
+    //create the object
+    var $obj = $( config.type, config.attr );
+    //create children and append to $obj
+    for( var i in config.children ){
+     var $o = _this.createForm( config.children[ i ] );
+     if( $o != undefined )
+       $obj.append( $o  )
+    }
+
+    if( config.label != undefined  ){
       $obj = $("<div>", {
         "class" : "form-group"
       })
         .append( $("<label>", {
-          "class":"col-sm-2 control-label",
+          "class":"col-sm-3 control-label",
           "for"  : config.attr.id,
           "text" : config.label
         }))
-        .append( $( config.type, config.attr ));
+        .append(
+          $("<div>", {class: "col-sm-9"}).append(
+            $obj
+          )
+        );
     }
 
-    //create children and append to $obj
-    for( var i in config.children ){
-      var $o = _this.createForm( config.children[ i ] );
-      if( $o != undefined )
-        $obj.append( $o  )
-    }
     return $obj;
   };
 
@@ -1772,6 +1782,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
   }();
 
   function _get(param, callback) {
+			if( param.url !== undefined )
+				return MMTDrop.tools.ajax( param.url, param, "GET", callback );
+
       var url = _serverURL;
       //old
       if( param.collection == undefined ){

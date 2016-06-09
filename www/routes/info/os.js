@@ -20,9 +20,9 @@ function getHardDrive(callback){
 
         var disk_info = str_disk_info.split(' ');
 
-        total = Math.ceil((disk_info[1] * 1024)/ Math.pow(1024,2));
-        used = Math.ceil(disk_info[2] * 1024 / Math.pow(1024,2)) ;
-        free = Math.ceil(disk_info[3] * 1024 / Math.pow(1024,2)) ;
+        total = disk_info[1];
+        used  = disk_info[2];
+        free  = disk_info[3];
 
         callback(total, free, used);
     });
@@ -34,7 +34,7 @@ router.get('/*', function(req, res, next) {
     //
     memory:{
       total: _os.totalmem(),
-      free : _os.freemem(),
+      used : _os.totalmem() - _os.freemem(),
     },
     //load average of 1 minutes
     loadavg : function(){
@@ -61,7 +61,7 @@ router.get('/*', function(req, res, next) {
         var total = user + nice + sys + idle + irq;
 
         return {
-            'idle' : idle,
+            'used' : total-idle,
             'total': total
         };
     }()
@@ -73,8 +73,10 @@ router.get('/*', function(req, res, next) {
       used : used
     };
 
+    obj.timestamp = (new Date()).getTime();
+    
     res.setHeader("Content-Type", "application/json");
-    res.send( obj )
+    res.send( {data: obj} )
   } );
 
 });

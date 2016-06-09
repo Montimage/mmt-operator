@@ -103,6 +103,14 @@ app.config = config;
 var socketio = require('socket.io')();
 app.socketio        = socketio;
 
+var _objRef = {
+  socketio    : socketio,
+  config      : config,
+  dbconnector : dbconnector,
+  dbadmin     : dbadmin,
+  probe       : probe
+};
+
 probeRoute.socketio    = socketio;
 probeRoute.config      = config;
 probeRoute.dbconnector = dbconnector;
@@ -132,7 +140,7 @@ else{
 
 //active checking for MUSA
 //TODO to remove in final product
-require("./libs/active_check.js").start( redis, dbconnector );
+//require("./libs/active_check.js").start( redis, dbconnector );
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -178,6 +186,10 @@ api.dbconnector = dbconnector;
 app.use('/api', api);
 
 app.use("/info/os", require("./routes/info/os"));
+
+var route_nic = require("./routes/info/nic");
+route_nic._objRef = _objRef;
+app.use("/info/nic", route_nic);
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){

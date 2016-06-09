@@ -17,6 +17,7 @@
     "ip": "1.0.2",
     "jade": "~1.11.0",
     "line-by-line": "0.1.4",
+    "lodash": "^4.13.1",
     "macaddress": "^0.2.8",
     "maxmind": "^1.1.0",
     "moment": "2.3.1",
