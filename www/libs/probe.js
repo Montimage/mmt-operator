@@ -18,7 +18,7 @@ function Probe( mode ){
     var self = this;
 
     var backup = function( file_name ){
-        exec("cp " + file_name + " " + file_name + "_" + (new Date()).getTime() );
+        exec("cp " + file_name + " " + file_name + "_" + (new Date()).getTime() + ".bak" );
     }
 
     //get the current input-source
@@ -56,8 +56,22 @@ function Probe( mode ){
 
     this.updateInputSource = function( value, callback ){
         backup( mmt_config_file );
-        var cmd = "sed -i -e 's/^\\s*input-source.*/input-source = \""+ value +"\"/' " + mmt_config_file;
-        return exec(cmd, callback);
+        fs.readFile( mmt_config_file, {
+          encoding: 'utf8'
+        }, function (err, content) {
+          if (err) return cb(err);
+          var arr = content.split('\n');
+          //for each line
+          for( var i=0; i<arr.length; i++ ){
+            var msg = arr[i].split("=");
+            //input-source = "eth2" #name of monitoring interfaces
+            if( msg[0].trim() == "input-source" ){
+              arr[i] = "input-source = " + '"'+ value +'" #changed by mmt-operator ' + (new Date()).toLocaleString() ;
+              break;
+            }
+          }
+          fs.writeFile( mmt_config_file, arr.join("\n"), callback );
+        });
     };
 }
 

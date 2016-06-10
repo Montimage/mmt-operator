@@ -19,5 +19,45 @@ router.get("/", function( req, res, next ){
       }} )
     })//end router._
   })//end ifconfig.i
-})
+});
+
+//when user want to save the config
+router.post("/", function( req, res, next ){
+  var obj = req.body;
+  console.log( JSON.stringify(obj) );
+
+  var send_error = function( msg ){
+    res.status(500).send( msg );
+  }
+
+  ifconfig.configure( obj.admin.iface,{
+    address           : obj.admin["address"],
+    netmask           : obj.admin["netmask"],
+    gateway           : obj.admin["gateway"],
+    "dns-servernames" : obj.admin["dns-servernames"]
+  }, function( err ){
+    if( err ){
+      send_error( err );
+      return;
+    }
+    if( obj.monitor != obj.admin.iface ){
+      ifconfig.configure( obj.monitor, {
+        address           : "0.0.0.0",
+        netmask           : "0.0.0.0",
+        gateway           : "0.0.0.0",
+        "dns-servernames" : "0.0.0.0",
+      }, function(){} )
+    }
+
+    router._objRef.probe.updateInputSource( obj.monitor, function( err ){
+      if( err ){
+        send_error( err );
+        return;
+      }
+      router._objRef.probe.restart( function(){
+        res.send("{}");
+      } )
+    } )
+  })
+});
 module.exports = router;

@@ -191,6 +191,10 @@ var route_nic = require("./routes/info/nic");
 route_nic._objRef = _objRef;
 app.use("/info/nic", route_nic);
 
+var route_conf = require("./routes/info/conf");
+route_conf._objRef = _objRef;
+app.use("/info/conf", route_conf);
+
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){

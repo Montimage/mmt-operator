@@ -28,7 +28,6 @@
     "sweetalert": "~1.1.3",
     "moment": "~2.10.6",
     "datatables-fixedheader": "~3.1.1",
-    "alertify.js": "^0.3.11",
-    "alpaca": "^1.5.17"
+    "alertify.js": "^0.3.11"
   }
 }

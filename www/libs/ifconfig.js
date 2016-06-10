@@ -13,17 +13,19 @@ if( os.platform() == "darwin" ){
   is_support = true;
 }
 
-var formatConfig = _.template(function () {
+var formatConfig = _.template(
+  "#mmt-operator " + (new Date()).toLocaleString() + "\n"
+  + function (){
 /**
-# mmt-operator
 auto <%= name %>
 iface <%= name %> inet static
-  address <%= ip %>
+  address <%= address %>
   netmask <%= netmask %>
   gateway <%= gateway %>
-  dns-servernames <%= dns_servernames %>
+  dns-servernames <%= dns %>
 */
-}.toString().split('\n').slice(2, -2).join('\n'));
+}.toString().split('\n').slice(2, -2).join('\n') );
+
 
 module.exports = {
     //cb(err, interfaces)
@@ -31,10 +33,10 @@ module.exports = {
       if( !is_support )
         return cb( "Do not support this kind of OS", {
             name           : "not support",
-            ip             : "not support",
+            address        : "not support",
             netmask        : "not support",
             gateway        : "not support",
-            dns_servernames: "not support",
+            "dns-servernames": "not support",
           });
       fs.readFile( FILE, {
         encoding: 'utf8'
@@ -64,6 +66,7 @@ module.exports = {
             ret[ iface ][ msg[0] ] = msg.slice(1).join(" ");
         }
 
+        delete( ret.lo );//delete "lo" interface
         cb(null, ret);
       });//end fs.readFile
     },
@@ -76,6 +79,8 @@ module.exports = {
     configure: function( name, description, cb ){
       if( !is_support )
         return cb("Do not support this kind of OS" );
+
+      description.dns = description["dns-servernames"];
 
       assert(_.isString(name));
       assert(_.isPlainObject(description));
@@ -108,9 +113,13 @@ module.exports = {
           if (err)  return cb(err);
 
           //restart network
-          cp.exec('ifdown ' + name + "; ifup " + name, function (err, __, stderr) {
-            cb(err || stderr || null);
-          });
+          if( os.platform == "linux ")
+            cp.exec('ifdown ' + name + "; ifup " + name, function (err, __, stderr) {
+              cb(err || stderr || null);
+            });
+          else {
+            cb( null );
+          }
         });//end fs.writeFile
       });//end fs.readFile
     }

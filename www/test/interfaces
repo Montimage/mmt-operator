@@ -5,27 +5,18 @@
 auto lo
 iface lo inet loopback
 
-# The primary network interface
-auto eth0
-iface eth0 inet dhcp
-
+#mmt-operator 2016-06-10 17:13:46
 auto eth2
 iface eth2 inet static
-address 192.168.0.196
-netmask 255.255.255.0
-gateway 192.168.0.1
-dns-servers 8.8.8.8
+  address 192.168.0.198
+  netmask 255.255.255.0
+  gateway 192.168.0.1
+  dns-servernames 8.8.8.4
 
-auto abc
-iface abc inet static
-  address x.x.x.x
-  netmask x.x.x.x
-  gateway x.x.x.x
-  dns-servernames 8.8.8.8
-
-auto eth1
-iface eth1 inet static
-  address x.x.x.x
-  netmask x.x.x.x
-  gateway x.x.x.x
-  dns-servernames 8.8.8.8
+#mmt-operator 2016-06-10 17:13:46
+auto eth0
+iface eth0 inet static
+  address 0.0.0.0
+  netmask 0.0.0.0
+  gateway 0.0.0.0
+  dns-servernames 0.0.0.0

@@ -11,7 +11,7 @@ var arr = [
             fn: "createSystemInformationReport"
         },
     },{
-        id: "probe",
+        id: "localIPs",
         title: "Local IPs",
         x: 6,
         y: 0,
@@ -19,7 +19,7 @@ var arr = [
         height: 3,
         type: "success",
         userData: {
-            fn: "createProbesInformationReport"
+            fn: "createLocalIPsInformationReport"
         },
     },{
         id: "network",
@@ -130,7 +130,9 @@ var ReportFactory = {
     $("#system-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
     var load_data = function(){
       MMTDrop.tools.ajax("/info/os", null, "GET", {
-        error  : function(){},
+        error  : function(){
+          MMTDrop.alert.error("Cannot connect to server", 10*1000);
+        },
         success: function( data ){
           var set_value = function( elem, val, text ){
             var type = "success";
@@ -277,26 +279,26 @@ var ReportFactory = {
             class : ""
           },
           children : [{
-            type: "<button>",
+            type: "<input>",
             attr: {
               type : "submit",
               class: "btn btn-primary",
-              html : 'Save'
+              value: 'Save'
             }
           },{
-            type: "<button>",
+            type: "<input>",
             attr: {
               type : "button",
               class: "btn btn-success pull-right",
-              html : ' Restore a Backup'
+              value: ' Restore a Backup'
             }
           },{
-            type: "<button>",
+            type: "<input>",
             attr: {
               type : "button",
               style: "margin-right: 10px",
               class: "btn btn-danger pull-right",
-              html : 'Empty DB'
+              value: 'Empty DB'
             }
           },]
         }//end buttons
@@ -333,7 +335,8 @@ var ReportFactory = {
         children: [{
           type : "<form>",
           attr : {
-            class        : "form-horizontal",
+            id    : "nic-form",
+            class : "form-horizontal",
           },
           children:[{
               label    : "Monitoring",
@@ -367,9 +370,10 @@ var ReportFactory = {
                   type : "<input>",
                   attr : {
                     id          : "nic-address",
+                    name        : "nic-address",
                     class       : "form-control",
                     placeholder : "addresss",
-                    required    : true
+                    required    : true,
                   }
                 }]
               },{
@@ -380,10 +384,11 @@ var ReportFactory = {
                 children : [{
                   type : "<input>",
                   attr : {
-                      id          : "nic-netmask",
+                    id          : "nic-netmask",
+                    name        : "nic-netmask",
                     class       : "form-control",
                     placeholder : "netmask",
-                    required    : true
+                    required    : true,
                   }
                 }]
               }]
@@ -404,9 +409,10 @@ var ReportFactory = {
                   type : "<input>",
                   attr : {
                     id          : "nic-gateway",
+                    name        : "nic-gateway",
                     class       : "form-control",
                     placeholder : "gateway",
-                    required    : true
+                    required    : true,
                   }
                 }]
               },{
@@ -418,9 +424,10 @@ var ReportFactory = {
                   type : "<input>",
                   attr : {
                     id          : "nic-dns-servernames",
+                    name        : "nic-dns-servernames",
                     class       : "form-control",
                     placeholder : "dns-servernames",
-                    required    : true
+                    required    : true,
                   }
                 }]
               }]
@@ -428,11 +435,12 @@ var ReportFactory = {
             //buttons
             {
               label : "",
-              type: "<button>",
+              type: "<input>",
               attr: {
                 type : "submit",
                 class: "btn btn-primary",
-                html : 'Save'
+                value: 'Save',
+                id   : "nic-btnSave"
               }
             }//end buttons
             ]
@@ -441,6 +449,7 @@ var ReportFactory = {
       $("#network-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
 
       $("#nic-mon-iface").val( obj.probe );
+      //when user change admin interface
       $("#nic-admin-iface").on("change", function(){
         var val   = $(this).val();
         var iface = obj.interfaces[ val ];
@@ -453,7 +462,60 @@ var ReportFactory = {
         set_value( "#nic-netmask", iface.netmask );
         set_value( "#nic-gateway", iface.gateway );
         set_value( "#nic-dns-servernames", iface["dns-servernames"] );
-      })
+      });
+      //get other interface as admin
+      var iface = "";
+      for( var i in obj.interfaces )
+        if( i != obj.probe ){
+          iface = i;
+          break;
+        }
+      $("#nic-admin-iface").val( iface ).trigger("change");
+
+
+      //when user submit form
+      $("#nic-form").validate({
+        errorClass  : "text-danger",
+        errorElement: "span",
+        rules: {
+          "nic-mon-iface"       : {ipv4: true},
+          "nic-address"         : {ipv4: true},
+          "nic-netmask"         : {ipv4: true},
+          "nic-gateway"         : {ipv4: true},
+          "nic-dns-servernames" : {ipv4: true},
+        },
+        //when the form was valided
+        submitHandler : function( form ){
+          if( confirm("Do you want to cancel?") )
+            return;
+          var data = {
+            monitor: $("#nic-admin-iface").val(),
+            admin  : {
+              iface             : $("#nic-mon-iface").val(),
+              address           : $("#nic-address").val(),
+              netmask           : $("#nic-netmask").val(),
+              gateway           : $("#nic-gateway").val(),
+              "dns-servernames" : $("#nic-dns-servernames").val()
+            }
+          };
+
+          MMTDrop.tools.ajax("/info/nic", data, "POST", {
+            error  : function(){
+              MMTDrop.alert.error("Cannot update the interfaces", 10*1000);
+            },
+            success: function(){
+              MMTDrop.alert.success("Successfully updated the interfaces", 10*1000);
+              obj.interfaces[ data.admin.iface ] = data.admin;
+              /*
+              setTimeout( function(){
+                window.location.href = "http://" + data.admin.address;
+              }, 1500 )
+              */
+            }
+          })
+          return false;
+        }
+      });
     };
 
     MMTDrop.tools.ajax("/info/nic", null, "GET", {
@@ -462,35 +524,81 @@ var ReportFactory = {
     })
   },
 
-  createProbesInformationReport: function(){
+  createLocalIPsInformationReport: function(){
     fPeriod.hide();
     fAutoReload.hide();
-    var list_interfaces = [{
-      type : "<option>",
-      attr : {
-        "value" : "eth0",
-        "text"  : "eth0"
-      }
-    },{
-      type : "<option>",
-      attr : {
-        "value" : "eth1",
-        "text"  : "eth1"
-      }
-    }];
 
     var form_config = {
       type : "<div>",
       attr : {
-        style : "margin: 20px 10px 10px 0px"
+        style : "margin: 35px",
+        class : "row"
       },
       children: [{
-        type : "<form>",
+        type : "<div>",
         attr : {
-          class        : "form-horizontal",
+          class: "col-sm-6",
         },
+        children: [{
+          type : "<form>",
+          attr : {
+            id: "conf-operator"
+          },
+          children: [{
+            label : "MMT-Operator",
+            type  : "<textarea>",
+            attr  : {
+              rows: 3,
+              id  : "conf-operator-content"
+            }
+          },{
+            type : "<input>",
+            attr : {
+              type : "submit",
+              class: "btn btn-primary",
+              value: 'Save',
+              id   : "conf-btnSave"
+            }
+          }]
+        }]
+      },{
+        type : "<div>",
+        attr : {
+          class: "col-sm-6",
+        },
+        children: [{
+          type : "<form>",
+          attr : {
+            id: "conf-probe"
+          },
+          children: [{
+            label : "MMT-Probe",
+            type  : "<textarea>",
+            attr  : {
+              rows: 3,
+              id  : "conf-probe-content"
+            }
+          },{
+            type : "<input>",
+            attr : {
+              type : "submit",
+              class: "btn btn-primary",
+              value: 'Save',
+              id   : "conf-btnSave"
+            }
+          }]
+        }]
       }]
     }
-    $("#probe-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+    $("#localIPs" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
+    MMTDrop.tools.ajax("/info/conf", null, "GET", {
+      error : function(){
+        MMTDrop.alert.error("Internal error", 10*1000);
+      },
+      success : function( data ){
+        $("#conf-probe-content").val( data.data.probe )
+        $("#conf-operator-content").val( data.data.operator )
+      }
+    })
   }
 }
