@@ -187,22 +187,24 @@ var ReportFactory = {
       children: [{
         type : "<form>",
         attr : {
-          class        : "form-horizontal",
+          class  : "form-horizontal",
+          id     : "conf-db-form"
         },
         children : [{
           label : "Last backup",
           type  : "<p>",
           attr  : {
             class : "form-control-static",
-            html  : "2016 "
-                  + ' <a class="" title=Download the last backup""><span class="glyphicon glyphicon-cloud-download"/></a>'
-                  //+ ' <a class="" title="Backup Now"><span class="glyphicon glyphicon-floppy-save" aria-hidden="true"/></a>'
+            html  : '<span id="conf-db-last-backup"></span>'
+                  + ' <a class="" title="Download the last backup" id="conf-db-download-backupBtn"><span class="glyphicon glyphicon-cloud-download"/></a>' +
+                  ' <span id="parentBackupNowBtn"><a class="" title="Backup Now" id = "backupNowBtn">backup now</a></span>'
           }
         },{
           label : "Auto backup",
           type  : "<select>",
           attr  : {
-            onchange : ""
+            onchange : "",
+            id       : "conf-db-auto"
           },
           children:[{
             type : "<option>",
@@ -230,12 +232,13 @@ var ReportFactory = {
             }
           }]
         },{
-          label : "Save to FTP Server",
+          label : "FTP Server",
           type  : "<input>",
           attr  : {
             type        : "text",
             placeholder : "10.0.0.2/backup",
             required    : true,
+            id          : "conf-db-ftp-server"
           }
         },
         {
@@ -247,27 +250,43 @@ var ReportFactory = {
           children : [{
             type : "<div>",
             attr : {
-              class : "col-sm-6"
+              class : "col-sm-5"
             },
             children : [{
               type : "<input>",
               attr : {
                 class       : "form-control",
-                placeholder : "ftp username"
+                placeholder : "ftp username",
+                id          : "conf-db-ftp-username"
               }
             }]
           },{
             type : "<div>",
             attr : {
-              class : "col-sm-6"
+              class : "col-sm-5"
             },
             children : [{
               type : "<input>",
               attr : {
                 class       : "form-control",
                 placeholder : "ftp password",
-                type        : "password"
+                type        : "password",
+                readonly    : true,
+                style       : "background-color: white !important",
+                onfocus     : "this.removeAttribute('readonly');",
+                id          : "conf-db-ftp-password",
               }
+            }]
+          },{
+            type : "<div>",
+            attr : {
+              class: "col-sm-2 checkbox"
+            },
+            children :[{
+              type : "<label>",
+              attr : {
+                html  : '<input type="checkbox" id="conf-db-ftp-secure" title="Secure FTP"> SFTP'
+              },
             }]
           }]
         },
@@ -287,13 +306,35 @@ var ReportFactory = {
               value: 'Save'
             }
           },{
-            type: "<input>",
+            type : "<div>",
             attr: {
-              type : "button",
-              id   : "conf-db-btnRestore",
-              class: "btn btn-success pull-right",
-              value: 'Restore a Backup'
-            }
+              class: "btn-group  pull-right dropup",
+            },
+            children:[{
+              type: "<input>",
+              attr: {
+                type : "button",
+                id   : "conf-db-btnRestore",
+                class: "btn btn-success",
+                value: 'Restore'
+              }
+            },{
+              type : "<button>",
+              attr : {
+                "type"          : "button",
+                "class"         : "btn btn-success dropdown-toggle",
+                "data-toggle"   : "dropdown",
+                "aria-haspopup" : true,
+                "aria-expanded" : true,
+                "html"          : '<span class="caret"/><span class="sr-only">Toggle Dropdown</span>'
+              },
+            },{
+              type : "<ul>",
+              attr : {
+                class : "dropdown-menu",
+                html  : '<li><a> Upload </a></li>'
+              }
+            }]
           },{
             type: "<input>",
             attr: {
@@ -310,6 +351,7 @@ var ReportFactory = {
     };
 
     $("#database-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+
     //when click on Empty
     $("#conf-db-btnEmpty").on("click", function(){
       if( confirm("Empty Database of MMT-Operator\nDo you want to cancel?") )
@@ -322,7 +364,101 @@ var ReportFactory = {
             MMTDrop.alert.success("Successfully emptyed the database", 10*1000);
           }
         })
-    })
+    });
+
+    //load data
+    MMTDrop.tools.ajax("/info/db/conf", null, "GET", {
+      error  : function(){
+        MMTDrop.alert.error("Internal Error 200", 10*1000);
+      },
+      success: function( data ){
+        if( data.length > 0 ){
+          data = data[0];
+          if( data.ftp ){
+            $("#conf-db-auto").val(         data.autobackup );
+            $("#conf-db-ftp-server").val(   data.ftp.server );
+            $("#conf-db-ftp-username").val( data.ftp.username );
+            $("#conf-db-ftp-password").val( data.ftp.password );
+            $("#conf-db-ftp-secure").prop( "checked", data.ftp.isSecure );
+
+            $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
+            if( data.lastBackup == undefined )
+              $("#conf-db-download-backupBtn").hide();
+            else
+              $("#conf-db-download-backupBtn").show();
+          }
+          if( data.isBackingUp === true )
+            window._backingup();
+        }
+      }
+    });
+
+    //when click on Save or submit form
+    //when user submit form
+    $("#conf-db-form").validate({
+      errorClass  : "text-danger",
+      errorElement: "span",
+      //when the form was valided
+      submitHandler : function( form ){
+        var data = {
+          autobackup : $("#conf-db-auto").val(),
+          ftp : {
+            server   : $("#conf-db-ftp-server").val(),
+            username : $("#conf-db-ftp-username").val(),
+            password : $("#conf-db-ftp-password").val(),
+            isSecure : $("#conf-db-ftp-secure").is(":checked"),
+          }
+        }
+        MMTDrop.tools.ajax("/info/db?action=save", {$set: data}, "POST", {
+          error  : function(){
+            MMTDrop.alert.error("Internal Error 201", 10*1000);
+          },
+          success: function(){
+            MMTDrop.alert.success("Successfully saved information", 10*1000);
+          }
+        })
+      }//end submitHandler
+    });
+
+    //checking periodically if the backingup finished
+    window._backingup = function(){
+      var $btn = $("#backupNowBtn").replaceWith(  $('<span><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
+      //check whenether the backingup finished
+      setInterval( function(){
+        MMTDrop.tools.ajax("/info/db/conf", null, "GET", {
+          error  : function(){},
+          success: function( data ){
+            if( data.length > 0 ){
+              data = data[0];
+
+              if( data.isBackingUp !== true ){
+                $("#parentBackupNowBtn").html(  $('<a class="" title="Backup Now" id="backupNowBtn">backup now</a>') );
+                $("#backupNowBtn").on("click", window._backupNowBtnOnClick);
+
+                $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
+              }
+            }
+          }
+        });
+      }, 10000);//end setInterval
+    }
+    //when click on "backup now"
+    window._backupNowBtnOnClick = function(){
+      window._backingup();
+
+      MMTDrop.tools.ajax("/info/db?action=save", {
+        "$set" : {isBackingUp: true}
+      }, "POST", {
+        error  : function(){
+          MMTDrop.alert.error("Internal Error 201", 10*1000);
+        },
+        success: function(){
+          MMTDrop.alert.success("Starting to backup database", 5*1000);
+        }
+      })
+    };
+
+    $("#backupNowBtn").on("click", window._backupNowBtnOnClick);
   },
 
   createNetworkInformationReport: function(){
