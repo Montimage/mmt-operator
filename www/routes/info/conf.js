@@ -7,21 +7,17 @@ var express = require('express');
 var router  = express.Router();
 var fs      = require('fs');
 var _os     = require("os");
+var exec    = require('child_process').exec;
+const OPERATOR_CONFIG_FILE = "./config.json";
 
 router.get("/", function( req, res, next ){
-  var mode = router._objRef.config.probe_analysis_mode;
-  var probe_config_file  = "/opt/mmt/probe/conf/" + mode + ".conf",
-      operator_config_file = "./config.json";
 
-  if( _os.platform() == "darwin" )
-    probe_config_file = "./test/online.conf";
-
-  fs.readFile( probe_config_file, { encoding: 'utf8' }, function (err, probe) {
+  router._objRef.probe.get_conf( function (err, probe) {
     if( err ){
       res.status(500).send( err );
       return;
     }
-    fs.readFile( operator_config_file, { encoding: 'utf8' }, function (err, operator) {
+    fs.readFile( OPERATOR_CONFIG_FILE, { encoding: 'utf8' }, function (err, operator) {
       if( err ){
         res.status(500).send( err );
         return;
@@ -40,6 +36,38 @@ router.get("/", function( req, res, next ){
 //when user want to save the config
 router.post("/", function( req, res, next ){
   var obj = req.body;
+  //save MMT-Probe
+  if( obj.probe ){
+    router._objRef.probe.set_conf( obj.probe, function( err ){
+      if( err )
+        return res.status( 500 ).send( err );
+      router._objRef.probe.restart();
+      res.send( "{}" );
+    } )
+    return;
+  }
+  //save MMT-Operator
+  if( obj.operator ){
+    try{
+      obj.operator = JSON.parse( obj.operator );
+    }catch( err ){
+      res.status( 500 ).send( err );
+    }
+    fs.writeFile( OPERATOR_CONFIG_FILE, JSON.stringify( obj.operator, null, "   "), function( err ){
+      if( err )
+        return res.status( 500 ).send( err );
+
+      res.send( "{}" );
+
+      //router._objRef.config = obj.operator;
+      //restart nodejs
+      exec("service operator_d restart");
+    } );
+    return;
+  }
+
+  //other
+  res.send( "WTF" );
 });
 
 module.exports = router;

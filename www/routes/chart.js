@@ -36,7 +36,15 @@ var all_pages = {
         title: "Behavior"
     },
     'ndn': {
-        title: "NDN"
+        title: "NDN",
+        children: {
+            "top" : {
+              title: "Top"
+            },
+            "alerts" : {
+              title: "Alerts"
+            }
+        }
     },
     'video': {
         title: "Video QoS"

@@ -109,6 +109,7 @@ var MongoConnector = function (opts) {
                               [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
                               [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME, NDN.NDN_MAX_RESPONSED_TIME, NDN.NDN_MIN_RESPONSED_TIME, NDN.NDN_AVR_RESPONSED_TIME, NDN.IFA]),
+
             //MUSA project
             //TODO to remove
             avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
@@ -388,6 +389,18 @@ var MongoConnector = function (opts) {
         if( format === 625){
             update_packet_timestamp( ts );
             self.dataCache.ndn.addMessage( msg );
+            //IFA: store all alerts
+
+            var new_msg = {};
+            //copy some attrs of msg to new_msg;
+            [ COL.PROBE_ID, COL.TIMESTAMP, NDN.MAC_SRC, NDN.IFA ].forEach( function(el, index){
+              new_msg[ el ] = msg[ el ];
+            } )
+
+            self.mdb.collection( "ndn_alerts" ).insert( new_msg, function (err, records) {
+                if (err) console.error(err.stack);
+            });
+
             return;
         }
 

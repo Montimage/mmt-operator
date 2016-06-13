@@ -26,11 +26,20 @@ var is_loggedin = function( req, res, redirect_url){
             res.redirect( redirect_url );
         else
             res.redirect( "/" );
-        
+
         return false;
     }
     return true;
 };
+
+router.all("/info/*", function( req, res, next ){
+  if ( req.session.loggedin == undefined) {
+	  res.status(403).send("Permision Denided");
+	  return;
+	}
+
+  next();
+});
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -60,15 +69,15 @@ router.post("/", function (req, res, next) {
         }).toArray(
             function (err, doc) {
                 if (err) throw new HttpException(req, res, err);;
-                
+
                 var loginOK = false;
-                
+
                 //not found username
                 if (Array.isArray(doc) && doc.length === 0 ) {
                     //verify the default user+pass
                     if( user === "admin" && pass === "mmt2nm" ){
                         loginOK = true;
-                    
+
                         //initilize database
                         db.collection("admin").insert({
                             username: user,
@@ -122,7 +131,7 @@ router.get("/change-password", function (req, res, next) {
 
 router.post("/change-password", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
-    
+
     var user = req.session.loggedin.username;
     var pass = req.body.password;
     var pass1 = req.body.password1;
@@ -178,10 +187,10 @@ router.post("/change-password", function (req, res, next) {
 
 router.get("/profile", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
-    
+
     router.dbadmin.getLicense( function( err, msg){
         if( err ) throw new HttpException(req, res, "Not found");
-        
+
         res.render('profile', {
             title     : 'Profile',
             version   : router.config.version + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK],
@@ -189,7 +198,7 @@ router.get("/profile", function (req, res, next) {
             expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
         });
     } );
-    
+
 });
 router.post("/profile", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
@@ -203,10 +212,10 @@ router.post("/profile", function (req, res, next) {
               console.log( error );
             }
         } );
-    
+
     router.dbadmin.getLicense( function( err, msg){
         if( err ) throw new HttpException(req, res, err);
-        
+
         res.render('profile', {
             title     : 'Profile',
             clientID  : "admin",
@@ -228,7 +237,7 @@ router.get("/setting", function (req, res, next) {
 
 router.post("/setting", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
-    
+
     var action = req.body.action;
     if( action == "empty_database" ){
         router.dbconnector.emptyDatabase(

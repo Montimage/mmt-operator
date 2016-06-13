@@ -5012,9 +5012,9 @@ MMTDrop.chartFactory = {
         }
 
                 var len = arrData.length;
-                if( len > 20 ){
-                    arrData.length = len = 20;
-                    MMTDrop.alert.error("Pie chart draws only the first 20 elements");
+                if( len > 50 ){
+                    arrData.length = len = 50;
+                    MMTDrop.alert.error("Pie chart draws only the first 20 elements", 10*1000);
                 }
 
         for (var i=0; i<len; i++){

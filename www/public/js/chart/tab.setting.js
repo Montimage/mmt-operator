@@ -131,7 +131,7 @@ var ReportFactory = {
     var load_data = function(){
       MMTDrop.tools.ajax("/info/os", null, "GET", {
         error  : function(){
-          MMTDrop.alert.error("Cannot connect to server", 10*1000);
+          MMTDrop.alert.error("Cannot connect to server", 5*1000);
         },
         success: function( data ){
           var set_value = function( elem, val, text ){
@@ -282,6 +282,7 @@ var ReportFactory = {
             type: "<input>",
             attr: {
               type : "submit",
+              id   : "conf-db-btnSave",
               class: "btn btn-primary",
               value: 'Save'
             }
@@ -289,13 +290,15 @@ var ReportFactory = {
             type: "<input>",
             attr: {
               type : "button",
+              id   : "conf-db-btnRestore",
               class: "btn btn-success pull-right",
-              value: ' Restore a Backup'
+              value: 'Restore a Backup'
             }
           },{
             type: "<input>",
             attr: {
               type : "button",
+              id   : "conf-db-btnEmpty",
               style: "margin-right: 10px",
               class: "btn btn-danger pull-right",
               value: 'Empty DB'
@@ -307,6 +310,19 @@ var ReportFactory = {
     };
 
     $("#database-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+    //when click on Empty
+    $("#conf-db-btnEmpty").on("click", function(){
+      if( confirm("Empty Database of MMT-Operator\nDo you want to cancel?") )
+        return;
+        MMTDrop.tools.ajax("/info/db?action=empty-db", {}, "POST", {
+          error  : function(){
+            MMTDrop.alert.error("Cannot empty the database", 10*1000);
+          },
+          success: function(){
+            MMTDrop.alert.success("Successfully emptyed the database", 10*1000);
+          }
+        })
+    })
   },
 
   createNetworkInformationReport: function(){
@@ -542,14 +558,15 @@ var ReportFactory = {
         children: [{
           type : "<form>",
           attr : {
-            id: "conf-operator"
+            id: "conf-operator-form"
           },
           children: [{
             label : "MMT-Operator",
             type  : "<textarea>",
             attr  : {
               rows: 3,
-              id  : "conf-operator-content"
+              id      : "conf-operator-content",
+              required: true
             }
           },{
             type : "<input>",
@@ -569,14 +586,15 @@ var ReportFactory = {
         children: [{
           type : "<form>",
           attr : {
-            id: "conf-probe"
+            id: "conf-probe-form"
           },
           children: [{
             label : "MMT-Probe",
             type  : "<textarea>",
             attr  : {
               rows: 3,
-              id  : "conf-probe-content"
+              id      : "conf-probe-content",
+              required: true
             }
           },{
             type : "<input>",
@@ -590,6 +608,7 @@ var ReportFactory = {
         }]
       }]
     }
+    //load data
     $("#localIPs" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
     MMTDrop.tools.ajax("/info/conf", null, "GET", {
       error : function(){
@@ -599,6 +618,72 @@ var ReportFactory = {
         $("#conf-probe-content").val( data.data.probe )
         $("#conf-operator-content").val( data.data.operator )
       }
-    })
+    });
+
+    //save operator-conf
+    //when user submit form
+    $("#conf-operator-form").validate({
+      errorClass  : "text-danger",
+      errorElement: "span",
+      //when the form was valided
+      submitHandler : function( form ){
+
+        var value = $("#conf-operator-content").val();
+        try{
+          var o = JSON.parse( value );
+        }catch( err ){
+          MMTDrop.alert.error( "<strong>Syntax error:</strong>" + err, 10*1000 );
+          return;
+        }
+
+        if( confirm("Update and Restart MMT-Operator\nDo you want to cancel?") )
+          return;
+
+        var data = {
+          operator: value,
+        };
+
+        MMTDrop.tools.ajax("/info/conf", data, "POST", {
+          error  : function(){
+            MMTDrop.alert.error("Cannot update the configure of MMT-Operator", 10*1000);
+          },
+          success: function(){
+            MMTDrop.alert.success("Successfully updated the configure of MMT-Operator", 10*1000);
+            obj.interfaces[ data.admin.iface ] = data.admin;
+          }
+        })
+        return false;
+      }
+    });
+
+    //save probe-conf
+    //when user submit form
+    $("#conf-probe-form").validate({
+      errorClass  : "text-danger",
+      errorElement: "span",
+      //when the form was valided
+      submitHandler : function( form ){
+
+        var value = $("#conf-probe-content").val();
+
+        if( confirm("Update and Restart MMT-Probe\nDo you want to cancel?") )
+          return;
+
+        var data = {
+          probe: value,
+        };
+
+        MMTDrop.tools.ajax("/info/conf", data, "POST", {
+          error  : function(){
+            MMTDrop.alert.error("Cannot update the configure of MMT-Probe", 10*1000);
+          },
+          success: function(){
+            MMTDrop.alert.success("Successfully updated the configure of MMT-Probe", 10*1000);
+            obj.interfaces[ data.admin.iface ] = data.admin;
+          }
+        })
+        return false;
+      }
+    });
   }
 }

@@ -21,6 +21,20 @@ function Probe( mode ){
         exec("cp " + file_name + " " + file_name + "_" + (new Date()).getTime() + ".bak" );
     }
 
+    this.get_conf_file_path = function(){
+      return mmt_config_file;
+    };
+
+    this.get_conf = function( cb ){
+      return fs.readFile( mmt_config_file, {
+        encoding: 'utf8'
+      }, cb );
+    };
+
+    this.set_conf = function( data, cb ){
+      return fs.writeFile( mmt_config_file, data, cb);
+    };
+
     //get the current input-source
     this.get_input_source = function( cb ){
       fs.readFile( mmt_config_file, {

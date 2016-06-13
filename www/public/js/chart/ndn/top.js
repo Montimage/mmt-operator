@@ -267,8 +267,8 @@ var ReportFactory = {
 
                     var top = 7;
                     if( cPie.showAll === true ){
-                      if( data.length > 100 )
-                        top = 100;
+                      if( data.length > 20 )
+                        top = 20;
                       else
                         top = data.length;
                     }
@@ -547,6 +547,13 @@ var ReportFactory = {
         //parse host from a name (eGW/GET/http://www.yahoo.com//0)
         //==> retun www.yahoo.com
         function( name ){
+
+          var d = name.indexOf( "http://");
+          if( d >= 0 ){
+            return name.substring( d + 8, name.indexOf( "/", d + 7) );
+          }
+          //if does not contain http://
+          //eGW/GET/www.yahoo.com//0
             var len = 0;
           var d = name.indexOf("GET/");
           len = "GET/".length;

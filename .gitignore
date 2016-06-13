@@ -6,9 +6,8 @@ lib-cov
 *.out
 *.pid
 *.gz
+*.DS_Store
+*.rdb
 
 operator/node_modules
-probe/mmt-probe
-probe/plugins
-
 /backup_db/
