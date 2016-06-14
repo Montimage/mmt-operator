@@ -22,7 +22,7 @@ iface <%= name %> inet static
   address <%= address %>
   netmask <%= netmask %>
   gateway <%= gateway %>
-  dns-servernames <%= dns %>
+  dns-nameservers <%= dns %>
 */
 }.toString().split('\n').slice(2, -2).join('\n') );
 
@@ -36,7 +36,7 @@ module.exports = {
             address        : "not support",
             netmask        : "not support",
             gateway        : "not support",
-            "dns-servernames": "not support",
+            "dns-nameservers": "not support",
           });
       fs.readFile( FILE, {
         encoding: 'utf8'
@@ -80,7 +80,7 @@ module.exports = {
       if( !is_support )
         return cb("Do not support this kind of OS" );
 
-      description.dns = description["dns-servernames"];
+      description.dns = description["dns-nameservers"];
 
       assert(_.isString(name));
       assert(_.isPlainObject(description));

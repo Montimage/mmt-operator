@@ -135,6 +135,7 @@ var ReportFactory = {
         },
         success: function( data ){
           var set_value = function( elem, val, text ){
+            if( val < 1 ) val = 1;
             var type = "success";
             if( val <= 50 )
               type = "success";
@@ -575,10 +576,10 @@ var ReportFactory = {
                 children : [{
                   type : "<input>",
                   attr : {
-                    id          : "nic-dns-servernames",
-                    name        : "nic-dns-servernames",
+                    id          : "nic-dns-nameservers",
+                    name        : "nic-dns-nameservers",
                     class       : "form-control",
-                    placeholder : "dns-servernames",
+                    placeholder : "dns-nameservers",
                     required    : true,
                   }
                 }]
@@ -613,7 +614,7 @@ var ReportFactory = {
         set_value( "#nic-address", iface.address );
         set_value( "#nic-netmask", iface.netmask );
         set_value( "#nic-gateway", iface.gateway );
-        set_value( "#nic-dns-servernames", iface["dns-servernames"] );
+        set_value( "#nic-dns-nameservers", iface["dns-nameservers"] );
       });
       //get other interface as admin
       var iface = "";
@@ -634,7 +635,7 @@ var ReportFactory = {
           "nic-address"         : {ipv4: true},
           "nic-netmask"         : {ipv4: true},
           "nic-gateway"         : {ipv4: true},
-          "nic-dns-servernames" : {ipv4: true},
+          "nic-dns-nameservers" : {ipv4: true},
         },
         //when the form was valided
         submitHandler : function( form ){
@@ -647,7 +648,7 @@ var ReportFactory = {
               address           : $("#nic-address").val(),
               netmask           : $("#nic-netmask").val(),
               gateway           : $("#nic-gateway").val(),
-              "dns-servernames" : $("#nic-dns-servernames").val()
+              "dns-nameservers" : $("#nic-dns-nameservers").val()
             }
           };
 

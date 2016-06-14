@@ -1,3 +1,5 @@
 /node_modules/
 /log/
 /dump.rdb
+/dist/
+.DS_Store

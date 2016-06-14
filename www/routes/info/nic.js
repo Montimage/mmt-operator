@@ -34,7 +34,7 @@ router.post("/", function( req, res, next ){
     address           : obj.admin["address"],
     netmask           : obj.admin["netmask"],
     gateway           : obj.admin["gateway"],
-    "dns-servernames" : obj.admin["dns-servernames"]
+    "dns-nameservers" : obj.admin["dns-nameservers"]
   }, function( err ){
     if( err ){
       send_error( err );
@@ -45,7 +45,7 @@ router.post("/", function( req, res, next ){
         address           : "0.0.0.0",
         netmask           : "0.0.0.0",
         gateway           : "0.0.0.0",
-        "dns-servernames" : "0.0.0.0",
+        "dns-nameservers" : "0.0.0.0",
       }, function(){} )
     }
 
