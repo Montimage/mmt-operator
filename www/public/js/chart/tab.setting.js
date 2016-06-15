@@ -197,8 +197,6 @@ var ReportFactory = {
           attr  : {
             class : "form-control-static",
             html  : '<span id="conf-db-last-backup"></span>'
-                  + ' <a class="" title="Download the last backup" id="conf-db-download-backupBtn"><span class="glyphicon glyphicon-cloud-download"/></a>' +
-                  ' <span id="parentBackupNowBtn"><a class="" title="Backup Now" id = "backupNowBtn">backup now</a></span>'
           }
         },{
           label : "Auto backup",
@@ -237,7 +235,7 @@ var ReportFactory = {
           type  : "<input>",
           attr  : {
             type        : "text",
-            placeholder : "10.0.0.2/backup",
+            placeholder : "10.0.0.2",
             required    : true,
             id          : "conf-db-ftp-server"
           }
@@ -337,6 +335,13 @@ var ReportFactory = {
               }
             }]
           },{
+            type : "<span>",
+            attr: {
+              style: "margin-right: 10px",
+              class: "pull-right",
+              id   : "parentBackupNowBtn"
+            }
+          },{
             type: "<input>",
             attr: {
               type : "button",
@@ -345,7 +350,7 @@ var ReportFactory = {
               class: "btn btn-danger pull-right",
               value: 'Empty DB'
             }
-          },]
+          }]
         }//end buttons
       ]
       }]
@@ -367,38 +372,14 @@ var ReportFactory = {
         })
     });
 
-    //load data
-    MMTDrop.tools.ajax("/info/db/conf", null, "GET", {
-      error  : function(){
-        MMTDrop.alert.error("Internal Error 200", 10*1000);
-      },
-      success: function( data ){
-        if( data.length > 0 ){
-          data = data[0];
-          if( data.ftp ){
-            $("#conf-db-auto").val(         data.autobackup );
-            $("#conf-db-ftp-server").val(   data.ftp.server );
-            $("#conf-db-ftp-username").val( data.ftp.username );
-            $("#conf-db-ftp-password").val( data.ftp.password );
-            $("#conf-db-ftp-secure").prop( "checked", data.ftp.isSecure );
-
-            $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
-            if( data.lastBackup == undefined )
-              $("#conf-db-download-backupBtn").hide();
-            else
-              $("#conf-db-download-backupBtn").show();
-          }
-          if( data.isBackingUp === true )
-            window._backingup();
-        }
-      }
-    });
-
     //when click on Save or submit form
     //when user submit form
     $("#conf-db-form").validate({
       errorClass  : "text-danger",
       errorElement: "span",
+      rules:{
+        "conf-db-ftp-server" : {ipv4 : true}
+      },
       //when the form was valided
       submitHandler : function( form ){
         var data = {
@@ -421,45 +402,71 @@ var ReportFactory = {
       }//end submitHandler
     });
 
-    //checking periodically if the backingup finished
-    window._backingup = function(){
-      var $btn = $("#backupNowBtn").replaceWith(  $('<span><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
-      //check whenether the backingup finished
-      setInterval( function(){
-        MMTDrop.tools.ajax("/info/db/conf", null, "GET", {
-          error  : function(){},
-          success: function( data ){
-            if( data.length > 0 ){
-              data = data[0];
+    //load data from db
+    window._loadData = function(){
+      MMTDrop.tools.ajax("/info/db", null, "GET", {
+        error  : function(){},
+        success: function( data ){
+          if( data.length > 0 ){
+            data = data[0];
+            if( data.ftp ){
+              $("#conf-db-auto").val(         data.autobackup );
+              $("#conf-db-ftp-server").val(   data.ftp.server );
+              $("#conf-db-ftp-username").val( data.ftp.username );
+              $("#conf-db-ftp-password").val( data.ftp.password );
+              $("#conf-db-ftp-secure").prop( "checked", data.ftp.isSecure );
 
-              if( data.isBackingUp !== true ){
-                $("#parentBackupNowBtn").html(  $('<a class="" title="Backup Now" id="backupNowBtn">backup now</a>') );
-                $("#backupNowBtn").on("click", window._backupNowBtnOnClick);
-
-                $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
-              }
+              $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
+              if( data.lastBackup == undefined )
+                $("#conf-db-download-backupBtn").hide();
+              else
+                $("#conf-db-download-backupBtn").show();
             }
+
+            if( data.isBackingUp ){
+              $("#parentBackupNowBtn").html(  $('<span><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
+            }else {
+              //database is being backed up
+              if( window._backupTimer ){
+                clearInterval( window._backupTimer );
+                MMTDrop.alert.success( "Successfully backed up database", 5*1000 );
+              }
+              
+              $("#parentBackupNowBtn").html(  $('<a class="btn btn-info" title="Backup Now" id="backupNowBtn">Backup now</a>') );
+              //when click on "backup now"
+              $("#backupNowBtn").on("click", function(){
+                //change button ==> backing up
+                $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
+
+                //check whenether the backingup finished
+                window._backupTimer = setInterval(window._loadData, 10000) ;
+
+                MMTDrop.tools.ajax("/info/db?action=save", {
+                  "$set" : {isBackingUp: true}
+                }, "POST", {
+                  error  : function(){
+                    MMTDrop.alert.error("Internal Error 201", 10*1000);
+                  },
+                  success: function(){
+                    MMTDrop.alert.success("Starting to backup database", 5*1000);
+                  }
+                })
+              });
+
+            }//end else
+
+            var text = "undefined";
+            if( data.lastBackup ){
+              text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+            }
+            $("#conf-db-last-backup").html( text );
           }
-        });
-      }, 10000);//end setInterval
-    }
-    //when click on "backup now"
-    window._backupNowBtnOnClick = function(){
-      window._backingup();
-
-      MMTDrop.tools.ajax("/info/db?action=save", {
-        "$set" : {isBackingUp: true}
-      }, "POST", {
-        error  : function(){
-          MMTDrop.alert.error("Internal Error 201", 10*1000);
-        },
-        success: function(){
-          MMTDrop.alert.success("Starting to backup database", 5*1000);
         }
-      })
-    };
+      });
+    }
 
-    $("#backupNowBtn").on("click", window._backupNowBtnOnClick);
+    //load data
+    window._loadData();
   },
 
   createNetworkInformationReport: function(){

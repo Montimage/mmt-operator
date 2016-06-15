@@ -13,15 +13,15 @@ var util            = require('util');
 var moment          = require('moment');
 var fs              = require('fs');
 
-var config          = require("./config.json");
-
+var config          = require("./libs/config");
+var redis           = require("./libs/redis");
 var routes          = require('./routes/index');
 var chartRoute      = require('./routes/chart');
 var api             = require('./routes/api');
 var probeRoute      = require('./routes/probe-server.js');
 
 var mmtAdaptor      = require('./libs/dataAdaptor');
-var dbc             = require('./libs/mongo_connector');
+var dbc             = require('./libs/data_db');
 var AdminDB         = require('./libs/admin_db');
 var Probe           = require('./libs/probe');
 
@@ -30,71 +30,14 @@ config.version = VERSION;
 var REDIS_STR = "redis",
     FILE_STR  = "file";
 
-if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
-    config.input_mode = FILE_STR;
-
-if( isNaN( config.port_number ) || config.port_number < 0 )
-    config.port_number = 80;
-
-if( config.log_folder == undefined )
-    config.log_folder = __dirname + '/log';
-
-
-// ensure log directory exists
-fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
-//overwrite console.log
-var logFile   = fs.createWriteStream(config.log_folder + '/' + (moment().format("YYYY-MM-DD")) +'.log', { flags: 'a' });
-var logStdout = process.stdout;
-
-console.logStdout = console.log;
-
-console.log = function () {
-    var prefix = moment().format("h:mm:ss") + " " ;
-    if( config.is_in_debug_mode === true  )
-        logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
-
-    logFile.write( prefix + util.format.apply(null, arguments) + '\n');
-
-}
-
-console.error = function( err ){
-    if( err == undefined ) return;
-    console.log( arguments );
-    console.log( err.stack );
-}
-
-console.debug = function( msg ){
-    try{
-        throw new Error( msg );
-    }catch( err ){
-        console.logStdout( err.stack );
-    }
-}
-
-var redis = require("redis");
-//override redis with the given information: host, port
-redis._createClient = redis.createClient;
-redis.createClient  = function(){
-  if( config.redis_server.port == undefined )
-    config.redis_server.port = 6379;
-  return redis._createClient(config.redis_server.port, config.redis_server.host, {});
-}
-
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 
-console.log( "configuration: " + JSON.stringify( config, null, "   " ) );
-
-
-
-var dbconnector = new dbc( {
-    connectString: 'mongodb://'+ config.database_server +':27017/mmt-data-' + config.probe_analysis_mode
-});
-
+var dbconnector = new dbc( config.database_server.host, config.database_server.port );
 dbconnector.config = config;
 
-var dbadmin = new AdminDB( 'mongodb://'+ config.database_server +':27017/mmt-admin' );
+var dbadmin = new AdminDB( config.database_server.host, config.database_server.port );
 var probe   = new Probe( config.probe_analysis_mode );
 
 var app = express();
@@ -156,7 +99,7 @@ app.use(express.static(path.join(__dirname, 'public'),{
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',
-               {stream: (config.is_in_debug_mode === true )? logStdout : logFile
+               {stream: (config.is_in_debug_mode === true )? config.logStdout : config.logFile
                }
               )
        );

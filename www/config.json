@@ -1,12 +1,15 @@
 {
-   "database_server": "127.0.0.1",
+   "database_server": {
+     "host": "127.0.0.1",
+     "port": 27017
+   }, 
    "redis_server": {
-      "host": "localhost",
+      "host": "192.168.0.7",
       "port": 6379
    },
-   "data_folder": "/Users/nhnghia/temps/share_vbox/report/",
+   "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
    "delete_data": true,
-   "input_mode": "file",
+   "input_mode": "redis",
    "probe_analysis_mode": "offline",
    "local_network": [
       {

@@ -5,32 +5,15 @@
  */
 var express = require('express');
 var router  = express.Router();
-var fs      = require('fs');
-var _os     = require("os");
-var exec    = require('child_process').exec;
+var backup  = require("../../libs/backup_db");
+
 
 router.get("/", function( req, res, next ){
-  if( req.query.all !== undefined ){
-
-  }
-
-  res.setHeader("Content-Type", "application/json");
-  res.send({});
-});
-
-
-router.get("/conf", function( req, res, next ){
-  router._objRef.dbadmin.connect( function(err, db){
+  backup.get_data( function( err, obj ){
     if( err )
       return res.status(500).send( err );
-
-    db.collection("db-backup").find( {_id : 1}).toArray( function(err, ret){
-      if( err )
-        return res.status(500).send( err );
-      else
-        return res.send( ret );
-    } );
-  } );
+    return res.send( [obj] );
+  })
 });
 
 
@@ -49,20 +32,18 @@ router.post("/", function( req, res, next ){
 
   if( action == "save" ){
     var data = req.body;
-    router._objRef.dbadmin.connect( function(err, db){
+
+    //backup database now
+    if( data.$set && data.$set.isBackingUp === true )
+      backup.backup();
+
+    //save other information
+    backup.set_data( data, function( err, ret ){
       if( err )
         return res.status(500).send( err );
-
-      if( data["$set"] == undefined )
-        data._id = 1;
-
-      db.collection("db-backup").update( {_id : 1}, data, {upsert: true}, function(err, ret){
-        if( err )
-          return res.status(500).send( err );
-        else
-          return res.send( ret );
-      } );
-    } );
+      else
+        return res.send( ret );
+    });
     return;
   }
 

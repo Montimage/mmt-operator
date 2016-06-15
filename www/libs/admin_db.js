@@ -1,10 +1,14 @@
 var MongoClient = require('mongodb').MongoClient;
 
-function AdminDB( connectString ) {
-    var self = this;
-    self._cache = {};
-    self.connectString = connectString;
+function AdminDB( host, port ) {
+    var self     = this;
+    self._cache  = {};
+    self.db_name = "mmt-admin";
     
+    var connectString = "mongodb://"+ host + ":" + port + "/" + self.db_name ;
+
+    self.connectString = connectString;
+
     this.connect = function (callback) {
         if (self.mdb) {
             callback(null, self.mdb);
@@ -30,7 +34,7 @@ function AdminDB( connectString ) {
             }).toArray( callback );
         });
     };
-    
+
     this.setAdmin = function (user, callback) {
         self.connect(function (err, db) {
             if (err) {
@@ -40,14 +44,14 @@ function AdminDB( connectString ) {
             var update = {$set:{}};
             if( user.password != undefined )
                 update.$set.password = user.password;
-            
+
             db.collection("admin").update({
                 username: user.username
             }, update, callback);
         });
     };
-    
-    
+
+
     this.getLicense = function ( callback ) {
         if( self._cache.license != undefined ){
             callback( null, self._cache.license );
@@ -71,10 +75,10 @@ function AdminDB( connectString ) {
             } );
         });
     };
-    
+
     this.insertLicense = function ( license, callback ) {
         self._cache.license = license;
-        
+
         self.connect(function (err, db) {
             if (err) {
                 callback(err);

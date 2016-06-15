@@ -10,15 +10,16 @@ var DataCache   = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
     format      = require('util').format;
 
-var MongoConnector = function (opts) {
-    this.mdb = null;
-
-    if (opts == undefined)
-        opts = {};
-
-    opts.connectString = opts.connectString || 'mongodb://127.0.0.1:27017/MMT';
-
+var MongoConnector = function (host, port) {
     var self = this;
+
+    self.mdb = null;
+    self.db_name = "mmt-data";
+    if( host == undefined )
+      return;
+    var connectString = 'mongodb://' + host + ":" + port + "/" + self.db_name;
+
+
     var COL  = dataAdaptor.StatsColumnId;
     var HTTP = dataAdaptor.HttpStatsColumnId;
     var NDN  = dataAdaptor.NdnColumnId;
@@ -36,7 +37,7 @@ var MongoConnector = function (opts) {
     }
     init_session_set.push( COL.START_TIME );
 
-    MongoClient.connect(opts.connectString, function (err, db) {
+    MongoClient.connect( connectString, function (err, db) {
         if (err) throw err;
         self.mdb       = db;
         self.appList   = new AppList( db );
@@ -206,10 +207,11 @@ var MongoConnector = function (opts) {
             //
             else
                 */
-                if( msg[ COL.PORT_DEST ] != undefined )
-
+              if( msg[ COL.IP_SRC_INIT_CONNECTION] )
                 //server_port
                 app_name = msg[ COL.PORT_DEST ];
+              else
+                app_name = msg[ COL.PORT_SRC ];
 
             //if( app_name == 0 )
             //    console.log( msg );

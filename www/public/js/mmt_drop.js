@@ -1498,8 +1498,9 @@ MMTDrop.tools = function () {
               403 : function (){
                 document.location.href = "/";
               },
-              404 : function (){ MMTDrop.alert.error( "Page not found", 10); },
-              500 : function (){ MMTDrop.alert.error( "Cannot connect to database", 10); }
+
+              404 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Page not found", 10); },
+              500 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Cannot connect to database", 10); }
           }
         });
         return;

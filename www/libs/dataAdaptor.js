@@ -89,7 +89,7 @@ var MMTDrop = {
         FORMAT_TYPE         : 32, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
         SRC_LOCATION        : 33,
         DST_LOCATION        : 34,
-        IP_SRC_INIT_CONNECTION  : 35, //0: if IP_SRC is init connection, else 1 ( IP_DEST initilizes connection)
+        IP_SRC_INIT_CONNECTION  : 35, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
     },
 
     SecurityColumnId           : {
@@ -373,11 +373,12 @@ var MMTDrop = {
         var COL       = this.StatsColumnId;
         if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
             return msg;
-
+        msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
         if( this.isLocalIP( msg[COL.IP_SRC] )  )
             return msg;
         else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
-            return this.inverseStatDirection( msg )
+          msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
+          return this.inverseStatDirection( msg )
         }
         return null;
     },
@@ -629,7 +630,7 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.STATS_FORMAT :
             msg = format_session_report( msg );
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
-            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = "_local";//ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
