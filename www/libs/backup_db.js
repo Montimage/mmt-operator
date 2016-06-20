@@ -1,10 +1,11 @@
 var config    = require("../libs/config")
-  , backupDB  = require("../libs/backup_db_to_ftp")
-  , AdminDB   = require("../libs/admin_db")
-  , DataDB    = require("../libs/data_db");
+  , manager   = require("../libs/manager_db")
+  , AdminDB   = require("../libs/AdminDB")
+  , DataDB    = require("../libs/DataDB");
 
 
-var dbadmin = new AdminDB( config.database_server.host, config.database_server.port );
+var dbadmin = new AdminDB();
+var db_name = (new DataDB()).db_name;
 
 function set_data( data, callback ){
   callback = callback || function(){};
@@ -33,7 +34,7 @@ function get_data( callback ){
       if( err ) return callback( err );
       if( arr.length > 0 )
         return callback( null, arr[0] );
-      return callback("not found");
+      return callback();
     });
   });
 }
@@ -47,26 +48,33 @@ function backup( callback ){
     get_data( function( err, obj ){
       if( err ) return callback( err );
 
-      backupDB.sync({
-          db  : (new DataDB()).db_name,
+
+      if( obj.ftp == undefined ) obj.ftp = {};
+      //in this case, we do not upload archiveFile to FTP server
+
+      manager.backup({
+          db  : db_name,
           host: config.database_server.host,
           port: config.database_server.port,
       }, {
+          //ftp connection setting. See: https://github.com/mscdex/node-ftp
           host    : obj.ftp.server,
           port    : 21,
           user    : obj.ftp.username,
           password: obj.ftp.password,
-          secure  : obj.ftp.isSecure
+          secure  : obj.ftp.isSecure,
+          isEnable: obj.ftp.isEnable
       }, function( err, file ) {
         var data = {
           $set: {isBackingUp : false}
         };
 
-        if( err == undefined && file ){
+        if( file ){
           //backup success
           var lastBackup = {
                 time     : (new Date()).getTime(),
-                file     : file.substr( file.indexOf("public/") + "public/".length )
+                file     : file.substr( file.indexOf("public/") + "public/".length ),
+                error    : err
               };
 
           data = {
@@ -82,8 +90,14 @@ function backup( callback ){
   })
 }
 
+
+function restore( archiveFile ){
+
+}
+
 module.exports = {
   get_data: get_data,
   set_data: set_data,
-  backup  : backup
+  backup  : backup,
+  restore : restore
 }

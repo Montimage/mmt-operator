@@ -1,8 +1,4 @@
 {
-   "database_server": {
-     "host": "127.0.0.1",
-     "port": 27017
-   }, 
    "redis_server": {
       "host": "192.168.0.7",
       "port": 6379
@@ -13,8 +9,8 @@
    "probe_analysis_mode": "offline",
    "local_network": [
       {
-         "ip": "192.0.0.0",
-         "mask": "255.0.0.0"
+         "ip": "192.168.0.0",
+         "mask": "255.255.0.0"
       },
       {
          "ip": "172.0.0.0",

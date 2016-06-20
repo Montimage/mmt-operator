@@ -1150,6 +1150,33 @@ MMTDrop.tools = function () {
     return !isNaN(parseFloat(n)) && isFinite(n);
   };
 
+  _this.getModalWindow = function( id ){
+     id = id || "modalWindow";
+
+     if( $( id ).length === 0 ){
+        var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="'+ id +'">'
+                    +'<div class="modal-dialog">'
+                    +'<div class="modal-content" >'
+                    +'<div class="modal-header">'
+                    +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
+                    +'<h4 class="modal-title">Title</h4>'
+                    +'</div>'
+                    +'<div class="modal-body code-json">'
+                    +'<div class="modal-sub-title"/>'
+                    +'<div class="modal-content"/>'
+                    +'</div>'
+                    +'</div></div></div>';
+
+        $("body").append( $(modal) );
+    }
+
+    var $modal       = $("#"+ id );
+    $modal.$title    = $("#"+ id +" .modal-title");
+    $modal.$subTitle = $("#"+ id +" .modal-sub-title");
+    $modal.$content  = $("#"+ id +" .modal-content");
+    return $modal;
+  };
+
   /**
    * create DOM object and its children using jQuery
    * @param  {[type]} config
@@ -5411,121 +5438,134 @@ MMTDrop.chartFactory = {
 
         var obj = [];
         var n   = columns.length;
-                if( n > 11 ){
-                    //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                    MMTDrop.alert.error("Line chart draws only the first 10 elements", 10);
-                    n = 10;
-                }
+        if( n > 11 ){
+            //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+            MMTDrop.alert.error("Line chart draws only the first 10 elements", 10);
+            n = 10;
+        }
 
-                //header
-                obj[0] = ["x"];    //ox
-                for( var j=1; j<n; j++){
-                    obj[j] = [ columns[j].label];
-                }
+        //header
+        obj[0] = ["x"];    //ox
+        for( var j=1; j<n; j++){
+            obj[j] = [ columns[j].label];
+        }
 
-                if( option.addZeroPoints ){
-                    var time        = option.addZeroPoints.time;
-                    var period      = option.addZeroPoints.sample_period;
-                    var probeStatus = option.addZeroPoints.probeStatus;
-                    //the first column is timestamp
-                    var begin  = 0, end = 0;
-                    if( arrData[0] ){
-                        begin = arrData[0][0];
-                        end   = arrData[ arrData.length - 1][0];
-                    }
-                    if( time.begin &&  (time.begin <= begin || begin == 0) )
-                        begin = time.begin;
-                    if( time.end &&  time.end >= end )
-                        end = time.end;
+        if( option.addZeroPoints  ){
+            var time        = option.addZeroPoints.time;
+            var period      = option.addZeroPoints.sample_period;
+            var probeStatus = option.addZeroPoints.probeStatus;
+            //the first column is timestamp
+            var begin  = 0, end = 0;
+            if( arrData[0] ){
+                begin = arrData[0][0];
+                end   = arrData[ arrData.length - 1][0];
+            }
+            if( time.begin &&  (time.begin <= begin || begin == 0) )
+                begin = time.begin;
+            if( time.end &&  time.end >= end )
+                end = time.end;
 
-                    if( (end - begin) / period > 2000 ){
-                        console.log( "too long");
-                        begin = end - 2000 * period ;
-                    }
+            if( (end - begin) / period > 2000 ){
+                console.log( "too long");
+                begin = end - 2000 * period ;
+            }
 
-                    var lastTS    = begin;
-                    var firstNull = false;
-                    while( lastTS <= end ){
-                        lastTS += period;
-                        var exist = false;
+            var lastTS    = begin;
+            var firstNull = false;
+            while( lastTS <= end ){
+                lastTS += period;
+                var exist = false;
 
-                        //cumulate data in this period: ((lastTS - period), lastTS]
-                        var data  = [];
-                        for( var j=1; j<n; j++)
-                            data[j] = 0;
+                //cumulate data in this period: ((lastTS - period), lastTS]
+                // for the first interaval:     [ begin,   begin + period ]
+                var data  = [];
+                //start from 1 as 0 is timestamp
+                for( var j=1; j<n; j++)
+                    data[j] = 0;
 
-                        var ts = 0;
-                        for (var i=0; i<arrData.length; i++){
-                            //the first column is timestamp
-                            //omit the elements outside the period
-                            if( arrData[i][0] > lastTS && arrData[i][0] != begin){//as arrData is sorted by asc. of ts
-                                //console.log("break");
+                var ts = 0;
+                var count = 0;
+                for (var i=0; i<arrData.length; i++){
+                  //each report is visited only one time
+                  if( arrData[i].visited === true )
+                    continue;
+
+                  ts = arrData[i][0];
+                  //the first column is timestamp
+                  //omit the elements outside the period
+                  if( ts > lastTS )//as arrData is sorted by asc. of ts
+                      break;
+                  //if( ts == lastTS && ts != begin)
+
+                  if( ts < lastTS )
+                    continue;
+                  // for the first interaval: [ begin, begin + period ]
+                  if( ts == lastTS - period && ts != begin )
+                      continue;
+
+                  count ++;
+                  //console.log( ts );
+                  exist = true;
+                  for( var j=1; j<n; j++)
+                      if( arrData[i][j] !== undefined )
+                          data[j] += arrData[i][j];
+                  arrData[i].visited = true;
+                  //console.log( i + "  " + count + " " + (new Date(ts)) );
+                }//end for
+
+                //timestamp is the one of a report if the report exist
+                //otherwise, it is fixed by the moment of refreshing the web page
+                if( exist && lastTS <= end && lastTS != ts + period && ts > begin )
+                    lastTS = ts;
+
+                //add this data if having data
+                //- else add zero point only for period inside [begin, end]
+                if( lastTS <= end || exist){
+                    var probeRunningInThisPeriod = false;
+                    if( exist )
+                        probeRunningInThisPeriod = true;
+                    else
+                        for( var j in probeStatus )
+                            if( probeStatus[j].start <= lastTS && lastTS <= probeStatus[j].last_update ){
+                                probeRunningInThisPeriod = true;
                                 break;
                             }
-                            // for the first interaval: [ (lastTS - period), lastTS ]
-                            if( arrData[i][0] <= lastTS - period && arrData[i][0] != begin )
-                                continue;
 
-                            ts = arrData[i][0];
-                            //console.log( ts );
-                            exist = true;
-                            for( var j=1; j<n; j++)
-                                if( arrData[i][j] !== undefined )
-                                    data[j] += arrData[i][j];
-                        }
-
-                        //timestamp is the one of a report if the report exist
-                        //otherwise, it is fixed by the moment of refreshing the web page
-                        if( exist && lastTS <= end && lastTS != ts + period && ts > begin )
-                            lastTS = ts;
-                        //add this data if having data
-                        //- else add zero point only for period inside [begin, end]
-                        if( lastTS <= end || exist){
-                            var probeRunningInThisPeriod = false;
-                            if( exist )
-                                probeRunningInThisPeriod = true;
+                    obj[0].push( new Date( lastTS ) );               //x
+                    for( var j=1; j<n; j++){
+                        if( probeRunningInThisPeriod ){
+                            obj[j].push( data[ j ] );  //y
+                            firstNull = true;
+                        }else{
+                            if( firstNull )
+                                obj[j].push( 0 );       //y ==> down to Zero
                             else
-                                for( var j in probeStatus )
-                                    if( probeStatus[j].start <= lastTS && lastTS <= probeStatus[j].last_update ){
-                                        probeRunningInThisPeriod = true;
-                                        break;
-                                    }
+                                obj[j].push( null );    //y ==> no data
 
-                            obj[0].push( new Date( lastTS ) );               //x
-                            for( var j=1; j<n; j++){
-                                if( probeRunningInThisPeriod ){
-                                    obj[j].push( data[ j ] );  //y
-                                    firstNull = true;
-                                }else{
-                                    if( firstNull )
-                                        obj[j].push( 0 );       //y ==> down to Zero
-                                    else
-                                        obj[j].push( null );    //y ==> no data
-
-                                    if( j == n-1 )
-                                        firstNull = false;
-                                }
-                            }
+                            if( j == n-1 )
+                                firstNull = false;
                         }
                     }
                 }
-                else{
-                    for (var i=0; i<arrData.length; i++){
-                        //the first column is timestamp
-                        var x = new Date( parseInt(arrData[i][0]) );
-                        obj[0].push( x );        //x
+            }
+        }
+        else{
+            for (var i=0; i<arrData.length; i++){
+                //the first column is timestamp
+                var x = new Date( parseInt(arrData[i][0]) );
+                obj[0].push( x );        //x
 
-                        for( var j=1; j<n; j++){
-                            var val = arrData[i][j];
-                            if( val === undefined )
-                                //continue;
-                                val = 0;
+                for( var j=1; j<n; j++){
+                    var val = arrData[i][j];
+                    if( val === undefined )
+                        //continue;
+                        val = 0;
 
-                            obj[j].push( val );  //y
+                    obj[j].push( val );  //y
 
-                        }
-                    }
                 }
+            }
+        }
         //as j starts from 1 ==> obj starts from 1
         // I will remove the first index of obj
         //obj.shift();

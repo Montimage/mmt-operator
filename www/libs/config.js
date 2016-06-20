@@ -13,8 +13,24 @@ if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
 if( isNaN( config.port_number ) || config.port_number < 0 )
     config.port_number = 80;
 
+function set_default_value( variable, prop, value ){
+  if( variable[prop] == undefined )
+    variable[prop] = value;
+}
+
 if( config.log_folder == undefined )
     config.log_folder = __dirname + '/log';
+
+if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
+  config.probe_analysis_mode = "offline";
+
+set_default_value( config, "database_server", {} );
+
+set_default_value( config.database_server, "host", "127.0.0.1" );
+set_default_value( config.database_server, "port", 27017 );
+
+set_default_value( config.redis_server, "host", "127.0.0.1" );
+set_default_value( config.redis_server, "port", 6379 );
 
 
 // ensure log directory exists
@@ -31,7 +47,6 @@ console.log = function () {
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
 
     logFile.write( prefix + util.format.apply(null, arguments) + '\n');
-
 }
 
 console.error = function( err ){

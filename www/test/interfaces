@@ -5,7 +5,7 @@
 auto lo
 iface lo inet loopback
 
-#mmt-operator 2016-06-14 15:25:53
+#mmt-operator 2016-06-16 11:07:56
 auto eth0
 iface eth0 inet static
   address 192.168.0.198
@@ -13,7 +13,7 @@ iface eth0 inet static
   gateway 192.168.0.1
   dns-nameservers 8.8.8.8
 
-#mmt-operator 2016-06-14 15:25:53
+#mmt-operator 2016-06-16 11:07:56
 auto eth2
 iface eth2 inet static
   address 0.0.0.0

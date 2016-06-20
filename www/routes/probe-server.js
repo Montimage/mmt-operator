@@ -61,6 +61,7 @@ router.process_message = function (db, message) {
                 console.log("[DONT 1] " + message);
                 return;
             }
+            
             if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
                 console.log("[DONT KNOW DIRECTION] " + message);
                 return;

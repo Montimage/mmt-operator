@@ -1,22 +1,25 @@
 var moment      = require('moment');
 var dataAdaptor = require('./dataAdaptor.js');
-var Window      = require("./window.js");
-var AppList     = require("./app-list.js");
+var Window      = require("./Window.js");
+var AppList     = require("./AppList.js");
 var ipLib       = require("ip");
-
+var config      = require("./config.js")
 // var ip2loc      = require("");
 
 var DataCache   = require("./cache.js");
 var MongoClient = require('mongodb').MongoClient,
     format      = require('util').format;
 
-var MongoConnector = function (host, port) {
+var MongoConnector = function () {
     var self = this;
 
     self.mdb = null;
     self.db_name = "mmt-data";
-    if( host == undefined )
-      return;
+
+    var host = config.database_server.host;
+    var port = config.database_server.port;
+
+
     var connectString = 'mongodb://' + host + ":" + port + "/" + self.db_name;
 
 
@@ -79,6 +82,16 @@ var MongoConnector = function (host, port) {
                                //set
                                [COL.MAC_SRC]),
 
+            link: new DataCache(db, "data_link",
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DEST],
+                               //inc
+                               [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                               //set
+                               [COL.MAC_SRC, COL.MAC_DEST]),
 
             session: new DataCache(db, "data_session",
                                    //key
@@ -208,9 +221,10 @@ var MongoConnector = function (host, port) {
             else
                 */
               if( msg[ COL.IP_SRC_INIT_CONNECTION] )
-                //server_port
+                //remote_port
                 app_name = msg[ COL.PORT_DEST ];
               else
+              //local port
                 app_name = msg[ COL.PORT_SRC ];
 
             //if( app_name == 0 )
@@ -248,8 +262,8 @@ var MongoConnector = function (host, port) {
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
             //group msg by each period
-            var mod = Math.ceil( (ts - self.startProbeTime) / (self.config.probe_stats_period * 1000) );
-            msg[ TIMESTAMP ] = self.startProbeTime + mod * ( self.config.probe_stats_period * 1000 );
+            var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
+            msg[ TIMESTAMP ] = self.startProbeTime + mod *    (config.probe_stats_period * 1000 );
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
 
@@ -294,6 +308,8 @@ var MongoConnector = function (host, port) {
                 self.dataCache.mac.addMessage(     msg );
                 //for each IP src
                 self.dataCache.ip.addMessage(      msg );
+                //for each link IP_SRC - IP_DEST
+                self.dataCache.link.addMessage(    msg );
 
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
@@ -923,10 +939,10 @@ var MongoConnector = function (host, port) {
             return;
         }
 
-        if( self.config.probe_analysis_mode == "online"){
+        if(config.probe_analysis_mode == "online"){
             //if online analysis ==> lastime is the current time of operator machine
             var time = (new Date()).getTime();
-            time -= self.config.probe_stats_period * 1000;
+            time -= config.probe_stats_period * 1000;
             cb( null, time );
             return;
         }
@@ -963,16 +979,7 @@ var MongoConnector = function (host, port) {
             self.lastPacketTimestamp = 0;
 
             console.log("drop database!");
-            //empty also mmt-bandwidth
-            MongoClient.connect('mongodb://' + self.config.database_server + ':27017/mmt-bandwidth', function (err, db) {
-                if (!err)
-                    db.dropDatabase(function (err, doc) {
-                        cb(err);
-                    });
-                else
-                    cb( err );
-            });
-
+            cb( err );
         });
     };
 

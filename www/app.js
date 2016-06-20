@@ -21,9 +21,9 @@ var api             = require('./routes/api');
 var probeRoute      = require('./routes/probe-server.js');
 
 var mmtAdaptor      = require('./libs/dataAdaptor');
-var dbc             = require('./libs/data_db');
-var AdminDB         = require('./libs/admin_db');
-var Probe           = require('./libs/probe');
+var DBC             = require('./libs/DataDB');
+var AdminDB         = require('./libs/AdminDB');
+var Probe           = require('./libs/Probe');
 
 config.version = VERSION;
 //config parser
@@ -34,11 +34,11 @@ console.log( "node version: %s, platform: %s", process.version, process.platform
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 
-var dbconnector = new dbc( config.database_server.host, config.database_server.port );
+var dbconnector = new DBC();
 dbconnector.config = config;
 
-var dbadmin = new AdminDB( config.database_server.host, config.database_server.port );
-var probe   = new Probe( config.probe_analysis_mode );
+var dbadmin = new AdminDB();
+var probe   = new Probe();
 
 var app = express();
 app.config = config;

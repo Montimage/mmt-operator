@@ -1,10 +1,14 @@
 var MongoClient = require('mongodb').MongoClient;
+var config      = require('./config');
 
-function AdminDB( host, port ) {
+function AdminDB() {
     var self     = this;
     self._cache  = {};
     self.db_name = "mmt-admin";
-    
+
+    var host = config.database_server.host;
+    var port = config.database_server.port;
+
     var connectString = "mongodb://"+ host + ":" + port + "/" + self.db_name ;
 
     self.connectString = connectString;

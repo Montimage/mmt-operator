@@ -232,13 +232,37 @@ var ReportFactory = {
           }]
         },{
           label : "FTP Server",
-          type  : "<input>",
+          type  : "<div>",
           attr  : {
-            type        : "text",
-            placeholder : "10.0.0.2",
-            required    : true,
-            id          : "conf-db-ftp-server"
-          }
+            class: "row"
+          },
+          children : [{
+            type : "<div>",
+            attr : {
+              class : "col-sm-5 checkbox"
+            },
+            children:[{
+              type  : "<label>",
+              attr  : {
+                html  : '<input type="checkbox" id="conf-db-ftp-enable" title="Automatically upload backup file to FTP server"> upload file to FTP server'
+              }
+            }]
+          },{
+            type : "<div>",
+            attr : {
+              class : "col-sm-7"
+            },
+            children:[{
+              type  : "<input>",
+              attr  : {
+                required    : true,
+                class       : "form-control",
+                type        : "text",
+                placeholder : "10.0.0.2",
+                id          : "conf-db-ftp-server"
+              }
+            }]
+          }]
         },
         {
           label    : "",
@@ -254,6 +278,7 @@ var ReportFactory = {
             children : [{
               type : "<input>",
               attr : {
+                required    : true,
                 class       : "form-control",
                 placeholder : "ftp username",
                 id          : "conf-db-ftp-username"
@@ -267,12 +292,14 @@ var ReportFactory = {
             children : [{
               type : "<input>",
               attr : {
+                required    : true,
                 class       : "form-control",
                 placeholder : "ftp password",
                 type        : "password",
+                //style+readonly are add to avoid browser load default username+password
                 readonly    : true,
                 style       : "background-color: white !important",
-                onfocus     : "this.removeAttribute('readonly');",
+                onfocus     : "this.removeAttribute('readonly');this.removeAttribute('style');",
                 id          : "conf-db-ftp-password",
               }
             }]
@@ -305,36 +332,15 @@ var ReportFactory = {
               value: 'Save'
             }
           },{
-            type : "<div>",
+            type: "<a>",
             attr: {
-              class: "btn-group  pull-right dropup",
-            },
-            children:[{
-              type: "<input>",
-              attr: {
-                type : "button",
-                id   : "conf-db-btnRestore",
-                class: "btn btn-success",
-                value: 'Restore'
-              }
-            },{
-              type : "<button>",
-              attr : {
-                "type"          : "button",
-                "class"         : "btn btn-success dropdown-toggle",
-                "data-toggle"   : "dropdown",
-                "aria-haspopup" : true,
-                "aria-expanded" : true,
-                "html"          : '<span class="caret"/><span class="sr-only">Toggle Dropdown</span>'
-              },
-            },{
-              type : "<ul>",
-              attr : {
-                class : "dropdown-menu",
-                html  : '<li><a> Upload </a></li>'
-              }
-            }]
+              href : "/chart/setting/restore_db",
+              id   : "conf-db-btnRestore",
+              class: "btn btn-success pull-right",
+              text : 'Restore'
+            }
           },{
+            //Backup Now button
             type : "<span>",
             attr: {
               style: "margin-right: 10px",
@@ -358,6 +364,12 @@ var ReportFactory = {
 
     $("#database-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
 
+    //style+readonly was add to avoid browser load default username+password
+    setTimeout( function(){
+      $("#conf-db-ftp-password").removeAttr("style").removeAttr("readonly");
+    }, 500);
+
+
     //when click on Empty
     $("#conf-db-btnEmpty").on("click", function(){
       if( confirm("Empty Database of MMT-Operator\nDo you want to cancel?") )
@@ -372,13 +384,19 @@ var ReportFactory = {
         })
     });
 
+    $("#conf-db-ftp-enable").change( function(){
+      var is_on = $(this).is(":checked");
+      $("#conf-db-ftp-server").setEnable( is_on );
+      $("#conf-db-ftp-username").setEnable( is_on );
+      $("#conf-db-ftp-password").setEnable( is_on );
+      $("#conf-db-ftp-secure").setEnable( is_on );
+    })
     //when click on Save or submit form
     //when user submit form
     $("#conf-db-form").validate({
       errorClass  : "text-danger",
       errorElement: "span",
       rules:{
-        "conf-db-ftp-server" : {ipv4 : true}
       },
       //when the form was valided
       submitHandler : function( form ){
@@ -389,6 +407,7 @@ var ReportFactory = {
             username : $("#conf-db-ftp-username").val(),
             password : $("#conf-db-ftp-password").val(),
             isSecure : $("#conf-db-ftp-secure").is(":checked"),
+            isEnable : $("#conf-db-ftp-enable").is(":checked"),
           }
         }
         MMTDrop.tools.ajax("/info/db?action=save", {$set: data}, "POST", {
@@ -396,7 +415,7 @@ var ReportFactory = {
             MMTDrop.alert.error("Internal Error 201", 10*1000);
           },
           success: function(){
-            MMTDrop.alert.success("Successfully saved information", 10*1000);
+            MMTDrop.alert.success("Successfully saved information", 5*1000);
           }
         })
       }//end submitHandler
@@ -408,35 +427,54 @@ var ReportFactory = {
         error  : function(){},
         success: function( data ){
           if( data.length > 0 ){
-            data = data[0];
+            data = data[0] || {};
             if( data.ftp ){
               $("#conf-db-auto").val(         data.autobackup );
               $("#conf-db-ftp-server").val(   data.ftp.server );
               $("#conf-db-ftp-username").val( data.ftp.username );
               $("#conf-db-ftp-password").val( data.ftp.password );
               $("#conf-db-ftp-secure").prop( "checked", data.ftp.isSecure );
-
-              $("#conf-db-last-backup").text(  data.lastBackup == undefined ? "undefined" : data.lastBackup );
-              if( data.lastBackup == undefined )
-                $("#conf-db-download-backupBtn").hide();
-              else
-                $("#conf-db-download-backupBtn").show();
+              $("#conf-db-ftp-enable").prop( "checked", data.ftp.isEnable ).trigger("change");
             }
 
+            if( data.lastBackup == undefined )
+              $("#conf-db-download-backupBtn").hide();
+            else
+              $("#conf-db-download-backupBtn").show();
+
+            //show last backup file
+            var text = "undefined";
+            if( data.lastBackup ){
+              text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+            }
+            $("#conf-db-last-backup").html( text );
+
+
             if( data.isBackingUp ){
-              $("#parentBackupNowBtn").html(  $('<span><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
+              $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
+              $("#conf-db-btnEmpty").disable();
+              $("#conf-db-btnRestore").disable();
             }else {
               //database is being backed up
               if( window._backupTimer ){
                 clearInterval( window._backupTimer );
-                MMTDrop.alert.success( "Successfully backed up database", 5*1000 );
+
+                if( data.lastBackup.error ){
+                  MMTDrop.alert.error( "Error while backing up database: " + JSON.stringify(data.lastBackup.error), 10*1000 );
+                }else
+                  MMTDrop.alert.success( "Successfully backed up database", 5*1000 );
+
+                $("#conf-db-btnEmpty").enable();
+                $("#conf-db-btnRestore").enable();
               }
-              
+
               $("#parentBackupNowBtn").html(  $('<a class="btn btn-info" title="Backup Now" id="backupNowBtn">Backup now</a>') );
               //when click on "backup now"
               $("#backupNowBtn").on("click", function(){
                 //change button ==> backing up
-                $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> backing up ...</span>') );
+                $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
+                $("#conf-db-btnEmpty").disable();
+                $("#conf-db-btnRestore").disable();
 
                 //check whenether the backingup finished
                 window._backupTimer = setInterval(window._loadData, 10000) ;
@@ -448,18 +486,12 @@ var ReportFactory = {
                     MMTDrop.alert.error("Internal Error 201", 10*1000);
                   },
                   success: function(){
-                    MMTDrop.alert.success("Starting to backup database", 5*1000);
+                    MMTDrop.alert.success("Starting to backup database", 3*1000);
                   }
                 })
               });
 
             }//end else
-
-            var text = "undefined";
-            if( data.lastBackup ){
-              text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
-            }
-            $("#conf-db-last-backup").html( text );
           }
         }
       });
@@ -664,7 +696,7 @@ var ReportFactory = {
               MMTDrop.alert.error("Cannot update the interfaces", 10*1000);
             },
             success: function(){
-              MMTDrop.alert.success("Successfully updated the interfaces", 10*1000);
+              MMTDrop.alert.success("Successfully updated the interfaces", 5*1000);
               obj.interfaces[ data.admin.iface ] = data.admin;
               /*
               setTimeout( function(){
@@ -792,7 +824,7 @@ var ReportFactory = {
             MMTDrop.alert.error("Cannot update the configure of MMT-Operator", 10*1000);
           },
           success: function(){
-            MMTDrop.alert.success("Successfully updated the configure of MMT-Operator", 10*1000);
+            MMTDrop.alert.success("Successfully updated the configure of MMT-Operator", 5*1000);
             obj.interfaces[ data.admin.iface ] = data.admin;
           }
         })

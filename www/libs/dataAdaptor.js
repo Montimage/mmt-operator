@@ -373,7 +373,9 @@ var MMTDrop = {
         var COL       = this.StatsColumnId;
         if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
             return msg;
+            
         msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
+
         if( this.isLocalIP( msg[COL.IP_SRC] )  )
             return msg;
         else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
@@ -568,7 +570,7 @@ function format_session_report( msg ){
   /**
   * in the probe version 98f750c, on May 03 2016
   * report id = 100 has 2 protocol path: one for uplink, one for down link
-  * this function will device a report into 2 reports as before:
+  * this function will return a report (as before) which takes the app_path as the longest one:
   */
   //remove one path: UP_PATH, retain DOWN_PATH
   msg.splice( 5, 1 );

@@ -1,7 +1,7 @@
-var mongo         = require('mongodb').MongoClient,
-    format        = require('util').format,
+var format        = require('util').format,
     dataAdaptor   = require('../libs/dataAdaptor'),
-    HttpException = require('../libs/HttpException');
+    HttpException = require('../libs/HttpException'),
+    AdminDB       = require("../libs/AdminDB");
 
 var express = require('express');
 var router  = express.Router();
@@ -12,7 +12,8 @@ var connect_to_db = function( cb ){
         cb( null, router.mdb );
         return;
     }
-    mongo.connect(router.dbConnectionString, function (err, db){
+    var admin_db = new AdminDB();
+    admin_db.connect(function (err, db){
        if(!err)
            router.mdb = db;
         cb( err, db );
