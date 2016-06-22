@@ -267,18 +267,26 @@ $(function () {
       d3.selectAll("path").attr("fill", "none");
       d3.selectAll(".tick line, path.domain, c3-ygrid").attr("stroke", "black");
 
-      var $form = MMTDrop.tools.createDOM({
-        type : "<form>",
-        attr : {
-          method : "POST"
-        },
-        children:[{
-          type : "<input>",
+      var $form = $("#frmUploadImage");
+      //for the first time
+      if( $form.length == 0){
+
+        $form = MMTDrop.tools.createDOM({
+          type : "<form>",
           attr : {
-            name : "data",
-          }
-        }]
-      });
+            id     : "frmUploadImage",
+            method : "POST",
+            style  : "display: none"
+          },
+          children:[{
+            type : "<input>",
+            attr : {
+              name : "data",
+            }
+          }]
+        });
+        $("body").append($form);
+      }
 
       function render_image( index ){
         if( index >= data.length ) return;

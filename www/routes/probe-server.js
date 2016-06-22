@@ -61,7 +61,7 @@ router.process_message = function (db, message) {
                 console.log("[DONT 1] " + message);
                 return;
             }
-            
+
             if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
                 console.log("[DONT KNOW DIRECTION] " + message);
                 return;
@@ -195,11 +195,16 @@ router.startListeningAtFolder = function (db, folder_path) {
     };
 
 
+    var _cache_files = [];
     //get the oldest file containing data and not beeing locked
     var get_csv_file = function (dir) {
-
+        if( _cache_files.length > 0){
+          //delete the first element from _cache_files and return the element
+          return _cache_files.splice(0, 1)[0];
+        }
         var files = fs.readdirSync(dir);
         var arr = [];
+
         for (var i in files) {
             var file_name = files[i];
             //file was read
@@ -221,9 +226,10 @@ router.startListeningAtFolder = function (db, folder_path) {
             return null;
 
         //sort by ascending of file name
-        arr = arr.sort();
+        _cache_files = arr.sort();
 
-        return arr[0];
+        //delete the first element from _cache_files and return the element
+        return _cache_files.splice(0, 1)[0];
     };
 
 
@@ -234,7 +240,7 @@ router.startListeningAtFolder = function (db, folder_path) {
             return;
         }
 
-        console.log("\nProcessing  file [" + file_name + "]");
+        console.log("file " + file_name);
         try{
             process_file(file_name, function ( total ) {
                 console.log(" ==> DONE ("+ total +" lines)");
