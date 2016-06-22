@@ -113,8 +113,8 @@ var ReportFactory = {
 
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
-            name = name.replace("ETHERNET", "ETH");
-            return name;
+            //name = name.replace("ETHERNET", "ETH");
+            return name == "ETH" ? "Total Bandwidth" : name;
         }
 
         var cLine = MMTDrop.chartFactory.createTimeline({
@@ -167,6 +167,9 @@ var ReportFactory = {
 
                     //filter key
                     for (var cls in obj) {
+                        if( cls == '99')
+                          continue;
+
                         //remove all keys having level > 4, ETHENET.IP.TCP.HTTP.GOOGLE
                         var count = 0;
                         for( var i=0; i<cls.length; i++)
@@ -180,7 +183,7 @@ var ReportFactory = {
                         for( var i=0; i<cls.length; i++)
                             if( cls[ i ] === '.'){
                                 var parent = cls.substr(0, i);
-                                if( obj[ parent ])
+                                if( obj[ parent ] && parent != "99")
                                     delete obj[ parent ];
                             }
                         //delete all applications (retain only protocols)
@@ -198,13 +201,21 @@ var ReportFactory = {
                         //sumup by time
                         o = MMTDrop.tools.sumUp(o, colToSum.id);
                         total = o[ colToSum.id ]
-
-                        columns.push({
-                            id: cls,
-                            label: name,
-                            type: "area-stack",
-                            value: total
-                        });
+                        if( cls != '99')
+                          columns.push({
+                              id   : cls,
+                              label: name,
+                              type : "area-stack",
+                              value: total
+                          });
+                        else {
+                          columns.push({
+                              id   : cls,
+                              label: name,
+                              type : "line",
+                              value: total
+                          });
+                        }
                     }
 
 
@@ -215,7 +226,7 @@ var ReportFactory = {
 
 
                     //retain only the top
-                    var top = 7;
+                    var top = 8;
                     if (columns.length > top) {
 
                         columns.splice(top, columns.length - top);
@@ -223,6 +234,7 @@ var ReportFactory = {
                         //other
                         var val = 0;
                         for (var i = 0; i < columns.length; i++)
+                          if( columns[i].id != '99')
                             val += columns[i].value;
 
                         if( val < cLine.dataLegend.dataTotal )
@@ -231,6 +243,7 @@ var ReportFactory = {
                         //other
                         var val = 0;
                         for (var i = 0; i < columns.length; i++)
+                          if( columns[i].id != '99')
                             val += columns[i].value;
 
                         if( val < cLine.dataLegend.dataTotal )
@@ -239,6 +252,7 @@ var ReportFactory = {
 
                     //update legend
                     for( var i in columns )
+                      if( columns[i].id != '99')
                         cLine.dataLegend.data[ columns[i].label ] = columns[i].value;
 
 
@@ -247,7 +261,7 @@ var ReportFactory = {
                         var o = obj[cls];
                         var name = setName( cls );
 
-                        if( cLine.dataLegend.data[ name ] === undefined )
+                        if( cls != '99' && cLine.dataLegend.data[ name ] === undefined )
                             //cls = "other";
                             continue;
 
@@ -314,7 +328,7 @@ var ReportFactory = {
                     }
                 },
                 color: {
-                    pattern: ['red', 'peru', 'orange', 'NavajoWhite', 'MediumPurple', 'purple', 'magenta', 'blue', 'MediumSpringGreen', 'green', ]
+                    pattern: ['gray', 'red', 'peru', 'orange', 'NavajoWhite', 'MediumPurple', 'purple', 'magenta', 'blue', 'MediumSpringGreen', 'green', ]
                 },
                 legend: {
                     show: false
@@ -326,6 +340,35 @@ var ReportFactory = {
                         }
                     },
                 },
+                tooltip: {
+                  contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                        var $$ = this, config = $$.config,
+                            titleFormat = config.tooltip_format_title || defaultTitleFormat,
+                            nameFormat = config.tooltip_format_name || function (name) { return name; },
+                            valueFormat = config.tooltip_format_value || defaultValueFormat,
+                            text, i, title, value, name, bgcolor;
+                            //push "Total Bandwidth" to the top
+                            d.push( d[0] );
+                            for (i = d.length; i >0; i--) {
+                              if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
+
+                              if (! text) {
+                                  title = titleFormat ? titleFormat(d[i].x) : d[i].x;
+                                  text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
+                              }
+
+                              name = nameFormat(d[i].name);
+                              value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
+                              bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+
+                              text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
+                              text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
+                              text += "<td class='value'>" + value + "</td>";
+                              text += "</tr>";
+                          }
+                        return text + "</table>";
+                    },
+                },
                 grid: {
                     x: {
                         show: false
@@ -334,11 +377,6 @@ var ReportFactory = {
                 zoom: {
                     enabled: false,
                     rescale: false
-                },
-                tooltip:{
-                    format: {
-                        title:  _this.formatTime
-                    }
                 },
             },
 	                //custom legend
@@ -415,20 +453,6 @@ var ReportFactory = {
                             "style": "width: 30px",
                             "align": "right"
                         })
-                        //.css({
-                        //    "background-color": chart.color(key)
-                        //})
-                        //.on('mouseover', function () {
-                        //    chart.focus($(this).data("id"));
-                        //})
-                        //.on('mouseout', function () {
-                        //    chart.revert();
-                        //})
-                        //.on('click', function () {
-                        //    var id = $(this).data("id");
-                        //    chart.toggle(id);
-                        //    //$(this).css("background-color", chart.color(id) );
-                        //})
                         .appendTo($tr);
 
                     $("<td>Other</td>") .appendTo($tr);
@@ -477,11 +501,13 @@ var ReportFactory = {
                 var legendId = _chart.elemID + "-legend";
 
                 $("#"+ legendId).remove();
-                $("#" + _chart.elemID).parent().parent().parent().append(
-                    $('<div class="col-md-4 overflow-auto-xy" id="' + legendId + '"/>')
+                var $parent = $("#" + _chart.elemID).parent().parent();
+                $parent.css("width", "calc(100% - 390px");
+                _chart.chart.resize()
+                $parent.parent().append(
+                    $('<div style="width: 360px; margin-right: 15px" class="pull-right overflow-auto-xy" id="' + legendId + '"/>')
                 );
                 $table.appendTo($("#" + legendId));
-
 
                 var table = $table.dataTable({
                     paging: false,
@@ -508,10 +534,9 @@ var ReportFactory = {
                     chart: _chart
                 }, function (event, widget) {
                     var height = widget.find(".grid-stack-item-content").innerHeight();
-                    height -= widget.find(".filter-bar").outerHeight(true) + 15;
-                    console.log( "resize protocol chhart " + height );
+                    height    -= widget.find(".filter-bar").outerHeight(true) + 15;
                     event.data.chart.chart.resize({
-                        height: height
+                        height: height,
                     });
                 });
             }
@@ -543,7 +568,7 @@ var ReportFactory = {
 					[
                 {
                     charts: [cLine],
-                    width: 8
+                    width: 12
                 },
 					 ],
 

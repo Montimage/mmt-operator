@@ -373,16 +373,14 @@ var MMTDrop = {
         var COL       = this.StatsColumnId;
         if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
             return msg;
-            
+
         msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
 
-        if( this.isLocalIP( msg[COL.IP_SRC] )  )
-            return msg;
-        else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
+        if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
           msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
           return this.inverseStatDirection( msg )
         }
-        return null;
+        return msg;
     },
 
     /**
@@ -617,9 +615,9 @@ function format_session_report( msg ){
  */
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
-    var formatTime = function( ts ){
-        var time = Math.round( ts * 1000 ) ; //round to second
 
+    var formatTime = function( ts ){
+        var time = Math.ceil( ts * 1000 ) ; //ceil: returns the smallest integer greater than or equal to a given number
         return time;
     }
     //timestamp

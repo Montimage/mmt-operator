@@ -103,8 +103,8 @@ app.use(morgan(':time :method :url :status :response-time ms - :res[content-leng
                }
               )
        );
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json({limit: '200mb'}));
+app.use(bodyParser.urlencoded({limit: '200mb', extended: false }));
 app.use(cookieParser());
 
 app.use(session({
@@ -143,6 +143,8 @@ app.use("/info/conf", route_conf);
 var route_db = require("./routes/info/db");
 route_db._objRef = _objRef;
 app.use("/info/db", route_db);
+
+app.use("/export", require("./routes/html2img.js"));
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){

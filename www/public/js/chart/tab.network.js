@@ -4,7 +4,7 @@ var arr = [
         title: "Top Users",
         x: 0,
         y: 0,
-        width: 4,
+        width: 3,
         height: 9,
         type: "info",
         userData: {
@@ -14,9 +14,9 @@ var arr = [
     {
         id: "top_profile",
         title: "Top Profiles",
-        x: 4,
+        x: 3,
         y: 0,
-        width: 4,
+        width: 3,
         height: 9,
         type: "success",
         userData: {
@@ -26,9 +26,9 @@ var arr = [
     {
         id: "top_location",
         title: "Top Geo Locations",
-        x: 8,
+        x: 6,
         y: 0,
-        width: 4,
+        width: 3,
         height: 9,
         type: "info",
         userData: {
@@ -38,9 +38,9 @@ var arr = [
     {
         id: "top_link",
         title: "Top Links",
-        x: 8,
+        x: 9,
         y: 0,
-        width: 4,
+        width: 3,
         height: 9,
         type: "warning",
         userData: {
@@ -63,6 +63,8 @@ function getHMTL( tag ){
     return html;
 }
 
+//limit number of rows of a table
+var LIMIT_SIZE=500;
 //create reports
 var ReportFactory = {
     createDetailOfApplicationChart2: function () {
@@ -431,8 +433,10 @@ var ReportFactory = {
     createApplicationReport: function (filter, ip) {
         var self = this;
         var db_param = {id: "network.profile" };
-        if( ip !== undefined )
-            db_param["userData"] = {ip: ip};
+        if( ip !== undefined ){
+            db_param.userData = {ip: ip };
+            db_param.id       = "network.ip";
+        }
         var database = MMTDrop.databaseFactory.createStatDB( db_param );
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
@@ -703,8 +707,10 @@ var ReportFactory = {
     createTopProfileReport: function (filter, ip) {
         var self = this;
         var db_param = {id: "network.profile" };
-        if( ip !== undefined )
-            db_param["userData"] = {ip: ip };
+        if( ip !== undefined ){
+            db_param.userData = {ip: ip };
+            db_param.id       = "network.ip";
+        }
         var database = MMTDrop.databaseFactory.createStatDB( db_param );
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
@@ -1006,8 +1012,21 @@ var ReportFactory = {
     },
     createTopLinkReport: function (filter) {
         var self = this;
-        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_link", action: "find"});
-        var COL      = MMTDrop.constants.StatsColumn;
+        var COL  = MMTDrop.constants.StatsColumn;
+        //mongoDB aggregate
+        var group = { _id : {} };
+
+        [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+          group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+          group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
+          group[ el ] = {"$first" : "$"+ el};
+        } );
+
+        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_link", action: "aggregate", query: [{$group: group}]});
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -1027,7 +1046,7 @@ var ReportFactory = {
                     };
 
                     var db_data  = db.data();
-                    var sperator = " <-> ";
+                    var sperator = " &#x21cb; ";
                     for( var i=0; i< db_data.length; i++){
                         var val     = db_data[i][ col.id ];
                         var ip_src  = db_data[i][ COL.IP_SRC.id ] ;
@@ -1059,8 +1078,8 @@ var ReportFactory = {
                     var top = 7;
 
 
-                    if( cPie.showAll === true && data.length >= 200 ){
-                        top = 200;
+                    if( cPie.showAll === true && data.length > LIMIT_SIZE ){
+                        top = LIMIT_SIZE;
                         cPie.showAll = false;
                     }
 
@@ -1164,7 +1183,7 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var $label = $("<a>", {
-                        text : key,
+                        html : key,
                         title: "click to show detail of this user",
                         href :"network/link?ips=" + legend.data[key].ips.join(",")
                     });
@@ -1365,8 +1384,8 @@ var ReportFactory = {
                     var top = 7;
 
 
-                    if( cPie.showAll === true && data.length >= 200 ){
-                        top = 200;
+                    if( cPie.showAll === true && data.length >= LIMIT_SIZE ){
+                        top = LIMIT_SIZE;
                         cPie.showAll = false;
                     }
 
@@ -1638,8 +1657,10 @@ var ReportFactory = {
     createTopProtocolReport: function (filter, ip) {
         var self = this;
         var db_param = {id: "network.profile" };
-        if( ip !== undefined )
-            db_param["userData"] = {ip: ip };
+        if( ip !== undefined ){
+            db_param.userData = {ip: ip };
+            db_param.id       = "network.ip";
+        }
         var database = MMTDrop.databaseFactory.createStatDB( db_param );
         var COL      = MMTDrop.constants.StatsColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
@@ -1984,8 +2005,8 @@ var ReportFactory = {
 
                     var top = 7;
 
-                    if( cPie.showAll === true && data.length >= 200 ){
-                        top = 200;
+                    if( cPie.showAll === true && data.length >= LIMIT_SIZE ){
+                        top = LIMIT_SIZE;
                         cPie.showAll = false;
                     }
 

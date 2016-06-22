@@ -62,6 +62,7 @@ var MongoConnector = function () {
                                  []),
 
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
+            //the parents is marked by isGen = true
             app: new DataCache(db, "data_app",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
                                //inc
@@ -69,7 +70,9 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT]),
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                                //set
+                                ["isGen"]),
 
             ip: new DataCache(db, "data_ip",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
@@ -81,7 +84,16 @@ var MongoConnector = function () {
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                //set
                                [COL.MAC_SRC]),
-
+           location: new DataCache(db, "data_location",
+                              [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.DST_LOCATION],
+                              //inc
+                              [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+                               COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                               COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                               COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                              //set
+                              [COL.MAC_SRC]),
             link: new DataCache(db, "data_link",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DEST],
                                //inc
@@ -136,6 +148,7 @@ var MongoConnector = function () {
     self.probeStatus = {
         set: function( last_update ){
             if( self.startProbeTime == undefined ){
+                this._last_update = last_update;
                 //useful when no element in collection "probe_status"
                 self.startProbeTime = last_update;
                 self.mdb.collection("probe_status").find({}).sort({"start": -1}).toArray( function( err, arr){
@@ -150,10 +163,12 @@ var MongoConnector = function () {
 
                 return;
             }
+            //no need to update the past
+            if( this._last_update >= last_update ) return;
 
             var start = self.startProbeTime;
 
-            self.mdb.collection("probe_status").update( {start: start}, {start: start, last_update: last_update}, {upsert: true});
+            self.mdb.collection("probe_status").update( {_id: start}, {_id: start, start: start, last_update: last_update}, {upsert: true});
         },
         get: function( period, callback ){
             self.mdb.collection("probe_status").find(
@@ -198,7 +213,24 @@ var MongoConnector = function () {
             self.probeStatus.set( ts );
         }
     };
+    var default_port = {
+      //proto : port
+      153: 80, //HTTP
+      341: 443, //SSL
 
+    }
+    var get_port = function( msg ){
+      var val = default_port[ msg[ COL.APP_ID ] ];
+
+      if( msg[ COL.PORT_SRC ] == val || msg[ COL.PORT_DEST ] == val )
+        return val;
+      if( msg[ COL.IP_SRC_INIT_CONNECTION] )
+        //remote_port
+        return msg[ COL.PORT_DEST ];
+      else
+      //local port
+        return msg[ COL.PORT_SRC ];
+    }
     var update_proto_name = function( msg ){
         //An app is reported as a protocol
         if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
@@ -220,12 +252,14 @@ var MongoConnector = function () {
             //
             else
                 */
-              if( msg[ COL.IP_SRC_INIT_CONNECTION] )
-                //remote_port
-                app_name = msg[ COL.PORT_DEST ];
-              else
-              //local port
-                app_name = msg[ COL.PORT_SRC ];
+              switch ( msg[ COL.APP_ID ]) {
+                case 354://HTTP
+
+                  break;
+                default:
+
+              }
+              app_name = get_port( msg );
 
             //if( app_name == 0 )
             //    console.log( msg );
@@ -248,13 +282,13 @@ var MongoConnector = function () {
         var msg = dataAdaptor.formatReportItem(message);
         var msg2;
         var ts = msg[ TIMESTAMP ];
-        if( self.startProbeTime == undefined )
-            self.startProbeTime = ts;
-
-
         var format = msg[ FORMAT_ID ];
 
         if ( format === 100 || format === 99 ){
+            //the timestamp of the first message from probe
+            if( self.startProbeTime === undefined )
+              self.startProbeTime = ts;
+
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
 
             //as 2 threads may produce a same session_ID for 2 different sessions
@@ -264,6 +298,7 @@ var MongoConnector = function () {
             //group msg by each period
             var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
             msg[ TIMESTAMP ] = self.startProbeTime + mod *    (config.probe_stats_period * 1000 );
+
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
 
@@ -310,6 +345,8 @@ var MongoConnector = function () {
                 self.dataCache.ip.addMessage(      msg );
                 //for each link IP_SRC - IP_DEST
                 self.dataCache.link.addMessage(    msg );
+                //remote location
+                self.dataCache.location.addMessage(msg );
 
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
@@ -334,11 +371,10 @@ var MongoConnector = function () {
 
 
             //add traffic for each app in the app_path
-            msg2 = msg;
-            var arr = [];
+            msg2 = JSON.parse(JSON.stringify( msg ));
+            msg2.isGen = false;//this means that this report is given by mmt-probe
+            var arr = [msg2];
             do{
-                arr.push( msg2 );
-
                 index = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 if( index === -1 ) break; //root
                 //clone
@@ -346,11 +382,15 @@ var MongoConnector = function () {
                 msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index  );
                 index                 = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 msg2[ COL.APP_ID   ]  = msg2[ COL.APP_PATH ].substr( index + 1 );
+                //this mean that this report is generated by mmt-operator
+                //to get the parents of the report that was generated by mmt-probe
+                msg2.isGen = true;
+                arr.push( msg2 );
             }
             while( true );
             self.dataCache.app.addArray( arr );
 
-
+            return;
         }else if (format === 0 || format == 1 || format == 2){
             update_packet_timestamp( ts );
             //delete data when a session is expired
@@ -362,6 +402,7 @@ var MongoConnector = function () {
             else{
                 console.log( "unknown session " + session_id );
             }
+            return;
         }
 
         if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
@@ -400,6 +441,7 @@ var MongoConnector = function () {
 
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
             self.probeStatus.set( ts );
+            return;
         }
 
 
@@ -622,7 +664,7 @@ var MongoConnector = function () {
     self.getCurrentProtocolStats = function (options, callback) {
         if (options.id !== "") {
 
-            if (["link.protocol", "dpi.app", "dpi.detail"].indexOf(options.id) > -1){
+            if (["link.protocol", "dpi.app", "dpi.detail","network.profile","app.list"].indexOf(options.id) > -1){
                 options.collection = "data_app_" + options.period_groupby;
             }else if (["link.traffic"].indexOf(options.id) > -1)
                 options.collection = "data_total_" + options.period_groupby;
@@ -631,8 +673,8 @@ var MongoConnector = function () {
             else if (["network.user"].indexOf(options.id) > -1)
                 options.collection = "data_ip_" + options.period_groupby;
             else if (["network.country"].indexOf(options.id) > -1)
-                options.collection = "data_session_" + options.period_groupby;
-            else if (["network.profile","network.detail", "network.destination",  "app.detail", "app.list"].indexOf(options.id) > -1)
+                options.collection = "data_location_" + options.period_groupby;
+            else if (["network.ip","network.detail", "network.destination",  "app.detail"].indexOf(options.id) > -1)
                 options.collection = "data_session_" + options.period_groupby;
             else if( options.id === "chart.license")
                 options.collection = "license";
@@ -787,11 +829,15 @@ var MongoConnector = function () {
                 return;
             }
 
-            if (options.id === "network.profile" || options.id === "app.list" || options.id === "dpi.app") {
+            if (options.id === "network.ip" || options.id === "network.profile" || options.id === "app.list" || options.id === "dpi.app") {
                 if( options.userData ){
                     if( options.userData.ip )
                         options.query[ COL.IP_SRC ] = options.userData.ip;
                 }
+                if(options.id === "network.profile" || options.id === "app.list")
+                  //get only the reports that was generated by mmt-probe (not by mmt-operator)
+                  options.query.isGen = false;
+
                 //id of group_by
                 var groupby = { "_id": "$" + COL.APP_PATH };
                 //sumup

@@ -1,7 +1,8 @@
 var config    = require("../libs/config")
   , manager   = require("../libs/manager_db")
   , AdminDB   = require("../libs/AdminDB")
-  , DataDB    = require("../libs/DataDB");
+  , DataDB    = require("../libs/DataDB")
+  , fs        = require("fs");
 
 
 var dbadmin = new AdminDB();
@@ -74,7 +75,8 @@ function backup( callback ){
           var lastBackup = {
                 time     : (new Date()).getTime(),
                 file     : file.substr( file.indexOf("public/") + "public/".length ),
-                error    : err
+                error    : err,
+                size     : fs.statSync( file ).size
               };
 
           data = {

@@ -260,4 +260,83 @@ $(function () {
     }else
         //checkbox is already checked ==> trigger its event
         $("#isAutoReloadChk").trigger("change");
+
+
+    //download images
+    $("#exportBtn").click( function(){
+      d3.selectAll("path").attr("fill", "none");
+      d3.selectAll(".tick line, path.domain, c3-ygrid").attr("stroke", "black");
+
+      var $form = MMTDrop.tools.createDOM({
+        type : "<form>",
+        attr : {
+          method : "POST"
+        },
+        children:[{
+          type : "<input>",
+          attr : {
+            name : "data",
+          }
+        }]
+      });
+
+      function render_image( index ){
+        if( index >= data.length ) return;
+        var node       = data[index];
+        var targetElem = $("#" + node.id);
+
+        console.log( "Rendering image for tab." + node.id)
+
+        // First render all SVGs to canvases
+        var elements = targetElem.find('svg').map(function() {
+            var svg    = $(this);
+            var canvas = $('<canvas>');
+
+            // Get the raw SVG string and curate it
+            var content = svg[0].outerHTML.trim();
+            canvg( canvas[0], content );
+
+            //temporary replace the svg by the canvas
+            //the svg will be put back after rendering image
+            svg.replaceWith(canvas);
+
+            return {
+                svg   : svg,
+                canvas: canvas
+            };
+        });
+        //return;
+        // At this point the container has no SVG, it only has HTML and Canvases.
+        html2canvas( targetElem, {
+          //allowTaint: true,
+          letterRendering: true,
+	        onrendered: function(canvas) {
+            var ctx=canvas.getContext("2d");
+
+            // Put the SVGs back in place
+            elements.each(function() {
+              this.canvas.replaceWith(this.svg);
+            });
+
+            //add water mark
+	    	    ctx.font      = "14px Arial";
+		        ctx.fillStyle = "grey";
+	    	    ctx.fillText("Montimage", 15, canvas.height - 12);
+            //get image based_64
+	    	    var image    = canvas.toDataURL("image/png");
+		        var fileName = node.id + "-" + (new Date()).toLocaleString() + ".png";
+
+            $form.attr("action", "/export?filename=" + fileName);
+            $form.children().val( image );
+            $form.submit();
+
+            //for others reports
+            if( index < data.length - 1 )
+              setTimeout( render_image, 1000, index + 1);
+	        }
+	      });// end html2canvas
+      }
+      render_image( 0 );
+
+    })//end $("#exportBtn").click
 });

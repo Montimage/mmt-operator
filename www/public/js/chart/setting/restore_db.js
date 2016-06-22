@@ -107,10 +107,19 @@ var ReportFactory = {
 
         //when user click on Delete button
         $(".btn-delete").on("click", function(){
-
-          if( confirm("Delete this backup ["+ this.dataset["file"] +"]\nDo you want to cancel?") )
+          var file = this.dataset["file"];
+          if( confirm("Delete this backup ["+ file +"]\nDo you want to cancel?") )
             return;
           $(this).disable();
+          
+          MMTDrop.tools.ajax("/info/db?action=delete", "POST", {file: file}, {
+            error: function(){
+              MMTDrop.alert.error("Internal Error 601", 5*1000);
+            },
+            success: function(){
+
+            }
+          })
         });
       }
     });

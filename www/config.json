@@ -6,7 +6,7 @@
    "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
    "delete_data": true,
    "input_mode": "redis",
-   "probe_analysis_mode": "offline",
+   "probe_analysis_mode": "online",
    "local_network": [
       {
          "ip": "192.168.0.0",

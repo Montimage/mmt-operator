@@ -1500,7 +1500,9 @@ MMTDrop.tools = function () {
     document.location.href = url;
   };
 
-  _this.ajax =  function( url, data, method, callback ){
+  _this.ajax =  function( url, data, method, callback, options ){
+    options = options || {};
+
     //convert to string for POST request
     if( method == "POST")
       if( typeof data == "object" )
@@ -1511,11 +1513,11 @@ MMTDrop.tools = function () {
         $.ajax({
           url        : url,
           type       : method,
-          dataType   : "json",
-          contentType: "application/json",
+          dataType   : options.dataType ? options.dataType :"json",
+          contentType: options.contentType ? options.contentType : "application/json",
           data       : data,
           cache      : (method == "GET" ? true: false),
-          timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 10000, //10 seconds
+          timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 30000, //30 seconds
           error      : callback.error, // (xhr, status, error),
           success    : function(data) {
             callback.success(data);
@@ -1527,7 +1529,7 @@ MMTDrop.tools = function () {
               },
 
               404 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Page not found", 10); },
-              500 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Cannot connect to database", 10); }
+              500 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Internal Error 500", 10); }
           }
         });
         return;
@@ -5041,8 +5043,8 @@ MMTDrop.chartFactory = {
 
                 var len = arrData.length;
                 if( len > 50 ){
-                    arrData.length = len = 50;
-                    MMTDrop.alert.error("Pie chart draws only the first 20 elements", 10*1000);
+                    arrData.length = len = 0;
+                    //MMTDrop.alert.error("Pie chart draws only the first 20 elements", 10*1000);
                 }
 
         for (var i=0; i<len; i++){
@@ -5450,7 +5452,7 @@ MMTDrop.chartFactory = {
             obj[j] = [ columns[j].label];
         }
 
-        if( option.addZeroPoints  ){
+        if( option.addZeroPoints ){
             var time        = option.addZeroPoints.time;
             var period      = option.addZeroPoints.sample_period;
             var probeStatus = option.addZeroPoints.probeStatus;
@@ -5476,8 +5478,8 @@ MMTDrop.chartFactory = {
                 lastTS += period;
                 var exist = false;
 
-                //cumulate data in this period: ((lastTS - period), lastTS]
-                // for the first interaval:     [ begin,   begin + period ]
+                //cumulate data in this period: [(lastTS - period), lastTS)
+                // for the last interaval:      [ end - period,       end ]
                 var data  = [];
                 //start from 1 as 0 is timestamp
                 for( var j=1; j<n; j++)
@@ -5494,17 +5496,16 @@ MMTDrop.chartFactory = {
                   //the first column is timestamp
                   //omit the elements outside the period
                   if( ts > lastTS )//as arrData is sorted by asc. of ts
-                      break;
-                  //if( ts == lastTS && ts != begin)
+                    break;
+                  // for the last interaval: [ end - period, end ]
+                  if( ts == lastTS && ts != end )
+                    break;
 
-                  if( ts < lastTS )
+                  //start from ts == (lastTS - period)
+                  if( ts < lastTS - period )
                     continue;
-                  // for the first interaval: [ begin, begin + period ]
-                  if( ts == lastTS - period && ts != begin )
-                      continue;
 
                   count ++;
-                  //console.log( ts );
                   exist = true;
                   for( var j=1; j<n; j++)
                       if( arrData[i][j] !== undefined )
@@ -5515,7 +5516,7 @@ MMTDrop.chartFactory = {
 
                 //timestamp is the one of a report if the report exist
                 //otherwise, it is fixed by the moment of refreshing the web page
-                if( exist && lastTS <= end && lastTS != ts + period && ts > begin )
+                if( exist && lastTS <= end && lastTS - period < ts && ts < lastTS && ts > begin )
                     lastTS = ts;
 
                 //add this data if having data
@@ -5523,7 +5524,7 @@ MMTDrop.chartFactory = {
                 if( lastTS <= end || exist){
                     var probeRunningInThisPeriod = false;
                     if( exist )
-                        probeRunningInThisPeriod = true;
+                        probeRunningInThisPeriod = true; //sure as it reports data to MMT-Operator
                     else
                         for( var j in probeStatus )
                             if( probeStatus[j].start <= lastTS && lastTS <= probeStatus[j].last_update ){
