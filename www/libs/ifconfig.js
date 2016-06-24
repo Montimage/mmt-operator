@@ -4,11 +4,12 @@ var assert = require('assert');
 var cp     = require('child_process');
 var fs     = require('fs');
 var os     = require("os");
-var is_support = (os.platform() == "linux");
+var PLATFORM = os.platform();
+var is_support = (PLATFORM == "linux");
 
 
 var FILE = '/etc/network/interfaces';
-if( os.platform() == "darwin" ){
+if( PLATFORM == "darwin" ){
   FILE = './test/interfaces';
   is_support = true;
 }
@@ -113,11 +114,12 @@ module.exports = {
           if (err)  return cb(err);
 
           //restart network
-          if( os.platform == "linux ")
+          if( PLATFORM == "linux"){
             cp.exec('ifdown ' + name + "; ifup " + name, function (err, __, stderr) {
+              console.log("ifdown and up " + name);
               cb(err || stderr || null);
             });
-          else {
+          }else {
             cb( null );
           }
         });//end fs.writeFile

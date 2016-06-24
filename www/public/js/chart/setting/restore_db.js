@@ -71,13 +71,18 @@ var ReportFactory = {
         //create data array of Table
         var arr = [];
         for( var i=0; i<obj.backup.length; i++ ){
-          var bak = obj.backup[i];
+          var bak     = obj.backup[i];
+          var disable = bak.file != undefined ? "" : 'style="pointer-events: none" disabled';
           arr.push([
             moment( new Date( bak.time ) ).format("YYYY-MM-DD HH:mm:ss" ),
-            '<a title="Download backup file" href="/'+ bak.file +'">' + bak.file.substr( "db_backup/".length ) + '</a>',
+            bak.file != undefined ?
+              '<a title="Download backup file" href="/'+ bak.file +'">' + bak.file.substr( "db_backup/".length ) + '</a>' : ""
+            ,
             bak.error ? JSON.stringify( bak.error ) : "",
-            '<div class="center-block" style="text-align: center"><a id="btnDelete" class="btn btn-danger btn-delete" data-file="'+ bak.file +'" data-index='+ i +'>Delete</a></div>',
-            '<div class="center-block" style="text-align: center"><a id="btnRestore" class="btn btn-success btn-restore" data-file="'+ bak.file +'" data-index='+ i +'>Restore</a></div>',
+
+            '<div class="center-block" style="text-align: center"><a '+disable+' id="btnDelete" class="btn btn-danger btn-delete" data-file="'+ bak.file +'" data-time='+ bak.time +'>Delete</a></div>',
+
+            '<div class="center-block" style="text-align: center"><a '+disable+' id="btnRestore" class="btn btn-success btn-restore" data-file="'+ bak.file +'" data-time='+ bak.time +'>Restore</a></div>',
           ])
         }
         //create DataTable
@@ -111,8 +116,8 @@ var ReportFactory = {
           if( confirm("Delete this backup ["+ file +"]\nDo you want to cancel?") )
             return;
           $(this).disable();
-          
-          MMTDrop.tools.ajax("/info/db?action=delete", "POST", {file: file}, {
+
+          MMTDrop.tools.ajax("/info/db?action=del", {time: this.dataset["time"]}, "POST", {
             error: function(){
               MMTDrop.alert.error("Internal Error 601", 5*1000);
             },

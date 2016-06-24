@@ -1,11 +1,16 @@
 {
+   "database_server":{
+      "host": "localhost",
+      "port": 27017
+   },
    "redis_server": {
       "host": "192.168.0.7",
       "port": 6379
    },
-   "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
+   "old_data_folder": "/Users/nhnghia/temps/share_vbox/output/",
+   "data_folder": "/opt/mmt/probe/result/report/online/",
    "delete_data": true,
-   "input_mode": "redis",
+   "input_mode": "file",
    "probe_analysis_mode": "online",
    "local_network": [
       {
@@ -38,7 +43,7 @@
       "max_length_size": 500000,
       "flush_to_client_period": 3
    },
-   "port_number": 8001,
-   "log_folder": "log",
+   "port_number": 8080,
+   "log_folder": "/tmp",
    "is_in_debug_mode": true
 }

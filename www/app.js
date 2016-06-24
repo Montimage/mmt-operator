@@ -132,9 +132,9 @@ app.use('/api', api);
 
 app.use("/info/os", require("./routes/info/os"));
 
-var route_nic = require("./routes/info/nic");
-route_nic._objRef = _objRef;
-app.use("/info/nic", route_nic);
+var route_probe = require("./routes/info/probe");
+route_probe._objRef = _objRef;
+app.use("/info/probe", route_probe);
 
 var route_conf = require("./routes/info/conf");
 route_conf._objRef = _objRef;

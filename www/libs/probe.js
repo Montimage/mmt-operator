@@ -3,6 +3,7 @@ var exec  = require('child_process').exec;
 var fs    = require('fs');
 var os    = require("os");
 var config= require("./config");
+var PLATFORM = os.platform();
 
 function Probe( mode ){
     mode = mode || config.probe_analysis_mode;
@@ -13,7 +14,7 @@ function Probe( mode ){
         mmt_license_file = "/opt/mmt/probe/bin/license.key",
         mmt_config_file  = "/opt/mmt/probe/conf/" + mode + ".conf";
 
-    if( os.platform() == "darwin" ){
+    if( PLATFORM == "darwin" ){
       mmt_config_file = './test/online.conf'
     }
 
@@ -59,13 +60,29 @@ function Probe( mode ){
       });
     };
 
-    this.restart = function( callback ){
-        return exec("service " + mmt_service_name + " restart", callback);
+    this._run_command = function( command, callback ){
+      callback = callback || function(){};
+      if( PLATFORM == "linux" )
+        return exec("service " + mmt_service_name + " " + command, callback);
+      callback();
     };
+
+    this.restart = function( cb ){
+      return this._run_command( "restart", cb);
+    }
+
+    this.stop = function( cb ){
+      return this._run_command( "stop", cb);
+    }
+
+    this.start = function( cb ){
+      return this._run_command( "start", cb);
+    }
 
     this.updateLicense = function( license, callback ){
         backup( mmt_license_file );
         return exec("echo " + license + " > " + mmt_license_file , callback);
+        
         var cmd = "sed -i -e 's/.*/"+ license +"/' " + mmt_license_file;
         return exec(cmd, callback);
     };

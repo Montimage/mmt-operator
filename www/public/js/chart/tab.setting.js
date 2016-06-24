@@ -11,26 +11,26 @@ var arr = [
             fn: "createSystemInformationReport"
         },
     },{
-        id: "localIPs",
-        title: "Local IPs",
+        id: "config",
+        title: "Configuration",
         x: 6,
         y: 0,
         width: 6,
         height: 3,
         type: "success",
         userData: {
-            fn: "createLocalIPsInformationReport"
+            fn: "createConfigReport"
         },
     },{
-        id: "network",
-        title: "Network Interfaces",
+        id: "probe",
+        title: "MMT-Probes",
         x: 0,
         y: 5,
         width: 6,
         height: 4,
         type: "warning",
         userData: {
-            fn: "createNetworkInformationReport"
+            fn: "createProbesReport"
         },
     },{
         id: "database",
@@ -258,7 +258,7 @@ var ReportFactory = {
                 required    : true,
                 class       : "form-control",
                 type        : "text",
-                placeholder : "10.0.0.2",
+                placeholder : "ip address",
                 id          : "conf-db-ftp-server"
               }
             }]
@@ -445,7 +445,10 @@ var ReportFactory = {
             //show last backup file
             var text = "undefined";
             if( data.lastBackup ){
-              text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+              if( data.lastBackup.file != undefined )
+                text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+              else
+                text = MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' (<a onclick="alert(\'Error: '+ JSON.stringify(data.lastBackup.error).replace(/"/g, "") +'\')">error</a>)';
             }
             $("#conf-db-last-backup").html( text );
 
@@ -454,12 +457,13 @@ var ReportFactory = {
               $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
               $("#conf-db-btnEmpty").disable();
               $("#conf-db-btnRestore").disable();
-            }else {
+            }else{
               //database is being backed up
               if( window._backupTimer ){
                 clearInterval( window._backupTimer );
-
-                if( data.lastBackup.error ){
+                if( data.lastBackup == undefined )
+                  MMTDrop.alert.error( "Error while backing up database: 101", 5*1000);
+                else if( data.lastBackup.error ){
                   MMTDrop.alert.error( "Error while backing up database: " + JSON.stringify(data.lastBackup.error), 10*1000 );
                 }else
                   MMTDrop.alert.success( "Successfully backed up database", 5*1000 );
@@ -501,229 +505,260 @@ var ReportFactory = {
     window._loadData();
   },
 
-  createNetworkInformationReport: function(){
-    fPeriod.hide();
-    fAutoReload.hide();
-
-    var generate_form = function( obj ){
-      obj = obj.data;
-
-      var list_interfaces = [];
-      for( var key in obj.interfaces )
-        list_interfaces.push({
-            type : "<option>",
-            attr : {
-              "value" : key,
-              "text"  : key
-            }
-          }
-        );
-
-      var form_config = {
-        type : "<div>",
-        attr : {
-          style : "margin: 40px 10px 10px 0px"
-        },
-        children: [{
-          type : "<form>",
-          attr : {
-            id    : "nic-form",
-            class : "form-horizontal",
-          },
-          children:[{
-              label    : "Monitoring",
-              type     : "<select>",
-              attr     : {
-                id : "nic-mon-iface"
-              },
-              children : list_interfaces
-            },
-            {
-              label    : "Administration",
-              type     : "<select>",
-              attr     : {
-                id : "nic-admin-iface"
-              },
-              children : list_interfaces
-            },
-            //
-            {
-              label    : "",
-              type     : "<div>",
-              attr     : {
-                class : "row"
-              },
-              children : [{
-                type : "<div>",
-                attr : {
-                  class : "col-sm-6"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "nic-address",
-                    name        : "nic-address",
-                    class       : "form-control",
-                    placeholder : "addresss",
-                    required    : true,
-                  }
-                }]
-              },{
-                type : "<div>",
-                attr : {
-                  class : "col-sm-6"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "nic-netmask",
-                    name        : "nic-netmask",
-                    class       : "form-control",
-                    placeholder : "netmask",
-                    required    : true,
-                  }
-                }]
-              }]
-            },
-            //
-            {
-              label    : "",
-              type     : "<div>",
-              attr     : {
-                class : "row"
-              },
-              children : [{
-                type : "<div>",
-                attr : {
-                  class : "col-sm-6"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "nic-gateway",
-                    name        : "nic-gateway",
-                    class       : "form-control",
-                    placeholder : "gateway",
-                    required    : true,
-                  }
-                }]
-              },{
-                type : "<div>",
-                attr : {
-                  class : "col-sm-6"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "nic-dns-nameservers",
-                    name        : "nic-dns-nameservers",
-                    class       : "form-control",
-                    placeholder : "dns-nameservers",
-                    required    : true,
-                  }
-                }]
-              }]
-            },
-            //buttons
-            {
-              label : "",
-              type: "<input>",
-              attr: {
-                type : "submit",
-                class: "btn btn-primary",
-                value: 'Save',
-                id   : "nic-btnSave"
-              }
-            }//end buttons
-            ]
-        }]//end form
-      }
-      $("#network-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
-
-      $("#nic-mon-iface").val( obj.probe );
-      //when user change admin interface
-      $("#nic-admin-iface").on("change", function(){
-        var val   = $(this).val();
-        var iface = obj.interfaces[ val ];
-        var set_value = function( el, val ){
-          if( val == undefined ) return;
-          $(el).val( val );
-        }
-
-        set_value( "#nic-address", iface.address );
-        set_value( "#nic-netmask", iface.netmask );
-        set_value( "#nic-gateway", iface.gateway );
-        set_value( "#nic-dns-nameservers", iface["dns-nameservers"] );
-      });
-      //get other interface as admin
-      var iface = "";
-      for( var i in obj.interfaces )
-        if( i != obj.probe ){
-          iface = i;
-          break;
-        }
-      $("#nic-admin-iface").val( iface ).trigger("change");
-
-
-      //when user submit form
-      $("#nic-form").validate({
-        errorClass  : "text-danger",
-        errorElement: "span",
-        rules: {
-          "nic-mon-iface"       : {ipv4: true},
-          "nic-address"         : {ipv4: true},
-          "nic-netmask"         : {ipv4: true},
-          "nic-gateway"         : {ipv4: true},
-          "nic-dns-nameservers" : {ipv4: true},
-        },
-        //when the form was valided
-        submitHandler : function( form ){
-          if( confirm("Do you want to cancel?") )
-            return;
-          var data = {
-            monitor: $("#nic-admin-iface").val(),
-            admin  : {
-              iface             : $("#nic-mon-iface").val(),
-              address           : $("#nic-address").val(),
-              netmask           : $("#nic-netmask").val(),
-              gateway           : $("#nic-gateway").val(),
-              "dns-nameservers" : $("#nic-dns-nameservers").val()
-            }
-          };
-
-          MMTDrop.tools.ajax("/info/nic", data, "POST", {
-            error  : function(){
-              MMTDrop.alert.error("Cannot update the interfaces", 10*1000);
-            },
-            success: function(){
-              MMTDrop.alert.success("Successfully updated the interfaces", 5*1000);
-              obj.interfaces[ data.admin.iface ] = data.admin;
-              /*
-              setTimeout( function(){
-                window.location.href = "http://" + data.admin.address;
-              }, 1500 )
-              */
-            }
-          })
-          return false;
-        }
-      });
-    };
-
-    MMTDrop.tools.ajax("/info/nic", null, "GET", {
-      error   : function(){},
-      success : generate_form
-    })
-  },
-
-  createLocalIPsInformationReport: function(){
+  createProbesReport: function(){
     fPeriod.hide();
     fAutoReload.hide();
 
     var form_config = {
       type : "<div>",
       attr : {
-        style : "margin: 35px",
+        style : "margin: 20px 10px 0px 10px",
+      },
+      children: [{
+        type : "<table>",
+        attr : {
+          id    : "listProbesTable",
+          class : "table table-striped table-bordered table-condensed dataTable",
+          style : "max-height: 240px; overflow: hidden",
+        }
+      },{
+      type : "<div>",
+      attr : {
+        class: "panel panel-default",
+        style: "margin-top: 10px"
+      },
+      children : [{
+        type : "<div>",
+        attr : {
+          class : "panel-heading",
+          text  : "Add new Probe",
+          style : "padding: 5px"
+        }
+      },{
+        type : "<div>",
+        attr : {
+          class : "panel-body",
+          style : "padding-bottom: 0px"
+        },
+        children : [{
+          type : "<form>",
+          attr : {
+            //style : "margin: 40px 10px 10px 0px",
+            id    : "ssh-form",
+            class : "form-horizontal"
+          },
+          children: [{
+            type : "<div>",
+            attr : {
+              class: "row form-group"
+            },
+            children:[
+              {
+                type     : "<label>",
+                attr     : {
+                  class : "col-md-2 control-label",
+                  text  : "SSH Information"
+                }
+              },
+              {
+                type : "<div>",
+                attr : {
+                  class : "col-sm-3"
+                },
+                children : [{
+                  type : "<input>",
+                  attr : {
+                    id          : "ssh-address",
+                    name        : "ssh-address",
+                    class       : "form-control",
+                    placeholder : "ip addresss",
+                    required    : true,
+                  }
+                }]
+              },
+              {
+                type : "<div>",
+                attr : {
+                  class : "col-sm-3"
+                },
+                children : [{
+                  type : "<input>",
+                  attr : {
+                    id          : "ssh-username",
+                    name        : "ssh-username",
+                    class       : "form-control",
+                    placeholder : "ssh username",
+                    required    : true,
+                  }
+                }]
+              },
+              {
+                type : "<div>",
+                attr : {
+                  class : "col-sm-3"
+                },
+                children : [{
+                  type : "<input>",
+                  attr : {
+                    id          : "ssh-password",
+                    name        : "ssh-password",
+                    type        : "password",
+                    class       : "form-control",
+                    placeholder : "ssh password",
+                    required    : true,
+                    readonly    : true,
+                    //style+readonly are add to avoid browser load default username+password
+                    readonly    : true,
+                    style       : "background-color: white !important",
+                    onfocus     : "this.removeAttribute('readonly');this.removeAttribute('style');",
+                  }
+                }]
+              },
+              //buttons
+              {
+                type: "<input>",
+                attr: {
+                  type : "submit",
+                  class: "btn btn-primary",
+                  value: 'Add',
+                  id   : "nic-btnSave"
+                }
+              }//end buttons
+              ]
+          }]//end form
+        }]
+      }]
+    }]
+    }
+
+    $("#probe-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+    //style+readonly was add to avoid browser load default username+password
+    setTimeout( function(){
+      $("#ssh-password").removeAttr("style").removeAttr("readonly");
+    }, 500);
+
+    //load list of probes from server, then show them in a table
+    var load_data = function(){
+      MMTDrop.tools.ajax("/info/probe", {}, "GET", {
+        error  : function(){
+          MMTDrop.alert.error("Cannot get list of Probes", 5*1000);
+        },
+        success: function( obj ){
+
+          //create data array of Table
+          var probeLst = obj.data;
+          var arr = [];
+
+          for( var i=0; i<probeLst.length; i++ ){
+            var probe   = probeLst[i];
+            var same  = 'style="margin-left: 10px;" data-id="'+ probe._id +'"'
+            var id      = probe._id;
+            arr.push([
+              i+1,
+              MMTDrop.tools.formatDateTime( new Date(probe.timestamp)),
+              probe.address,
+              "",
+              '<div class="center-block" style="text-align: center">'
+              +
+              '<a '+same+' id="btnStop"        title="Stop"> <i class="fa fa-stop"></i> </a>'
+              +
+              '<a '+same+' id="btnRestart"     title="Restart" > <i class="fa fa-refresh"></i> </a>'
+              +
+              '<a '+same+' id="btnConfig"      title="Configure" > <i class="fa fa-sliders"></i> </a>'
+              +
+              '<a '+same+' id="btnInstall"     title="Install" > <i class="fa fa-gear"></i> </a>'
+              +
+              '<a '+same+' id="btnDelete"      title="Uninstall" > <i class="fa fa-trash"></i> </a>'
+              +
+              '</div>',
+            ])
+          }
+          //create DataTable
+          var table = $("#listProbesTable").dataTable({
+            "scrollY"        : "180px",
+            "scrollCollapse" : true,
+            "paging"         : false,
+            "searching"      : false,
+            "info"           : false,
+            order            : [0, "asc"],
+            data             : arr,
+            columns: [
+              {title: ""},
+              {title: "Timestamp"},
+              {title: "IP Address"},
+              {title: "Last Report"},
+              {title: "Actions"},
+            ]
+          });
+
+          //resize dataData when user resizes window/div
+          var $widget = $("#system-content").getWidgetParent();
+          //resize when changing window size
+          $widget.on("widget-resized", null, table, function (event, widget) {
+            var h = $("#system-content").getWidgetContentOfParent().height() - 150;
+            $(".dataTables_scrollBody").css('max-height', h+"px").css('height', h+"px")
+          });
+          $widget.trigger("widget-resized", [$widget]);
+
+          //when user click on Delete button
+          $(".btn-delete").on("click", function(){
+            var file = this.dataset["file"];
+            if( confirm("Delete this backup ["+ file +"]\nDo you want to cancel?") )
+              return;
+            $(this).disable();
+
+            MMTDrop.tools.ajax("/info/db?action=del", {time: this.dataset["time"]}, "POST", {
+              error: function(){
+                MMTDrop.alert.error("Internal Error 601", 5*1000);
+              },
+              success: function(){
+
+              }
+            })
+          });
+        }
+      })//end MMTDrop.tools.ajax
+    };//end load_data
+    load_data();
+
+
+    //when user submit form
+    $("#ssh-form").validate({
+      errorClass  : "text-danger",
+      errorElement: "span",
+      rules: {
+        "ssh-address"         : {ipv4: true},
+      },
+      //when the form was valided
+      submitHandler : function( form ){
+        var data = {
+            address : $("#ssh-address").val(),
+            username: $("#ssh-username").val(),
+            password: $("#ssh-password").val(),
+        };
+
+        MMTDrop.tools.ajax("/info/probe", data, "POST", {
+          error  : function(){
+            MMTDrop.alert.error("Cannot add new Probe", 5*1000);
+          },
+          success: function(){
+            MMTDrop.alert.success("Successfully add the Probe", 5*1000);
+            load_data();
+          }
+        })
+        return false;
+      }
+    });
+  },
+
+  createConfigReport: function(){
+    fPeriod.hide();
+    fAutoReload.hide();
+
+    var form_config = {
+      type : "<div>",
+      attr : {
+        style : "margin: 20px",
         class : "row"
       },
       children: [{
@@ -742,6 +777,7 @@ var ReportFactory = {
             attr  : {
               rows: 3,
               id      : "conf-operator-content",
+              class   : "form-control textarea-config",
               required: true
             }
           },{
@@ -765,11 +801,12 @@ var ReportFactory = {
             id: "conf-probe-form"
           },
           children: [{
-            label : "MMT-Probe",
+            label : "Network Interfaces",
             type  : "<textarea>",
             attr  : {
               rows: 3,
               id      : "conf-probe-content",
+              class   : "form-control textarea-config",
               required: true
             }
           },{
@@ -785,7 +822,7 @@ var ReportFactory = {
       }]
     }
     //load data
-    $("#localIPs" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
+    $("#config-content" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
     MMTDrop.tools.ajax("/info/conf", null, "GET", {
       error : function(){
         MMTDrop.alert.error("Internal error", 10*1000);
@@ -842,7 +879,10 @@ var ReportFactory = {
 
         var value = $("#conf-probe-content").val();
 
-        if( confirm("Update and Restart MMT-Probe\nDo you want to cancel?") )
+        if( confirm("Update Network Interfaces and Restart Machine \n\nDo you want to cancel?") )
+          return;
+
+        if( !confirm("Update Network Interfaces and Restart Machine \n\nIs network interfaces description correct?") )
           return;
 
         var data = {
@@ -851,10 +891,10 @@ var ReportFactory = {
 
         MMTDrop.tools.ajax("/info/conf", data, "POST", {
           error  : function(){
-            MMTDrop.alert.error("Cannot update the configure of MMT-Probe", 10*1000);
+            MMTDrop.alert.error("Cannot update the configure of Network Interfaces", 10*1000);
           },
           success: function(){
-            MMTDrop.alert.success("Successfully updated the configure of MMT-Probe", 10*1000);
+            MMTDrop.alert.success("Successfully updated the configure of Network Interfaces", 10*1000);
             obj.interfaces[ data.admin.iface ] = data.admin;
           }
         })

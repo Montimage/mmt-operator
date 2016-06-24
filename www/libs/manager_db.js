@@ -91,7 +91,8 @@ function removeRF(target, callback) {
  */
 function mongoDump(options, archiveFile, callback) {
   var mongodump
-    , mongoOptions;
+    , mongoOptions
+    , errMsg = "";
 
   callback = callback || function() { };
 
@@ -102,6 +103,7 @@ function mongoDump(options, archiveFile, callback) {
     '--archive=' + archiveFile
   ];
 
+
   if(options.username && options.password) {
     mongoOptions.push('-u');
     mongoOptions.push(options.username);
@@ -110,22 +112,28 @@ function mongoDump(options, archiveFile, callback) {
     mongoOptions.push(options.password);
   }
 
-  log('Starting mongodump of ' + options.db, 'info');
+  log('Starting mongodump of ' + options.db );
   mongodump = spawn('mongodump', mongoOptions);
-
+  mongodump.stdout.on('data', function(data){
+    log( data.toString() );
+  });
+  mongodump.stderr.on('data', function(data){
+    errMsg += "\n" + data.toString();
+    console.error( data.toString() );
+  });
   mongodump.on('exit', function (code) {
     if(code === 0) {
-      log('mongodump executed successfully', 'info');
+      log('mongodump executed successfully');
       callback(null);
     } else {
-      callback(new Error("Mongodump exited with code " + code));
+      callback( {code:  code, message: errMsg } );
     }
   });
 }
 
 
 /**
- * mongoDump
+ * mongoStore
  *
  * Calls mongodump on a specified database.
  *
@@ -133,9 +141,10 @@ function mongoDump(options, archiveFile, callback) {
  * @param archiveFile  archive file containing result
  * @param callback   callback(err)
  */
-function mongoStore(options, archiveFile, callback) {
-  var mongodump
-    , mongoOptions;
+function mongoRestore(options, archiveFile, callback) {
+  var mongorestore
+    , mongoOptions
+    , errMsg = "";
 
   callback = callback || function() { };
 
@@ -157,14 +166,20 @@ function mongoStore(options, archiveFile, callback) {
   }
 
   log('Starting mongorestore of ' + options.db + " from " + archiveFile);
-  mongodump = spawn('mongorestore', mongoOptions);
-
-  mongodump.on('exit', function (code) {
+  mongorestore = spawn('mongorestore', mongoOptions);
+  mongorestore.stdout.on('data', function(data){
+    log( data.toString() );
+  });
+  mongorestore.stderr.on('data', function(data){
+    errMsg += "\n" + data.toString();
+    console.error( data.toString() );
+  });
+  mongorestore.on('exit', function (code) {
     if(code === 0) {
-      log('mongodump executed successfully', 'info');
+      log('mongorestore executed successfully', 'info');
       callback(null);
     } else {
-      callback(new Error("Mongodump exited with code " + code));
+      callback( {code:  code, message: errMsg } );
     }
   });
 }
@@ -321,7 +336,7 @@ function getFromFtpServer(options, source_file, target_file, callback) {
  * @param callback        callback(err)
  */
 function backup(mongodbConfig, FtpConfig, callback) {
-  var tmpDir      = path.join( __dirname, '..', 'public', 'db_backup')
+  var tmpDir      = "/tmp" //path.join( __dirname, '..', 'public', 'db_backup')
     , archiveName = getArchiveName( mongodbConfig.db )
     , archiveFile = path.join( tmpDir, archiveName );
 
@@ -333,13 +348,12 @@ function backup(mongodbConfig, FtpConfig, callback) {
 
     //backup to tar.gz file
     mongoDump( mongodbConfig, archiveFile, function( err ){
-
-      if( err ) return callback( err );
+      if( err ) return callback( {mongodump: err} );
 
       //send tar.gz file to FTP server
       if( FtpConfig.isEnable != undefined )
         sendToFtpServer( FtpConfig, archiveFile, archiveName, function( err ){
-          callback(err, archiveFile );
+          callback({ftp: err}, archiveFile );
         });
       else
         callback(null, archiveFile );
@@ -365,15 +379,21 @@ function restore(archiveFile, mongodbConfig, FtpConfig, callback) {
 
   if( FtpConfig.host != undefined )
     getFromFtpServer( FtpConfig, archiveFile, tmpFile, function( err ){
-      if( err ) return callback( err );
+      if( err ) return callback( {ftp: err} );
       mongoStore( mongodbConfig, tmpFile, function( err ){
         //delete tmpFile after restoring
         removeRF( tmpFile );
-        callback(err);
+        if( err )
+          return callback( {mongostore : err} );
+        return callback();
       } );
     });
   else
-    mongoStore( mongodbConfig, archiveFile, callback );
+    mongoStore( mongodbConfig, archiveFile, function( err ){
+      if( err )
+        return callback( {mongostore : err} );
+      return callback();
+    } );
 }
 
 module.exports = { backup: backup, restore : restore};

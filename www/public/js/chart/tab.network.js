@@ -4,7 +4,7 @@ var arr = [
         title: "Top Users",
         x: 0,
         y: 0,
-        width: 3,
+        width: 6,
         height: 9,
         type: "info",
         userData: {
@@ -14,9 +14,9 @@ var arr = [
     {
         id: "top_profile",
         title: "Top Profiles",
-        x: 3,
+        x: 6,
         y: 0,
-        width: 3,
+        width: 6,
         height: 9,
         type: "success",
         userData: {
@@ -26,9 +26,9 @@ var arr = [
     {
         id: "top_location",
         title: "Top Geo Locations",
-        x: 6,
-        y: 0,
-        width: 3,
+        x: 0,
+        y: 9,
+        width: 6,
         height: 9,
         type: "info",
         userData: {
@@ -38,9 +38,9 @@ var arr = [
     {
         id: "top_link",
         title: "Top Links",
-        x: 9,
-        y: 0,
-        width: 3,
+        x: 6,
+        y: 9,
+        width: 6,
         height: 9,
         type: "warning",
         userData: {

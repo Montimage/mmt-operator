@@ -586,7 +586,12 @@ a {
 }
 
 
-
+.textarea-config{
+  font-size: 11px;
+  line-height: normal;
+  height: 100px !important;
+  font-family: "Courier New", "Lucida Console";
+}
 
 .chart-gauge {}
 

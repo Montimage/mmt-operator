@@ -70,20 +70,19 @@ function backup( callback ){
           $set: {isBackingUp : false}
         };
 
-        if( file ){
-          //backup success
-          var lastBackup = {
-                time     : (new Date()).getTime(),
-                file     : file.substr( file.indexOf("public/") + "public/".length ),
-                error    : err,
-                size     : fs.statSync( file ).size
-              };
+        var lastBackup = {
+              time  : (new Date()).getTime(),
+              file  : file == undefined ? null : file.substr( file.indexOf("public/") + "public/".length ),
+              _file : file, //real file
+              error : err,
+              size  : file == undefined ? 0    : fs.statSync( file ).size
+            };
 
-          data = {
-            $set : {isBackingUp : false, lastBackup: lastBackup},
-            $push: {backup: lastBackup}
-          };
-        }
+        data = {
+          $set : {isBackingUp : false, lastBackup: lastBackup},
+          $push: {backup: lastBackup}
+        };
+
         set_data(data, function( err2 ){
           callback( err || err2, file );
         });
