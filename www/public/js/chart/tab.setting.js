@@ -27,7 +27,7 @@ var arr = [
         x: 0,
         y: 5,
         width: 6,
-        height: 4,
+        height: 5,
         type: "warning",
         userData: {
             fn: "createProbesReport"
@@ -42,6 +42,17 @@ var arr = [
         type: "danger",
         userData: {
             fn: "createDatabaseInformationReport"
+        },
+    },{
+        id: "log",
+        title: "Log Files",
+        x: 6,
+        y: 10,
+        width: 6,
+        height: 1,
+        type: "danger",
+        userData: {
+            fn: "createLogInformationReport"
         },
     }
 ];
@@ -334,7 +345,8 @@ var ReportFactory = {
           },{
             type: "<a>",
             attr: {
-              href : "/chart/setting/restore_db",
+              "href" : "/chart/setting/restore_db",
+              type : "button",
               id   : "conf-db-btnRestore",
               class: "btn btn-success pull-right",
               text : 'Restore'
@@ -372,7 +384,7 @@ var ReportFactory = {
 
     //when click on Empty
     $("#conf-db-btnEmpty").on("click", function(){
-      if( confirm("Empty Database of MMT-Operator\nDo you want to cancel?") )
+      if( confirm("Empty Database\nDo you want to cancel?\n\n\n") )
         return;
         MMTDrop.tools.ajax("/info/db?action=empty-db", {}, "POST", {
           error  : function(){
@@ -390,7 +402,9 @@ var ReportFactory = {
       $("#conf-db-ftp-username").setEnable( is_on );
       $("#conf-db-ftp-password").setEnable( is_on );
       $("#conf-db-ftp-secure").setEnable( is_on );
-    })
+    });
+    $("#conf-db-ftp-enable").trigger("change");
+
     //when click on Save or submit form
     //when user submit form
     $("#conf-db-form").validate({
@@ -437,30 +451,40 @@ var ReportFactory = {
               $("#conf-db-ftp-enable").prop( "checked", data.ftp.isEnable ).trigger("change");
             }
 
-            if( data.lastBackup == undefined )
+            if( data.lastBackup == undefined || data.lastBackup.name == undefined )
               $("#conf-db-download-backupBtn").hide();
             else
               $("#conf-db-download-backupBtn").show();
 
             //show last backup file
-            var text = "undefined";
+            var text = "none";
             if( data.lastBackup ){
-              if( data.lastBackup.file != undefined )
-                text = '<a title="Download the backup file" href="/'+ data.lastBackup.file +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
-              else
+              if( data.lastBackup.name != undefined )
+                text = '<a title="Download the backup file" href="/db_backup/'+ data.lastBackup.name +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+              else if( data.lastBackup.error )
                 text = MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' (<a onclick="alert(\'Error: '+ JSON.stringify(data.lastBackup.error).replace(/"/g, "") +'\')">error</a>)';
             }
             $("#conf-db-last-backup").html( text );
 
+            //if database is being backedup or restored
+            if( data.isBackingUp === true || data.isRestoring != undefined ){
+              if( data.isBackingUp )
+                $("#parentBackupNowBtn").html( '<span class="btn btn-default"><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') ;
+              else{
+                $("#conf-db-btnRestore").replaceWith(  '<span disabled class="btn btn-default pull-right"><i class = "fa fa-refresh fa-spin fa-fw"/> Restoring ...</span>' );
+                $("#parentBackupNowBtn").html(  '<span disabled class="btn btn-info"> Back up</span>' );
+              }
 
-            if( data.isBackingUp ){
-              $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
               $("#conf-db-btnEmpty").disable();
               $("#conf-db-btnRestore").disable();
+
+              //check whenether the backingup/restoring finished
+              window._backupTimer = setInterval(window._loadData, 10000) ;
             }else{
               //database is being backed up
               if( window._backupTimer ){
                 clearInterval( window._backupTimer );
+
                 if( data.lastBackup == undefined )
                   MMTDrop.alert.error( "Error while backing up database: 101", 5*1000);
                 else if( data.lastBackup.error ){
@@ -473,8 +497,12 @@ var ReportFactory = {
               }
 
               $("#parentBackupNowBtn").html(  $('<a class="btn btn-info" title="Backup Now" id="backupNowBtn">Backup now</a>') );
+
+
               //when click on "backup now"
               $("#backupNowBtn").on("click", function(){
+                if( confirm("Backup database now.\nDo you want to cancel?") )
+                  return;
                 //change button ==> backing up
                 $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
                 $("#conf-db-btnEmpty").disable();
@@ -658,7 +686,7 @@ var ReportFactory = {
               MMTDrop.tools.formatDateTime( new Date(probe.timestamp)),
               probe.address,
               "",
-              '<div class="center-block" style="text-align: center">'
+              '<div class="center-block" style="text-align: center; text-decoration: none">'
               +
               '<a '+same+' id="btnStop"        title="Stop"> <i class="fa fa-stop"></i> </a>'
               +
@@ -675,7 +703,7 @@ var ReportFactory = {
           }
           //create DataTable
           var table = $("#listProbesTable").dataTable({
-            "scrollY"        : "180px",
+            "scrollY"        : "300px",
             "scrollCollapse" : true,
             "paging"         : false,
             "searching"      : false,
@@ -692,10 +720,10 @@ var ReportFactory = {
           });
 
           //resize dataData when user resizes window/div
-          var $widget = $("#system-content").getWidgetParent();
+          var $widget = $("#probe-content").getWidgetParent();
           //resize when changing window size
           $widget.on("widget-resized", null, table, function (event, widget) {
-            var h = $("#system-content").getWidgetContentOfParent().height() - 150;
+            var h = $("#probe-content").getWidgetContentOfParent().height() - 185;
             $(".dataTables_scrollBody").css('max-height', h+"px").css('height', h+"px")
           });
           $widget.trigger("widget-resized", [$widget]);
@@ -901,5 +929,8 @@ var ReportFactory = {
         return false;
       }
     });
+  },
+  createLogInformationReport : function( ){
+
   }
 }

@@ -52,7 +52,8 @@ console.log = function () {
 console.error = function( err ){
     if( err == undefined ) return;
     console.log( arguments );
-    console.log( err.stack );
+    if( err.stack )
+      console.log( err.stack );
 }
 
 console.debug = function( msg ){

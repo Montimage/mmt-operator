@@ -32,10 +32,10 @@ var exec  = require('child_process').exec
  * Logs a message to the console with a tag.
  *
  * @param message  the message to log
- * @param tag      (optional) the tag to log with.
  */
-function log(message, tag) {
-  console.log( "==> " + message )
+function log(message) {
+  if( message != undefined )
+    console.log( "==> " + message )
 }
 
 /**
@@ -171,7 +171,8 @@ function mongoRestore(options, archiveFile, callback) {
     log( data.toString() );
   });
   mongorestore.stderr.on('data', function(data){
-    errMsg += "\n" + data.toString();
+    if( errMsg.length < 1000)
+      errMsg += "\n" + data.toString();
     console.error( data.toString() );
   });
   mongorestore.on('exit', function (code) {
@@ -179,6 +180,8 @@ function mongoRestore(options, archiveFile, callback) {
       log('mongorestore executed successfully', 'info');
       callback(null);
     } else {
+      //if( code == 2)
+      //  errMsg = "Not enough memory";
       callback( {code:  code, message: errMsg } );
     }
   });
@@ -353,10 +356,10 @@ function backup(mongodbConfig, FtpConfig, callback) {
       //send tar.gz file to FTP server
       if( FtpConfig.isEnable != undefined )
         sendToFtpServer( FtpConfig, archiveFile, archiveName, function( err ){
-          callback({ftp: err}, archiveFile );
+          callback({ftp: err}, archiveFile,archiveName );
         });
       else
-        callback(null, archiveFile );
+        callback(null, archiveFile, archiveName );
     })
   })
 }
@@ -378,20 +381,21 @@ function restore(archiveFile, mongodbConfig, FtpConfig, callback) {
   log("Restore database");
 
   if( FtpConfig.host != undefined )
+    //download file from FTP server to a temp file
     getFromFtpServer( FtpConfig, archiveFile, tmpFile, function( err ){
       if( err ) return callback( {ftp: err} );
-      mongoStore( mongodbConfig, tmpFile, function( err ){
+      mongoRestore( mongodbConfig, tmpFile, function( err ){
         //delete tmpFile after restoring
         removeRF( tmpFile );
         if( err )
-          return callback( {mongostore : err} );
+          return callback( {mongorestore : err} );
         return callback();
       } );
     });
   else
-    mongoStore( mongodbConfig, archiveFile, function( err ){
+    mongoRestore( mongodbConfig, archiveFile, function( err ){
       if( err )
-        return callback( {mongostore : err} );
+        return callback( {mongorestore : err} );
       return callback();
     } );
 }

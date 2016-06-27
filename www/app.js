@@ -130,6 +130,8 @@ app.use('/ip', require("./routes/ip2loc.js"))
 api.dbconnector = dbconnector;
 app.use('/api', api);
 
+app.use("/a_api", require("./routes/a_api.js"));
+
 app.use("/info/os", require("./routes/info/os"));
 
 var route_probe = require("./routes/info/probe");
@@ -226,7 +228,6 @@ process.on('uncaughtException', function (err) {
 
 function exit(){
     setTimeout( function(){
-        console.log("bye!\n");
         console.logStdout("Bye!\n");
         process.exit(1);
     }, 2000 );
@@ -234,11 +235,24 @@ function exit(){
 
 //clean up
 function cleanup ( cb ){
-    console.log( "Cleaning up before exiting... ");
     console.logStdout( "\nCleaning up before exiting ... ");
-    if( dbconnector ){
-        dbconnector.close( exit );
-    }
+    //reset state of db-backup to default
+    dbadmin.connect( function(err, db){
+      if( err ) return console.error( err );
+
+      db.collection( "db-backup" ).update(  {_id:1}, {
+        $set : {
+          isBackingUp : null,
+          isRestoring : null
+        }
+      }, {
+        upsert : true
+      }, function(){
+        if( dbconnector ){
+            dbconnector.close( exit );
+        }
+      } );
+    });
 };
 
 

@@ -87,7 +87,12 @@ router.post("/", function( req, res, next ){
   }
 
   if( action == "restore" ){
-    return;
+    var id = req.query.id;
+    if( id == undefined )
+      return res.status(500).send( {message: "need id"} );
+
+    backup.restore( id );
+    return res.send({});
   }
   //other
   res.send( "WTF" );

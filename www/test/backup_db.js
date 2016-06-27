@@ -52,7 +52,11 @@ var DB = require("../libs/DataDB");
 console.log( (new DB()).db_name );
 
 var backup = require("../libs/backup_db");
+/*
 backup.backup( function(err, file){
   console.log( JSON.stringify( err ), file);
   return;
 } );
+*/
+
+backup.restore( 1467033028426, console.error );

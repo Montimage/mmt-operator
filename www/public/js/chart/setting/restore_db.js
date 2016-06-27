@@ -32,7 +32,7 @@ var ReportFactory = {
           children : [{
             type     : "<table>",
             attr     : {
-              class : "table table-striped table-bordered table-condensed dataTable",
+              class : "table table-striped table-bordered table-condensed nowrap dataTable",
               id    : "dataTable"
             },
           }]
@@ -40,12 +40,13 @@ var ReportFactory = {
           type: "<div>",
           children : [
             {
-              type: "<a>",
+              type: "<input>",
               attr: {
+                type    : "button",
                 class   : "btn btn-warning pull-right",
                 style   : "margin-left: 30px",
-                text    : "Upload",
-                href    : '/chart/sla/metric' + MMTDrop.tools.getQueryString(["app_id"])
+                value   : "Upload",
+                id      : "uploadBtn",
               }
             }
           ]
@@ -54,7 +55,11 @@ var ReportFactory = {
 
     var render = function( msg ){
       $("#system-content" ).html('<div style="text-align: center">'+ msg +'</div>');
+    };
+    var _glo = {
+      backupLst : []
     }
+
     MMTDrop.tools.ajax("/info/db", null, "GET", {
       error  : function(){
         MMTDrop.alert.error("Cannot connect to server", 5*1000);
@@ -63,26 +68,58 @@ var ReportFactory = {
         var obj = data[0];
         if( obj == undefined || obj.backup == undefined || obj.backup.length == 0)
           return render("Ops! There are no backup!!!");
+
+        //point to global variable
+        _glo.backupLst = obj.backup;
+
         if( obj.isBackingUp === true || obj.isRestoring === true )
           return render("Database is being backup or restore ...");
+
+        if( obj.restore == undefined ) obj.restore = [];
+
+        //get informtion of restores concerning to this backup
+        var get_restore_info = function( time ){
+          var res = [];
+          for( var i=0; i< obj.restore.length; i++ )
+            if( obj.restore[i].time == time ){
+              res.push(
+                " - " +
+                moment( new Date( obj.restore[i].time ) ).format("YYYY-MM-DD HH:mm:ss" )
+                +
+                ((obj.restore[i].error != null) ? " error: " + JSON.stringify( obj.restore[i].error ) : "")
+               );
+            }
+
+          if( res.length > 0 )
+            return "<strong>Restore:</strong> <br/>" + res.join("<br/>");
+          return "";
+        }
 
         $("#system-content" ).html( MMTDrop.tools.createForm( form_config ) ) ;
 
         //create data array of Table
         var arr = [];
         for( var i=0; i<obj.backup.length; i++ ){
-          var bak     = obj.backup[i];
-          var disable = bak.file != undefined ? "" : 'style="pointer-events: none" disabled';
+          var bak       = obj.backup[i];
+          var disable   = bak.file == undefined || obj.isBackingUp || obj.isRestoring != undefined;
+          var timestamp = moment( new Date( bak.time ) ).format("YYYY-MM-DD HH:mm:ss" );
+
           arr.push([
-            moment( new Date( bak.time ) ).format("YYYY-MM-DD HH:mm:ss" ),
+            timestamp,
             bak.file != undefined ?
-              '<a title="Download backup file" href="/'+ bak.file +'">' + bak.file.substr( "db_backup/".length ) + '</a>' : ""
+              '<div class="pull-right"><a title="Download backup file" href="/db_backup/'+ bak.name +'">' + MMTDrop.tools.formatDataVolume( bak.size ) + ' <i class = "fa fa-cloud-download"/></a></div>' : ""
             ,
-            bak.error ? JSON.stringify( bak.error ) : "",
-
-            '<div class="center-block" style="text-align: center"><a '+disable+' id="btnDelete" class="btn btn-danger btn-delete" data-file="'+ bak.file +'" data-time='+ bak.time +'>Delete</a></div>',
-
-            '<div class="center-block" style="text-align: center"><a '+disable+' id="btnRestore" class="btn btn-success btn-restore" data-file="'+ bak.file +'" data-time='+ bak.time +'>Restore</a></div>',
+            //Note
+            '<div class="need-to-fix-width" style="width: 500px; text-overflow: ellipsis;overflow: hidden">'
+            +
+            (bak.error ? JSON.stringify( bak.error ) : "") + get_restore_info( bak.time )
+            +
+            '</div>',
+            //restore button
+            disable ?
+            '<div class="center-block" style="text-align: center"><span disabled class="btn btn-success">Restore</span></div>'
+            :
+            '<div class="center-block" style="text-align: center"><a class="btn btn-success btn-restore" data-file="'+ timestamp +'" data-time='+ bak.time +'>Restore</a></div>',
           ])
         }
         //create DataTable
@@ -93,13 +130,18 @@ var ReportFactory = {
           order : [0, "desc"],
           data: arr,
           columns: [
-            {title: "Backup Time"},
-            {title: "File"},
+            {title: "Backup Time", width: "120px"},
+            {title: "Size (Bytes)", className:"dt-body-right", width: "100px"},
             {title: "Note"},
-            {title: ""},
-            {title: ""}
+            {title: "", width: "100px"}
           ]
         });
+
+        if( obj.isBackingUp || obj.isRestoring != undefined ){
+          $("#uploadBtn").disable();
+
+          $("#dataTable_filter").parent().prev().html("<div class='pull-right'>Database is being " + (obj.isBackingUp? "backed up" : "restored" + ' <i class="fa fa-refresh fa-spin fa-fw"></i></div>'));
+        }
 
         //resize dataData when user resizes window/div
         var $widget = $("#system-content").getWidgetParent();
@@ -107,22 +149,28 @@ var ReportFactory = {
         $widget.on("widget-resized", null, table, function (event, widget) {
           var h = $("#system-content").getWidgetContentOfParent().height() - 150;
           $(".dataTables_scrollBody").css('max-height', h+"px").css('height', h+"px")
+
+          var w = $("#system-content").getWidgetContentOfParent().width() - 120 - 100 - 100 - 150;
+          $(".need-to-fix-width").width(w + "px");
         });
         $widget.trigger("widget-resized", [$widget]);
 
         //when user click on Delete button
-        $(".btn-delete").on("click", function(){
+        $(".btn-restore").on("click", function(){
           var file = this.dataset["file"];
-          if( confirm("Delete this backup ["+ file +"]\nDo you want to cancel?") )
+          if( confirm("Restore this backup ["+ file +"]\nDo you want to cancel?") )
             return;
           $(this).disable();
 
-          MMTDrop.tools.ajax("/info/db?action=del", {time: this.dataset["time"]}, "POST", {
+          var id = this.dataset["time"];
+
+          MMTDrop.tools.ajax("/info/db?action=restore&id=" + id, {}, "POST", {
             error: function(){
               MMTDrop.alert.error("Internal Error 601", 5*1000);
             },
+            //reload the page when success
             success: function(){
-
+              MMTDrop.alert.success("Starting to restore database", 3*1000);
             }
           })
         });

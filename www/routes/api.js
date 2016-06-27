@@ -4,12 +4,10 @@ var router = express.Router();
 function proc_request(req, res, next) {
 
 	//check session loggedin
-	/*
 	if (req.session.loggedin == undefined) {
 	  res.status(403).send("Permision Denided");
 	  return;
 	}
-	 */
 
 	var collection = req.params.collection, action = req.params.action;
 
@@ -110,7 +108,7 @@ router.post('/:collection/:action', proc_request);
 
 //older way to get data
 router.get('/*', function(req, res, next) {
-	
+
 	var dbconnector = router.dbconnector;
 
 	var PERIOD = {
