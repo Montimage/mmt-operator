@@ -16,7 +16,7 @@ var arr = [
         x: 6,
         y: 0,
         width: 6,
-        height: 3,
+        height: 4,
         type: "success",
         userData: {
             fn: "createConfigReport"
@@ -42,17 +42,6 @@ var arr = [
         type: "danger",
         userData: {
             fn: "createDatabaseInformationReport"
-        },
-    },{
-        id: "log",
-        title: "Log Files",
-        x: 6,
-        y: 10,
-        width: 6,
-        height: 1,
-        type: "danger",
-        userData: {
-            fn: "createLogInformationReport"
         },
     }
 ];
@@ -585,7 +574,7 @@ var ReportFactory = {
                 type     : "<label>",
                 attr     : {
                   class : "col-md-2 control-label",
-                  text  : "SSH Information"
+                  text  : "SSH"
                 }
               },
               {
@@ -787,9 +776,15 @@ var ReportFactory = {
       type : "<div>",
       attr : {
         style : "margin: 20px",
-        class : "row"
+        class : "row",
       },
       children: [{
+        type : "<div>",
+        attr : {
+          class : "col-md-12 text-right",
+          html  : 'MMT-Operator log files <input id="log-datepicker" type="hidden"><span class="glyphicon glyphicon-calendar datepicker-icon"/>'
+        }
+      },{
         type : "<div>",
         attr : {
           class: "col-sm-6",
@@ -849,8 +844,39 @@ var ReportFactory = {
         }]
       }]
     }
-    //load data
+    //generate form
     $("#config-content" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
+
+    //log files
+    var $datepicker = null;
+
+    var minDate = (new Date()).getTime();
+    if( status_db.probeStatus )
+      for( var i=0; i<status_db.probeStatus.length; i++)
+        if( status_db.probeStatus[i].start < minDate )
+          minDate = status_db.probeStatus[i].start;
+    minDate = new Date( minDate );
+
+    $("#log-datepicker").datepicker({
+      showButtonPanel: false,
+      minDate        : "-7d",
+      maxDate        : "-1d",
+  		defaultDate    : "-1d",
+  		closeText      : "Close",
+      beforeShow: function(input, inst){
+        inst.dpDiv.css({marginTop: '20px', marginLeft: '-55px'});
+      },
+      onSelect: function ( dateText, inst ) {
+  			window.location.href = "/info/conf/log/" + inst.selectedYear + "/" + inst.selectedMonth + "/" + inst.selectedDay;
+  			$(this).hide();
+  		},
+    });//end log-datepicker.datepicker
+    $("#log-datepicker").next().click( function(){
+      $("#log-datepicker").datepicker("show");
+    });
+
+
+    //load data
     MMTDrop.tools.ajax("/info/conf", null, "GET", {
       error : function(){
         MMTDrop.alert.error("Internal error", 10*1000);
@@ -929,8 +955,11 @@ var ReportFactory = {
         return false;
       }
     });
-  },
-  createLogInformationReport : function( ){
 
-  }
+    //when user resize
+    $("#conf-probe-form").getWidgetParent().on("widget-resized", function(){
+      var h = $("#conf-probe-form").getWidgetContentOfParent().height() - 145;
+      $(".textarea-config").css( "height", h + "px" );
+    }).trigger("widget-resized");
+  },
 }

@@ -2,7 +2,7 @@ var fs               = require('fs');
 var path             = require('path');
 var mmtAdaptor       = require('../libs/dataAdaptor');
 var LineByLineReader = require('line-by-line');
-
+var path             = require('path');
 var CURRENT_PROFILE = {};
 
 var router = {};
@@ -240,7 +240,7 @@ router.startListeningAtFolder = function (db, folder_path) {
             return;
         }
 
-        console.log("file " + file_name);
+        console.log("file " + path.basename( file_name ));
         try{
             process_file(file_name, function ( total ) {
                 console.log(" ==> DONE ("+ total +" lines)");

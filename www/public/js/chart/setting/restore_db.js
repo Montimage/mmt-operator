@@ -86,7 +86,7 @@ var ReportFactory = {
                 " - " +
                 moment( new Date( obj.restore[i].time ) ).format("YYYY-MM-DD HH:mm:ss" )
                 +
-                ((obj.restore[i].error != null) ? " error: " + JSON.stringify( obj.restore[i].error ) : "")
+                ((obj.restore[i].error != null) ? " error: " + JSON.stringify( obj.restore[i].error ) : ' <i class="fa fa-check"></i>')
                );
             }
 

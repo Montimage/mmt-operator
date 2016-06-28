@@ -8,6 +8,9 @@ var router  = express.Router();
 var fs      = require('fs');
 var _os     = require("os");
 var exec    = require('child_process').exec;
+var path    = require('path');
+var config  = require('../../libs/config.js');
+
 const OPERATOR_CONFIG_FILE = "./config.json";
 var  INTERFACES_FILE       = "/etc/network/interfaces";
 var PLATFORM               = _os.platform();
@@ -102,6 +105,23 @@ router.post("/", function( req, res, next ){
 
   //other
   res.send( "WTF" );
+});
+
+
+
+//get log file
+router.get("/log/:year/:month/:day", function( req, res, next){
+  var date = new Date(req.params.year, req.params.month, req.params.day);
+
+  fs.readFile(  path.join(config.log_folder, (moment(date).format("YYYY-MM-DD")) + ".log" ), { encoding: 'utf8' }, function (err, data) {
+
+    if( err )
+      return res.status(500).send( err );
+
+    res.setHeader( 'Content-Type', 'text/plain' );
+    res.send( data );
+  });
+  return;
 });
 
 module.exports = router;
