@@ -4,15 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "build:css": "mkdir -p dist/public/css/ && echo '=> minify:css' && cleancss public/css/style.css -o dist/public/css/style.css",
-    "build:js": "echo '=> minify:js' && npm run minify:public -s && npm run minify:node -s",
-    "minify:node": "for d in ./ routes/ routes/*/ libs/ cron/; do mkdir -p dist/$d; for f in $d*.js; do uglifyjs $f > dist/$f; done; done;",
-    "minify:public": "for d in public/js/ public/js/*/ public/js/*/*/; do mkdir -p dist/$d; for f in $d*.js; do uglifyjs $f > dist/$f; done; done;",
-    "build:img": "echo '=> copy images' && cp -r public/img dist/public/img && cp -r public/favicon.ico dist/public",
-    "build:copy": "echo '=> copy files' && cp -r bin views data *.json node_modules dist/ && cp -r public/lib dist/public/",
-    "build": "npm run test -s && npm run clean -s && npm run build:js -s && npm run build:css -s && npm run build:img -s && npm run build:copy -s",
-    "clean": "echo '=> cleaning' && rm -rf dist/*",
-    "test": "echo '=> testing' && mocha test-cases/"
+    "build": "node ./bin/build",
+    "test" : "echo '=> testing' && mocha test-cases/"
   },
   "dependencies": {
     "body-parser": "~1.13.2",

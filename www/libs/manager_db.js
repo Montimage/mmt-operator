@@ -339,7 +339,7 @@ function getFromFtpServer(options, source_file, target_file, callback) {
  * @param callback        callback(err)
  */
 function backup(mongodbConfig, FtpConfig, callback) {
-  var tmpDir      = "/tmp" //path.join( __dirname, '..', 'public', 'db_backup')
+  var tmpDir      = path.join( __dirname, '..', 'public', 'db_backup')
     , archiveName = getArchiveName( mongodbConfig.db )
     , archiveFile = path.join( tmpDir, archiveName );
 

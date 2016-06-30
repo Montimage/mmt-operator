@@ -860,8 +860,8 @@ var ReportFactory = {
     $("#log-datepicker").datepicker({
       showButtonPanel: false,
       minDate        : "-7d",
-      maxDate        : "-1d",
-  		defaultDate    : "-1d",
+      maxDate        : "-0d",
+  		defaultDate    : "-0d",
   		closeText      : "Close",
       beforeShow: function(input, inst){
         inst.dpDiv.css({marginTop: '20px', marginLeft: '-55px'});

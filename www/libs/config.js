@@ -42,7 +42,7 @@ var logStdout = process.stdout;
 console.logStdout = console.log;
 
 console.log = function () {
-    var prefix = moment().format("h:mm:ss") + " " ;
+    var prefix = moment().format("HH:mm:ss") + " " ;
     if( config.is_in_debug_mode === true  )
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
 
@@ -63,6 +63,11 @@ console.debug = function( msg ){
         console.logStdout( err.stack );
     }
 }
+
+console.info = console.log;
+
+console.log( "Start MMT-Operator" );
+console.info( JSON.stringify( config ) );
 
 config.logStdout = logStdout;
 config.logFile   = logFile;

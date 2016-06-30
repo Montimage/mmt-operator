@@ -4,10 +4,10 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+var app   = require('../app');
 var debug = require('debug')('www:server');
-var http = require('http');
-var port = app.config.port_number;
+var http  = require('http');
+var port  = app.config.port_number;
 app.set('port', port );
 
 /**

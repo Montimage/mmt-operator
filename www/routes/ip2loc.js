@@ -1,9 +1,9 @@
 
 var express = require('express');
 var router  = express.Router();
-
+var path    = require("path");
 var maxmind = require('maxmind');
-var ipToCountry = maxmind.open('./data/GeoLite2-Country.mmdb', {
+var ipToCountry = maxmind.open(path.join( __dirname, "..", "data", "GeoLite2-Country.mmdb"), {
     cache: {
         max: 1000, // max items in cache
         maxAge: 1000 * 60 * 60 // life time in milliseconds
