@@ -11,11 +11,13 @@
      path    = require("path"),
      cp      = require('child_process'),
      util    = require("util"),
+     os      = require("os"),
      moment  = require('moment'),
      CleanCSS = require('clean-css'),
-     UglifyJS = require("uglify-js")
+     UglifyJS = require("uglify-js"),
   ;
 
+var PLATFORM     = os.platform();
 var DIST_FOLDER  = path.join(__dirname, '..' , "dist", "operator" );
 
 function log( msg, level ){
@@ -160,6 +162,9 @@ function build(){
 
 
 function install(){
+  if( PLATFORM != "linux" )
+    return console.log( "Install for Linux platform only." );
+    
   log("Install MMT-Operator at /opt/mmt/operator");
   mkdir("/opt/mmt", function(){
     copy(DIST_FOLDER, " /opt/mmt/", function(){
