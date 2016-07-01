@@ -18,33 +18,48 @@ This chain of tools depends on the following packages:
 
 ### Nodejs 
 
+
     sudo apt-get update
     sudo apt-get install -y python-software-properties python g++ make
     sudo add-apt-repository -y ppa:chris-lea/node.js
     sudo apt-get update
     sudo apt-get install nodejs
     eventually (if not in above): sudo apt-get install npm; sudo apt-get install node
+    #upgrade the last version of nodejs (>= v5.x)
+    npm cache clean -f
+    npm install -g n
+    n stable
 
 ### MONGO db
 
 Follow the procedure described on the following link to install the latest version of Mongodb
 
+    #require >= mongo 3.2
     http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
 ## Usage
 
-### MMT Operator
     #Install the libraries
     cd www
     npm install
     #If there are errors when npm install of mongodb, use sudo apt-get install libkrb5-dev
     
-    #To use Mongodb as persistence
+    #start
     sudo npm start
     
+
 Once MMT-Operator is up and running, open your favorite browser and goto
 
-    localhost
+    localhost:8080
+
+## Build MMT-Operator as a service (daemon)
+
+    #Install MMT-Operator in /opt/mmt/operator
+    node bin/build build
+    node bin/build install
+
+    #Start
+    sudo service operator_d start
 
 ## Contributors
 
