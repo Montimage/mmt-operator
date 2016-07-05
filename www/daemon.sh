@@ -1,10 +1,9 @@
-#! /bin/sh
+#!/bin/sh
 ### BEGIN INIT INFO
 # Required-Start:    $remote_fs $syslog
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Example initscript
 # Description:       Start MMT-Operator to view graphically results of MMT-Probe
 ### END INIT INFO
 
@@ -16,14 +15,15 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 
 NAME=operator
-DAEMON="/opt/mmt/operator/bin/www"
-DAEMON_ARGS=""
+DAEMON="/usr/bin/node"
+DAEMON_ARGS="/opt/mmt/operator/bin/www"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME_d
 DESC="MMT-Operator"
 
 # Exit if the package is not installed
-[ -x "$DAEMON" ] || exit 0
+[ -x "$DAEMON" ] || (echo "Cannot find $DAEMON"; exit 1) || exit 0
+[ -x "$DAEMON_ARGS" ] || (echo "Cannot find $DAEMON_ARGS"; exit 1) || exit 0
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
@@ -48,11 +48,8 @@ do_start()
 
         start-stop-daemon --start --quiet --pidfile $PIDFILE --name $NAME --exec $DAEMON --test > /dev/null \
                 || return 1
-        start-stop-daemon --start --background --quiet --pidfile $PIDFIL --name $NAME --exec $DAEMON -- $DAEMON_ARGS \
+        start-stop-daemon --start --background --quiet --pidfile $PIDFIL --make-pidfile --name $NAME --exec $DAEMON -- $DAEMON_ARGS \
                 || return 2
-        # Add code here, if necessary, that waits for the process to be ready
-        # to handle requests from services started subsequently which depend
-        # on this one.  As a last resort, sleep for some time.
 }
 
 #
@@ -75,7 +72,7 @@ do_stop()
         # that waits for the process to drop all resources that could be
         # needed by services started subsequently.  A last resort is to
         # sleep for some time.
-        start-stop-daemon --stop --quiet --oknodo --retry=0/10/KILL/5 --exec $DAEMON
+        start-stop-daemon --stop --quiet --oknodo --retry=0/10/KILL/20 --exec $DAEMON
         [ "$?" = 2 ] && return 2
 
         # don't forget to delete their pidfiles when they exit.

@@ -92,10 +92,10 @@ router.post("/", function( req, res, next ){
         if( err )
           return res.status( 500 ).send( err );
 
-        res.send( "{}" );
-
         //restart nodejs
         exec("service operator_d restart");
+
+        res.send( {restart: "Done"} );
       });
     }else{
       res.send( {res: "nothing change"} );

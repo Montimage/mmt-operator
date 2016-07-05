@@ -410,12 +410,6 @@ var ReportFactory = {
                         .css({
                             "background-color": chart.color(key)
                         })
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
                         .on('click', function () {
                             var id = $(this).data("id");
                             chart.toggle(id);

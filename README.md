@@ -25,10 +25,11 @@ This chain of tools depends on the following packages:
     sudo apt-get update
     sudo apt-get install nodejs
     eventually (if not in above): sudo apt-get install npm; sudo apt-get install node
-    #upgrade the last version of nodejs (>= v5.x)
-    npm cache clean -f
-    npm install -g n
-    n stable
+    #upgrade the last version of nodejs (>= v4.4.x)
+    sudo npm cache clean -f
+    sudo npm install -g n
+    sudo n stable
+    sudo ln -sf /usr/local/n/versions/node/5.4.1/bin/node /usr/bin/node
 
 ### MONGO db
 
@@ -55,8 +56,8 @@ Once MMT-Operator is up and running, open your favorite browser and goto
 ## Build MMT-Operator as a service (daemon)
 
     #Install MMT-Operator in /opt/mmt/operator
-    node bin/build build
-    node bin/build install
+    npm run build
+    sudo npm run install
 
     #Start
     sudo service operator_d start

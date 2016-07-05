@@ -256,9 +256,15 @@ function cleanup ( cb ){
 };
 
 
+var is_existing = false;
 process.on('SIGINT',function(){
     try{
-          cleanup();
+      if( is_existing ){
+        console.log( "MMT-Operator is being existed!");
+        return;
+      }
+      is_existing = true;
+      cleanup();
     }catch( err ){
         console.error( err );
         exit();

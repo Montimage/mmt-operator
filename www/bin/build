@@ -14,7 +14,7 @@
      os      = require("os"),
      moment  = require('moment'),
      CleanCSS = require('clean-css'),
-     UglifyJS = require("uglify-js"),
+     UglifyJS = require("uglify-js")
   ;
 
 var PLATFORM     = os.platform();
@@ -164,7 +164,7 @@ function build(){
 function install(){
   if( PLATFORM != "linux" )
     return console.log( "Install for Linux platform only." );
-    
+
   log("Install MMT-Operator at /opt/mmt/operator");
   mkdir("/opt/mmt", function(){
     copy(DIST_FOLDER, " /opt/mmt/", function(){
