@@ -210,9 +210,11 @@ table.treetable  tbody{
     overflow-x: hidden;
     display: block;
 }
+/*
 table.treetable span.indenter{
     overflow-x: hidden;
 }
+*/
 table.treetable >tbody>tr>td:first-child {
     cursor: default;
     overflow: hidden;

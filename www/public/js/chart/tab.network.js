@@ -63,13 +63,35 @@ function getHMTL( tag ){
     return html;
 }
 
+var COL = MMTDrop.constants.StatsColumn;
+//MongoDB match expression
+var get_match_query = function( p ){
+  var param = MMTDrop.tools.getURLParameters();
+  var $match = {};
+  if( param.loc )
+    $match[ COL.DST_LOCATION.id ] = param.loc;
+  if( param.profile )
+    $match[ COL.APP_ID.id ] = {$in: MMTDrop.constants.getAppListFromCategoryName( param.profile ) };
+  if( param.ip )
+    $match[ COL.IP_SRC.id ] = param.ip;
+  if( param.link ){
+    var link = param.link.split(",");
+    $match[ COL.IP_SRC.id ]  = {$in: link};
+    $match[ COL.IP_DEST.id ] = {$in: link};
+  }
+
+  if( _.isEmpty( $match ))
+    return null;
+  return {$match: $match};
+}
+
 //limit number of rows of a table
 var LIMIT_SIZE=500;
 //create reports
 var ReportFactory = {
     createDetailOfApplicationChart2: function () {
         var self    = this;
-        var COL     = MMTDrop.constants.StatsColumn;
+
         var HTTP    = MMTDrop.constants.HttpStatsColumn;
         var SSL     = MMTDrop.constants.TlsStatsColumn;
         var RTP     = MMTDrop.constants.RtpStatsColumn;
@@ -717,6 +739,7 @@ var ReportFactory = {
         */
 
         //mongoDB aggregate
+        var $match = get_match_query();
         var group = { _id : {} };
 
         [ COL.APP_ID.id ].forEach( function( el, index){
@@ -729,9 +752,15 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]});
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
+        var param = {collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]};
+        if( $match != undefined ){
+          param.collection = "data_session",
+          param.query      = [$match, {$group: group}];
+        }
+
+        var database = MMTDrop.databaseFactory.createStatDB( param );
 
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -877,26 +906,15 @@ var ReportFactory = {
                             //$(this).css("background-color", chart.color(id) );
                         })
                         .appendTo($tr);
-                    $("<td>", {
-                        "text": key
-                    }).appendTo($tr);
+
 
                     var $a = $("<a>", {
-                        href : "?show detail of this class",
+                        href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip"], "profile=" + key ),
                         title: "click to show detail of this class",
-                        text : MMTDrop.tools.formatDataVolume( val ),
+                        text : key,
 
                     });
-                    $a.on("click", null, key, function( event ){
-                        event.preventDefault();
-                        var id = event.data;
-
-                        if( ip )
-                            location.href = "?profile=" + id + "&ip = " + ip;
-                        else
-                            location.href = "?profile=" + id;
-                        return false;
-                    });
+                    $("<td>").append($a).appendTo($tr);
 
                     $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
 
@@ -1035,6 +1053,7 @@ var ReportFactory = {
         var COL  = MMTDrop.constants.StatsColumn;
         //mongoDB aggregate
         var group = { _id : {} };
+        var $match = get_match_query();
 
         [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
@@ -1046,7 +1065,13 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_link", action: "aggregate", query: [{$group: group}]});
+        var param = {collection: "data_link", action: "aggregate", query: [{$group: group}]}
+        if( $match != undefined ){
+          param.collection = "data_session",
+          param.query      = [$match, {$group: group}];
+        }
+
+        var database = MMTDrop.databaseFactory.createStatDB( param );
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -1205,7 +1230,7 @@ var ReportFactory = {
                     var $label = $("<a>", {
                         html : key,
                         title: "click to show detail of this user",
-                        href :"network/link?ips=" + legend.data[key].ips.join(",")
+                        href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip"], "link="+ legend.data[key].ips.join(","))
                     });
 
                     $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -1355,9 +1380,12 @@ var ReportFactory = {
 
         return report;
     },
+
     createTopUserReport: function (filter, userData) {
         var self = this;
         var COL  = MMTDrop.constants.StatsColumn;
+
+        var $match = get_match_query();
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -1371,8 +1399,13 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_ip", action: "aggregate", query: [{$group: group}]});
+        var param = {collection: "data_ip", action: "aggregate", query: [{$group: group}]};
+        if( $match != undefined ){
+          param.collection = "data_session",
+          param.query      = [$match, {$group: group}]
+        }
 
+        var database = MMTDrop.databaseFactory.createStatDB( param );
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -1489,7 +1522,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-top-users"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='40%'>Client IP</th><th width='20%'>MAC</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='40%'>Local IP</th><th width='20%'>MAC</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -1526,7 +1559,7 @@ var ReportFactory = {
                     var $label = $("<a>", {
                         text : key,
                         title: "click to show detail of this user",
-                        href :"?ip=" + key
+                        href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link"], "ip="+ key)
                     });
 
                     $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -1687,7 +1720,6 @@ var ReportFactory = {
 
         return report;
     },
-
     createTopProtocolReport: function (filter, ip) {
         var self = this;
         var db_param = {id: "network.profile" };
@@ -1997,6 +2029,8 @@ var ReportFactory = {
     createTopLocationReport: function(filter, ip, userData){
         var self = this;
         var COL  = MMTDrop.constants.StatsColumn;
+
+        var $match = get_match_query();
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -2010,7 +2044,15 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB({collection: "data_location", action: "aggregate", query: [{$group: group}]});
+
+        var param = {collection: "data_location", action: "aggregate", query: [{$group: group}]};
+
+        if( $match != undefined ){
+          param.collection = "data_session",
+          param.query      = [$match, {$group: group}]
+        }
+
+        var database = MMTDrop.databaseFactory.createStatDB( param );
 
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -2162,7 +2204,7 @@ var ReportFactory = {
                     var $label = $("<a>", {
                         text : key,
                         title: "click to show detail of this location",
-                        href :"?loc=" + key
+                        href : MMTDrop.tools.getCurrentURL(["ip","link","profile"], "loc=" + key),
                     });
 
                     $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -2327,6 +2369,7 @@ var ReportFactory = {
 
 }
 
+/*
 var param = MMTDrop.tools.getURLParameters();
 if( param.ip != undefined ){
     var ip = param.ip; //'<a href="?">'+ param.ip +'</a>'
@@ -2436,3 +2479,4 @@ function loadDetail( ip_dest, app_id ){
         $("body").append( $(modal) );
     }
 }
+*/

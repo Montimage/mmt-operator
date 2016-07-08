@@ -36,7 +36,7 @@ var ReportFactory = {
         var detail_db= new MMTDrop.Database({id : "dpi.detail", format: [99,100], userData: {}});
         var database = new MMTDrop.Database({id : "dpi.app", format: [99,100]});
         var COL      = MMTDrop.constants.StatsColumn;
-        
+
         var cTree    = MMTDrop.chartFactory.createTree({
             getData: {
                 getDataFn: function (db) {
@@ -60,7 +60,7 @@ var ReportFactory = {
                     if (args.length == 1)
                         label = args[0].label;
 
-                    //id of columns tobe sumUp 
+                    //id of columns tobe sumUp
                     var cols = [];
                     for (var i in args)
                         cols.push(args[i].id);
@@ -93,7 +93,7 @@ var ReportFactory = {
 
                                 if (!isNaN(temp) && parseInt(temp) != 0)
                                     isZero = false;
-                                
+
                                 if( args[i].id == COL.DATA_VOLUME.id)
                                     temp = MMTDrop.tools.formatDataVolume( temp );
 
@@ -110,15 +110,15 @@ var ReportFactory = {
                         if (isZero == false)
                             data.push(o);
                     }
-                    
+
                     //calculate total unique app/proto
                     //console.log( APP );
                     cTree.totalProtocols = 0;
                     for( var app in APP )
                         if( app != -1)  //_other
                             cTree.totalProtocols ++;
-                    
-                    
+
+
                     //columns to show. The first column is APP_PATH
                     var columns = [group];
 
@@ -146,7 +146,7 @@ var ReportFactory = {
             click: function ( app_path_arr ) {
                 if (Array.isArray( app_path_arr ) == false)
                     return;
-                
+
                 //clear the chart
                 if( app_path_arr.length == 0 ){
                     detail_db.data([]);
@@ -154,16 +154,16 @@ var ReportFactory = {
                     cLine.redraw();
                     return;
                 }
-                
+
                 if( app_path_arr.length > 10 ){
                     app_path_arr.length = 10;
                 }
-                
+
                 //load data corresponding to the selected app
                 var group_by = fPeriod.selectedOption().id;
                 var period   = JSON.stringify( status_db.time );
                 var db_options = {period: period, period_groupby: group_by, userData : { app_path: app_path_arr} };
-                
+
                 detail_db.reload( db_options, function( new_data ){
                     cLine.attachTo( detail_db );
                     cLine.redraw();
@@ -174,9 +174,9 @@ var ReportFactory = {
                 if( _chart.totalProtocols == undefined )
                     _chart.totalProtocols = 0;
                 var str = _chart.totalProtocols +" distinct protocols/applications";
-                
+
                 $("#" + _chart.elemID).append('<div style="font-size:12px; margin-top: 10px; color:green">'+ str +'</div>');
-                
+
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
                 $widget.on("widget-resized", null, _chart.chart, function (event, widget) {
@@ -201,7 +201,7 @@ var ReportFactory = {
 						                 MMTDrop.constants.StatsColumn.APP_PATH.id];
 
                     var data = db.data();
-                    
+
                     data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
 
                     var arr = [];
@@ -219,10 +219,10 @@ var ReportFactory = {
                         }
                         arr.push(o);
                     }
-                    
+
                     var time_id = 3;
                     var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-        
+
                     var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
                     for (var i = 0; i < header.length; i++) {
                         var path = header[i];
@@ -231,11 +231,11 @@ var ReportFactory = {
                             label: MMTDrop.constants.getPathFriendlyName(path)
                         });
                     }
-                    
+
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height = $widget.find(".grid-stack-item-content").innerHeight();
                         height -= $widget.find(".filter-bar").outerHeight(true) + 15;
-                    
+
                     return {
                         data: arr,
                         columns: columns,
@@ -283,6 +283,9 @@ var ReportFactory = {
                         height: height
                     });
                 });
+
+
+                $(".col-md-4").css("width", "200px !important;");
             }
         });
 

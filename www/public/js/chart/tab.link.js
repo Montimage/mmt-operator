@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "Bandwidth",
+        title: "",
         x: 0,
         y: 0,
         width: 12,

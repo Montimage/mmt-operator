@@ -45,7 +45,7 @@ var ReportFactory = {
                 type    : "button",
                 class   : "btn btn-warning pull-right",
                 style   : "margin-left: 30px",
-                value   : "Upload",
+                value   : "Upload a Backup File",
                 id      : "uploadBtn",
               }
             }
@@ -101,12 +101,12 @@ var ReportFactory = {
         var arr = [];
         for( var i=0; i<obj.backup.length; i++ ){
           var bak       = obj.backup[i];
-          var disable   = bak.file == undefined || obj.isBackingUp || obj.isRestoring != undefined;
+          var disable   = bak.file == undefined || bak.name == undefined || obj.isBackingUp || obj.isRestoring != undefined;
           var timestamp = moment( new Date( bak.time ) ).format("YYYY-MM-DD HH:mm:ss" );
 
           arr.push([
             timestamp,
-            bak.file != undefined ?
+            bak.file != undefined && bak.name != undefined ?
               '<div class="pull-right"><a title="Download backup file" href="/db_backup/'+ bak.name +'">' + MMTDrop.tools.formatDataVolume( bak.size ) + ' <i class = "fa fa-cloud-download"/></a></div>' : ""
             ,
             //Note
@@ -152,6 +152,7 @@ var ReportFactory = {
 
           var w = $("#system-content").getWidgetContentOfParent().width() - 120 - 100 - 100 - 150;
           $(".need-to-fix-width").width(w + "px");
+          $(".dataTables_scrollBody").addClass("table-bordered");
         });
         $widget.trigger("widget-resized", [$widget]);
 

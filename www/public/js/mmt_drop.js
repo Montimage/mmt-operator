@@ -601,16 +601,16 @@ MMTDrop.constants = {
       8: [90, 162, 590, 591],
       9: [79, 219, 569],
       10: [7, 15, 30, 41, 48, 81, 82, 85, 93, 97, 99, 163, 164, 166, 178, 180, 181, 182, 191, 198, 214, 218, 241, 243, 251, 260, 288, 304, 310, 325, 339, 341, 347, 349, 354, 363, 376, 377, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, //],
-                 //Tunlelling
-      /*11: [*/
-                 137, 141, 142, 179, 196, 278, 279, 281, 461, 481, 496,//],
-                 //Remote
-            //13: [
-                 265, 290, 340, 356, 357, 388, 414,
-                //],
-            //Misc
-      //14: [
-                65, 66, 78, 156, 393],
+               //Tunlelling
+    /*11: [*/
+               137, 141, 142, 179, 196, 278, 279, 281, 461, 481, 496,//],
+               //Remote
+          //13: [
+               265, 290, 340, 356, 357, 388, 414,
+              //],
+          //Misc
+    //14: [
+              65, 66, 78, 156, 393],
 
       12: [233, 237, 276, 355],
       15: [593, 599, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 625],
@@ -645,7 +645,14 @@ MMTDrop.constants = {
 
       return protocolName;
     },
-
+    getAppListFromCategoryName: function( cat_name ){
+      for( var key in this.CategoriesIdsMap )
+        if( this.CategoriesIdsMap[ key ] == cat_name ){
+          if( this.CategoriesAppIdsMap[ key ] == undefined )
+            return [];
+          return this.CategoriesAppIdsMap[ key ];
+        }      
+    },
     /**
       * Return the path friendly name.
       * @param {string} path application protocol path (given by application IDs)
@@ -857,6 +864,8 @@ MMTDrop.tools = function () {
      * @returns {[[string]]}
      */
     _this.formatDataVolume = function (v) {
+        if( v == undefined ) return "unknown";
+
         if( MMTDrop.config.format_payload !== true )
             return Math.round(v);
 
@@ -1458,8 +1467,11 @@ MMTDrop.tools = function () {
    * @return {[type]} [description]
    */
   _this.getURLParameters  = function(){
+      var d = window.location.href.indexOf('?');
+      if( d == -1 )
+        return {};
       var vars = {}, hash;
-      var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+      var hashes = window.location.href.slice(d + 1).split('&');
       for(var i = 0; i < hashes.length; i++){
           hash = hashes[i].split('=');
           vars[hash[0]] = hash[1];
@@ -5721,9 +5733,9 @@ MMTDrop.chartFactory = {
                   }
             };
             //console.log( chart_opt );
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
-
+                if( param.chart ){
+                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+                }
                 var nb_real_points = 0;
                 if( obj[1] )
                     for( var i = 0; i<obj[0].length; i++)
