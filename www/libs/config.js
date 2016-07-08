@@ -1,7 +1,8 @@
 var config  = require("../config.json"),
     fs      = require("fs"),
     util    = require("util"),
-    moment  = require('moment');;
+    moment  = require('moment'),
+    path    = require('path');
 
 //config parser
 var REDIS_STR = "redis",
@@ -18,8 +19,7 @@ function set_default_value( variable, prop, value ){
     variable[prop] = value;
 }
 
-if( config.log_folder == undefined )
-    config.log_folder = __dirname + '/log';
+set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
 if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
   config.probe_analysis_mode = "offline";
@@ -36,7 +36,7 @@ set_default_value( config.redis_server, "port", 6379 );
 // ensure log directory exists
 fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
 //overwrite console.log
-var logFile   = fs.createWriteStream(config.log_folder + '/' + (moment().format("YYYY-MM-DD")) +'.log', { flags: 'a' });
+var logFile   = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
 var logStdout = process.stdout;
 
 console.logStdout = console.log;
@@ -71,5 +71,9 @@ console.info( JSON.stringify( config ) );
 
 config.logStdout = logStdout;
 config.logFile   = logFile;
+config.outStream = logStdout;
+
+if( config.is_in_debug_mode == true )
+  config.outStream = logFile
 
 module.exports = config;

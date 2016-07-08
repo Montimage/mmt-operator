@@ -373,16 +373,17 @@ var ReportFactory = {
 
     //when click on Empty
     $("#conf-db-btnEmpty").on("click", function(){
-      if( confirm("Empty Database\nDo you want to cancel?\n\n\n") )
+      if( !confirm("Are you sure you want to empty the Database?\n\n\n") )
         return;
-        MMTDrop.tools.ajax("/info/db?action=empty-db", {}, "POST", {
-          error  : function(){
-            MMTDrop.alert.error("Cannot empty the database", 10*1000);
-          },
-          success: function(){
-            MMTDrop.alert.success("Successfully emptyed the database", 10*1000);
-          }
-        })
+
+      MMTDrop.tools.ajax("/info/db?action=empty-db", {}, "POST", {
+        error  : function(){
+          MMTDrop.alert.error("Cannot empty the database", 10*1000);
+        },
+        success: function(){
+          MMTDrop.alert.success("Successfully emptyed the database", 10*1000);
+        }
+      })
     });
 
     $("#conf-db-ftp-enable").change( function(){
@@ -490,7 +491,7 @@ var ReportFactory = {
 
               //when click on "backup now"
               $("#backupNowBtn").on("click", function(){
-                if( confirm("Backup database now.\nDo you want to cancel?") )
+                if( !confirm("Backup database now.\nAre you sure?\n\n") )
                   return;
                 //change button ==> backing up
                 $("#parentBackupNowBtn").html(  $('<span class="btn btn-default" disabled><i class = "fa fa-refresh fa-spin fa-fw"/> Backing up ...</span>') );
@@ -720,7 +721,7 @@ var ReportFactory = {
           //when user click on Delete button
           $(".btn-delete").on("click", function(){
             var file = this.dataset["file"];
-            if( confirm("Delete this backup ["+ file +"]\nDo you want to cancel?") )
+            if( !confirm("Delete this backup ["+ file +"]\nAre you sure?\n\n") )
               return;
             $(this).disable();
 
@@ -903,7 +904,7 @@ var ReportFactory = {
           return;
         }
 
-        if( confirm("Update and Restart MMT-Operator\nDo you want to cancel?") )
+        if( !confirm("Update and Restart MMT-Operator\nAre you sure?\n\n") )
           return;
 
         var data = {
@@ -933,7 +934,7 @@ var ReportFactory = {
 
         var value = $("#conf-probe-content").val();
 
-        if( confirm("Update Network Interfaces and Restart Machine \n\nDo you want to cancel?") )
+        if( !confirm("Update Network Interfaces and Restart Machine \n\nAre you sure?") )
           return;
 
         if( !confirm("Update Network Interfaces and Restart Machine \n\nIs network interfaces description correct?") )

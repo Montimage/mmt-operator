@@ -58,7 +58,7 @@ var all_pages = {
 };
 
 var pages_to_show = {};
-['link', 'network', 'application', 'dpi', 'security', 'evasion', 'ndn', 'video', 'sla'].forEach(
+['link', 'network', 'application', 'dpi', 'security', 'evasion'].forEach(
   function(key){
     pages_to_show[ key ] = all_pages[ key ];
   });

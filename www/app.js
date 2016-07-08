@@ -99,7 +99,8 @@ app.use(express.static(path.join(__dirname, 'public'),{
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',
-               {stream: (config.is_in_debug_mode === true )? config.logStdout : config.logFile
+               {
+                 stream: config.outStream
                }
               )
        );

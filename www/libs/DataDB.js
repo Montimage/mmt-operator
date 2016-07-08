@@ -421,6 +421,7 @@ var MongoConnector = function () {
             return;
         }
 
+        //receive this msg when probe is starting
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
             if( self.startProbeTime == undefined  || self.startProbeTime < ts){
                 self.startProbeTime = ts;

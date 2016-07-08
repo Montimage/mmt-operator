@@ -266,6 +266,8 @@ $(function () {
     $("#exportBtn").click( function(){
       d3.selectAll("path").attr("fill", "none");
       d3.selectAll(".tick line, path.domain, c3-ygrid").attr("stroke", "black");
+      d3.selectAll(".c3-line").attr("stroke-width", "2px");
+      d3.selectAll(".c3-ygrid").attr("stroke", "#aaa").attr("stroke-dasharray","3 3");
 
       var $form = $("#frmUploadImage");
       //for the first time
@@ -330,13 +332,23 @@ $(function () {
 	    	    ctx.font      = "14px Arial";
 		        ctx.fillStyle = "grey";
 	    	    ctx.fillText("Montimage", 15, canvas.height - 12);
-            //get image based_64
-	    	    var image    = canvas.toDataURL("image/png");
-		        var fileName = node.id + "-" + (new Date()).toLocaleString() + ".png";
 
-            $form.attr("action", "/export?filename=" + fileName);
-            $form.children().val( image );
-            $form.submit();
+		        var fileName = node.title + "-" + (new Date()).toLocaleString() + ".png";
+
+            try {
+              var isFileSaverSupported = !!new Blob;
+              //OK, your browser support Blog
+              canvas.toBlob(function(blob) {
+                  saveAs(blob, fileName);
+              });
+            } catch (e) {
+              $form.attr("action", "/export?filename=" + fileName);
+              $form.attr("method", "POST");
+              //get image based_64
+              $form.children().val( canvas.toDataURL("image/png") );
+              $form.submit();
+            }
+
 
             //for others reports
             if( index < data.length - 1 )

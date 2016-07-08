@@ -15,7 +15,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 
 NAME=operator
-DAEMON="/usr/bin/node"
+DAEMON="$(which node)"
 DAEMON_ARGS="/opt/mmt/operator/bin/www"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME_d

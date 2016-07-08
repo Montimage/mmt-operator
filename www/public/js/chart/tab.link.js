@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "Traffic",
+        title: "Bandwidth",
         x: 0,
         y: 0,
         width: 12,
@@ -114,7 +114,7 @@ var ReportFactory = {
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             //name = name.replace("ETHERNET", "ETH");
-            return name == "ETH" ? "Total Bandwidth" : name;
+            return name == "ETH" ? "  TOTAL" : name;
         }
 
         var cLine = MMTDrop.chartFactory.createTimeline({

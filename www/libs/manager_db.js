@@ -75,8 +75,22 @@ function removeRF(target, callback) {
     if (!exists) {
       return callback(null);
     }
-    log("Removing " + target, 'info');
+    log("Removing " + target);
     exec( 'rm -rf ' + target, callback);
+  });
+}
+
+function mkdir(target, callback) {
+  var fs = require('fs');
+
+  callback = callback || function() { };
+
+  fs.exists(target, function(exists) {
+    if (exists) {
+      return callback(null);
+    }
+    log("Create folder " + target);
+    exec( 'mkdir -p ' + target, callback);
   });
 }
 
@@ -346,22 +360,25 @@ function backup(mongodbConfig, FtpConfig, callback) {
   callback = callback || function() {};
 
   log("Backup database");
-  //delete old archive file (if exists)
-  removeRF( archiveFile, function(){
+  mkdir(tmpDir, function(err){
+    if( err ) return console.error( err );
+    //delete old archive file (if exists)
+    removeRF( archiveFile, function(){
 
-    //backup to tar.gz file
-    mongoDump( mongodbConfig, archiveFile, function( err ){
-      if( err ) return callback( {mongodump: err} );
+      //backup to tar.gz file
+      mongoDump( mongodbConfig, archiveFile, function( err ){
+        if( err ) return callback( {mongodump: err} );
 
-      //send tar.gz file to FTP server
-      if( FtpConfig.isEnable != undefined )
-        sendToFtpServer( FtpConfig, archiveFile, archiveName, function( err ){
-          callback({ftp: err}, archiveFile,archiveName );
-        });
-      else
-        callback(null, archiveFile, archiveName );
-    })
-  })
+        //send tar.gz file to FTP server
+        if( FtpConfig.isEnable != undefined )
+          sendToFtpServer( FtpConfig, archiveFile, archiveName, function( err ){
+            callback({ftp: err}, archiveFile,archiveName );
+          });
+        else
+          callback(null, archiveFile, archiveName );
+      });//end mongoDump
+    });//end removeRF
+  });//end mkdir
 }
 
 /**

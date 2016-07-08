@@ -10,7 +10,7 @@
  */
 var MMTDrop = {
     //The version of the MMTDrop library.
-    VERSION : "1.1.0"
+    VERSION : "2.1.0"
 };
 
 if( typeof Highcharts !== "undefined" )
@@ -1492,7 +1492,15 @@ MMTDrop.tools = function () {
       arr = "";
     return arr;
   };
+  _this.getCurrentURL = function( param, add_query_str ){
+    var href = window.location.href;
+    if( href.indexOf( "#") > 1 )
+      href = href.substr(0, href.indexOf("#"));
+    if( href.indexOf( "?") > 1 )
+      href = href.substr(0, href.indexOf("?"));
 
+    return href + _this.getQueryString( param, add_query_str);
+  };
   _this.gotoURL = function( url, options ){
     if( options && options.param )
       url += _this.getQueryString( options.param );
@@ -5998,17 +6006,19 @@ MMTDrop.chartFactory = {
             //get all selected rows
             var arr = [];
             var selectedRows = $('#' + elemID + "_treetable tbody tr").filter(".selected");
+
             selectedRows.each( function(){;
               var id = this.dataset["ttId"];//data-tt-id
               arr.push( id );
             });
 
-                        if( arr.length > 10 ){
-                            arr.length = 10;
-                            $(this).parent().removeClass("selected");
-                        }
+            if( arr.length > 10 ){
+                arr.length = 10;
+                $(this).parent().removeClass("selected");
+                return;
+            }
 
-                        MMTDrop.tools.localStorage.set("tree-selected-ids-" + elemID, arr );
+            MMTDrop.tools.localStorage.set("tree-selected-ids-" + elemID, arr );
             option.click( arr, this );
           }
         });

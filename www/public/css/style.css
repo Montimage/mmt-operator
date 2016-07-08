@@ -220,6 +220,7 @@ table.treetable >tbody>tr>td:first-child {
     display: block;
     border-bottom: 0px;
     border-right: 0px;
+    color: black;
 }
 table.treetable >tbody>tr:last-child>td:first-child {
     border-bottom: thin solid #efefef;
@@ -228,6 +229,10 @@ table.treetable>tbody>tr>td {
     cursor: pointer;
     border-collapse: collapse;
     border: thin solid #efefef;
+    color: #428bca;
+}
+table.treetable>tbody>tr.selected>td{
+  color: white;
 }
 table>tbody>tr:hover {
     text-decoration: underline;

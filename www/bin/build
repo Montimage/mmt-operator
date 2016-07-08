@@ -171,9 +171,11 @@ function install(){
       log("Set MMT-Operator as service");
       var daemon_file = path.join(__dirname, "..", "daemon.sh");
       copy( daemon_file, "/etc/init.d/operator_d", function(){
-        cp.exec("chmod +x " + daemon_file, function(){
+        cp.exec("chmod +x " + daemon_file, function( err ){
+          if( err ) return console.error( err );
           console.log( "now you can use MMT-Operator using the commands:\n sudo service operator_d start|stop|restart|status" );
-          console.log( "the config file is located at /opt/mmt/operator/config.json")
+          console.log( "the config file is located at /opt/mmt/operator/config.json");
+          console.log("");
         })
       })
     })
