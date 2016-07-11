@@ -202,7 +202,8 @@ MMTDrop.constants = {
       RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
       FORMAT_TYPE       : {id: 32 , label: "Type"},
       SRC_LOCATION      : {id: 33, label: "Source"},
-      DST_LOCATION      : {id: 34, label: "Destination"}
+      DST_LOCATION      : {id: 34, label: "Destination"},
+      PROFILE_ID        : {id: 36, label: "Profile Id"}
     },
 
 
@@ -588,62 +589,47 @@ MMTDrop.constants = {
     },
 
     /**
-     * A table of Category-Id: Application-Id[]
-     */
-    CategoriesAppIdsMap: {
-      1: [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 26, 27, 31, 32, 33, 34, 35, 36, 38, 39, 40, 44, 45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 64, 67, 68, 69, 70, 71, 72, 73, 74, 76, 80, 83, 87, 88, 89, 91, 94, 95, 98, 100, 101, 102, 106, 110, 111, 112, 114, 115, 116, 121, 122, 123, 124, 125, 126, 127, 130, 131, 132, 133, 134, 135, 139, 143, 145, 146, 147, 148, 150, 151, 153, 154, 155, 157, 158, 159, 165, 168, 171, 174, 175, 176, 184, 187, 189, 193, 200, 201, 203, 204, 206, 207, 208, 209, 210, 211, 212, 217, 222, 223, 226, 230, 234, 235, 238, 239, 240, 244, 245, 246, 248, 249, 250, 252, 253, 256, 258, 261, 262, 264, 267, 268, 269, 274, 275, 282, 283, 286, 287, 289, 292, 293, 294, 295, 300, 301, 302, 303, 305, 306, 307, 309, 313, 315, 316, 318, 319, 320, 321, 326, 327, 328, 329, 331, 333, 334, 335, 336, 338, 342, 343, 346, 348, 350, 351, 352, 353, 359, 360, 362, 364, 367, 368, 369, 370, 375, 378, 379, 380, 383, 386, 387, 389, 390, 391, 392, 394, 395, 396, 398, 399, 400, 401, 402, 403, 404, 406, 408, 412, 415, 416, 417, 418, 419, 420, 423, 424, 425, 426, 428, 430, 431, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 580, 583, 597, 598, 623],
-      2: [17, 28, 52, 84, 92, 105, 109, 129, 172, 190, 215, 257, 263, 332, 344, 361, 365, 405],
-      3: [8, 24, 29, 42, 43, 47, 63, 75, 86, 96, 108, 113, 119, 120, 144, 149, 167, 192, 194, 199, 216, 224, 225, 227, 266, 270, 271, 285, 296, 297, 308, 345, 374, 407, 409, 410, 411, 413, 421, 432, 617, 618, 619, 620, 621],
-      4: [77, 107, 138, 161, 185, 195, 197, 228, 229, 231, 242, 254, 255, 277, 280, 284, 291, 298, 299, 311, 312, 330, 337, 371, 372, 381, 382, 385, 427, 429, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 581, 582, 584, 585, 586, 587, 588, 589, 592],
-      5: [16, 37, 104, 118, 136, 140, 160, 173, 183, 186, 188, 220, 221, 232, 259, 314, 317, 366, 384, 397, 594, 595, 596, 600, 622],
-      6: [128, 152, 169, 170, 205, 213, 272, 273, 323, 324, 422],
-      7: [117, 247, 322, 358],
-      8: [90, 162, 590, 591],
-      9: [79, 219, 569],
-      10: [7, 15, 30, 41, 48, 81, 82, 85, 93, 97, 99, 163, 164, 166, 178, 180, 181, 182, 191, 198, 214, 218, 241, 243, 251, 260, 288, 304, 310, 325, 339, 341, 347, 349, 354, 363, 376, 377, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, //],
-               //Tunlelling
-    /*11: [*/
-               137, 141, 142, 179, 196, 278, 279, 281, 461, 481, 496,//],
-               //Remote
-          //13: [
-               265, 290, 340, 356, 357, 388, 414,
-              //],
-          //Misc
-    //14: [
-              65, 66, 78, 156, 393],
-
-      12: [233, 237, 276, 355],
-      15: [593, 599, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 625],
-            16: [103, 373, 177, 202, 236]
-    },
-
-
-    /**
      * Maps the Protocol ID to a Protocol Name
      * @param {number} id
      * @returns {string} Protocol name
      */
     getProtocolNameFromID : function( app_id ) {
-            var id = parseInt( app_id );
-
+      var id = parseInt( app_id );
       var protocolName = "Unknown";
-            if( id > 0 )
-                protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'Unknown';
-            else if( MMTDrop.constants.OtherProtocolsIDName && ( id in MMTDrop.constants.OtherProtocolsIDName)){
+      if( id > 0 )
+          protocolName = ( id in MMTDrop.constants.ProtocolsIDName) ? MMTDrop.constants.ProtocolsIDName[id] : 'Unknown';
+      else if( MMTDrop.constants.OtherProtocolsIDName && ( id in MMTDrop.constants.OtherProtocolsIDName)){
 
-                protocolName = MMTDrop.constants.OtherProtocolsIDName[id];
+          protocolName = MMTDrop.constants.OtherProtocolsIDName[id];
 
-                var arr = protocolName.split(":");
-                if( isNaN( arr[1] ) ){
-                    protocolName = arr[1]; //domain name
-                }else{
-                    //parent: port_number
-                    protocolName = MMTDrop.constants.ProtocolsIDName[ arr[0] ] + ":" + arr[1];
-                }
+          var arr = protocolName.split(":");
+          if( isNaN( arr[1] ) ){
+              protocolName = arr[1]; //domain name
+          }else{
+              //parent: port_number
+              protocolName = MMTDrop.constants.ProtocolsIDName[ arr[0] ] + ":" + arr[1];
+          }
 
-            }
-
+      }
       return protocolName;
+    },
+    getProtocolIDFromName : function( proto_name ){
+      //ProtocolName
+      if( proto_name.indexOf(":") == -1 ){
+        for( var key in this.ProtocolsIDName )
+          if( this.ProtocolsIDName[ key ] == proto_name ){
+              return parseInt( key );
+          }
+        return;
+      }
+
+      var arr = proto_name.split(":"); //protocol:port
+      arr[0] = this.getProtocolIDFromName( arr[0] );
+      proto_name = arr.join(":"); //proto_id:port
+      for( var key in MMTDrop.constants.OtherProtocolsIDName )
+        if( MMTDrop.constants.OtherProtocolsIDName[ key ] == proto_name ){
+            return parseInt( key );
+        }
     },
     getAppListFromCategoryName: function( cat_name ){
       for( var key in this.CategoriesIdsMap )
@@ -651,7 +637,7 @@ MMTDrop.constants = {
           if( this.CategoriesAppIdsMap[ key ] == undefined )
             return [];
           return this.CategoriesAppIdsMap[ key ];
-        }      
+        }
     },
     /**
       * Return the path friendly name.
@@ -719,28 +705,6 @@ MMTDrop.constants = {
        return path.toString().substring(0, n);
      },
     /**
-     * Get Category ID of an application
-     * @param {number} appId - application Id
-     * @returns {number} - category Id
-     */
-    getCategoryIdFromAppId : function( appId ){
-            appId = parseInt( appId );
-
-            if( appId < 0 && MMTDrop.constants.OtherProtocolsIDName ){
-                var val = MMTDrop.constants.OtherProtocolsIDName[ appId ];
-                if( val == undefined )
-                    return -1;
-                appId   = parseInt( val.split(":")[0] );
-            }
-
-      for (var i in MMTDrop.constants.CategoriesAppIdsMap){
-        var arr = MMTDrop.constants.CategoriesAppIdsMap[i];
-        if (arr.indexOf( appId ) > -1)
-          return i;
-      }
-      return -1;
-    },
-    /**
      * Maps the Protocol ID to a Protocol Name
      * @param {number} id
      * @returns {string} Protocol Name
@@ -751,7 +715,13 @@ MMTDrop.constants = {
                 protocolName = MMTDrop.constants.CategoriesIdsMap[id] ;
       return protocolName;
     },
-
+    getCategoryIdFromName : function( cat_name ){
+      for( var key in this.CategoriesIdsMap )
+        if( this.CategoriesIdsMap[ key ] == cat_name ){
+          return parseInt( key );
+        }
+      return -1;
+    },
     /**
      * List of period Id.
      *
@@ -1466,7 +1436,7 @@ MMTDrop.tools = function () {
    * Get an object representing the parameters of the current url
    * @return {[type]} [description]
    */
-  _this.getURLParameters  = function(){
+  _this.getURLParameters  = function( ){
       var d = window.location.href.indexOf('?');
       if( d == -1 )
         return {};
@@ -1474,7 +1444,7 @@ MMTDrop.tools = function () {
       var hashes = window.location.href.slice(d + 1).split('&');
       for(var i = 0; i < hashes.length; i++){
           hash = hashes[i].split('=');
-          vars[hash[0]] = hash[1];
+          vars[hash[0]] = decodeURIComponent(hash[1]);
       }
       return vars;
   };
@@ -1625,6 +1595,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     this.afterReload = function( cb ){
         _reloadCallback.push( cb );
     }
+    this.updateParameter = function(){};
 
     this.delete = function(){
         _data = [];
@@ -1672,51 +1643,56 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
    * @see {@link MMTDrop.tools#mergeObjects}
    */
   this.reload = function(new_param, callback, user_data){
+    if( typeof this.updateParameter == "function" ){
+      var user_param = this.updateParameter( _param );
+      if( user_param != undefined )
+        _param = MMTDrop.tools.mergeObjects(_param, user_param);
+    }
     if (new_param)
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
 
-        if( isFirstTime ){
-            _param.isReload = false;
-            isFirstTime = false;
-            console.log("Load database: " + JSON.stringify(_param));
-        }else{
-           _param.isReload = true;
-            console.log("Reload database: " + JSON.stringify(_param));
+    if( isFirstTime ){
+        _param.isReload = false;
+        isFirstTime = false;
+        console.log("Load database: " + JSON.stringify(_param));
+    }else{
+       _param.isReload = true;
+        console.log("Reload database: " + JSON.stringify(_param));
+    }
+    var onSuccess = function( newData ){
+                        console.log("  - got " + newData.data.length + " elements");
+
+        _originalData     = newData.data;
+        _this.time        = newData.time;
+        if( newData.probeStatus )
+            _this.probeStatus = newData.probeStatus;
+        if( newData.protocols )
+            MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
+
+        if (typeof(dataProcessingFn) == "function"){
+            _originalData = dataProcessingFn( _originalData );
         }
-        var onSuccess = function( newData ){
-                            console.log("  - got " + newData.data.length + " elements");
 
-            _originalData     = newData.data;
-            _this.time        = newData.time;
-            if( newData.probeStatus )
-                _this.probeStatus = newData.probeStatus;
-            if( newData.protocols )
-                MMTDrop.constants.OtherProtocolsIDName = newData.protocols;
+        this.reset();
 
-            if (typeof(dataProcessingFn) == "function"){
-                _originalData = dataProcessingFn( _originalData );
-            }
-
-            this.reset();
-
-            if( callback ) callback( _originalData, user_data );
-            for( var i in _reloadCallback )
-                _reloadCallback[i]( _originalData, user_data );
-        };
+        if( callback ) callback( _originalData, user_data );
+        for( var i in _reloadCallback )
+            _reloadCallback[i]( _originalData, user_data );
+    };
 
 
-        _get (_param, {
-            success: onSuccess.bind( this ),
-            error  : function( xhr, status, msg){
-                if( status == "timeout")
-                    msg = "Connection timeout";
-                else
-                    msg = "Cannot connect to database server";
+    _get (_param, {
+        success: onSuccess.bind( this ),
+        error  : function( xhr, status, msg){
+            if( status == "timeout")
+                msg = "Connection timeout";
+            else
+                msg = "Cannot connect to database server";
 
-                MMTDrop.alert.error( msg, 10*1000 );
-                //throw new Error( msg );
-            }
-        } );
+            MMTDrop.alert.error( msg, 10*1000 );
+            //throw new Error( msg );
+        }
+    } );
 
   };
 
@@ -2126,12 +2102,10 @@ MMTDrop.databaseFactory = {
       db.stat.splitDataByClass = function(){
         var data = db.data();
         var obj = {};
-        var appId = 0;
         var catId = -1;
                 var path ;
         for (var i=0; i<data.length; i++){
-          appId = data[i][MMTDrop.constants.StatsColumn.APP_ID.id];
-          catId = MMTDrop.constants.getCategoryIdFromAppId( appId );
+          catId = data[i][MMTDrop.constants.StatsColumn.PROFILE_ID.id];
 
           if (obj[catId] == null)
             obj[catId] = [];
@@ -5472,7 +5446,7 @@ MMTDrop.chartFactory = {
             obj[j] = [ columns[j].label];
         }
 
-        if( option.addZeroPoints ){
+        if( option.addZeroPoints){
             var time        = option.addZeroPoints.time;
             var period      = option.addZeroPoints.sample_period;
             var probeStatus = option.addZeroPoints.probeStatus;
@@ -6358,3 +6332,6 @@ MMTDrop.chartFactory = {
 
 //Set default initial options for MMTDrop
 MMTDrop.setOptions({});
+
+if (typeof module !== 'undefined')
+  module.exports = MMTDrop.constants;

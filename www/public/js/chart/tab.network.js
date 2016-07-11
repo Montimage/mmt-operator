@@ -30,7 +30,7 @@ var arr = [
         y: 9,
         width: 6,
         height: 9,
-        type: "info",
+        type: "warning",
         userData: {
             fn: "createTopLocationReport"
         },
@@ -42,7 +42,7 @@ var arr = [
         y: 9,
         width: 6,
         height: 9,
-        type: "warning",
+        type: "danger",
         userData: {
             fn: "createTopLinkReport"
         },
@@ -50,8 +50,8 @@ var arr = [
 ];
 
 var availableReports = {
-    "createTopUserReport": "Top Users",
-    "createTopProtocolReport": "Top Protocols",
+    "createTopUserReport"     : "Top Users",
+    "createTopProtocolReport" : "Top Protocols",
     "createTopLocationReport" : "Top Geo Locations"
 };
 
@@ -64,6 +64,34 @@ function getHMTL( tag ){
 }
 
 var COL = MMTDrop.constants.StatsColumn;
+
+//change title of each report
+var param = MMTDrop.tools.getURLParameters();
+//top profile => detail of 1 profile (list app) => one app
+if( param.profile ){
+  arr[1].title =  param.profile + " &#10095; "
+  if( param.app )
+    arr[1].title += param.app;
+  else
+    arr[1].title += "Top Apps/Protos"
+}
+
+//when all paramerters are selected
+if( param.profile && param.ip && param.link && param.app && param.loc )
+  arr = [{
+      id: "detail_location",
+      title: "Detail",
+      x: 0,
+      y: 0,
+      width: 12,
+      height: 9,
+      type: "success",
+      userData: {
+          fn: "createDetailOfApplicationChart"
+      },
+  },]
+
+
 //MongoDB match expression
 var get_match_query = function( p ){
   var param = MMTDrop.tools.getURLParameters();
@@ -71,7 +99,9 @@ var get_match_query = function( p ){
   if( param.loc )
     $match[ COL.DST_LOCATION.id ] = param.loc;
   if( param.profile )
-    $match[ COL.APP_ID.id ] = {$in: MMTDrop.constants.getAppListFromCategoryName( param.profile ) };
+    $match[ COL.PROFILE_ID.id ] = MMTDrop.constants.getCategoryIdFromName( param.profile );
+  if( param.app )
+    $match[ COL.APP_ID.id ] = MMTDrop.constants.getProtocolIDFromName( param.app );
   if( param.ip )
     $match[ COL.IP_SRC.id ] = param.ip;
   if( param.link ){
@@ -728,40 +758,44 @@ var ReportFactory = {
     },
     createTopProfileReport: function (filter, ip) {
         var self = this;
-        /*
-        var db_param = {id: "network.profile" };
-        if( ip !== undefined ){
-            db_param.userData = {ip: ip };
-            db_param.id       = "network.ip";
-        }
-        var database = MMTDrop.databaseFactory.createStatDB( db_param );
-        var COL      = MMTDrop.constants.StatsColumn;
-        */
-
         //mongoDB aggregate
-        var $match = get_match_query();
-        var group = { _id : {} };
+        var group  = { _id : {} };
 
-        [ COL.APP_ID.id ].forEach( function( el, index){
+        [ COL.PROFILE_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.APP_ID.id].forEach( function( el, index){
+        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.PROFILE_ID.id].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
 
+        var query_by_app = MMTDrop.tools.getURLParameters()["profile"] !== undefined;
+        //param.raw = true;
+
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
-        var param = {collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]};
-        if( $match != undefined ){
-          param.collection = "data_session",
-          param.query      = [$match, {$group: group}];
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]} );
+        //this is called each time database is reloaded
+        database.updateParameter = function( param ){
+          var $match = get_match_query();
+          //query by app_id
+          if( $match != undefined ){
+            param.collection     = "data_session";
+            param.query          = [$match, {$group: group}];
+
+            group._id = {};
+            [ COL.APP_ID.id ].forEach( function( el, index){
+              group["_id"][ el ] = "$" + el;
+            });
+
+            [ COL.APP_ID.id].forEach( function( el, index){
+              group[ el ] = {"$first" : "$"+ el};
+            } );
+          }
+          return param;
         }
-
-        var database = MMTDrop.databaseFactory.createStatDB( param );
-
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -774,7 +808,11 @@ var ReportFactory = {
                     //the first column is Timestamp, so I start from 1 instance of 0
                     var columns = [];
 
-                    var obj = db.stat.splitDataByClass();
+                    var obj = {};
+                    if( query_by_app )
+                      obj = db.stat.splitDataByApp();
+                    else
+                      obj = db.stat.splitDataByClass();
 
                     cPie.dataLegend = {
                         "dataTotal": 0,
@@ -792,7 +830,11 @@ var ReportFactory = {
                         var v = o[col.id];
                         if( v === 0 || v === undefined ) continue;
 
-                        var name = MMTDrop.constants.getCategoryNameFromID(cls);
+                        var name = "";
+                        if( query_by_app )
+                          name = MMTDrop.constants.getProtocolNameFromID(cls);
+                        else
+                          name = MMTDrop.constants.getCategoryNameFromID(cls);
 
                         data.push({
                             "key": name,
@@ -831,6 +873,7 @@ var ReportFactory = {
                             cPie.dataLegend.data[o.key] = o.val;
                         }
                     }
+                    cPie.dataLegend.length = data.length;
 
                     return {
                         data: data,
@@ -874,7 +917,9 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-condensed tbl-top-profiles"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Profile</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
+                var title = "Profile";
+                if( query_by_app ) title = "Application/Protocol"
+                $("<thead><tr><th></th><th width='50%'>"+ title +"</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if( key == "Other")
@@ -907,14 +952,21 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
+                      var $a = null;
+                      if( query_by_app )
+                        $a = $("<a>", {
+                           href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile"], "app=" + key ),
+                           title: "click to show detail of this application/protocol",
+                           text : key,
+                         });
+                      else
+                       $a = $("<a>", {
+                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip"], "profile=" + key ),
+                          title: "click to show detail of this profile",
+                          text : key,
 
-                    var $a = $("<a>", {
-                        href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip"], "profile=" + key ),
-                        title: "click to show detail of this class",
-                        text : key,
-
-                    });
-                    $("<td>").append($a).appendTo($tr);
+                        });
+                      $("<td>").append($a).appendTo($tr);
 
                     $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
 
@@ -1053,8 +1105,6 @@ var ReportFactory = {
         var COL  = MMTDrop.constants.StatsColumn;
         //mongoDB aggregate
         var group = { _id : {} };
-        var $match = get_match_query();
-
         [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
@@ -1065,13 +1115,15 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var param = {collection: "data_link", action: "aggregate", query: [{$group: group}]}
-        if( $match != undefined ){
-          param.collection = "data_session",
-          param.query      = [$match, {$group: group}];
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", query: [{$group: group}]} );
+        database.updateParameter = function( param ){
+          var $match = get_match_query();
+          if( $match != undefined ){
+            param.collection = "data_session";
+            param.query      = [$match, {$group: group}];
+          }
         }
 
-        var database = MMTDrop.databaseFactory.createStatDB( param );
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -1149,6 +1201,7 @@ var ReportFactory = {
                         };
                         data.length = top+1;
                     }
+                    cPie.dataLegend.length = data.length;
 
                     return {
                         data: data,
@@ -1226,14 +1279,13 @@ var ReportFactory = {
                             //$(this).css("background-color", chart.color(id) );
                         })
                         .appendTo($tr);
+                      var $label = $("<a>", {
+                          html : key,
+                          title: "click to show detail of this user",
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip", "app"], "link="+ legend.data[key].ips.join(","))
+                      });
 
-                    var $label = $("<a>", {
-                        html : key,
-                        title: "click to show detail of this user",
-                        href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip"], "link="+ legend.data[key].ips.join(","))
-                    });
-
-                    $("<td>", {align: "left"}).append($label).appendTo($tr);
+                      $("<td>").append($label).appendTo($tr);
 
                     $("<td>", {
                         "text" : MMTDrop.tools.formatDataVolume( val ),
@@ -1385,7 +1437,7 @@ var ReportFactory = {
         var self = this;
         var COL  = MMTDrop.constants.StatsColumn;
 
-        var $match = get_match_query();
+
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -1399,13 +1451,16 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var param = {collection: "data_ip", action: "aggregate", query: [{$group: group}]};
-        if( $match != undefined ){
-          param.collection = "data_session",
-          param.query      = [$match, {$group: group}]
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_ip", action: "aggregate", query: [{$group: group}]} );
+        //this is call each time database is reloaded
+        database.updateParameter = function( param ){
+          var $match = get_match_query();
+          if( $match != undefined ){
+            param.collection = "data_session";
+            param.query      = [$match, {$group: group}];
+          }
         }
 
-        var database = MMTDrop.databaseFactory.createStatDB( param );
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
@@ -1477,7 +1532,7 @@ var ReportFactory = {
                         };
                         data.length = top+1;
                     }
-
+                    cPie.dataLegend.length = data.length;
                     return {
                         data: data,
                         columns: [{
@@ -1556,13 +1611,13 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
-                    var $label = $("<a>", {
-                        text : key,
-                        title: "click to show detail of this user",
-                        href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link"], "ip="+ key)
-                    });
+                      var $label = $("<a>", {
+                          text : key,
+                          title: "click to show detail of this user",
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link", "app"], "ip="+ key)
+                      });
 
-                    $("<td>", {align: "left"}).append($label).appendTo($tr);
+                      $("<td>", {align: "left"}).append($label).appendTo($tr);
 
                     $("<td>", {
                         "text" : mac,
@@ -2030,7 +2085,6 @@ var ReportFactory = {
         var self = this;
         var COL  = MMTDrop.constants.StatsColumn;
 
-        var $match = get_match_query();
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -2045,14 +2099,15 @@ var ReportFactory = {
         } );
 
 
-        var param = {collection: "data_location", action: "aggregate", query: [{$group: group}]};
-
-        if( $match != undefined ){
-          param.collection = "data_session",
-          param.query      = [$match, {$group: group}]
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_location", action: "aggregate", query: [{$group: group}]} );
+        //this is called each time database is reloaded
+        database.updateParameter = function( param ){
+          var $match       = get_match_query();
+          if( $match != undefined ){
+            param.collection = "data_session";
+            param.query      = [$match, {$group: group}];
+          }
         }
-
-        var database = MMTDrop.databaseFactory.createStatDB( param );
 
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -2121,7 +2176,7 @@ var ReportFactory = {
                         };
                         data.length = top+1;
                     }
-
+                    cPie.dataLegend.length = data.length;
                     return {
                         data: data,
                         columns: [{
@@ -2200,19 +2255,14 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
+                      var $label = $("<a>", {
+                          text : key,
+                          title: "click to show detail of this location",
+                          href : MMTDrop.tools.getCurrentURL(["ip","link","profile", "app"], "loc=" + key),
+                      });
 
-                    var $label = $("<a>", {
-                        text : key,
-                        title: "click to show detail of this location",
-                        href : MMTDrop.tools.getCurrentURL(["ip","link","profile"], "loc=" + key),
-                    });
+                      $("<td>", {align: "left"}).append($label).appendTo($tr);
 
-                    $("<td>", {align: "left"}).append($label).appendTo($tr);
-
-                    // $("<td>", {
-                    //     "text" : mac,
-                    //     "align": "left"
-                    // }).appendTo($tr);
 
 
                     $("<td>", {

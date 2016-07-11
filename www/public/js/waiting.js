@@ -21,7 +21,7 @@ var breadcrumbs = {
       $dom = $("<ol>",{
         id   : "breadcrumbs",
         class: "breadcrumb",
-        style:'width:100%;height:32px;text-align:center;padding-top:3px; background-color:white',
+        style:'float:left;height:32px;padding-top:3px; background-color:white',
       });
       $dom.appendTo( $("#toolbar") )
     }

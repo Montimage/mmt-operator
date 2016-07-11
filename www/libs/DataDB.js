@@ -64,7 +64,7 @@ var MongoConnector = function () {
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             //the parents is marked by isGen = true
             app: new DataCache(db, "data_app",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH, COL.APP_ID],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH],
                                //inc
                                [COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
@@ -72,7 +72,7 @@ var MongoConnector = function () {
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                 //set
-                                ["isGen"]),
+                                ["isGen", COL.PROFILE_ID]),
 
             ip: new DataCache(db, "data_ip",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
@@ -119,7 +119,8 @@ var MongoConnector = function () {
                                  HTTP.TRANSACTIONS_COUNT,
                                ],
                                    //set
-                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION],
+                               [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
+                               COL.PROFILE_ID],
                                   //init
                                init_session_set
                                   ),
@@ -296,8 +297,9 @@ var MongoConnector = function () {
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
             //group msg by each period
-            var mod = Math.ceil( (ts - self.startProbeTime) / (config.probe_stats_period * 1000) );
-            msg[ TIMESTAMP ] = self.startProbeTime + mod *    (config.probe_stats_period * 1000 );
+            //ceil: returns the smallest integer greater than or equal to a given number
+            var mod = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
+            msg[ TIMESTAMP ] = self.startProbeTime + mod *    config.probe_stats_period_in_ms;
 
 
             update_packet_timestamp( msg[ TIMESTAMP ] );

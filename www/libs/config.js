@@ -32,6 +32,8 @@ set_default_value( config.database_server, "port", 27017 );
 set_default_value( config.redis_server, "host", "127.0.0.1" );
 set_default_value( config.redis_server, "port", 6379 );
 
+set_default_value( config, "probe_stats_period", 5);
+config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
 
 // ensure log directory exists
 fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
