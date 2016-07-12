@@ -200,10 +200,14 @@ MMTDrop.constants = {
       RTT_MAX_CLIENT    : {id: 29 , label: "RTT min Client"},
       RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
       RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
-      FORMAT_TYPE       : {id: 32 , label: "Type"},
-      SRC_LOCATION      : {id: 33, label: "Source"},
-      DST_LOCATION      : {id: 34, label: "Destination"},
-      PROFILE_ID        : {id: 36, label: "Profile Id"}
+      RETRANSMISSION_COUNT: {id: 32 , label: "Retransmision Count"},
+      REPORT_NUMBER     : {id: 33 , label: "Duration Report Number"},//number of periods (e.g. 5 second) being reported
+
+      FORMAT_TYPE       : {id: 34 , label: "Type"},//
+      SRC_LOCATION      : {id: 35, label: "Source"},
+      DST_LOCATION      : {id: 36, label: "Destination"},
+      IP_SRC_INIT_CONNECTION: {id: 37, label: "Connection initilized by local IP"},
+      PROFILE_ID        : {id: 38, label: "Profile Id"},
     },
 
 
@@ -1436,7 +1440,7 @@ MMTDrop.tools = function () {
    * Get an object representing the parameters of the current url
    * @return {[type]} [description]
    */
-  _this.getURLParameters  = function( ){
+  _this.getURLParameters  = function( key ){
       var d = window.location.href.indexOf('?');
       if( d == -1 )
         return {};
@@ -1445,6 +1449,10 @@ MMTDrop.tools = function () {
       for(var i = 0; i < hashes.length; i++){
           hash = hashes[i].split('=');
           vars[hash[0]] = decodeURIComponent(hash[1]);
+
+          //when user want to get only one parameter
+          if( key != undefined && key == hash[0] )
+            return vars[ hash[0] ];
       }
       return vars;
   };

@@ -33,7 +33,29 @@ var ReportFactory = {
         var COL   = MMTDrop.constants.StatsColumn;
         var HTTP  = MMTDrop.constants.HttpStatsColumn;
         var fApp  = MMTDrop.filterFactory.createAppFilter();
-        var appList_db = MMTDrop.databaseFactory.createStatDB({id:"app.list"});
+
+        //mongoDB aggregate
+        var group = { _id : {} };
+
+        [ COL.APP_ID.id ].forEach( function( el, index){
+          group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+          group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.APP_ID.id ].forEach( function( el, index){
+          group[ el ] = {"$first" : "$"+ el};
+        } );
+
+        var $match = {isGen: false};
+        $match[ COL.FORMAT_ID.id ] = 100;
+
+        //isGen:false => select only app/proto given by mmt-probe
+        //mmt-operator generates also parent protos of them to get hierarchy
+        var appList_db = new MMTDrop.databaseFactory.createStatDB({collection: "data_app", action: "aggregate",
+          query: [{"$match": $match}, {"$group" : group}]});
+
+        //var appList_db = MMTDrop.databaseFactory.createStatDB({id:"app.list"});
 
         var database = new MMTDrop.Database({id: "app.responsetime", format: [100]}, function( data ){
             //group by timestamp

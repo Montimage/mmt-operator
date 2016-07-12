@@ -72,7 +72,7 @@ var MongoConnector = function () {
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                 //set
-                                ["isGen", COL.PROFILE_ID]),
+                                ["isGen", COL.PROFILE_ID, COL.APP_ID]),
 
             ip: new DataCache(db, "data_ip",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],

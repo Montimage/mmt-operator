@@ -42,3 +42,18 @@ $( function(){
 MMTDrop.setOptions({
     format_payload: true
 });
+
+
+//hide animation if 2 consecutif refreshes are less than 5seconds;
+var now = (new Date()).getTime();
+var lastRefresh = MMTDrop.tools.cookie.get("last_load");
+MMTDrop.tools.cookie.set("last_load", now, 1);
+
+if( lastRefresh == undefined ) lastRefresh = 0;
+if( now - lastRefresh < 10000 ){
+  //remove animation
+  $('<style type="text/css">\
+  .c3-chart-arc .c3-chart-line{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none;}\
+</style>').appendTo("head");
+
+}

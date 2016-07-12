@@ -417,7 +417,7 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
                     $("<td>", {
-                        "text": key
+                        "html": '<span style="max-width:150px;display:inline-block">' + key + '</span>'
                     }).appendTo($tr);
                     $("<td>", {
                         "align": "right",

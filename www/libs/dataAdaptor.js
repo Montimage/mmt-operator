@@ -87,11 +87,14 @@ var MMTDrop = {
         RTT_MAX_CLIENT      : 29,
         RTT_AVG_SERVER      : 30,
         RTT_AVG_CLIENT      : 31,
-        FORMAT_TYPE         : 32, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
-        SRC_LOCATION        : 33,
-        DST_LOCATION        : 34,
-        IP_SRC_INIT_CONNECTION  : 35, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
-        PROFILE_ID          : 36, //original app_id given by mmt-probe
+        RETRANSMISSION_COUNT: 32,
+        REPORT_NUMBER       : 33,
+
+        FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
+        SRC_LOCATION        : 35,
+        DST_LOCATION        : 36,
+        IP_SRC_INIT_CONNECTION  : 37, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
+        PROFILE_ID          : 38, //original app_id given by mmt-probe
     },
 
     SecurityColumnId           : {
