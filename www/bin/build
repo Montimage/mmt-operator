@@ -14,7 +14,8 @@
      os      = require("os"),
      moment  = require('moment'),
      CleanCSS = require('clean-css'),
-     UglifyJS = require("uglify-js")
+     UglifyJS = require("uglify-js"),
+     VERSION  = require("../version.json").VERSION
   ;
 
 var PLATFORM     = os.platform();
@@ -158,7 +159,7 @@ function build(){
 
     //Compressing output
     process.on('exit', function(){
-      var DIST_TAR = DIST_FOLDER + "-" + moment().format("YYYY-MM-DD") + "tar.gz";
+      var DIST_TAR = DIST_FOLDER + "-" + VERSION + "-" + moment().format("YYYY-MM-DD") + ".tar.gz";
       console.log( "Compressing ... " + DIST_TAR);
       var command_str = "tar " + ["-czf ", DIST_TAR, DIST_FOLDER].join(" ");
       cp.execSync( command_str, {cwd: path.join( DIST_FOLDER, ".." )} );

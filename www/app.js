@@ -1,4 +1,4 @@
-const VERSION         = "v0.5.0-4b76871";
+var VERSION         = require("./version.json").VERSION;
 
 var express         = require('express');
 var session         = require('express-session')
@@ -24,6 +24,7 @@ var mmtAdaptor      = require('./libs/dataAdaptor');
 var DBC             = require('./libs/DataDB');
 var AdminDB         = require('./libs/AdminDB');
 var Probe           = require('./libs/Probe');
+
 
 config.version = VERSION;
 //config parser
