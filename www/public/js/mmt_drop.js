@@ -1457,6 +1457,13 @@ MMTDrop.tools = function () {
       return vars;
   };
 
+  _this.createStylesheet = function( content ){
+    $('<style>',{
+      type : "text/css",
+      html : content
+    }).appendTo("head");
+  }
+
   _this.getQueryString = function( param, add_query_str ){
     var obj = _this.getURLParameters();
     var arr = [];

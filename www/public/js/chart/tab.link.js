@@ -496,8 +496,7 @@ var ReportFactory = {
 
                 $("#"+ legendId).remove();
                 var $parent = $("#" + _chart.elemID).parent().parent();
-                $parent.css("width", "calc(100% - 390px");
-                _chart.chart.resize()
+
                 $parent.parent().append(
                     $('<div style="width: 360px; margin-right: 15px" class="pull-right overflow-auto-xy" id="' + legendId + '"/>')
                 );
@@ -509,7 +508,17 @@ var ReportFactory = {
                     order: [[3, "desc"]]
                 });
 
+
+                $parent.css("width", ($(document).width() - 50 - 390) + "px")
+                       .css("width", "calc(100% - 390px")
+                       .css("width", "-webkit-calc(100% - 390px")//safari
+                       .css("width", "-moz-calc(100% - 390px")   //firefox
+                       .css("width", "-o-calc(100% - 390px")   //opera
+                       ;
+                _chart.chart.resize();
+
                 table.DataTable().columns.adjust();
+
             },
         /*
 	    click: function(){
@@ -682,7 +691,7 @@ var ReportFactory = {
                 var table = _chart.chart;
                 if( table === undefined ) return;
 
-                table.DataTable().columns.adjust();
+                //table.DataTable().columns.adjust();
 
                 table.on("draw.dt", function () {
                     var $div = $('.dataTables_scrollBody');
@@ -690,7 +699,10 @@ var ReportFactory = {
                     $div.css('height', h);
                     $div.css('margin-top', 10);
                     $div.css('margin-bottom', 10);
-                    $div.children().filter("table").css("border-top", "thin solid #ddd");
+                    $div.children().filter("table").css({
+                      "border-top" : "thin solid #ddd",
+                      "width"      : "100%"
+                    });
                 });
                 table.trigger("draw.dt");
 
@@ -706,7 +718,7 @@ var ReportFactory = {
                 $widget.css({"margin-top": "20px"});
                 $widget.before('<div style="margin: 0; height: '
                                + ($widget.outerHeight(true) + 30) +'px; background-color: white; left: -10px; right:-10px; position: absolute; top:'
-                               + ($widget.position().top ) +'px;">&nbsp;</div>')
+                               + ($widget.position().top ) +'px;">&nbsp;</div>');
             }
         });
 

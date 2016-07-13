@@ -252,7 +252,7 @@ tr.selected a {
     opacity: 0.8;
 }
 .c3-line {
-    stroke-width: 2px;
+    stroke-width: 2px !important;
 }
 
 .c3-axis-y-label{

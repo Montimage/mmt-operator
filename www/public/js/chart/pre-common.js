@@ -52,8 +52,6 @@ MMTDrop.tools.cookie.set("last_load", now, 1);
 if( lastRefresh == undefined ) lastRefresh = 0;
 if( now - lastRefresh < 10000 ){
   //remove animation
-  $('<style type="text/css">\
-  .c3-chart-arc .c3-chart-line{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none;}\
-</style>').appendTo("head");
+  MMTDrop.tools.createStylesheet('.c3-chart-arc,.c3-chart-line{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none;}');
 
 }
