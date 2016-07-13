@@ -1,9 +1,11 @@
-var moment      = require('moment');
-var dataAdaptor = require('./dataAdaptor.js');
-var Window      = require("./Window.js");
-var AppList     = require("./AppList.js");
-var ipLib       = require("ip");
-var config      = require("./config.js")
+var moment         = require('moment');
+var dataAdaptor    = require('./dataAdaptor.js');
+var Window         = require("./Window.js");
+var AppList        = require("./AppList.js");
+var ipLib          = require("ip");
+var config         = require("./config.js");
+var CircularBuffer = require("./CircularBuffer.js");
+
 // var ip2loc      = require("");
 
 var DataCache   = require("./Cache.js");
@@ -45,6 +47,7 @@ var MongoConnector = function () {
         self.mdb       = db;
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
+        self.startProbeTime = 0; //timestamp when probe starts
 
         self.operatorStatus.set("start");
         self.dataCache = {
@@ -274,6 +277,49 @@ var MongoConnector = function () {
     }
 
     /**
+     * Get a true timestamp of a report based on its reported timestamp and its report number
+     * @param  {[integer]} rep_number report number
+     * @param  {[integer]} ts         report timestamp
+     * @return {[integer]}            return the timestamp that comes from reports having the same rep_number and are mostly used
+     */
+    self.getTrueTimestamp = function( rep_number, ts ){
+      if( rep_number == undefined ) return ts;
+
+      if( self.time_buffer == undefined )
+        self.time_buffer = new CircularBuffer( 10 ); //capacity = 100
+
+      //find one element on time_buffer having same report_id
+      var obj = self.time_buffer.data().find( function( el, i){
+        return ( el != undefined && el.rep_id == rep_number )
+      });
+
+      //not found
+      if( obj == undefined ){
+        obj = {};
+        obj[ ts ] = 1; //the ts is used 1 time (this time)
+
+        self.time_buffer.enq({
+          rep_id : rep_number,
+          data   : obj
+        })
+
+        return ts;
+      }
+      //get the ts with max utilisation
+      var max = {ts: 0, use: 0};
+      for( var t in obj.data )
+        if( obj.data[ t ] > max.use ){
+          max.use = obj.data[ t ];
+          max.ts  = t;
+        }
+      //increase utilisation of the max
+      obj.data[ max.ts ] ++;
+      console.log( self.time_buffer.data() );
+      //return parseInt( max.ts );
+      return ts;
+    }
+
+    /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
      */
@@ -286,6 +332,24 @@ var MongoConnector = function () {
         var format = msg[ FORMAT_ID ];
 
         if ( format === 100 || format === 99 ){
+
+            //group msg by each period
+            //ceil: returns the smallest integer greater than or equal to a given number
+            var mod    = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
+            var new_ts = self.startProbeTime + mod   *  config.probe_stats_period_in_ms;
+
+            if( format == 100 )
+              msg[ TIMESTAMP ] = self.getTrueTimestamp( msg[ COL.REPORT_NUMBER ] , new_ts);
+            else
+              msg[ TIMESTAMP ] = new_ts;
+
+
+
+            msg[ COL.ORG_TIMESTAMP ] = ts;
+            ts                       = msg[ TIMESTAMP ];
+
+
+
             //the timestamp of the first message from probe
             if( self.startProbeTime === undefined )
               self.startProbeTime = ts;
@@ -295,12 +359,6 @@ var MongoConnector = function () {
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
-
-            //group msg by each period
-            //ceil: returns the smallest integer greater than or equal to a given number
-            var mod = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
-            msg[ TIMESTAMP ] = self.startProbeTime + mod *    config.probe_stats_period_in_ms;
-
 
             update_packet_timestamp( msg[ TIMESTAMP ] );
 
@@ -426,6 +484,8 @@ var MongoConnector = function () {
         //receive this msg when probe is starting
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
             if( self.startProbeTime == undefined  || self.startProbeTime < ts){
+                if( self.time_buffer )
+                  self.time_buffer.empty();
                 self.startProbeTime = ts;
                 console.log("The last runing probe is " + (new Date( self.startProbeTime )));
 
@@ -1021,6 +1081,8 @@ var MongoConnector = function () {
 
     self.emptyDatabase = function (cb) {
         self.appList.clear();
+        self.time_buffer.empty();
+
         for( var i in self.dataCache )
             self.dataCache[i].clear();
 

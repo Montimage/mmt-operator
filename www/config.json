@@ -7,11 +7,11 @@
     "host": "192.168.0.32",
     "port": 6379
   },
-  "old_data_folder": "/Users/nhnghia/temps/share_vbox/output/",
-  "data_folder": "/opt/mmt/probe/result/report/online/",
+  "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
+  "old_data_folder": "/opt/mmt/probe/result/report/online/",
   "delete_data": true,
-  "input_mode": "redis",
-  "probe_analysis_mode": "online",
+  "input_mode": "file",
+  "probe_analysis_mode": "offline",
   "local_network": [
     {
       "ip": "192.168.0.0",

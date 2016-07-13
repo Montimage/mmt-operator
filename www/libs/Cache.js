@@ -1,5 +1,5 @@
-var config  = require("../config.json");
-
+var config      = require("../libs/config.js");
+var dataAdaptor = require("../libs/dataAdaptor.js");
 /**
  * @param   {Object} option
  {
@@ -20,8 +20,8 @@ var config  = require("../config.json");
 function Cache ( option ) {
 "use strict";
     var _this                   = this;
-    var TIMESTAMP               = 3; //index of timestamp
-
+    var TIMESTAMP               = dataAdaptor.StatsColumnId.TIMESTAMP; //index of timestamp
+    var REPORT_NUMBER           = dataAdaptor.StatsColumnId.REPORT_NUMBER;
     var _period_to_update_value = 0;
     var _retain_period          = -1;
     var _collection_name        = option.collection_name + "_" + option.period;
@@ -126,7 +126,7 @@ function Cache ( option ) {
         //clone object;
         msg    = JSON.parse(JSON.stringify( msg ));
 
-        var ts = msg[ TIMESTAMP ];
+        var ts = msg[ TIMESTAMP ] > ts ? msg[ TIMESTAMP ] : ts;
         _this.data.push( msg );
 
         //only for ndn offline
@@ -169,16 +169,18 @@ function Cache ( option ) {
     };
 
     this.addArray = function (arr, cb ) {
-        if( arr != null && arr.length > 0 )
-            _this.data = _this.data.concat( arr );
+        if( arr == null || !(arr.length > 0) )
+            return;
 
-        if( _this.data.length === 0 ) return ;
+        var ts = 0;
+        arr.forEach( function(el, i ){
+          _this.data.push( el );
 
-        //get time of the last element in the array
-        var last = _this.data[ _this.data.length - 1 ];
-        var ts   = last[ TIMESTAMP ];
+          //get the latest timestamp
+          if( el[ TIMESTAMP ] > ts )
+            ts = el[ TIMESTAMP ];
+        });
 
-        //need messages arrive in time order???
         if( ts - _lastUpdateTime > _period_to_update_value || _period_to_update_value == 0 ){
             var data = [];
             if( _lastUpdateTime !== 0  || _period_to_update_value == 0)
@@ -256,7 +258,7 @@ function Cache ( option ) {
 
             if( _period_to_update_name === "real" || _period_to_update_name === "special")
                 key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ];
-            else
+            else //each minute, hour, day, month
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
 
             var txt = JSON.stringify( key_obj );

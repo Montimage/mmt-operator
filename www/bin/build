@@ -155,6 +155,17 @@ function build(){
     copy_folder( ["public", "lib"], copy_msg);
     copy_folder( ["public", "img"], copy_msg);
     copy_folder( ["views"], copy_msg);
+
+    //Compressing output
+    process.on('exit', function(){
+      var DIST_TAR = DIST_FOLDER + "-" + moment().format("YYYY-MM-DD") + "tar.gz";
+      console.log( "Compressing ... " + DIST_TAR);
+      var command_str = "tar " + ["-czf ", DIST_TAR, DIST_FOLDER].join(" ");
+      cp.execSync( command_str, {cwd: path.join( DIST_FOLDER, ".." )} );
+      console.log( "\nA distribution of MMT-Operator is located at " + DIST_TAR );
+
+   });
+
   });//end mkdir( DIST_FOLDER)
 }
 

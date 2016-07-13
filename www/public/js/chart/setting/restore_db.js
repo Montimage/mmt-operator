@@ -47,6 +47,7 @@ var ReportFactory = {
                 style   : "margin-left: 30px",
                 value   : "Upload a Backup File",
                 id      : "uploadBtn",
+                disabled: true
               }
             }
           ]

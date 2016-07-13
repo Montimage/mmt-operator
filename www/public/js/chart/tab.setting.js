@@ -203,7 +203,8 @@ var ReportFactory = {
           type  : "<select>",
           attr  : {
             onchange : "",
-            id       : "conf-db-auto"
+            id       : "conf-db-auto",
+            disabled : true
           },
           children:[{
             type : "<option>",
@@ -636,10 +637,11 @@ var ReportFactory = {
               {
                 type: "<input>",
                 attr: {
-                  type : "submit",
-                  class: "btn btn-primary",
-                  value: 'Add',
-                  id   : "nic-btnSave"
+                  type    : "submit",
+                  class   : "btn btn-primary",
+                  value   : 'Add',
+                  id      : "nic-btnSave",
+                  disabled: true
                 }
               }//end buttons
               ]
@@ -704,7 +706,7 @@ var ReportFactory = {
               {title: ""},
               {title: "Timestamp"},
               {title: "IP Address"},
-              {title: "Last Report"},
+              {title: "Last Reported"},
               {title: "Actions"},
             ]
           });

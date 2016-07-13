@@ -453,7 +453,12 @@ var ReportFactory = {
                     });
 
                     var top = 7;
-                    if( data.length > top+2 && cPie.showAll !== true && ip == undefined ){
+                    if( cPie.showAll === true && data.length > LIMIT_SIZE ){
+                        top = LIMIT_SIZE;
+                        cPie.showAll = false;
+                    }
+
+                    if( data.length > top+2 && cPie.showAll !== true){
                         var val = 0;
 
                         //update data
@@ -672,7 +677,9 @@ var ReportFactory = {
                 $table.dataTable({
                     paging: false,
                     dom: "t",
-                    order: [[3, "desc"]]
+                    order: [[3, "desc"]],
+                    "scrollY": "240px",
+                    "scrollCollapse": true,
                 });
             }
         });

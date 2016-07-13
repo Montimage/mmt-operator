@@ -91,10 +91,13 @@ var MMTDrop = {
         REPORT_NUMBER       : 33,
 
         FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
-        SRC_LOCATION        : 35,
-        DST_LOCATION        : 36,
-        IP_SRC_INIT_CONNECTION  : 37, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
-        PROFILE_ID          : 38, //original app_id given by mmt-probe
+
+        SRC_LOCATION            : 40,
+        DST_LOCATION            : 41,
+        IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
+        PROFILE_ID              : 43, // profile id
+        ORG_APP_ID              : 44, //original APP_ID given by probe
+        ORG_TIMESTAMP           : 45, //original TIMESTAMP given by probe
     },
 
     SecurityColumnId           : {

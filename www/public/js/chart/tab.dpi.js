@@ -182,7 +182,7 @@ var ReportFactory = {
                 $widget.on("widget-resized", null, _chart.chart, function (event, widget) {
                     var chart = $("table.treetable tbody");
                     var height = widget.find(".grid-stack-item-content").innerHeight();
-                    height -= widget.find(".filter-bar").outerHeight(true) + 65;
+                    height -= widget.find(".filter-bar").outerHeight(true) + 80;
                     chart.css({
                         "max-height": height,
                         "height"    : height

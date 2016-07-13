@@ -23,7 +23,6 @@ html
     script( type='text/javascript', src ='/socket.io/socket.io.js')
     script( type='text/javascript', src ='/js/alert.js')
     
-    link(rel='stylesheet', href='/css/style.css')
     
     block header
     
@@ -31,6 +30,7 @@ html
         
     block javascripts
         
+    link(rel='stylesheet', href='/css/style.css')
   body
     script(type='text/javascript')
       if( locals.is_in_debug_mode === false )

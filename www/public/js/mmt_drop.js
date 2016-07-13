@@ -204,10 +204,13 @@ MMTDrop.constants = {
       REPORT_NUMBER     : {id: 33 , label: "Duration Report Number"},//number of periods (e.g. 5 second) being reported
 
       FORMAT_TYPE       : {id: 34 , label: "Type"},//
-      SRC_LOCATION      : {id: 35, label: "Source"},
-      DST_LOCATION      : {id: 36, label: "Destination"},
-      IP_SRC_INIT_CONNECTION: {id: 37, label: "Connection initilized by local IP"},
-      PROFILE_ID        : {id: 38, label: "Profile Id"},
+
+      SRC_LOCATION          : {id: 40, label: "Source"},
+      DST_LOCATION          : {id: 41, label: "Destination"},
+      IP_SRC_INIT_CONNECTION: {id: 42, label: "Connection initilized by local IP"},
+      PROFILE_ID            : {id: 43, label: "Profile Id"},
+      ORG_APP_ID            : {id: 44, label: "App ID"},  //original APP_ID given by probe
+      ORG_TIMESTAMP         : {id: 45, label: "Timestamp"},//original TIMESTAMP given by probe
     },
 
 

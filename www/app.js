@@ -216,6 +216,7 @@ app.use(function(err, req, res, next) {
     res.render('error', {message: err.message, error: err} );
 });
 
+process.stdin.resume();//so the program will not close instantly
 process.on('uncaughtException', function (err) {
     console.error( err );
 
@@ -228,10 +229,8 @@ process.on('uncaughtException', function (err) {
 });
 
 function exit(){
-    setTimeout( function(){
-        console.logStdout("Bye!\n");
-        process.exit(1);
-    }, 2000 );
+  console.logStdout("Bye!\n");
+  process.exit(1);
 }
 
 //clean up
@@ -251,7 +250,9 @@ function cleanup ( cb ){
       }, function(){
         if( dbconnector ){
             dbconnector.close( exit );
+            return;
         }
+        exit();
       } );
     });
 };
@@ -260,9 +261,10 @@ function cleanup ( cb ){
 var is_existing = false;
 process.on('SIGINT',function(){
     try{
+      //ctrl+c again
       if( is_existing ){
         console.log( "MMT-Operator is being existed!");
-        return;
+        process.exit();
       }
       is_existing = true;
       cleanup();
