@@ -5443,8 +5443,8 @@ MMTDrop.chartFactory = {
         }
 
         //sort by the first column (time)
-                for( var i in arrData )
-                    arrData[i][ 0 ] = parseInt( arrData[i][ 0 ] );
+        for( var i in arrData )
+            arrData[i][ 0 ] = parseInt( arrData[i][ 0 ] );
 
         arrData.sort( function (a, b){
           return a[0] - b[0];
@@ -5464,121 +5464,69 @@ MMTDrop.chartFactory = {
             obj[j] = [ columns[j].label];
         }
 
-        if( option.addZeroPoints){
+        if( option.addZeroPoints ){
             var time        = option.addZeroPoints.time;
             var period      = option.addZeroPoints.sample_period;
             var probeStatus = option.addZeroPoints.probeStatus;
             //the first column is timestamp
-            var begin  = 0, end = 0;
-            if( arrData[0] ){
-                begin = arrData[0][0];
-                end   = arrData[ arrData.length - 1][0];
-            }
-            if( time.begin &&  (time.begin <= begin || begin == 0) )
-                begin = time.begin;
-            if( time.end &&  time.end >= end )
-                end = time.end;
+            var start_time  = time.begin, end_time = time.end;
+            var time_id     = 0;
 
-            if( (end - begin) / period > 2000 ){
-                console.log( "too long");
-                begin = end - 2000 * period ;
+            if( (time.end - time.begin) / period > 2000 ){
+                throw new Error("too long");
             }
 
-            var lastTS    = begin;
-            var firstNull = false;
-            while( lastTS <= end ){
-                lastTS += period;
-                var exist = false;
+            var create_zero = function( ts ){
+              var zero = {};
+              zero[time_id] = ts;
+              return zero;
+            }
 
-                //cumulate data in this period: [(lastTS - period), lastTS)
-                // for the last interaval:      [ end - period,       end ]
-                var data  = [];
-                //start from 1 as 0 is timestamp
-                for( var j=1; j<n; j++)
-                    data[j] = 0;
+            //check if probe was runing at ts
+            var is_probe_running_at = function( ts ){
+              for( var j in probeStatus )
+                if( probeStatus[j].start <= ts && ts <= probeStatus[j].last_update )
+                  return true;
+              return false;
+            }
 
-                var ts = 0;
-                var count = 0;
-                for (var i=0; i<arrData.length; i++){
-                  //each report is visited only one time
-                  if( arrData[i].visited === true )
-                    continue;
+            //add first element if need
+            if( arrData.length == 0 || start_time < (arrData[0][ time_id ] - period) )
+                arrData.unshift( create_zero( start_time ) );
 
-                  ts = arrData[i][0];
-                  //the first column is timestamp
-                  //omit the elements outside the period
-                  if( ts > lastTS )//as arrData is sorted by asc. of ts
-                    break;
-                  // for the last interaval: [ end - period, end ]
-                  if( ts == lastTS && ts != end )
-                    break;
+            //add last element if need
+            if( arrData.length == 0 || end_time > (arrData[ data.length - 1 ][ time_id ] + period ) )
+                arrData.push( create_zero( end_time ));
 
-                  //start from ts == (lastTS - period)
-                  if( ts < lastTS - period )
-                    continue;
+            var len = arrData.length;
+            var arr = [ arrData[0] ];
+            for (var i = 1; i < len; i++) {
+              var t = arrData[i-1][ time_id ] + period;
+              while( arrData[i][ time_id ] - t >= 2 * period ){
+                arr.push( create_zero( t )  );
+                t += period;
+              }
+              arr.push( arrData[i] );
+            }
 
-                  count ++;
-                  exist = true;
-                  for( var j=1; j<n; j++)
-                      if( arrData[i][j] !== undefined )
-                          data[j] += arrData[i][j];
-                  arrData[i].visited = true;
-                  //console.log( i + "  " + count + " " + (new Date(ts)) );
-                }//end for
+            arrData = arr;
+        }
 
-                //timestamp is the one of a report if the report exist
-                //otherwise, it is fixed by the moment of refreshing the web page
-                if( exist && lastTS <= end && lastTS - period < ts && ts < lastTS && ts > begin )
-                    lastTS = ts;
+        for (var i=0; i<arrData.length; i++){
+            //the first column is timestamp
+            var x = parseInt(arrData[i][0]);
+            var is_running = is_probe_running_at( x );
 
-                //add this data if having data
-                //- else add zero point only for period inside [begin, end]
-                if( lastTS <= end || exist){
-                    var probeRunningInThisPeriod = false;
-                    if( exist )
-                        probeRunningInThisPeriod = true; //sure as it reports data to MMT-Operator
-                    else
-                        for( var j in probeStatus )
-                            if( probeStatus[j].start <= lastTS && lastTS <= probeStatus[j].last_update ){
-                                probeRunningInThisPeriod = true;
-                                break;
-                            }
+            obj[0].push( new Date(x) );        //x
 
-                    obj[0].push( new Date( lastTS ) );               //x
-                    for( var j=1; j<n; j++){
-                        if( probeRunningInThisPeriod ){
-                            obj[j].push( data[ j ] );  //y
-                            firstNull = true;
-                        }else{
-                            if( firstNull )
-                                obj[j].push( 0 );       //y ==> down to Zero
-                            else
-                                obj[j].push( null );    //y ==> no data
-
-                            if( j == n-1 )
-                                firstNull = false;
-                        }
-                    }
-                }
+            for( var j=1; j<n; j++){
+                var val = arrData[i][j];
+                if( val == undefined && is_running )
+                    val = 0;
+                obj[j].push( val );  //y
             }
         }
-        else{
-            for (var i=0; i<arrData.length; i++){
-                //the first column is timestamp
-                var x = new Date( parseInt(arrData[i][0]) );
-                obj[0].push( x );        //x
 
-                for( var j=1; j<n; j++){
-                    var val = arrData[i][j];
-                    if( val === undefined )
-                        //continue;
-                        val = 0;
-
-                    obj[j].push( val );  //y
-
-                }
-            }
-        }
         //as j starts from 1 ==> obj starts from 1
         // I will remove the first index of obj
         //obj.shift();

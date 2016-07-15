@@ -246,33 +246,6 @@ function Cache ( option ) {
             return new_obj;
         }
 
-        //report_number: {timestamp: use}
-        var report_number = {};
-        for (var i in _this.data) {
-          var msg = _this.data[i];
-          var id  = msg[ REPORT_NUMBER ];
-          var ts  = msg[ TIMESTAMP ];
-
-          if( report_number[ id ] == undefined )
-            report_number[ id ] = {};
-          if( report_number[id][ts] == undefined )
-            report_number[ id ][ ts ] = { ts : ts, use: 1};
-          else
-            report_number[ id ][ ts ].use ++;
-        }
-        //find a timestamp represeting rep_id. It is a timestamp being mostly used
-        for( var id in report_number ){
-          var rep = report_number[ id ];
-          //find max
-          var max = {ts: 0, use: 0};
-          for( var i in rep )
-            if( rep[i].use > max.use )
-              max = rep[i];
-
-          report_number[id] = max;
-        }
-        //end report_number
-
         //
         var key_id  = option.message_format.key;
         var data_id = option.message_format.data;
@@ -284,7 +257,7 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
 
             if( _period_to_update_name === "real" || _period_to_update_name === "special")
-                key_obj[ TIMESTAMP ] = report_number[ msg[ REPORT_NUMBER ] ].ts;
+                key_obj[ REPORT_NUMBER ] = msg[ REPORT_NUMBER ];
             else //each minute, hour, day, month
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
 
@@ -295,6 +268,11 @@ function Cache ( option ) {
             }
 
             var oo = obj[txt];
+            //ts is the max ts of the reports in its period
+            if( _period_to_update_name === "real" || _period_to_update_name === "special"){
+              if( oo[ TIMESTAMP ] == undefined ||  oo[ TIMESTAMP ] < msg[ TIMESTAMP ] )
+                oo[ TIMESTAMP ] = msg[ TIMESTAMP ];
+            }
 
             //increase
             for (var j in data_id['$inc']){
@@ -485,10 +463,6 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         if( _cache_day )
             _cache_day.clear();
     }
-
-    setInterval( function(){
-        self.flushCaches( "real" );
-    }, 30*1000 );//each 30 seconds
 }
 
 module.exports = DataCache;

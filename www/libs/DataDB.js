@@ -30,7 +30,11 @@ var MongoConnector = function () {
     var NDN  = dataAdaptor.NdnColumnId;
     var FTP  = dataAdaptor.FtpStatsColumnId;
 
-    var FORMAT_ID = 0, PROBE_ID = 1, SOURCE_ID = 2, TIMESTAMP = 3;
+    var FORMAT_ID     = COL.FORMAT_ID,
+        PROBE_ID      = COL.PROBE_ID,
+        SOURCE_ID     = COL.SOURCE_ID,
+        TIMESTAMP     = COL.TIMESTAMP,
+        REPORT_NUMBER = COL.REPORT_NUMBER;
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
 
     //all columns of HTTP => they cover all columns of SSL,RTP et FTP
@@ -47,7 +51,6 @@ var MongoConnector = function () {
         self.mdb       = db;
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
-        self.startProbeTime = 0; //timestamp when probe starts
 
         self.operatorStatus.set("start");
         self.dataCache = {
@@ -291,20 +294,6 @@ var MongoConnector = function () {
 
         if ( format === 100 || format === 99 ){
 
-            //group msg by each period
-            //ceil: returns the smallest integer greater than or equal to a given number
-            var mod          = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
-            msg[ TIMESTAMP ] = self.startProbeTime + mod   *  config.probe_stats_period_in_ms;
-
-            msg[ COL.ORG_TIMESTAMP ] = ts;
-            ts                       = msg[ TIMESTAMP ];
-
-
-
-            //the timestamp of the first message from probe
-            if( self.startProbeTime === undefined )
-              self.startProbeTime = ts;
-
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
 
             //as 2 threads may produce a same session_ID for 2 different sessions
@@ -435,8 +424,6 @@ var MongoConnector = function () {
         //receive this msg when probe is starting
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
             if( self.startProbeTime == undefined  || self.startProbeTime < ts){
-                if( self.time_buffer )
-                  self.time_buffer.empty();
                 self.startProbeTime = ts;
                 console.log("The last runing probe is " + (new Date( self.startProbeTime )));
 
@@ -453,8 +440,19 @@ var MongoConnector = function () {
             return;
         }
 
+        //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
             self.probeStatus.set( ts );
+
+            if( self._lastUpdateDataBaseTime == undefined )
+              self._lastUpdateDataBaseTime = ts;
+
+            if( ts - self._lastUpdateDataBaseTime > 30*1000 ){
+              self._lastUpdateDataBaseTime = ts;
+              for( var i in self.dataCache )
+                self.dataCache[i].flushCaches( "real" );
+            }
+
             return;
         }
 
@@ -1033,8 +1031,6 @@ var MongoConnector = function () {
     self.emptyDatabase = function (cb) {
         if( self.appList )
           self.appList.clear();
-        if( self.time_buffer )
-          self.time_buffer.empty();
 
         for( var i in self.dataCache )
             self.dataCache[i].clear();

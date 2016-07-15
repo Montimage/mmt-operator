@@ -754,15 +754,15 @@ var ReportFactory = {
         var _this = this;
         var COL = MMTDrop.constants.StatsColumn;
         var group = { _id : {} };
-        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
+        [ COL.REPORT_NUMBER.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.UL_PACKET_COUNT.id, COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
-          group[ el ] = {"$first" : "$"+ el};
-        } );
+        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id, COL.REPORT_NUMBER.id ].forEach( function( el, index){
+          group[ el ] = {"$last" : "$"+ el};
+        });
         var database = new MMTDrop.Database({collection: "data_total", action: "aggregate",
           query: [{"$group" : group}]});
 
