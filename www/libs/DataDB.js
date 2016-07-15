@@ -276,48 +276,6 @@ var MongoConnector = function () {
             msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
 
-    /**
-     * Get a true timestamp of a report based on its reported timestamp and its report number
-     * @param  {[integer]} rep_number report number
-     * @param  {[integer]} ts         report timestamp
-     * @return {[integer]}            return the timestamp that comes from reports having the same rep_number and are mostly used
-     */
-    self.getTrueTimestamp = function( rep_number, ts ){
-      if( rep_number == undefined ) return ts;
-
-      if( self.time_buffer == undefined )
-        self.time_buffer = new CircularBuffer( 10 ); //capacity = 100
-
-      //find one element on time_buffer having same report_id
-      var obj = self.time_buffer.data().find( function( el, i){
-        return ( el != undefined && el.rep_id == rep_number )
-      });
-
-      //not found
-      if( obj == undefined ){
-        obj = {};
-        obj[ ts ] = 1; //the ts is used 1 time (this time)
-
-        self.time_buffer.enq({
-          rep_id : rep_number,
-          data   : obj
-        })
-
-        return ts;
-      }
-      //get the ts with max utilisation
-      var max = {ts: 0, use: 0};
-      for( var t in obj.data )
-        if( obj.data[ t ] > max.use ){
-          max.use = obj.data[ t ];
-          max.ts  = t;
-        }
-      //increase utilisation of the max
-      obj.data[ max.ts ] ++;
-      console.log( self.time_buffer.data() );
-      //return parseInt( max.ts );
-      return ts;
-    }
 
     /**
      * Stock a report to database
@@ -335,15 +293,8 @@ var MongoConnector = function () {
 
             //group msg by each period
             //ceil: returns the smallest integer greater than or equal to a given number
-            var mod    = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
-            var new_ts = self.startProbeTime + mod   *  config.probe_stats_period_in_ms;
-
-            if( format == 100 )
-              msg[ TIMESTAMP ] = self.getTrueTimestamp( msg[ COL.REPORT_NUMBER ] , new_ts);
-            else
-              msg[ TIMESTAMP ] = new_ts;
-
-
+            var mod          = Math.ceil( (ts - self.startProbeTime) / config.probe_stats_period_in_ms );
+            msg[ TIMESTAMP ] = self.startProbeTime + mod   *  config.probe_stats_period_in_ms;
 
             msg[ COL.ORG_TIMESTAMP ] = ts;
             ts                       = msg[ TIMESTAMP ];
@@ -1080,8 +1031,10 @@ var MongoConnector = function () {
 
 
     self.emptyDatabase = function (cb) {
-        self.appList.clear();
-        self.time_buffer.empty();
+        if( self.appList )
+          self.appList.clear();
+        if( self.time_buffer )
+          self.time_buffer.empty();
 
         for( var i in self.dataCache )
             self.dataCache[i].clear();

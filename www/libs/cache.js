@@ -246,6 +246,33 @@ function Cache ( option ) {
             return new_obj;
         }
 
+        //report_number: {timestamp: use}
+        var report_number = {};
+        for (var i in _this.data) {
+          var msg = _this.data[i];
+          var id  = msg[ REPORT_NUMBER ];
+          var ts  = msg[ TIMESTAMP ];
+
+          if( report_number[ id ] == undefined )
+            report_number[ id ] = {};
+          if( report_number[id][ts] == undefined )
+            report_number[ id ][ ts ] = { ts : ts, use: 1};
+          else
+            report_number[ id ][ ts ].use ++;
+        }
+        //find a timestamp represeting rep_id. It is a timestamp being mostly used
+        for( var id in report_number ){
+          var rep = report_number[ id ];
+          //find max
+          var max = {ts: 0, use: 0};
+          for( var i in rep )
+            if( rep[i].use > max.use )
+              max = rep[i];
+
+          report_number[id] = max;
+        }
+        //end report_number
+
         //
         var key_id  = option.message_format.key;
         var data_id = option.message_format.data;
@@ -257,7 +284,7 @@ function Cache ( option ) {
             var key_obj  = copyObject( msg, key_id );
 
             if( _period_to_update_name === "real" || _period_to_update_name === "special")
-                key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ];
+                key_obj[ TIMESTAMP ] = report_number[ msg[ REPORT_NUMBER ] ].ts;
             else //each minute, hour, day, month
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
 
@@ -272,14 +299,6 @@ function Cache ( option ) {
             //increase
             for (var j in data_id['$inc']){
                 var key = data_id['$inc'][ j ];
-                /*
-                if( typeof key == "object"){
-                  //check if the condition is ok
-                  if( ! compare( msg, key ) )
-                    continue;
-                  key = key.key;
-                }
-                */
 
                 var val = msg[ key ];
                 if( val == undefined  || typeof val  != "number" )
@@ -295,15 +314,6 @@ function Cache ( option ) {
             for (var j in data_id['$set']){
                 var key = data_id['$set'][ j ];
 
-                /*
-                if( typeof key == "object"){
-                  //check if the condition is ok
-                  if( ! compare( msg, key ) )
-                    continue;
-                  key = key.key;
-                }
-                */
-
                 if( msg[key] != undefined )
                     oo[ key ] = msg[ key ];
             }
@@ -311,14 +321,6 @@ function Cache ( option ) {
             //init
             for( var j in data_id["$init"] ){
                 var key = data_id["$init"][ j ];
-                /*
-                if( typeof key == "object"){
-                  //check if the condition is ok
-                  if( ! compare( msg, key ) )
-                    continue;
-                  key = key.key;
-                }
-                */
 
                 var val = msg[ key ];
 
