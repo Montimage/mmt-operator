@@ -59,36 +59,37 @@ var MMTDrop = {
         PROBE_ID            : 1, /**< Index of the probe id column */
         SOURCE_ID           : 2, /**< Index of the data source id column */
         TIMESTAMP           : 3, /**< Index of the format id column */
-        APP_ID              : 4, /**< Index of the application id column */
-        APP_PATH            : 5, /**< Index of the application path column */
-        ACTIVE_FLOWS        : 6, /**< Index of the active flows column */
-        DATA_VOLUME         : 7, /**< Index of the data volume column */
-        PAYLOAD_VOLUME      : 8, /**< Index of the payload data volume column */
-        PACKET_COUNT        : 9, /**< Index of the packet count column */
-        UL_DATA_VOLUME      : 10, /**< Index of the data volume column */
-        UL_PAYLOAD_VOLUME   : 11, /**< Index of the payload data volume column */
-        UL_PACKET_COUNT     : 12, /**< Index of the packet count column */
-        DL_DATA_VOLUME      : 13, /**< Index of the data volume column */
-        DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
-        DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
-        START_TIME          : 16, /**< Index of the start timestamp of the flow */
-        IP_SRC              : 17, /**< Index of the IP address source column */
-        IP_DEST             : 18, /**< Index of the IP address destination column */
-        MAC_SRC             : 19, /**< Index of the MAC address source column */
-        MAC_DEST            : 20, /**< Index of the MAC address destination column */
-        SESSION_ID          : 21, //Identifier of the session or if the protocol does not have session its session id = 0
-        PORT_DEST           : 22, //Server port number (0 if transport protocol is session less like ICMP)
-        PORT_SRC            : 23, //Client port number (0 if transport protocol is session less like ICMP)
-        THREAD_NUMBER       : 24,
-        RTT                 : 25,
-        RTT_MIN_SERVER      : 26,
-        RTT_MIN_CLIENT      : 27,
-        RTT_MAX_SERVER      : 28,
-        RTT_MAX_CLIENT      : 29,
-        RTT_AVG_SERVER      : 30,
-        RTT_AVG_CLIENT      : 31,
-        RETRANSMISSION_COUNT: 32,
-        REPORT_NUMBER       : 33,
+        REPORT_NUMBER       : 4,
+        APP_ID              : 5, /**< Index of the application id column */
+        APP_PATH            : 6, /**< Index of the application path column */
+        ACTIVE_FLOWS        : 7, /**< Index of the active flows column */
+        DATA_VOLUME         : 8, /**< Index of the data volume column */
+        PAYLOAD_VOLUME      : 9, /**< Index of the payload data volume column */
+        PACKET_COUNT        : 10, /**< Index of the packet count column */
+        UL_DATA_VOLUME      : 11, /**< Index of the data volume column */
+        UL_PAYLOAD_VOLUME   : 12, /**< Index of the payload data volume column */
+        UL_PACKET_COUNT     : 13, /**< Index of the packet count column */
+        DL_DATA_VOLUME      : 14, /**< Index of the data volume column */
+        DL_PAYLOAD_VOLUME   : 15, /**< Index of the payload data volume column */
+        DL_PACKET_COUNT     : 16, /**< Index of the packet count column */
+        START_TIME          : 17, /**< Index of the start timestamp of the flow */
+        IP_SRC              : 18, /**< Index of the IP address source column */
+        IP_DEST             : 19, /**< Index of the IP address destination column */
+        MAC_SRC             : 20, /**< Index of the MAC address source column */
+        MAC_DEST            : 21, /**< Index of the MAC address destination column */
+        SESSION_ID          : 22, //Identifier of the session or if the protocol does not have session its session id = 0
+        PORT_DEST           : 23, //Server port number (0 if transport protocol is session less like ICMP)
+        PORT_SRC            : 24, //Client port number (0 if transport protocol is session less like ICMP)
+        THREAD_NUMBER       : 25,
+        RTT                 : 26,
+        RTT_MIN_SERVER      : 27,
+        RTT_MIN_CLIENT      : 28,
+        RTT_MAX_SERVER      : 29,
+        RTT_MAX_CLIENT      : 30,
+        RTT_AVG_SERVER      : 31,
+        RTT_AVG_CLIENT      : 32,
+        RETRANSMISSION_COUNT: 33,
+
 
         FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
 
@@ -429,8 +430,6 @@ var MMTDrop = {
             return msg;
 
         var COL       = this.StatsColumnId;
-        if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
-            return msg;
 
         msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
 
@@ -474,6 +473,8 @@ var MMTDrop = {
               return true;
             }
         }
+
+        
         this._localCacheIPs[ ip ] = false;
         return false;
     },
@@ -620,8 +621,9 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 };
 
 function format_session_report( msg ){
-  var UP_PATH = msg[ 5 ], DOWN_PATH = msg[ 6 ];
-  var PATH_INDEX = 5;
+  var PATH_INDEX = MMTDrop.StatsColumnId.APP_PATH;
+  var UP_PATH = msg[ PATH_INDEX ], DOWN_PATH = msg[ PATH_INDEX + 1 ];
+
 
   /**
   * in the probe version 98f750c, on May 03 2016
@@ -629,7 +631,7 @@ function format_session_report( msg ){
   * this function will return a report (as before) which takes the app_path as the longest one:
   */
   //remove one path: UP_PATH, retain DOWN_PATH
-  msg.splice( 5, 1 );
+  msg.splice( PATH_INDEX, 1 );
 
   //retain the path having more information
   //not really relevance

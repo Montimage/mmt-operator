@@ -26,7 +26,7 @@ function proc_request(req, res, next) {
 
 			var time = {
 				begin : time - inteval,
-				end : time
+				end   : time
 			};
 
 			//probe status: stat_time, stop_time
@@ -34,17 +34,22 @@ function proc_request(req, res, next) {
 				var obj = {
 					time : time,
 					//attach list of applications detected by oprator (name of website)
-					protocols : dbconnector.appList.get(),
-					data : [],
-					probeStatus : [],
+					protocols   : dbconnector.appList.get(),
+					data        : [],
+					probeStatus : {},
 				};
 				if (!err)
-					for ( var i in arr)
-						obj.probeStatus.push({
-							start : arr[i].start,
-							last_update : arr[i].last_update
-						});
+					for ( var i in arr){
+						var msg = arr[i];
+						//for each probe
+						if( obj.probeStatus[ msg.id ] == undefined )
+							obj.probeStatus[ msg.id ] = [];
 
+						obj.probeStatus[ msg.id ].push({
+							start       : msg.start,
+							last_update : msg.last_update
+						});
+					}
 				res.setHeader("Content-Type", "application/json");
 				res.send(obj);
 			});
@@ -264,12 +269,17 @@ router.get('/*', function(req, res, next) {
 
 			if (op.userData != undefined && op.userData.getProbeStatus) {
 				dbconnector.probeStatus.get(op.time, function(err, arr) {
-					obj.probeStatus = [];
-					for ( var i in arr)
-						obj.probeStatus.push({
-							start : arr[i].start,
-							last_update : arr[i].last_update
+					obj.probeStatus = {};
+					for ( var i in arr){
+						var msg = arr[i];
+						if( obj.probeStatus[ msg.id ] == undefined )
+							obj.probeStatus[msg.id] = [];
+
+						obj.probeStatus[msg.id].push({
+							start       : msg.start,
+							last_update : msg.last_update
 						})
+					}
 					res.send(obj);
 				})
 			} else

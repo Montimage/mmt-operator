@@ -144,8 +144,11 @@ MMTDrop.constants = {
       SOURCE_ID         : {id: 2,  label: "Source"},
       /** Index of the format id column */
       TIMESTAMP         : {id: 3,  label: "Timestamp"},
+
+      REPORT_NUMBER     : {id: 4 , label: "Duration Report Number"},//number of periods (e.g. 5 second) being reported
+
       /** Index of the application id column */
-      APP_ID            : {id: 4,  label: "App"},
+      APP_ID            : {id: 5,  label: "App"},
       /**
        * Index of the application path column
        *
@@ -156,52 +159,52 @@ MMTDrop.constants = {
        * It allows to build a hierarchical view on the protocol statistics.
        *
        */
-      APP_PATH          : {id: 5,  label: "App Path"},
+      APP_PATH          : {id: 6,  label: "App Path"},
       /** Index of the active flows column */
-      ACTIVE_FLOWS      : {id: 6,  label: "Flow Count"},
+      ACTIVE_FLOWS      : {id: 7,  label: "Flow Count"},
       /** Index of the data volume column */
-      DATA_VOLUME       : {id: 7,  label: "Data Volume"},
+      DATA_VOLUME       : {id: 8,  label: "Data Volume"},
       /** Index of the payload data volume column */
-      PAYLOAD_VOLUME    : {id: 8,  label: "Payload Volume"},
+      PAYLOAD_VOLUME    : {id: 9,  label: "Payload Volume"},
       /** Index of the packet count column */
-      PACKET_COUNT      : {id: 9, label: "Packet Count"},
+      PACKET_COUNT      : {id: 10, label: "Packet Count"},
       /** Index of the data volume column */
-      UL_DATA_VOLUME    : {id: 10, label: "UL Data Volume"},
+      UL_DATA_VOLUME    : {id: 11, label: "UL Data Volume"},
       /** Index of the payload data volume column */
-      UL_PAYLOAD_VOLUME : {id: 11, label: "UL Packet Count"},
+      UL_PAYLOAD_VOLUME : {id: 12, label: "UL Packet Count"},
       /** Index of the packet count column */
-      UL_PACKET_COUNT   : {id: 12, label: "UL Packet Count"},
+      UL_PACKET_COUNT   : {id: 13, label: "UL Packet Count"},
       /** Index of the data volume column */
-      DL_DATA_VOLUME    : {id: 13, label: "DL Data Volume"},
+      DL_DATA_VOLUME    : {id: 14, label: "DL Data Volume"},
       /** Index of the payload data volume column */
-      DL_PAYLOAD_VOLUME : {id: 14, label: "DL Payload Volume"},
+      DL_PAYLOAD_VOLUME : {id: 15, label: "DL Payload Volume"},
       /** Index of the packet count column */
-      DL_PACKET_COUNT   : {id: 15, label: "DL Packet Count"},
+      DL_PACKET_COUNT   : {id: 16, label: "DL Packet Count"},
       /** Index of the start timestamp of the flow */
-      START_TIME        : {id: 16, label: "Start Time"},
+      START_TIME        : {id: 17, label: "Start Time"},
 
-      IP_SRC           : {id: 17, label: "IP Source"},
-      IP_DEST          : {id: 18, label: "IP Destination"} ,
+      IP_SRC           : {id: 18, label: "IP Source"},
+      IP_DEST          : {id: 19, label: "IP Destination"} ,
 
       /** Index of the MAC address source column */
-      MAC_SRC           : {id: 19, label: "MAC Destination"},
+      MAC_SRC           : {id: 20, label: "MAC Destination"},
       /** Index of the MAC address source column */
-      MAC_DEST          : {id: 20 , label: "MAC Source "},
-      SESSION_ID        : {id: 21 , label: "Session ID"},
-      PORT_DEST         : {id: 22 , label: "Port Destination"},
-      PORT_SRC          : {id: 23 , label: "Port Source"},
-      THREAD_NUMBER     : {id: 24 , label: "Thread Number"},
+      MAC_DEST          : {id: 21 , label: "MAC Source "},
+      SESSION_ID        : {id: 22 , label: "Session ID"},
+      PORT_DEST         : {id: 23 , label: "Port Destination"},
+      PORT_SRC          : {id: 24 , label: "Port Source"},
+      THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
-      RTT               : {id: 25 , label: "RTT"},
+      RTT               : {id: 26 , label: "RTT"},
 
-      RTT_MIN_SERVER    : {id: 26 , label: "RTT min Server"},
-      RTT_MIN_CLIENT    : {id: 27 , label: "RTT min Client"},
-      RTT_MAX_SERVER    : {id: 28 , label: "RTT min Server"},
-      RTT_MAX_CLIENT    : {id: 29 , label: "RTT min Client"},
-      RTT_AVG_SERVER    : {id: 30 , label: "RTT min Server"},
-      RTT_AVG_CLIENT    : {id: 31 , label: "RTT min Client"},
-      RETRANSMISSION_COUNT: {id: 32 , label: "Retransmision Count"},
-      REPORT_NUMBER     : {id: 33 , label: "Duration Report Number"},//number of periods (e.g. 5 second) being reported
+      RTT_MIN_SERVER    : {id: 27 , label: "RTT min Server"},
+      RTT_MIN_CLIENT    : {id: 28 , label: "RTT min Client"},
+      RTT_MAX_SERVER    : {id: 29 , label: "RTT min Server"},
+      RTT_MAX_CLIENT    : {id: 30 , label: "RTT min Client"},
+      RTT_AVG_SERVER    : {id: 31 , label: "RTT min Server"},
+      RTT_AVG_CLIENT    : {id: 32 , label: "RTT min Client"},
+      RETRANSMISSION_COUNT: {id: 33 , label: "Retransmision Count"},
+
 
       FORMAT_TYPE       : {id: 34 , label: "Type"},//
 
@@ -1885,7 +1888,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       query = param.query.slice(0);
 
     if( param.period )
-      query.unshift( {"$match" : {3: {"$gte": param.period.begin, "$lt" : param.period.end }}} );
+      query.unshift( {"$match" : {3: {"$gte": param.period.begin, "$lte" : param.period.end }}} );
 
     //need for "POST"
     query = JSON.stringify( query );
@@ -5484,9 +5487,12 @@ MMTDrop.chartFactory = {
 
             //check if probe was runing at ts
             var is_probe_running_at = function( ts ){
-              for( var j in probeStatus )
-                if( probeStatus[j].start <= ts && ts <= probeStatus[j].last_update )
-                  return true;
+              //for each probe
+              for( var p_id in probeStatus )
+                //for each running period of a probe
+                for( var i in probeStatus[ p_id ])
+                  if( probeStatus[p_id][i].start <= ts && ts <= probeStatus[p_id][i].last_update )
+                    return true;
               return false;
             }
 
@@ -5501,31 +5507,58 @@ MMTDrop.chartFactory = {
             var len = arrData.length;
             var arr = [ arrData[0] ];
             for (var i = 1; i < len; i++) {
-              var t = arrData[i-1][ time_id ] + period;
-              while( arrData[i][ time_id ] - t >= 2 * period ){
-                arr.push( create_zero( t )  );
+              var t = arrData[i-1][ time_id ];
+              //if there exist any hole between two consecutif reports
+              while( arrData[i][ time_id ] - t >= 1.5 * period ){
                 t += period;
+                arr.push( create_zero( t )  );
               }
               arr.push( arrData[i] );
             }
 
             arrData = arr;
-        }
 
-        for (var i=0; i<arrData.length; i++){
+            for (var i=0; i<arrData.length; i++){
+                //the first column is timestamp
+                var x = arrData[i][0];
+                var is_running = is_probe_running_at( x );
+
+                obj[0].push( new Date(x) );        //x
+
+                for( var j=1; j<n; j++){
+                    var val = arrData[i][j];
+                    if( val == null){
+                      if( is_running )
+                        val = 0;
+                      else{
+                        //at this point, probe is not running
+                        //this point is null but its precedent is not ==> put down to zero
+                        if( i>0 && arrData[i-1][j] != null )
+                          val = 0;
+                        else if( i<arrData.length -1 && arrData[i+1][j] != null ) //this point is null but its following is not ==> put down to zero
+                          val = 0;
+                        else
+                          val = null;//should be null, not undefined
+                      }
+                    }
+                    obj[j].push( val );  //y
+                }
+            }
+        }
+        else
+          for (var i=0; i<arrData.length; i++){
             //the first column is timestamp
-            var x = parseInt(arrData[i][0]);
-            var is_running = is_probe_running_at( x );
+            var x = arrData[i][0];
 
             obj[0].push( new Date(x) );        //x
 
             for( var j=1; j<n; j++){
                 var val = arrData[i][j];
-                if( val == undefined && is_running )
+                if( val == undefined )
                     val = 0;
                 obj[j].push( val );  //y
             }
-        }
+          }
 
         //as j starts from 1 ==> obj starts from 1
         // I will remove the first index of obj

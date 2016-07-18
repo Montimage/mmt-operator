@@ -53,6 +53,7 @@ var MongoConnector = function () {
         self.startTime = (new Date()).getTime();
 
         self.operatorStatus.set("start");
+
         self.dataCache = {
 
             total: new DataCache(db, "data_total",
@@ -152,36 +153,51 @@ var MongoConnector = function () {
         console.log("Connected to Database");
     });
 
+
     self.probeStatus = {
-        set: function( last_update ){
+        data: {
+          //this contains a list of status of probes:
+          //id          : probe id
+          //start       : starting moment of probe
+          //last_update : last updated of probe
+        },
+        set: function( msg ){
+          var id          = msg[ PROBE_ID ],
+            report_number = msg[ REPORT_NUMBER],
+            last_update   = msg[ TIMESTAMP ];
+
+          if( self.probeStatus.data[ id ] == undefined )
+            self.probeStatus.data[id] = {
+              _id            : id + "-" + last_update,//_id using by mongoDB
+              id             : id, //probe Id
+              start          : last_update,
+              report_number  : report_number,
+              last_update    : 0
+            };
+
+
             if( self.startProbeTime == undefined ){
-                this._last_update = last_update;
-                //useful when no element in collection "probe_status"
                 self.startProbeTime = last_update;
-                self.mdb.collection("probe_status").find({}).sort({"start": -1}).toArray( function( err, arr){
-                    if( err || arr.length == 0 )
-                        return;
-
-                    self.startProbeTime = arr[0].start;
-                    var start           = self.startProbeTime;
-
-                    self.mdb.collection("probe_status").update( {start: start}, {last_update: last_update});
-                } );
-
-                return;
             }
+
+            var probe = self.probeStatus.data[ id ];
             //no need to update the past
-            if( this._last_update >= last_update ) return;
+            if( probe.last_update >= last_update ) return;
 
-            var start = self.startProbeTime;
 
-            self.mdb.collection("probe_status").update( {_id: start}, {_id: start, start: start, last_update: last_update}, {upsert: true});
+            probe.last_update = last_update;
+
+            //update to mongoDB
+            self.mdb.collection("probe_status").update( {_id: probe._id}, probe, {upsert: true});
         },
         get: function( period, callback ){
-            self.mdb.collection("probe_status").find(
-                //TODO: not need to get all history of probe
-                //{start: {$gte : period.begin}, last_update: { $lte: period.end}}
-            ).toArray( callback );
+            self.mdb.collection("probe_status").find({
+              $or : [
+                {start: {$lte : period.begin}, last_update: { $gte: period.begin}},
+                {start: {$gte : period.begin}, last_update: { $lte: period.end}},
+                {start: {$lte : period.end}  , last_update: { $gte: period.end}},
+              ]
+            }).toArray( callback );
         }
     };
 
@@ -194,8 +210,6 @@ var MongoConnector = function () {
             self.mdb.collection("operator_status").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );
         }
     };
-    self.lastPacketTimestamp = 0;
-
     self.splitDomainName = function( domain_name ){
         //192.168.0.7
         if( ipLib.isV4Format( domain_name) || ipLib.isV6Format( domain_name) )
@@ -213,12 +227,36 @@ var MongoConnector = function () {
         return domain_name;
     };
 
-    var update_packet_timestamp = function( ts ){
-        if( self.lastPacketTimestamp < ts ){
-            self.lastPacketTimestamp = ts;
-            //update status of probe ==> it is alive
-            self.probeStatus.set( ts );
-        }
+    var update_packet_timestamp = function( msg ){
+      var ts     = msg[ TIMESTAMP ];
+      var p_id   = msg[ PROBE_ID ];
+      var probe  = self.probeStatus.data[ p_id ];
+
+      //I received reports from a probe before its starting
+      //or starting message is sent after reports
+      if( probe == undefined ){
+        console.log("undefined");//first message
+        //update status of probe ==> it is alive
+        self.probeStatus.set( msg );
+        return;
+      }
+
+      var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
+
+      /*
+      console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
+
+      if( ts > new_ts )
+        console.log( "=====================Report too late ", JSON.stringify(msg) );
+      else if( ts < new_ts - 2*config.probe_stats_period_in_ms )
+        console.log( "=====================Report too soon:", JSON.stringify(msg) );
+      */
+
+      msg[ TIMESTAMP ]         = new_ts;
+      msg[ COL.ORG_TIMESTAMP ] = ts;
+
+      //update status of probe ==> it is alive
+      self.probeStatus.set( msg );
     };
     var default_port = {
       //proto : port
@@ -279,7 +317,7 @@ var MongoConnector = function () {
             msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
 
-
+    self.lastPacketTimestamp = 0;
     /**
      * Stock a report to database
      * @param {[[Type]]} message [[Description]]
@@ -289,8 +327,25 @@ var MongoConnector = function () {
 
         var msg = dataAdaptor.formatReportItem(message);
         var msg2;
-        var ts = msg[ TIMESTAMP ];
-        var format = msg[ FORMAT_ID ];
+        var ts       = msg[ TIMESTAMP ];
+        var format   = msg[ FORMAT_ID ];
+        var probe_id = msg[ PROBE_ID ];
+
+        //receive this msg when probe is starting
+        if ( format === dataAdaptor.CsvFormat.LICENSE) {
+            if( self.startProbeTime == undefined  || self.startProbeTime < ts){
+                self.startProbeTime = ts;
+                console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+            }
+            //new running period
+            self.probeStatus.data[ probe_id ] = null;
+            //this is 30-report: 5-th element is not REPORT_NUMBER
+            //we set REPORT_NUMBER to 0
+            msg[ REPORT_NUMBER ] = 0;
+            self.probeStatus.set( msg );
+            return;
+        }
+
 
         if ( format === 100 || format === 99 ){
 
@@ -300,7 +355,9 @@ var MongoConnector = function () {
             //this ensures that session_id is unique
             msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
-            update_packet_timestamp( msg[ TIMESTAMP ] );
+            update_packet_timestamp( msg );
+
+            self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
             if( format === 100 ){
               //HTTP
@@ -392,7 +449,8 @@ var MongoConnector = function () {
 
             return;
         }else if (format === 0 || format == 1 || format == 2){
-            update_packet_timestamp( ts );
+            self.lastPacketTimestamp = ts;
+
             //delete data when a session is expired
             var session_id = msg[ 4 ];
             if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
@@ -405,8 +463,11 @@ var MongoConnector = function () {
             return;
         }
 
+        self.probeStatus.set( msg );
+
         if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
-            update_packet_timestamp( ts );
+            self.lastPacketTimestamp = ts;
+
             self.mdb.collection("behaviour").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
@@ -414,21 +475,11 @@ var MongoConnector = function () {
         }
 
         if ( format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
-            update_packet_timestamp( ts );
+            self.lastPacketTimestamp = ts;
+
             self.mdb.collection("security").insert(msg, function (err, records) {
                 if (err) console.error(err.stack);
             });
-            return;
-        }
-
-        //receive this msg when probe is starting
-        if ( format === dataAdaptor.CsvFormat.LICENSE) {
-            if( self.startProbeTime == undefined  || self.startProbeTime < ts){
-                self.startProbeTime = ts;
-                console.log("The last runing probe is " + (new Date( self.startProbeTime )));
-
-                self.probeStatus.set( ts );
-            }
             return;
         }
 
@@ -442,8 +493,6 @@ var MongoConnector = function () {
 
         //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
-            self.probeStatus.set( ts );
-
             if( self._lastUpdateDataBaseTime == undefined )
               self._lastUpdateDataBaseTime = ts;
 

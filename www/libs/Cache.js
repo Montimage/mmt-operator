@@ -124,7 +124,7 @@ function Cache ( option ) {
 
     this.addMessage = function ( msg, cb ) {
         //clone object;
-        msg    = JSON.parse(JSON.stringify( msg ));
+        msg = JSON.parse(JSON.stringify( msg ));
 
         var ts = msg[ TIMESTAMP ] > ts ? msg[ TIMESTAMP ] : ts;
         _this.data.push( msg );
@@ -263,9 +263,9 @@ function Cache ( option ) {
 
             var txt = JSON.stringify( key_obj );
 
-            if (obj[txt] == undefined) {
+            //first msg in the group identified by key_obj
+            if (obj[txt] == undefined)
                 obj[txt] = key_obj;
-            }
 
             var oo = obj[txt];
             //ts is the max ts of the reports in its period
