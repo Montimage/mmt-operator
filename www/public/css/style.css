@@ -4,7 +4,7 @@
 
 /* Move down content because we have a fixed navbar that is 50px tall */
 body {
-    padding-top: 100px;
+    padding-top: 95px;
     background-color: #ddd;
 }
 
@@ -42,7 +42,54 @@ body {
     overflow-y: auto;
 }
 .row-cursor-pointer tr{
-    cursor: pointer
+    cursor: pointer;
+}
+.row-cursor-pointer tbody>tr:hover{
+    color: #428bca;
+}
+
+.row-cursor-default tr{
+    cursor: default;
+    color: black;
+}
+.row-cursor-default tbody>tr:hover{
+    color: black;
+}
+
+.table-inside-table{
+    padding: 2px;
+}
+.table-inside-table, .table-inside-table thead{
+    background-color: #5cb85c;
+}
+
+.table-inside-table table{
+    border-color: #5cb85c;
+}
+.table-inside-table td{
+    max-width: 300px;
+}
+.dataTable td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -o-text-overflow: ellipsis;
+    -ms-text-overflow: ellipsis;
+}
+
+
+.bg-img-1-red-pixel{
+    /*1 red pixel*/
+    background-image: url(data:image/gif;base64,R0lGODlhAQABAPAAAP8AAP///yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==);
+    background-size: 0px 3px; /*your percentage is the first one (width), second one (100%) is for height*/
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    color: #000;
+    transition:         background-size 1s ease-out;
+    -moz-transition:    background-size 1s ease-out;
+    -ms-transition:     background-size 1s ease-out;
+    -o-transition:      background-size 1s ease-out;
+    -webkit-transition: background-size 1s ease-out;
 }
 @media ( min-width : 768px) {
     .sidebar {
@@ -97,7 +144,7 @@ body {
 
     -webkit-transition: 300ms;
     transition: 300ms;
-    
+
     -webkit-transform: scale(0, 1);
     -ms-transform: scale(0, 1);
     transform: scale(0, 1);
@@ -163,9 +210,11 @@ table.treetable  tbody{
     overflow-x: hidden;
     display: block;
 }
+/*
 table.treetable span.indenter{
     overflow-x: hidden;
 }
+*/
 table.treetable >tbody>tr>td:first-child {
     cursor: default;
     overflow: hidden;
@@ -173,6 +222,7 @@ table.treetable >tbody>tr>td:first-child {
     display: block;
     border-bottom: 0px;
     border-right: 0px;
+    color: black;
 }
 table.treetable >tbody>tr:last-child>td:first-child {
     border-bottom: thin solid #efefef;
@@ -181,6 +231,10 @@ table.treetable>tbody>tr>td {
     cursor: pointer;
     border-collapse: collapse;
     border: thin solid #efefef;
+    color: #428bca;
+}
+table.treetable>tbody>tr.selected>td{
+  color: white;
 }
 table>tbody>tr:hover {
     text-decoration: underline;
@@ -191,14 +245,14 @@ tr.selected a {
     color: #fff;
 }
 .brillance{
-    
+
 }
 
 .c3-area {
     opacity: 0.8;
 }
 .c3-line {
-    stroke-width: 2px;
+    stroke-width: 2px !important;
 }
 
 .c3-axis-y-label{
@@ -218,3 +272,352 @@ a {
 .modal-wide .modal-body {
   overflow-y: auto;
 }
+
+
+.c3-legend-item{
+    animation: 2s linear;
+}
+
+.c3-chart-line {
+    opacity: 0;
+    animation-name    : draw_c3j_line;
+    animation-duration: 2s;
+
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+}
+
+@keyframes draw_c3j_line {
+    0%    { opacity: 0}
+    40%   { opacity: 0;   transform: translate(0px,50px);}
+    80%   { opacity: 0.4; transform: translate(0px,0px);}
+    100%  { opacity: 1;}
+}
+
+
+
+.c3-chart-arc {
+    opacity: 0;
+    animation-name    : draw_c3j_arc;
+    animation-duration: 2s;
+
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+
+    -webkit-transform-origin:center center;
+}
+
+@keyframes draw_c3j_arc {
+    0%    { opacity: 0 }
+    40%   { opacity: 0;   transform: scale(0,0);}
+    80%   { opacity: 0.4; transform: scale(1,1);}
+    100%  { opacity: 1;}
+}
+
+.footer{
+    position: relative;
+    background-color: white;
+    width: 100%;
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+@media ( max-width : 768px) {
+    #toolbar{
+        display: none !important;
+    }
+    #content{
+        padding: 0px !important;
+    }
+}
+#toolbar{
+    border-bottom: 1px solid #ccc;
+    box-shadow: 3px 3px 5px #ccc;
+    background-color: white;
+    display: block;
+    width: 100%;
+    height: 35px;
+    position: fixed;
+    top: 51px;
+    z-index: 1000;
+    padding-top: 2px;
+}
+#alert{
+    border-bottom: 1px solid #ccc;
+    box-shadow: 3px 3px 5px #ccc;
+    display: block;
+    width: 100%;
+    margin: 0px;
+    position: fixed;
+    top: 85px;
+    z-index: 1000;
+    text-align: center;
+    font-size: 13px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+#alert ~ #content{
+    margin-top: 40px;
+}
+#content{
+    padding: 10px;
+}
+#waiting{
+    z-index: 10001;
+    background-color: rgba(0,0,0, 0.4);
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    text-align: center;
+    color: white;
+}
+#waiting i{
+    position: fixed;
+    top: 40%;
+}
+#toolbar-box{
+}
+#toolbar button{
+    border-radius: 0px !important;
+    border: 0px;
+    border-right: 1px solid #ccc;
+}
+
+#toolbar-gauges{
+    float: left;
+    margin-left: 100px;
+    height: 32px;
+    padding-right: 2px;
+    padding-top: 2px;
+}
+
+#toolbar-gauges li{
+    border: 0px !important;
+    width: 50px;
+    text-align: center;
+    margin: 5px auto;
+}
+
+.grid-stack-item-header{
+    border-width: 1px;
+    border-style: solid;
+    border-color: transparent;
+    position: relative;
+    font-weight: bold;
+    margin-left: 10px;
+    padding: 10px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    float:left;
+    cursor: move;
+}
+
+
+.grid-stack-item-content{
+    border-width: 1px;
+    border-style: solid;
+    border-color: #ccc;
+    background-color: white;
+    position: relative;
+    overflow: auto;
+    padding-top: 10px;
+}
+
+.report-header{
+    margin-right: 50px;
+}
+
+.grid-stack-item-content .loading{
+    text-align: center;
+    position: absolute;
+    width: 100%;
+    top: 30px;
+    z-index: 10;
+}
+.input-group-addon{
+    background-color: transparent;
+    border: none;
+}
+.form-control{
+    height: 28px;
+    line-height: 25px;
+}
+.input-group-addon~.form-control{
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+}
+
+.date-range-selected > .ui-state-active,
+.date-range-selected > .ui-state-default {
+   background: none;
+   background-color: lightsteelblue;
+}
+
+.date-picker{
+    display: block;
+    position: absolute !important;
+    cursor: move;
+    padding-top: 7px;
+    z-index: 1000;
+}
+
+.date-picker .close-btn{
+    position: absolute;
+    top: 0px;
+    right: -6px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    z-index: 1000;
+    cursor: pointer;
+    padding: 3px;
+    font-size: 10px;
+    font-weight: normal;
+}
+
+.datepicker-icon{
+    font-size: 16px;
+    padding-left: 5px;
+    padding-right: 0px;
+    cursor: pointer;
+}
+.ui-datepicker-buttonpane{
+    hight: 50px;
+    background-color: white;
+}
+.ui-icon-gripsmall-diagonal-se{
+    background-image: none !important;
+}
+
+.grid-stack .grid-stack-placeholder > .placeholder-content {
+  border: 2px dashed grey;
+}
+
+.grid-stack > .grid-stack-item > .ui-resizable-s {
+    left : 0px;
+    right: 0px;
+}
+
+.mmt-verdict-label{
+    font-size: 13px;
+    text-decoration:none;
+    display: inline-block;
+}
+#mmt-verdict-total{
+    text-align: center;
+}
+
+.strimText {
+    white-space: pre-wrap;
+    overflow-x: hidden;
+    width: 100%;
+}
+.fail-info{
+    font-size: 10px;
+}
+.code-json{
+    white-space: pre-wrap;
+    width: 100%;
+    text-align: left;
+    display: inline-block;
+    cursor: default;
+}
+
+.code-json number{
+    color:brown;
+}
+.code-json string{
+    color:cadetblue ;
+}
+.code-json label{
+    color: darkslategrey
+}
+
+
+.auto-reload-button{
+    padding-top: 0px;
+    width: 170px;
+    float: right;
+}
+
+.onoffswitch {
+    width: 70px;
+    position: relative;
+    display: table;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: thin solid #999999; border-radius: 15px;
+}
+.onoffswitch-inner {
+    display: block; width: 200%; margin-left: -100%;
+    transition: margin 0.3s ease-in 0s;
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+    display: block; float: left; width: 50%; height: 28px; padding: 0; line-height: 26px;
+    font-size: 14px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
+    box-sizing: border-box;
+}
+.onoffswitch-inner:before {
+    content: "ON";
+    padding-left: 10px;
+    background-color: #07B810; color: #FFFFFF;
+}
+.onoffswitch-inner:after {
+    content: "OFF";
+    padding-right: 10px;
+    background-color: #EEEEEE; color: #999999;
+    text-align: right;
+}
+.onoffswitch-switch {
+    display: block; width: 22px; height:22px; margin: 3px;
+    background: #FFFFFF;
+    position: absolute; top: 0; bottom: 0;
+    right: 41px;
+    border: 2px solid #999999; border-radius: 20px;
+    transition: all 0.3s ease-in 0s;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+    margin-left: 0;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
+    right: 0px;
+}
+
+
+.textarea-config{
+  font-size: 11px;
+  line-height: normal;
+  height: 150px;
+  font-family: "Courier New", "Lucida Console";
+}
+
+.chart-gauge {}
+
+.chart-filled {
+    fill: #07B810;
+}
+
+.chart-empty {
+    fill: #dedede;
+}
+
+.needle,
+.needle-center {
+    fill: #464A4F;
+}
+
+
+/*jquery validate*/
+.error:{
+
+}
+/*end jquery validate*/

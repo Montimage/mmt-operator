@@ -4,29 +4,35 @@ block header
     link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.theme.default.css')
     link( rel='stylesheet',         href='/lib/jquery-treetable/css/jquery.treetable.css')
     script( type='text/javascript', src ='/lib/jquery-treetable/jquery.treetable.js')
-    
+
     link( rel='stylesheet',         href='/lib/datatables/media/css/dataTables.bootstrap.css')
     script( type='text/javascript', src ='/lib/datatables/media/js/jquery.dataTables.js')
     script( type='text/javascript', src ='/lib/datatables/media/js/dataTables.bootstrap.js')
+    
     //script( type='text/javascript', src ='/lib/datatables-fixedheader/js/dataTables.fixedHeader.js')
-
+    //to export charts
+    script( type='text/javascript', src='/lib/canvg/rgbcolor.js')
+    script( type='text/javascript', src='/lib/canvg/StackBlur.js')
+    script( type='text/javascript', src='/lib/canvg/canvg.js')
+    script( type='text/javascript', src='/lib/html2canvas/build/html2canvas.min.js')
+    script( type='text/javascript', src='/js/FileSaver.js')
     //- script( type='text/javascript', src='/lib/highcharts/highcharts.js')
     //- script( type='text/javascript', src='/lib/highcharts/highcharts-exporting.js')
 
     //- Load c3.css
     link( rel="stylesheet", href='/lib/c3/c3.min.css')
-    
+
     script( type='text/javascript', src='/lib/moment/moment.js', charset='utf-8')
-    
+
     //- Load d3.js and c3.js
     script( type='text/javascript', src='/lib/d3/d3.js', charset='utf-8')
     script( type='text/javascript', src='/lib/c3/c3.min.js')
 
     script( type='text/javascript', src='/lib/lodash/lodash.js')
-    
+
     link( rel="stylesheet",         href='/lib/jquery-ui/themes/base/jquery-ui.min.css')
     script( type='text/javascript', src='/lib/jquery-ui/jquery-ui.js')
-    
+
     link( rel="stylesheet",         href='/lib/gridstack/dist/gridstack.css')
     script( type='text/javascript', src='/lib/gridstack/dist/gridstack.js')
 
@@ -34,24 +40,40 @@ block header
     link( rel="stylesheet",         href="/lib/sweetalert/dist/sweetalert.css" )
 
     // highcharts
-    script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
-    
+    //script( type='text/javascript', src= '/lib/highcharts/highcharts.js')
+
     //override
+    script( type='text/javascript', src='/js/over/jquery-override.js')
     script( type='text/javascript', src='/js/over/jquery-datepicker.js')
-    
-    
-    link( rel='stylesheet',         href='/css/chart.css')
+    script( type='text/javascript', src= '/js/waiting.js')
     script( type='text/javascript', src= '/js/grid.js')
     script( type='text/javascript', src= '/js/event.js')
-    
+
     script( type='text/javascript', src= '/js/mmt_drop.js')
     
     script( type='text/javascript', src= '/js/chart/pre-common.js')
     //script that configures the content of the grid
-    script( type='text/javascript', src= '/js/chart/tab.#{ page_id }.js')
+    if( pathname == null )
+        script( type='text/javascript', src= '/js/chart/tab.#{ page_id }.js')
+    else
+        script( type='text/javascript', src= '/js/chart/#{ pathname }.js')
+
     //script render the reports based on the configuration above
     script( type='text/javascript', src= '/js/chart/common.js')
+
+    script( type='text/javascript', src= '/js/tooltip.js')
+
     
+mixin ahref( index, query_string, val )
+  a( href="/chart/#{ index }#{ query_string }" )= val.title
+
+mixin dropdown( index, query_string, val )
+  a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")= val.title
+  ul.dropdown-menu
+    each vv, ii in val.children
+      li
+        a( href="/chart/#{ index }/#{ ii }#{ query_string }" )= vv.title
+      
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
         .container-fluid
@@ -64,53 +86,73 @@ block content
             .navbar-collapse.collapse
                 ul.nav.navbar-nav.navbar-right
                     each val, index in pages
+                      if( val.children == undefined )
                         if( index === page_id )
                             li.active
-                                a( href="/chart/#{index}" )= val.title
+                              +ahref( index, query_string, val )
                         else
                             li
-                                a( href="/chart/#{index}" )= val.title
+                              +ahref( index, query_string, val )
+                      else
+                        if( index === page_id )
+                          li.active.dropdown
+                            +dropdown( index, query_string, val )
+                        else
+                          li.dropdown
+                            +dropdown( index, query_string, val )
+                              
                     li.dropdown
-                        a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") 
+                        a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")
                             span.glyphicon.glyphicon-user
                         ul.dropdown-menu
                             li: a( href="/profile" ) Profile
                             li: a( href="/change-password" ) Change password
                             li.divider( role="separator" )
-                            li: a( href="/setting" ) Setting
+                            li: a( href="/chart/setting" ) Settings
                             li.divider( role="separator" )
                             li: a( href="/logout" ) Logout
-                            
+
     #toolbar
         ul.nav.navbar-nav
+            li: button#exportBtn.btn.btn-default.btn-block( title="Export graphs to images")
+                span.glyphicon.glyphicon-import
+                
             li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
                 span.glyphicon.glyphicon-plus
             li: button#deleteBtn.btn.btn-default.btn-block( title="Drag and drop a report here to delete it")
                 span.glyphicon.glyphicon-trash
-
+            
         #toolbar-box
+
+        //#toolbar-gauges
+            ul.nav.navbar-nav
+              li: .chart-gauge
+              li: span.glyphicon.glyphicon-save
+                  span 100
+              li: span.glyphicon.glyphicon-open
+                  span 1
+              li Mbps
         
-        .auto-reload-button
+        #autoReload.auto-reload-button
             .input-group.input-group-sm
-                span.input-group-addon Auto reload
+                span.input-group-addon Auto reload 
                 .onoffswitch
                     input.onoffswitch-checkbox#isAutoReloadChk(type="checkbox", name="isAutoReloadChk",checked)
                     label.onoffswitch-label(for="isAutoReloadChk")
                         span.onoffswitch-inner
                         span.onoffswitch-switch
-
+                
     #waiting.center-block.loading
         i.fa.fa-refresh.fa-spin.fa-4x
-        
+        noscript
+            h2 Javascript is disabled. Please enable it!
+
     #content
         script(type='text/javascript').
-            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period } });
-            window.alert = function( txt ) {
-                sweetAlert("", txt);
-            }
+            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period }, probe_analysis_mode : "#{ probe_analysis_mode }" });
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
-        
+
     //This modal is used for creating a new report
     #modal.modal.fade
         .modal-dialog
@@ -118,13 +160,13 @@ block content
                 .modal-header
                     button.close(type="button", data-dismiss="modal", aria-label="Close" )
                         span( aria-hidden="true") &times;
-                    h4.modal-title Select a report 
+                    h4.modal-title Select a report
                 .modal-body.container-fluid
                     .row
                         .col-md-10.col-md-offset-1
                             form.form-horizontal
                                 .form-group
-                                    label.control-label(for="reportList") Report 
+                                    label.control-label(for="reportList") Report
                                     select#reportList.form-control( name="reportList")
                                 .form-group
                                     label.control-label(for="reportTitle") Title
@@ -139,8 +181,6 @@ block content
                                         button.btn.btn-info(    type="button", data-type="info")    &nbsp;
                                         button.btn.btn-warning( type="button", data-type="warning") &nbsp;
                                         button.btn.btn-danger(  type="button", data-type="danger")  &nbsp;
-                                    
-                            
+
                 .modal-footer
                     button#doneBtn.btn.btn-primary( type="button") Done
-        

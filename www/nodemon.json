@@ -1,0 +1,6 @@
+{
+  "verbose": true,
+  "ignore" : ["test", "test-cases", "public"],
+  "watch"  : ["libs", "routes", "views"],
+  "legacy-watch": true
+}

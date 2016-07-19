@@ -1,7 +1,7 @@
 /**
- * A publish-subsribe 
+ * A publish-subsribe
  */
-var EVENTS = function(){
+module.export = function(){
 	var channels = {};
 	var hOP = channels.hasOwnProperty;
 
@@ -32,5 +32,3 @@ var EVENTS = function(){
 		}
 	};
 };
-
-module.export = EVENTS;

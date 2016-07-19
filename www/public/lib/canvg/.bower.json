@@ -1,0 +1,29 @@
+{
+  "name": "canvg",
+  "main": "canvg.js",
+  "keywords": [
+    "javascript",
+    "client",
+    "browser",
+    "svg",
+    "canvas"
+  ],
+  "ignore": [
+    "examples",
+    "svgs"
+  ],
+  "dependencies": {
+    "rgb-color": "ariutta/rgb-color"
+  },
+  "homepage": "https://github.com/gabelerner/canvg",
+  "_release": "f5519bc910",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "f5519bc910ecefe083f636707b27e436386fdeed"
+  },
+  "_source": "https://github.com/gabelerner/canvg.git",
+  "_target": "*",
+  "_originalSource": "canvg-gabelerner",
+  "_direct": true
+}

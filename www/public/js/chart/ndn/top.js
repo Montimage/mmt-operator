@@ -4,7 +4,7 @@ var arr = [
         title: "Top Names",
         x: 0,
         y: 0,
-        width: 6,
+        width: 4,
         height: 9,
         type: "info",
         userData: {
@@ -12,11 +12,23 @@ var arr = [
         },
     },
     {
+        id: "top_host",
+        title: "Top Hosts",
+        x: 4,
+        y: 0,
+        width: 4,
+        height: 9,
+        type: "success",
+        userData: {
+            fn: "createTopHostReport"
+        },
+    },
+    {
         id: "top_user",
         title: "Top Machines",
-        x: 6,
+        x: 8,
         y: 0,
-        width: 6,
+        width: 4,
         height: 9,
         type: "warning",
         userData: {
@@ -57,7 +69,7 @@ if( param.mac != undefined || param.name ){
 function getHMTL( tag ){
     var html = tag[0];
     for( var i=1; i<tag.length; i++)
-        html += ' <i class="fa fa-angle-right"/> ' + tag[i]; 
+        html += ' <i class="fa fa-angle-right"/> ' + tag[i];
     return html;
 }
 
@@ -70,12 +82,12 @@ var ReportFactory = {
         var database = new MMTDrop.Database( db_param );
         var COL      = MMTDrop.constants.NdnColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        
+
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
-                    
+
                     var obj = {};
                     var ID  = (isMAC ? COL.NAME: COL.MAC_SRC);
                     //index
@@ -83,32 +95,32 @@ var ReportFactory = {
                         var msg = data[i];
                         var key = {id: msg[ ID.id ], mac_dest: msg[ COL.MAC_DEST.id ]};
                         key     = JSON.stringify( key );
-                        
+
                         if( obj[ key ] == undefined )
                             obj[ key ] = msg;
                         else{
-                            for( var j=13; j<22; j++)
+                            for( var j=13; j<24; j++)
                                 //time
-                                if( j == 14 || j == 18 ){
+                                if( j == 14 || j == 18 || j == 21 || j==22 || j==23){
                                     obj[key][ j ] = msg[ j ];
                                 }else
                                     obj[key][ j ] += msg[ j ];
                         }
                     }
-                    
+
                     data = [];
                     for( var i in obj ){
                         obj[i][ 0 ] = data.length + 1;
                         data.push( obj[i] );
                     }
-                    
-                    var columns = [{id: 0, label: ""           , align: "left"}, 
+
+                    var columns = [{id: 0, label: ""           , align: "left"},
                                    {id: 7, label: "Name"       , align: "left"},
                                    {id: 6, label: "MAC Destination"       , align: "left"},
                                   ];
                     if( ! isMAC )
                         columns[1] = {id: 5, label: "MAC Source" , align: "right"};
-                    
+
                     for(var i in COL )
                         if( COL[i].id > 7 && COL[i].id != 12)
                             columns.push( COL[i] );
@@ -132,7 +144,7 @@ var ReportFactory = {
 
                 var table = _chart.chart;
                 if( table === undefined ) return;
-                
+
                 table.DataTable().columns.adjust();
 
                 table.on("draw.dt", function () {
@@ -188,21 +200,21 @@ var ReportFactory = {
 
         return report;
     },
-    
-    createTopNameReport: function (filter, isMAC) {
+
+    createTopNameReport: function (filter, isMAC, fn) {
         isMAC = (isMAC === true);
         var self = this;
         var db_option= {format: [625], id: "ndn.name"};
         if( isMAC )
             db_option.id = "ndn.mac";
-        
+
         var database = new MMTDrop.Database( db_option );
         var COL      = MMTDrop.constants.NdnColumn;
         var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createNdnMetricFilter();
 
-        
-        
+
+
         var cPie = MMTDrop.chartFactory.createPie({
             getData: {
                 getDataFn: function (db) {
@@ -220,15 +232,18 @@ var ReportFactory = {
                     };
 
                     var db_data = db.data();
-                    
+
                     for( var i=0; i< db_data.length; i++){
                         var val  = db_data[i][ col.id ];
                         var name = db_data[i][ COL.NAME.id ];
                         if( isMAC )
                             name = db_data[i][ COL.MAC_SRC.id ];
-                        var val2 = val;
-                        if( col.id < COL.NB_DATA_PACKET.id )
-                            val2  = db_data[i][ col.id + 4 ];
+                        if( fn ){
+                          name = fn( name );
+                          if(name == null) continue;
+                        }
+
+                        var val2 = db_data[i][ COL.IFA.id ];
 
                         if( cPie.dataLegend.data[name] === undefined )
                             cPie.dataLegend.data[name] = {val2: 0, val: 0};
@@ -244,35 +259,41 @@ var ReportFactory = {
                             "val": cPie.dataLegend.data[ name ].val,
                             "val2": cPie.dataLegend.data[ name ].val2
                         });
-                    
+
 
                     data.sort(function (a, b) {
                         return b.val - a.val;
                     });
 
                     var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true){
+                    if( cPie.showAll === true ){
+                      if( data.length > 20 )
+                        top = 20;
+                      else
+                        top = data.length;
+                    }
+
+                    if( data.length > top + 1 ){
                         var val = 0, val2 = 0;
-                        
+
                         //update data
                         for (var i=top; i<data.length; i++ ){
                             var msg = data[i];
                             val  += msg.val;
-                            val2 += msg.val2;
                             //remove
                             delete( cPie.dataLegend.data[ msg.key ]);
                         }
-                                            
+
                         //reset dataLegend
-                        cPie.dataLegend.data["Other"] = {val2: val2, val: val};
-                        
+                        cPie.dataLegend.data["Other"] = {val2: 0, val: val};
+
                         data[top] = {
                             key: "Other",
-                            val: val 
+                            val: val
                         };
                         data.length = top+1;
                     }
-                    
+
                     return {
                         data: data,
                         columns: [{
@@ -297,7 +318,7 @@ var ReportFactory = {
                     onclick: function( d, i ){
                         var ip = d.id;
                         if( ip === "Other") return;
-                        
+
                         var _chart = cPie;
                         //TODO
                     }
@@ -310,13 +331,17 @@ var ReportFactory = {
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed"
+                    "class": "table table-bordered table-striped table-hover table-condensed tbl-legend"
                 });
                 var name = "Name";
                 if( isMAC )
                     name = "MAC Address";
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='60%'>"+ name  +"</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                if( isMAC )//add column for
+                  $("<thead><tr><th></th><th width='60%'>"+ name  +"</th><th width='20%'>" + legend.label +   "</th><th width='20%'>Percent</th><th>IFA</th></tr>").appendTo($table);
+                else {
+                  $("<thead><tr><th></th><th width='60%'>"+ name  +"</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                }
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -324,7 +349,7 @@ var ReportFactory = {
                     i++;
                     var val   = legend.data[key].val;
                     var val2  = legend.data[key].val2;
-                    
+
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
 
@@ -349,33 +374,34 @@ var ReportFactory = {
                             //$(this).css("background-color", chart.color(id) );
                         })
                         .appendTo($tr);
-                    
+
                     var $label = $("<a>", {
                         text : key,
                         title: "click to show detail of this " + (isMAC ? "name" : "machine"),
                         href : (isMAC ? "?mac=": "?name=") + encodeURI(key)
                     });
-                    
+
                     $("<td>", {align: "left"
                         }).append($label).appendTo($tr);
-                    
+
                     $("<td>", {
                         "text" : MMTDrop.tools.formatDataVolume( val ),
                         "align": "right"
                     }).appendTo($tr);
-                    /*
-                    $("<td>", {
-                        "text" : (val * 100 / val2).toFixed(2) + "%",
-                        "align": "right"
-                    }).appendTo($tr);
-                    */
+
                     $("<td>", {
                         "align": "right",
                         "text": (val * 100 / legend.ndnTotal).toFixed(2) + "%"
 
                     }).appendTo($tr);
+
+                    if( isMAC )
+                      $("<td>", {
+                          "text" : val2, //val2.toFixed(2),
+                          "align": "right"
+                      }).appendTo($tr);
                 }
-                
+
                 //footer of table
                 var $tfoot = $("<tfoot>");
 
@@ -385,7 +411,7 @@ var ReportFactory = {
                     var key = "Other";
                     var val = legend.data[key].val;
                     var val2 = legend.data[key].val2;
-                    
+
                     $("<td>", {
                             "class": "item-" + key,
                             "data-id": key,
@@ -409,39 +435,38 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var $a = $("<a>", {
-                        href: "?show all clients",
+                        href: "#showAllClients",
                         title: "click to show all clients",
                         text: "Other",
-                        
+
                     });
-                    $a.on("click", function(){
+                    $a.on("click", function( event ){
+                        event.preventDefault();
                        _chart.showAll = true;
-                       _chart.redraw(); 
+                       _chart.redraw();
                         return false;
                     });
-                    
+
                     $("<td>").append( $a ).appendTo($tr);
-                    
+
                     $("<td>", {
                         "align": "right",
                         "html":  MMTDrop.tools.formatDataVolume( val ),
                     }).appendTo($tr);
-                    /*
-                    $("<td>", {
-                        "text" : (val * 100 / val2).toFixed(2) + "%",
-                        "align": "right"
-                    }).appendTo($tr);
-                    */
+
                     $("<td>", {
                         "align": "right",
                         "text": (val * 100 / legend.ndnTotal).toFixed(2) + "%"
 
                     }).appendTo($tr);
+                    if( isMAC )
+                      $("<td>", {
+                      }).appendTo($tr);
 
                     $tfoot.append($tr).appendTo($table);
                 }
 
-                $tfoot.append(
+                var $total =
                     $("<tr>", {
                         "class": 'success'
                     }).append(
@@ -458,25 +483,30 @@ var ReportFactory = {
                             "align": "right",
                             "text": MMTDrop.tools.formatDataVolume( legend.ndnTotal )
                         })
-                    )/*.append(
-                        $("<td>", {
-                            "text" : (legend.ndnTotal * 100 / legend.dataTotal).toFixed(2) + "%",
-                            "align": "right"
-                        })
-                    )*/.append(
+                    ).append(
                         $("<td>", {
                             "align": "right",
                             "text": "100%"
                         })
                     )
-                ).appendTo($table);
+
+
+                if ( isMAC )
+                  $total.append($("<td>"));
+
+                $tfoot.append( $total ).appendTo( $table );
 
                 $table.dataTable({
                     paging: false,
                     dom: "t",
                     order: [[3, "desc"]]
                 });
-            }
+            },
+            bgPercentage:{
+                table : ".tbl-legend",
+                column: 4, //index of column, start from 1
+                css   : "bg-img-1-red-pixel"
+            },
         });
         //
 
@@ -512,9 +542,66 @@ var ReportFactory = {
 
         return report;
     },
-    
+    createTopHostReport: function (filter ) {
+      return this.createTopNameReport( filter, false,
+        //parse host from a name (eGW/GET/http://www.yahoo.com//0)
+        //==> retun www.yahoo.com
+        function( name ){
+
+          var d = name.indexOf( "http://");
+          if( d >= 0 ){
+            return name.substring( d + 8, name.indexOf( "/", d + 7) );
+          }
+          //if does not contain http://
+          //eGW/GET/www.yahoo.com//0
+            var len = 0;
+          var d = name.indexOf("GET/");
+          len = "GET/".length;
+          if( d == -1 ){
+            d = name.indexOf("POST/");
+            len = "POST/".length;
+          }
+
+          if( d == -1 ){
+            d = name.indexOf("HEAD/");
+            len = "HEAD/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("PUT/");
+            len = "PUT/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("DELETE/");
+            len = "DELETE/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("OPTIONS/");
+            len = "OPTIONS/".length;
+          }
+          if( d == -1 ){
+            d = name.indexOf("TRACE/");
+            len = "TRACE/".length;
+          }
+
+          if( d == -1 ){
+            d = name.indexOf("CONNECT/");
+            len = "CONNECT/".length;
+          }
+
+          if( d == -1){
+            return null;
+          }
+          name = name.substring( d + len );
+          d = name.indexOf("/");
+          if( d == -1 )
+            return name;
+
+          name = name.substring(0, d);
+          return name;
+        });
+    },
     createTopMACReport: function (filter) {
         return this.createTopNameReport(filter, true);
     },
-    
+
 }

@@ -29,26 +29,50 @@ MMTDrop.setOptions({
 
 if( ReportFactory === undefined )
     var ReportFactory = {};
-    
+
 for (var i in ReportFactory)
         MMTDrop.reportFactory[i] = ReportFactory[i];
 
 ReportFactory = MMTDrop.reportFactory;
 
 var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var reports = [];
+var COL     = MMTDrop.constants.StatsColumn;
+//this database is reload firstly when a page is loaded
+//this db contains status of probe, interval to get data of reports
+var status_db = new MMTDrop.Database({collection: "status"});
+
+var fAutoReload = {
+  hide : function(){
+    $("#autoReload").hide();
+    $("#isAutoReloadChk").prop("checked", false);
+  }
+};
 
 $(function () {
     'use strict'
-    
+
+    if( typeof arr === "undefined" ){
+        console.error("No Reports are defined!");
+        $("#waiting").hide();
+        return;
+    }
+
     $("#waiting").on("click", function(){
             $("#waiting").hide();
     });
-    
+
     if (fPeriod == undefined) {
         throw new Error("Need to defined fPeriod filter")
     }
+    //init toolbar-box
+    if( arr.length == 1 )
+      $("#deleteBtn").hide();
+    if( MMTDrop.tools.object2Array(availableReports).length == 0 )
+      $("#addBtn").hide();
 
+    //fProbe.renderTo("toolbar-box");
 
     fPeriod.renderTo("toolbar-box");
     fPeriod.onChange( loading.onShowing  );
@@ -62,13 +86,17 @@ $(function () {
                 if (rep) {
                     rep.renderTo(node.id + "-content");
                     reports.push( rep );
+                }else{
+                  //rep is not a real report (it could be a form, ...)
+                  //=> hide loading icon
+                  loading.onHide();
                 }
             }
-            
+
             //loading is defined in each tab
             if( loading )
                 loading.totalChart ++;
-            
+
         } catch (ex) {
             console.error("Error when rending report [" + key + "] to the DOM [" + node.id + "]");
             console.error(ex.stack);
@@ -83,32 +111,63 @@ $(function () {
     }
 
 
+
+    //reload databases of reports
+    var reloadReports = function( data, group_by ){
+      //there are no reports
+      if (reports.length == 0 ){
+        loading.onHide();
+      }else{
+        var probe_id = MMTDrop.tools.getURLParameters().probe_id;
+        try{
+            for( var i=0; i<reports.length; i++ ){
+              var param = reports[ i ].database.param;
+              var param = {period: status_db.time, period_groupby: group_by};
+              if( probe_id != undefined ){
+                param.probe = [ parseInt( probe_id ) ];
+
+                var $match = {};
+                $match[ COL.PROBE_ID.id ] =  parseInt( probe_id ) ;
+                param.query = [{$match: $match}];
+              }
+
+
+              reports[ i ].database.reload( param , function(new_data, rep){
+                    //for each element in dataFlow array
+                    for( var j in rep.dataFlow ){
+                        var filter = rep.dataFlow[ j ];
+                        if(!filter) return;
+
+                        filter = filter.object;
+                        if (filter instanceof MMTDrop.Filter)
+                            filter.filter();
+                        else if( filter ){ //chart
+                            filter.attachTo( rep.database );
+                            filter.redraw();
+                        }
+                    }
+                }, reports[ i ]);
+            }
+        }catch ( err ){
+            loading.onHide();
+            console.error( err );
+        }
+      }//end if
+    }
+
     fPeriod.onFilter( function( opt ){
         console.log("fProbe filtering");
-        for( var i=0; i<reports.length; i++ ){
-            
-            reports[ i ].database.reload({ period :  opt.id}, function(new_data, rep){
-                var filter = MMTDrop.tools.getFirstElement(rep.dataFlow);
-                if(!filter) return;
-
-                filter = filter.object;
-                if (filter instanceof MMTDrop.Filter)
-                    filter.filter();
-                else if( filter ){ //chart
-                    filter.attachTo( rep.database );
-                    filter.redraw();
-                }
-
-            }, reports[ i ]);
-        }
+        var period = MMTDrop.tools.getURLParameters().period;
+        if( period == undefined )
+          status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
+        else
+          status_db.reload({ action: period }, reloadReports, opt.id );
     });
-    
+
     //fire the chain of filters
     setTimeout( function(){
-        fPeriod.filter(); 
+        fPeriod.filter();
     }, 0 );
-
-
 
     //update the modal show list of reports to user
     var $modal = $("#modal");
@@ -158,8 +217,8 @@ $(function () {
         //renderReport(node);
 
     });
-    
-    
+
+
     var reloadCount = 0;
     var auto_reload_timer = null;
     function start_auto_reload_timer(){
@@ -172,17 +231,16 @@ $(function () {
         auto_reload_timer = setInterval( function(){
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
-            
+
             if( reloadCount >= 10 ){
                 location.reload();
                 throw new Error("Stop");
             }
-            
+
             loading.onShowing();
             fPeriod.filter();
-        }, p);   
+        }, p);
     }
-    
     $("#isAutoReloadChk").change( function(){
         var is_on = $(this).is(":checked");
         console.log( "autoReload: " + is_on );
@@ -194,7 +252,7 @@ $(function () {
         }
     });
 
-    
+
     var checked = MMTDrop.tools.localStorage.get("autoreload", false);
     //checkbox default is "true"
     if(  checked === false ){
@@ -203,4 +261,102 @@ $(function () {
         //checkbox is already checked ==> trigger its event
         $("#isAutoReloadChk").trigger("change");
 
+
+    //download images
+    $("#exportBtn").click( function(){
+      d3.selectAll("path").attr("fill", "none");
+      d3.selectAll(".tick line, path.domain, c3-ygrid").attr("stroke", "black");
+      d3.selectAll(".c3-line").attr("stroke-width", "2px");
+      d3.selectAll(".c3-ygrid").attr("stroke", "#aaa").attr("stroke-dasharray","3 3");
+
+      var $form = $("#frmUploadImage");
+      //for the first time
+      if( $form.length == 0){
+
+        $form = MMTDrop.tools.createDOM({
+          type : "<form>",
+          attr : {
+            id     : "frmUploadImage",
+            method : "POST",
+            style  : "display: none"
+          },
+          children:[{
+            type : "<input>",
+            attr : {
+              name : "data",
+            }
+          }]
+        });
+        $("body").append($form);
+      }
+
+      function render_image( index ){
+        if( index >= data.length ) return;
+        var node       = data[index];
+        var targetElem = $("#" + node.id);
+
+        console.log( "Rendering image for tab." + node.id)
+
+        // First render all SVGs to canvases
+        var elements = targetElem.find('svg').map(function() {
+            var svg    = $(this);
+            var canvas = $('<canvas>');
+
+            // Get the raw SVG string and curate it
+            var content = svg[0].outerHTML.trim();
+            canvg( canvas[0], content );
+
+            //temporary replace the svg by the canvas
+            //the svg will be put back after rendering image
+            svg.replaceWith(canvas);
+
+            return {
+                svg   : svg,
+                canvas: canvas
+            };
+        });
+        //return;
+        // At this point the container has no SVG, it only has HTML and Canvases.
+        html2canvas( targetElem, {
+          //allowTaint: true,
+          letterRendering: true,
+	        onrendered: function(canvas) {
+            var ctx=canvas.getContext("2d");
+
+            // Put the SVGs back in place
+            elements.each(function() {
+              this.canvas.replaceWith(this.svg);
+            });
+
+            //add water mark
+	    	    ctx.font      = "14px Arial";
+		        ctx.fillStyle = "grey";
+	    	    ctx.fillText("Montimage", 15, canvas.height - 12);
+
+		        var fileName = node.title + "-" + (new Date()).toLocaleString() + ".png";
+
+            try {
+              var isFileSaverSupported = !!new Blob;
+              //OK, your browser support Blog
+              canvas.toBlob(function(blob) {
+                  saveAs(blob, fileName);
+              });
+            } catch (e) {
+              $form.attr("action", "/export?filename=" + fileName);
+              $form.attr("method", "POST");
+              //get image based_64
+              $form.children().val( canvas.toDataURL("image/png") );
+              $form.submit();
+            }
+
+
+            //for others reports
+            if( index < data.length - 1 )
+              setTimeout( render_image, 1000, index + 1);
+	        }
+	      });// end html2canvas
+      }
+      render_image( 0 );
+
+    })//end $("#exportBtn").click
 });

@@ -1,5 +1,24 @@
-var ipLib  = require("ip");
-var config = require("../config.json");
+var ipLib   = require("ip");
+var config  = require("../config.json");
+var maxmind = require('maxmind');
+var path    = require("path");
+var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Country.mmdb'), {
+    cache: {
+        max: 1000, // max items in cache
+        maxAge: 1000 * 60 * 60 // life time in milliseconds
+    }
+});
+
+ipToCountry._get = function( ip ){
+  var loc = ipToCountry.get( ip );
+  if (loc){
+    return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
+  }else if(MMTDrop.isLocalIP( ip )){
+    return "_local"
+  }else{
+    return "_unknown";
+  }
+}
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -18,6 +37,7 @@ var MMTDrop = {
         WEB_APP_FORMAT          : 1/**< WEB flow report format id */,
         SSL_APP_FORMAT          : 2/**< SSL flow report format id */,
         RTP_APP_FORMAT          : 3/**< RTP flow report format id */,
+        FTP_APP_FORMAT          : 4,
         MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
         RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
         NO_SESSION_STATS_FORMAT : 99,
@@ -28,20 +48,9 @@ var MMTDrop = {
         LICENSE                 : 30,
         NDN_FORMAT              : 625,
         DUMMY_FORMAT            : 200,
+        OTT_QOS                 : 70
     },
-    
-    isFlowStats : function ( format ) {
-        switch (format) {
-            case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
-            case MMTDrop.CsvFormat.WEB_APP_FORMAT :
-            case MMTDrop.CsvFormat.SSL_APP_FORMAT :
-            case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-                return true;
-            default :
-                return false;
-        }
-    },
-    
+
     /**
      * Constants: MMTDrop defined csv format types
      */
@@ -50,28 +59,48 @@ var MMTDrop = {
         PROBE_ID            : 1, /**< Index of the probe id column */
         SOURCE_ID           : 2, /**< Index of the data source id column */
         TIMESTAMP           : 3, /**< Index of the format id column */
-        APP_ID              : 4, /**< Index of the application id column */
-        APP_PATH            : 5, /**< Index of the application path column */
-        ACTIVE_FLOWS        : 6, /**< Index of the active flows column */
-        DATA_VOLUME         : 7, /**< Index of the data volume column */
-        PAYLOAD_VOLUME      : 8, /**< Index of the payload data volume column */
-        PACKET_COUNT        : 9, /**< Index of the packet count column */
-        UL_DATA_VOLUME      : 10, /**< Index of the data volume column */
-        UL_PAYLOAD_VOLUME   : 11, /**< Index of the payload data volume column */
-        UL_PACKET_COUNT     : 12, /**< Index of the packet count column */
-        DL_DATA_VOLUME      : 13, /**< Index of the data volume column */
-        DL_PAYLOAD_VOLUME   : 14, /**< Index of the payload data volume column */
-        DL_PACKET_COUNT     : 15, /**< Index of the packet count column */
-        START_TIME          : 16, /**< Index of the start timestamp of the flow */
-        IP_SRC              : 17, /**< Index of the IP address source column */
-        IP_DEST             : 18, /**< Index of the IP address destination column */
-        MAC_SRC             : 19, /**< Index of the MAC address source column */
-        MAC_DEST            : 20, /**< Index of the MAC address destination column */
-        SESSION_ID          : 21, //Identifier of the session or if the protocol does not have session its session id = 0 
-        PORT_DEST           : 22, //Server port number (0 if transport protocol is session less like ICMP)
-        PORT_SRC            : 23, //Client port number (0 if transport protocol is session less like ICMP) 
+        REPORT_NUMBER       : 4,
+        APP_ID              : 5, /**< Index of the application id column */
+        APP_PATH            : 6, /**< Index of the application path column */
+        ACTIVE_FLOWS        : 7, /**< Index of the active flows column */
+        DATA_VOLUME         : 8, /**< Index of the data volume column */
+        PAYLOAD_VOLUME      : 9, /**< Index of the payload data volume column */
+        PACKET_COUNT        : 10, /**< Index of the packet count column */
+        UL_DATA_VOLUME      : 11, /**< Index of the data volume column */
+        UL_PAYLOAD_VOLUME   : 12, /**< Index of the payload data volume column */
+        UL_PACKET_COUNT     : 13, /**< Index of the packet count column */
+        DL_DATA_VOLUME      : 14, /**< Index of the data volume column */
+        DL_PAYLOAD_VOLUME   : 15, /**< Index of the payload data volume column */
+        DL_PACKET_COUNT     : 16, /**< Index of the packet count column */
+        START_TIME          : 17, /**< Index of the start timestamp of the flow */
+        IP_SRC              : 18, /**< Index of the IP address source column */
+        IP_DEST             : 19, /**< Index of the IP address destination column */
+        MAC_SRC             : 20, /**< Index of the MAC address source column */
+        MAC_DEST            : 21, /**< Index of the MAC address destination column */
+        SESSION_ID          : 22, //Identifier of the session or if the protocol does not have session its session id = 0
+        PORT_DEST           : 23, //Server port number (0 if transport protocol is session less like ICMP)
+        PORT_SRC            : 24, //Client port number (0 if transport protocol is session less like ICMP)
+        THREAD_NUMBER       : 25,
+        RTT                 : 26,
+        RTT_MIN_SERVER      : 27,
+        RTT_MIN_CLIENT      : 28,
+        RTT_MAX_SERVER      : 29,
+        RTT_MAX_CLIENT      : 30,
+        RTT_AVG_SERVER      : 31,
+        RTT_AVG_CLIENT      : 32,
+        RETRANSMISSION_COUNT: 33,
+
+
+        FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
+
+        SRC_LOCATION            : 40,
+        DST_LOCATION            : 41,
+        IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
+        PROFILE_ID              : 43, // profile id
+        ORG_APP_ID              : 44, //original APP_ID given by probe
+        ORG_TIMESTAMP           : 45, //original TIMESTAMP given by probe
     },
-    
+
     SecurityColumnId           : {
         FORMAT_ID               : 0, /**< Index of the format id column */
         PROBE_ID                : 1, /**< Index of the probe id column */
@@ -111,94 +140,155 @@ var MMTDrop = {
         VERDICT                 : 10,
         DESCRIPTION             : 11
     },
-    /**
-     * Constants: MMTDrop defined Flow based csv format (format 0, and common part of 1, 2, 3)
-     */
-    FlowStatsColumnId           : {
-        FORMAT_ID               : 0, /**< Index of the format id column */
-        PROBE_ID                : 1, /**< Index of the probe id column */
-        SOURCE_ID               : 2, /**< Index of the data source id column */
-        TIMESTAMP               : 3, /**< Index of the format id column */
-        FLOW_ID                 : 4, /**< Index of the flow id column */
-        START_TIME              : 5, /**< Index of the flow start time */
-        IP_VERSION              : 6, /**< Index of the IP version number column */
-        SERVER_ADDR             : 7, /**< Index of the server address column */
-        CLIENT_ADDR             : 8, /**< Index of the client address column */
-        SERVER_PORT             : 9, /**< Index of the server port column */
-        CLIENT_PORT             : 10, /**< Index of the client port column */
 
-        //IS_LOCAL                : 11, /** 0 (if not a local address), 1 (local address,server),2 (local address,client),3 (local address,both server and client)*/
-
-        TRANSPORT_PROTO         : 11, /**< Index of the transport protocol identifier column */
-        UL_PACKET_COUNT         : 12, /**< Index of the uplink packet count column */
-        DL_PACKET_COUNT         : 13, /**< Index of the downlink packet count column */
-        UL_DATA_VOLUME          : 14, /**< Index of the uplink data volume column */
-        DL_DATA_VOLUME          : 15, /**< Index of the downlink data volume column */
-        TCP_RTT                 : 16, /**< Index of the TCP round trip time column */
-        RETRANSMISSION_COUNT    : 17, /**< Index of the retransmissions count column */
-        APP_FAMILY              : 18, /**< Index of the application family column */
-        CONTENT_CLASS           : 19, /**< Index of the content class column */
-        PROTO_PATH              : 20, /**< Index of the protocol path column */
-        APP_NAME                : 21, /**< Index of the application name column */
-        APP_FORMAT_ID           : 22, /**< Index of the start of the application specific statistics (this is not a real column, rather an index) */
-    },
-    
     HttpStatsColumnId : {
-        RESPONSE_TIME       : 0, /**< Index of the response time column */
-        TRANSACTIONS_COUNT  : 1, /**< Index of the HTTP transactions count (req/res number) column */
-        INTERACTION_TIME    : 2, /**< Index of the interaction time (between client and server) column */
-        HOSTNAME            : 3, /**< Index of the hostname column */
-        MIME_TYPE           : 4, /**< Index of the MIME type column */
-        REFERER             : 5, /**< Index of the Referer column */
-        DEVICE_OS_ID        : 6, /**< Index of the device and operating system ids column */
-        CDN_FLAG            : 7, /**< Index of the is CDN delivered column */
+        APP_FAMILY         : 50,
+        CONTENT_CLASS      : 51,
+        RESPONSE_TIME      : 52, /**< Index of the response time column */
+        TRANSACTIONS_COUNT : 53, /**< Index of the HTTP transactions count (req/res number) column */
+        INTERACTION_TIME   : 54, /**< Index of the interaction time (between client and server) column */
+        HOSTNAME           : 55, /**< Index of the hostname column */
+        MIME_TYPE          : 56, /**< Index of the MIME type column */
+        REFERER            : 57, /**< Index of the Referer column */
+        CDN_FLAG           : 58, /**< Index of the is CDN delivered column */
+        URI                : 59,
+        METHOD             : 60,
+        RESPONSE           : 61,
+        CONTENT_LENGTH     : 62,
+        FRAGMENTATION      : 63,
+        REQUEST_ID         : 64
     },
-    
+
     TlsStatsColumnId : {
-        SERVER_NAME : 0, /**< Index of the format id column */
-        CDN_FLAG    : 1, /**< Index of the format id column */
+      APP_FAMILY    : 70,
+      CONTENT_CLASS : 71,
+      SERVER_NAME   : 72, /**< Index of the format id column */
+      CDN_FLAG      : 73, /**< Index of the format id column */
     },
-    
+
     RtpStatsColumnId : {
-        PACKET_LOSS_RATE        : 0, /**< Index of the format id column */
-        PACKET_LOSS_BURSTINESS  : 1, /**< Index of the format id column */
-        MAX_JITTER              : 2,
+      APP_FAMILY             : 80,
+      CONTENT_CLASS          : 81,
+      PACKET_LOSS_RATE       : 82, /**< Index of the format id column */
+      PACKET_LOSS_BURSTINESS : 83, /**< Index of the format id column */
+      MAX_JITTER             : 84,
+      ORDER_ERROR            : 85
     },
-   
+
+    FtpStatsColumnId : {
+      APP_FAMILY        : 90,
+			CONNNECTION_TYPE  : 91,
+			USERNAME          : 92,
+			PASSWORD          : 93,
+			FILE_SIZE         : 94,
+			FILE_NAME         : 95,
+    },
+
      LicenseColumnId           : {
-        FORMAT_ID                       : 0, /**< Index of the format id column */
-        PROBE_ID                        : 1, /**< Index of the probe id column */
-        SOURCE_ID                       : 2, /**< Index of the data source id column */
-        TIMESTAMP                       : 3, /**< Index of the format id column */
-        LICENSE_INFO_ID                 : 4, /**< Index of the application id column */
-        NUMBER_OF_MAC                   : 5,
-        MAC_ADDRESSES                   : 6,
-        EXPIRY_DATE                     : 7
+        FORMAT_ID       : 0, /**< Index of the format id column */
+        PROBE_ID        : 1, /**< Index of the probe id column */
+        SOURCE_ID       : 2, /**< Index of the data source id column */
+        TIMESTAMP       : 3, /**< Index of the format id column */
+        LICENSE_INFO_ID : 4, /**< Index of the application id column */
+        NUMBER_OF_MAC   : 5,
+        MAC_ADDRESSES   : 6,
+        EXPIRY_DATE     : 7,
+        VERSION_PROBE   : 8,
+        VERSION_SDK     : 9,
     },
-    NdnColumnId : {
+    NdnColumnId                  : {
 			/** Index of the format id column */
-			FORMAT_ID            : 0  ,
-			PROBE_ID             : 1  ,
-			SOURCE_ID            : 2  ,
-			TIMESTAMP            : 3  ,
-			SESSION_ID           : 4  ,
-            MAC_SRC              : 5  ,
-            MAC_DEST             : 6  ,
-            NAME                 : 7  ,
-            IS_OVER_TCP          : 8  ,
-            IP_SRC               : 9  ,
-            IP_DEST              : 10 ,
-            PORT_SRC             : 11 ,
-            PORT_DEST            : 12 ,
-            NB_INTEREST_PACKET   : 13 ,
-            INTEREST_LIFETIME    : 14 ,
-            DATA_VOLUME_INTEREST : 15 ,
-			NDN_VOLUME_INTEREST  : 16 ,
-            NB_DATA_PACKET       : 17 ,
-            DATA_FRESHNESS_PERIOD : 18 ,
-            DATA_VOLUME_DATA     : 19 ,
-			NDN_VOLUME_DATA      : 20 ,
+			FORMAT_ID             : 0 ,
+			PROBE_ID              : 1 ,
+			SOURCE_ID             : 2 ,
+			TIMESTAMP             : 3 ,
+			SESSION_ID            : 4 ,
+      MAC_SRC               : 5 ,
+      MAC_DEST              : 6 ,
+      NAME                  : 7 ,
+      IS_OVER_TCP           : 8 ,
+      IP_SRC                : 9 ,
+      IP_DEST               : 10 ,
+      PORT_SRC              : 11 ,
+      PORT_DEST             : 12 ,
+      NB_INTEREST_PACKET    : 13 ,
+      INTEREST_LIFETIME     : 14 ,
+      DATA_VOLUME_INTEREST  : 15 ,
+			NDN_VOLUME_INTEREST   : 16 ,
+      NB_DATA_PACKET        : 17 ,
+      DATA_FRESHNESS_PERIOD : 18 ,
+      DATA_VOLUME_DATA      : 19 ,
+			NDN_VOLUME_DATA       : 20 ,
+      NDN_MAX_RESPONSED_TIME   : 21,
+			NDN_MIN_RESPONSED_TIME   : 22,
+			NDN_AVR_RESPONSED_TIME   : 23,
+			IFA 										 : 24,
 		},
+    OTTQoSColumnId: {
+      FORMAT_ID                   : 0  ,
+			PROBE_ID                    : 1  ,
+			SOURCE_ID                   : 2  ,
+			TIMESTAMP                   : 3  ,
+      VIDEO_URI                   : 4,
+      VIDEO_QUALITY               : 5,
+      NETWORK_BITRATE             : 6,
+      VIDEO_BITRATE               : 7,
+      TOTAL_VIDEO_DURATION        : 8,
+      TOTAL_VIDEO_DOWNLOAD        : 9,
+      RETRANSMISSION_COUNT        : 10,
+      OUT_OF_ORDER                : 11,
+      PROBABILITY_BUFFERING       : 12
+    },
+    /**
+     * A table of Category-Id: Application-Id[]
+     */
+    CategoriesAppIdsMap: {
+      1: [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 26, 27, 31, 32, 33, 34, 35, 36, 38, 39, 40, 44, 45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 64, 67, 68, 69, 70, 71, 72, 73, 74, 76, 80, 83, 87, 88, 89, 91, 94, 95, 98, 100, 101, 102, 106, 110, 111, 112, 114, 115, 116, 121, 122, 123, 124, 125, 126, 127, 130, 131, 132, 133, 134, 135, 139, 143, 145, 146, 147, 148, 150, 151, 153, 154, 155, 157, 158, 159, 165, 168, 171, 174, 175, 176, 184, 187, 189, 193, 200, 201, 203, 204, 206, 207, 208, 209, 210, 211, 212, 217, 222, 223, 226, 230, 234, 235, 238, 239, 240, 244, 245, 246, 248, 249, 250, 252, 253, 256, 258, 261, 262, 264, 267, 268, 269, 274, 275, 282, 283, 286, 287, 289, 292, 293, 294, 295, 300, 301, 302, 303, 305, 306, 307, 309, 313, 315, 316, 318, 319, 320, 321, 326, 327, 328, 329, 331, 333, 334, 335, 336, 338, 342, 343, 346, 348, 350, 351, 352, 353, 359, 360, 362, 364, 367, 368, 369, 370, 375, 378, 379, 380, 383, 386, 387, 389, 390, 391, 392, 394, 395, 396, 398, 399, 400, 401, 402, 403, 404, 406, 408, 412, 415, 416, 417, 418, 419, 420, 423, 424, 425, 426, 428, 430, 431, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 580, 583, 597, 598, 623],
+      2: [17, 28, 52, 84, 92, 105, 109, 129, 172, 190, 215, 257, 263, 332, 344, 361, 365, 405],
+      3: [8, 24, 29, 42, 43, 47, 63, 75, 86, 96, 108, 113, 119, 120, 144, 149, 167, 192, 194, 199, 216, 224, 225, 227, 266, 270, 271, 285, 296, 297, 308, 345, 374, 407, 409, 410, 411, 413, 421, 432, 617, 618, 619, 620, 621],
+      4: [77, 107, 138, 161, 185, 195, 197, 228, 229, 231, 242, 254, 255, 277, 280, 284, 291, 298, 299, 311, 312, 330, 337, 371, 372, 381, 382, 385, 427, 429, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 581, 582, 584, 585, 586, 587, 588, 589, 592],
+      5: [16, 37, 104, 118, 136, 140, 160, 173, 183, 186, 188, 220, 221, 232, 259, 314, 317, 366, 384, 397, 594, 595, 596, 600, 622],
+      6: [128, 152, 169, 170, 205, 213, 272, 273, 323, 324, 422],
+      7: [117, 247, 322, 358],
+      8: [90, 162, 590, 591],
+      9: [79, 219, 569],
+      10: [7, 15, 30, 41, 48, 81, 82, 85, 93, 97, 99, 163, 164, 166, 178, 180, 181, 182, 191, 198, 214, 218, 241, 243, 251, 260, 288, 304, 310, 325, 339, 341, 347, 349, 354, 363, 376, 377, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, //],
+               //Tunlelling
+    /*11: [*/
+               137, 141, 142, 179, 196, 278, 279, 281, 461, 481, 496,//],
+               //Remote
+          //13: [
+               265, 290, 340, 356, 357, 388, 414,
+              //],
+          //Misc
+    //14: [
+              65, 66, 78, 156, 393],
+
+      12: [233, 237, 276, 355],
+      15: [593, 599, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 625],
+            16: [103, 373, 177, 202, 236]
+    },
+    /**
+     * Get Category ID of an application
+     * @param {number} appId - application Id
+     * @returns {number} - category Id
+     */
+    getCategoryIdFromAppId : function( appId ){
+      //cache last found
+      if( this._cacheCategoryIdFromAppId == undefined )
+        this._cacheCategoryIdFromAppId = {};
+      if( this._cacheCategoryIdFromAppId[ appId] != undefined )
+        return this._cacheCategoryIdFromAppId[ appId ];
+
+      appId = parseInt( appId );
+
+      for (var i in MMTDrop.CategoriesAppIdsMap){
+        var arr = MMTDrop.CategoriesAppIdsMap[i];
+        if (arr.indexOf( appId ) > -1)
+          return this._cacheCategoryIdFromAppId[ appId ] = parseInt( i );
+      }
+      return -1;
+    },
     /**
      * Return the parent of the given protocol path. <br>
      * ("1.2" is the parent of "1.2.3"; "." is the parent of "1")
@@ -228,7 +318,7 @@ var MMTDrop = {
             return child;
         }
     },
-    
+
     /**
      * Returns the root application id given the application path.
      * @param {Object} path application protocol path
@@ -241,7 +331,7 @@ var MMTDrop = {
             return path.toString().substring(0, n);
         }
     },
-    
+
     getAppLevelFromPath : function( path ){
         var count = 0;
         for( var j=0; j<path.length; j++){
@@ -283,7 +373,7 @@ var MMTDrop = {
         var n = path.toString().lastIndexOf(".");
         return MMTDrop.ProtocolsIDName[path.toString().substring(n + 1, path.toString().length)];
     },
-    
+
     /**
      * Returns the parent application name given the application path. <br>
      * If the application parent does not exist (path equal to root application), -1 is returned.
@@ -295,7 +385,7 @@ var MMTDrop = {
             return -1;
         return this.getAppId(parent);
     },
-    
+
     /**
      * Returns the protocol path from the given statistics report entry
      * @param {Object} entry statistics report entry
@@ -303,7 +393,7 @@ var MMTDrop = {
     getEntryPath : function(entry) {
         return entry[MMTDrop.StatsColumnId.APP_PATH];
     },
-    
+
     /**
      * Maps the Protocol ID to a Protocol Name
      * @param {number} id
@@ -314,7 +404,7 @@ var MMTDrop = {
         protocolName = ( id in MMTDrop.ProtocolsIDName) ? MMTDrop.ProtocolsIDName[id] : 'NaP';
         return protocolName;
     },
-    
+
     /**
      * Maps the Protocol Name to a Protocol ID
      * @param {string} protocolName
@@ -325,7 +415,7 @@ var MMTDrop = {
         protocolID = ( protocolName in MMTDrop.ProtocolsNameID) ? MMTDrop.ProtocolsNameID[protocolName] : 'NaP';
         return protocolID;
     },
-    
+
     /**
      * Returns the first element that was inserted in the given array
      */
@@ -334,27 +424,37 @@ var MMTDrop = {
             if (data.propertyIsEnumerable(prop))
                 return prop;
     },
-    
+
     setDirectionStatFlowByIP: function( msg ){
         if( config.local_network == null )
             return msg;
-        
+
         var COL       = this.StatsColumnId;
-        if( msg[ COL.FORMAT_ID ] != this.CsvFormat.STATS_FORMAT )
-            return msg;
-        
-        if( this.isLocalIP( msg[COL.IP_SRC] )  )
-            return msg;
-        else if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
-            return this.inverseStatDirection( msg )
+
+        msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
+
+        if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
+          msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
+          return this.inverseStatDirection( msg )
         }
-        return null;
+        return msg;
     },
-    
+
+    /**
+     * check whether an IP is in the list of local ips networks
+     * @param  {[type]} ip [description]
+     * @return {[boolean]}
+     */
     isLocalIP : function( ip ){
-        if( ip === undefined || ip === "undefined")
+        if( ip == undefined || ip === "undefined" || ip === "null")
             return false;
-        
+        if( this._localCacheIPs == undefined )
+          this._localCacheIPs = {};
+
+        //check in the cache
+        if( this._localCacheIPs[ ip ] !== undefined )
+          return this._localCacheIPs[ ip ];
+
         if( this._localIPs === undefined ){
             var rootsIP = [];
             for( var i in config.local_network ){
@@ -365,15 +465,20 @@ var MMTDrop = {
             }
             this._localIPs = rootsIP;
         }
-        
+
         for( var i in this._localIPs ){
             var lo = this._localIPs[ i ];
-            if( ipLib.mask( ip, lo.mask ) == lo.root )
-                return true;
+            if( ipLib.mask( ip, lo.mask ) == lo.root ){
+              this._localCacheIPs[ ip ] = true;
+              return true;
+            }
         }
-        return false;  
+
+        
+        this._localCacheIPs[ ip ] = false;
+        return false;
     },
-    
+
     inverseStatDirection: function( msg ){
         var swap = function( id_1, id_2){
             var tmp   = msg[id_1];
@@ -387,10 +492,11 @@ var MMTDrop = {
         swap( COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
         swap( COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
         swap( COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
-        
+        swap( COL.SRC_LOCATION,      COL.DST_LOCATION );
+
         return msg;
     },
-    
+
     //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
     PureProtocol :  [
         30,81,82,85,99,117,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
@@ -473,10 +579,10 @@ MMTDrop.formatReportItem = function(entry) {
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
         case MMTDrop.CsvFormat.LICENSE:
-        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
+        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
     }
-    
+
     var obj = {};
     for( var i in entry ){
         obj[ i ] = entry[ i ];
@@ -503,25 +609,75 @@ MMTDrop.reverseFormatReportItem = function(entry) {
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
         case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
         case MMTDrop.CsvFormat.LICENSE:
-        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO 
+        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
     }
-    
+
     var arr = [];
     for( var i in entry ){
         arr[ parseInt( i ) ] = entry[ i ];
     }
     return arr;
 };
+
+function format_session_report( msg ){
+  var PATH_INDEX = MMTDrop.StatsColumnId.APP_PATH;
+  var UP_PATH = msg[ PATH_INDEX ], DOWN_PATH = msg[ PATH_INDEX + 1 ];
+
+
+  /**
+  * in the probe version 98f750c, on May 03 2016
+  * report id = 100 has 2 protocol path: one for uplink, one for down link
+  * this function will return a report (as before) which takes the app_path as the longest one:
+  */
+  //remove one path: UP_PATH, retain DOWN_PATH
+  msg.splice( PATH_INDEX, 1 );
+
+  //retain the path having more information
+  //not really relevance
+  if( MMTDrop.getAppLevelFromPath( UP_PATH ) > MMTDrop.getAppLevelFromPath( DOWN_PATH ))
+      msg[ PATH_INDEX ] = UP_PATH;
+
+  var format_type = msg[ MMTDrop.StatsColumnId.FORMAT_TYPE ];
+  var cols = [];
+  switch (format_type) {
+    case MMTDrop.CsvFormat.WEB_APP_FORMAT:
+      cols = MMTDrop.HttpStatsColumnId;
+      break;
+    case MMTDrop.CsvFormat.SSL_APP_FORMAT:
+      cols = MMTDrop.TlsStatsColumnId;
+      break;
+    case MMTDrop.CsvFormat.RTP_APP_FORMAT:
+      cols = MMTDrop.RtpStatsColumnId;
+      break;
+    case MMTDrop.CsvFormat.FTP_APP_FORMAT:
+      cols = MMTDrop.FtpStatsColumnId;
+      break;
+    default:
+      return msg;
+  }
+
+  var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1);
+  var i;
+
+  for( var k in cols ){
+    i = cols[ k ];
+    msg[ i ] = msg[ i - _new ];
+    msg[ i - _new ] = -1;
+  }
+
+  return msg;
+}
+
 /**
  * Convert a message in string format to an array
  * @param {[[Type]]} message [[Description]]
  */
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
+
     var formatTime = function( ts ){
-        var time = Math.round( ts )  * 1000 ; //round to second
-        
+        var time = Math.ceil( ts * 1000 ) ; //ceil: returns the smallest integer greater than or equal to a given number
         return time;
     }
     //timestamp
@@ -530,14 +686,14 @@ MMTDrop.formatMessage = function( message ){
     switch( msg[0] ) {
         case MMTDrop.CsvFormat.NDN_FORMAT :
             break;
-        case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
-        case MMTDrop.CsvFormat.WEB_APP_FORMAT :
-        case MMTDrop.CsvFormat.SSL_APP_FORMAT :
-        case MMTDrop.CsvFormat.RTP_APP_FORMAT :
-            msg[ MMTDrop.FlowStatsColumnId.START_TIME ] = formatTime(msg[ MMTDrop.FlowStatsColumnId.START_TIME ] );
-            break;
+            //main report
         case MMTDrop.CsvFormat.STATS_FORMAT :
-            msg[ MMTDrop.StatsColumnId.START_TIME ] = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
+            msg = format_session_report( msg );
+
+            msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = "_local";
+            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
+            msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
         case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
@@ -549,10 +705,10 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.LICENSE:
             msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] = formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
             break;
-        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : 
-        case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : 
+        case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT :
+        case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT :
         default :
-            
+
     }
     return msg;
 }

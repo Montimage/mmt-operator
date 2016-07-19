@@ -1,0 +1,227 @@
+#!/usr/bin/env node
+
+/**
+ * Create a distribution of MMT-Operator
+ * Move a distribution to /opt/mmt/operator/
+ * 	and create a daemon operator_d
+ */
+
+ var config  = require("../config.json"),
+     fs      = require("fs"),
+     path    = require("path"),
+     cp      = require('child_process'),
+     util    = require("util"),
+     os      = require("os"),
+     moment  = require('moment'),
+     CleanCSS = require('clean-css'),
+     UglifyJS = require("uglify-js"),
+     VERSION  = require("../version.json").VERSION
+  ;
+
+var PLATFORM     = os.platform();
+var DIST_FOLDER  = "operator";
+var DIST_PATH    = path.join(__dirname, '..' , "dist", DIST_FOLDER );
+
+function log( msg, level ){
+  level = level || 0;
+  var str = "";
+  for( var i=0; i<level; i++ )
+    str += "  ";
+  console.log( str + "==> " + msg );
+}
+
+/*
+ * create a folder, ok when it exists
+ */
+function mkdir( folder, callback ){
+  cp.exec("mkdir -p " + folder, function( err ){
+    //other than folder exists
+    if( err && err.code != "EEXIST" )
+      return console.error( JSON.stringify( err ) );
+    if( callback )
+      callback();
+  });
+}
+
+function copy( src, dst, callback ){
+  cp.exec("cp -r " + src + " " + dst, function( err ){
+    if( err ) return console.error( err );
+    if( callback )
+      callback( src );
+  })
+}
+
+function remove( file, callback ){
+  cp.exec("rm -rf " + file, function( err ){
+    if( err ) return console.error( err );
+    if( callback )
+      callback( file );
+  })
+}
+
+function copy_folder( folder_path_arr, callback ){
+  var folder_path = path.join.apply(path, folder_path_arr )
+      ,src_folder = path.join( __dirname, "..", folder_path )
+      ,dst_folder = path.join( DIST_PATH, folder_path, ".." )
+  ;
+  mkdir( dst_folder, function(){
+    copy( src_folder, dst_folder, callback );
+  })
+}
+
+function process_file( file_path_arr, file_name, proc_fun ){
+  proc_fun = proc_fun || function( str ){ return str; }
+
+  var file_path = path.join.apply(path, file_path_arr )
+      ,src_file = path.join( __dirname, "..", file_path, file_name )
+      ,dst_file = path.join( DIST_PATH, file_path, file_name )
+  ;
+
+  //read file
+  fs.readFile( src_file, {encoding: 'utf8'}, function (err, content) {
+    if (err) return console.error( err );
+
+    //create destionation folder if need
+    mkdir( path.join( dst_file, ".." ), function(){
+      //modify the content if need
+      content = proc_fun( content, file_name );
+      //write to dist folder
+      if( content != undefined )
+        fs.writeFile( dst_file, content );
+    })
+  });
+}
+
+function process_dir( dir_arr, proc_fun ){
+
+  var dir_path = path.join.apply(path, dir_arr);
+      dir_path = path.join( __dirname, "..", dir_path );
+
+  var files = fs.readdirSync( dir_path );
+
+  var ignore_folders = ["node_modules", "lib", "test", "test-cases", "dist"]
+
+  for( var i=0; i<files.length; i++ ){
+    var file_name = files[i];
+    var stat = fs.statSync( path.join( dir_path, file_name ));
+    if( stat.isFile() )
+      process_file( dir_arr, file_name, proc_fun );
+    else if( stat.isDirectory() && ignore_folders.indexOf( file_name ) == -1 )
+      process_dir( dir_arr.concat( file_name ),proc_fun );
+  }
+}
+
+function process_dirs(){
+  var proc_fun = arguments[ arguments.length - 1];
+  for( var i=0; i<arguments.length-1; i++ )
+    process_dir( arguments[i], proc_fun );
+}
+
+
+
+
+function build(){
+  mkdir( DIST_PATH, function(){
+    //minify css
+    process_file(["public", "css"], "style.css", function( content, file ){
+      log( "minify css: " + file);
+      return new CleanCSS().minify( content ).styles;
+    });
+
+    //minify javascript
+    var includeArr = ["www", "build"];
+
+    process_dirs(["."],
+      function( content, file){
+        try{
+          if( includeArr.indexOf( file ) == -1 && path.extname( file ) != ".js" )
+            return;
+          log( "minify javascript: " + file );
+          var ret = UglifyJS.minify( content, {fromString: true} );
+          return ret.code;
+        }catch( err ){
+          console.error( "Error when minify ["+ file +"]: " + err.toString() );
+        }
+      }
+    );
+
+    //beautify JSON
+    process_dirs(["."],
+    function( content, file){
+      if( path.extname( file ) != ".json" )
+        return;
+      log( "beautify json: " + file );
+      var ret = JSON.parse( content );
+      return JSON.stringify( ret, null, "  " );
+    });
+
+
+    var copy_msg = function( file ){
+      log( "copy folder: " + file );
+    }
+    copy_folder( ["data"], copy_msg);
+    copy_folder( ["node_modules"], copy_msg);
+    copy_folder( ["public", "lib"], copy_msg);
+    copy_folder( ["public", "img"], copy_msg);
+    copy_folder( ["views"], copy_msg);
+
+    //Compressing output
+    process.on('exit', function(){
+      var DIST_TAR = DIST_FOLDER + "-" + VERSION + "-" + moment().format("YYYY-MM-DD") + ".tar.gz";
+      console.log( "Compressing ... " + DIST_TAR);
+      var command_str = "tar " + ["-czf ", DIST_TAR, DIST_FOLDER].join(" ");
+      console.log( command_str );
+      cp.execSync( command_str, {cwd: path.join( DIST_PATH, ".." )} );
+      console.log( "\nA distribution of MMT-Operator is located at " + DIST_TAR );
+
+   });
+
+  });//end mkdir( DIST_PATH)
+}
+
+
+
+
+function install(){
+  if( PLATFORM != "linux" )
+    return console.log( "Install for Linux platform only." );
+
+  log("Install MMT-Operator at /opt/mmt/operator");
+  mkdir("/opt/mmt", function(){
+    copy(DIST_PATH, " /opt/mmt/", function(){
+      log("Set MMT-Operator as service");
+      var daemon_file = path.join(__dirname, "..", "daemon.sh");
+      copy( daemon_file, "/etc/init.d/operator_d", function(){
+        cp.exec("chmod +x " + daemon_file, function( err ){
+          if( err ) return console.error( err );
+          console.log( "now you can use MMT-Operator using the commands:\n sudo service operator_d start|stop|restart|status" );
+          console.log( "the config file is located at /opt/mmt/operator/config.json");
+          console.log("");
+        })
+      })
+    })
+  });
+}
+
+function dist_clean(){
+  log("Remove MMT-Operator")
+  remove("/opt/mmt/operator", function(){
+    remove("/etc/init.d/operator_d", function(){
+      log( "Done", 1);
+    })
+  })
+}
+
+var action = "";
+if( process.argv.length > 2 )
+  action = process.argv[2];
+
+
+if( action == "build" )
+  build();
+else if( action == "install" )
+  install();
+else if( action == "dist-clean" )
+  dist_clean();
+else
+  console.error("Usage: " + process.argv[0] + " " + process.argv[1] + " build|dist-clean|install\n");
