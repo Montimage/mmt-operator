@@ -414,18 +414,21 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
 
         self.havingMessage = false;
 
-        var arr = _cache_real.flushDataToDatabase();
+        _cache_real.flushDataToDatabase( function(err, arr){
+          if( err ) return cb( err );
+          _cache_minute.addArray( arr );
 
-        _cache_minute.addArray( arr );
-        arr = _cache_minute.flushDataToDatabase();
+          _cache_minute.flushDataToDatabase( function(err1, arr1){
+            if( err1 ) return cb( err1 );
+            _cache_hour.addArray( arr1 );
 
-        _cache_hour.addArray( arr );
-        arr = _cache_hour.flushDataToDatabase();
-
-        _cache_day.addArray( arr );
-        _cache_day.flushDataToDatabase();
-
-        if( cb ) cb();
+            _cache_hour.flushDataToDatabase( function(err2, arr2){
+              if( err2 ) return cb( err2 );
+              _cache_day.addArray( arr2 );
+              _cache_day.flushDataToDatabase( cb );
+            });
+          });
+        });
     };
 
     this.flushCaches = function( level ){

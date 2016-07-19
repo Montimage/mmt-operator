@@ -7,11 +7,10 @@
     "host": "localhost",
     "port": 6379
   },
-  "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
-  "_data_folder": "/opt/mmt/probe/result/report/online/",
+  "data_folder": "/opt/mmt/probe/result/report/online/",
   "delete_data": true,
   "input_mode": "file",
-  "probe_analysis_mode": "offline",
+  "probe_analysis_mode": "online",
   "local_network": [
     {
       "ip": "192.168.0.0",
@@ -43,7 +42,7 @@
     "max_length_size": 500000,
     "flush_to_client_period": 3
   },
-  "port_number": 8088,
+  "port_number": 80,
   "log_folder": "./log",
   "is_in_debug_mode": true
 }
