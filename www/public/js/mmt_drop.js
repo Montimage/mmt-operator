@@ -1142,7 +1142,7 @@ MMTDrop.tools = function () {
   _this.getModalWindow = function( id ){
      id = id || "modalWindow";
 
-     if( $( id ).length === 0 ){
+     if( $( "#" + id ).length === 0 ){
         var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="'+ id +'">'
                     +'<div class="modal-dialog">'
                     +'<div class="modal-content" >'
@@ -1150,9 +1150,9 @@ MMTDrop.tools = function () {
                     +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
                     +'<h4 class="modal-title">Title</h4>'
                     +'</div>'
-                    +'<div class="modal-body code-json">'
+                    +'<div class="modal-body">'
                     +'<div class="modal-sub-title"/>'
-                    +'<div class="modal-content"/>'
+                    +'<div class="modal-body-content"/>'
                     +'</div>'
                     +'</div></div></div>';
 
@@ -1162,7 +1162,7 @@ MMTDrop.tools = function () {
     var $modal       = $("#"+ id );
     $modal.$title    = $("#"+ id +" .modal-title");
     $modal.$subTitle = $("#"+ id +" .modal-sub-title");
-    $modal.$content  = $("#"+ id +" .modal-content");
+    $modal.$content  = $("#"+ id +" .modal-body-content");
     return $modal;
   };
 

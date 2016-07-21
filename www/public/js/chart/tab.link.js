@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "",
+        title: "Traffic",
         x: 0,
         y: 0,
         width: 12,
@@ -88,6 +88,14 @@ var ReportFactory = {
         var _this    = this;
         var self     = this;
         var COL      = MMTDrop.constants.StatsColumn;
+        var PUREPROTOCOLS =  [
+          30,81,82,85,99,
+          117,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,
+          228,231,241,247,272,273,298,299,
+          314,322,323,324,325,339,340,341,354,357,358,363,376,388,
+          461,
+          625,626,628
+        ];
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -102,9 +110,17 @@ var ReportFactory = {
         } );
 
         var match = {};
+        //get only pure protocols such as ETH, IP (not application, such as FACEBOOK, GOOGLE)
+        var p1 ={}, p2 = {};
+        p1[ COL.APP_ID.id ] = {"$in" : PUREPROTOCOLS }; //pure protocols
+        p2[ COL.APP_ID.id ] = {"$lt" : 0}; //pure protocols with port numbers
+        match[ "$or" ]      = [ p1, p2 ];
+
         //get maximum of 5 levels: eth.vlan.ip.tcp.http
         //I need eth (99) to get the total
-        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,4}$", "$options" : ""};
+        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,3}$", "$options" : ""};
+
+
         var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",
           query: [{"$match": match}, {"$group" : group}]});
 
@@ -253,7 +269,7 @@ var ReportFactory = {
                     //update legend
                     for( var i in columns )
                       if( columns[i].id != '99')
-                        cLine.dataLegend.data[ columns[i].label ] = columns[i].value;
+                        cLine.dataLegend.data[ columns[i].label ] = {val: columns[i].value, cls: columns[i].id};
 
 
                     data = {};
@@ -388,13 +404,14 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-node-legend"
                 });
 
-                $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th</tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th><th></th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
-                    var val = legend.data[key];
+                    var val = legend.data[key].val;
+                    var cls = legend.data[key].cls;
 
                     //there are at least 2
-                    if (key == "Other" && val < legend.dataTotal )
+                    if (key == "Other")
                         continue;
                     i++;
 
@@ -431,6 +448,15 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    var fun = "createPopupReport('app'," //collection
+                        + COL.APP_PATH.id +",'"
+                        + cls
+                        +"','Protocol: " + key +"')";
+
+                    $("<td>",{
+                      "align" : "center",
+                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
+                    }).appendTo($tr);
                 }
                 //footer of table
                 var $tfoot = $("<tfoot>");
@@ -464,7 +490,7 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
-
+                    $("<td>") .appendTo($tr);
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -489,6 +515,8 @@ var ReportFactory = {
                             "align": "right",
                             "text": "100%"
                         })
+                    ).append(
+                      $("<td>")
                     )).appendTo($table);
 
 
@@ -581,7 +609,7 @@ var ReportFactory = {
 
         return report;
     },
-    createNodeReport: function (fProbe) {
+    createNodeReport: function (fPeriod) {
         var DETAIL = {};//data detail of each MAC
         var COL = MMTDrop.constants.StatsColumn;
         var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true});
@@ -655,6 +683,11 @@ var ReportFactory = {
 
                     //Format data
                     for (var i in obj) {
+                        var fun = "createPopupReport('mac'," //collection
+                            + COL.MAC_SRC.id +",'"
+                            + i +"','MAC: "
+                            + i +"')";
+
                         //convert to time string
                         obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
                         obj[i]["LastTime"]    = moment(obj[i]["LastTime"]).format( "MM/DD HH:mm:ss" );
@@ -663,6 +696,8 @@ var ReportFactory = {
                         obj[i]["In Bytes"]    = MMTDrop.tools.formatDataVolume(obj[i]["In Bytes"]);
                         obj[i]["Out Bytes"]   = MMTDrop.tools.formatDataVolume(obj[i]["Out Bytes"]);
                         obj[i]["Total Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Total Bytes"]);
+
+                        obj[i]["detail"]      = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
                     }
 
                      var columns = [{id: "#"            , label: ""               , align:"right"},
@@ -674,7 +709,9 @@ var ReportFactory = {
                                   {id:"Out Bytes"       , label:"Out Bytes"       , align:"right"},
                                   {id:"Total Bytes"     , label:"Total Bytes"     , align:"right"},
                                   {id:"StartTime"       , label:"Start Time"      , align:"right"},
-                                  {id:"LastTime", label:"Last Updated", align:"right"},];
+                                  {id:"LastTime"        , label:"Last Updated"    , align:"right"},
+                                  {id:"detail"          , label:""                , align:"center"}
+                      ];
                     return {
                         data: arr,
                         columns: columns

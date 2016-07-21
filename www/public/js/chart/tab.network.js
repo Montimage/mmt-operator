@@ -440,10 +440,11 @@ var ReportFactory = {
 
                         data.push({
                             "key": name,
-                            "val": v
+                            "val": v,
+                            "cls": cls,
                         });
 
-                        cPie.dataLegend.data[name] = v;
+                        cPie.dataLegend.data[name] = {val: v, cls: cls};
                         cPie.dataLegend.dataTotal += v;
                     }
 
@@ -477,7 +478,7 @@ var ReportFactory = {
                         cPie.dataLegend.data = {};
                         for (var i = 0; i < data.length; i++) {
                             var o = data[i];
-                            cPie.dataLegend.data[o.key] = o.val;
+                            cPie.dataLegend.data[o.key] = {val: o.val, cls: o.cls};
                         }
                     }
                     cPie.dataLegend.length = data.length;
@@ -526,14 +527,15 @@ var ReportFactory = {
                 $table.appendTo($("#" + _chart.elemID));
                 var title = "Profile";
                 if( query_by_app ) title = "Application/Protocol"
-                $("<thead><tr><th></th><th width='50%'>"+ title +"</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='50%'>"+ title +"</th><th>" + legend.label + "</th><th>Percent</th><th></th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if( key == "Other")
                         continue;
 
                     i++;
-                    var val = legend.data[key];
+                    var val = legend.data[key].val;
+                    var cls = legend.data[key].cls;
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
 
@@ -589,6 +591,17 @@ var ReportFactory = {
                         "align": "right",
                         "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
                     }).appendTo($tr);
+
+                    var fun = "createPopupReport('app'," //collection
+                        + (query_by_app? COL.APP_ID.id : COL.PROFILE_ID.id) +","
+                        + cls
+                        + (query_by_app? ",'Appcation/Protocol: " : ",'Profile: ") + key +"')";
+
+                    $("<td>",{
+                      "align" : "center",
+                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
+                    }).appendTo($tr);
+
                 }
                 var $tfoot = $("<tfoot>");
 
@@ -596,7 +609,7 @@ var ReportFactory = {
                     i++;
                     $tr = $("<tr>");
                     var key = "Other";
-                    var val = legend.data[key];
+                    var val = legend.data[key].val;
 
                     $("<td>", {
                             "class": "item-" + key,
@@ -646,6 +659,8 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    $("<td>").appendTo($tr);
+
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -671,6 +686,8 @@ var ReportFactory = {
                             "align": "right",
                             "text": "100%"
                         })
+                    ).append(
+                      $("<td>")
                     )
                 ).appendTo($table);
 
@@ -864,13 +881,14 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-top-users"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='60%'>Links</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='60%'>Links</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th><th></th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
                         continue;
                     i++;
                     var val = legend.data[key].val;
+                    var ips = legend.data[key].ips;
 
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
@@ -897,7 +915,7 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
-                    var link = legend.data[key].ips.join(",");
+                    var link = ips.join(",");
                     if( legend.length == 1 && link == MMTDrop.tools.getURLParameters("link") ){
                       $("<td>",{
                         html : key
@@ -922,6 +940,20 @@ var ReportFactory = {
                         "align": "right",
                         "text" : percent
 
+                    }).appendTo($tr);
+
+                    var $match = {};
+                    $match[ COL.IP_SRC.id ]  = {$in: ips};
+                    $match[ COL.IP_DEST.id ] = {$in: ips};
+                    $match = JSON.stringify( $match );
+
+                    var fun = "createPopupReport('link'," //collection
+                        + "'match',"
+                        + "this.getAttribute('match')"
+                        + ",'Link: " + key +"')";
+                    $("<td>",{
+                      "align" : "center",
+                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'" match=\''+ $match +'\'><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
                     }).appendTo($tr);
                 }
 
@@ -986,6 +1018,8 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    $("<td>").appendTo($tr);
+
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -1011,6 +1045,8 @@ var ReportFactory = {
                             "align": "right",
                             "text": "100%"
                         })
+                    ).append(
+                      $("<td>")
                     )
                 ).appendTo($table);
 
@@ -2053,3 +2089,7 @@ var ReportFactory = {
     }
 
 }
+
+
+//show hierarchy URL parameters on toolbar
+$( breadcrumbs.loadDataFromURL );

@@ -201,7 +201,7 @@ router.get('/*', function(req, res, next) {
 				end : parseInt(period.end)
 			};
 			period = req.query.period_groupby;
-			console.log(req.query);
+			console.log( JSON.stringify( req.query ));
 		} else
 			options = getOptionsByPeriod2(period);
 	} else
@@ -252,7 +252,7 @@ router.get('/*', function(req, res, next) {
 	if (req.query.userData)
 		options.userData = req.query.userData;
 
-	console.log( options );
+	console.log( JSON.stringify( options ));
 
 	var queryData = function(op) {
 		dbconnector.getProtocolStats(op, function(err, data) {
