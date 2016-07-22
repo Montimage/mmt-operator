@@ -164,7 +164,7 @@ function build(){
     copy_folder( ["public", "lib"], copy_msg);
     copy_folder( ["public", "img"], copy_msg);
     copy_folder( ["views"], copy_msg);
-
+    copy_folder( ["public/favicon.ico"]);
     //Compressing output
     process.on('exit', function(){
       var DIST_TAR = DIST_FOLDER + "-" + VERSION + "-" + moment().format("YYYY-MM-DD") + ".tar.gz";

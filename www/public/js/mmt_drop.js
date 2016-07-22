@@ -595,7 +595,7 @@ MMTDrop.constants = {
             12:'DataBase',
             //13:'Remote', 14:'Misc',
             15:'CDN',
-            16: 'SocialNetwork'
+            16: 'SocialNetwork',
     },
 
     /**
@@ -655,11 +655,15 @@ MMTDrop.constants = {
       */
      getPathFriendlyName : function(path) {
        var id = path.split(".");
-       var name = [];
-       for( var i=0; i<id.length; i++)
-         name.push( MMTDrop.constants.getProtocolNameFromID( id[i] ) );
+       var arr = [];
+       for( var i=0; i<id.length; i++){
+         var name = MMTDrop.constants.getProtocolNameFromID( id[i] );
+         if( name.indexOf(":") != -1 )
+            name = ":" + name.split(":")[1]; //HTTP:80 => get only :80
+         arr.push( name );
+       }
 
-       return name.join("/");
+       return arr.join("/");
      },
 
      /**
@@ -720,7 +724,7 @@ MMTDrop.constants = {
      * @returns {string} Protocol Name
      */
     getCategoryNameFromID : function(id) {
-      var protocolName = "Network";
+      var protocolName = "_unknown";
       if ( id in MMTDrop.constants.CategoriesIdsMap)
                 protocolName = MMTDrop.constants.CategoriesIdsMap[id] ;
       return protocolName;
@@ -1142,7 +1146,7 @@ MMTDrop.tools = function () {
   _this.getModalWindow = function( id ){
      id = id || "modalWindow";
 
-     if( $( id ).length === 0 ){
+     if( $( "#" + id ).length === 0 ){
         var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="'+ id +'">'
                     +'<div class="modal-dialog">'
                     +'<div class="modal-content" >'
@@ -1150,9 +1154,9 @@ MMTDrop.tools = function () {
                     +'<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>'
                     +'<h4 class="modal-title">Title</h4>'
                     +'</div>'
-                    +'<div class="modal-body code-json">'
+                    +'<div class="modal-body">'
                     +'<div class="modal-sub-title"/>'
-                    +'<div class="modal-content"/>'
+                    +'<div class="modal-body-content"/>'
                     +'</div>'
                     +'</div></div></div>';
 
@@ -1162,7 +1166,7 @@ MMTDrop.tools = function () {
     var $modal       = $("#"+ id );
     $modal.$title    = $("#"+ id +" .modal-title");
     $modal.$subTitle = $("#"+ id +" .modal-sub-title");
-    $modal.$content  = $("#"+ id +" .modal-content");
+    $modal.$content  = $("#"+ id +" .modal-body-content");
     return $modal;
   };
 

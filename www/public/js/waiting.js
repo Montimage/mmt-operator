@@ -10,6 +10,8 @@ var waiting = {
     }
 }
 
+
+
 //Indicate the current page's location within a navigational hierarchy.
 var breadcrumbs = {
   setData : function( data ){
@@ -30,19 +32,18 @@ var breadcrumbs = {
         arr.push('<li>' + el + '</li>')
     })
     $dom.html(arr.join(""))
+  },
+  loadDataFromURL : function(){
+    var obj = MMTDrop.tools.getURLParameters();
+    var arr = [];
+    var url = null;
+    for( var key in obj ){
+      if (url == undefined )
+        url = MMTDrop.tools.getCurrentURL([key]);
+      else
+        url += "&"+ key + "=" + obj[key];
+      arr.push( '<a href="'+ url +'" title="'+ key +'='+ obj[key] +'">' + obj[key] + '</a>' );
+    }
+    breadcrumbs.setData( arr );
   }
 }
-
-$(function(){
-  var obj = MMTDrop.tools.getURLParameters();
-  var arr = [];
-  var url = null;
-  for( var key in obj ){
-    if (url == undefined )
-      url = MMTDrop.tools.getCurrentURL([key]);
-    else
-      url += "&"+ key + "=" + obj[key];
-    arr.push( '<a href="'+ url +'" title="'+ key +'='+ obj[key] +'">' + obj[key] + '</a>' );
-  }
-  breadcrumbs.setData( arr );
-});
