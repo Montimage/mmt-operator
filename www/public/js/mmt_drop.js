@@ -595,7 +595,7 @@ MMTDrop.constants = {
             12:'DataBase',
             //13:'Remote', 14:'Misc',
             15:'CDN',
-            16: 'SocialNetwork'
+            16: 'SocialNetwork',
     },
 
     /**
@@ -655,11 +655,15 @@ MMTDrop.constants = {
       */
      getPathFriendlyName : function(path) {
        var id = path.split(".");
-       var name = [];
-       for( var i=0; i<id.length; i++)
-         name.push( MMTDrop.constants.getProtocolNameFromID( id[i] ) );
+       var arr = [];
+       for( var i=0; i<id.length; i++){
+         var name = MMTDrop.constants.getProtocolNameFromID( id[i] );
+         if( name.indexOf(":") != -1 )
+            name = ":" + name.split(":")[1]; //HTTP:80 => get only :80
+         arr.push( name );
+       }
 
-       return name.join("/");
+       return arr.join("/");
      },
 
      /**
@@ -720,7 +724,7 @@ MMTDrop.constants = {
      * @returns {string} Protocol Name
      */
     getCategoryNameFromID : function(id) {
-      var protocolName = "Network";
+      var protocolName = "_unknown";
       if ( id in MMTDrop.constants.CategoriesIdsMap)
                 protocolName = MMTDrop.constants.CategoriesIdsMap[id] ;
       return protocolName;

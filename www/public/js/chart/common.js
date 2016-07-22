@@ -391,8 +391,9 @@ function createTrafficReport( collection, key, id ){
           tmp = "UL_" + tmp;
       }
       return {
-          id: COL[tmp].id,
+          id   : COL[tmp].id,
           label: label,
+          total: 0, //total data IN/OUT
           //type: "area"
       };
   }
@@ -436,6 +437,7 @@ function createTrafficReport( collection, key, id ){
                 var period = fPeriod.getDistanceBetweenToSamples();
 
                 var ylabel = col.label;
+                col.total  = 0;
 
                 if (col.id === MMTDrop.constants.StatsColumn.PACKET_COUNT.id) {
                     ylabel += " (pps)";
@@ -451,11 +453,6 @@ function createTrafficReport( collection, key, id ){
                     //dir = 1: incoming, -1 outgoing, 0: All
                     cols.push( getCol(col, true)); //in
                     cols.push( getCol(col, false)); //out
-                    /*cols.push({
-                        id: col.id,
-                        label: "All"
-                            //type : "line"
-                    });*/
                 } else
                     cols.push(col);
 
@@ -478,6 +475,8 @@ function createTrafficReport( collection, key, id ){
                     for (var j in cols) {
                         var id = cols[j].id;
 
+                        cols[j].total += msg[ id ];
+
                         if( msg[id] == undefined )
                             msg[id] = 0;
 
@@ -488,6 +487,13 @@ function createTrafficReport( collection, key, id ){
                     }
                 }
 
+                for (var j in cols)
+                  if (col.id === COL.DATA_VOLUME.id || col.id === COL.PAYLOAD_VOLUME.id)
+                    cols[j].label += " ("+ MMTDrop.tools.formatDataVolume( cols[j].total ) +"B)";
+                  else
+                    cols[j].label += " ("+ MMTDrop.tools.formatLocaleNumber( cols[j].total ) +")";
+
+                //first columns is timestamp
                 cols.unshift(COL.TIMESTAMP);
 
                 var $widget = $("#" + cLine.elemID).getWidgetParent();
@@ -503,7 +509,7 @@ function createTrafficReport( collection, key, id ){
                         time_id       : 3,
                         time          : status_db.time,
                         sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-                        probeStatus   : data.length == 0 ? {} : status_db.probeStatus
+                        probeStatus   : {}//data.length == 0 ? {} : status_db.probeStatus
                     },
                 };
             }
@@ -514,7 +520,7 @@ function createTrafficReport( collection, key, id ){
                 type: "line"//step
             },
             color: {
-                pattern: ['orange', 'green', 'gray']
+                pattern: ['orange', 'green']
             },
             grid: {
                 x: {
@@ -537,7 +543,10 @@ function createTrafficReport( collection, key, id ){
             },
             tooltip:{
                 format: {
-                    title:  formatTime
+                    title:  formatTime,
+                    name : function (name, ratio, id, index) {
+                      return name.split(" ")[0]; //return only In/Out
+                    }
                 }
             },
         },
@@ -564,13 +573,10 @@ function createTrafficReport( collection, key, id ){
   var report = new MMTDrop.Report(
       // title
       "",
-
       // database
       database,
-
       // filers
 		[fMetric],
-
       //charts
 		[
           {
@@ -578,7 +584,6 @@ function createTrafficReport( collection, key, id ){
               width: 12
           },
 		 ],
-
       //order of data flux
       dataFlow
   );

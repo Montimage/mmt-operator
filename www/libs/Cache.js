@@ -431,30 +431,45 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
         });
     };
 
-    this.flushCaches = function( level ){
+    this.flushCaches = function( level, cb ){
+        cb = cb || function(){};
+
         //flush immediately
         if( is_retain_all === true )
-            return _cache_real.flushDataToDatabase();
+            return _cache_real.flushDataToDatabase( cb );
 
 
-        var arr = [];
         if( level == "real" || level == "minute" || level == "hour" || level == "day"){
-                arr = _cache_real.flushDataToDatabase();
-                _cache_minute.addArray( arr );
-        }
-        if( level == "minute" || level == "hour" || level == "day"){
-                arr = _cache_minute.flushDataToDatabase();
-                _cache_hour.addArray( arr );
-        }
-        if( level == "hour" || level == "day"){
-                arr = _cache_hour.flushDataToDatabase();
-                _cache_day.addArray( arr );
-        }
-        if( level == "day"){
-                _cache_day.flushDataToDatabase();
-        }
+          _cache_real.flushDataToDatabase( function(err, arr){
+            if( err ) return cb( err );
+            _cache_minute.addArray( arr );
 
-        return arr;
+            if( level == "minute" || level == "hour" || level == "day"){
+                _cache_minute.flushDataToDatabase( function( err1, arr1){
+                  if( err1 ) return cb( err1 );
+                  _cache_hour.addArray( arr1 );
+
+                  if( level == "hour" || level == "day"){
+                      _cache_hour.flushDataToDatabase( function( err2, arr2 ){
+                          if( err2 ) return cb( err2 );
+
+                          _cache_day.addArray( arr2 );
+                          if( level == "day")
+                              _cache_day.flushDataToDatabase( cb );
+                          else
+                            cb( err2, arr2 );
+                      } );
+
+                  }
+                  else
+                    cb( err1, arr1 );
+                });
+
+            }else
+              cb( err, arr );
+          });
+
+        }
     }
 
     this.clear = function(){

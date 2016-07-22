@@ -51,7 +51,6 @@ var arr = [
 
 var availableReports = {
     "createTopUserReport"     : "Top Users",
-    "createTopProtocolReport" : "Top Protocols",
     "createTopLocationReport" : "Top Geo Locations"
 };
 
@@ -379,13 +378,14 @@ var ReportFactory = {
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
         var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]} );
+
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           //query by app_id
           if( $match != undefined ){
-            param.collection     = "data_session";
-            param.query          = [$match, {$group: group}];
+            param.collection = "data_session";
+            param.query      = [$match, {$group: group}];
 
             group._id = {};
             [ COL.APP_ID.id ].forEach( function( el, index){
@@ -535,7 +535,8 @@ var ReportFactory = {
 
                     i++;
                     var val = legend.data[key].val;
-                    var cls = legend.data[key].cls;
+                    var cls = parseInt( legend.data[key].cls );
+
                     var $tr = $("<tr>");
                     $tr.appendTo($table);
 
@@ -592,15 +593,35 @@ var ReportFactory = {
                         "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
                     }).appendTo($tr);
 
-                    var fun = "createPopupReport('app'," //collection
-                        + (query_by_app? COL.APP_ID.id : COL.PROFILE_ID.id) +","
+                    var fun = "";
+                    if( query_by_app ){
+                      fun = "createPopupReport('app'," //collection
+                        + COL.APP_ID.id  +","
                         + cls
-                        + (query_by_app? ",'Appcation/Protocol: " : ",'Profile: ") + key +"')";
+                        + ",'Appcation/Protocol: " + key +"')";
 
-                    $("<td>",{
-                      "align" : "center",
-                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
-                    }).appendTo($tr);
+                        $("<td>",{
+                          "align" : "center",
+                          "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
+                        }).appendTo($tr);
+
+                    }else{
+                      var match = {isGen: false};
+                      match[ COL.PROFILE_ID.id ] = cls;
+                      match = JSON.stringify( match );
+
+                      fun = "createPopupReport('app'," //collection
+                        + "'match',"
+                        + "this.getAttribute('match')"
+                        + ",'Profile: " + key +"')";
+
+
+                        $("<td>",{
+                          "align" : "center",
+                          "html"  : '<a title="Click to show graph" onclick="'+ fun +'" match=\''+ match +'\'><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
+                        }).appendTo($tr);
+                    }
+
 
                 }
                 var $tfoot = $("<tfoot>");
@@ -868,7 +889,7 @@ var ReportFactory = {
                 }
             },
             bgPercentage:{
-                table : ".tbl-top-users",
+                table : ".tbl-top-link",
                 column: 4, //index of column, start from 1
                 css   : "bg-img-1-red-pixel"
             },
@@ -878,10 +899,10 @@ var ReportFactory = {
                 var legend = _chart.dataLegend;
 
                 var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-hover table-condensed tbl-top-users"
+                    "class": "table table-bordered table-striped table-hover table-condensed tbl-top-link"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='60%'>Links</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th><th></th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th>Links</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th><th></th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -1093,7 +1114,6 @@ var ReportFactory = {
 
         return report;
     },
-
     createTopUserReport: function (filter, userData) {
         var self = this;
         var COL  = MMTDrop.constants.StatsColumn;
@@ -1238,7 +1258,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-top-users"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='40%'>Local IP</th><th width='20%'>MAC</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='40%'>Local IP</th><th width='20%'>MAC</th><th width='15%'>" + legend.label + "</th><th width='15%'>Percent</th><th> </th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -1301,6 +1321,16 @@ var ReportFactory = {
                         "align": "right",
                         "text" : percent
 
+                    }).appendTo($tr);
+
+                    var fun = "createPopupReport('ip'," //collection
+                        + COL.IP_SRC.id +",'"
+                        + key
+                        + "','IP: " + key +"')";
+
+                    $("<td>",{
+                      "align" : "center",
+                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
                     }).appendTo($tr);
                 }
 
@@ -1367,6 +1397,8 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    $("<td>").appendTo( $tr );
+
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -1395,6 +1427,8 @@ var ReportFactory = {
                             "align": "right",
                             "text": "100%"
                         })
+                    ).append(
+                      $("<td>")
                     )
                 ).appendTo($table);
 
@@ -1434,312 +1468,6 @@ var ReportFactory = {
                     width: 12
                 },
            ],
-
-            //order of data flux
-            dataFlow
-        );
-
-        return report;
-    },
-    createTopProtocolReport: function (filter, ip) {
-        var self = this;
-        var db_param = {id: "network.profile" };
-        if( ip !== undefined ){
-            db_param.userData = {ip: ip };
-            db_param.id       = "network.ip";
-        }
-        var database = MMTDrop.databaseFactory.createStatDB( db_param );
-        var COL      = MMTDrop.constants.StatsColumn;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var fMetric  = MMTDrop.filterFactory.createMetricFilter();
-
-        var cPie = MMTDrop.chartFactory.createPie({
-            getData: {
-                getDataFn: function (db) {
-                    var col = fMetric.selectedOption();
-
-                    var data = [];
-                    //the first column is Timestamp, so I start from 1 instance of 0
-                    var columns = [];
-
-                    var obj = db.stat.splitDataByApp();
-
-                    cPie.dataLegend = {
-                        "dataTotal": 0,
-                        "label"    : col.label.substr(0, col.label.indexOf(" ")),
-                        "data"     : {}
-                    };
-
-                    var total = 0;
-
-                    for (var cls in obj) {
-                        var o = obj[cls];
-                        //sumup by col.id
-                        o = MMTDrop.tools.sumUp(o, col.id);
-
-                        var v = o[col.id];
-                        if( v === 0 || v === undefined ) continue;
-
-                        var name = MMTDrop.constants.getProtocolNameFromID(cls);
-
-                        data.push({
-                            "key": name,
-                            "val": v
-                        });
-
-                        cPie.dataLegend.data[name] = v;
-                        cPie.dataLegend.dataTotal += v;
-                    }
-
-
-                    data.sort(function (a, b) {
-                        return b.val - a.val;
-                    });
-
-                    var top = 7;
-                    if( data.length > top+1 && cPie.showAll !== true && ip == undefined ){
-                        var val = 0;
-
-                        //update data
-                        for (var i=top; i<data.length; i++ ){
-                            var msg = data[i];
-                            val += msg.val;
-                        }
-
-                        data[top] = {
-                            key: "Other",
-                            val: val
-                        };
-                        data.length = top+1;
-
-                        //reset dataLegend
-                        cPie.dataLegend.data = {};
-                        for (var i = 0; i < data.length; i++) {
-                            var o = data[i];
-                            cPie.dataLegend.data[o.key] = o.val;
-                        }
-                    }
-
-                    return {
-                        data: data,
-                        columns: [{
-                            "id": "key",
-                            label: ""
-                        }, {
-                            "id": "val",
-                            label: ""
-                        }],
-                    };
-                }
-            },
-            chart: {
-                size: {
-                    height: 300
-                },
-                legend: {
-                    hide: true,
-                },
-                data: {
-                    onclick: function( d, i ){
-                        var id = d.id;
-                        if( id === "Other") return;
-
-                        var _chart = cPie.chart;
-                    }
-                }
-            },
-            bgPercentage:{
-                table : ".tbl-top-proto",
-                column: 4, //index of column, start from 1
-                css   : "bg-img-1-red-pixel"
-            },
-            //custom legend
-            afterEachRender: function (_chart) {
-                var chart = _chart.chart;
-                var legend = _chart.dataLegend;
-
-                var $table = $("<table>", {
-                    "class": "table table-bordered table-striped table-condensed tbl-top-proto"
-                });
-                $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th width='50%'>Protocol/Application</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
-                var i = 0;
-                for (var key in legend.data) {
-                    if( key == "Other")
-                        continue;
-
-                    i++;
-                    var val = legend.data[key];
-                    var $tr = $("<tr>");
-                    $tr.appendTo($table);
-
-                    $("<td>", {
-                            "class": "item-" + key,
-                            "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
-                            "align": "right"
-                        })
-                        .css({
-                            "background-color": chart.color(key)
-                        })
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
-                        .on('click', function () {
-                            var id = $(this).data("id");
-                            chart.toggle(id);
-                            //$(this).css("background-color", chart.color(id) );
-                        })
-                        .appendTo($tr);
-                    $("<td>", {
-                        "text": key
-                    }).appendTo($tr);
-
-                    var $a = $("<a>", {
-                        href : "?show detail of this class",
-                        title: "click to show detail of this class",
-                        text : MMTDrop.tools.formatDataVolume( val ),
-
-                    });
-                    $a.on("click", null, key, function( event ){
-                        event.preventDefault();
-                        var id = event.data;
-
-                        if( ip )
-                            location.href = "?profile=" + id + "&ip = " + ip;
-                        else
-                            location.href = "?profile=" + id;
-                        return false;
-                    });
-
-                    $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
-
-                    $("<td>", {
-                        "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
-                    }).appendTo($tr);
-                }
-                var $tfoot = $("<tfoot>");
-
-                if (legend.data["Other"] != undefined) {
-                    i++;
-                    $tr = $("<tr>");
-                    var key = "Other";
-                    var val = legend.data[key];
-
-                    $("<td>", {
-                            "class": "item-" + key,
-                            "data-id": key,
-                            "style": "width: 30px; cursor: pointer",
-                            "align": "right"
-                        })
-                        .css({
-                            "background-color": chart.color(key)
-                        })
-                        .on('mouseover', function () {
-                            chart.focus($(this).data("id"));
-                        })
-                        .on('mouseout', function () {
-                            chart.revert();
-                        })
-                        .on('click', function () {
-                            var id = $(this).data("id");
-                            chart.toggle(id);
-                            //$(this).css("background-color", chart.color(id) );
-                        })
-                        .appendTo($tr);
-
-                    var $a = $("<a>", {
-                        href: "?show all classes",
-                        title: "click to show all classes",
-                        text: "Other",
-
-                    });
-                    $a.on("click", function(){
-                       _chart.showAll = true;
-                       _chart.redraw();
-                        return false;
-                    });
-
-                    $("<td>").append( $a ).appendTo($tr);
-
-
-                    $("<td>", {
-                        "align": "right",
-                        "html" :  MMTDrop.tools.formatDataVolume( val )
-                    }).appendTo($tr);
-
-                    $("<td>", {
-                        "align": "right",
-                        "text": Math.round(val * 10000 / legend.dataTotal) / 100 + "%"
-
-                    }).appendTo($tr);
-
-                    $tfoot.append($tr).appendTo($table);
-                }
-
-                $tfoot.append(
-                    $("<tr>", {
-                        "class": 'success'
-                    }).append(
-                        $("<td>", {
-                            "align": "center",
-                            "text": i
-                        })
-                    ).append(
-                        $("<td>", {
-                            "text": "Total"
-                        })
-                    ).append(
-                        $("<td>", {
-                            "align": "right",
-                            "text": MMTDrop.tools.formatDataVolume( legend.dataTotal )
-                        })
-                    ).append(
-                        $("<td>", {
-                            "align": "right",
-                            "text": "100%"
-                        })
-                    )
-                ).appendTo($table);
-
-                $table.dataTable({
-                    paging: false,
-                    dom: "t",
-                    order: [[3, "desc"]]
-                });
-            }
-        });
-        //
-
-        var dataFlow = [{object:fProbe,
-                         effect:[{
-                object: fMetric,
-                effect: [{
-                    object: cPie
-                }]
-        }, ] }];
-
-        var report = new MMTDrop.Report(
-            // title
-            null,
-
-            // database
-            database,
-
-            // filers
-					[fProbe, fMetric],
-
-            //charts
-					[
-                {
-                    charts: [cPie],
-                    width: 12
-                },
-					 ],
 
             //order of data flux
             dataFlow
@@ -1887,7 +1615,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-top-locations"
                 });
                 $table.appendTo($("#" + _chart.elemID));
-                $("<thead><tr><th></th><th>Location</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th>Location</th><th width='20%'>" + legend.label + "</th><th width='20%'>Percent</th><th></th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     if (key == "Other")
@@ -1946,6 +1674,17 @@ var ReportFactory = {
                         "align": "right",
                         "text" : percent
 
+                    }).appendTo($tr);
+
+
+                    var fun = "createPopupReport('location'," //collection
+                        + COL.DST_LOCATION.id +",'"
+                        + key
+                        + "','Location: " + key +"')";
+
+                    $("<td>",{
+                      "align" : "center",
+                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
                     }).appendTo($tr);
                 }
 
@@ -2012,6 +1751,8 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    $("<td>").appendTo( $tr );
+
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -2040,6 +1781,8 @@ var ReportFactory = {
                             "align": "right",
                             "text": "100%"
                         })
+                    ).append(
+                      $("<td>")
                     )
                 ).appendTo($table);
 

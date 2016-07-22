@@ -607,20 +607,24 @@ var MongoConnector = function () {
         callback(null, ["tobe implemented"]);
     };
 
-    // Do a query on database. Action can be "find", "aggregate", ...
     self.queryDB = function (collection, action, query, callback, raw) {
-        console.log(action, " on [", collection, "] query : ", JSON.stringify(query) );
+      console.log(action, " on [", collection, "] query : ", JSON.stringify(query) );
 
-        //flush caches to DB before query
-        for( var i in self.dataCache ){
-            var cache = self.dataCache[ i ];
-            if( collection.indexOf( cache.option.collection_name ) == 0 ){
-              //data_total_real => real
-              cache.flushCaches( collection.split("_")[2] );
-              break;//only one collection concernts to this query
-            }
-        }
-
+      //flush caches to DB before doing query
+      for( var i in self.dataCache ){
+          var cache = self.dataCache[ i ];
+          if( collection.indexOf( cache.option.collection_name ) == 0 ){
+            //data_total_real => real
+            var level = collection.split("_")[2];
+            cache.flushCaches( level, function(){
+              self._queryDB( collection, action, query, callback, raw );
+            });
+            break;//only one collection concernts to this query
+          }
+      }
+    }
+    // Do a query on database. Action can be "find", "aggregate", ...
+    self._queryDB = function (collection, action, query, callback, raw) {
         var start_ts = (new Date()).getTime();
         var cursor   = {};
         if( action == "aggregate" )

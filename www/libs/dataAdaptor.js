@@ -13,8 +13,10 @@ ipToCountry._get = function( ip ){
   var loc = ipToCountry.get( ip );
   if (loc){
     return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
-  }else if(MMTDrop.isLocalIP( ip )){
-    return "_local"
+  }else if( MMTDrop.isLocalIP( ip )
+    //multicast
+    || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0){
+      return "_local"
   }else{
     return "_unknown";
   }
@@ -246,7 +248,8 @@ var MMTDrop = {
       1: [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 18, 19, 20, 21, 22, 23, 25, 26, 27, 31, 32, 33, 34, 35, 36, 38, 39, 40, 44, 45, 46, 49, 50, 51, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 64, 67, 68, 69, 70, 71, 72, 73, 74, 76, 80, 83, 87, 88, 89, 91, 94, 95, 98, 100, 101, 102, 106, 110, 111, 112, 114, 115, 116, 121, 122, 123, 124, 125, 126, 127, 130, 131, 132, 133, 134, 135, 139, 143, 145, 146, 147, 148, 150, 151, 153, 154, 155, 157, 158, 159, 165, 168, 171, 174, 175, 176, 184, 187, 189, 193, 200, 201, 203, 204, 206, 207, 208, 209, 210, 211, 212, 217, 222, 223, 226, 230, 234, 235, 238, 239, 240, 244, 245, 246, 248, 249, 250, 252, 253, 256, 258, 261, 262, 264, 267, 268, 269, 274, 275, 282, 283, 286, 287, 289, 292, 293, 294, 295, 300, 301, 302, 303, 305, 306, 307, 309, 313, 315, 316, 318, 319, 320, 321, 326, 327, 328, 329, 331, 333, 334, 335, 336, 338, 342, 343, 346, 348, 350, 351, 352, 353, 359, 360, 362, 364, 367, 368, 369, 370, 375, 378, 379, 380, 383, 386, 387, 389, 390, 391, 392, 394, 395, 396, 398, 399, 400, 401, 402, 403, 404, 406, 408, 412, 415, 416, 417, 418, 419, 420, 423, 424, 425, 426, 428, 430, 431, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 580, 583, 597, 598, 623],
       2: [17, 28, 52, 84, 92, 105, 109, 129, 172, 190, 215, 257, 263, 332, 344, 361, 365, 405],
       3: [8, 24, 29, 42, 43, 47, 63, 75, 86, 96, 108, 113, 119, 120, 144, 149, 167, 192, 194, 199, 216, 224, 225, 227, 266, 270, 271, 285, 296, 297, 308, 345, 374, 407, 409, 410, 411, 413, 421, 432, 617, 618, 619, 620, 621],
-      4: [77, 107, 138, 161, 185, 195, 197, 228, 229, 231, 242, 254, 255, 277, 280, 284, 291, 298, 299, 311, 312, 330, 337, 371, 372, 381, 382, 385, 427, 429, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 581, 582, 584, 585, 586, 587, 588, 589, 592],
+      4: [77, 107, 138, 161, 185, 195, 197, 228, 229, 231, 242, 254, 255, 277, 280, 284, 291, 298, 299, 311, 312, 330, 337, 371, 372, 381, 382, 385, 427, 429, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 581, 582, 584, 585, 586, 587, 588, 589, 592,
+      627],
       5: [16, 37, 104, 118, 136, 140, 160, 173, 183, 186, 188, 220, 221, 232, 259, 314, 317, 366, 384, 397, 594, 595, 596, 600, 622],
       6: [128, 152, 169, 170, 205, 213, 272, 273, 323, 324, 422],
       7: [117, 247, 322, 358],
@@ -262,11 +265,16 @@ var MMTDrop = {
               //],
           //Misc
     //14: [
-              65, 66, 78, 156, 393],
-
-      12: [233, 237, 276, 355],
-      15: [593, 599, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 625],
-            16: [103, 373, 177, 202, 236]
+              65, 66, 78, 156, 393,
+            630],
+      //Database
+      12: [233, 237, 276, 355,
+        628,629],
+      //CND
+      15: [593, 599, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616,
+         625,626],
+      //SocialNetwork
+      16: [103, 373, 177, 202, 236]
     },
     /**
      * Get Category ID of an application
@@ -287,6 +295,7 @@ var MMTDrop = {
         if (arr.indexOf( appId ) > -1)
           return this._cacheCategoryIdFromAppId[ appId ] = parseInt( i );
       }
+      console.log( "Not found category for this app: " + appId  );
       return -1;
     },
     /**
@@ -656,14 +665,16 @@ function format_session_report( msg ){
     default:
       return msg;
   }
-
-  var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1);
-  var i;
+  //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
+  var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
+      i,
+      new_msg = msg.slice( 0  );//clone: avoid being overrided
 
   for( var k in cols ){
-    i = cols[ k ];
-    msg[ i ] = msg[ i - _new ];
-    msg[ i - _new ] = -1;
+    //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
+    i               = cols[ k ];
+    msg[ i ]        = new_msg[ i - _new ];
+    msg[ i - _new ] = -2;
   }
 
   return msg;
@@ -693,6 +704,8 @@ MMTDrop.formatMessage = function( message ){
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
             msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = "_local";
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
+            //continue in NO_SESSION_STATS_FORMAT
+        case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );
             break;
         case MMTDrop.CsvFormat.SECURITY_FORMAT:
