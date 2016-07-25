@@ -605,7 +605,7 @@ function createPopupReport( collection, key, id, title, probe_id  ){
   setTimeout( function(){
     rep.renderTo("_pop_report_graphs");
     var param = rep.database.param;
-    var param = {period: status_db.time, period_groupby: "minute"};
+    var param = {period: status_db.time, period_groupby: fPeriod.selectedOption().id};
     if( probe_id ){
       param.probe = [ probe_id ];
 

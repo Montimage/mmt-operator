@@ -94,7 +94,7 @@ var ReportFactory = {
           228,231,241,247,272,273,298,299,
           314,322,323,324,325,339,340,341,354,357,358,363,376,388,
           461,
-          625,626,628
+          625,626,627,628
         ];
         //mongoDB aggregate
         var group = { _id : {} };
@@ -130,7 +130,7 @@ var ReportFactory = {
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             //name = name.replace("ETHERNET", "ETH");
-            return name == "ETH" ? "  TOTAL" : name;
+            return name == "ETH" ? "TOTAL" : name;
         }
 
         var cLine = MMTDrop.chartFactory.createTimeline({
@@ -499,7 +499,10 @@ var ReportFactory = {
                         "class": 'success'
                     }).append(
                         $("<td>", {
-                            text: i
+                            //text  : i,
+                            style : "cursor:pointer;background-color:"+ chart.color( "TOTAL" )
+                        }).on('click', function () {
+                            chart.toggle( "TOTAL" );
                         })
                     ).append(
                         $("<td>", {
@@ -512,8 +515,8 @@ var ReportFactory = {
                         })
                     ).append(
                         $("<td>", {
-                            "align": "right",
-                            "text": "100%"
+                            "align"  : "right",
+                            "text"   : "100%",
                         })
                     ).append(
                       $("<td>")

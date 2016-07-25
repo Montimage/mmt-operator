@@ -45,7 +45,7 @@ MMTDrop.setOptions({
 
 
 $(function(){
-  //hide animation if 2 consecutif refreshes are less than 5seconds;
+  //hide animation if 2 consecutif refreshes are less than 10seconds;
   var now = (new Date()).getTime();
   var lastRefresh = MMTDrop.tools.cookie.get("last_load");
   MMTDrop.tools.cookie.set("last_load", now, 1);

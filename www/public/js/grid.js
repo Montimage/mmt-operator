@@ -2,7 +2,7 @@ var Grid = {};
 
 Grid.add_widget = function (node) {
     var grid = Grid.grid;
-    
+
     var header = "";
     var type = node.type;
     if (type == undefined)
@@ -15,13 +15,13 @@ Grid.add_widget = function (node) {
 
     if( node.locked !== true )
         node.locked = false;
-    
-    grid.add_widget($('<div id="' + node.id + '" data-title="' + node.title + '" data-type="' + type + '" data-user="' + encodeURI(JSON.stringify(node.userData)) + '" data-gs-locked="'+ node.locked +'" data-gs-no-resize="'+ node.locked +'" data-gs-no-move="'+ node.locked +'"><div id="' + node.id + '-content" class="grid-stack-item-content"></div>' + header + '</div>'),
+
+    grid.addWidget($('<div id="' + node.id + '" data-title="' + node.title + '" data-type="' + type + '" data-user="' + encodeURI(JSON.stringify(node.userData)) + '" data-gs-locked="'+ node.locked +'" data-gs-no-resize="'+ node.locked +'" data-gs-no-move="'+ node.locked +'"><div id="' + node.id + '-content" class="grid-stack-item-content"></div>' + header + '</div>'),
         node.x, node.y, node.width, node.height);
 
     if( node.locked )
         $("#" + node.id + "-content-header").css("cursor", "default");
-    
+
     var bgcolor = $("#" + node.id + "-content-header").css("background-color");
     $("#" + node.id + "-content").css("border-color", bgcolor);
     $("#" + node.id + "-content-setting").css("border-color", bgcolor);
@@ -39,8 +39,8 @@ Grid.load_grid = function (serialized_data, grid_stack) {
             handles: 'e, s, w, se'
         },
         width: 12,
-        cell_height: 60,
-        vertical_margin: 20,
+        cellHeight: 60,
+        verticalMargin: 20,
         draggable: {
             handle: '.grid-stack-item-header',
             scroll: true,
@@ -52,7 +52,7 @@ Grid.load_grid = function (serialized_data, grid_stack) {
 
     var grid = $(grid_stack).data('gridstack');
     Grid.grid = grid;
-    grid.remove_all();
+    grid.removeAll();
 
     var items = serialized_data; //GridStackUI.Utils.sort( serialized_data, -1 );
     _.each(items, function (node) {
@@ -72,12 +72,12 @@ Grid.load_grid = function (serialized_data, grid_stack) {
         };
 
         $gridStack.on("resizestop", function( event, ui ){
-            var el = $(event.target); 
+            var el = $(event.target);
             setTimeout(function( el ){
                 el.trigger('widget-resized', [el, el.width(), el.height()]);
             }, 100, el);
         });
-        
+
         $gridStack.on("dragstart", function (event, ui) {
             onDragging = true;
             if (!canBeDeleted()) return;
@@ -115,7 +115,7 @@ Grid.load_grid = function (serialized_data, grid_stack) {
             $deleteBtn.removeClass("btn-danger");
         });
         $deleteBtn.on("click", function(){
-            alert("Drag and drop a report here to delete it."); 
+            alert("Drag and drop a report here to delete it.");
         });
     });
     return grid;
@@ -171,9 +171,9 @@ Grid.together = function (serialized_data, grid_stack) {
 
     Grid.load_grid(data, grid_stack);
     $(grid_stack).on('change', function (e, items) {
-        
+
         Grid.save_grid( grid_stack, key );
-        
+
         var $btn = $("#resetGridBtn");
         if ($btn.length == 0)
             add_reset_button();

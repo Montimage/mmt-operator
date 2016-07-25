@@ -668,13 +668,17 @@ function format_session_report( msg ){
   //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
   var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
       i,
-      new_msg = msg.slice( 0  );//clone: avoid being overrided
+      new_msg = {};//clone: avoid being overrided
+
+  for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<cols.APP_FAMILY; i++){
+    new_msg[ i ] = msg[ i ];
+    msg[ i ]     = null;
+  }
 
   for( var k in cols ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
     i               = cols[ k ];
     msg[ i ]        = new_msg[ i - _new ];
-    msg[ i - _new ] = -2;
   }
 
   return msg;

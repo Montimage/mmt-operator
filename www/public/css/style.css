@@ -228,7 +228,7 @@ table.treetable >tbody>tr:last-child>td:first-child {
     border-bottom: thin solid #efefef;
 }
 table.treetable>tbody>tr>td {
-    cursor: pointer;
+    cursor: pointer;;
     border-collapse: collapse;
     border: thin solid #efefef;
     color: #428bca;
@@ -278,7 +278,7 @@ a {
     animation: 2s linear;
 }
 
-.c3-chart-line {
+.c3-chart-lines {
     opacity: 0;
     animation-name    : draw_c3j_line;
     animation-duration: 2s;

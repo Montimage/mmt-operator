@@ -5579,14 +5579,14 @@ MMTDrop.chartFactory = {
         for (var j=1; j<columns.length; j++){
           //not root
           //if( columns[j].label.indexOf("/") > 0 )
-                    if( columns[j].type == "area-stack" ){
-                        columns[j].type = "area";
-            groups.push( columns[j].label );
-                    }
-                    else if( columns[j].type == "area-step-stack" ){
-                        columns[j].type = "area-step";
-            groups.push( columns[j].label );
-                    }
+          if( columns[j].type == "area-stack" ){
+              columns[j].type = "area";
+              groups.push( columns[j].label );
+          }
+          else if( columns[j].type == "area-step-stack" ){
+              columns[j].type = "area-step";
+              groups.push( columns[j].label );
+          }
         }
 
         var types = {};
