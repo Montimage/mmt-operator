@@ -593,9 +593,13 @@ function createTrafficReport( collection, key, id ){
 
 
 function createPopupReport( collection, key, id, title, probe_id  ){
+  var formatTime = function( date ){
+        return moment( (new Date(date)).getTime() ).format( fPeriod.getTimeFormat() );
+  };
   var rep   = createTrafficReport( collection, key, id );
   var $modal = MMTDrop.tools.getModalWindow("_pop_report");
-  $modal.$title.html("Traffic of " + title);
+  $modal.$title.html("Traffic of " + title + " (from "+ formatTime( status_db.time.begin )  +" to "+
+    formatTime( status_db.time.end )  +")" );
   $modal.$content.html('<div id="_pop_report_graphs" style="height: 200px; width: 100%" class="">'
                       +'<div class="center-block loading text-center" style="width: 100px; margin-top: 150px"> <i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>'
                       +'<span class="sr-only">Loading...</span></div>'

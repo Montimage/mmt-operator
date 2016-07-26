@@ -82,7 +82,8 @@ block content
                     span.sr-only Toggle navigation
                     each val in [1, 2, 3]
                         span.icon-bar
-                a.navbar-brand( href="/") MMT-NM
+                a.navbar-brand( href="http://montimage.com", title="goto Montimage's Website")
+                  img.logo( src="/img/logo.png" )
             .navbar-collapse.collapse
                 ul.nav.navbar-nav.navbar-right
                     each val, index in pages
@@ -115,7 +116,7 @@ block content
     #toolbar
         ul.nav.navbar-nav
             li: button#exportBtn.btn.btn-default.btn-block( title="Export graphs to images")
-                span.glyphicon.glyphicon-import
+                i.fa.fa-download( aria-hidden="true")
                 
             li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
                 span.glyphicon.glyphicon-plus

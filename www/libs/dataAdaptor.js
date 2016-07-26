@@ -157,8 +157,8 @@ var MMTDrop = {
         METHOD             : 60,
         RESPONSE           : 61,
         CONTENT_LENGTH     : 62,
-        FRAGMENTATION      : 63,
-        REQUEST_ID         : 64
+        REQUEST_INDICATOR  : 63, //It indicates that a particular request is finished with a response
+        DATA_TRANSFER_TIME : 64, //Time between first response packet and TCP_FIN
     },
 
     TlsStatsColumnId : {
@@ -184,6 +184,9 @@ var MMTDrop = {
 			PASSWORD          : 93,
 			FILE_SIZE         : 94,
 			FILE_NAME         : 95,
+      DIRECTION         : 96, // direction of the flow
+      CONTROL_SESSION_ID: 97, // control session session_id of the corresponding data section
+      RESPONSE_TIME     : 98, // Response time of the file transfer only
     },
 
      LicenseColumnId           : {

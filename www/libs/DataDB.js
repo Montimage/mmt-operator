@@ -64,7 +64,7 @@ var MongoConnector = function () {
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                  COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,HTTP.DATA_TRANSFER_TIME,
                                  ],
                                  []),
 
@@ -79,7 +79,10 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.DATA_TRANSFER_TIME,
+                                FTP.RESPONSE_TIME
+                                ],
                                 //set
                                 ["isGen", COL.PROFILE_ID, COL.APP_ID]),
 
@@ -92,7 +95,8 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,HTTP.DATA_TRANSFER_TIME,],
                                //set
                                [COL.MAC_SRC]),
            location: new DataCache(db, "data_location",
@@ -104,7 +108,9 @@ var MongoConnector = function () {
                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                               COL.RETRANSMISSION_COUNT,
+                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.DATA_TRANSFER_TIME,
+                             ],
                               //set
                               [COL.MAC_SRC]),
             link: new DataCache(db, "data_link",
@@ -116,6 +122,7 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                //set
                                [COL.MAC_SRC, COL.MAC_DEST]),
@@ -127,11 +134,11 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME,
-                                 HTTP.TRANSACTIONS_COUNT,
+                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,HTTP.DATA_TRANSFER_TIME,
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,

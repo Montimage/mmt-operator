@@ -208,6 +208,7 @@ MMTDrop.constants = {
 
       FORMAT_TYPE       : {id: 34 , label: "Type"},//
 
+      //this part is created by mmt-operator
       SRC_LOCATION          : {id: 40, label: "Source"},
       DST_LOCATION          : {id: 41, label: "Destination"},
       IP_SRC_INIT_CONNECTION: {id: 42, label: "Connection initilized by local IP"},
@@ -256,6 +257,8 @@ MMTDrop.constants = {
       METHOD       : {id: 60, label: "Method"},
       RESPONSE     : {id: 61, label: "Response"},
       CONTENT_LENGTH: {id: 62, label: "Content length"},
+      REQUEST_INDICATOR  : {id: 63, label:""}, //It indicates that a particular request is finished with a response
+      DATA_TRANSFER_TIME : {id: 64, label:""}, //Time between first response packet and TCP_FIN
 
     },
 
@@ -297,12 +300,15 @@ MMTDrop.constants = {
      * Data format description for statistic reports of FTP protocol
      */
     FtpStatsColumn : {
-      APP_FAMILY        : {id: 90 , label: "App Family"},
+      APP_FAMILY        : {id: 90, label: "App Family"},
       CONNNECTION_TYPE  : {id: 91, label: "Connection Type"},
       USERNAME          : {id: 92, label: "Username"},
       PASSWORD          : {id: 93, label: "Password"},
       FILE_SIZE         : {id: 94, label: "File Size"},
-      FILE_NAME         : {id: 95, label: "File Name"}
+      FILE_NAME         : {id: 95, label: "File Name"},
+      DIRECTION         : {id: 96, label: "Direction"}, // direction of the flow
+      CONTROL_SESSION_ID: {id: 97, label: "Session ID"}, // control session session_id of the corresponding data section
+      RESPONSE_TIME     : {id: 98, label: "Response Time"}, // Response time of the file transfer only
     },
 
     /**
@@ -858,7 +864,7 @@ MMTDrop.tools = function () {
         if (v >= 1000000)
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
-            return (v / 1000).toFixed(2) + "K";
+            return (v / 1000).toFixed(2) + "k";
 
         return v.toFixed(2) ;//Math.round(v);
     };
@@ -4945,8 +4951,8 @@ MMTDrop.chartFactory = {
             }
           }
         };
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+        if( param.chart )
+          chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
         var chart = c3.generate( chart_opt );
         return chart;
       });
