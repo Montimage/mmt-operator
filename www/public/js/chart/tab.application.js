@@ -28,7 +28,7 @@ var arr = [
         y: 0,
         width: 6,
         height: 5,
-        type: "warning",
+        type: "danger",
         userData: {
             fn: "createSlowestAppsReport"
         },
@@ -39,6 +39,7 @@ var availableReports = {
     "createResponseTimeReport": "Response Time",
 };
 
+var URL_PARAM = MMTDrop.tools.getURLParameters();
 
 //create reports
 var ReportFactory = {
@@ -244,7 +245,11 @@ var ReportFactory = {
                     },
                     onclick: function( d, element ){
                         loadDetail( d.x.getTime() );
-                    }
+                    },
+                    selection: {
+                      enabled: true,
+                      multiple: false
+                    },
                 },
                 color: {
                     pattern: ['violet', 'orange', 'DeepSkyBlue', 'red']
@@ -255,6 +260,7 @@ var ReportFactory = {
                     },
                     y: {
                       lines : [
+                        //granularity line
                         {value: 100000, text: "10000 ms", position: 'start'}
                       ]
                     },
@@ -270,9 +276,10 @@ var ReportFactory = {
                               //override the default format
                               format: function( v ){
                                   if( v < 0 ) return 0;
-                                  return  v.toFixed(2);
+                                  return  MMTDrop.tools.formatDataVolume(v, true);
                               }
-                          }
+                          },
+                          min: 0
                     },
                     y2: {
                         show : true,
@@ -305,11 +312,6 @@ var ReportFactory = {
                 },
             },
             afterRender: function(){
-                if( ! $("#__cust__style").length )
-                    $('<style id="__cust__style" type="text/css">\
-.c3-circle {cursor:pointer !important;} \
-.c3-event-rect-{cursor:pointer} \
-</style>').appendTo("head");
             }
 
         });
@@ -329,17 +331,17 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var cols = [ {id: 0, label:""},
-                                {id: COL.TIMESTAMP.id            , label: "Time"               , align: "left"},
-                                {id: COL.RTT.id                  , label: "NRT (ms/flow)"      , align: "right"},
-                                {id: HTTP.DATA_TRANSFER_TIME.id  , label: "DTT (ms/flow)"      , align: "right"},
-                                {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)"    , align: "right"},
-                                {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."       , align: "right"},
-                                {id: COL.ACTIVE_FLOWS.id         , label: "#Active Flows"      , align: "right"},
-                                {id: COL.PACKET_COUNT.id         , label: "Packet Rate (pps)"  , align: "right"},
-                                {id: COL.RETRANSMISSION_COUNT.id , label: "%Retrans."          , align: "right"},
-                                {id: COL.DATA_VOLUME.id          , label: "Data Rate (bps)"    , align: "right"},
-                                {id: "packet_size"               , label: "Pkt Size (B)"       , align: "right"},
-                                {id: COL.PAYLOAD_VOLUME.id       , label: "%Payload"           , align: "right"},
+                                {id: COL.TIMESTAMP.id            , label: "Time"            , align: "left"},
+                                {id: COL.RTT.id                  , label: "NRT (ms/flow)"   , align: "right"},
+                                {id: HTTP.DATA_TRANSFER_TIME.id  , label: "DTT (ms/flow)"   , align: "right"},
+                                {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)" , align: "right"},
+                                {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."    , align: "right"},
+                                {id: COL.ACTIVE_FLOWS.id         , label: "#Act. Flows"     , align: "right"},
+                                {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
+                                {id: COL.RETRANSMISSION_COUNT.id , label: "%Retrans."       , align: "right"},
+                                {id: COL.DATA_VOLUME.id          , label: "Data Rate (bps)" , align: "right"},
+                                {id: "packet_size"               , label: "Pkt Size (B)"    , align: "right"},
+                                {id: COL.PAYLOAD_VOLUME.id       , label: "%Payload"        , align: "right"},
                                ];
                     var data = db.data();
 
@@ -511,7 +513,7 @@ var ReportFactory = {
 
         //group._total = {$sum : []};
 
-        [ COL.RTT.id,
+        [ COL.RTT.id, COL.ACTIVE_FLOWS.id,
           HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.DATA_TRANSFER_TIME.id
         ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
@@ -532,104 +534,188 @@ var ReportFactory = {
         var database = new MMTDrop.Database({collection: (is_app? "data_app" : "data_ip"), action: "aggregate",
                           query : [{"$match": $match},{"$group" : group}] });
 
-        var cBar = MMTDrop.chartFactory.createBar({
-          getData: {
-            getDataFn: function (db) {
-              var data = db.data();
+        //is_trans : show only transactions
+        function createBar( is_trans ){
+          return MMTDrop.chartFactory.createBar({
+            getData: {
+              getDataFn: function (db) {
+                var data = db.data();
 
-              var divide = function( a, b ){
-                if( a == null || isNaN( a ) || b == null || isNaN( b ) || b == 0)
-                  return 0;
-                return a/b;
-              }
+                var divide = function( a, b ){
+                  if( a == null || isNaN( a ) || b == null || isNaN( b ) || b == 0)
+                    return 0;
+                  return a/b;
+                }
 
-              for( var i in data ){
-                var v = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; // * 1000  to get milliseconds
-                data[i][ COL.RTT.id ]                 =  divide( data[i][ COL.RTT.id ], v);
-                data[i][ HTTP.RESPONSE_TIME.id ]      =  divide( data[i][ HTTP.RESPONSE_TIME.id ], v);
-                data[i][ HTTP.DATA_TRANSFER_TIME.id ] =  divide( data[i][ HTTP.DATA_TRANSFER_TIME.id ], v);
+                for( var i in data ){
+                  var v = 1000; // * 1000  to get milliseconds
+                  if( data[i][ COL.ACTIVE_FLOWS.id ] != 0 )
+                    v *= data[i][ COL.ACTIVE_FLOWS.id ];
+                  data[i][ COL.RTT.id ]                 =  divide( data[i][ COL.RTT.id ], v);
 
-               data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ HTTP.DATA_TRANSFER_TIME.id ];
-              }
-              //get top 8
-              data.sort( function( a, b ){
-                return b._total - a._total;
-              });
+                  v = 1000;
+                  if( data[i][ HTTP.TRANSACTIONS_COUNT.id ] != 0 )
+                    v *= data[i][ HTTP.TRANSACTIONS_COUNT.id ];
+                  data[i][ HTTP.RESPONSE_TIME.id ]      =  divide( data[i][ HTTP.RESPONSE_TIME.id ], v);
+                  data[i][ HTTP.DATA_TRANSFER_TIME.id ] =  divide( data[i][ HTTP.DATA_TRANSFER_TIME.id ], v);
 
-              var arr = [];
-              var len = 8;
-              if( data.length < len ) len = data.length;
+                 data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ HTTP.DATA_TRANSFER_TIME.id ];
+                }
+                //get top 8
+                data.sort( function( a, b ){
+                  return b._total - a._total;
+                });
 
-              for( var i=0; i<len; i++ )
-                if( data[i]._total == 0)
-                  break;
-                else
-                  arr.push( data[i] );
-              console.log( arr );
-              var obj = [
-                ["RTT"],
-                ["ART"],
-                ["DTT"],
-                //["Tran"]
-              ]
-              var ips = [];
-              for( var i in arr ){
-                var msg = arr[i];
-                if( is_app )
-                  ips.push( MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
-                else
-                  ips.push( msg[ col_id ] );
+                var obj = [
+                  ["RTT"],
+                  ["ART"],
+                  ["DTT"],
+                ];
+                if( is_trans )
+                  obj = [["#Transactions"]];
 
-                obj[0].push( msg[ COL.RTT.id ] );
-                obj[1].push( msg[ HTTP.RESPONSE_TIME.id ] );
-                obj[2].push( msg[ HTTP.DATA_TRANSFER_TIME.id ] );
-                //obj[3].push( msg[ HTTP.TRANSACTIONS_COUNT.id ] );
-              }
-              var cols = [ {id:0} ];
-              for( var i in ips )
-                cols.push( {id: i, label: ips[i]} );
+                var groups = [];
+                for( var i in obj )
+                  groups.push( obj[i][0]);
 
 
-              return {
-                data   : obj,
-                columns: cols,
-                chart  : {
-                  axis : {
-                    x  : {
-                      categories : ips,
-                      //label      : "IP"
+                var ips = [];
+                for( var i=0; i<8; i++ ){
+                  var msg = data[i];
+                  var label = "";
+
+                  if( is_app )
+                    ips.push( msg == undefined? "" : MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
+                  else
+                    ips.push( msg == undefined? "" : msg[ col_id ] );
+
+                  if( is_trans ){
+                    obj[0].push( msg == undefined? 0 : - msg[ HTTP.TRANSACTIONS_COUNT.id ] );
+                  }else{
+
+
+                    obj[0].push( msg == undefined? 0 : msg[ COL.RTT.id ] );
+                    obj[1].push( msg == undefined? 0 : msg[ HTTP.RESPONSE_TIME.id ] );
+                    obj[2].push( msg == undefined? 0 : msg[ HTTP.DATA_TRANSFER_TIME.id ] );
+                  }
+                }
+                var cols = [];
+                for( var i in ips )
+                  cols.push( {id: i, label: ips[i]} );
+
+
+                return {
+                  data   : obj,
+                  columns: cols,
+                  chart  : {
+                    data :{
+                      groups: [groups]
+                    },
+                    axis : {
+                      x  : {
+                        categories : ips,
+                      }
                     }
                   }
                 }
               }
-            }
-          },
-          chart: {
-            data:{
-              groups: [
-                  ['RTT', 'ART', 'DTT']
-              ]
             },
-            bar : {
-              width: 15,
-              spacing: 5
-            },
-            axis: {
-              rotated: true,
-              y : {
-                tick : {
-                  format: function( val ){
-                    return Math.round(val*100)/100;
-                  },
+            chart: {
+              //Set a callback which is executed when the chart is rendered. Basically, this callback will be called in each time when the chart is redrawed.
+              onrendered: function(){
+                var _id = this.config.bindto;
+
+                if( is_trans ){
+                  d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX )
+                    // and translate it to the y = 0 position
+                   .attr('transform', "translate(" + this.y(0) + ",0)")
+                   //hide Ox label
+                   .selectAll("text").style('visibility', 'hidden')
+                  ;
+
+                   var $el = $( _id ).parents().filter(".col-md-5");
+                   if( $el.length > 0 )
+                     $el.css("padding-right", "0px");
+
+                }else{
+                  d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
+                    //set middle
+                   .selectAll("text").style({
+                      'text-anchor' : 'middle',
+                      "cursor"      : "pointer",
+                    })
+                   .selectAll("tspan").attr('x', -50);
+
+                  var $el = $( _id ).parents().filter(".col-md-7");
+                  if( $el.length > 0 )
+                    $el.css("padding-left", "0px");
+               }
+              },
+              data: {
+                onclick: function (d, element) {
+                  var cat = this.category( d.x );
+                  MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : "ip=") + cat) )
                 },
-                label: "ms"
+                selection: {
+                  enabled: true,
+                  multiple: false
+                },
+              },
+              color: {
+                pattern: (is_trans ? ["red"] : ['green', 'blue', 'orange'])
+              },
+              bar : {
+                width: 15,
+                spacing: 5
+              },
+              axis: {
+                rotated: true,
+                y : {
+                  //inverted: true,
+                  tick : {
+                    format: function( val ){
+                      if( val < 0 )
+                        val = -val;
+                      return MMTDrop.tools.formatDataVolume( val, true );
+                    },
+                    count: 6
+                  },
+                  label: {
+                    text    : is_trans? "transactions" : "ms/transaction",
+                    position: is_trans? 'inner-left'   : 'inner-right'
+                  },
+                  padding: {
+                    top: 0
+                  }
+                },
+                x : {
+                  //show : is_trans? false: true
+                }
+              },
+              grid: {
+                y: {
+                  show : true,
+                }
+              },
+              padding: {
+                top: 20,
+              },
+              legend : {
+                item: {
+                  onclick: (is_trans ? function (id) {
+                    //this function prevents hidding bars in Transaction
+                  } : null)
+                }
               }
             },
-            padding: {
-              top: 20
+            afterEachRender: function(o){
+
             }
-          }
-        });
+          });
+        }//end createBar;
+
+        var cBar_time = createBar(),
+            cBar_tran = createBar( true );
 
 
         var report = new MMTDrop.Report(
@@ -641,11 +727,14 @@ var ReportFactory = {
 					[],
             // charts
 					[{
-              charts: [cBar],
-              width: 12
+            charts: [cBar_tran],
+            width: 5
+          },{
+            charts: [cBar_time],
+            width: 7
           }],
             //order of data flux
-            [{object: cBar} ]
+            [{object: cBar_tran}, {object: cBar_time}]
         );
 
         return report;

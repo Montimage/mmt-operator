@@ -266,6 +266,13 @@ tr.selected a {
 .c3-axis-y-label{
 }
 
+.c3-bar {
+    cursor: pointer;
+}
+.c3-circle {
+  cursor:pointer !important;
+}
+
 .dataTable, .dataTables_filter, .dataTables_info{
     font-size: 12px;
 }

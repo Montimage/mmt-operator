@@ -841,7 +841,6 @@ MMTDrop.tools = function () {
                 arr.push(zero);
             }
         }
-
         return arr;
     };
 
@@ -853,7 +852,7 @@ MMTDrop.tools = function () {
      * @param   {[[integer]]} value
      * @returns {[[string]]}
      */
-    _this.formatDataVolume = function (v) {
+    _this.formatDataVolume = function (v, round) {
         if( v == undefined ) return "unknown";
 
         if( MMTDrop.config.format_payload !== true )
@@ -865,8 +864,9 @@ MMTDrop.tools = function () {
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
             return (v / 1000).toFixed(2) + "k";
-
-        return v.toFixed(2) ;//Math.round(v);
+        if( round !== false )
+          return Math.round(v);
+        return v.toFixed(2) ;
     };
 
     _this.formatPercentage = function( v ){
@@ -1452,6 +1452,17 @@ MMTDrop.tools = function () {
     return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
   };
 
+  _this.parseURLParameters = function( url ){
+    var obj    = {}, hash,
+        hashes = url.split("&");
+
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+
+        obj[hash[0]] = decodeURIComponent(hash[1]);
+    }
+    return obj;
+  };
   /**
    * Get an object representing the parameters of the current url
    * @return {[type]} [description]
@@ -1460,16 +1471,12 @@ MMTDrop.tools = function () {
       var d = window.location.href.indexOf('?');
       if( d == -1 )
         return {};
-      var vars = {}, hash;
-      var hashes = window.location.href.slice(d + 1).split('&');
-      for(var i = 0; i < hashes.length; i++){
-          hash = hashes[i].split('=');
-          vars[hash[0]] = decodeURIComponent(hash[1]);
 
-          //when user want to get only one parameter
-          if( key != undefined && key == hash[0] )
-            return vars[ hash[0] ];
-      }
+      var hashes = window.location.href.slice(d + 1);
+      var vars = _this.parseURLParameters( hashes );
+      if( key )
+        return vars[ key ];
+
       return vars;
   };
 
@@ -1478,11 +1485,15 @@ MMTDrop.tools = function () {
       type : "text/css",
       html : content
     }).appendTo("head");
-  }
+  };
 
   _this.getQueryString = function( param, add_query_str ){
-    var obj = _this.getURLParameters();
-    var arr = [];
+    var obj     = _this.getURLParameters();
+    var arr     = [];
+    var add_obj = {};
+    if( add_query_str !== undefined && add_query_str !== "" ){
+      add_obj = _this.parseURLParameters( add_query_str );
+    }
 
     //get all parameters
     if( param == undefined || param.length == 0 ){
@@ -1492,12 +1503,13 @@ MMTDrop.tools = function () {
     }
     for( var i=0; i<param.length; i++ ){
       var val = obj[ param[i] ];
-      if( val != undefined )
+      if( val != undefined && add_obj[ param[i] ] == undefined )
         arr.push( param[i] + "=" +  val);
     }
 
-    if( add_query_str !== undefined && add_query_str !== "" )
-      arr.push( add_query_str )
+    if( add_query_str !== undefined && add_query_str !== "" ){
+      arr.push( add_query_str );
+    }
 
     if( arr.length > 0 )
       arr = "?" + arr.join("&");
@@ -1519,7 +1531,7 @@ MMTDrop.tools = function () {
       url += _this.getQueryString( options.param );
 
     document.location.href = url;
-  };
+  },
 
   _this.ajax =  function( url, data, method, callback, options ){
     options = options || {};
