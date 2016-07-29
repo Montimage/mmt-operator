@@ -68,7 +68,7 @@ Grid.load_grid = function (serialized_data, grid_stack) {
 
         var canBeDeleted = function () {
             var t = $(grid_stack + ' > .grid-stack-item:visible');
-            return t.length > 2;
+            return t.length > 1;
         };
 
         $gridStack.on("resizestop", function( event, ui ){

@@ -37,13 +37,17 @@ var breadcrumbs = {
     var obj = MMTDrop.tools.getURLParameters();
     var arr = [];
     var url = null;
+    var last= "";
     for( var key in obj ){
       if (url == undefined )
         url = MMTDrop.tools.getCurrentURL([key]);
       else
         url += "&"+ key + "=" + obj[key];
       arr.push( '<a href="'+ url +'" title="'+ key +'='+ obj[key] +'">' + obj[key] + '</a>' );
+      last = obj[key];
     }
+    if( arr.length > 0 )
+      arr[ arr.length - 1 ] = last;
     breadcrumbs.setData( arr );
   }
 }

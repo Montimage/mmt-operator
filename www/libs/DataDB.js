@@ -623,12 +623,17 @@ var MongoConnector = function () {
           if( collection.indexOf( cache.option.collection_name ) == 0 ){
             //data_total_real => real
             var level = collection.split("_")[2];
-            cache.flushCaches( level, function(){
+            if( level )
+              cache.flushCaches( level, function(){
+                self._queryDB( collection, action, query, callback, raw );
+              });
+            else
               self._queryDB( collection, action, query, callback, raw );
-            });
-            break;//only one collection concernts to this query
+            return;//only one collection concernts to this query
           }
       }
+
+      self._queryDB( collection, action, query, callback, raw );
     }
     // Do a query on database. Action can be "find", "aggregate", ...
     self._queryDB = function (collection, action, query, callback, raw) {
@@ -646,10 +651,18 @@ var MongoConnector = function () {
 
           var old_query = query;
           query = {};
+
           for( var i in old_query ){
             var obj = old_query[i];//{$match: {}}
             for( var key in obj )
-              query[ key ] = obj[ key ];
+              if( query[ key ] == undefined)
+                query[ key ] = obj[ key ];
+              else{
+                //old_query may contain 2 $match
+                //==> merge them
+                for( var j in obj[key] )
+                  query[ key ][ j ] = obj[ key ][ j ];
+              }
           }
 
           if( query.$limit == undefined || query.$limit > 5000 )

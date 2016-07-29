@@ -277,8 +277,14 @@ tr.selected a {
     font-size: 12px;
 }
 
-a {
-    cursor: pointer;
+a, .ahref {
+  cursor: pointer;
+  color : "#337ab7";
+  text-decoration: none;
+}
+
+a:hover, .ahref:hover{
+  text-decoration: none;
 }
 
 .modal.modal-wide .modal-dialog {

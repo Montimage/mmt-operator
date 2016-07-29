@@ -58,8 +58,7 @@ MMTDrop.config = {
     /**
      * Chart render: "highchart", "c3js"
      */
-    render: "highchart",
-        db_timeout: 15*1000, //timeout for database
+    render: "highchart"
 };
 
 
@@ -630,6 +629,8 @@ MMTDrop.constants = {
       return protocolName;
     },
     getProtocolIDFromName : function( proto_name ){
+      if( proto_name == undefined ) return;
+
       //ProtocolName
       if( proto_name.indexOf(":") == -1 ){
         for( var key in this.ProtocolsIDName )
@@ -864,7 +865,7 @@ MMTDrop.tools = function () {
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
             return (v / 1000).toFixed(2) + "k";
-        if( round !== false )
+        if( round === true )
           return Math.round(v);
         return v.toFixed(2) ;
     };
@@ -1531,7 +1532,11 @@ MMTDrop.tools = function () {
       url += _this.getQueryString( options.param );
 
     document.location.href = url;
+    throw new Error("abort to goto " + url);
   },
+  _this.reloadPage = function( add_param_string ){
+    _this.gotoURL( _this.getCurrentURL([], add_param_string) );
+  }
 
   _this.ajax =  function( url, data, method, callback, options ){
     options = options || {};
@@ -1691,7 +1696,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       if( user_param != undefined )
         _param = MMTDrop.tools.mergeObjects(_param, user_param);
     }
-    if (new_param)
+    if (new_param && _param.no_override_when_reload !== true )
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
 
     if( isFirstTime ){
@@ -3156,7 +3161,7 @@ MMTDrop.filterFactory = {
 
           for( var path in obj){
             var parentKey = MMTDrop.constants.getParentPath( path );
-            var parentApp       = MMTDrop.constants.getAppIdFromPath( parentKey );
+            var parentApp = MMTDrop.constants.getAppIdFromPath( parentKey );
             //keys[j] is a children of parentApp
             if(  parentApp in data ){
               data[ parentApp ] = data[parentApp].concat( obj[path] );
@@ -3172,7 +3177,12 @@ MMTDrop.filterFactory = {
         for (var i in keys){
           opts.push({id:  keys[i], label: MMTDrop.constants.getProtocolNameFromID( keys[i] ) });
         }
-
+        //alphabet of labels
+        opts.sort( function( a,b ){
+          if(a.label < b.label) return -1;
+          if(a.label > b.label) return 1;
+          return 0;
+        });
         //if there are more than one option or no option ==> add "All" to top
         if (opts.length != 1)
           opts.unshift(MMTDrop.tools.cloneData(options[0]));

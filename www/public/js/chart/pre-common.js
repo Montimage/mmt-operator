@@ -53,6 +53,6 @@ $(function(){
   if( lastRefresh == undefined ) lastRefresh = 0;
   if( now - lastRefresh < 10000 ){
     //remove animation
-    MMTDrop.tools.createStylesheet('.c3-chart-arc,.c3-chart-line{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none;}');
+    MMTDrop.tools.createStylesheet('.c3-chart-arc,.c3-chart-lines{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none; opacity:1}');
   }
 })
