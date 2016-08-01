@@ -302,10 +302,10 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var cols = [ COL.TIMESTAMP,
                                 {id: COL.RTT.id                , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
-                                {id: HTTP.RESPONSE_TIME.id      , label: "App Response Time (ART)"     , type: "area-stack"},
+                                {id: HTTP.RESPONSE_TIME.id     , label: "App Response Time (ART)"     , type: "area-stack"},
                                 {id: HTTP.DATA_TRANSFER_TIME.id, label: "Data Transfer Time (DTT)"    , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
-                                {id: COL.DATA_VOLUME.id         , label: "Data Rate"                   , type: "line"}
+                                {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"}
                                ];
                     var data  = db.data();
                     var total = 0;
@@ -656,11 +656,14 @@ var ReportFactory = {
                 for( var i=0; i<8; i++ ){
                   var msg = data[i];
                   var label = "";
-
-                  if( is_app )
-                    ips.push( msg == undefined? "" : MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
-                  else
-                    ips.push( msg == undefined? "" : msg[ col_id ] );
+                  if( is_trans )
+                    ips.push( "");
+                  else{
+                    if( is_app )
+                      ips.push( msg == undefined? "" : MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
+                    else
+                      ips.push( msg == undefined? "" : msg[ col_id ] );
+                  }
 
                   if( is_trans ){
                     obj[0].push( msg == undefined? 0 : - msg[ HTTP.TRANSACTIONS_COUNT.id ] );
@@ -709,7 +712,8 @@ var ReportFactory = {
                    var $el = $( _id ).parents().filter(".col-md-5");
                    if( $el.length > 0 )
                      $el.css("padding-right", "0px");
-
+                  //add class
+                  d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation-inverted", true);
                 }else{
                   d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
                     //set middle
@@ -731,6 +735,8 @@ var ReportFactory = {
                   var $el = $( _id ).parents().filter(".col-md-7");
                   if( $el.length > 0 )
                     $el.css("padding-left", "0px");
+
+                  d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation", true);
                }
               },
               data: {
@@ -748,10 +754,30 @@ var ReportFactory = {
                   }
                 },
                 onmouseover: function( d ){
+                  //avoid 2 consecutif calls
+                  var now = (new Date()).getTime();
+                  if( this._lastCall_MouseOver == undefined )
+                    this._lastCall_MouseOver = 0;
+                  if( now - this._lastCall_MouseOver < 100 )
+                    return;
+                  this._lastCall_MouseOver = now;
 
+                  var neighbour = this.parent._neighbour;
+                  if( neighbour )
+                    neighbour.chart.tooltip.show( {x: d.x} );
                 },
                 onmouseout: function( d ){
+                  //avoid 2 consecutif calls
+                  var now = (new Date()).getTime();
+                  if( this._lastCall_MouseOut == undefined )
+                    this._lastCall_MouseOut = 0;
+                  if( now - this._lastCall_MouseOut < 100 )
+                    return;
+                  this._lastCall_MouseOut = now;
 
+                  var neighbour = this.parent._neighbour;
+                  if( neighbour )
+                    neighbour.chart.tooltip.hide();
                 }
               },
               color: {
@@ -771,15 +797,16 @@ var ReportFactory = {
                         val = -val;
                       return MMTDrop.tools.formatDataVolume( val, true );
                     },
-                    count: is_trans? 4 : 6
+                    count: is_trans? 4 : 4
                   },
                   label: {
-                    text    : is_trans? "transactions" : "ms/transaction",
+                    text    : is_trans? "trans." : "ms/trans.",
                     position: is_trans? 'inner-left'   : 'inner-right'
                   },
                   padding: {
-                    top: 0
-                  }
+                    top: 0,
+                    bottom: 0
+                  },
                 },
                 x : {
                   //show : is_trans? false: true
@@ -810,6 +837,8 @@ var ReportFactory = {
         var cBar_time = createBar(),
             cBar_tran = createBar( true );
 
+        cBar_time._neighbour = cBar_tran;
+        cBar_tran._neighbour = cBar_time;
 
         var report = new MMTDrop.Report(
             // title
@@ -856,13 +885,14 @@ var ReportFactory = {
 
                     var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
                                    {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
-                                   col_key
+                                   col_key,
+                                   {id: "EURT"           , label: "EURT (ms)"    , align:"right"},
                                    ];
 
                     var colSum = [
                         {id: COL.RTT.id                , label: "NRT (ms)"     , align:"right"},
-                        {id: HTTP.DATA_TRANSFER_TIME.id, label: "DTT (ms)"     , align: "right"},
                         {id: HTTP.RESPONSE_TIME.id     , label: "ART (ms)"     , align:"right"},
+                        {id: HTTP.DATA_TRANSFER_TIME.id, label: "DTT (ms)"     , align: "right"},
                         {id: HTTP.TRANSACTIONS_COUNT.id, label: "#HTTP Trans." , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id       , label: "#Act. Flows"  , align:"right"},
                         {id: COL.UL_DATA_VOLUME.id     , label: "Upload (B)"   , align:"right"},
@@ -962,7 +992,8 @@ var ReportFactory = {
 
                           href = MMTDrop.tools.getCurrentURL([], param );
                           //goto detail if a local IP or an APP is selected
-                          if( URL_PARAM.app_id() != undefined && URL_PARAM.ip != undefined ){
+                          //if( URL_PARAM.app_id() != undefined && URL_PARAM.ip != undefined )
+                          {
                             param  += "&ts=" + obj[ "LastUpdated" ] + "&groupby=" + fPeriod.selectedOption().id;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
@@ -971,7 +1002,8 @@ var ReportFactory = {
 
                           href = MMTDrop.tools.getCurrentURL([], param );
                           //goto detail if a local IP or an APP is selected
-                          if( URL_PARAM.remote != undefined && URL_PARAM.ip != undefined ){
+                          //if( URL_PARAM.remote != undefined && URL_PARAM.ip != undefined )
+                          {
                             param  += "&ts=" + obj[ "LastUpdated" ] + "&groupby=" + fPeriod.selectedOption().id;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
@@ -994,8 +1026,7 @@ var ReportFactory = {
 
                         obj[ COL.RTT.id ] = self.divide( obj[ COL.RTT.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
 
-
-
+                        obj.EURT = self.divide( obj[ COL.RTT.id ] + obj[ HTTP.RESPONSE_TIME.id ] + obj[ HTTP.DATA_TRANSFER_TIME.id ], 1 );
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});

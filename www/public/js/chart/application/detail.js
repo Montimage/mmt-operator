@@ -30,6 +30,13 @@ URL_PARAM.app_id = function(){
 
 URL_PARAM.ts = parseInt( URL_PARAM.ts );
 
+var COL     = MMTDrop.constants.StatsColumn;
+var HTTP    = MMTDrop.constants.HttpStatsColumn;
+var TLS     = MMTDrop.constants.TlsStatsColumn;
+var RTP     = MMTDrop.constants.RtpStatsColumn;
+var FTP     = MMTDrop.constants.FtpStatsColumn;
+var FORMAT  = MMTDrop.constants.CsvFormat;
+
 //create reports
 var ReportFactory = {
     formatRTT : function( time ){
@@ -43,12 +50,6 @@ var ReportFactory = {
       fAutoReload.hide();
 
       var self    = this;
-      var COL     = MMTDrop.constants.StatsColumn;
-      var HTTP    = MMTDrop.constants.HttpStatsColumn;
-      var TLS     = MMTDrop.constants.TlsStatsColumn;
-      var RTP     = MMTDrop.constants.RtpStatsColumn;
-      var FORMAT  = MMTDrop.constants.CsvFormat;
-
       var $match = {};
       $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
       //only session protocols
@@ -73,23 +74,15 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
-                                   {id: COL.PORT_SRC.id  , label: "Src. Port" , align:"right"},
-                                   {id: COL.PORT_DEST.id  , label: "Dst. Port" , align:"right"},
+                                   {id: COL.IP_SRC.id    , label: "Local"     , align:"left"},
+                                   {id: COL.IP_DEST.id   , label: "Remote"    , align:"left"},
                                    {id: COL.APP_PATH.id  , label: "Proto. Path"    , align:"left"},
+                                   {id: COL.UL_PACKET_COUNT.id, label: "#Up. (pkt)"  , align:"right"},
+                                   {id: COL.DL_PACKET_COUNT.id, label: "#Down. (pkt)", align:"right"},
+                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran."    , align:"right"},
+                                   {id:"EURT", label: "EURT (ms)", align: "right"}
                                   ];
 
-                    var colSum = [
-
-                        //{id: COL.RTT.id                , label: "NRT (ms)"    , align:"right"},
-                        //{id: HTTP.RESPONSE_TIME.id     , label: "ART (ms)"    , align:"right"},
-                        //{id: HTTP.DATA_TRANSFER_TIME.id, label: "ART (ms)"    , align:"right"},
-                        //{id: COL.UL_DATA_VOLUME.id     , label: "Up. (B)"     , align:"right"},
-                        //{id: COL.UL_PACKET_COUNT.id    , label: "Up. (pkt)"   , align:"right"},
-                        //{id: COL.DL_DATA_VOLUME.id     , label: "Down. (B)"   , align:"right"},
-                        //{id: COL.DL_PACKET_COUNT.id    , label: "Down. (pkt)" , align:"right"},
-
-                        //{id: COL.RETRANSMISSION_COUNT.id, label: "#Retran. (pkt)"   , align:"right"},
-                    ];
                     var otherCols = [
                         { id: HTTP.METHOD.id   , label: HTTP.METHOD.label},
                         { id: HTTP.URI.id      , label: HTTP.URI.label},
@@ -105,36 +98,38 @@ var ReportFactory = {
                       var new_str = str.substr( 0, len ) + "...";
                       return '<span title="'+ str +'">'+ new_str +'</span>';
                     }
-                    var data = db.data();
-
+                    var data        = db.data();
+                    window._HISTORY = data;
                     var arr = [];
                     var havingOther = false;
 
-                    for( var i in data){
+                    console.log( data.length );
+                    for( var i=0; i<data.length; i++){
                         var msg     = data[i];
 
                         var format  = msg [ COL.FORMAT_TYPE.id ];
                         var obj     = {};
-
+                        obj.index   = i+1;
                         obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
                         obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
-                        obj[ COL.UL_DATA_VOLUME.id] = msg[ COL.UL_DATA_VOLUME.id];
-                        obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
-                        obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id]; // ip
-                        obj[ COL.PORT_SRC.id ]      = msg[ COL.PORT_SRC.id ];
-                        obj[ COL.PORT_DEST.id ]     = msg[ COL.PORT_DEST.id ];
 
-                        for( var j in colSum ){
-                                var val = msg[ colSum[j].id ];
-                                if( val == undefined )
-                                    val = 0;
-                            obj[ colSum[j].id ] = val;
-                        }
+                        obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( msg[ COL.UL_DATA_VOLUME.id] );
+                        obj[ COL.DL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( msg[ COL.DL_DATA_VOLUME.id] );
 
-                        obj.EURT = msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ HTTP.DATA_TRANSFER_TIME.id ];
+                        obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id] + ":" + msg[ COL.PORT_SRC.id ]; // ip
+                        obj[ COL.IP_DEST.id ]      = msg[ COL.IP_DEST.id] + ":" + msg[ COL.PORT_DEST.id ];
 
-                        for( var i in otherCols ){
-                            var c   = otherCols[i];
+
+                        obj[ COL.UL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.UL_PACKET_COUNT.id] );
+                        obj[ COL.DL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_PACKET_COUNT.id] );
+                        obj[ COL.RETRANSMISSION_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.RETRANSMISSION_COUNT.id] );
+
+                        var val = self.formatRTT( msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ HTTP.DATA_TRANSFER_TIME.id ] );
+
+                        obj.EURT = '<a onclick="loadDetail('+ i +')">' + val + '</a>'
+
+                        for( var j in otherCols ){
+                            var c   = otherCols[j];
                             var val = msg[ c.id ];
                             if( val != undefined && val != ""){
                                 obj[ c.id ]  = formatString( val );
@@ -143,13 +138,12 @@ var ReportFactory = {
                         }
 
                         arr.push( obj );
-
                     }
 
                     for( var i in otherCols ){
                         var c = otherCols[i];
                         if( c.havingData === true ){
-                            colSum.push( c );
+                            columns.push( c );
                             //default value for the rows that have not data of this c
                             for( var j in arr )
                                 if( arr[j][ c.id ] == undefined )
@@ -157,23 +151,11 @@ var ReportFactory = {
                         }
                     }
 
-                    columns = columns.concat( [
-                      {id:"EURT", label: "EURT (ms)", align: "right"}
-                    ]);
-                    columns = columns.concat( colSum );
                     columns.unshift( {id: "index", label: ""});
 
-                    for( var i=0; i<arr.length; i++ ){
-                        arr[i][ COL.UL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.UL_DATA_VOLUME.id ] );
-                        arr[i][ COL.DL_DATA_VOLUME.id ] = MMTDrop.tools.formatDataVolume( arr[i][ COL.DL_DATA_VOLUME.id ] );
-                        arr[i].index = i+1;
 
-                        arr[i][ "EURT" ] = self.formatRTT( arr[i][ "EURT" ] );
-
-                        arr[i][ "EURT" ] = '<a onclick="loadDetail()">' + arr[i][ "EURT" ] + '</a>'
-                    }
                   return {
-                      data: arr,
+                      data   : arr,
                       columns: columns
                   };
                 }
@@ -214,6 +196,10 @@ var ReportFactory = {
                     }
                 });
                 $widget.trigger("widget-resized", [$widget]);
+
+                //data table has only one row => show its details
+                if( window._HISTORY.length == 1 )
+                  loadDetail(0);
             }
         });
 
@@ -236,8 +222,64 @@ var ReportFactory = {
     },
 }
 
+function createBar( opt ){
+  var chart_opt =  {
+      bindto: "CHANGE",
+      size: {
+        height: 120
+      },
+      padding:{
+        right: 200
+      },
+      data: {
+        columns : [["CHANGE"]],
+        groups  : [["CHANGE"]],
+        type    : "bar"
+      },
+      color: {
+        pattern: ['violet', 'orange', 'DeepSkyBlue']
+      },
+      axis: {
+        rotated: true,
+        y : {
+          tick : {
+            format: function( val ){
+              return MMTDrop.tools.formatDataVolume( val );
+            },
+            count: 5
+          },
+          label: {
+            text    : "CHANGE",
+            position: 'inner-right'
+          },
+          min: 0,
+          padding: {
+            top   : 0,
+            bottom: 0
+          }
+        },
+        x : {
+          type: 'category',
+          categories: ["CHANGE"],
+          min: 0,
+        }
+      },
+      grid: {
+        y: {
+          show : true,
+        }
+      },
+      padding: {
+        top: 20,
+      },
+    };
 
-function loadDetail( msg ) {
+    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, opt );
+    return c3.generate( chart_opt );
+}//end createBar;
+
+
+function loadDetail( index ) {
 
     if ($("#modalWindow").length === 0) {
       var modal = '<div class="modal modal-wide fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">' +
@@ -245,19 +287,255 @@ function loadDetail( msg ) {
           '<div class="modal-content" >' +
           '<div class="modal-header">' +
           '<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>' +
-          '<h4 class="modal-title">Detail</h4>' +
+          '<h4 class="modal-title">Transaction Details</h4>' +
           '</div>' +
+          '<div class="text-center sub-title"></div>' +
           '<div class="modal-body code-json">' +
-          '<div id="detailItem"/>' +
-          '<div id="popupTable"/>' +
-          '</div>' +
+          '<div id="detailItem" class="row"/>' +
           '</div></div></div>';
-
       $("body").append($(modal));
     }
+    var msg  = _HISTORY[ index ];
 
-    $("#detailItem").html('<strong>Interval: </strong> from ');
+    $("#modalWindow .sub-title").html( (new Date(msg[ COL.TIMESTAMP.id ])).toLocaleString() + "<br/>"
+              + '<strong>Local: </strong>' + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ]
+              + ', <strong>Application: </strong>' + MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ])
+              + ', <strong>Remote: </strong>' + msg[ COL.IP_DEST.id ] + ":" + msg[ COL.PORT_DEST.id ] )
+
+    var cols = [ COL.MAC_SRC, COL.MAC_DEST, COL.DST_LOCATION, COL.IP_SRC_INIT_CONNECTION ];
+    cols     = MMTDrop.tools.mergeObjects(cols, HTTP);
+    cols     = MMTDrop.tools.mergeObjects(cols, TLS);
+    cols     = MMTDrop.tools.mergeObjects(cols, FTP);
+    cols     = MMTDrop.tools.mergeObjects(cols, RTP);
+    var other_dom = [];
+    var exclude   = [ HTTP.RESPONSE_TIME.id, HTTP.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id ];
+    for( var i in cols ){
+      var c   = cols[ i ];
+      var val = msg[ c.id ];
+      if( val == undefined || exclude.indexOf( c.id ) != -1 )
+        continue;
+      if( c.id == HTTP.REQUEST_INDICATOR.id )
+        val = (val == 0)? "no" : "yes";
+
+      other_dom.push({
+        type : "<tr>",
+        children: [{
+          type : "<td>",
+          attr : {
+            width: '20%',
+            style: "width:20%;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;",
+            title: val,
+            text : c.label
+          }
+        },{
+          type : "<td>",
+          attr : {
+            width: '80%',
+            style: "width:80%;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;",
+            title: val,
+            text : val
+          }
+        }]
+      });
+    }//end for
+
+
+    var dom_cfg = {
+      type    : "<div>",
+      children: [{
+        type : "<div>",
+        attr : {
+          class : "col-sm-6",
+        },
+        children: [{
+          type : "<div>",
+          attr : {
+            text  : "Performance",
+            id    : "detail_perf_header",
+            style : "font-weight:bold"
+          }
+        },{
+          type : "<div>",
+          attr : {
+            id    : "detail_perf_chart",
+            style : "height: 120px"
+          }
+        }]
+      },{
+        type : "<div>",
+        attr : {
+          class : "col-sm-6",
+        },
+        children: [{
+          type : "<div>",
+          attr : {
+            text  : "Usage",
+            id    : "detail_usage_header",
+            style : "font-weight:bold"
+          }
+        },{
+          type : "<div>",
+          attr : {
+            id    : "detail_usage_chart",
+            style : "height: 120px"
+          }
+        }]
+      },{
+        type : "<div>",
+        attr : {
+          class : "col-sm-6",
+        },
+        children: [{
+          type : "<div>",
+          attr : {
+            text  : "TCP",
+            id    : "detail_tcp_header",
+            style : "font-weight:bold"
+          }
+        },{
+          type : "<div>",
+          attr : {
+            id    : "detail_tcp_chart",
+            style : "height: 120px"
+          }
+        }]
+      },{
+        type : "<div>",
+        attr : {
+          class : "col-sm-6",
+        },
+        children: [{
+          type : "<div>",
+          attr : {
+            text  : "Usage",
+            id    : "detail_pkt_header",
+            style : "font-weight:bold"
+          }
+        },{
+          type : "<div>",
+          attr : {
+            id    : "detail_pkt_chart",
+            style : "height: 120px",
+            //html  : 'loading ...'<i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>
+          }
+        }]
+      },{
+        type : "<div>",
+        attr : {
+          class : "col-md-12"
+        },
+        children:[{
+          type : "<table>",
+          attr : {
+            class: "col-md-12 table table-striped table-bordered table-condensed nowrap",
+            style: "font-size: 12px;table-layout:fixed;"
+          },
+          children: other_dom
+        }]
+      }]
+    };
+
+
+
+
+    $("#detailItem").html( MMTDrop.tools.createDOM( dom_cfg ) );
+    function format_nu( v ){
+      if( isNaN( v )) return 0;
+      return v;
+    };
+
     $("#modalWindow").modal();
+    setTimeout( function(){
+      createBar({
+        bindto: "#detail_perf_chart",
+        data: {
+          columns : [["NRT", format_nu( msg[ COL.RTT.id ])/1000 ],
+                     ["ART", format_nu( msg[ HTTP.RESPONSE_TIME.id ])/1000 ],
+                     ["DTT", format_nu( msg[ HTTP.DATA_TRANSFER_TIME.id ])/1000 ],
+                    ],
+          groups  : [["NRT","ART","DTT"]],
+        },
+        axis: {
+          y : {
+            label: {
+              text    : "Time(ms)",
+            }
+          },
+          x : {
+            categories : ["EURT"]
+          }
+        }
+      });
+
+      createBar({
+        bindto: "#detail_usage_chart",
+        data: {
+          columns : [["Request", format_nu( msg[ COL.UL_DATA_VOLUME.id ]) ],
+                     ["Response", format_nu( msg[ COL.DL_DATA_VOLUME.id ]) ],
+                    ],
+          groups  : [["Request","Response"]],
+        },
+        color: {
+          pattern: ['green', 'orange']
+        },
+        axis: {
+          y : {
+            label: {
+              text    : "Bytes",
+            }
+          },
+          x : {
+            categories : ["Bytes"]
+          }
+        }
+      });
+
+      createBar({
+        bindto: "#detail_tcp_chart",
+        data: {
+          columns : [["Client", format_nu( msg[ COL.RETRANSMISSION_COUNT.id ]) ],
+                     ["Server", 0 ],
+                    ],
+          groups  : [["Client.","Server"]],
+        },
+        color: {
+          pattern: ['green', 'orange']
+        },
+        axis: {
+          y : {
+            label: {
+              text    : "Packets",
+            }
+          },
+          x : {
+            categories : ["Retrans."]
+          }
+        }
+      });
+
+      createBar({
+        bindto: "#detail_pkt_chart",
+        data: {
+          columns : [["Request", format_nu( msg[ COL.UL_PACKET_COUNT.id ]) ],
+                     ["Response", format_nu( msg[ COL.DL_PACKET_COUNT.id ]) ],
+                    ],
+          groups  : [["Request","Response"]],
+        },
+        color: {
+          pattern: ['green', 'orange']
+        },
+        axis: {
+          y : {
+            label: {
+              text    : "Packets",
+            }
+          },
+          x : {
+            categories : ["Packets"]
+          }
+        }
+      });
+    }, 800 )
 }
 
 
@@ -270,7 +548,8 @@ $( function(){
   for( var key in obj ){
     if( key == "groupby")
       continue;
-
+    if( key == "ts" )
+      obj[key] = (new Date( parseInt(obj[key]) )).toLocaleString();
     if (url == undefined )
       url = "/chart/application?" + key + "="+ obj[key]
     else

@@ -316,7 +316,33 @@ a:hover, .ahref:hover{
     100%  { opacity: 1;}
 }
 
+.c3-chart-bars,.mmt-c3-chart-bars-animation, .mmt-c3-chart-bars-animation-inverted {
+    opacity: 0;
+    animation-name    : draw_c3j_bar;
+    animation-duration: 2s;
 
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+}
+
+@keyframes draw_c3j_bar {
+    0%    { opacity: 0}
+    40%   { opacity: 0;   transform: translate(-100px,0px);}
+    80%   { opacity: 0.7; transform: translate(0px,0px);}
+    100%  { opacity: 1;}
+}
+
+.mmt-c3-chart-bars-animation-inverted {
+    animation-name    : draw_c3j_bar_inverted;
+}
+
+@keyframes draw_c3j_bar_inverted {
+    0%    { opacity: 0}
+    40%   { opacity: 0;   transform: translate(100px,0px);}
+    80%   { opacity: 0.7; transform: translate(0px,0px);}
+    100%  { opacity: 1;}
+}
 
 .c3-chart-arc {
     opacity: 0;
