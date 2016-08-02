@@ -103,7 +103,6 @@ var ReportFactory = {
                     var arr = [];
                     var havingOther = false;
 
-                    console.log( data.length );
                     for( var i=0; i<data.length; i++){
                         var msg     = data[i];
 
@@ -226,15 +225,19 @@ function createBar( opt ){
   var chart_opt =  {
       bindto: "CHANGE",
       size: {
-        height: 120
+        height: 100
       },
       padding:{
-        right: 200
+        top: 0,
+        right: 30
       },
       data: {
         columns : [["CHANGE"]],
         groups  : [["CHANGE"]],
-        type    : "bar"
+        type    : "bar",
+        //order: 'desc' // stack order by sum of values descendantly.
+        //order: 'asc'  // stack order by sum of values ascendantly.
+        order: null   // stack order by data definition.
       },
       color: {
         pattern: ['violet', 'orange', 'DeepSkyBlue']
@@ -250,7 +253,7 @@ function createBar( opt ){
           },
           label: {
             text    : "CHANGE",
-            position: 'inner-right'
+            position: 'outter-right'
           },
           min: 0,
           padding: {
@@ -259,9 +262,8 @@ function createBar( opt ){
           }
         },
         x : {
-          type: 'category',
+          type      : 'category',
           categories: ["CHANGE"],
-          min: 0,
         }
       },
       grid: {
@@ -269,9 +271,37 @@ function createBar( opt ){
           show : true,
         }
       },
-      padding: {
-        top: 20,
+      bar: {
+        width: 30
       },
+      tooltip: {
+        contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+              var $$ = this, config = $$.config,
+                  titleFormat = config.tooltip_format_title || defaultTitleFormat,
+                  nameFormat  = config.tooltip_format_name  || function (name) { return name; },
+                  valueFormat = config.tooltip_format_value || defaultValueFormat,
+                  text, i, title, value, name, bgcolor;
+              for (i = 0; i < d.length; i++) {
+                  if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
+
+                  if (! text) {
+                      title = titleFormat ? titleFormat(d[i].x) : d[i].x;
+                      text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
+                  }
+
+                  name = nameFormat(d[i].name);
+                  value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
+                  bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+
+                  text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
+                  text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
+                  text += "<td class='value'>" + value + "</td>";
+                  text += "</tr>";
+              }
+              return text + "</table>";
+          },
+        grouped: true
+      }
     };
 
     chart_opt = MMTDrop.tools.mergeObjects( chart_opt, opt );
@@ -314,8 +344,22 @@ function loadDetail( index ) {
       var val = msg[ c.id ];
       if( val == undefined || exclude.indexOf( c.id ) != -1 )
         continue;
-      if( c.id == HTTP.REQUEST_INDICATOR.id )
-        val = (val == 0)? "no" : "yes";
+      switch ( c.id ) {
+        case COL.IP_SRC_INIT_CONNECTION.id:
+          val = val? "yes" : "no";
+          break;
+        case HTTP.REQUEST_INDICATOR.id:
+          val = (val == 1)? "yes" : "no";
+          break;
+        case HTTP.INTERACTION_TIME.id :
+          val = MMTDrop.tools.formatLocaleNumber( val ) +  ' ms';
+          break;
+        case HTTP.CONTENT_LENGTH.id:
+          val += ' bytes';
+          break;
+
+
+      }
 
       other_dom.push({
         type : "<tr>",
@@ -358,7 +402,7 @@ function loadDetail( index ) {
           type : "<div>",
           attr : {
             id    : "detail_perf_chart",
-            style : "height: 120px"
+            style : "height: 100px"
           }
         }]
       },{
@@ -377,7 +421,7 @@ function loadDetail( index ) {
           type : "<div>",
           attr : {
             id    : "detail_usage_chart",
-            style : "height: 120px"
+            style : "height: 100px"
           }
         }]
       },{
@@ -396,7 +440,7 @@ function loadDetail( index ) {
           type : "<div>",
           attr : {
             id    : "detail_tcp_chart",
-            style : "height: 120px"
+            style : "height: 100px"
           }
         }]
       },{
@@ -415,7 +459,7 @@ function loadDetail( index ) {
           type : "<div>",
           attr : {
             id    : "detail_pkt_chart",
-            style : "height: 120px",
+            style : "height: 100px",
             //html  : 'loading ...'<i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>
           }
         }]
@@ -425,6 +469,12 @@ function loadDetail( index ) {
           class : "col-md-12"
         },
         children:[{
+          type : "<div>",
+          attr : {
+            text: "Others",
+            style: "font-weight:bold"
+          }
+        },{
           type : "<table>",
           attr : {
             class: "col-md-12 table table-striped table-bordered table-condensed nowrap",
@@ -451,7 +501,7 @@ function loadDetail( index ) {
         data: {
           columns : [["NRT", format_nu( msg[ COL.RTT.id ])/1000 ],
                      ["ART", format_nu( msg[ HTTP.RESPONSE_TIME.id ])/1000 ],
-                     ["DTT", format_nu( msg[ HTTP.DATA_TRANSFER_TIME.id ])/1000 ],
+                     ["DTT", format_nu( msg[ HTTP.DATA_TRANSFER_TIME.id ])/1000 ]
                     ],
           groups  : [["NRT","ART","DTT"]],
         },
@@ -471,7 +521,7 @@ function loadDetail( index ) {
         bindto: "#detail_usage_chart",
         data: {
           columns : [["Request", format_nu( msg[ COL.UL_DATA_VOLUME.id ]) ],
-                     ["Response", format_nu( msg[ COL.DL_DATA_VOLUME.id ]) ],
+                     ["Response", format_nu( msg[ COL.DL_DATA_VOLUME.id ]) ]
                     ],
           groups  : [["Request","Response"]],
         },
@@ -494,9 +544,9 @@ function loadDetail( index ) {
         bindto: "#detail_tcp_chart",
         data: {
           columns : [["Client", format_nu( msg[ COL.RETRANSMISSION_COUNT.id ]) ],
-                     ["Server", 0 ],
+                     ["Server", 0 ]
                     ],
-          groups  : [["Client.","Server"]],
+          groups  : [["Client","Server"]],
         },
         color: {
           pattern: ['green', 'orange']
@@ -517,7 +567,7 @@ function loadDetail( index ) {
         bindto: "#detail_pkt_chart",
         data: {
           columns : [["Request", format_nu( msg[ COL.UL_PACKET_COUNT.id ]) ],
-                     ["Response", format_nu( msg[ COL.DL_PACKET_COUNT.id ]) ],
+                     ["Response", format_nu( msg[ COL.DL_PACKET_COUNT.id ]) ]
                     ],
           groups  : [["Request","Response"]],
         },
@@ -527,7 +577,7 @@ function loadDetail( index ) {
         axis: {
           y : {
             label: {
-              text    : "Packets",
+              text : "Packets",
             }
           },
           x : {

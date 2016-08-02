@@ -256,7 +256,7 @@ MMTDrop.constants = {
       METHOD       : {id: 60, label: "Method"},
       RESPONSE     : {id: 61, label: "Response"},
       CONTENT_LENGTH: {id: 62, label: "Content length"},
-      REQUEST_INDICATOR  : {id: 63, label:"Has Response"}, //It indicates that a particular request is finished with a response
+      REQUEST_INDICATOR  : {id: 63, label:"Got Complete Response"}, //It indicates that a particular request is finished with a response
       DATA_TRANSFER_TIME : {id: 64, label:""}, //Time between first response packet and TCP_FIN
 
     },
@@ -1643,7 +1643,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     this.afterReload = function( cb ){
         _reloadCallback.push( cb );
     }
-    this.updateParameter = function(){};
+    this.updateParameter = null;
 
     this.delete = function(){
         _data = [];
@@ -5587,7 +5587,7 @@ MMTDrop.chartFactory = {
 
             for( var j=1; j<n; j++){
                 var val = arrData[i][j];
-                if( val == undefined )
+                if( val === undefined )
                     val = 0;
                 obj[j].push( val );  //y
             }
@@ -5645,9 +5645,9 @@ MMTDrop.chartFactory = {
                   type   : (type === "scatter")? type:  "",
                   types  : types,
                   groups : [ groups ],
-                            //order  : 'desc' // stack order by sum of values descendantly. this is default.
-                            //order: 'asc'  // stack order by sum of values ascendantly.
-                            order: null,   // stack order by data definition.}
+                  //order  : 'desc' // stack order by sum of values descendantly. this is default.
+                  //order: 'asc'  // stack order by sum of values ascendantly.
+                  order: null,   // stack order by data definition.}
                 },
                         size:{
                             height: height
@@ -5686,32 +5686,32 @@ MMTDrop.chartFactory = {
                   format: {
                     title: MMTDrop.tools.formatDateTime
                   },
-                            contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
-                                  var $$ = this, config = $$.config,
-                                      titleFormat = config.tooltip_format_title || defaultTitleFormat,
-                                      nameFormat = config.tooltip_format_name || function (name) { return name; },
-                                      valueFormat = config.tooltip_format_value || defaultValueFormat,
-                                      text, i, title, value, name, bgcolor;
-                                  for (i = 0; i < d.length; i++) {
-                                      if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
+                  contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                        var $$ = this, config = $$.config,
+                            titleFormat = config.tooltip_format_title || defaultTitleFormat,
+                            nameFormat  = config.tooltip_format_name  || function (name) { return name; },
+                            valueFormat = config.tooltip_format_value || defaultValueFormat,
+                            text, i, title, value, name, bgcolor;
+                        for (i = 0; i < d.length; i++) {
+                            if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
 
-                                      if (! text) {
-                                          title = titleFormat ? titleFormat(d[i].x) : d[i].x;
-                                          text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
-                                      }
+                            if (! text) {
+                                title = titleFormat ? titleFormat(d[i].x) : d[i].x;
+                                text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
+                            }
 
-                                      name = nameFormat(d[i].name);
-                                      value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
-                                      bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+                            name = nameFormat(d[i].name);
+                            value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
+                            bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
 
-                                      text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
-                                      text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
-                                      text += "<td class='value'>" + value + "</td>";
-                                      text += "</tr>";
-                                  }
-                                  return text + "</table>";
-                              },
-                            grouped: true
+                            text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
+                            text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
+                            text += "<td class='value'>" + value + "</td>";
+                            text += "</tr>";
+                        }
+                        return text + "</table>";
+                    },
+                  grouped: true
                 },
                 grid: {
                   x: {

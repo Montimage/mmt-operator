@@ -17,7 +17,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 4,
-        height: 5,
+        height: 4,
         type: "warning",
         userData: {
             fn: "createSlowestUsersReport"
@@ -28,7 +28,7 @@ var arr = [
         x: 4,
         y: 0,
         width: 4,
-        height: 5,
+        height: 4,
         type: "danger",
         userData: {
             fn: "createSlowestAppsReport"
@@ -39,7 +39,7 @@ var arr = [
         x: 8,
         y: 0,
         width: 4,
-        height: 5,
+        height: 4,
         type: "warning",
         userData: {
             fn: "createSlowestRemotesReport"
@@ -148,50 +148,8 @@ var ReportFactory = {
 
 
 
-        //mongoDB aggregate
-        var group = { _id : {} };
-
-        [ COL.TIMESTAMP.id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
-        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
-          COL.RETRANSMISSION_COUNT.id, COL.RTT.id,
-          HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
-          HTTP.DATA_TRANSFER_TIME.id
-        ].forEach( function( el, index){
-          group[ el ] = {"$sum" : "$" + el};
-        });
-        [ COL.TIMESTAMP.id ].forEach( function( el, index){
-          group[ el ] = {"$first" : "$"+ el};
-        } );
-
-        var $match = {};
-        $match[ COL.FORMAT_ID.id ] = 100;
-
-        //load data corresponding to the selected app
-        var probe_id  = URL_PARAM.probe_id;
-        if( probe_id != undefined )
-          $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
-
-
-        if( URL_PARAM.app_id() )
-            $match[ COL.APP_ID.id] = URL_PARAM.app_id();
-        if( URL_PARAM.ip )
-            $match[ COL.IP_SRC.id] = URL_PARAM.ip;
-        if( URL_PARAM.remote )
-          $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
-
-
-        var db_option = {collection: "data_session", action: "aggregate",
-                        query : [{"$match": $match},{"$group" : group}] };
-
-        if ( URL_PARAM.app_id() != undefined && URL_PARAM.ip == undefined && URL_PARAM.remote == undefined ){
-          db_option.collection = "data_app";
-          $match.isGen         = false;
-        }else if( URL_PARAM.ip && URL_PARAM.app_id() == undefined && URL_PARAM.remote == undefined )
-          db_option.collection = "data_ip";
-
-        var database = new MMTDrop.Database( db_option,
+        var database = new MMTDrop.Database( {action: "aggregate"},
+          //this function is called when database got data from server
           function( data ){
             //reload list of app/proto
             appList_db._reload();
@@ -239,19 +197,22 @@ var ReportFactory = {
 
             //check whenever probe runing at the moment ts
             var inActivePeriod = function( ts ){
-                for( var t in status_db.probeStatus )
-                    if( status_db.probeStatus[t].start <= ts && ts <= status_db.probeStatus[t].last_update )
-                        return true;
+              if( URL_PARAM.app_id != undefined || URL_PARAM.ip != undefined || URL_PARAM.remote != undefined )
                 return false;
+
+              for( var t in status_db.probeStatus )
+                  if( status_db.probeStatus[t].start <= ts && ts <= status_db.probeStatus[t].last_update )
+                      return true;
+              return false;
             }
 
-            var createZeroPoint = function( ts ){
+            var createZeroPoint = function( ts, true_zero ){
                 var zero = {};
                 zero[ time_id ] = ts;
 
                 var default_value = null;
 
-                if( inActivePeriod( ts ) )
+                if( true_zero === true || inActivePeriod( ts ) )
                     default_value = 0;
 
                 for( var c in cols )
@@ -275,6 +236,8 @@ var ReportFactory = {
             var arr    = [];
             var lastTS = start_time;
 
+            var last_exist = false;
+
             while( lastTS <= end_time ){
                 lastTS += period_sampling;
 
@@ -288,13 +251,71 @@ var ReportFactory = {
                     }
                 }
 
-                if ( !existPoint )
+                if ( !existPoint ){
+                  //there exist a point just before
+                  if( last_exist )
+                    arr.push( createZeroPoint( lastTS, true ) );
+                  else
                     arr.push( createZeroPoint( lastTS ) );
+                }
+                else if( last_exist == false && arr.length > 1 ){
+                  //update the precedent point to zero
+                  var msg = arr[ arr.length - 1 - 1 ];
+                  for( var k in msg )
+                    if( msg[k] === null )
+                      msg[k] = 0;
+                }
+
+                last_exist = existPoint;
             }
 
 
             return arr;
-        });
+        });//end new Database
+        //this is called each time database is reloaded to update parameters of database
+        database.updateParameter = function( _old_param ){
+          //mongoDB aggregate
+          var group = { _id : {} };
+
+          [ COL.TIMESTAMP.id ].forEach( function( el, index){
+            group["_id"][ el ] = "$" + el;
+          } );
+          [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
+            COL.RETRANSMISSION_COUNT.id, COL.RTT.id,
+            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
+            HTTP.DATA_TRANSFER_TIME.id
+          ].forEach( function( el, index){
+            group[ el ] = {"$sum" : "$" + el};
+          });
+          [ COL.TIMESTAMP.id ].forEach( function( el, index){
+            group[ el ] = {"$first" : "$"+ el};
+          } );
+
+          var $match = {};
+          $match[ COL.FORMAT_ID.id ] = 100;
+
+          //load data corresponding to the selected app
+          var probe_id  = URL_PARAM.probe_id;
+          if( probe_id != undefined )
+            $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
+
+
+          if( URL_PARAM.app_id() )
+              $match[ COL.APP_ID.id] = URL_PARAM.app_id();
+          if( URL_PARAM.ip )
+              $match[ COL.IP_SRC.id] = URL_PARAM.ip;
+          if( URL_PARAM.remote )
+            $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+
+          var collection = "data_session";
+          if ( URL_PARAM.app_id() != undefined && URL_PARAM.ip == undefined && URL_PARAM.remote == undefined ){
+            collection    = "data_app";
+            $match.isGen  = false;
+          }else if( URL_PARAM.ip && URL_PARAM.app_id() == undefined && URL_PARAM.remote == undefined )
+            collection = "data_ip";
+
+          return {collection: collection, query : [{"$match": $match},{"$group" : group}]};
+        };//end database.updateParameter
 
         //line chart on the top
         var cLine = MMTDrop.chartFactory.createTimeline({
@@ -308,16 +329,22 @@ var ReportFactory = {
                                 {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"}
                                ];
                     var data  = db.data();
-                    var total = 0;
+
                     var get_number = function( v ){
-                      if( v == null || isNaN( v )) return 0;
+                      if( v == null || isNaN( v )) return -1;
                       return v;
                     }
 
-                    for( var i in data )
-                      total += get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ HTTP.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] )
-
-                    total = Math.round(total/data.length);
+                    var length = 0, total  = 0, val;
+                    for( var i in data ){
+                      val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ HTTP.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
+                      //val = -3
+                      if( val >= 0 ){
+                        total  += val;
+                        length ++;
+                      }
+                    }
+                    total = Math.round(total/length);
 
                     return {
                         data    : data,
@@ -416,9 +443,6 @@ var ReportFactory = {
                     }
                 },
             },
-            afterRender: function(){
-            }
-
         });
 
         //show tooltip when user moves mouse over one row off cTable
@@ -477,7 +501,7 @@ var ReportFactory = {
                         msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick="loadDetail('+ time +')">' + t2 + '</a>';
 
                         //DATA_VOLUME represents bandwith bps => need to divide by 8 to get bytes
-                        msg["packet_size"] = (msg[ COL.DATA_VOLUME.id ] / msg[ COL.PACKET_COUNT.id ] / 8).toFixed(2);
+                        msg["packet_size"] = _this.divide(msg[ COL.DATA_VOLUME.id ], msg[ COL.PACKET_COUNT.id ] * 8).toFixed(2);
                         msg[ HTTP.DATA_TRANSFER_TIME.id ] = MMTDrop.tools.formatDataVolume( msg[ HTTP.DATA_TRANSFER_TIME.id ] );
                         msg[ COL.DATA_VOLUME.id ]         = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
@@ -556,56 +580,62 @@ var ReportFactory = {
           col_id = COL.IP_SRC.id;
         var is_app = (col_id == COL.APP_ID.id);
 
-        //mongoDB aggregate
-        var group = { _id : {} };
 
-        [ col_id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
 
-        [ COL.RTT.id, COL.ACTIVE_FLOWS.id,
-          HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.DATA_TRANSFER_TIME.id
-        ].forEach( function( el, index){
-          group[ el ] = {"$sum" : "$" + el};
-          //group._total["$sum"].push( "$" + el );
-        });
-        [ col_id ].forEach( function( el, index){
-          group[ el ] = {"$first" : "$"+ el};
-        } );
+        var database = new MMTDrop.Database({action: "aggregate"});
+        //this is called each time database is reloaded to update parameters of database
+        database.updateParameter = function( _old_param ){
+          //mongoDB aggregate
+          var $group = { _id : {} };
 
-        var $match = {} ;
-        $match[ COL.FORMAT_ID.id ] = 100;
+          [ col_id ].forEach( function( el, index){
+            $group["_id"][ el ] = "$" + el;
+          } );
 
-        if( is_app ){
-          $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
-        }
+          [ COL.RTT.id, COL.ACTIVE_FLOWS.id,
+            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.DATA_TRANSFER_TIME.id
+          ].forEach( function( el, index){
+            $group[ el ] = {"$sum" : "$" + el};
+            //group._total["$sum"].push( "$" + el );
+          });
+          [ col_id ].forEach( function( el, index){
+            $group[ el ] = {"$first" : "$"+ el};
+          } );
 
-        if( URL_PARAM.app_id() )
-          $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
-        if( URL_PARAM.ip )
-          $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
-        if( URL_PARAM.remote )
-          $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+          var $match = {} ;
+          $match[ COL.FORMAT_ID.id ] = 100;
 
-        //load data corresponding to the selected app
-        var probe_id   = MMTDrop.tools.getURLParameters().probe_id;
-        if( probe_id != undefined )
-          $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
-
-        //query on either "ip", "app" or "session"
-        var collection = "data_session";
-        if( is_app ){
-          if( URL_PARAM.ip  == undefined && URL_PARAM.remote  == undefined){
-            collection   = "data_app";
-            $match.isGen = false;
+          if( is_app ){
+            $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
           }
-        }
-        else{
-          if( col_id == COL.IP_SRC.id && URL_PARAM.app_id()  == undefined && URL_PARAM.remote == undefined)
-            collection = "data_ip";
-        }
-        var database = new MMTDrop.Database({collection: collection, action: "aggregate",
-                          query : [{"$match": $match},{"$group" : group}] });
+
+          if( URL_PARAM.app_id() )
+            $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
+          if( URL_PARAM.ip )
+            $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
+          if( URL_PARAM.remote )
+            $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+
+          //load data corresponding to the selected app
+          var probe_id   = MMTDrop.tools.getURLParameters().probe_id;
+          if( probe_id != undefined )
+            $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
+
+            //query on either "ip", "app" or "session"
+            var collection = "data_session";
+            if( is_app ){
+              if( URL_PARAM.ip  == undefined && URL_PARAM.remote  == undefined){
+                collection   = "data_app";
+                //query on data_app ==> selection only real applications/protocols
+                $match.isGen = false;
+              }
+            }
+            else{
+              if( col_id == COL.IP_SRC.id && URL_PARAM.app_id()  == undefined && URL_PARAM.remote == undefined)
+                collection = "data_ip";
+            }
+          return {collection: collection, query : [{"$match": $match},{"$group" : $group}]};
+        }//end database.updateParameter
 
         //is_trans : show only transactions
         function createBar( is_trans ){
@@ -645,7 +675,7 @@ var ReportFactory = {
                   ["DTT"],
                 ];
                 if( is_trans )
-                  obj = [["#Transactions"]];
+                  obj = [["#HTTP Trans."]];
 
                 var groups = [];
                 for( var i in obj )
@@ -700,6 +730,9 @@ var ReportFactory = {
               //Set a callback which is executed when the chart is rendered. Basically, this callback will be called in each time when the chart is redrawed.
               onrendered: function(){
                 var _id = this.config.bindto;
+                //hide tick
+                d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX ).
+                  selectAll(".tick").selectAll("line").style("visibility","hidden");
 
                 if( is_trans ){
                   d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX )
@@ -715,6 +748,7 @@ var ReportFactory = {
                   //add class
                   d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation-inverted", true);
                 }else{
+
                   d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
                     //set middle
                    .selectAll("text").style({
@@ -725,10 +759,9 @@ var ReportFactory = {
                      var cat = $(this).text();
                      MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : (col_id == COL.IP_SRC.id ? "ip=": "remote=")) + cat) )
                    })
-                   .on("mouseover", function(){
-                     var text = $(this).text();
-
-                   })
+                  // .on("mouseover", function(){
+                  //   var text = $(this).text();
+                  // })
                    .selectAll("tspan").attr('x', -50)
                    ;
 
@@ -785,7 +818,6 @@ var ReportFactory = {
               },
               bar : {
                 width: 15,
-                spacing: 5
               },
               axis: {
                 rotated: true,
@@ -800,8 +832,8 @@ var ReportFactory = {
                     count: is_trans? 4 : 4
                   },
                   label: {
-                    text    : is_trans? "trans." : "ms/trans.",
-                    position: is_trans? 'inner-left'   : 'inner-right'
+                    text    : is_trans? "transactions" : "ms/transaction",
+                    position: is_trans? 'outter-left'   : 'outter-right'
                   },
                   padding: {
                     top: 0,
@@ -818,7 +850,11 @@ var ReportFactory = {
                 }
               },
               padding: {
-                top: 20,
+                right: (is_trans ? 0: 30 ),
+                top  : 10
+              },
+              size:{
+                height: 250
               },
               legend : {
                 item: {

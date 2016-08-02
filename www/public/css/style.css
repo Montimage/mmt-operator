@@ -259,7 +259,7 @@ tr.selected a {
 .c3-area {
     opacity: 0.8;
 }
-.c3-line {
+.c3-line,.c3-ygrid-line {
     stroke-width: 2px !important;
 }
 
