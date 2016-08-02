@@ -142,7 +142,7 @@ var MongoConnector = function () {
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-                               COL.PROFILE_ID, "isGen"],
+                               COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR],
                                   //init
                                init_session_set
                                   ),
@@ -366,6 +366,7 @@ var MongoConnector = function () {
 
         if ( format === 100 || format === 99 ){
             msg.isGen = false;//this is original message comming from mmt-probe
+
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
 
             //as 2 threads may produce a same session_ID for 2 different sessions
@@ -379,6 +380,8 @@ var MongoConnector = function () {
             if( format === 100 ){
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] == 1 ){
+                  msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
+                  
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
                   msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.REQUEST_ID ];
                   if( msg[ HTTP.FRAGMENTATION ] == 0 ){

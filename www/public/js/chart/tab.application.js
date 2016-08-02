@@ -510,8 +510,9 @@ var ReportFactory = {
                         msg[ COL.DATA_VOLUME.id ]         = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         //% payload
-                        msg[ COL.PAYLOAD_VOLUME.id ] =  msg[ COL.PAYLOAD_VOLUME.id ] + "%";
-
+                        msg[ COL.PAYLOAD_VOLUME.id ]       += "%";
+                        //% Retransmision
+                        msg[ COL.RETRANSMISSION_COUNT.id ] += "%";
                         msg.__formated = true;
 
                         arr.push( msg );
@@ -528,7 +529,7 @@ var ReportFactory = {
             },
             bgPercentage:{
                 table : ".tbl-resp-time-report",
-                column: 13, //index of column, start from 1
+                column: [9,12], //index of column, start from 1
                 css   : "bg-img-1-red-pixel",
             },
             afterEachRender: function (_chart) {
@@ -756,7 +757,7 @@ var ReportFactory = {
                   d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
                     //set middle
                    .selectAll("text").style({
-                      'text-anchor' : 'middle',
+                      //'text-anchor' : 'middle',
                     })
                    .attr({"class" : "ahref", "fill": "#337ab7"})
                    .on("click", function(){
@@ -766,7 +767,7 @@ var ReportFactory = {
                   // .on("mouseover", function(){
                   //   var text = $(this).text();
                   // })
-                   .selectAll("tspan").attr('x', -50)
+                   //.selectAll("tspan").attr('x', -50)
                    ;
 
                   var $el = $( _id ).parents().filter(".col-md-7");
