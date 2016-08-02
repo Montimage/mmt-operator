@@ -313,6 +313,10 @@ var ReportFactory = {
             $match.isGen  = false;
           }else if( URL_PARAM.ip && URL_PARAM.app_id() == undefined && URL_PARAM.remote == undefined )
             collection = "data_ip";
+          else {
+            //data_session
+            $match.isGen  = false;
+          }
 
           return {collection: collection, query : [{"$match": $match},{"$group" : group}]};
         };//end database.updateParameter

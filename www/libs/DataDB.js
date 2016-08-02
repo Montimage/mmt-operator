@@ -98,7 +98,7 @@ var MongoConnector = function () {
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,HTTP.DATA_TRANSFER_TIME,],
                                //set
-                               [COL.MAC_SRC]),
+                               [COL.MAC_SRC, "isGen"]),
            location: new DataCache(db, "data_location",
                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.DST_LOCATION],
                               //inc
@@ -142,7 +142,7 @@ var MongoConnector = function () {
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-                               COL.PROFILE_ID],
+                               COL.PROFILE_ID, "isGen"],
                                   //init
                                init_session_set
                                   ),
@@ -151,7 +151,7 @@ var MongoConnector = function () {
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
+                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], ["isGen"], [COL.START_TIME], 5*60*1000),
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
@@ -252,7 +252,7 @@ var MongoConnector = function () {
       //I received reports from a probe before its starting
       //or starting message is sent after reports
       if( probe == undefined ){
-        console.log("undefined");//first message
+        console.log("first message comming from mmt-probe " + (new Date(ts)).toLocaleString() );//first message
         //update status of probe ==> it is alive
         self.probeStatus.set( msg );
         return;
@@ -365,7 +365,7 @@ var MongoConnector = function () {
 
 
         if ( format === 100 || format === 99 ){
-
+            msg.isGen = false;//this is original message comming from mmt-probe
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
 
             //as 2 threads may produce a same session_ID for 2 different sessions
@@ -424,6 +424,7 @@ var MongoConnector = function () {
 
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
+                msg2.isGen = true;
                 msg2 = dataAdaptor.inverseStatDirection( msg2 );
                 //we must not increase number of active flows
                 msg2[ COL.ACTIVE_FLOWS ] = 0;
