@@ -365,6 +365,11 @@ var MongoConnector = function () {
 
 
         if ( format === 100 || format === 99 ){
+
+            //a dummy report when session expired
+            if( msg[ COL.DATA_VOLUME ] == 0 )
+              return;
+
             msg.isGen = false;//this is original message comming from mmt-probe
 
             msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
@@ -381,7 +386,7 @@ var MongoConnector = function () {
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] == 1 ){
                   msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
-                  
+
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
                   msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.REQUEST_ID ];
                   if( msg[ HTTP.FRAGMENTATION ] == 0 ){

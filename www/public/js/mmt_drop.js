@@ -962,29 +962,28 @@ MMTDrop.tools = function () {
    * @memberof! MMTDrop.tools
    */
    _this.mergeObjects = function( obj1, obj2 ){
-         if( obj2 == undefined )
-             return obj1;
-         else if (obj1 == undefined )
-             return obj2;
-    //obj1 = MMTDrop.tools.cloneData( obj1 );
-    for (var p in obj2) {
-      try {
-        // Property in destination object set; update its value.
-        if ( obj2[p].constructor == Object ) {
-          obj1[p] = MMTDrop.tools.mergeObjects(obj1[p], obj2[p]);
-
-        } else {
-          obj1[p] = obj2[p];
-        }
-
-      } catch(e) {
-        // Property in destination object not set; create it and set its value.
-        obj1[p] = obj2[p];
-
+    var ret = {}, obj = obj1;
+    for (var p in obj) {
+      // Property in destination object set; update its value.
+      if ( obj[p] != undefined && obj[p].constructor == Object ) {
+        if( ret[p] == undefined ) ret[p] = {};
+        ret[p] = MMTDrop.tools.mergeObjects( ret[p], obj[p]);
       }
+      else
+        ret[p] = obj[p];
     }
 
-    return obj1;
+    obj = obj2;
+    for (var p in obj) {
+      // Property in destination object set; update its value.
+      if ( obj[p] != undefined && obj[p].constructor == Object ) {
+        if( ret[p] == undefined ) ret[p] = {};
+        ret[p] = MMTDrop.tools.mergeObjects( ret[p], obj[p]);
+      }
+      else
+        ret[p] = obj[p];
+    }
+    return ret;
   };
 
 
@@ -4870,6 +4869,7 @@ MMTDrop.Chart = function(option, renderFn){
             if( obj.addZeroPoints )
                 opt.addZeroPoints = obj.addZeroPoints;
       //dynamically create option for rendering chart
+
       if( obj.chart )
         opt.chart = MMTDrop.tools.mergeObjects( opt.chart, obj.chart );
     }
@@ -4905,9 +4905,10 @@ MMTDrop.chartFactory = {
       var _param = {};
       _param = MMTDrop.tools.mergeObjects( _param, param );
 
-      var chart = new MMTDrop.Chart( _param,
 
+      var chart = new MMTDrop.Chart( _param,
           function (elemID, option, data){
+
         //flat data: retain the first columns
         //the next ones are of each probe
         //get list of probes
@@ -5008,8 +5009,9 @@ MMTDrop.chartFactory = {
             grouped: true
           },
         };
-        if( param.chart )
-          chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+        if( option.chart )
+          chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
         var chart = c3.generate( chart_opt );
         return chart;
       });
@@ -5149,8 +5151,9 @@ MMTDrop.chartFactory = {
                   },
 
               };
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+              if( option.chart )
+                chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
                 var chart = c3.generate( chart_opt );
                 chart.color = function( key ){
                     if( chart.colors == undefined )
@@ -5774,9 +5777,9 @@ MMTDrop.chartFactory = {
                   }
             };
             //console.log( chart_opt );
-                if( param.chart ){
-                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
-                }
+            if( option.chart )
+              chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
                 var nb_real_points = 0;
                 if( obj[1] )
                     for( var i = 0; i<obj[0].length; i++)
@@ -6021,8 +6024,9 @@ MMTDrop.chartFactory = {
         };
 
                 //console.log( chart_opt );
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+                if( option.chart )
+                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
 
                 table.treetable( chart_opt );
 
@@ -6194,15 +6198,16 @@ MMTDrop.chartFactory = {
         });
                  */
         //add each element to a row
-                if( param.chart && param.chart.deferRender === true){
-                    param.chart.data = arrData;
-                    param.chart.columns = [];
+
+                if( option.chart && option.chart.deferRender === true){
+                   option.chart.data = arrData;
+                     option.chart.columns = [];
 
                     for( var i in option.columns )
                         if( option.columns[i].align === "right" )
-                            param.chart.columns.push( {className: "text-right"} );
+                           option.chart.columns.push( {className: "text-right"} );
                         else
-                            param.chart.columns.push( [] );
+                           option.chart.columns.push( [] );
 
                 }else
                     for (var i in arrData) {
@@ -6260,13 +6265,14 @@ MMTDrop.chartFactory = {
                     }
 
         tbody.appendTo(table);
-                var chart_option = {
+                var chart_opt = {
                     //fixedHeader: true,
                 };
-                if( param.chart )
-                   chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );
+                if( option.chart )
+                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
 
-               table.dataTable(chart_option);
+
+               table.dataTable(chart_opt);
 
         //when user click on a row
                 if (option.click) {

@@ -493,7 +493,7 @@ function loadDetail( index ) {
       if( isNaN( v )) return 0;
       return v;
     };
-
+    console.log( msg );
     $("#modalWindow").modal();
     setTimeout( function(){
       createBar({

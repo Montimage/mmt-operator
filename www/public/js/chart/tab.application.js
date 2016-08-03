@@ -644,6 +644,8 @@ var ReportFactory = {
 
         //is_trans : show only transactions
         function createBar( is_trans ){
+          if( is_trans == undefined ) is_trans = false;
+
           return MMTDrop.chartFactory.createBar({
             getData: {
               getDataFn: function (db) {
@@ -869,13 +871,10 @@ var ReportFactory = {
                 }
               }
             },
-            afterEachRender: function(o){
-
-            }
           });
         }//end createBar;
 
-        var cBar_time = createBar(),
+        var cBar_time = createBar( ),
             cBar_tran = createBar( true );
 
         cBar_time._neighbour = cBar_tran;
@@ -1071,7 +1070,7 @@ var ReportFactory = {
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
-
+console.log( JSON.stringify( arr, null, " "));
                     return {
                         data: arr,
                         columns: columns
