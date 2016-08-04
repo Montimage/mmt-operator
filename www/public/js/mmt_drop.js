@@ -903,6 +903,17 @@ MMTDrop.tools = function () {
         return time;
         */
     };
+    _this.formatString = function( val, len ){
+      if( typeof( val ) != "string" )
+        return val;
+      var str = val.toString();
+      
+      len = len || 50;
+      if( len > str.length )
+        return str;
+      var new_str = str.substr( 0, len ) + "...";
+      return '<span title="'+ str +'">'+ new_str +'</span>';
+    };
 
     _this.printStack = function(){
         try{

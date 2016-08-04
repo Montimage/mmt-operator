@@ -227,7 +227,7 @@ var ReportFactory = {
                           var val = msg[ c.id ];
                           if( val != undefined && val !== "" && val !== 0 && val !== -1){
                             //if( val == 0 ) val = ""
-                            obj[ c.id ]  = val;
+                            obj[ c.id ]  = MMTDrop.tools.formatString( val, 50 );
                             c.havingData = true;
                           }
                       }
