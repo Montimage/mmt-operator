@@ -147,7 +147,7 @@ var MMTDrop = {
         APP_FAMILY         : 50,
         CONTENT_CLASS      : 51,
         RESPONSE_TIME      : 52, /**< Index of the response time column */
-        TRANSACTIONS_COUNT : 53, /**< Index of the HTTP transactions count (req/res number) column */
+        TRANSACTIONS_COUNT : 53, /**< Index of the HTTP transactions count (req/res number) per TCP session */
         INTERACTION_TIME   : 54, /**< Index of the interaction time (between client and server) column */
         HOSTNAME           : 55, /**< Index of the hostname column */
         MIME_TYPE          : 56, /**< Index of the MIME type column */
@@ -157,7 +157,7 @@ var MMTDrop = {
         METHOD             : 60,
         RESPONSE           : 61,
         CONTENT_LENGTH     : 62,
-        REQUEST_INDICATOR  : 63, //It indicates that a particular request is finished with a response
+        REQUEST_INDICATOR  : 63, //It indicates that a particular request is finished with a response( 1: yes, 0: no)
         DATA_TRANSFER_TIME : 64, //Time between first response packet and TCP_FIN
     },
 

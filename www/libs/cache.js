@@ -239,19 +239,19 @@ function Cache ( option ) {
 
     var _getData = function () {
 
-        var copyObject = function( obj, key ){
+        var copyObject = function( obj, keys ){
             var new_obj = {};
-            for( var i in key )
-                new_obj[ key[i] ] = obj[ key[i] ];
+            for( var i in keys )
+                new_obj[ keys[i] ] = obj[ keys[i] ];
             return new_obj;
         }
 
         //
         var key_id  = option.message_format.key;
         var data_id = option.message_format.data;
-
+        var now     = (new Date()).getTime();
         var obj = {};
-        for (var i in _this.data) {
+        for (var i=0; i<_this.data.length; i++) {
             var msg  = _this.data[i];
 
             var key_obj  = copyObject( msg, key_id );
@@ -261,7 +261,12 @@ function Cache ( option ) {
             else //each minute, hour, day, month
                 key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
 
-            var txt = JSON.stringify( key_obj );
+            //var txt = JSON.stringify( key_obj );
+            var txt = "";
+            for( var j in key_obj )
+              txt += (key_obj[j] + "-");
+
+            key_obj._id = txt + msg[ TIMESTAMP ] + "-" + now;//+now to avoid duplicate ID after 2 consecutif calls of _getData (this can happen when flushCache is called)
 
             //first msg in the group identified by key_obj
             if (obj[txt] == undefined)

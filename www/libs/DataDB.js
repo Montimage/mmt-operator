@@ -58,7 +58,7 @@ var MongoConnector = function () {
 
             total: new DataCache(db, "data_total",
                                  //key
-                                 [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
+                                 [COL.FORMAT_ID, COL.PROBE_ID],
                                  //inc
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
@@ -71,7 +71,7 @@ var MongoConnector = function () {
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             //the parents is marked by isGen = true
             app: new DataCache(db, "data_app",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -87,7 +87,7 @@ var MongoConnector = function () {
                                 ["isGen", COL.PROFILE_ID, COL.APP_ID]),
 
             ip: new DataCache(db, "data_ip",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -100,7 +100,7 @@ var MongoConnector = function () {
                                //set
                                [COL.MAC_SRC, "isGen"]),
            location: new DataCache(db, "data_location",
-                              [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.DST_LOCATION],
+                              [COL.FORMAT_ID, COL.PROBE_ID, COL.DST_LOCATION],
                               //inc
                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -114,7 +114,7 @@ var MongoConnector = function () {
                               //set
                               [COL.MAC_SRC]),
             link: new DataCache(db, "data_link",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DEST],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC, COL.IP_DEST],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -148,14 +148,14 @@ var MongoConnector = function () {
                                   ),
 
             mac: new DataCache(db, "data_mac",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], ["isGen"], [COL.START_TIME], 5*60*1000),
             //for DOCTOR project
             //TODO to remove
-            ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
-                                                NDN.MAC_SRC, NDN.NAME],
+            ndn: new DataCache(db, "data_ndn",
+                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.MAC_SRC, NDN.NAME],
                                //inc
                               [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
@@ -177,6 +177,9 @@ var MongoConnector = function () {
           //id          : probe id
           //start       : starting moment of probe
           //last_update : last updated of probe
+        },
+        reset: function( probe_id ){
+          self.probeStatus.data[ probe_id ] = undefined;
         },
         set: function( msg ){
           var id          = msg[ PROBE_ID ],
@@ -245,9 +248,9 @@ var MongoConnector = function () {
     };
 
     var update_packet_timestamp = function( msg ){
-      var ts     = msg[ TIMESTAMP ];
-      var p_id   = msg[ PROBE_ID ];
-      var probe  = self.probeStatus.data[ p_id ];
+      var ts       = msg[ TIMESTAMP ];
+      var probe_id = msg[ PROBE_ID ];
+      var probe    = self.probeStatus.data[ probe_id ];
 
       //I received reports from a probe before its starting
       //or starting message is sent after reports
@@ -260,14 +263,22 @@ var MongoConnector = function () {
 
       var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
 
-      /*
-      console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
+      //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
+      //probe is restarted
+      if( ts > new_ts + 2*config.probe_stats_period_in_ms ){
+        console.log("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
+        //new running period
+        self.probeStatus.reset( probe_id );
+        self.probeStatus.set( msg );
+        return;
+      }else if( ts < new_ts - 2*config.probe_stats_period_in_ms ){
+        console.log("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
+        //new running period
+        self.probeStatus.reset( probe_id );
+        self.probeStatus.set( msg );
+        return;
+      }
 
-      if( ts > new_ts )
-        console.log( "=====================Report too late ", JSON.stringify(msg) );
-      else if( ts < new_ts - 2*config.probe_stats_period_in_ms )
-        console.log( "=====================Report too soon:", JSON.stringify(msg) );
-      */
 
       msg[ TIMESTAMP ]         = new_ts;
       msg[ COL.ORG_TIMESTAMP ] = ts;
@@ -352,10 +363,10 @@ var MongoConnector = function () {
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
             if( self.startProbeTime == undefined  || self.startProbeTime < ts){
                 self.startProbeTime = ts;
-                console.log("The last runing probe is " + (new Date( self.startProbeTime )));
+                console.log("Probe starts at " + (new Date( self.startProbeTime )));
             }
             //new running period
-            self.probeStatus.data[ probe_id ] = null;
+            self.probeStatus.reset( probe_id );
             //this is 30-report: 5-th element is not REPORT_NUMBER
             //we set REPORT_NUMBER to 0
             msg[ REPORT_NUMBER ] = 0;
@@ -385,11 +396,15 @@ var MongoConnector = function () {
             if( format === 100 ){
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] == 1 ){
+                  //each HTTP report is a unique session (1 request - 1 resp if it has)
+                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
+                  //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
+
+                  //mmt-operator: sum = number of req/res per 5 seconds
                   msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
 
-                  //each HTTP report is a unique session (1 request - 1 resp if it has)
-                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.REQUEST_ID ];
-                  if( msg[ HTTP.FRAGMENTATION ] == 0 ){
+                  //HTTP data is not yet completely transfered
+                  if( msg[ HTTP.REQUEST_INDICATOR ] == 0 ){
                     msg[ COL.ACTIVE_FLOWS ] = 0;
                   }
               }

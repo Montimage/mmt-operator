@@ -13,7 +13,7 @@ var arr = [
     },
     {
         id: "slowest_local",
-        title: "Top Users",
+        title: "Slowest Users",
         x: 0,
         y: 0,
         width: 4,
@@ -24,7 +24,7 @@ var arr = [
         },
     },{
         id: "slowest_app",
-        title: "Top Apps/Protocols",
+        title: "Slowest Applications",
         x: 4,
         y: 0,
         width: 4,
@@ -35,7 +35,7 @@ var arr = [
         },
     },{
         id: "slowest_remote",
-        title: "Top Remotes",
+        title: "Slowest Remotes",
         x: 8,
         y: 0,
         width: 4,
@@ -609,10 +609,8 @@ var ReportFactory = {
 
           var $match = {} ;
           $match[ COL.FORMAT_ID.id ] = 100;
-
-          if( is_app ){
-            $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
-          }
+          //select only APP or IP that contains APPs on the top of tcp
+          $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
           if( URL_PARAM.app_id() )
             $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
@@ -634,10 +632,6 @@ var ReportFactory = {
                 //query on data_app ==> selection only real applications/protocols
                 $match.isGen = false;
               }
-            }
-            else{
-              if( col_id == COL.IP_SRC.id && URL_PARAM.app_id()  == undefined && URL_PARAM.remote == undefined)
-                collection = "data_ip";
             }
           return {collection: collection, query : [{"$match": $match},{"$group" : $group}]};
         }//end database.updateParameter
@@ -682,7 +676,7 @@ var ReportFactory = {
                   ["DTT"],
                 ];
                 if( is_trans )
-                  obj = [["#HTTP Trans."]];
+                  obj = [["#HTTP Transaction"]];
 
                 var groups = [];
                 for( var i in obj )
@@ -737,7 +731,7 @@ var ReportFactory = {
               //Set a callback which is executed when the chart is rendered. Basically, this callback will be called in each time when the chart is redrawed.
               onrendered: function(){
                 var _id = this.config.bindto;
-                //hide tick
+                //hide tick for transsitions bar chart
                 d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX ).
                   selectAll(".tick").selectAll("line").style("visibility","hidden");
 
@@ -839,7 +833,7 @@ var ReportFactory = {
                     count: is_trans? 4 : 4
                   },
                   label: {
-                    text    : is_trans? "transactions" : "ms/transaction",
+                    text    : is_trans? "trans." : "ms/trans.",
                     position: is_trans? 'outter-left'   : 'outter-right'
                   },
                   padding: {
@@ -857,7 +851,7 @@ var ReportFactory = {
                 }
               },
               padding: {
-                right: (is_trans ? 0: 30 ),
+                right: (is_trans ? 5: 30 ),
                 top  : 10
               },
               size:{
@@ -988,7 +982,7 @@ var ReportFactory = {
 
                             obj[ COL.START_TIME.id ] = start_time;
                             obj[ "LastUpdated" ]     = last_update;
-
+                            obj[ COL.TIMESTAMP.id ]  = msg[ COL.TIMESTAMP.id ];
                             for (var j in colSum )
                                 obj[ colSum[j].id ] = msg[ colSum[j].id ];
                         }
@@ -1034,7 +1028,7 @@ var ReportFactory = {
                           //goto detail if a local IP or an APP is selected
                           //if( URL_PARAM.app_id() != undefined && URL_PARAM.ip != undefined )
                           {
-                            param  += "&ts=" + obj[ "LastUpdated" ] + "&groupby=" + fPeriod.selectedOption().id;
+                            param  += "&ts=" + obj[ COL.TIMESTAMP.id ] + "&groupby=" + fPeriod.selectedOption().id;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
                         }else{
@@ -1044,7 +1038,7 @@ var ReportFactory = {
                           //goto detail if a local IP or an APP is selected
                           //if( URL_PARAM.remote != undefined && URL_PARAM.ip != undefined )
                           {
-                            param  += "&ts=" + obj[ "LastUpdated" ] + "&groupby=" + fPeriod.selectedOption().id;
+                            param  += "&ts=" + obj[ COL.TIMESTAMP.id ] + "&groupby=" + fPeriod.selectedOption().id;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
                         }
@@ -1070,7 +1064,7 @@ var ReportFactory = {
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
-console.log( JSON.stringify( arr, null, " "));
+
                     return {
                         data: arr,
                         columns: columns
@@ -1117,9 +1111,11 @@ function loadDetail(timestamp) {
     }
 
     var $match = {};
-    $match[COL.TIMESTAMP.id ] = timestamp;
+    $match[ COL.TIMESTAMP.id ] = timestamp;
     //only session protocols
     $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+    //only on TCP: ETH.VLAN?.IP?.*.TCP
+    $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
     if (URL_PARAM.probe_id )
       $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
     if (URL_PARAM.app_id() )

@@ -77,7 +77,7 @@ if( param.profile ){
 
 //when all paramerters are selected
 //==> only one report is shown
-if( param.profile && param.ip && param.link && param.app && param.loc )
+if( param.profile && param.app && param.link )
   arr = [{
       id: "detail_location",
       title: "Details",

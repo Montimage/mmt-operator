@@ -50,25 +50,31 @@ var ReportFactory = {
       fAutoReload.hide();
 
       var self    = this;
-      var $match = {};
-      $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
-      //only session protocols
-      $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
-      if (URL_PARAM.probe_id )
-        $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
-      if (URL_PARAM.app_id() )
-        $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
-      if (URL_PARAM.ip )
-        $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
-      if (URL_PARAM.remote )
-        $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
 
-      var col_id = COL.IP_DEST.id;
-      if( URL_PARAM.remote )//when an IP is selected ==> group by APP
-        col_id = COL.APP_ID.id;
+      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "find",
+                      period_groupby: URL_PARAM.groupby, no_override_when_reload: true });
 
+      database.updateParameter = function( _old_param ){
+        var $match = {};
+        $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
+        //only session protocols
+        $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
-      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "find", query: [{$match: $match}], period_groupby: URL_PARAM.groupby, no_override_when_reload: true });
+        if (URL_PARAM.probe_id )
+          $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
+        if (URL_PARAM.app_id() )
+          $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
+        if (URL_PARAM.ip )
+          $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
+        if (URL_PARAM.remote )
+          $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+
+        var col_id = COL.IP_DEST.id;
+        if( URL_PARAM.remote )//when an IP is selected ==> group by APP
+          col_id = COL.APP_ID.id;
+          
+        return {query: [{$match: $match}]};
+      }
 
       var cTable = MMTDrop.chartFactory.createTable({
             getData: {
