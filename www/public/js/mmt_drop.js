@@ -158,7 +158,7 @@ MMTDrop.constants = {
        * It allows to build a hierarchical view on the protocol statistics.
        *
        */
-      APP_PATH          : {id: 6,  label: "App Path"},
+      APP_PATH          : {id: 6,  label: "App. Path"},
       /** Index of the active flows column */
       ACTIVE_FLOWS      : {id: 7,  label: "Flow Count"},
       /** Index of the data volume column */
@@ -194,7 +194,7 @@ MMTDrop.constants = {
       PORT_SRC          : {id: 24 , label: "Port Source"},
       THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
-      RTT               : {id: 26 , label: "RTT"},
+      RTT               : {id: 31 , label: "RTT"},
 
       RTT_MIN_SERVER    : {id: 27 , label: "RTT min Server"},
       RTT_MIN_CLIENT    : {id: 28 , label: "RTT min Client"},
@@ -907,7 +907,7 @@ MMTDrop.tools = function () {
       if( typeof( val ) != "string" )
         return val;
       var str = val.toString();
-      
+
       len = len || 50;
       if( len > str.length )
         return str;
@@ -6217,8 +6217,10 @@ MMTDrop.chartFactory = {
                     for( var i in option.columns )
                         if( option.columns[i].align === "right" )
                            option.chart.columns.push( {className: "text-right"} );
+                        else if( option.columns[i].class )
+                           option.chart.columns.push( {className: option.columns[i].class } );
                         else
-                           option.chart.columns.push( [] );
+                          option.chart.columns.push( [] );
 
                 }else
                     for (var i in arrData) {
@@ -6277,7 +6279,7 @@ MMTDrop.chartFactory = {
 
         tbody.appendTo(table);
                 var chart_opt = {
-                    //fixedHeader: true,
+
                 };
                 if( option.chart )
                   chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );

@@ -641,7 +641,7 @@ var ReportFactory = {
                   class   : "btn btn-primary",
                   value   : 'Add',
                   id      : "nic-btnSave",
-                  disabled: true
+                  //disabled: true
                 }
               }//end buttons
               ]
@@ -704,8 +704,8 @@ var ReportFactory = {
             data             : arr,
             columns: [
               {title: ""},
-              {title: "Timestamp"},
-              {title: "IP Address"},
+              {title: "Created Time"},
+              {title: "Host Address"},
               {title: "Last Reported"},
               {title: "Actions"},
             ]
@@ -721,24 +721,13 @@ var ReportFactory = {
           $widget.trigger("widget-resized", [$widget]);
 
           //when user click on Delete button
-          $(".btn-delete").on("click", function(){
-            var file = this.dataset["file"];
-            if( !confirm("Delete this backup ["+ file +"]\nAre you sure?\n\n") )
-              return;
-            $(this).disable();
+          $("#btnDelete").on("click", function(){
 
-            MMTDrop.tools.ajax("/info/db?action=del", {time: this.dataset["time"]}, "POST", {
-              error: function(){
-                MMTDrop.alert.error("Internal Error 601", 5*1000);
-              },
-              success: function(){
-
-              }
-            })
           });
         }
       })//end MMTDrop.tools.ajax
     };//end load_data
+    
     load_data();
 
 
@@ -747,7 +736,21 @@ var ReportFactory = {
       errorClass  : "text-danger",
       errorElement: "span",
       rules: {
-        "ssh-address"         : {ipv4: true},
+        "ssh-address" : {ipv4: true},
+        "ssh-username": {
+          required: {
+            depends: function( el ){
+              return $("#ssh-address").val() != "localhost";
+            }
+          }
+        },
+        "ssh-password": {
+          required: {
+            depends: function( el ){
+              return $("#ssh-address").val() != "localhost";
+            }
+          }
+        }
       },
       //when the form was valided
       submitHandler : function( form ){

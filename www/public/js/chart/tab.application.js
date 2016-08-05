@@ -12,8 +12,8 @@ var arr = [
         },
     },
     {
-        id: "slowest_local",
-        title: "Slowest Users",
+        id: "top_local",
+        title: "Top Users",
         x: 0,
         y: 0,
         width: 4,
@@ -23,8 +23,8 @@ var arr = [
             fn: "createSlowestUsersReport"
         },
     },{
-        id: "slowest_app",
-        title: "Slowest Applications",
+        id: "top_app",
+        title: "Top Applications",
         x: 4,
         y: 0,
         width: 4,
@@ -34,8 +34,8 @@ var arr = [
             fn: "createSlowestAppsReport"
         },
     },{
-        id: "slowest_remote",
-        title: "Slowest Remotes",
+        id: "top_remote",
+        title: "Top Remotes",
         x: 8,
         y: 0,
         width: 4,
@@ -665,9 +665,14 @@ var ReportFactory = {
 
                  data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ HTTP.DATA_TRANSFER_TIME.id ];
                 }
+
                 //get top 8
+                //sort by DESC of #Trans
                 data.sort( function( a, b ){
-                  return b._total - a._total;
+                  var val = b[ HTTP.TRANSACTIONS_COUNT.id ] - a[ HTTP.TRANSACTIONS_COUNT.id ];
+                  if( val == 0 )
+                    return b._total - a._total
+                  return val;
                 });
 
                 var obj = [

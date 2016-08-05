@@ -78,13 +78,18 @@ body {
     max-width: 300px;
 }
 .dataTable td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
-    -ms-text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.truncate{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  -ms-text-overflow: ellipsis;
+  max-width: 1px;
+  width: 60%;
+}
 
 .bg-img-1-red-pixel{
     /*1 red pixel*/

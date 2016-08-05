@@ -72,7 +72,7 @@ var ReportFactory = {
         var col_id = COL.IP_DEST.id;
         if( URL_PARAM.remote )//when an IP is selected ==> group by APP
           col_id = COL.APP_ID.id;
-          
+
         return {query: [{$match: $match}]};
       }
 
@@ -85,25 +85,19 @@ var ReportFactory = {
                                    {id: COL.APP_PATH.id  , label: "Proto. Path"    , align:"left"},
                                    {id: COL.UL_PACKET_COUNT.id, label: "#Up. (pkt)"  , align:"right"},
                                    {id: COL.DL_PACKET_COUNT.id, label: "#Down. (pkt)", align:"right"},
-                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran."    , align:"right"},
+                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran." , align:"right"},
                                    {id:"EURT", label: "EURT (ms)", align: "right"}
                                   ];
 
                     var otherCols = [
                         { id: HTTP.METHOD.id   , label: HTTP.METHOD.label},
-                        { id: HTTP.URI.id      , label: HTTP.URI.label},
+                        { id: HTTP.URI.id      , label: HTTP.URI.label, class: "truncate"},
                         { id: HTTP.RESPONSE.id , label: HTTP.RESPONSE.label},
                         { id: HTTP.MIME_TYPE.id, label: "MIME"     , align:"left"},
                         { id: HTTP.REFERER.id  , label: "Referer"  , align:"left"},
                     ];
 
-                    function formatString( str, len ){
-                      len = len || 50;
-                      if( len > str.length )
-                        return str;
-                      var new_str = str.substr( 0, len ) + "...";
-                      return '<span title="'+ str +'">'+ new_str +'</span>';
-                    }
+
                     var data        = db.data();
                     window._HISTORY = data;
                     var arr = [];
@@ -137,7 +131,7 @@ var ReportFactory = {
                             var c   = otherCols[j];
                             var val = msg[ c.id ];
                             if( val != undefined && val != ""){
-                                obj[ c.id ]  = formatString( val );
+                                obj[ c.id ]  = val;
                                 c.havingData = true;
                             }
                         }
@@ -181,7 +175,7 @@ var ReportFactory = {
                 //table.DataTable().columns.adjust();
                 table.on("draw.dt", function () {
                     var $div = $('.dataTables_scrollBody');
-                    var h = $div.getWidgetContentOfParent().height() - 120;
+                    var h = $div.getWidgetContentOfParent().height() - 130;
                     $div.css({'height': h + "px",
                         'max-height'  : h + "px",
                         'border'      : "thin solid #ddd"});
@@ -348,7 +342,7 @@ function loadDetail( index ) {
     for( var i in cols ){
       var c   = cols[ i ];
       var val = msg[ c.id ];
-      if( val == undefined || exclude.indexOf( c.id ) != -1 )
+      if( val == undefined || val === "" || exclude.indexOf( c.id ) != -1 )
         continue;
       switch ( c.id ) {
         case COL.IP_SRC_INIT_CONNECTION.id:
@@ -499,7 +493,7 @@ function loadDetail( index ) {
       if( isNaN( v )) return 0;
       return v;
     };
-    console.log( msg );
+
     $("#modalWindow").modal();
     setTimeout( function(){
       createBar({

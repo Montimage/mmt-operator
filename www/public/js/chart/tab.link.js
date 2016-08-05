@@ -118,7 +118,7 @@ var ReportFactory = {
 
         //get maximum of 5 levels: eth.vlan.ip.tcp.http
         //I need eth (99) to get the total
-        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,3}$", "$options" : ""};
+        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,5}$", "$options" : ""};
 
 
         var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",

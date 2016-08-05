@@ -151,7 +151,8 @@ var MongoConnector = function () {
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], ["isGen"], [COL.START_TIME], 5*60*1000),
+                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
+                                ["isGen"], [COL.START_TIME], 5*60*1000),
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn",
@@ -651,8 +652,11 @@ var MongoConnector = function () {
               cache.flushCaches( level, function(){
                 self._queryDB( collection, action, query, callback, raw );
               });
-            else
-              self._queryDB( collection, action, query, callback, raw );
+            else{ //data_mac
+              cache.flushCaches( "real", function(){
+                self._queryDB( collection, action, query, callback, raw );
+              });
+            }
             return;//only one collection concernts to this query
           }
       }
