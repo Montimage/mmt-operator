@@ -68,9 +68,15 @@ var sendResponse = function( error, data ){
       });
  		}
   }
-  else {
-		sendResponse( "Tobe implemented" );
-	}
+  else if (action == "remove"){
+    if( query.$match == undefined )
+      return response.status( 500 ).send( {message: "Need $match"} );
+    dbadmin.connect( function(err, db){
+      if( err ) return res.status(500).send( err );
+      db.collection( collection ).remove(  query.$match, query.$options, sendResponse );
+    });
+	}else
+    sendResponse( "WTF" );
  }
 
  router.get('/:collection/:action',  proc_request);

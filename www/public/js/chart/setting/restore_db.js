@@ -181,3 +181,12 @@ var ReportFactory = {
 
 	},//end createBackupFormReport
 }
+
+
+
+//show hierarchy URL parameters on toolbar
+$( function(){
+  breadcrumbs.setData( [
+    'Restore Database'
+  ] );
+});

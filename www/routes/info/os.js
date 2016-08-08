@@ -74,8 +74,8 @@ router.get('/*', function(req, res, next) {
     };
 
     obj.timestamp = (new Date()).getTime();
-    console.log( JSON.stringify( obj ));
-    
+    //console.log( JSON.stringify( obj ));
+
     res.setHeader("Content-Type", "application/json");
     res.send( {data: obj} )
   } );
