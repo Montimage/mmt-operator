@@ -21,6 +21,7 @@ jQuery.fn.setEnable = function( val ){
   if( val == undefined )
     val = true;
   this.prop('disabled', !val );
+  this.attr('disabled', !val );
 }
 
 jQuery.fn.disable = function(){

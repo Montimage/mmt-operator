@@ -111,7 +111,7 @@ router.post("/", function( req, res, next ){
 
 //get log file
 router.get("/log/:year/:month/:day", function( req, res, next){
-  var date = new Date(req.params.year, req.params.month, req.params.day);
+  var date = new Date(req.params.year, req.params.month - 1, req.params.day);
 
   fs.readFile(  path.join(config.log_folder, (moment(date).format("YYYY-MM-DD")) + ".log" ), { encoding: 'utf8' }, function (err, data) {
 

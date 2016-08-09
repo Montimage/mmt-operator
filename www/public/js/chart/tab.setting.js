@@ -49,6 +49,7 @@ var arr = [
 var availableReports = {
 }
 
+var REFRESH_INFO_INTERVAL = 5000; //5seconds
 
 //create reports
 var ReportFactory = {
@@ -167,14 +168,14 @@ var ReportFactory = {
                  (obj.hardDrive.total/1000/1000).toFixed(2)  + " GB";
           set_value("#sys-disk-bar",   Math.round(obj.hardDrive.used/obj.hardDrive.total*100), text );
 
-          $("#sys-timestamp").text( moment( new Date( obj.timestamp )).format("YYYY-MM-DD HH:mm:ss" ) )
+          $("#sys-timestamp").text( MMTDrop.tools.formatDateTime( obj.timestamp ) );
         }
       })
     }
 
     setTimeout( load_data, 1000);
     //auto update each 5seconds
-    setInterval( load_data, 5000);
+    setInterval( load_data, REFRESH_INFO_INTERVAL);
 	},
 
   createDatabaseInformationReport: function(){
@@ -584,11 +585,11 @@ var ReportFactory = {
             '<span id="update-'+ p_id +'"></span>',
             '<div class="center-block" style="text-align: center; text-decoration: none">'
             +
-            '<a '+same+' class="btn-stop"   title="Start/Stop"><i class="fa fa-stop"></i></a>'
+            '<a id="btn-action-'+ p_id +'" '+same+' class="btn-action fa fa-stop" title="Start/Stop"></a>'
             +
-            '<a '+same+' class="btn-config" title="Configure" ><i class="fa fa-sliders"></i></a>'
+            '<a '+same+' class="btn-config fa fa-sliders" title="Configure" ></a>'
             +
-            '<a '+same+' class="btn-delete" title="Install/Uninstall" ><i class="fa fa-trash"></i></a>'
+            '<a '+same+' class="btn-delete fa fa-trash"" title="Install/Uninstall" ></a>'
             +
             '</div>',
           ]);
@@ -629,31 +630,34 @@ var ReportFactory = {
 
           MMTDrop.tools.ajax("/info/probe/remove/" + p_id , {}, "POST", {
             error  : function(){
-              MMTDrop.alert.error("Cannot remove Probe " + p_id, 3*1000);
+              MMTDrop.alert.error("Cannot remove the MMT-Probe " + p_id, 3*1000);
             },
             success: function( obj ){
-              MMTDrop.alert.success("Successfully remove the Probe " + p_id, 3*1000);
+              MMTDrop.alert.success("Successfully remove the MMT-Probe " + p_id, 1*1000);
               setTimeout( function(){
                 MMTDrop.tools.reloadPage();
-              }, 3200 );
+              }, 1200 );
             }
           });//end ajax
         });
 
         //when user click on Stop/Start button
-        $(".btn-stop").on("click", function(){
-          var p_id = this.getAttribute("data-id");
+        $(".btn-action").on("click", function(){
+          var p_id   = this.getAttribute("data-id");
+          var action = this.getAttribute("data-action");
+          var title  = this.getAttribute("title");
 
-          if( !confirm("Delete and Uninstall MMT-Probe ["+ p_id +"]\n\nAre you sure?"))
+          if( !confirm( title +  " MMT-Probe ["+ p_id +"]\n\nAre you sure?"))
             return;
 
-          MMTDrop.tools.ajax("/info/probe/stop/" + p_id , {}, "GET", {
+          $(".btn-action").disable();
+
+          MMTDrop.tools.ajax("/info/probe/action/" + p_id + "/" + action , {}, "GET", {
             error  : function(){
-              MMTDrop.alert.error("Cannot stop Probe " + p_id, 3*1000);
+              MMTDrop.alert.error("Cannot "+ title.toLowerCase() +" the MMT-Probe " + p_id, 3*1000);
             },
             success: function( obj ){
-              MMTDrop.alert.success("Successfully stop the Probe " + p_id, 3*1000);
-
+              MMTDrop.alert.success("Successfully send "+ title.toLowerCase() +" signal to the MMT-Probe " + p_id, 3*1000);
             }
           });//end ajax
         });
@@ -676,8 +680,8 @@ var ReportFactory = {
                 children:[{
                   type : "<textarea>",
                   attr : {
-                    rows  : 10,
-                    class : "form-control",
+                    rows  : 25,
+                    class : "form-control textarea-config",
                     text  : probe_config,
                     id    : "probe-cfg-text"
                   }
@@ -693,7 +697,7 @@ var ReportFactory = {
                 }]
               }
               var modal = MMTDrop.tools.getModalWindow("probe-cfg");
-              modal.$title.html("Configuration of Probe " + p_id );
+              modal.$title.html("Configuration of MMT-Probe " + p_id );
               modal.$content.html( MMTDrop.tools.createDOM( form_cfg ) );
               modal.modal();
 
@@ -705,10 +709,10 @@ var ReportFactory = {
 
                 MMTDrop.tools.ajax("/info/probe/config/" + p_id, {config: config}, "POST", {
                   error  : function(){
-                    MMTDrop.alert.error("Cannot modify the configuration of Probe " + p_id, 5*1000);
+                    MMTDrop.alert.error("Cannot modify the configuration of MMT-Probe " + p_id, 5*1000);
                   },
                   success: function(){
-                    MMTDrop.alert.success("Successfully update the configuration of Probe " + p_id, 3*1000);
+                    MMTDrop.alert.success("Successfully update the configuration of MMT-Probe " + p_id, 3*1000);
                     modal.modal("hide");
                   }
                 })
@@ -718,12 +722,20 @@ var ReportFactory = {
         });
 
         function load_probe_time(){
-          MMTDrop.tools.ajax("/api/status/find", {}, "GET", {
+          MMTDrop.tools.ajax("/api/status/5000", {}, "GET", {
             error  : function(){
               //MMTDrop.alert.error("Cannot get status of Probes", 3*1000);
+              $(".btn-action").disable();
+              $(".btn-config").disable();
+              $(".btn-delete").disable();
             },
             success: function( obj ){
-              var probeStatus = obj.probeStatus;
+              $(".btn-action").enable();
+              $(".btn-config").enable();
+              $(".btn-delete").enable();
+
+              var current_time = obj.time.now;
+              var probeStatus  = obj.probeStatus;
               //for each probe
               for( var p_id in probeStatus ){
                 var probe_ts = probeStatus[p_id], last_ts = 0;
@@ -734,13 +746,25 @@ var ReportFactory = {
                     last_ts = probe_ts[j].last_update;
 
                 $("#update-" + p_id).html( MMTDrop.tools.formatDateTime( new Date( last_ts ) ));
+                //check whenether the probe is running or not
+                var is_running = (last_ts > (current_time - 10*1000));
+                var attr = is_running ? {
+                  title        : "Stop",
+                  "data-action": "stop",
+                  class        : "btn-action fa fa-stop"
+                } : {
+                  title        : "Start",
+                  "data-action": "start",
+                  class        : "btn-action fa fa-play"
+                }
+                $("#btn-action-"+ p_id).attr( attr );
               }
             }
           });
         };
         load_probe_time();
         //regularly update timestamp of probes
-        setInterval( load_probe_time, 5000);
+        setInterval( load_probe_time, REFRESH_INFO_INTERVAL);
       }
     })//end MMTDrop.tools.ajax
 
@@ -847,7 +871,7 @@ var ReportFactory = {
         inst.dpDiv.css({marginTop: '20px', marginLeft: '-55px'});
       },
       onSelect: function ( dateText, inst ) {
-  			window.location.href = "/info/conf/log/" + inst.selectedYear + "/" + inst.selectedMonth + "/" + inst.selectedDay;
+  			window.location.href = "/info/conf/log/" + inst.selectedYear + "/" + (inst.selectedMonth + 1) + "/" + inst.selectedDay;
   			$(this).hide();
   		},
     });//end log-datepicker.datepicker

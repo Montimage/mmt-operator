@@ -55,8 +55,20 @@ router.get("/", function( req, res, next ){
  });
 
 //stop a probe
-router.get('/stop/:probe_id', function( req, res, next){
+router.get('/action/:probe_id/:action', function( req, res, next){
+  var probe_id = req.params.probe_id;
+  var action  = req.params.action;
 
+  if( action != "start" && action != "stop" )
+    return res.status(500).send( {description: "Action can be only start/stop"} );
+
+  getInfo( req.params.probe_id, function( err, arr ){
+    if( err || arr.length == 0 )
+      return res.status(500).send( {description: "Not found probe " + probe_id} );
+    var probe_cfg = arr[0];
+    var probe     = new Probe( "online", probe_cfg );
+    probe[action]( sendResponse( res )  );
+  })
 });
 
 //remove a probe

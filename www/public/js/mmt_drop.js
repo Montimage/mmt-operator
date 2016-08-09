@@ -885,8 +885,11 @@ MMTDrop.tools = function () {
      * @returns {string}
      */
     _this.formatDateTime = function (v, withMillisecond) {
-        return v.toLocaleString();
-       /*
+        //return v.toLocaleString();
+        //accept timestamp
+        if( typeof v == "number")
+          v = new Date( v );
+
         var milli = "";
         if( withMillisecond === true )
             milli = "." + ("00" + v.getMilliseconds()).slice(-3);
@@ -901,7 +904,6 @@ MMTDrop.tools = function () {
 
 
         return time;
-        */
     };
     _this.formatString = function( val, len ){
       if( typeof( val ) != "string" )

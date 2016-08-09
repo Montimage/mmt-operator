@@ -38,6 +38,7 @@ var ReportFactory = {
             class       : "form-control",
             placeholder : "probe id",
             required    : true,
+            number      : true,
           }
         },{
           type  : "<input>",

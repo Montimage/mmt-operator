@@ -36,7 +36,8 @@ function Probe( mode ){
     };
 
     this.set_conf = function( data, cb ){
-      return fs.writeFile( mmt_config_file, data, cb);
+      backup( mmt_config_file );
+      return fs.writeFile( mmt_config_file, data.trim(), cb);
     };
 
 

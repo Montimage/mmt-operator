@@ -292,6 +292,12 @@ a:hover, .ahref:hover{
   text-decoration: none;
 }
 
+a[disabled], .ahrefl[disabled]{
+  color: #999;
+  pointer-events:none;;
+  cursor: not-allowed;
+}
+
 .modal.modal-wide .modal-dialog {
   width: 90%;
 }
