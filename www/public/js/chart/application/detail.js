@@ -123,7 +123,7 @@ var ReportFactory = {
                         obj[ COL.DL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_PACKET_COUNT.id] );
                         obj[ COL.RETRANSMISSION_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.RETRANSMISSION_COUNT.id] );
 
-                        var val = self.formatRTT( msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ HTTP.DATA_TRANSFER_TIME.id ] );
+                        var val = self.formatRTT( msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ] );
 
                         obj.EURT = '<a onclick="loadDetail('+ i +')">' + val + '</a>'
 
@@ -338,7 +338,7 @@ function loadDetail( index ) {
     cols     = MMTDrop.tools.mergeObjects(cols, FTP);
     cols     = MMTDrop.tools.mergeObjects(cols, RTP);
     var other_dom = [];
-    var exclude   = [ HTTP.RESPONSE_TIME.id, HTTP.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id ];
+    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id ];
     for( var i in cols ){
       var c   = cols[ i ];
       var val = msg[ c.id ];
@@ -352,10 +352,10 @@ function loadDetail( index ) {
           val = (val == 1)? "yes" : "no";
           break;
         case HTTP.INTERACTION_TIME.id :
-          val = MMTDrop.tools.formatLocaleNumber( val ) +  ' ms';
+          val = MMTDrop.tools.formatInterval( val/1000 );
           break;
         case HTTP.CONTENT_LENGTH.id:
-          val += ' bytes';
+          val = MMTDrop.tools.formatDataVolume( val ) + 'B';
           break;
 
 
@@ -501,7 +501,7 @@ function loadDetail( index ) {
         data: {
           columns : [["NRT", format_nu( msg[ COL.RTT.id ])/1000 ],
                      ["ART", format_nu( msg[ HTTP.RESPONSE_TIME.id ])/1000 ],
-                     ["DTT", format_nu( msg[ HTTP.DATA_TRANSFER_TIME.id ])/1000 ]
+                     ["DTT", format_nu( msg[ COL.DATA_TRANSFER_TIME.id ])/1000 ]
                     ],
           groups  : [["NRT","ART","DTT"]],
         },

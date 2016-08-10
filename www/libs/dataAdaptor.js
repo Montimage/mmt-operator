@@ -90,10 +90,11 @@ var MMTDrop = {
         RTT_MAX_CLIENT      : 30,
         RTT_AVG_SERVER      : 31,
         RTT_AVG_CLIENT      : 32,
-        RETRANSMISSION_COUNT: 33,
+        DATA_TRANSFER_TIME  : 33, //Time difference between first data packet time and the last packet time received in the sample interval
+        RETRANSMISSION_COUNT: 34,
 
 
-        FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
+        FORMAT_TYPE         : 35, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
 
         SRC_LOCATION            : 40,
         DST_LOCATION            : 41,
@@ -158,7 +159,6 @@ var MMTDrop = {
         RESPONSE           : 61,
         CONTENT_LENGTH     : 62,
         REQUEST_INDICATOR  : 63, //It indicates that a particular request is finished with a response( 1: yes, 0: no)
-        DATA_TRANSFER_TIME : 64, //Time between first response packet and TCP_FIN
     },
 
     TlsStatsColumnId : {
@@ -444,11 +444,14 @@ var MMTDrop = {
         var COL       = this.StatsColumnId;
 
         msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
+        if ( this.isLocalIP( msg[COL.IP_SRC] ) )
+          return msg;
 
         if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
           msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
           return this.inverseStatDirection( msg )
         }
+        
         return msg;
     },
 

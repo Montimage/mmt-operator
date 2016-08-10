@@ -264,7 +264,7 @@ function Cache ( option ) {
             //var txt = JSON.stringify( key_obj );
             var txt = "";
             for( var j in key_obj )
-              txt += (key_obj[j] + "-");
+              txt += (key_obj[j] + "_");
 
             key_obj._id = txt + msg[ TIMESTAMP ] + "-" + now;//+now to avoid duplicate ID after 2 consecutif calls of _getData (this can happen when flushCache is called)
 

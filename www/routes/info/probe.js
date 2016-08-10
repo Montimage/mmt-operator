@@ -25,7 +25,7 @@ function getInfo( probe_id, cb ){
     if( probe_id ) match.probe_id = probe_id;
 
     db.collection("probes").find( match ).toArray( function(err, arr){
-      cb( err, arr );
+      cb( err, arr, db );
     });
   });
 }
@@ -62,9 +62,11 @@ router.get('/action/:probe_id/:action', function( req, res, next){
   if( action != "start" && action != "stop" )
     return res.status(500).send( {description: "Action can be only start/stop"} );
 
-  getInfo( req.params.probe_id, function( err, arr ){
+  getInfo( probe_id, function( err, arr, db ){
     if( err || arr.length == 0 )
       return res.status(500).send( {description: "Not found probe " + probe_id} );
+
+    db.collection("probes").update( {probe_id : probe_id}, {$set:{action: {name: action, timestamp: (new Date()).getTime()}}}, {upsert: true});
     var probe_cfg = arr[0];
     var probe     = new Probe( "online", probe_cfg );
     probe[action]( sendResponse( res )  );

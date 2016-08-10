@@ -650,13 +650,15 @@ var ReportFactory = {
           if( !confirm( title +  " MMT-Probe ["+ p_id +"]\n\nAre you sure?"))
             return;
 
-          $(".btn-action").disable();
+          $("#btn-action-" + p_id).disable();
 
           MMTDrop.tools.ajax("/info/probe/action/" + p_id + "/" + action , {}, "GET", {
             error  : function(){
+              $("#btn-action-" + p_id).enable();
               MMTDrop.alert.error("Cannot "+ title.toLowerCase() +" the MMT-Probe " + p_id, 3*1000);
             },
             success: function( obj ){
+              $("#btn-action-" + p_id).enable();
               MMTDrop.alert.success("Successfully send "+ title.toLowerCase() +" signal to the MMT-Probe " + p_id, 3*1000);
             }
           });//end ajax
@@ -721,23 +723,24 @@ var ReportFactory = {
           });//end ajax
         });
 
+        var timeout_handle = undefined;
         function load_probe_time(){
+          //avoid 2 consecutif calls
+          if( timeout_handle !== undefined )
+            clearTimeout( timeout_handle );
+          timeout_handle = undefined;
+
+
           MMTDrop.tools.ajax("/api/status/5000", {}, "GET", {
             error  : function(){
               //MMTDrop.alert.error("Cannot get status of Probes", 3*1000);
-              $(".btn-action").disable();
-              $(".btn-config").disable();
-              $(".btn-delete").disable();
             },
             success: function( obj ){
-              $(".btn-action").enable();
-              $(".btn-config").enable();
-              $(".btn-delete").enable();
-
               var current_time = obj.time.now;
               var probeStatus  = obj.probeStatus;
               //for each probe
               for( var p_id in probeStatus ){
+
                 var probe_ts = probeStatus[p_id], last_ts = 0;
                 //find last timestamp
                 //for each running period of a probe
@@ -761,15 +764,13 @@ var ReportFactory = {
               }
             }
           });
+          //regularly update timestamp of probes
+          timeout_handle = setTimeout( load_probe_time, REFRESH_INFO_INTERVAL );
         };
         load_probe_time();
-        //regularly update timestamp of probes
-        setInterval( load_probe_time, REFRESH_INFO_INTERVAL);
+
       }
     })//end MMTDrop.tools.ajax
-
-
-
   },
 
   createConfigReport: function(){

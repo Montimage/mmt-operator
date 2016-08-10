@@ -157,7 +157,7 @@ var ReportFactory = {
             //group by timestamp
             var cols = [ COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS,
                COL.RTT, COL.RETRANSMISSION_COUNT,
-               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.DATA_TRANSFER_TIME ];
+               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME ];
 
             //sort by inc of time
             data.sort( function( a, b){
@@ -176,7 +176,7 @@ var ReportFactory = {
               val = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; //micro second => milli second
 
               data[i][ HTTP.RESPONSE_TIME.id ] = _this.divide( data[i][ HTTP.RESPONSE_TIME.id ]     , val);
-              data[i][ HTTP.DATA_TRANSFER_TIME.id ] = _this.divide( data[i][ HTTP.DATA_TRANSFER_TIME.id ], val);
+              data[i][ COL.DATA_TRANSFER_TIME.id ] = _this.divide( data[i][ COL.DATA_TRANSFER_TIME.id ], val);
 
               //% of retransmision
               data[i][ COL.RETRANSMISSION_COUNT.id ] = _this.divide( data[i][ COL.RETRANSMISSION_COUNT.id ]*100, data[i][ COL.PACKET_COUNT.id ] );
@@ -283,7 +283,7 @@ var ReportFactory = {
           [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
             COL.RETRANSMISSION_COUNT.id, COL.RTT.id,
             HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
-            HTTP.DATA_TRANSFER_TIME.id
+            COL.DATA_TRANSFER_TIME.id
           ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
           });
@@ -328,7 +328,7 @@ var ReportFactory = {
                     var cols = [ COL.TIMESTAMP,
                                 {id: COL.RTT.id                , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
                                 {id: HTTP.RESPONSE_TIME.id     , label: "App Response Time (ART)"     , type: "area-stack"},
-                                {id: HTTP.DATA_TRANSFER_TIME.id, label: "Data Transfer Time (DTT)"    , type: "area-stack"},
+                                {id: COL.DATA_TRANSFER_TIME.id, label: "Data Transfer Time (DTT)"    , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
                                 {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"}
                                ];
@@ -341,7 +341,7 @@ var ReportFactory = {
 
                     var length = 0, total  = 0, val;
                     for( var i in data ){
-                      val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ HTTP.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
+                      val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ COL.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
                       //val = -3
                       if( val >= 0 ){
                         total  += val;
@@ -467,7 +467,7 @@ var ReportFactory = {
                                 {id: COL.TIMESTAMP.id            , label: "Time"            , align: "left"},
                                 {id: COL.RTT.id                  , label: "NRT (ms/flow)"   , align: "right"},
                                 {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)" , align: "right"},
-                                {id: HTTP.DATA_TRANSFER_TIME.id  , label: "DTT (ms/flow)"   , align: "right"},
+                                {id: COL.DATA_TRANSFER_TIME.id  , label: "DTT (ms/flow)"   , align: "right"},
                                 {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."    , align: "right"},
                                 {id: COL.ACTIVE_FLOWS.id         , label: "#Act. Flows"     , align: "right"},
                                 {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
@@ -506,7 +506,7 @@ var ReportFactory = {
 
                         //DATA_VOLUME represents bandwith bps => need to divide by 8 to get bytes
                         msg["packet_size"] = _this.divide(msg[ COL.DATA_VOLUME.id ], msg[ COL.PACKET_COUNT.id ] * 8).toFixed(2);
-                        msg[ HTTP.DATA_TRANSFER_TIME.id ] = MMTDrop.tools.formatDataVolume( msg[ HTTP.DATA_TRANSFER_TIME.id ] );
+                        msg[ COL.DATA_TRANSFER_TIME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_TRANSFER_TIME.id ] );
                         msg[ COL.DATA_VOLUME.id ]         = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
                         msg[ COL.PACKET_COUNT.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         //% payload
@@ -598,7 +598,7 @@ var ReportFactory = {
           } );
 
           [ COL.RTT.id, COL.ACTIVE_FLOWS.id,
-            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.DATA_TRANSFER_TIME.id
+            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, COL.DATA_TRANSFER_TIME.id
           ].forEach( function( el, index){
             $group[ el ] = {"$sum" : "$" + el};
             //group._total["$sum"].push( "$" + el );
@@ -608,6 +608,8 @@ var ReportFactory = {
           } );
 
           var $match = {} ;
+          //query on data_app ==> selection only real applications/protocols
+          $match.isGen = false;
           $match[ COL.FORMAT_ID.id ] = 100;
           //select only APP or IP that contains APPs on the top of tcp
           $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
@@ -629,8 +631,6 @@ var ReportFactory = {
             if( is_app ){
               if( URL_PARAM.ip  == undefined && URL_PARAM.remote  == undefined){
                 collection   = "data_app";
-                //query on data_app ==> selection only real applications/protocols
-                $match.isGen = false;
               }
             }
           return {collection: collection, query : [{"$match": $match},{"$group" : $group}]};
@@ -655,15 +655,15 @@ var ReportFactory = {
                   var v = 1000; // * 1000  to get milliseconds
                   if( data[i][ COL.ACTIVE_FLOWS.id ] != 0 )
                     v *= data[i][ COL.ACTIVE_FLOWS.id ];
-                  data[i][ COL.RTT.id ]                 =  divide( data[i][ COL.RTT.id ], v);
+                  data[i][ COL.RTT.id ] =  divide( data[i][ COL.RTT.id ], v);
 
                   v = 1000;
                   if( data[i][ HTTP.TRANSACTIONS_COUNT.id ] != 0 )
                     v *= data[i][ HTTP.TRANSACTIONS_COUNT.id ];
                   data[i][ HTTP.RESPONSE_TIME.id ]      =  divide( data[i][ HTTP.RESPONSE_TIME.id ], v);
-                  data[i][ HTTP.DATA_TRANSFER_TIME.id ] =  divide( data[i][ HTTP.DATA_TRANSFER_TIME.id ], v);
+                  data[i][ COL.DATA_TRANSFER_TIME.id ] =  divide( data[i][ COL.DATA_TRANSFER_TIME.id ], v);
 
-                 data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ HTTP.DATA_TRANSFER_TIME.id ];
+                 data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ COL.DATA_TRANSFER_TIME.id ];
                 }
 
                 //get top 8
@@ -708,7 +708,7 @@ var ReportFactory = {
 
                     obj[0].push( msg == undefined? 0 : msg[ COL.RTT.id ] );
                     obj[1].push( msg == undefined? 0 : msg[ HTTP.RESPONSE_TIME.id ] );
-                    obj[2].push( msg == undefined? 0 : msg[ HTTP.DATA_TRANSFER_TIME.id ] );
+                    obj[2].push( msg == undefined? 0 : msg[ COL.DATA_TRANSFER_TIME.id ] );
                   }
                 }
                 var cols = [];
@@ -931,7 +931,7 @@ var ReportFactory = {
                     var colSum = [
                         {id: COL.RTT.id                , label: "NRT (ms)"     , align:"right"},
                         {id: HTTP.RESPONSE_TIME.id     , label: "ART (ms)"     , align:"right"},
-                        {id: HTTP.DATA_TRANSFER_TIME.id, label: "DTT (ms)"     , align: "right"},
+                        {id: COL.DATA_TRANSFER_TIME.id , label: "DTT (ms)"     , align: "right"},
                         {id: HTTP.TRANSACTIONS_COUNT.id, label: "#HTTP Trans." , align:"right"},
                         {id: COL.ACTIVE_FLOWS.id       , label: "#Act. Flows"  , align:"right"},
                         {id: COL.UL_DATA_VOLUME.id     , label: "Upload (B)"   , align:"right"},
@@ -1061,11 +1061,11 @@ var ReportFactory = {
                         //1000: micro second => milli second
                         obj[ HTTP.RESPONSE_TIME.id ] = self.divide( obj[ HTTP.RESPONSE_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
 
-                        obj[ HTTP.DATA_TRANSFER_TIME.id ] = self.divide( obj[ HTTP.DATA_TRANSFER_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
+                        obj[ COL.DATA_TRANSFER_TIME.id ] = self.divide( obj[ COL.DATA_TRANSFER_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
 
                         obj[ COL.RTT.id ] = self.divide( obj[ COL.RTT.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
 
-                        obj.EURT = self.divide( obj[ COL.RTT.id ] + obj[ HTTP.RESPONSE_TIME.id ] + obj[ HTTP.DATA_TRANSFER_TIME.id ], 1 );
+                        obj.EURT = self.divide( obj[ COL.RTT.id ] + obj[ HTTP.RESPONSE_TIME.id ] + obj[ COL.DATA_TRANSFER_TIME.id ], 1 );
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
@@ -1109,6 +1109,7 @@ function loadDetail(timestamp) {
       return;
     last_call = { val: timestamp, ts: ts };
 
+    //decide whether we can goto detail page without show the list
     if( URL_PARAM.app_id() != undefined
       && (URL_PARAM.ip != undefined || URL_PARAM.remote != undefined )){
       MMTDrop.tools.gotoURL("application/detail" + MMTDrop.tools.getQueryString([], "ts=" + timestamp + "&groupby=" + fPeriod.selectedOption().id));
@@ -1116,6 +1117,8 @@ function loadDetail(timestamp) {
     }
 
     var $match = {};
+    //only reports comming from mmt-probe
+    $match.isGen = false;
     $match[ COL.TIMESTAMP.id ] = timestamp;
     //only session protocols
     $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
@@ -1146,7 +1149,7 @@ function loadDetail(timestamp) {
      COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
      COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
      COL.RETRANSMISSION_COUNT.id,
-     HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.DATA_TRANSFER_TIME.id
+     HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, COL.DATA_TRANSFER_TIME.id
     ].forEach( function( el, index){
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );
@@ -1164,9 +1167,12 @@ function loadDetail(timestamp) {
     }, function(new_data, table) {
         table.attachTo(detail_db, false);
         table.renderTo("popupTable");
-        var time_str = moment(timestamp).format("YYYY/MM/DD HH:mm:ss");
-        var end_time_str = moment(timestamp + (fPeriod.getDistanceBetweenToSamples() - 1) * 1000).format("YYYY/MM/DD HH:mm:ss");
-        $("#detailItem").html('<strong>Interval: </strong> from ' + time_str + ', to ' + end_time_str);
+        var interval     = fPeriod.getDistanceBetweenToSamples() - 1;
+        var time_str     = moment(timestamp).format("YYYY/MM/DD HH:mm:ss");
+        var end_time_str = moment(timestamp + interval * 1000).format("YYYY/MM/DD HH:mm:ss");
+        $("#detailItem").html('<strong>Interval: </strong> '
+          + MMTDrop.tools.formatInterval( interval + 1 )
+          + ' (from ' + time_str + ', to ' + end_time_str + ")");
         $("#modalWindow").modal();
     }, cTableDetail);
 

@@ -194,18 +194,19 @@ MMTDrop.constants = {
       PORT_SRC          : {id: 24 , label: "Port Source"},
       THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
-      RTT               : {id: 31 , label: "RTT"},
-
+      RTT               : {id: 26 , label: "RTT"},
       RTT_MIN_SERVER    : {id: 27 , label: "RTT min Server"},
       RTT_MIN_CLIENT    : {id: 28 , label: "RTT min Client"},
       RTT_MAX_SERVER    : {id: 29 , label: "RTT min Server"},
       RTT_MAX_CLIENT    : {id: 30 , label: "RTT min Client"},
       RTT_AVG_SERVER    : {id: 31 , label: "RTT min Server"},
       RTT_AVG_CLIENT    : {id: 32 , label: "RTT min Client"},
-      RETRANSMISSION_COUNT: {id: 33 , label: "Retransmision Count"},
+
+      DATA_TRANSFER_TIME  : {id: 33, label: "Data Transfer Time"},
+      RETRANSMISSION_COUNT: {id: 34, label: "Retransmision Count"},
 
 
-      FORMAT_TYPE       : {id: 34 , label: "Type"},//
+      FORMAT_TYPE       : {id: 35, label: "Type"},//Identifier of the format of the encapsulated application report
 
       //this part is created by mmt-operator
       SRC_LOCATION          : {id: 40, label: "Source"},
@@ -257,7 +258,6 @@ MMTDrop.constants = {
       RESPONSE     : {id: 61, label: "Response"},
       CONTENT_LENGTH: {id: 62, label: "Content length"},
       REQUEST_INDICATOR  : {id: 63, label:"Got Complete Response"}, //It indicates that a particular request is finished with a response
-      DATA_TRANSFER_TIME : {id: 64, label:""}, //Time between first response packet and TCP_FIN
 
     },
 
@@ -877,6 +877,17 @@ MMTDrop.tools = function () {
 
     _this.formatLocaleNumber = function( v ){
         return v.toLocaleString();
+    }
+
+    _this.formatInterval = function( no_seconds ){
+      if( no_seconds == undefined ) return "undefined";
+      var h = Math.floor( no_seconds / 3600 );
+      no_seconds -= h*3600;
+      var m = Math.floor( no_seconds / 60 );
+      no_seconds -= m*60;
+
+      no_seconds = Math.round( no_seconds * 1000 )/1000;
+      return (h>0? (h + "h"): "") + (m>0? (m + "m"): "") + (no_seconds>0? (no_seconds + "s"): "");
     }
 
     /**
@@ -1567,7 +1578,7 @@ MMTDrop.tools = function () {
           contentType: options.contentType ? options.contentType : "application/json",
           data       : data,
           cache      : (method == "GET" ? true: false),
-          timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 30000, //30 seconds
+          timeout    : options.timeout? options.timeout : (MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 60000), //60 seconds
           error      : callback.error, // (xhr, status, error),
           success    : function(data) {
             callback.success(data);
