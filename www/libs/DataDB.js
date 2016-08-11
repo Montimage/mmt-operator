@@ -317,7 +317,8 @@ var MongoConnector = function () {
       else
       //local port
         return msg[ COL.PORT_SRC ];
-    }
+    };
+
     var update_proto_name = function( msg ){
         //An app is reported as a protocol
         if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
@@ -338,7 +339,7 @@ var MongoConnector = function () {
             }
             //
             else
-                */
+
               switch ( msg[ COL.APP_ID ]) {
                 case 354://HTTP
 
@@ -346,17 +347,20 @@ var MongoConnector = function () {
                 default:
 
               }
+              */
               app_name = get_port( msg );
 
             //if( app_name == 0 )
             //    console.log( msg );
 
             app_name = msg[ COL.APP_ID ] + ":" + app_name;
-
-            msg[ COL.APP_ID   ]  =       self.appList.upsert( app_name ) ;
+            //get app_id from app_name
+            msg[ COL.APP_ID   ]  = self.appList.upsert( app_name ) ;
+            //apdaate app_path
             msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
-        }else
-            msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
+        }
+        //else
+        //    msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
 
     self.lastPacketTimestamp = 0;
@@ -398,10 +402,12 @@ var MongoConnector = function () {
 
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
-            msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
             //update timestamp of msg based on its report_number
             update_packet_timestamp( msg );
+
+            msg[ COL.SESSION_ID ] = self.probeStatus.data[ probe_id ].start + "-" + msg[ COL.SESSION_ID ];
 
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 

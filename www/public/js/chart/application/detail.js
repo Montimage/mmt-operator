@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "response_time",
-        title: "Transactions Details",
+        title: "Details of Flows",
         x: 0,
         y: 0,
         width: 12,
@@ -30,6 +30,8 @@ URL_PARAM.app_id = function(){
 
 URL_PARAM.ts = parseInt( URL_PARAM.ts );
 
+arr[0].title = "Details of Flows at " + MMTDrop.tools.formatDateTime( URL_PARAM.ts );
+
 var COL     = MMTDrop.constants.StatsColumn;
 var HTTP    = MMTDrop.constants.HttpStatsColumn;
 var TLS     = MMTDrop.constants.TlsStatsColumn;
@@ -51,14 +53,17 @@ var ReportFactory = {
 
       var self    = this;
 
-      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "find",
-                      period_groupby: URL_PARAM.groupby, no_override_when_reload: true });
-
+      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
+                      period_groupby: URL_PARAM.groupby, no_override_when_reload: true, raw:true });
       database.updateParameter = function( _old_param ){
+
+        //get list of transactions at the moment URL_PARAM.ts;
         var $match = {};
         $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
         //only session protocols
         $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+        //only on TCP: ETH.VLAN?.IP?.*.TCP
+        $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
         if (URL_PARAM.probe_id )
           $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
@@ -72,21 +77,81 @@ var ReportFactory = {
         var col_id = COL.IP_DEST.id;
         if( URL_PARAM.remote )//when an IP is selected ==> group by APP
           col_id = COL.APP_ID.id;
-
-        return {query: [{$match: $match}]};
+        var $group = {};
+        $group._id = "$" + COL.SESSION_ID.id;
+        $group[ COL.SESSION_ID.id ] = {$first : "$" + COL.SESSION_ID.id};
+        return {query: [{$match: $match}, {$group: $group}]};
       }
+
+      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
+                      period_groupby: URL_PARAM.groupby });
+
+      database.afterReload(
+        //this is called when database is reloaded successfully
+        //==> we get list of flows based on the id_list returned by database
+        function( id_list ){
+          var id_arr = [];
+          for( var i in id_list )
+            id_arr.push( id_list[i][ COL.SESSION_ID.id ] );
+
+          //get list of transactions at the moment URL_PARAM.ts;
+          var $match = {};
+          $match[ COL.SESSION_ID.id ] = {$in : id_arr};
+          var $group = {};
+          $group._id = "$" + COL.SESSION_ID.id;
+
+          [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id,
+               COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id,
+               COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
+               COL.RTT.id, COL.RTT_AVG_CLIENT.id, COL.RTT_AVG_SERVER.id,
+               COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
+               COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
+               COL.RETRANSMISSION_COUNT.id,
+               COL.DATA_TRANSFER_TIME.id,
+               HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.INTERACTION_TIME.id,
+               FTP.RESPONSE_TIME.id
+          ].forEach( function( el, index){
+            $group[ el ] = {"$sum" : "$" + el};
+            //group._total["$sum"].push( "$" + el );
+          });
+          [ COL.APP_ID.id, COL.APP_PATH.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.START_TIME.id,
+            COL.PORT_SRC.id, COL.PORT_DEST.id,
+            COL.SRC_LOCATION.id, COL.DST_LOCATION.id,
+
+          ].forEach( function( el, index){
+            $group[ el ] = {"$first" : "$"+ el};
+          } );
+          [ COL.TIMESTAMP.id,
+            HTTP.CONTENT_CLASS.id, HTTP.HOSTNAME.id, HTTP.MIME_TYPE.id, HTTP.REFERER.id, HTTP.CDN_FLAG.id,
+            HTTP.URI.id, HTTP.METHOD.id, HTTP.RESPONSE.id, HTTP.CONTENT_LENGTH.id, HTTP.REQUEST_INDICATOR.id,
+
+            TLS.SERVER_NAME.id,
+
+            FTP.CONNNECTION_TYPE.id, FTP.USERNAME.id, FTP.PASSWORD.id, FTP.FILE_SIZE.id, FTP.FILE_NAME.id,
+            FTP.DIRECTION.id, FTP.CONTROL_SESSION_ID.id,
+
+          ].forEach( function( el, index){
+            $group[ el ] = {"$last" : "$"+ el};
+          } );
+
+          trans_db.reload( {query: [{$match: $match}, {$group: $group}]}, function( data ){
+            cTable.attachTo( trans_db );
+            cTable.redraw();
+          });
+      });
 
       var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
-                    var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
-                                   {id: COL.IP_SRC.id    , label: "Local"     , align:"left"},
-                                   {id: COL.IP_DEST.id   , label: "Remote"    , align:"left"},
-                                   {id: COL.APP_PATH.id  , label: "Proto. Path"    , align:"left"},
-                                   {id: COL.UL_PACKET_COUNT.id, label: "#Up. (pkt)"  , align:"right"},
-                                   {id: COL.DL_PACKET_COUNT.id, label: "#Down. (pkt)", align:"right"},
-                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran." , align:"right"},
-                                   {id:"EURT", label: "EURT (ms)", align: "right"}
+                    var columns = [{id: COL.START_TIME.id            , label: "Start Time"     , align:"left"},
+                                   {id: COL.TIMESTAMP.id             , label: "Last Updated"   , align:"left"},
+                                   {id: COL.IP_SRC.id                , label: "Local"          , align:"left"},
+                                   {id: COL.IP_DEST.id               , label: "Remote"         , align:"left"},
+                                   {id: COL.APP_PATH.id              , label: "Proto. Path"    , align:"left"},
+                                   {id: COL.UL_PACKET_COUNT.id       , label: "#Up. (pkt)"     , align:"right"},
+                                   {id: COL.DL_PACKET_COUNT.id       , label: "#Down. (pkt)"   , align:"right"},
+                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran."       , align:"right"},
+                                   {id:"EURT"                        , label: "EURT (ms)"      , align: "right"}
                                   ];
 
                     var otherCols = [
@@ -99,6 +164,13 @@ var ReportFactory = {
 
 
                     var data        = db.data();
+                    //sort by timestamp
+                    data.sort( function( a, b ){
+                      var d = a[ COL.TIMESTAMP.id ] - b[ COL.TIMESTAMP.id ];
+                      if( d == 0 )
+                        return a[ COL.START_TIME.id ] - b[ COL.START_TIME.id ];
+                      return d;
+                    });
                     window._HISTORY = data;
                     var arr = [];
                     var havingOther = false;
@@ -109,7 +181,8 @@ var ReportFactory = {
                         var format  = msg [ COL.FORMAT_TYPE.id ];
                         var obj     = {};
                         obj.index   = i+1;
-                        obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                        obj[ COL.START_TIME.id ]    = MMTDrop.tools.formatDateTime( msg[COL.START_TIME.id] );
+                        obj[ COL.TIMESTAMP.id ]     = MMTDrop.tools.formatDateTime( msg[COL.TIMESTAMP.id] );
                         obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
 
                         obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( msg[ COL.UL_DATA_VOLUME.id] );
@@ -151,6 +224,7 @@ var ReportFactory = {
                     }
 
                     columns.unshift( {id: "index", label: ""});
+
 
 
                   return {
@@ -215,7 +289,7 @@ var ReportFactory = {
 				 ],
 
           //order of data flux
-          [{object: cTable}]
+          []
       );
       return report;
     },
@@ -317,7 +391,7 @@ function loadDetail( index ) {
           '<div class="modal-content" >' +
           '<div class="modal-header">' +
           '<button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>' +
-          '<h4 class="modal-title">Transaction Details</h4>' +
+          '<h4 class="modal-title">Flow Details</h4>' +
           '</div>' +
           '<div class="text-center sub-title"></div>' +
           '<div class="modal-body code-json">' +
@@ -327,7 +401,9 @@ function loadDetail( index ) {
     }
     var msg  = _HISTORY[ index ];
 
-    $("#modalWindow .sub-title").html( (new Date(msg[ COL.TIMESTAMP.id ])).toLocaleString() + "<br/>"
+    $("#modalWindow .sub-title").html(
+              "<strong>Start time: </strong>" + MMTDrop.tools.formatDateTime( msg[ COL.START_TIME.id ])
+              + ", <strong>Last Updated: </strong>" + MMTDrop.tools.formatDateTime( msg[ COL.TIMESTAMP.id ]) + "<br/>"
               + '<strong>Local: </strong>' + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ]
               + ', <strong>Application: </strong>' + MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ])
               + ', <strong>Remote: </strong>' + msg[ COL.IP_DEST.id ] + ":" + msg[ COL.PORT_DEST.id ] )
@@ -338,24 +414,26 @@ function loadDetail( index ) {
     cols     = MMTDrop.tools.mergeObjects(cols, FTP);
     cols     = MMTDrop.tools.mergeObjects(cols, RTP);
     var other_dom = [];
-    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id ];
+    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id, FTP.RESPONSE_TIME.id ];
     for( var i in cols ){
       var c   = cols[ i ];
       var val = msg[ c.id ];
       if( val == undefined || val === "" || exclude.indexOf( c.id ) != -1 )
+        continue;
+      if( c.id == HTTP.INTERACTION_TIME.id && val == 0 )
         continue;
       switch ( c.id ) {
         case COL.IP_SRC_INIT_CONNECTION.id:
           val = val? "yes" : "no";
           break;
         case HTTP.REQUEST_INDICATOR.id:
-          val = (val == 1)? "yes" : "no";
+          val = (val == 0)? "yes" : "no";
           break;
         case HTTP.INTERACTION_TIME.id :
-          val = MMTDrop.tools.formatInterval( val/1000 );
+          val = MMTDrop.tools.formatInterval( val/1000000 );
           break;
         case HTTP.CONTENT_LENGTH.id:
-          val = MMTDrop.tools.formatDataVolume( val ) + 'B';
+          val = (val == 0 ? "unknown" : (MMTDrop.tools.formatDataVolume( val ) + 'B'));
           break;
 
 
@@ -599,7 +677,7 @@ $( function(){
     if( key == "groupby")
       continue;
     if( key == "ts" )
-      obj[key] = (new Date( parseInt(obj[key]) )).toLocaleString();
+      obj[key] = MMTDrop.tools.formatDateTime(new Date( parseInt(obj[key]) ));
     if (url == undefined )
       url = "/chart/application?" + key + "="+ obj[key]
     else

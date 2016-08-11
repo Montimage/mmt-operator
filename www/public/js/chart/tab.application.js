@@ -109,7 +109,7 @@ var ReportFactory = {
           // eg, when probe gives ETH.IP.TCP.HTTP, mmt-opertor will generates an entry for ETH, another for IP, and another for TCP)
 
           //select only proto/app based on IP
-          $match[ COL.FORMAT_ID.id ] = 100;
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
           //timestamp
           var period = status_db.time; //this comes from common.js
@@ -292,7 +292,11 @@ var ReportFactory = {
           } );
 
           var $match = {};
-          $match[ COL.FORMAT_ID.id ] = 100;
+          //only IP (session report)
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+          $match.isGen  = false;
+          //only on TCP: ETH.VLAN?.IP?.*.TCP
+          $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
           //load data corresponding to the selected app
           var probe_id  = URL_PARAM.probe_id;
@@ -310,12 +314,6 @@ var ReportFactory = {
           var collection = "data_session";
           if ( URL_PARAM.app_id() != undefined && URL_PARAM.ip == undefined && URL_PARAM.remote == undefined ){
             collection    = "data_app";
-            $match.isGen  = false;
-          }else if( URL_PARAM.ip && URL_PARAM.app_id() == undefined && URL_PARAM.remote == undefined )
-            collection = "data_ip";
-          else {
-            //data_session
-            $match.isGen  = false;
           }
 
           return {collection: collection, query : [{"$match": $match},{"$group" : group}]};
@@ -438,7 +436,7 @@ var ReportFactory = {
                     }
                 },
                 zoom: {
-                    enabled: false,
+                    enabled: true,
                     rescale: true
                 },
                 tooltip:{
@@ -610,7 +608,8 @@ var ReportFactory = {
           var $match = {} ;
           //query on data_app ==> selection only real applications/protocols
           $match.isGen = false;
-          $match[ COL.FORMAT_ID.id ] = 100;
+          //only IP (session report)
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
           //select only APP or IP that contains APPs on the top of tcp
           $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
@@ -655,13 +654,14 @@ var ReportFactory = {
                   var v = 1000; // * 1000  to get milliseconds
                   if( data[i][ COL.ACTIVE_FLOWS.id ] != 0 )
                     v *= data[i][ COL.ACTIVE_FLOWS.id ];
-                  data[i][ COL.RTT.id ] =  divide( data[i][ COL.RTT.id ], v);
+                  data[i][ COL.RTT.id ]                =  divide( data[i][ COL.RTT.id ], v);
+                  data[i][ COL.DATA_TRANSFER_TIME.id ] =  divide( data[i][ COL.DATA_TRANSFER_TIME.id ], v);
 
                   v = 1000;
                   if( data[i][ HTTP.TRANSACTIONS_COUNT.id ] != 0 )
                     v *= data[i][ HTTP.TRANSACTIONS_COUNT.id ];
                   data[i][ HTTP.RESPONSE_TIME.id ]      =  divide( data[i][ HTTP.RESPONSE_TIME.id ], v);
-                  data[i][ COL.DATA_TRANSFER_TIME.id ] =  divide( data[i][ COL.DATA_TRANSFER_TIME.id ], v);
+
 
                  data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ COL.DATA_TRANSFER_TIME.id ];
                 }
@@ -922,23 +922,24 @@ var ReportFactory = {
                     if( URL_PARAM.remote )
                       col_key  = {id: COL.APP_ID.id, label: "App/Proto"};
 
-                    var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
-                                   {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
-                                   col_key,
-                                   {id: "EURT"           , label: "EURT (ms)"    , align:"right"},
+                    var columns = [
+                      {id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
+                      {id: "LastUpdated"    , label: "Last Updated" , align:"left"},
+                      col_key,
+                      {id: "EURT"           , label: "EURT (ms)"    , align:"right"},
                                    ];
 
                     var colSum = [
-                        {id: COL.RTT.id                , label: "NRT (ms)"     , align:"right"},
-                        {id: HTTP.RESPONSE_TIME.id     , label: "ART (ms)"     , align:"right"},
-                        {id: COL.DATA_TRANSFER_TIME.id , label: "DTT (ms)"     , align: "right"},
-                        {id: HTTP.TRANSACTIONS_COUNT.id, label: "#HTTP Trans." , align:"right"},
-                        {id: COL.ACTIVE_FLOWS.id       , label: "#Act. Flows"  , align:"right"},
-                        {id: COL.UL_DATA_VOLUME.id     , label: "Upload (B)"   , align:"right"},
-                        {id: COL.DL_DATA_VOLUME.id     , label: "Download (B)" , align:"right"},
-                        {id: COL.DATA_VOLUME.id        , label: "Total (B)"    , align:"right"},
-                        {id: COL.PACKET_COUNT.id       , label: "#Packets"     , align:"right"},
-                        {id: COL.RETRANSMISSION_COUNT.id, label: "#Retrans."   , align:"right"},
+                      {id: COL.RTT.id                 , label: "NRT (ms)"    , align:"right"},
+                      {id: HTTP.RESPONSE_TIME.id      , label: "ART (ms)"    , align:"right"},
+                      {id: COL.DATA_TRANSFER_TIME.id  , label: "DTT (ms)"    , align: "right"},
+                      {id: HTTP.TRANSACTIONS_COUNT.id , label: "#HTTP Trans.", align:"right"},
+                      {id: COL.ACTIVE_FLOWS.id        , label: "#Act. Flows" , align:"right"},
+                      {id: COL.UL_DATA_VOLUME.id      , label: "Up. (B)"     , align:"right"},
+                      {id: COL.DL_DATA_VOLUME.id      , label: "Down. (B)"   , align:"right"},
+                      {id: COL.DATA_VOLUME.id         , label: "Total (B)"   , align:"right"},
+                      {id: COL.PACKET_COUNT.id        , label: "#Packets"    , align:"right"},
+                      {id: COL.RETRANSMISSION_COUNT.id, label: "#Retrans."   , align:"right"},
                     ];
 
                     var data = db.data();
@@ -1061,7 +1062,8 @@ var ReportFactory = {
                         //1000: micro second => milli second
                         obj[ HTTP.RESPONSE_TIME.id ] = self.divide( obj[ HTTP.RESPONSE_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
 
-                        obj[ COL.DATA_TRANSFER_TIME.id ] = self.divide( obj[ COL.DATA_TRANSFER_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
+
+                        obj[ COL.DATA_TRANSFER_TIME.id ] = self.divide( obj[ COL.DATA_TRANSFER_TIME.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
 
                         obj[ COL.RTT.id ] = self.divide( obj[ COL.RTT.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
 
@@ -1149,7 +1151,8 @@ function loadDetail(timestamp) {
      COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
      COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
      COL.RETRANSMISSION_COUNT.id,
-     HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, COL.DATA_TRANSFER_TIME.id
+     COL.DATA_TRANSFER_TIME.id,
+     HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id
     ].forEach( function( el, index){
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );

@@ -257,7 +257,7 @@ MMTDrop.constants = {
       METHOD       : {id: 60, label: "Method"},
       RESPONSE     : {id: 61, label: "Response"},
       CONTENT_LENGTH: {id: 62, label: "Content length"},
-      REQUEST_INDICATOR  : {id: 63, label:"Got Complete Response"}, //It indicates that a particular request is finished with a response
+      REQUEST_INDICATOR  : {id: 63, label:"Got Complete Response"}, //It indicates that a particular request is finished with a response: 0 = finished, 1: first block, 2: second block, ..., 0: the last block
 
     },
 
