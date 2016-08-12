@@ -76,7 +76,7 @@ var ReportFactory = {
         return (time/1000).toFixed( 2 );
     },
     divide : function( a, b ){
-      if (b == 0) return 0;
+      if (b == 0) return a;
       //equivalent with toFixed(2) but return a number (instanceof string)
       return Math.round( a * 100/b )/100;
     },
@@ -171,12 +171,12 @@ var ReportFactory = {
               data[i][0] = i+1;
               //avg of 1 session
               var val = data[i][ COL.ACTIVE_FLOWS.id ] * 1000; //micro second => milli second
-              data[i][ COL.RTT.id ]            = _this.divide( data[i][ COL.RTT.id ], val);
+              data[i][ COL.RTT.id ]                = _this.divide( data[i][ COL.RTT.id ], val);
+              data[i][ COL.DATA_TRANSFER_TIME.id ] = _this.divide( data[i][ COL.DATA_TRANSFER_TIME.id ], val);
 
               val = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; //micro second => milli second
+              data[i][ HTTP.RESPONSE_TIME.id ] = _this.divide( data[i][ HTTP.RESPONSE_TIME.id ] , val);
 
-              data[i][ HTTP.RESPONSE_TIME.id ] = _this.divide( data[i][ HTTP.RESPONSE_TIME.id ]     , val);
-              data[i][ COL.DATA_TRANSFER_TIME.id ] = _this.divide( data[i][ COL.DATA_TRANSFER_TIME.id ], val);
 
               //% of retransmision
               data[i][ COL.RETRANSMISSION_COUNT.id ] = _this.divide( data[i][ COL.RETRANSMISSION_COUNT.id ]*100, data[i][ COL.PACKET_COUNT.id ] );
@@ -281,9 +281,8 @@ var ReportFactory = {
             group["_id"][ el ] = "$" + el;
           } );
           [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
-            COL.RETRANSMISSION_COUNT.id, COL.RTT.id,
+            COL.RETRANSMISSION_COUNT.id, COL.RTT.id, COL.DATA_TRANSFER_TIME.id,
             HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
-            COL.DATA_TRANSFER_TIME.id
           ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
           });
@@ -326,7 +325,7 @@ var ReportFactory = {
                     var cols = [ COL.TIMESTAMP,
                                 {id: COL.RTT.id                , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
                                 {id: HTTP.RESPONSE_TIME.id     , label: "App Response Time (ART)"     , type: "area-stack"},
-                                {id: COL.DATA_TRANSFER_TIME.id, label: "Data Transfer Time (DTT)"    , type: "area-stack"},
+                                {id: COL.DATA_TRANSFER_TIME.id , label: "Data Transfer Time (DTT)"    , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
                                 {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"}
                                ];
@@ -347,7 +346,7 @@ var ReportFactory = {
                       }
                     }
                     total = Math.round(total/length);
-
+                    window._EURT = total;
                     return {
                         data    : data,
                         columns : cols,
@@ -465,7 +464,7 @@ var ReportFactory = {
                                 {id: COL.TIMESTAMP.id            , label: "Time"            , align: "left"},
                                 {id: COL.RTT.id                  , label: "NRT (ms/flow)"   , align: "right"},
                                 {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)" , align: "right"},
-                                {id: COL.DATA_TRANSFER_TIME.id  , label: "DTT (ms/flow)"   , align: "right"},
+                                {id: COL.DATA_TRANSFER_TIME.id   , label: "DTT (ms/flow)"   , align: "right"},
                                 {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."    , align: "right"},
                                 {id: COL.ACTIVE_FLOWS.id         , label: "#Act. Flows"     , align: "right"},
                                 {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
@@ -499,14 +498,13 @@ var ReportFactory = {
                         if( t2.localeCompare( msg[ COL.TIMESTAMP.id ] ) != 0 )
                             t2 = msg[ COL.TIMESTAMP.id ] + " 	&rarr; " + t2;
 
-
                         msg[ COL.TIMESTAMP.id ] = '<a data-timestamp='+ time +' onclick="loadDetail('+ time +')">' + t2 + '</a>';
 
                         //DATA_VOLUME represents bandwith bps => need to divide by 8 to get bytes
                         msg["packet_size"] = _this.divide(msg[ COL.DATA_VOLUME.id ], msg[ COL.PACKET_COUNT.id ] * 8).toFixed(2);
                         msg[ COL.DATA_TRANSFER_TIME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_TRANSFER_TIME.id ] );
-                        msg[ COL.DATA_VOLUME.id ]         = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
-                        msg[ COL.PACKET_COUNT.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
+                        msg[ COL.DATA_VOLUME.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
+                        msg[ COL.PACKET_COUNT.id ]       = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         //% payload
                         msg[ COL.PAYLOAD_VOLUME.id ]       += "%";
                         //% Retransmision
@@ -704,8 +702,6 @@ var ReportFactory = {
                   if( is_trans ){
                     obj[0].push( msg == undefined? 0 : - msg[ HTTP.TRANSACTIONS_COUNT.id ] );
                   }else{
-
-
                     obj[0].push( msg == undefined? 0 : msg[ COL.RTT.id ] );
                     obj[1].push( msg == undefined? 0 : msg[ HTTP.RESPONSE_TIME.id ] );
                     obj[2].push( msg == undefined? 0 : msg[ COL.DATA_TRANSFER_TIME.id ] );
@@ -1035,6 +1031,8 @@ var ReportFactory = {
                           //if( URL_PARAM.app_id() != undefined && URL_PARAM.ip != undefined )
                           {
                             param  += "&ts=" + obj[ COL.TIMESTAMP.id ] + "&groupby=" + fPeriod.selectedOption().id;
+                            if( window._EURT )
+                              param += "&EURT=" + window._EURT;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
                         }else{
@@ -1045,6 +1043,8 @@ var ReportFactory = {
                           //if( URL_PARAM.remote != undefined && URL_PARAM.ip != undefined )
                           {
                             param  += "&ts=" + obj[ COL.TIMESTAMP.id ] + "&groupby=" + fPeriod.selectedOption().id;
+                            if( window._EURT )
+                              param += "&EURT=" + window._EURT;
                             href = "application/detail" + MMTDrop.tools.getQueryString([],param);
                           }
                         }

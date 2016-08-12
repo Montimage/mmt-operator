@@ -30,6 +30,10 @@ URL_PARAM.app_id = function(){
 
 URL_PARAM.ts = parseInt( URL_PARAM.ts );
 
+if( URL_PARAM.ts == 0 || isNaN( URL_PARAM.ts ) ){
+  MMTDrop.tools.gotoURL( "../application" );
+}
+
 arr[0].title = "Details of Flows at " + MMTDrop.tools.formatDateTime( URL_PARAM.ts );
 
 var COL     = MMTDrop.constants.StatsColumn;
@@ -151,7 +155,7 @@ var ReportFactory = {
                                    {id: COL.UL_PACKET_COUNT.id       , label: "#Up. (pkt)"     , align:"right"},
                                    {id: COL.DL_PACKET_COUNT.id       , label: "#Down. (pkt)"   , align:"right"},
                                    {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran."       , align:"right"},
-                                   {id:"EURT"                        , label: "EURT (ms)"      , align: "right"}
+                                   {id:"EURT"                        , label: "EURT"           , align: "right"}
                                   ];
 
                     var otherCols = [
@@ -196,9 +200,15 @@ var ReportFactory = {
                         obj[ COL.DL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_PACKET_COUNT.id] );
                         obj[ COL.RETRANSMISSION_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.RETRANSMISSION_COUNT.id] );
 
-                        var val = self.formatRTT( msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ] );
+                        msg[ HTTP.RESPONSE_TIME.id ]     /= 1000; //usec => msec
+                        msg[ COL.DATA_TRANSFER_TIME.id ] /= 1000;
+                        msg[ COL.RTT.id ]                /= 1000;
 
-                        obj.EURT = '<a onclick="loadDetail('+ i +')">' + val + '</a>'
+                        var val = msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ];
+                        var label = MMTDrop.tools.formatInterval( val/1000 );// /1000 : msec => second
+                        obj.EURT = '<a onclick="loadDetail('+ i +')">' + label + '</a>';
+                        if( URL_PARAM.EURT && val > URL_PARAM.EURT )
+                          obj.EURT = '<a onclick="loadDetail('+ i +')" style="color: red;">' + label + '</a>';
 
                         for( var j in otherCols ){
                             var c   = otherCols[j];
@@ -621,13 +631,13 @@ function loadDetail( index ) {
       createBar({
         bindto: "#detail_tcp_chart",
         data: {
-          columns : [["Client", format_nu( msg[ COL.RETRANSMISSION_COUNT.id ]) ],
-                     ["Server", 0 ]
+          columns : [["Retrans."     , format_nu( msg[ COL.RETRANSMISSION_COUNT.id ]) ],
+                     ["Out of Order", 0 ]
                     ],
-          groups  : [["Client","Server"]],
+          groups  : [["Retrans.","Out of Order"]],
         },
         color: {
-          pattern: ['green', 'orange']
+          pattern: ['violet', 'Turquoise']
         },
         axis: {
           y : {
@@ -636,7 +646,7 @@ function loadDetail( index ) {
             }
           },
           x : {
-            categories : ["Retrans."]
+            categories : ["Packets"]
           }
         }
       });

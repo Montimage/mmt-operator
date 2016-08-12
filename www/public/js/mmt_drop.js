@@ -881,13 +881,15 @@ MMTDrop.tools = function () {
 
     _this.formatInterval = function( no_seconds ){
       if( no_seconds == undefined ) return "undefined";
+      var d = Math.floor( no_seconds / 3600 / 24 );
+      no_seconds -= d*3600*24;
       var h = Math.floor( no_seconds / 3600 );
       no_seconds -= h*3600;
       var m = Math.floor( no_seconds / 60 );
       no_seconds -= m*60;
 
       no_seconds = Math.round( no_seconds * 1000 )/1000;
-      return (h>0? (h + "h"): "") + (m>0? (m + "m"): "") + (no_seconds>0? (no_seconds + "s"): "");
+      return (d>0? (d + "d ") : "") + (h>0? (h + "h"): "") + (m>0? (m + "m"): "") + (no_seconds>0? (no_seconds.toFixed(3) + "s"): "");
     }
 
     /**
