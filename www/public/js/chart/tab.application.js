@@ -277,6 +277,9 @@ var ReportFactory = {
           //mongoDB aggregate
           var group = { _id : {} };
 
+          //[ COL.TIMESTAMP.id ].forEach( function( el, index){
+          //  group["_id"][ el ] = "$" + el;
+          //} );
           [ COL.TIMESTAMP.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
           } );
@@ -287,7 +290,7 @@ var ReportFactory = {
             group[ el ] = {"$sum" : "$" + el};
           });
           [ COL.TIMESTAMP.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
+            group[ el ] = {"$last" : "$"+ el};
           } );
 
           var $match = {};
@@ -435,7 +438,7 @@ var ReportFactory = {
                     }
                 },
                 zoom: {
-                    enabled: true,
+                    enabled: false,
                     rescale: true
                 },
                 tooltip:{

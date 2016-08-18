@@ -412,6 +412,9 @@ var MongoConnector = function () {
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
             if( format === 100 ){
+              //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
+              if( msg[ COL.DATA_TRANSFER_TIME ] > config.probe_stats_period_in_ms*1000*2 )
+                msg[ COL.DATA_TRANSFER_TIME ] = 0;
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] == 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)

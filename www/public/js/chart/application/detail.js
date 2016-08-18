@@ -63,6 +63,7 @@ var ReportFactory = {
 
         //get list of transactions at the moment URL_PARAM.ts;
         var $match = {};
+        $match.isGen = false;
         $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
         //only session protocols
         $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
@@ -100,7 +101,8 @@ var ReportFactory = {
 
           //get list of transactions at the moment URL_PARAM.ts;
           var $match = {};
-          $match[ COL.SESSION_ID.id ] = {$in : id_arr};
+          $match.isGen = false;
+          $match[ COL.SESSION_ID.id ] = id_arr.length == 1 ? id_arr[0] : {$in : id_arr} ;
           var $group = {};
           $group._id = "$" + COL.SESSION_ID.id;
 
@@ -113,10 +115,10 @@ var ReportFactory = {
                COL.RETRANSMISSION_COUNT.id,
                COL.DATA_TRANSFER_TIME.id,
                HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.INTERACTION_TIME.id,
+               RTP.PACKET_LOSS_RATE.id, RTP.PACKET_LOSS_BURSTINESS.id, RTP.ORDER_ERROR.id,
                FTP.RESPONSE_TIME.id
           ].forEach( function( el, index){
             $group[ el ] = {"$sum" : "$" + el};
-            //group._total["$sum"].push( "$" + el );
           });
           [ COL.APP_ID.id, COL.APP_PATH.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.START_TIME.id,
             COL.PORT_SRC.id, COL.PORT_DEST.id,
@@ -130,6 +132,8 @@ var ReportFactory = {
             HTTP.URI.id, HTTP.METHOD.id, HTTP.RESPONSE.id, HTTP.CONTENT_LENGTH.id, HTTP.REQUEST_INDICATOR.id,
 
             TLS.SERVER_NAME.id,
+
+            RTP.MAX_JITTER.id,
 
             FTP.CONNNECTION_TYPE.id, FTP.USERNAME.id, FTP.PASSWORD.id, FTP.FILE_SIZE.id, FTP.FILE_NAME.id,
             FTP.DIRECTION.id, FTP.CONTROL_SESSION_ID.id,
@@ -200,11 +204,8 @@ var ReportFactory = {
                         obj[ COL.DL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_PACKET_COUNT.id] );
                         obj[ COL.RETRANSMISSION_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.RETRANSMISSION_COUNT.id] );
 
-                        msg[ HTTP.RESPONSE_TIME.id ]     /= 1000; //usec => msec
-                        msg[ COL.DATA_TRANSFER_TIME.id ] /= 1000;
-                        msg[ COL.RTT.id ]                /= 1000;
-
                         var val = msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ];
+                        val /= 1000; //usec => ms
                         var label = MMTDrop.tools.formatInterval( val/1000 );// /1000 : msec => second
                         obj.EURT = '<a onclick="loadDetail('+ i +')">' + label + '</a>';
                         if( URL_PARAM.EURT && val > URL_PARAM.EURT )
@@ -424,7 +425,10 @@ function loadDetail( index ) {
     cols     = MMTDrop.tools.mergeObjects(cols, FTP);
     cols     = MMTDrop.tools.mergeObjects(cols, RTP);
     var other_dom = [];
-    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id, FTP.RESPONSE_TIME.id ];
+    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
+       FTP.RESPONSE_TIME.id,
+       RTP.PACKET_LOSS_RATE.id, RTP.PACKET_LOSS_BURSTINESS.id, RTP.ORDER_ERROR.id
+    ];
     for( var i in cols ){
       var c   = cols[ i ];
       var val = msg[ c.id ];
@@ -684,7 +688,7 @@ $( function(){
   var url = null;
   var last = "";
   for( var key in obj ){
-    if( key == "groupby")
+    if( key == "groupby" || key == "EURT")
       continue;
     if( key == "ts" )
       obj[key] = MMTDrop.tools.formatDateTime(new Date( parseInt(obj[key]) ));
