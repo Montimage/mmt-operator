@@ -407,7 +407,7 @@ var MongoConnector = function () {
             //update timestamp of msg based on its report_number
             update_packet_timestamp( msg );
 
-            msg[ COL.SESSION_ID ] = self.probeStatus.data[ probe_id ].start + "-" + msg[ COL.SESSION_ID ];
+            //msg[ COL.SESSION_ID ] = self.probeStatus.data[ probe_id ].start + "-" + msg[ COL.SESSION_ID ];
 
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
@@ -561,7 +561,7 @@ var MongoConnector = function () {
             if( self._lastUpdateDataBaseTime == undefined )
               self._lastUpdateDataBaseTime = ts;
 
-            if( ts - self._lastUpdateDataBaseTime > 30*1000 ){
+            if( ts - self._lastUpdateDataBaseTime > config.buffer.max_interval*1000 ){
               self._lastUpdateDataBaseTime = ts;
               for( var i in self.dataCache )
                 self.dataCache[i].flushCaches( "real" );

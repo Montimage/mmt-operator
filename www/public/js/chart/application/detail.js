@@ -97,7 +97,11 @@ var ReportFactory = {
         function( id_list ){
           var id_arr = [];
           for( var i in id_list )
-            id_arr.push( id_list[i][ COL.SESSION_ID.id ] );
+            //TODO limit to 10000
+            if( id_arr.length > 10000 )
+              break;
+            else
+              id_arr.push( id_list[i][ COL.SESSION_ID.id ] );
 
           //get list of transactions at the moment URL_PARAM.ts;
           var $match = {};
@@ -600,7 +604,7 @@ function loadDetail( index ) {
         axis: {
           y : {
             label: {
-              text    : "Time(ms)",
+              text    : "Time (ms)",
             }
           },
           x : {
