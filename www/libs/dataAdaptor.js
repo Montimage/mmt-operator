@@ -451,7 +451,7 @@ var MMTDrop = {
           msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
           return this.inverseStatDirection( msg )
         }
-        
+
         return msg;
     },
 
@@ -572,6 +572,14 @@ ETHERIP
         341,354,376,461,
     ],
     ProtocolsIDName: {99: "ETH", 153: "HTTP", 154: "HTTP_CONNECT", 155: "HTTP_PROXY", 178: "IP", 179: "IP_IN_IP", 180: "IPP", 181: "IPSEC", 182: "IPV6", 341: "SSL", 354: "TCP", 376: "UDP", 461: "ETHERIP"
+    },
+
+    cloneData : function( obj ){
+      if( Array.isArray( obj ))
+        return obj.slice( 0 );
+      else if ( typeof(obj) === 'object' )
+        return  JSON.parse(JSON.stringify(obj));
+      return obj;
     }
 };
 

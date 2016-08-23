@@ -97,8 +97,8 @@ var ReportFactory = {
         function( id_list ){
           var id_arr = [];
           for( var i in id_list )
-            //TODO limit to 10000
-            if( id_arr.length > 10000 )
+            //TODO limit to 500
+            if( id_arr.length > 500 )
               break;
             else
               id_arr.push( id_list[i][ COL.SESSION_ID.id ] );
