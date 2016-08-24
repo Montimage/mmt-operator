@@ -37,11 +37,11 @@ var MongoConnector = function () {
         REPORT_NUMBER = COL.REPORT_NUMBER;
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
 
-    //all columns of HTTP => they cover all columns of SSL,RTP et FTP
+    //all columns of HTTP, SSL,RTP et FTP
     var init_session_set = [];
     for( var i = COL.FORMAT_TYPE ; i <= FTP.FILE_NAME; i++){
         //exclude set
-        if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT ].indexOf( i ) == -1 )
+        if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.REQUEST_INDICATOR ].indexOf( i ) == -1 )
             init_session_set.push( i );
     }
     init_session_set.push( COL.START_TIME );
@@ -58,20 +58,20 @@ var MongoConnector = function () {
 
             total: new DataCache(db, "data_total",
                                  //key
-                                 [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
+                                 [COL.FORMAT_ID, COL.PROBE_ID],
                                  //inc
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                                  COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                  COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                  COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT
+                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                  ],
                                  []),
 
             //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
             //the parents is marked by isGen = true
             app: new DataCache(db, "data_app",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.APP_PATH],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -79,12 +79,15 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
+                                FTP.RESPONSE_TIME
+                                ],
                                 //set
                                 ["isGen", COL.PROFILE_ID, COL.APP_ID]),
 
             ip: new DataCache(db, "data_ip",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -92,11 +95,12 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,],
                                //set
-                               [COL.MAC_SRC]),
+                               [COL.MAC_SRC, "isGen"]),
            location: new DataCache(db, "data_location",
-                              [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.DST_LOCATION],
+                              [COL.FORMAT_ID, COL.PROBE_ID, COL.DST_LOCATION],
                               //inc
                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -104,11 +108,13 @@ var MongoConnector = function () {
                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                               COL.RETRANSMISSION_COUNT,
+                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
+                             ],
                               //set
                               [COL.MAC_SRC]),
             link: new DataCache(db, "data_link",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DEST],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC, COL.IP_DEST],
                                //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -116,6 +122,7 @@ var MongoConnector = function () {
                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
                                //set
                                [COL.MAC_SRC, COL.MAC_DEST]),
@@ -127,28 +134,29 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME,
-                                 HTTP.TRANSACTIONS_COUNT,
+                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-                               COL.PROFILE_ID],
+                               COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR],
                                   //init
                                init_session_set
                                   ),
 
             mac: new DataCache(db, "data_mac",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.MAC_SRC],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME], [], [COL.START_TIME], 5*60*1000),
+                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
+                                ["isGen"], [COL.START_TIME], 5*60*1000),
             //for DOCTOR project
             //TODO to remove
-            ndn: new DataCache(db, "data_ndn", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID,
-                                                NDN.MAC_SRC, NDN.NAME],
+            ndn: new DataCache(db, "data_ndn",
+                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.MAC_SRC, NDN.NAME],
                                //inc
                               [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
                               //set
@@ -167,16 +175,33 @@ var MongoConnector = function () {
     self.probeStatus = {
         data: {
           //this contains a list of status of probes:
-          //id          : probe id
-          //start       : starting moment of probe
-          //last_update : last updated of probe
+          //id           : probe id
+          //start        : starting moment of probe
+          //last_update  : last updated of probe
+          //report_number: report_number of the firt message (at the starting moment)
+        },
+        reset: function( probe_id ){
+          self.probeStatus.data[ probe_id ] = undefined;
+        },
+        resetAll: function(){
+          self.probeStatus.data = {};
+          self.probeStatus.time = {start: 0, last_update: 0};
+        },
+        //this contains timestamp of all probes
+        time:{
+          start      : 0,
+          last_update: 0
         },
         set: function( msg ){
           var id          = msg[ PROBE_ID ],
             report_number = msg[ REPORT_NUMBER],
             last_update   = msg[ TIMESTAMP ];
 
-          if( self.probeStatus.data[ id ] == undefined )
+          if( self.probeStatus.data[ id ] == undefined ){
+            console.log( "First message comming from probe " + id + " at " + (new Date(last_update)).toLocaleString() );
+            //there are no report_number in report 200
+            if( isNaN( report_number ))
+              report_number = 0;
             self.probeStatus.data[id] = {
               _id            : id + "-" + last_update,//_id using by mongoDB
               id             : id, //probe Id
@@ -184,21 +209,22 @@ var MongoConnector = function () {
               report_number  : report_number,
               last_update    : 0
             };
+          }
+
+          if( self.probeStatus.time.start == 0 )
+            self.probeStatus.time.start = last_update;
+          if( self.probeStatus.time.last_update < last_update )
+            self.probeStatus.time.last_update = last_update;
+
+          var probe = self.probeStatus.data[ id ];
+          //no need to update the past
+          if( probe.last_update >= last_update ) return;
 
 
-            if( self.startProbeTime == undefined ){
-                self.startProbeTime = last_update;
-            }
+          probe.last_update = last_update;
 
-            var probe = self.probeStatus.data[ id ];
-            //no need to update the past
-            if( probe.last_update >= last_update ) return;
-
-
-            probe.last_update = last_update;
-
-            //update to mongoDB
-            self.mdb.collection("probe_status").update( {_id: probe._id}, probe, {upsert: true});
+          //update to mongoDB
+          self.mdb.collection("probe_status").update( {_id: probe._id}, probe, {upsert: true});
         },
         get: function( period, callback ){
             self.mdb.collection("probe_status").find({
@@ -238,29 +264,35 @@ var MongoConnector = function () {
     };
 
     var update_packet_timestamp = function( msg ){
-      var ts     = msg[ TIMESTAMP ];
-      var p_id   = msg[ PROBE_ID ];
-      var probe  = self.probeStatus.data[ p_id ];
+      var ts       = msg[ TIMESTAMP ];
+      var probe_id = msg[ PROBE_ID ];
+      var probe    = self.probeStatus.data[ probe_id ];
 
       //I received reports from a probe before its starting
       //or starting message is sent after reports
       if( probe == undefined ){
-        console.log("undefined");//first message
-        //update status of probe ==> it is alive
         self.probeStatus.set( msg );
         return;
       }
 
       var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
 
-      /*
-      console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
+      //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
+      //probe is restarted
+      if( ts > new_ts + 2*config.probe_stats_period_in_ms ){
+        console.log("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
+        //new running period
+        self.probeStatus.reset( probe_id );
+        self.probeStatus.set( msg );
+        return;
+      }else if( ts < new_ts - 2*config.probe_stats_period_in_ms ){
+        console.log("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
+        //new running period
+        self.probeStatus.reset( probe_id );
+        self.probeStatus.set( msg );
+        return;
+      }
 
-      if( ts > new_ts )
-        console.log( "=====================Report too late ", JSON.stringify(msg) );
-      else if( ts < new_ts - 2*config.probe_stats_period_in_ms )
-        console.log( "=====================Report too soon:", JSON.stringify(msg) );
-      */
 
       msg[ TIMESTAMP ]         = new_ts;
       msg[ COL.ORG_TIMESTAMP ] = ts;
@@ -285,7 +317,8 @@ var MongoConnector = function () {
       else
       //local port
         return msg[ COL.PORT_SRC ];
-    }
+    };
+
     var update_proto_name = function( msg ){
         //An app is reported as a protocol
         if( dataAdaptor.ParentProtocol.indexOf( msg[ COL.APP_ID   ]  ) > -1 ){
@@ -306,7 +339,7 @@ var MongoConnector = function () {
             }
             //
             else
-                */
+
               switch ( msg[ COL.APP_ID ]) {
                 case 354://HTTP
 
@@ -314,17 +347,20 @@ var MongoConnector = function () {
                 default:
 
               }
+              */
               app_name = get_port( msg );
 
             //if( app_name == 0 )
             //    console.log( msg );
 
             app_name = msg[ COL.APP_ID ] + ":" + app_name;
-
-            msg[ COL.APP_ID   ]  =       self.appList.upsert( app_name ) ;
+            //get app_id from app_name
+            msg[ COL.APP_ID   ]  = self.appList.upsert( app_name ) ;
+            //apdaate app_path
             msg[ COL.APP_PATH ] += "." + msg[ COL.APP_ID   ];
-        }else
-            msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
+        }
+        //else
+        //    msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
 
     self.lastPacketTimestamp = 0;
@@ -343,12 +379,8 @@ var MongoConnector = function () {
 
         //receive this msg when probe is starting
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
-            if( self.startProbeTime == undefined  || self.startProbeTime < ts){
-                self.startProbeTime = ts;
-                console.log("The last runing probe is " + (new Date( self.startProbeTime )));
-            }
             //new running period
-            self.probeStatus.data[ probe_id ] = null;
+            self.probeStatus.reset( probe_id );
             //this is 30-report: 5-th element is not REPORT_NUMBER
             //we set REPORT_NUMBER to 0
             msg[ REPORT_NUMBER ] = 0;
@@ -356,26 +388,48 @@ var MongoConnector = function () {
             return;
         }
 
-
         if ( format === 100 || format === 99 ){
 
-            msg[ COL.ACTIVE_FLOWS ] = 1;//one msg is a report of a session
+            //a dummy report when session expired
+            if( msg[ COL.DATA_VOLUME ] == 0 )
+              return;
+
+            msg.isGen = false;//this is original message comming from mmt-probe
+
+            //one msg is a report of a session
+            //==> total of them are number of active flows at the sample interval
+            msg[ COL.ACTIVE_FLOWS ] = 1;
 
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
-            msg[ COL.SESSION_ID   ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
+            //update timestamp of msg based on its report_number
             update_packet_timestamp( msg );
+
+            //msg[ COL.SESSION_ID ] = self.probeStatus.data[ probe_id ].start + "-" + msg[ COL.SESSION_ID ];
 
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
             if( format === 100 ){
+              //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
+              if( msg[ COL.DATA_TRANSFER_TIME ] > config.probe_stats_period_in_ms*1000*2 )
+                msg[ COL.DATA_TRANSFER_TIME ] = 0;
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] == 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
-                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.REQUEST_ID ];
-                  if( msg[ HTTP.FRAGMENTATION ] == 0 ){
-                    msg[ COL.ACTIVE_FLOWS ] = 0;
+                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
+                  //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
+
+                  //same as ACTIVE_FLOWS
+                  //mmt-operator: sum = number of req/res per 5 seconds
+                  msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
+
+                  //HTTP data is not yet completely transfered
+                  if( msg[ HTTP.REQUEST_INDICATOR ] == 0 ){
+                    //this msg reports a part of HTTP transaction
+                    //==> we reset its RESPONSE_TIME to zero as it was reported
+                    //msg[ HTTP.RESPONSE_TIME ] = 0;
                   }
               }
             }
@@ -417,6 +471,7 @@ var MongoConnector = function () {
 
                 //add traffic for the other side (src <--> dest )
                 msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
+                msg2.isGen = true;
                 msg2 = dataAdaptor.inverseStatDirection( msg2 );
                 //we must not increase number of active flows
                 msg2[ COL.ACTIVE_FLOWS ] = 0;
@@ -506,7 +561,7 @@ var MongoConnector = function () {
             if( self._lastUpdateDataBaseTime == undefined )
               self._lastUpdateDataBaseTime = ts;
 
-            if( ts - self._lastUpdateDataBaseTime > 30*1000 ){
+            if( ts - self._lastUpdateDataBaseTime > config.buffer.max_interval*1000 ){
               self._lastUpdateDataBaseTime = ts;
               for( var i in self.dataCache )
                 self.dataCache[i].flushCaches( "real" );
@@ -616,12 +671,20 @@ var MongoConnector = function () {
           if( collection.indexOf( cache.option.collection_name ) == 0 ){
             //data_total_real => real
             var level = collection.split("_")[2];
-            cache.flushCaches( level, function(){
-              self._queryDB( collection, action, query, callback, raw );
-            });
-            break;//only one collection concernts to this query
+            if( level )
+              cache.flushCaches( level, function(){
+                self._queryDB( collection, action, query, callback, raw );
+              });
+            else{ //data_mac
+              cache.flushCaches( "real", function(){
+                self._queryDB( collection, action, query, callback, raw );
+              });
+            }
+            return;//only one collection concernts to this query
           }
       }
+
+      self._queryDB( collection, action, query, callback, raw );
     }
     // Do a query on database. Action can be "find", "aggregate", ...
     self._queryDB = function (collection, action, query, callback, raw) {
@@ -639,10 +702,18 @@ var MongoConnector = function () {
 
           var old_query = query;
           query = {};
+
           for( var i in old_query ){
             var obj = old_query[i];//{$match: {}}
             for( var key in obj )
-              query[ key ] = obj[ key ];
+              if( query[ key ] == undefined)
+                query[ key ] = obj[ key ];
+              else{
+                //old_query may contain 2 $match
+                //==> merge them
+                for( var j in obj[key] )
+                  query[ key ][ j ] = obj[ key ][ j ];
+              }
           }
 
           if( query.$limit == undefined || query.$limit > 5000 )
@@ -1094,6 +1165,8 @@ var MongoConnector = function () {
     self.emptyDatabase = function (cb) {
         if( self.appList )
           self.appList.clear();
+        if( self.probeStatus )
+          self.probeStatus.resetAll();
 
         for( var i in self.dataCache )
             self.dataCache[i].clear();

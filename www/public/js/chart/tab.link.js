@@ -94,7 +94,7 @@ var ReportFactory = {
           228,231,241,247,272,273,298,299,
           314,322,323,324,325,339,340,341,354,357,358,363,376,388,
           461,
-          625,626,628
+          625,626,627,628
         ];
         //mongoDB aggregate
         var group = { _id : {} };
@@ -118,7 +118,7 @@ var ReportFactory = {
 
         //get maximum of 5 levels: eth.vlan.ip.tcp.http
         //I need eth (99) to get the total
-        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,3}$", "$options" : ""};
+        match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,5}$", "$options" : ""};
 
 
         var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",
@@ -130,7 +130,7 @@ var ReportFactory = {
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
             //name = name.replace("ETHERNET", "ETH");
-            return name == "ETH" ? "  TOTAL" : name;
+            return name == "ETH" ? "TOTAL" : name;
         }
 
         var cLine = MMTDrop.chartFactory.createTimeline({
@@ -160,9 +160,9 @@ var ReportFactory = {
                         period /= 8; //  bit/second
                         ylabel += " (bps)";
                         if( col.id === COL.DATA_VOLUME.id )
-                            unit = "Data (Byte)";
+                            unit = "Data (B)";
                         else
-                            unit = "Payload (Byte)";
+                            unit = "Payload (B)";
                     }
 
                     var data = db.data(); //db.stat.sumDataByParent( );
@@ -334,6 +334,9 @@ var ReportFactory = {
                 }
             },
             chart: {
+                data: {
+                  //order: null
+                },
                 point: {
                     //show: false,
                     r: 0,
@@ -357,7 +360,7 @@ var ReportFactory = {
                     },
                 },
                 tooltip: {
-                  contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                  _contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
                         var $$ = this, config = $$.config,
                             titleFormat = config.tooltip_format_title || defaultTitleFormat,
                             nameFormat = config.tooltip_format_name || function (name) { return name; },
@@ -499,7 +502,10 @@ var ReportFactory = {
                         "class": 'success'
                     }).append(
                         $("<td>", {
-                            text: i
+                            //text  : i,
+                            style : "cursor:pointer;background-color:"+ chart.color( "TOTAL" )
+                        }).on('click', function () {
+                            chart.toggle( "TOTAL" );
                         })
                     ).append(
                         $("<td>", {
@@ -512,8 +518,8 @@ var ReportFactory = {
                         })
                     ).append(
                         $("<td>", {
-                            "align": "right",
-                            "text": "100%"
+                            "align"  : "right",
+                            "text"   : "100%",
                         })
                     ).append(
                       $("<td>")
@@ -612,7 +618,15 @@ var ReportFactory = {
     createNodeReport: function (fPeriod) {
         var DETAIL = {};//data detail of each MAC
         var COL = MMTDrop.constants.StatsColumn;
-        var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true});
+
+        var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true, no_override_when_reload: true});
+        //this is called each time database is reloaded to update parameters of database
+        database.updateParameter = function( _old_param ){
+          var last5Minute = status_db.time.end - 5*60*1000;
+          var $match = {};
+          $match[ COL.TIMESTAMP.id ] = {$gte: last5Minute, $lte: status_db.time.end };
+          return {query: [{$match: $match}]};
+        }
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {

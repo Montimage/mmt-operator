@@ -9,15 +9,14 @@
     "datatables": ">=1.10.7"
   },
   "homepage": "https://github.com/DataTables/FixedHeader",
-  "version": "3.1.1",
-  "_release": "3.1.1",
+  "version": "3.1.2",
+  "_release": "3.1.2",
   "_resolution": {
     "type": "version",
-    "tag": "3.1.1",
-    "commit": "20376190bc40d55a1dbdf44959c82ac8b473a3f8"
+    "tag": "3.1.2",
+    "commit": "b101ab3fa2592ae927373f9cd817c5ce9629726e"
   },
-  "_source": "git://github.com/DataTables/FixedHeader.git",
+  "_source": "https://github.com/DataTables/FixedHeader.git",
   "_target": "~3.1.1",
-  "_originalSource": "datatables-fixedheader",
-  "_direct": true
+  "_originalSource": "datatables-fixedheader"
 }

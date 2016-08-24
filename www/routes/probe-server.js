@@ -170,6 +170,9 @@ router.startListeningAtFolder = function (db, folder_path) {
         var lr = new LineByLineReader(file_name);
         var totalLines = 0;
 
+        var start_ts = (new Date()).getTime();
+        console.log("file " + path.basename( file_name ));
+        
         lr.on('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
             router.process_message(db, "[" + line + "]");
@@ -178,6 +181,8 @@ router.startListeningAtFolder = function (db, folder_path) {
 
         lr.on('end', function () {
             // All lines are read, file is closed now.
+            start_ts = (new Date()).getTime() - start_ts;
+            console.log(" ==> DONE ("+ totalLines +" lines, "+ start_ts +" ms)");
             //remove data file
             if( router.config.delete_data ){
                 fs.unlinkSync( file_name );
@@ -239,11 +244,8 @@ router.startListeningAtFolder = function (db, folder_path) {
             setTimeout(process_folder, 1500);
             return;
         }
-
-        console.log("file " + path.basename( file_name ));
         try{
-            process_file(file_name, function ( total ) {
-                console.log(" ==> DONE ("+ total +" lines)");
+            process_file(file_name, function () {
                 process_folder();
             });
         }catch( ex ){

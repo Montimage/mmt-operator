@@ -35,6 +35,12 @@ set_default_value( config.redis_server, "port", 6379 );
 set_default_value( config, "probe_stats_period", 5);
 config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
 
+//use in Cache to decide when we will push caches to DB:
+//- either their size >= max_length_size
+//- or interval between 2 reports >= max_interval
+set_default_value( config.buffer, "max_length_size", 50000 );
+set_default_value( config.buffer, "max_interval", 30 );
+
 // ensure log directory exists
 fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
 //overwrite console.log

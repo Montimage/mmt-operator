@@ -1,8 +1,8 @@
-var spawn = require('child_process').spawn;
-var exec  = require('child_process').exec;
-var fs    = require('fs');
-var os    = require("os");
-var config= require("./config");
+var spawn  = require('child_process').spawn;
+var exec   = require('child_process').exec;
+var fs     = require('fs');
+var os     = require("os");
+var config = require("./config");
 var PLATFORM = os.platform();
 
 function Probe( mode ){
@@ -14,6 +14,7 @@ function Probe( mode ){
         mmt_license_file = "/opt/mmt/probe/bin/license.key",
         mmt_config_file  = "/opt/mmt/probe/conf/" + mode + ".conf";
 
+    //FOR testing only
     if( PLATFORM == "darwin" ){
       mmt_config_file = './test/online.conf'
     }
@@ -31,11 +32,41 @@ function Probe( mode ){
     this.get_conf = function( cb ){
       return fs.readFile( mmt_config_file, {
         encoding: 'utf8'
-      }, cb );
+      }, cb ); //cb (err, content)
     };
 
     this.set_conf = function( data, cb ){
-      return fs.writeFile( mmt_config_file, data, cb);
+      backup( mmt_config_file );
+      return fs.writeFile( mmt_config_file, data.trim(), cb);
+    };
+
+
+    var _run_command = function( command, callback ){
+      callback = callback || function(){};
+      if( PLATFORM == "linux" )
+        return exec("service " + mmt_service_name + " " + command, callback);
+
+      callback("Not support platform " + PLATFORM );
+    };
+
+    this.restart = function( cb ){
+      return _run_command( "restart", cb);
+    }
+
+    this.stop = function( cb ){
+      return _run_command( "stop", cb);
+    }
+
+    this.start = function( cb ){
+      return _run_command( "start", cb);
+    }
+
+    this.updateLicense = function( license, callback ){
+        backup( mmt_license_file );
+        return exec("echo " + license + " > " + mmt_license_file , callback);
+
+        var cmd = "sed -i -e 's/.*/"+ license +"/' " + mmt_license_file;
+        return exec(cmd, callback);
     };
 
     //get the current input-source
@@ -60,32 +91,6 @@ function Probe( mode ){
       });
     };
 
-    this._run_command = function( command, callback ){
-      callback = callback || function(){};
-      if( PLATFORM == "linux" )
-        return exec("service " + mmt_service_name + " " + command, callback);
-      callback();
-    };
-
-    this.restart = function( cb ){
-      return this._run_command( "restart", cb);
-    }
-
-    this.stop = function( cb ){
-      return this._run_command( "stop", cb);
-    }
-
-    this.start = function( cb ){
-      return this._run_command( "start", cb);
-    }
-
-    this.updateLicense = function( license, callback ){
-        backup( mmt_license_file );
-        return exec("echo " + license + " > " + mmt_license_file , callback);
-        
-        var cmd = "sed -i -e 's/.*/"+ license +"/' " + mmt_license_file;
-        return exec(cmd, callback);
-    };
 
     this.updateInputSource = function( value, callback ){
         backup( mmt_config_file );

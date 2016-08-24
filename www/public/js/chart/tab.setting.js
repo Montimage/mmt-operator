@@ -49,6 +49,7 @@ var arr = [
 var availableReports = {
 }
 
+var REFRESH_INFO_INTERVAL = 5000; //5seconds
 
 //create reports
 var ReportFactory = {
@@ -167,14 +168,14 @@ var ReportFactory = {
                  (obj.hardDrive.total/1000/1000).toFixed(2)  + " GB";
           set_value("#sys-disk-bar",   Math.round(obj.hardDrive.used/obj.hardDrive.total*100), text );
 
-          $("#sys-timestamp").text( moment( new Date( obj.timestamp )).format("YYYY-MM-DD HH:mm:ss" ) )
+          $("#sys-timestamp").text( MMTDrop.tools.formatDateTime( obj.timestamp ) );
         }
       })
     }
 
     setTimeout( load_data, 1000);
     //auto update each 5seconds
-    setInterval( load_data, 5000);
+    setInterval( load_data, REFRESH_INFO_INTERVAL);
 	},
 
   createDatabaseInformationReport: function(){
@@ -451,7 +452,10 @@ var ReportFactory = {
             var text = "none";
             if( data.lastBackup ){
               if( data.lastBackup.name != undefined )
-                text = '<a title="Download the backup file" href="/db_backup/'+ data.lastBackup.name +'">' + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' <i class = "fa fa-cloud-download"/></a>';
+                text = '<a title="Download the backup file" href="/db_backup/'+ data.lastBackup.name +'">'
+                  + MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time ))
+                  + " ("+  MMTDrop.tools.formatDataVolume( data.lastBackup.size ) +"B)"
+                  + ' <i class = "fa fa-cloud-download"/></a>';
               else if( data.lastBackup.error )
                 text = MMTDrop.tools.formatDateTime( new Date( data.lastBackup.time )) + ' (<a onclick="alert(\'Error: '+ JSON.stringify(data.lastBackup.error).replace(/"/g, "") +'\')">error</a>)';
             }
@@ -540,235 +544,233 @@ var ReportFactory = {
           class : "table table-striped table-bordered table-condensed dataTable",
           style : "max-height: 240px; overflow: hidden",
         }
-      },{
-      type : "<div>",
-      attr : {
-        class: "panel panel-default",
-        style: "margin-top: 10px"
       },
-      children : [{
-        type : "<div>",
-        attr : {
-          class : "panel-heading",
-          text  : "Add new Probe",
-          style : "padding: 5px"
+      //buttons
+      {
+        type: "<a>",
+        attr: {
+          class  : "btn btn-warning pull-right",
+          text   : 'Add new Probe',
+          href   : "setting/add_probe"
+          //disabled: true
         }
-      },{
-        type : "<div>",
-        attr : {
-          class : "panel-body",
-          style : "padding-bottom: 0px"
-        },
-        children : [{
-          type : "<form>",
-          attr : {
-            //style : "margin: 40px 10px 10px 0px",
-            id    : "ssh-form",
-            class : "form-horizontal"
-          },
-          children: [{
-            type : "<div>",
-            attr : {
-              class: "row form-group"
-            },
-            children:[
-              {
-                type     : "<label>",
-                attr     : {
-                  class : "col-md-2 control-label",
-                  text  : "SSH"
-                }
-              },
-              {
-                type : "<div>",
-                attr : {
-                  class : "col-sm-3"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "ssh-address",
-                    name        : "ssh-address",
-                    class       : "form-control",
-                    placeholder : "ip addresss",
-                    required    : true,
-                  }
-                }]
-              },
-              {
-                type : "<div>",
-                attr : {
-                  class : "col-sm-3"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "ssh-username",
-                    name        : "ssh-username",
-                    class       : "form-control",
-                    placeholder : "ssh username",
-                    required    : true,
-                  }
-                }]
-              },
-              {
-                type : "<div>",
-                attr : {
-                  class : "col-sm-3"
-                },
-                children : [{
-                  type : "<input>",
-                  attr : {
-                    id          : "ssh-password",
-                    name        : "ssh-password",
-                    type        : "password",
-                    class       : "form-control",
-                    placeholder : "ssh password",
-                    required    : true,
-                    readonly    : true,
-                    //style+readonly are add to avoid browser load default username+password
-                    readonly    : true,
-                    style       : "background-color: white !important",
-                    onfocus     : "this.removeAttribute('readonly');this.removeAttribute('style');",
-                  }
-                }]
-              },
-              //buttons
-              {
-                type: "<input>",
-                attr: {
-                  type    : "submit",
-                  class   : "btn btn-primary",
-                  value   : 'Add',
-                  id      : "nic-btnSave",
-                  disabled: true
-                }
-              }//end buttons
-              ]
-          }]//end form
-        }]
-      }]
-    }]
+      }//end buttons
+      ]
     }
 
     $("#probe-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
-    //style+readonly was add to avoid browser load default username+password
-    setTimeout( function(){
-      $("#ssh-password").removeAttr("style").removeAttr("readonly");
-    }, 500);
+
 
     //load list of probes from server, then show them in a table
-    var load_data = function(){
-      MMTDrop.tools.ajax("/info/probe", {}, "GET", {
-        error  : function(){
-          MMTDrop.alert.error("Cannot get list of Probes", 5*1000);
-        },
-        success: function( obj ){
-
-          //create data array of Table
-          var probeLst = obj.data;
-          var arr = [];
-
-          for( var i=0; i<probeLst.length; i++ ){
-            var probe   = probeLst[i];
-            var same  = 'style="margin-left: 10px;" data-id="'+ probe._id +'"'
-            var id      = probe._id;
-            arr.push([
-              i+1,
-              MMTDrop.tools.formatDateTime( new Date(probe.timestamp)),
-              probe.address,
-              "",
-              '<div class="center-block" style="text-align: center; text-decoration: none">'
-              +
-              '<a '+same+' id="btnStop"        title="Stop"> <i class="fa fa-stop"></i> </a>'
-              +
-              '<a '+same+' id="btnRestart"     title="Restart" > <i class="fa fa-refresh"></i> </a>'
-              +
-              '<a '+same+' id="btnConfig"      title="Configure" > <i class="fa fa-sliders"></i> </a>'
-              +
-              '<a '+same+' id="btnInstall"     title="Install" > <i class="fa fa-gear"></i> </a>'
-              +
-              '<a '+same+' id="btnDelete"      title="Uninstall" > <i class="fa fa-trash"></i> </a>'
-              +
-              '</div>',
-            ])
-          }
-          //create DataTable
-          var table = $("#listProbesTable").dataTable({
-            "scrollY"        : "300px",
-            "scrollCollapse" : true,
-            "paging"         : false,
-            "searching"      : false,
-            "info"           : false,
-            order            : [0, "asc"],
-            data             : arr,
-            columns: [
-              {title: ""},
-              {title: "Timestamp"},
-              {title: "IP Address"},
-              {title: "Last Reported"},
-              {title: "Actions"},
-            ]
-          });
-
-          //resize dataData when user resizes window/div
-          var $widget = $("#probe-content").getWidgetParent();
-          //resize when changing window size
-          $widget.on("widget-resized", null, table, function (event, widget) {
-            var h = $("#probe-content").getWidgetContentOfParent().height() - 185;
-            $(".dataTables_scrollBody").css('max-height', h+"px").css('height', h+"px")
-          });
-          $widget.trigger("widget-resized", [$widget]);
-
-          //when user click on Delete button
-          $(".btn-delete").on("click", function(){
-            var file = this.dataset["file"];
-            if( !confirm("Delete this backup ["+ file +"]\nAre you sure?\n\n") )
-              return;
-            $(this).disable();
-
-            MMTDrop.tools.ajax("/info/db?action=del", {time: this.dataset["time"]}, "POST", {
-              error: function(){
-                MMTDrop.alert.error("Internal Error 601", 5*1000);
-              },
-              success: function(){
-
-              }
-            })
-          });
-        }
-      })//end MMTDrop.tools.ajax
-    };//end load_data
-    load_data();
-
-
-    //when user submit form
-    $("#ssh-form").validate({
-      errorClass  : "text-danger",
-      errorElement: "span",
-      rules: {
-        "ssh-address"         : {ipv4: true},
+    MMTDrop.tools.ajax("/info/probe", {}, "GET", {
+      error  : function(){
+        MMTDrop.alert.error("Cannot get list of Probes", 5*1000);
       },
-      //when the form was valided
-      submitHandler : function( form ){
-        var data = {
-            address : $("#ssh-address").val(),
-            username: $("#ssh-username").val(),
-            password: $("#ssh-password").val(),
-        };
+      success: function( obj ){
 
-        MMTDrop.tools.ajax("/info/probe", data, "POST", {
-          error  : function(){
-            MMTDrop.alert.error("Cannot add new Probe", 5*1000);
-          },
-          success: function(){
-            MMTDrop.alert.success("Successfully add the Probe", 5*1000);
-            load_data();
-          }
-        })
-        return false;
+        //create data array of Table
+        var probeLst = obj.data;
+        var arr = [];
+
+        for( var i=0; i<probeLst.length; i++ ){
+          var probe = probeLst[i];
+          var p_id  = probe.probe_id;
+          if( p_id == undefined ) p_id = "undefined";
+          var same  = 'style="margin-left: 20px;" data-id="'+ p_id +'"'
+
+          arr.push([
+            p_id,
+            MMTDrop.tools.formatDateTime( new Date(probe.timestamp)),
+            probe.address,
+            '<span id="update-'+ p_id +'"></span>',
+            '<div class="center-block" style="text-align: center; text-decoration: none">'
+            +
+            '<a id="btn-action-'+ p_id +'" '+same+' class="btn-action fa fa-stop" title="Start/Stop"></a>'
+            +
+            '<a '+same+' class="btn-config fa fa-sliders" title="Configure" ></a>'
+            +
+            '<a '+same+' class="btn-delete fa fa-trash"" title="Install/Uninstall" ></a>'
+            +
+            '</div>',
+          ]);
+        }
+        //create DataTable
+        var table = $("#listProbesTable").dataTable({
+          "scrollY"        : "300px",
+          "scrollCollapse" : true,
+          "paging"         : false,
+          "searching"      : false,
+          "info"           : false,
+          order            : [0, "asc"],
+          data             : arr,
+          columns: [
+            {title: "ID"},
+            {title: "Created Time"},
+            {title: "Host Address"},
+            {title: "Last Reported"},
+            {title: "Actions"},
+          ]
+        });
+
+        //resize dataData when user resizes window/div
+        var $widget = $("#probe-content").getWidgetParent();
+        //resize when changing window size
+        $widget.on("widget-resized", null, table, function (event, widget) {
+          var h = $("#probe-content").getWidgetContentOfParent().height() - 115;
+          $(".dataTables_scrollBody").css('max-height', h+"px").css('height', h+"px")
+        });
+        $widget.trigger("widget-resized", [$widget]);
+
+        //when user click on Delete button
+        $(".btn-delete").on("click", function(){
+          var p_id = this.getAttribute("data-id");
+
+          if( !confirm("Delete and Uninstall MMT-Probe ["+ p_id +"]\n\nAre you sure?"))
+            return;
+
+          MMTDrop.tools.ajax("/info/probe/remove/" + p_id , {}, "POST", {
+            error  : function(){
+              MMTDrop.alert.error("Cannot remove the MMT-Probe " + p_id, 3*1000);
+            },
+            success: function( obj ){
+              MMTDrop.alert.success("Successfully remove the MMT-Probe " + p_id, 1*1000);
+              setTimeout( function(){
+                MMTDrop.tools.reloadPage();
+              }, 1200 );
+            }
+          });//end ajax
+        });
+
+        //when user click on Stop/Start button
+        $(".btn-action").on("click", function(){
+          var p_id   = this.getAttribute("data-id");
+          var action = this.getAttribute("data-action");
+          var title  = this.getAttribute("title");
+
+          if( !confirm( title +  " MMT-Probe ["+ p_id +"]\n\nAre you sure?"))
+            return;
+
+          $("#btn-action-" + p_id).disable();
+
+          MMTDrop.tools.ajax("/info/probe/action/" + p_id + "/" + action , {}, "GET", {
+            error  : function(){
+              $("#btn-action-" + p_id).enable();
+              MMTDrop.alert.error("Cannot "+ title.toLowerCase() +" the MMT-Probe " + p_id, 3*1000);
+            },
+            success: function( obj ){
+              $("#btn-action-" + p_id).enable();
+              MMTDrop.alert.success("Successfully send "+ title.toLowerCase() +" signal to the MMT-Probe " + p_id, 3*1000);
+            }
+          });//end ajax
+        });
+
+        //when user click on Stop/Start button
+        $(".btn-config").on("click", function(){
+          var p_id = this.getAttribute("data-id");
+
+          MMTDrop.tools.ajax("/info/probe/config/" + p_id , {}, "GET", {
+            error  : function(){
+              MMTDrop.alert.error("Cannot get configuration of Probe " + p_id, 3*1000);
+            },
+            success: function( obj ){
+              var probe_config = obj.data;
+              var form_cfg = {
+                type : "<div>",
+                attr : {
+                  class: "col-md-12",
+                },
+                children:[{
+                  type : "<textarea>",
+                  attr : {
+                    rows  : 25,
+                    class : "form-control textarea-config",
+                    text  : probe_config,
+                    id    : "probe-cfg-text"
+                  }
+                },{
+                  type : "<input>",
+                  attr : {
+                    value : "Save",
+                    id    : "probe-cfg-save-btn",
+                    type  : "submit",
+                    class : "btn btn-primary pull-right",
+                    style : "width: 100px; margin-top: 20px",
+                  }
+                }]
+              }
+              var modal = MMTDrop.tools.getModalWindow("probe-cfg");
+              modal.$title.html("Configuration of MMT-Probe " + p_id );
+              modal.$content.html( MMTDrop.tools.createDOM( form_cfg ) );
+              modal.modal();
+
+              $("#probe-cfg-save-btn").click( function(){
+                var config = $("#probe-cfg-text").val();
+                if( config == probe_config ){
+                  return MMTDrop.alert.success("The configuration does not change", 3*1000);
+                }
+
+                MMTDrop.tools.ajax("/info/probe/config/" + p_id, {config: config}, "POST", {
+                  error  : function(){
+                    MMTDrop.alert.error("Cannot modify the configuration of MMT-Probe " + p_id, 5*1000);
+                  },
+                  success: function(){
+                    MMTDrop.alert.success("Successfully update the configuration of MMT-Probe " + p_id, 3*1000);
+                    modal.modal("hide");
+                  }
+                })
+              });
+            }
+          });//end ajax
+        });
+
+        var timeout_handle = undefined;
+        function load_probe_time(){
+          //avoid 2 consecutif calls
+          if( timeout_handle !== undefined )
+            clearTimeout( timeout_handle );
+          timeout_handle = undefined;
+
+
+          MMTDrop.tools.ajax("/api/status/5000", {}, "GET", {
+            error  : function(){
+              //MMTDrop.alert.error("Cannot get status of Probes", 3*1000);
+            },
+            success: function( obj ){
+              var current_time = obj.time.now;
+              var probeStatus  = obj.probeStatus;
+              //for each probe
+              for( var p_id in probeStatus ){
+
+                var probe_ts = probeStatus[p_id], last_ts = 0;
+                //find last timestamp
+                //for each running period of a probe
+                for( var j in probe_ts )
+                  if( probe_ts[j].last_update > last_ts )
+                    last_ts = probe_ts[j].last_update;
+
+                $("#update-" + p_id).html( MMTDrop.tools.formatDateTime( new Date( last_ts ) ));
+                //check whenether the probe is running or not
+                var is_running = (last_ts > (current_time - 10*1000));
+                var attr = is_running ? {
+                  title        : "Stop",
+                  "data-action": "stop",
+                  class        : "btn-action fa fa-stop"
+                } : {
+                  title        : "Start",
+                  "data-action": "start",
+                  class        : "btn-action fa fa-play"
+                }
+                $("#btn-action-"+ p_id).attr( attr );
+              }
+            }
+          });
+          //regularly update timestamp of probes
+          timeout_handle = setTimeout( load_probe_time, REFRESH_INFO_INTERVAL );
+        };
+        load_probe_time();
+
       }
-    });
+    })//end MMTDrop.tools.ajax
   },
 
   createConfigReport: function(){
@@ -870,7 +872,7 @@ var ReportFactory = {
         inst.dpDiv.css({marginTop: '20px', marginLeft: '-55px'});
       },
       onSelect: function ( dateText, inst ) {
-  			window.location.href = "/info/conf/log/" + inst.selectedYear + "/" + inst.selectedMonth + "/" + inst.selectedDay;
+  			window.location.href = "/info/conf/log/" + inst.selectedYear + "/" + (inst.selectedMonth + 1) + "/" + inst.selectedDay;
   			$(this).hide();
   		},
     });//end log-datepicker.datepicker

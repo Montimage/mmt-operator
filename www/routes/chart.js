@@ -104,7 +104,7 @@ router.get('/*', function(req, res, next) {
         query_string = "";
 
     var page = all_pages[id];
-    var title = "Need to implement";
+    var title = "...";
     if (page) title = page.title;
 
     res.render("chart", {

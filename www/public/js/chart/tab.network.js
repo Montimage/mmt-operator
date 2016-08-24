@@ -77,7 +77,7 @@ if( param.profile ){
 
 //when all paramerters are selected
 //==> only one report is shown
-if( param.profile && param.ip && param.link && param.app && param.loc )
+if( param.profile && param.app && param.link )
   arr = [{
       id: "detail_location",
       title: "Details",
@@ -147,6 +147,7 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     HISTORY = [];
                     var columns = [{id: COL.START_TIME.id, label: "Start Time"     , align:"left"},
+                                   {id: COL.TIMESTAMP.id , label: "Timestamp"      , align:"left"},
                                    {id: COL.IP_DEST.id   , label: "Remote Address" , align:"left"},
                                   COL.APP_PATH];
 
@@ -188,19 +189,21 @@ var ReportFactory = {
                       HISTORY.push( msg );
 
                       obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                      obj[ COL.TIMESTAMP.id ]     = moment( msg[COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm:ss");
                       obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
                       obj[ COL.FORMAT_TYPE.id ]   = msg[ COL.FORMAT_TYPE.id ];
                       var host =  "";
-                      if( type == 0 )
+                      if( type == 0 || type == undefined)
                         type = msg[ COL.FORMAT_TYPE.id ];
+
                       //HTTP
                       if( type == 1)
                         host =  msg[ HTTP.HOSTNAME.id ];
                       else if( type == 2)
                         host = msg[ SSL.SERVER_NAME.id ];
 
-                      if( host != undefined && host != ""){
-                              obj[COL.IP_DEST.id]  = host + " ("+ msg[COL.IP_DEST.id] +")";
+                      if( host != undefined && host != "" && host !=  msg[COL.IP_DEST.id] ){
+                              obj[COL.IP_DEST.id]  = host;
                       }else
                           obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id]; // ip
 
@@ -224,13 +227,12 @@ var ReportFactory = {
                           var val = msg[ c.id ];
                           if( val != undefined && val !== "" && val !== 0 && val !== -1){
                             //if( val == 0 ) val = ""
-                            obj[ c.id ]  = val;
+                            obj[ c.id ]  = MMTDrop.tools.formatString( val, 50 );
                             c.havingData = true;
                           }
                       }
 
                       arr.push( obj );
-
                     }
 
                     for( var i in otherCols ){

@@ -6,37 +6,47 @@
  var router  = express.Router();
  var fs      = require("fs");
 var AdminDB  = require("../../libs/AdminDB");
-
+var Probe    = require("../../libs/Probe");
 
 var dbadmin = new AdminDB();
 
-router.get("/", function( req, res, next ){
- dbadmin.connect( function(err, db){
-   if( err ) return res.status(500).send( err );
+function sendResponse( res ){
+  return function( err, ret ){
+    if( err ) return res.status(500).send( err );
+    return res.send( {data: ret} );
+  }
+}
 
-   db.collection("probes").find( {}).toArray( function(err, arr){
-     if( err ) return res.status(500).send( err );
-     res.send({data : arr});
-   });
- });
+function getInfo( probe_id, cb ){
+  dbadmin.connect( function(err, db){
+    if( err ) return res.status(500).send( err );
+
+    var match = {};
+    if( probe_id ) match.probe_id = probe_id;
+
+    db.collection("probes").find( match ).toArray( function(err, arr){
+      cb( err, arr, db );
+    });
+  });
+}
+
+//get list of probes
+router.get("/", function( req, res, next ){
+ getInfo( null, sendResponse( res) );
 });
 
 
- //when user want to save the config
- router.post("/", function( req, res, next ){
+ //add a new probe
+ router.post("/add", function( req, res, next ){
    var data = req.body || {};
-   console.log( data );
-   if( data.address && data.username && data.password ){
+   if( data.address == "localhost" || (data.address && data.username && data.password )){
      dbadmin.connect( function(err, db){
        if( err ) return res.status(500).send( err );
 
-       data._id       = data.address;
+       data._id       = data.probe_id + data.address;
        data.timestamp = (new Date()).getTime();
 
-       db.collection("probes").update( {_id : data._id}, data, {upsert: true}, function( err, ret ){
-         if( err ) return res.status(500).send( err );
-         return res.send( ret );
-       });
+       db.collection("probes").update( {_id : data._id}, data, {upsert: true}, sendResponse( res ) );
      });
      return;
    }
@@ -44,5 +54,57 @@ router.get("/", function( req, res, next ){
    res.send( "WTF" );
  });
 
+//stop a probe
+router.get('/action/:probe_id/:action', function( req, res, next){
+  var probe_id = req.params.probe_id;
+  var action  = req.params.action;
 
+  if( action != "start" && action != "stop" )
+    return res.status(500).send( {description: "Action can be only start/stop"} );
+
+  getInfo( probe_id, function( err, arr, db ){
+    if( err || arr.length == 0 )
+      return res.status(500).send( {description: "Not found probe " + probe_id} );
+
+    db.collection("probes").update( {probe_id : probe_id}, {$set:{action: {name: action, timestamp: (new Date()).getTime()}}}, {upsert: true});
+    var probe_cfg = arr[0];
+    var probe     = new Probe( "online", probe_cfg );
+    probe[action]( sendResponse( res )  );
+  })
+});
+
+//remove a probe
+router.post('/remove/:probe_id', function( req, res, next){
+  dbadmin.connect( function(err, db){
+    if( err ) return res.status(500).send( err );
+    var probe_id = req.params.probe_id;
+    //uninstall probe
+    //
+    db.collection("probes").remove( {probe_id : probe_id}, sendResponse( res ));
+  });
+});
+
+//get config of a probe
+router.get('/config/:probe_id', function( req, res, next){
+  getInfo( req.params.probe_id, function( err, arr ){
+    if( err || arr.length == 0 )
+      return res.status(500).send( {description: "Not found probe " + probe_id} );
+
+    var probe_cfg = arr[0];
+    var probe     = new Probe( "online", probe_cfg );
+    probe.get_conf( sendResponse( res )  );
+  })
+});
+
+//set config of a probe
+router.post('/config/:probe_id', function( req, res, next){
+  getInfo( req.params.probe_id, function( err, arr ){
+    if( err || arr.length == 0 )
+      return res.status(500).send( {description: "Not found probe " + probe_id} );
+
+    var probe_cfg = arr[0];
+    var probe     = new Probe( "online", probe_cfg );
+    probe.set_conf( req.body.config, sendResponse( res )  );
+  })
+});
  module.exports = router;

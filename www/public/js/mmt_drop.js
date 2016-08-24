@@ -58,8 +58,7 @@ MMTDrop.config = {
     /**
      * Chart render: "highchart", "c3js"
      */
-    render: "highchart",
-        db_timeout: 15*1000, //timeout for database
+    render: "highchart"
 };
 
 
@@ -159,7 +158,7 @@ MMTDrop.constants = {
        * It allows to build a hierarchical view on the protocol statistics.
        *
        */
-      APP_PATH          : {id: 6,  label: "App Path"},
+      APP_PATH          : {id: 6,  label: "App. Path"},
       /** Index of the active flows column */
       ACTIVE_FLOWS      : {id: 7,  label: "Flow Count"},
       /** Index of the data volume column */
@@ -187,29 +186,31 @@ MMTDrop.constants = {
       IP_DEST          : {id: 19, label: "IP Destination"} ,
 
       /** Index of the MAC address source column */
-      MAC_SRC           : {id: 20, label: "MAC Destination"},
+      MAC_SRC           : {id: 20, label: "MAC Source"},
       /** Index of the MAC address source column */
-      MAC_DEST          : {id: 21 , label: "MAC Source "},
+      MAC_DEST          : {id: 21 , label: "MAC Destination "},
       SESSION_ID        : {id: 22 , label: "Session ID"},
       PORT_DEST         : {id: 23 , label: "Port Destination"},
       PORT_SRC          : {id: 24 , label: "Port Source"},
       THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
       RTT               : {id: 26 , label: "RTT"},
-
       RTT_MIN_SERVER    : {id: 27 , label: "RTT min Server"},
       RTT_MIN_CLIENT    : {id: 28 , label: "RTT min Client"},
       RTT_MAX_SERVER    : {id: 29 , label: "RTT min Server"},
       RTT_MAX_CLIENT    : {id: 30 , label: "RTT min Client"},
       RTT_AVG_SERVER    : {id: 31 , label: "RTT min Server"},
       RTT_AVG_CLIENT    : {id: 32 , label: "RTT min Client"},
-      RETRANSMISSION_COUNT: {id: 33 , label: "Retransmision Count"},
+
+      DATA_TRANSFER_TIME  : {id: 33, label: "Data Transfer Time"},
+      RETRANSMISSION_COUNT: {id: 34, label: "Retransmision Count"},
 
 
-      FORMAT_TYPE       : {id: 34 , label: "Type"},//
+      FORMAT_TYPE       : {id: 35, label: "Type"},//Identifier of the format of the encapsulated application report
 
+      //this part is created by mmt-operator
       SRC_LOCATION          : {id: 40, label: "Source"},
-      DST_LOCATION          : {id: 41, label: "Destination"},
+      DST_LOCATION          : {id: 41, label: "Remote Location"},
       IP_SRC_INIT_CONNECTION: {id: 42, label: "Connection initilized by local IP"},
       PROFILE_ID            : {id: 43, label: "Profile Id"},
       ORG_APP_ID            : {id: 44, label: "App ID"},  //original APP_ID given by probe
@@ -256,6 +257,7 @@ MMTDrop.constants = {
       METHOD       : {id: 60, label: "Method"},
       RESPONSE     : {id: 61, label: "Response"},
       CONTENT_LENGTH: {id: 62, label: "Content length"},
+      REQUEST_INDICATOR  : {id: 63, label:"Got Complete Response"}, //It indicates that a particular request is finished with a response: 0 = finished, 1: first block, 2: second block, ..., 0: the last block
 
     },
 
@@ -297,12 +299,15 @@ MMTDrop.constants = {
      * Data format description for statistic reports of FTP protocol
      */
     FtpStatsColumn : {
-      APP_FAMILY        : {id: 90 , label: "App Family"},
+      APP_FAMILY        : {id: 90, label: "App Family"},
       CONNNECTION_TYPE  : {id: 91, label: "Connection Type"},
       USERNAME          : {id: 92, label: "Username"},
       PASSWORD          : {id: 93, label: "Password"},
       FILE_SIZE         : {id: 94, label: "File Size"},
-      FILE_NAME         : {id: 95, label: "File Name"}
+      FILE_NAME         : {id: 95, label: "File Name"},
+      DIRECTION         : {id: 96, label: "Direction"}, // direction of the flow
+      CONTROL_SESSION_ID: {id: 97, label: "Session ID"}, // control session session_id of the corresponding data section
+      RESPONSE_TIME     : {id: 98, label: "Response Time"}, // Response time of the file transfer only
     },
 
     /**
@@ -577,7 +582,7 @@ MMTDrop.constants = {
      */
     ProtocolsIDName: {
             "-1": "_other",
-      0: 'All', 2: '163', 3: '360', 4: '302_FOUND', 5: '360BUY', 6: '56', 7: 'VLAN', 8: '888', 9: 'ABOUT', 10: 'ADCASH', 11: 'ADDTHIS', 12: 'ADF', 13: 'ADOBE', 14: 'AFP', 15: 'AH', 16: 'AIM', 17: 'AIMINI', 18: 'ALIBABA', 19: 'ALIPAY', 20: 'ALLEGRO', 21: 'AMAZON', 22: 'AMEBLO', 23: 'ANCESTRY', 24: 'ANGRYBIRDS', 25: 'ANSWERS', 26: 'AOL', 27: 'APPLE', 28: 'APPLEJUICE', 29: 'ARMAGETRON', 30: 'ARP', 31: 'ASK', 32: 'AVG', 33: 'AVI', 34: 'AWEBER', 35: 'AWS', 36: 'BABYLON', 37: 'BADOO', 38: 'BAIDU', 39: 'BANKOFAMERICA', 40: 'BARNESANDNOBLE', 41: 'BATMAN', 42: 'BATTLEFIELD', 43: 'BATTLENET', 44: 'BBB', 45: 'BBC_ONLINE', 46: 'BESTBUY', 47: 'BETFAIR', 48: 'BGP', 49: 'BIBLEGATEWAY', 50: 'BILD', 51: 'BING', 52: 'BITTORRENT', 53: 'BLEACHERREPORT', 54: 'BLOGFA', 55: 'BLOGGER', 56: 'BLOGSPOT', 57: 'BODYBUILDING', 58: 'BOOKING', 59: 'CBSSPORTS', 60: 'CENT', 61: 'CHANGE', 62: 'CHASE', 63: 'CHESS', 64: 'CHINAZ', 65: 'CITRIX', 66: 'CITRIXONLINE', 67: 'CLICKSOR', 68: 'CNN', 69: 'CNZZ', 70: 'COMCAST', 71: 'CONDUIT', 72: 'COPYSCAPE', 73: 'CORREIOS', 74: 'CRAIGSLIST', 75: 'CROSSFIRE', 76: 'DAILYMAIL', 77: 'DAILYMOTION', 78: 'DCERPC', 79: 'DIRECT_DOWNLOAD_LINK', 80: 'DEVIANTART', 81: 'DHCP', 82: 'DHCPV6', 83: 'DIGG', 84: 'DIRECTCONNECT', 85: 'DNS', 86: 'DOFUS', 87: 'DONANIMHABER', 88: 'DOUBAN', 89: 'DOUBLECLICK', 90: 'DROPBOX', 91: 'EBAY', 92: 'EDONKEY', 93: 'EGP', 94: 'EHOW', 95: 'EKSISOZLUK', 96: 'ELECTRONICSARTS', 97: 'ESP', 98: 'ESPN', 99: 'ETH', 100: 'ETSY', 101: 'EUROPA', 102: 'EUROSPORT', 103: 'FACEBOOK', 104: 'FACETIME', 105: 'FASTTRACK', 106: 'FC2', 107: 'FEIDIAN', 108: 'FIESTA', 109: 'FILETOPIA', 110: 'FIVERR', 111: 'FLASH', 112: 'FLICKR', 113: 'FLORENSIA', 114: 'FOURSQUARE', 115: 'FOX', 116: 'FREE', 117: 'FTP', 118: 'GADUGADU', 119: 'GAMEFAQS', 120: 'GAMESPOT', 121: 'GAP', 122: 'GARANTI', 123: 'GAZETEVATAN', 124: 'GIGAPETA', 125: 'GITHUB', 126: 'GITTIGIDIYOR', 127: 'GLOBO', 128: 'GMAIL', 129: 'GNUTELLA', 130: 'GOOGLE_MAPS', 131: 'GO', 132: 'GODADDY', 133: 'GOO', 134: 'GOOGLE', 135: 'GOOGLE_USER_CONTENT', 136: 'GOSMS', 137: 'GRE', 138: 'GROOVESHARK', 139: 'GROUPON', 140: 'GTALK', 141: 'GTP', 142: 'GTP2', 143: 'GUARDIAN', 144: 'GUILDWARS', 145: 'HABERTURK', 146: 'HAO123', 147: 'HEPSIBURADA', 148: 'HI5', 149: 'HALFLIFE2', 150: 'HOMEDEPOT', 151: 'HOOTSUITE', 152: 'HOTMAIL', 153: 'HTTP', 154: 'HTTP_CONNECT', 155: 'HTTP_PROXY', 156: 'HTTP_APPLICATION_ACTIVESYNC', 157: 'HUFFINGTON_POST', 158: 'HURRIYET', 159: 'I23V5', 160: 'IAX', 161: 'ICECAST', 162: 'APPLE_ICLOUD', 163: 'ICMP', 164: 'ICMPV6', 165: 'IFENG', 166: 'IGMP', 167: 'IGN', 168: 'IKEA', 169: 'IMAP', 170: 'IMAPS', 171: 'INTERNET_MOVIE_DATABASE', 172: 'IMESH', 173: 'IMESSAGE', 174: 'IMGUR', 175: 'INCREDIBAR', 176: 'INDIATIMES', 177: 'INSTAGRAM', 178: 'IP', 179: 'IP_IN_IP', 180: 'IPP', 181: 'IPSEC', 182: 'IPV6', 183: 'IRC', 184: 'IRS', 185: 'APPLE_ITUNES', 186: 'UNENCRYPED_JABBER', 187: 'JAPANPOST', 188: 'KAKAO', 189: 'KAT', 190: 'KAZAA', 191: 'KERBEROS', 192: 'KING', 193: 'KOHLS', 194: 'KONGREGATE', 195: 'KONTIKI', 196: 'L2TP', 197: 'LASTFM', 198: 'LDAP', 199: 'LEAGUEOFLEGENDS', 200: 'LEGACY', 201: 'LETV', 202: 'LINKEDIN', 203: 'LIVE', 204: 'LIVEDOOR', 205: 'LIVEMAIL', 206: 'LIVEINTERNET', 207: 'LIVEJASMIN', 208: 'LIVEJOURNAL', 209: 'LIVESCORE', 210: 'LIVINGSOCIAL', 211: 'LOWES', 212: 'MACYS', 213: 'MAIL_RU', 214: 'MANET', 215: 'MANOLITO', 216: 'MAPLESTORY', 217: 'MATCH', 218: 'MDNS', 219: 'MEDIAFIRE', 220: 'MEEBO', 221: 'MGCP', 222: 'MICROSOFT', 223: 'MILLIYET', 224: 'MINECRAFT', 225: 'MINICLIP', 226: 'MLBASEBALL', 227: 'MMO_CHAMPION', 228: 'MMS', 229: 'MOVE', 230: 'MOZILLA', 231: 'MPEG', 232: 'MSN', 233: 'MSSQL', 234: 'MULTIPLY', 235: 'MYNET', 236: 'MYSPACE', 237: 'MYSQL', 238: 'MYWEBSEARCH', 239: 'NBA', 240: 'NEOBUX', 241: 'NETBIOS', 242: 'NETFLIX', 243: 'NETFLOW', 244: 'NEWEGG', 245: 'NEWSMAX', 246: 'NFL', 247: 'NFS', 248: 'NICOVIDEO', 249: 'NIH', 250: 'NORDSTROM', 251: 'NTP', 252: 'NYTIMES', 253: 'ODNOKLASSNIKI', 254: 'OFF', 255: 'OGG', 256: 'ONET', 257: 'OPENFT', 258: 'ORANGEDONKEY', 259: 'OSCAR', 260: 'OSPF', 261: 'OUTBRAIN', 262: 'OVERSTOCK', 263: 'PANDO', 264: 'PAYPAL', 265: 'PCANYWHERE', 266: 'PCH', 267: 'PCONLINE', 268: 'PHOTOBUCKET', 269: 'PINTEREST', 270: 'PLAYSTATION', 271: 'POGO', 272: 'POP', 273: 'POPS', 274: 'POPO', 275: 'PORNHUB', 276: 'POSTGRES', 277: 'PPLIVE', 278: 'PPP', 279: 'PPPOE', 280: 'PPSTREAM', 281: 'PPTP', 282: 'PREMIERLEAGUE', 283: 'QQ', 284: 'QQLIVE', 285: 'QUAKE', 286: 'QUICKTIME', 287: 'R10', 288: 'RADIUS', 289: 'RAKUTEN', 290: 'RDP', 291: 'REALMEDIA', 292: 'REDDIT', 293: 'REDTUBE', 294: 'REFERENCE', 295: 'RENREN', 296: 'ROBLOX', 297: 'ROVIO', 298: 'RTP', 299: 'RTSP', 300: 'SABAHTR', 301: 'SAHIBINDEN', 302: 'SALESFORCE', 303: 'SALON', 304: 'SCTP', 305: 'SEARCHNU', 306: 'SEARCH_RESULTS', 307: 'SEARS', 308: 'SECONDLIFE', 309: 'SECURESERVER', 310: 'SFLOW', 311: 'SHAZAM', 312: 'SHOUTCAST', 313: 'SINA', 314: 'SIP', 315: 'SITEADVISOR', 316: 'SKY', 317: 'SKYPE', 318: 'SKYROCK', 319: 'SKYSPORTS', 320: 'SLATE', 321: 'SLIDESHARE', 322: 'SMB', 323: 'SMTP', 324: 'SMTPS', 325: 'SNMP', 326: 'SOCRATES', 327: 'SOFTONIC', 328: 'SOGOU', 329: 'SOHU', 330: 'SOPCAST', 331: 'SOSO', 332: 'SOULSEEK', 333: 'SOUNDCLOUD', 334: 'SOURGEFORGE', 335: 'SPIEGEL', 336: 'SPORX', 337: 'SPOTIFY', 338: 'SQUIDOO', 339: 'SSDP', 340: 'SSH', 341: 'SSL', 342: 'STACK_OVERFLOW', 343: 'STATCOUNTER', 344: 'STEALTHNET', 345: 'STEAM', 346: 'STUMBLEUPON', 347: 'STUN', 348: 'SULEKHA', 349: 'SYSLOG', 350: 'TAGGED', 351: 'TAOBAO', 352: 'TARGET', 353: 'TCO', 354: 'TCP', 355: 'TDS', 356: 'TEAMVIEWER', 357: 'TELNET', 358: 'TFTP', 359: 'THEMEFOREST', 360: 'THE_PIRATE_BAY', 361: 'THUNDER', 362: 'TIANYA', 363: 'TLS', 364: 'TMALL', 365: 'TORRENTZ', 366: 'TRUPHONE', 367: 'TUBE8', 368: 'TUDOU', 369: 'TUENTI', 370: 'TUMBLR', 371: 'TVANTS', 372: 'TVUPLAYER', 373: 'TWITTER', 374: 'UBI', 375: 'UCOZ', 376: 'UDP', 377: 'UDPLITE', 378: 'UOL', 379: 'USDEPARTMENTOFSTATE', 380: 'USENET', 381: 'USTREAM', 382: 'HTTP_APPLICATION_VEOHTV', 383: 'VIADEO', 384: 'VIBER', 385: 'VIMEO', 386: 'VK', 387: 'VKONTAKTE', 388: 'VNC', 389: 'WALMART', 390: 'WARRIORFORUM', 391: 'WAYN', 392: 'WEATHER', 393: 'WEBEX', 394: 'WEEKLYSTANDARD', 395: 'WEIBO', 396: 'WELLSFARGO', 397: 'WHATSAPP', 398: 'WIGETMEDIA', 399: 'WIKIA', 400: 'WIKIMEDIA', 401: 'WIKIPEDIA', 402: 'WILLIAMHILL', 403: 'WINDOWSLIVE', 404: 'WINDOWSMEDIA', 405: 'WINMX', 406: 'WINUPDATE', 407: 'WORLD_OF_KUNG_FU', 408: 'WORDPRESS_ORG', 409: 'WARCRAFT3', 410: 'WORLDOFWARCRAFT', 411: 'WOWHEAD', 412: 'WWE', 413: 'XBOX', 414: 'XDMCP', 415: 'XHAMSTER', 416: 'XING', 417: 'XINHUANET', 418: 'XNXX', 419: 'XVIDEOS', 420: 'YAHOO', 421: 'YAHOOGAMES', 422: 'YAHOOMAIL', 423: 'YANDEX', 424: 'YELP', 425: 'YOUKU', 426: 'YOUPORN', 427: 'YOUTUBE', 428: 'ZAPPOS', 429: 'ZATTOO', 430: 'ZEDO', 431: 'ZOL', 432: 'ZYNGA', 433: '3PC', 434: 'ANY_0HOP', 435: 'ANY_DFS', 436: 'ANY_HIP', 437: 'ANY_LOCAL', 438: 'ANY_PES', 439: 'ARGUS', 440: 'ARIS', 441: 'AX_25', 442: 'BBN_RCC_MON', 443: 'BNA', 444: 'BR_SAT_MON', 445: 'CBT', 446: 'CFTP', 447: 'CHAOS', 448: 'COMPAQ_PEER', 449: 'CPHB', 450: 'CPNX', 451: 'CRTP', 452: 'CRUDP', 453: 'DCCP', 454: 'DCN_MEAS', 455: 'DDP', 456: 'DDX', 457: 'DGP', 458: 'EIGRP', 459: 'EMCON', 460: 'ENCAP', 461: 'ETHERIP', 462: 'FC', 463: 'FIRE', 464: 'GGP', 465: 'GMTP', 466: 'HIP', 467: 'HMP', 468: 'I_NLSP', 469: 'IATP', 470: 'IDPR', 471: 'IDPR_CMTP', 472: 'IDRP', 473: 'IFMP', 474: 'IGP', 475: 'IL', 476: 'IPCOMP', 477: 'IPCV', 478: 'IPLT', 479: 'IPPC', 480: 'IPTM', 481: 'IPX_IN_IP', 482: 'IRTP', 483: 'IS_IS', 484: 'ISO_IP', 485: 'ISO_TP4', 486: 'KRYPTOLAN', 487: 'LARP', 488: 'LEAF_1', 489: 'LEAF_2', 490: 'MERIT_INP', 491: 'MFE_NSP', 492: 'MHRP', 493: 'MICP', 494: 'MOBILE', 495: 'MOBILITY_HEADER', 496: 'MPLS_IN_IP', 497: 'MTP', 498: 'MUX', 499: 'NARP', 500: 'NETBLT', 501: 'NSFNET_IGP', 502: 'NVP_II', 503: 'PGM', 504: 'PIM', 505: 'PIPE', 506: 'PNNI', 507: 'PRM', 508: 'PTP', 509: 'PUP', 510: 'PVP', 511: 'QNX', 512: 'RSVP', 513: 'RSVP_E2E_IGNORE', 514: 'RVD', 515: 'SAT_EXPAK', 516: 'SAT_MON', 517: 'SCC_SP', 518: 'SCPS', 519: 'SDRP', 520: 'SECURE_VMTP', 521: 'SHIM6', 522: 'SKIP', 523: 'SM', 524: 'SMP', 525: 'SNP', 526: 'SPRITE_RPC', 527: 'SPS', 528: 'SRP', 529: 'SSCOPMCE', 530: 'ST', 531: 'STP', 532: 'SUN_ND', 533: 'SWIPE', 534: 'TCF', 535: 'TLSP', 536: 'TP_PP', 537: 'TRUNK_1', 538: 'TRUNK_2', 539: 'UTI', 540: 'VINES', 541: 'VISA', 542: 'VMTP', 543: 'VRRP', 544: 'WB_EXPAK', 545: 'WB_MON', 546: 'WSN', 547: 'XNET', 548: 'XNS_IDP', 549: 'XTP', 550: 'BUZZNET', 551: 'COMEDY', 552: 'RAMBLER', 553: 'SMUGMUG', 554: 'ARCHIEVE', 555: 'CITYNEWS', 556: 'SCIENCESTAGE', 557: 'ONEWORLD', 558: 'DISQUS', 559: 'BLOGCU', 560: 'EKOLEY', 561: '500PX', 562: 'FOTKI', 563: 'FOTOLOG', 564: 'JALBUM', 565: 'LOCKERZ', 566: 'PANORAMIO', 567: 'SNAPFISH', 568: 'WEBSHOTS', 569: 'MEGA', 570: 'VIDOOSH', 571: 'AFREECA', 572: 'WILDSCREEN', 573: 'BLOGTV', 574: 'HULU', 575: 'MEVIO', 576: 'LIVESTREAM', 577: 'LIVELEAK', 578: 'DEEZER', 579: 'BLIPTV', 580: 'BREAK', 581: 'CITYTV', 582: 'COMEDYCENTRAL', 583: 'ENGAGEMEDIA', 584: 'SCREENJUNKIES', 585: 'RUTUBE', 586: 'SEVENLOAD', 587: 'MUBI', 588: 'IZLESENE', 589: 'VIDEO_HOSTING', 590: 'BOX', 591: 'SKYDRIVE', 592: '7DIGITAL', 593: 'CLOUDFRONT', 594: 'TANGO', 595: 'WECHAT', 596: 'LINE', 597: 'BLOOMBERG', 598: 'MSCDN', 599: 'AKAMAI', 600: 'YAHOOMSG', 601: 'BITGRAVITY', 602: 'CACHEFLY', 603: 'CDN77', 604: 'CDNETWORKS', 605: 'CHINACACHE', 606: 'COTENDO', 607: 'EDGECAST', 608: 'FASTLY', 609: 'HIGHWINDS', 610: 'INTERNAP', 611: 'LEVEL3', 612: 'LIMELIGHT', 613: 'MAXCDN', 614: 'NETDNA', 615: 'VOXEL', 616: 'RACKSPACE', 617: 'GAMEFORGE', 618: 'METIN2', 619: 'OGAME', 620: 'BATTLEKNIGHT', 621: '4STORY', 622: 'FBMSG', 623: 'GCM',
+      0: 'All', 2: '163', 3: '360', 4: '302_FOUND', 5: '360BUY', 6: '56', 7: 'VLAN', 8: '888', 9: 'ABOUT', 10: 'ADCASH', 11: 'ADDTHIS', 12: 'ADF', 13: 'ADOBE', 14: 'AFP', 15: 'AH', 16: 'AIM', 17: 'AIMINI', 18: 'ALIBABA', 19: 'ALIPAY', 20: 'ALLEGRO', 21: 'AMAZON', 22: 'AMEBLO', 23: 'ANCESTRY', 24: 'ANGRYBIRDS', 25: 'ANSWERS', 26: 'AOL', 27: 'APPLE', 28: 'APPLEJUICE', 29: 'ARMAGETRON', 30: 'ARP', 31: 'ASK', 32: 'AVG', 33: 'AVI', 34: 'AWEBER', 35: 'AWS', 36: 'BABYLON', 37: 'BADOO', 38: 'BAIDU', 39: 'BANKOFAMERICA', 40: 'BARNESANDNOBLE', 41: 'BATMAN', 42: 'BATTLEFIELD', 43: 'BATTLENET', 44: 'BBB', 45: 'BBC_ONLINE', 46: 'BESTBUY', 47: 'BETFAIR', 48: 'BGP', 49: 'BIBLEGATEWAY', 50: 'BILD', 51: 'BING', 52: 'BITTORRENT', 53: 'BLEACHERREPORT', 54: 'BLOGFA', 55: 'BLOGGER', 56: 'BLOGSPOT', 57: 'BODYBUILDING', 58: 'BOOKING', 59: 'CBSSPORTS', 60: 'CENT', 61: 'CHANGE', 62: 'CHASE', 63: 'CHESS', 64: 'CHINAZ', 65: 'CITRIX', 66: 'CITRIXONLINE', 67: 'CLICKSOR', 68: 'CNN', 69: 'CNZZ', 70: 'COMCAST', 71: 'CONDUIT', 72: 'COPYSCAPE', 73: 'CORREIOS', 74: 'CRAIGSLIST', 75: 'CROSSFIRE', 76: 'DAILYMAIL', 77: 'DAILYMOTION', 78: 'DCERPC', 79: 'DIRECT_DOWNLOAD_LINK', 80: 'DEVIANTART', 81: 'DHCP', 82: 'DHCPV6', 83: 'DIGG', 84: 'DIRECTCONNECT', 85: 'DNS', 86: 'DOFUS', 87: 'DONANIMHABER', 88: 'DOUBAN', 89: 'DOUBLECLICK', 90: 'DROPBOX', 91: 'EBAY', 92: 'EDONKEY', 93: 'EGP', 94: 'EHOW', 95: 'EKSISOZLUK', 96: 'ELECTRONICSARTS', 97: 'ESP', 98: 'ESPN', 99: 'ETH', 100: 'ETSY', 101: 'EUROPA', 102: 'EUROSPORT', 103: 'FACEBOOK', 104: 'FACETIME', 105: 'FASTTRACK', 106: 'FC2', 107: 'FEIDIAN', 108: 'FIESTA', 109: 'FILETOPIA', 110: 'FIVERR', 111: 'FLASH', 112: 'FLICKR', 113: 'FLORENSIA', 114: 'FOURSQUARE', 115: 'FOX', 116: 'FREE', 117: 'FTP', 118: 'GADUGADU', 119: 'GAMEFAQS', 120: 'GAMESPOT', 121: 'GAP', 122: 'GARANTI', 123: 'GAZETEVATAN', 124: 'GIGAPETA', 125: 'GITHUB', 126: 'GITTIGIDIYOR', 127: 'GLOBO', 128: 'GMAIL', 129: 'GNUTELLA', 130: 'GOOGLE_MAPS', 131: 'GO', 132: 'GODADDY', 133: 'GOO', 134: 'GOOGLE', 135: 'GOOGLE_USER_CONTENT', 136: 'GOSMS', 137: 'GRE', 138: 'GROOVESHARK', 139: 'GROUPON', 140: 'GTALK', 141: 'GTP', 142: 'GTP2', 143: 'GUARDIAN', 144: 'GUILDWARS', 145: 'HABERTURK', 146: 'HAO123', 147: 'HEPSIBURADA', 148: 'HI5', 149: 'HALFLIFE2', 150: 'HOMEDEPOT', 151: 'HOOTSUITE', 152: 'HOTMAIL', 153: 'HTTP', 154: 'HTTP_CONNECT', 155: 'HTTP_PROXY', 156: 'HTTP_APPLICATION_ACTIVESYNC', 157: 'HUFFINGTON_POST', 158: 'HURRIYET', 159: 'I23V5', 160: 'IAX', 161: 'ICECAST', 162: 'APPLE_ICLOUD', 163: 'ICMP', 164: 'ICMPV6', 165: 'IFENG', 166: 'IGMP', 167: 'IGN', 168: 'IKEA', 169: 'IMAP', 170: 'IMAPS', 171: 'INTERNET_MOVIE_DATABASE', 172: 'IMESH', 173: 'IMESSAGE', 174: 'IMGUR', 175: 'INCREDIBAR', 176: 'INDIATIMES', 177: 'INSTAGRAM', 178: 'IP', 179: 'IP_IN_IP', 180: 'IPP', 181: 'IPSEC', 182: 'IP6', 183: 'IRC', 184: 'IRS', 185: 'APPLE_ITUNES', 186: 'UNENCRYPED_JABBER', 187: 'JAPANPOST', 188: 'KAKAO', 189: 'KAT', 190: 'KAZAA', 191: 'KERBEROS', 192: 'KING', 193: 'KOHLS', 194: 'KONGREGATE', 195: 'KONTIKI', 196: 'L2TP', 197: 'LASTFM', 198: 'LDAP', 199: 'LEAGUEOFLEGENDS', 200: 'LEGACY', 201: 'LETV', 202: 'LINKEDIN', 203: 'LIVE', 204: 'LIVEDOOR', 205: 'LIVEMAIL', 206: 'LIVEINTERNET', 207: 'LIVEJASMIN', 208: 'LIVEJOURNAL', 209: 'LIVESCORE', 210: 'LIVINGSOCIAL', 211: 'LOWES', 212: 'MACYS', 213: 'MAIL_RU', 214: 'MANET', 215: 'MANOLITO', 216: 'MAPLESTORY', 217: 'MATCH', 218: 'MDNS', 219: 'MEDIAFIRE', 220: 'MEEBO', 221: 'MGCP', 222: 'MICROSOFT', 223: 'MILLIYET', 224: 'MINECRAFT', 225: 'MINICLIP', 226: 'MLBASEBALL', 227: 'MMO_CHAMPION', 228: 'MMS', 229: 'MOVE', 230: 'MOZILLA', 231: 'MPEG', 232: 'MSN', 233: 'MSSQL', 234: 'MULTIPLY', 235: 'MYNET', 236: 'MYSPACE', 237: 'MYSQL', 238: 'MYWEBSEARCH', 239: 'NBA', 240: 'NEOBUX', 241: 'NETBIOS', 242: 'NETFLIX', 243: 'NETFLOW', 244: 'NEWEGG', 245: 'NEWSMAX', 246: 'NFL', 247: 'NFS', 248: 'NICOVIDEO', 249: 'NIH', 250: 'NORDSTROM', 251: 'NTP', 252: 'NYTIMES', 253: 'ODNOKLASSNIKI', 254: 'OFF', 255: 'OGG', 256: 'ONET', 257: 'OPENFT', 258: 'ORANGEDONKEY', 259: 'OSCAR', 260: 'OSPF', 261: 'OUTBRAIN', 262: 'OVERSTOCK', 263: 'PANDO', 264: 'PAYPAL', 265: 'PCANYWHERE', 266: 'PCH', 267: 'PCONLINE', 268: 'PHOTOBUCKET', 269: 'PINTEREST', 270: 'PLAYSTATION', 271: 'POGO', 272: 'POP', 273: 'POPS', 274: 'POPO', 275: 'PORNHUB', 276: 'POSTGRES', 277: 'PPLIVE', 278: 'PPP', 279: 'PPPOE', 280: 'PPSTREAM', 281: 'PPTP', 282: 'PREMIERLEAGUE', 283: 'QQ', 284: 'QQLIVE', 285: 'QUAKE', 286: 'QUICKTIME', 287: 'R10', 288: 'RADIUS', 289: 'RAKUTEN', 290: 'RDP', 291: 'REALMEDIA', 292: 'REDDIT', 293: 'REDTUBE', 294: 'REFERENCE', 295: 'RENREN', 296: 'ROBLOX', 297: 'ROVIO', 298: 'RTP', 299: 'RTSP', 300: 'SABAHTR', 301: 'SAHIBINDEN', 302: 'SALESFORCE', 303: 'SALON', 304: 'SCTP', 305: 'SEARCHNU', 306: 'SEARCH_RESULTS', 307: 'SEARS', 308: 'SECONDLIFE', 309: 'SECURESERVER', 310: 'SFLOW', 311: 'SHAZAM', 312: 'SHOUTCAST', 313: 'SINA', 314: 'SIP', 315: 'SITEADVISOR', 316: 'SKY', 317: 'SKYPE', 318: 'SKYROCK', 319: 'SKYSPORTS', 320: 'SLATE', 321: 'SLIDESHARE', 322: 'SMB', 323: 'SMTP', 324: 'SMTPS', 325: 'SNMP', 326: 'SOCRATES', 327: 'SOFTONIC', 328: 'SOGOU', 329: 'SOHU', 330: 'SOPCAST', 331: 'SOSO', 332: 'SOULSEEK', 333: 'SOUNDCLOUD', 334: 'SOURGEFORGE', 335: 'SPIEGEL', 336: 'SPORX', 337: 'SPOTIFY', 338: 'SQUIDOO', 339: 'SSDP', 340: 'SSH', 341: 'SSL', 342: 'STACK_OVERFLOW', 343: 'STATCOUNTER', 344: 'STEALTHNET', 345: 'STEAM', 346: 'STUMBLEUPON', 347: 'STUN', 348: 'SULEKHA', 349: 'SYSLOG', 350: 'TAGGED', 351: 'TAOBAO', 352: 'TARGET', 353: 'TCO', 354: 'TCP', 355: 'TDS', 356: 'TEAMVIEWER', 357: 'TELNET', 358: 'TFTP', 359: 'THEMEFOREST', 360: 'THE_PIRATE_BAY', 361: 'THUNDER', 362: 'TIANYA', 363: 'TLS', 364: 'TMALL', 365: 'TORRENTZ', 366: 'TRUPHONE', 367: 'TUBE8', 368: 'TUDOU', 369: 'TUENTI', 370: 'TUMBLR', 371: 'TVANTS', 372: 'TVUPLAYER', 373: 'TWITTER', 374: 'UBI', 375: 'UCOZ', 376: 'UDP', 377: 'UDPLITE', 378: 'UOL', 379: 'USDEPARTMENTOFSTATE', 380: 'USENET', 381: 'USTREAM', 382: 'HTTP_APPLICATION_VEOHTV', 383: 'VIADEO', 384: 'VIBER', 385: 'VIMEO', 386: 'VK', 387: 'VKONTAKTE', 388: 'VNC', 389: 'WALMART', 390: 'WARRIORFORUM', 391: 'WAYN', 392: 'WEATHER', 393: 'WEBEX', 394: 'WEEKLYSTANDARD', 395: 'WEIBO', 396: 'WELLSFARGO', 397: 'WHATSAPP', 398: 'WIGETMEDIA', 399: 'WIKIA', 400: 'WIKIMEDIA', 401: 'WIKIPEDIA', 402: 'WILLIAMHILL', 403: 'WINDOWSLIVE', 404: 'WINDOWSMEDIA', 405: 'WINMX', 406: 'WINUPDATE', 407: 'WORLD_OF_KUNG_FU', 408: 'WORDPRESS_ORG', 409: 'WARCRAFT3', 410: 'WORLDOFWARCRAFT', 411: 'WOWHEAD', 412: 'WWE', 413: 'XBOX', 414: 'XDMCP', 415: 'XHAMSTER', 416: 'XING', 417: 'XINHUANET', 418: 'XNXX', 419: 'XVIDEOS', 420: 'YAHOO', 421: 'YAHOOGAMES', 422: 'YAHOOMAIL', 423: 'YANDEX', 424: 'YELP', 425: 'YOUKU', 426: 'YOUPORN', 427: 'YOUTUBE', 428: 'ZAPPOS', 429: 'ZATTOO', 430: 'ZEDO', 431: 'ZOL', 432: 'ZYNGA', 433: '3PC', 434: 'ANY_0HOP', 435: 'ANY_DFS', 436: 'ANY_HIP', 437: 'ANY_LOCAL', 438: 'ANY_PES', 439: 'ARGUS', 440: 'ARIS', 441: 'AX_25', 442: 'BBN_RCC_MON', 443: 'BNA', 444: 'BR_SAT_MON', 445: 'CBT', 446: 'CFTP', 447: 'CHAOS', 448: 'COMPAQ_PEER', 449: 'CPHB', 450: 'CPNX', 451: 'CRTP', 452: 'CRUDP', 453: 'DCCP', 454: 'DCN_MEAS', 455: 'DDP', 456: 'DDX', 457: 'DGP', 458: 'EIGRP', 459: 'EMCON', 460: 'ENCAP', 461: 'ETHERIP', 462: 'FC', 463: 'FIRE', 464: 'GGP', 465: 'GMTP', 466: 'HIP', 467: 'HMP', 468: 'I_NLSP', 469: 'IATP', 470: 'IDPR', 471: 'IDPR_CMTP', 472: 'IDRP', 473: 'IFMP', 474: 'IGP', 475: 'IL', 476: 'IPCOMP', 477: 'IPCV', 478: 'IPLT', 479: 'IPPC', 480: 'IPTM', 481: 'IPX_IN_IP', 482: 'IRTP', 483: 'IS_IS', 484: 'ISO_IP', 485: 'ISO_TP4', 486: 'KRYPTOLAN', 487: 'LARP', 488: 'LEAF_1', 489: 'LEAF_2', 490: 'MERIT_INP', 491: 'MFE_NSP', 492: 'MHRP', 493: 'MICP', 494: 'MOBILE', 495: 'MOBILITY_HEADER', 496: 'MPLS_IN_IP', 497: 'MTP', 498: 'MUX', 499: 'NARP', 500: 'NETBLT', 501: 'NSFNET_IGP', 502: 'NVP_II', 503: 'PGM', 504: 'PIM', 505: 'PIPE', 506: 'PNNI', 507: 'PRM', 508: 'PTP', 509: 'PUP', 510: 'PVP', 511: 'QNX', 512: 'RSVP', 513: 'RSVP_E2E_IGNORE', 514: 'RVD', 515: 'SAT_EXPAK', 516: 'SAT_MON', 517: 'SCC_SP', 518: 'SCPS', 519: 'SDRP', 520: 'SECURE_VMTP', 521: 'SHIM6', 522: 'SKIP', 523: 'SM', 524: 'SMP', 525: 'SNP', 526: 'SPRITE_RPC', 527: 'SPS', 528: 'SRP', 529: 'SSCOPMCE', 530: 'ST', 531: 'STP', 532: 'SUN_ND', 533: 'SWIPE', 534: 'TCF', 535: 'TLSP', 536: 'TP_PP', 537: 'TRUNK_1', 538: 'TRUNK_2', 539: 'UTI', 540: 'VINES', 541: 'VISA', 542: 'VMTP', 543: 'VRRP', 544: 'WB_EXPAK', 545: 'WB_MON', 546: 'WSN', 547: 'XNET', 548: 'XNS_IDP', 549: 'XTP', 550: 'BUZZNET', 551: 'COMEDY', 552: 'RAMBLER', 553: 'SMUGMUG', 554: 'ARCHIEVE', 555: 'CITYNEWS', 556: 'SCIENCESTAGE', 557: 'ONEWORLD', 558: 'DISQUS', 559: 'BLOGCU', 560: 'EKOLEY', 561: '500PX', 562: 'FOTKI', 563: 'FOTOLOG', 564: 'JALBUM', 565: 'LOCKERZ', 566: 'PANORAMIO', 567: 'SNAPFISH', 568: 'WEBSHOTS', 569: 'MEGA', 570: 'VIDOOSH', 571: 'AFREECA', 572: 'WILDSCREEN', 573: 'BLOGTV', 574: 'HULU', 575: 'MEVIO', 576: 'LIVESTREAM', 577: 'LIVELEAK', 578: 'DEEZER', 579: 'BLIPTV', 580: 'BREAK', 581: 'CITYTV', 582: 'COMEDYCENTRAL', 583: 'ENGAGEMEDIA', 584: 'SCREENJUNKIES', 585: 'RUTUBE', 586: 'SEVENLOAD', 587: 'MUBI', 588: 'IZLESENE', 589: 'VIDEO_HOSTING', 590: 'BOX', 591: 'SKYDRIVE', 592: '7DIGITAL', 593: 'CLOUDFRONT', 594: 'TANGO', 595: 'WECHAT', 596: 'LINE', 597: 'BLOOMBERG', 598: 'MSCDN', 599: 'AKAMAI', 600: 'YAHOOMSG', 601: 'BITGRAVITY', 602: 'CACHEFLY', 603: 'CDN77', 604: 'CDNETWORKS', 605: 'CHINACACHE', 606: 'COTENDO', 607: 'EDGECAST', 608: 'FASTLY', 609: 'HIGHWINDS', 610: 'INTERNAP', 611: 'LEVEL3', 612: 'LIMELIGHT', 613: 'MAXCDN', 614: 'NETDNA', 615: 'VOXEL', 616: 'RACKSPACE', 617: 'GAMEFORGE', 618: 'METIN2', 619: 'OGAME', 620: 'BATTLEKNIGHT', 621: '4STORY', 622: 'FBMSG', 623: 'GCM',
             625: 'NDN',
             626:'NDN_HTTP',
             627: 'QUIC',
@@ -624,6 +629,8 @@ MMTDrop.constants = {
       return protocolName;
     },
     getProtocolIDFromName : function( proto_name ){
+      if( proto_name == undefined ) return;
+
       //ProtocolName
       if( proto_name.indexOf(":") == -1 ){
         for( var key in this.ProtocolsIDName )
@@ -835,7 +842,6 @@ MMTDrop.tools = function () {
                 arr.push(zero);
             }
         }
-
         return arr;
     };
 
@@ -847,7 +853,7 @@ MMTDrop.tools = function () {
      * @param   {[[integer]]} value
      * @returns {[[string]]}
      */
-    _this.formatDataVolume = function (v) {
+    _this.formatDataVolume = function (v, round) {
         if( v == undefined ) return "unknown";
 
         if( MMTDrop.config.format_payload !== true )
@@ -858,9 +864,10 @@ MMTDrop.tools = function () {
         if (v >= 1000000)
             return (v / 1000000).toFixed(2) + "M";
         if (v >= 1000)
-            return (v / 1000).toFixed(2) + "K";
-
-        return v.toFixed(2) ;//Math.round(v);
+            return (v / 1000).toFixed(2) + "k";
+        if( round === true )
+          return Math.round(v);
+        return v.toFixed(2) ;
     };
 
     _this.formatPercentage = function( v ){
@@ -872,14 +879,30 @@ MMTDrop.tools = function () {
         return v.toLocaleString();
     }
 
+    _this.formatInterval = function( no_seconds ){
+      if( no_seconds == undefined ) return "undefined";
+      var d = Math.floor( no_seconds / 3600 / 24 );
+      no_seconds -= d*3600*24;
+      var h = Math.floor( no_seconds / 3600 );
+      no_seconds -= h*3600;
+      var m = Math.floor( no_seconds / 60 );
+      no_seconds -= m*60;
+
+      no_seconds = Math.round( no_seconds * 1000 )/1000;
+      return (d>0? (d + "d ") : "") + (h>0? (h + "h"): "") + (m>0? (m + "m"): "") + (no_seconds>0? (no_seconds.toFixed(3) + "s"): "");
+    }
+
     /**
      * Get date and time string from a date object
      * @param   {Date}
      * @returns {string}
      */
     _this.formatDateTime = function (v, withMillisecond) {
-        return v.toLocaleString();
-       /*
+        //return v.toLocaleString();
+        //accept timestamp
+        if( typeof v == "number")
+          v = new Date( v );
+
         var milli = "";
         if( withMillisecond === true )
             milli = "." + ("00" + v.getMilliseconds()).slice(-3);
@@ -894,7 +917,17 @@ MMTDrop.tools = function () {
 
 
         return time;
-        */
+    };
+    _this.formatString = function( val, len ){
+      if( typeof( val ) != "string" )
+        return val;
+      var str = val.toString();
+
+      len = len || 50;
+      if( len > str.length )
+        return str;
+      var new_str = str.substr( 0, len ) + "...";
+      return '<span title="'+ str +'">'+ new_str +'</span>';
     };
 
     _this.printStack = function(){
@@ -955,29 +988,28 @@ MMTDrop.tools = function () {
    * @memberof! MMTDrop.tools
    */
    _this.mergeObjects = function( obj1, obj2 ){
-         if( obj2 == undefined )
-             return obj1;
-         else if (obj1 == undefined )
-             return obj2;
-    //obj1 = MMTDrop.tools.cloneData( obj1 );
-    for (var p in obj2) {
-      try {
-        // Property in destination object set; update its value.
-        if ( obj2[p].constructor == Object ) {
-          obj1[p] = MMTDrop.tools.mergeObjects(obj1[p], obj2[p]);
-
-        } else {
-          obj1[p] = obj2[p];
-        }
-
-      } catch(e) {
-        // Property in destination object not set; create it and set its value.
-        obj1[p] = obj2[p];
-
+    var ret = {}, obj = obj1;
+    for (var p in obj) {
+      // Property in destination object set; update its value.
+      if ( obj[p] != undefined && obj[p].constructor == Object ) {
+        if( ret[p] == undefined ) ret[p] = {};
+        ret[p] = MMTDrop.tools.mergeObjects( ret[p], obj[p]);
       }
+      else
+        ret[p] = obj[p];
     }
 
-    return obj1;
+    obj = obj2;
+    for (var p in obj) {
+      // Property in destination object set; update its value.
+      if ( obj[p] != undefined && obj[p].constructor == Object ) {
+        if( ret[p] == undefined ) ret[p] = {};
+        ret[p] = MMTDrop.tools.mergeObjects( ret[p], obj[p]);
+      }
+      else
+        ret[p] = obj[p];
+    }
+    return ret;
   };
 
 
@@ -1446,6 +1478,17 @@ MMTDrop.tools = function () {
     return _this.sumByGroups( data, colsSum, [colGroup, colSubgroup]);
   };
 
+  _this.parseURLParameters = function( url ){
+    var obj    = {}, hash,
+        hashes = url.split("&");
+
+    for(var i = 0; i < hashes.length; i++){
+        hash = hashes[i].split('=');
+
+        obj[hash[0]] = decodeURIComponent(hash[1]);
+    }
+    return obj;
+  };
   /**
    * Get an object representing the parameters of the current url
    * @return {[type]} [description]
@@ -1454,16 +1497,12 @@ MMTDrop.tools = function () {
       var d = window.location.href.indexOf('?');
       if( d == -1 )
         return {};
-      var vars = {}, hash;
-      var hashes = window.location.href.slice(d + 1).split('&');
-      for(var i = 0; i < hashes.length; i++){
-          hash = hashes[i].split('=');
-          vars[hash[0]] = decodeURIComponent(hash[1]);
 
-          //when user want to get only one parameter
-          if( key != undefined && key == hash[0] )
-            return vars[ hash[0] ];
-      }
+      var hashes = window.location.href.slice(d + 1);
+      var vars = _this.parseURLParameters( hashes );
+      if( key )
+        return vars[ key ];
+
       return vars;
   };
 
@@ -1472,11 +1511,15 @@ MMTDrop.tools = function () {
       type : "text/css",
       html : content
     }).appendTo("head");
-  }
+  };
 
   _this.getQueryString = function( param, add_query_str ){
-    var obj = _this.getURLParameters();
-    var arr = [];
+    var obj     = _this.getURLParameters();
+    var arr     = [];
+    var add_obj = {};
+    if( add_query_str !== undefined && add_query_str !== "" ){
+      add_obj = _this.parseURLParameters( add_query_str );
+    }
 
     //get all parameters
     if( param == undefined || param.length == 0 ){
@@ -1486,12 +1529,13 @@ MMTDrop.tools = function () {
     }
     for( var i=0; i<param.length; i++ ){
       var val = obj[ param[i] ];
-      if( val != undefined )
+      if( val != undefined && add_obj[ param[i] ] == undefined )
         arr.push( param[i] + "=" +  val);
     }
 
-    if( add_query_str !== undefined && add_query_str !== "" )
-      arr.push( add_query_str )
+    if( add_query_str !== undefined && add_query_str !== "" ){
+      arr.push( add_query_str );
+    }
 
     if( arr.length > 0 )
       arr = "?" + arr.join("&");
@@ -1513,7 +1557,11 @@ MMTDrop.tools = function () {
       url += _this.getQueryString( options.param );
 
     document.location.href = url;
-  };
+    throw new Error("abort to goto " + url);
+  },
+  _this.reloadPage = function( add_param_string ){
+    _this.gotoURL( _this.getCurrentURL([], add_param_string) );
+  }
 
   _this.ajax =  function( url, data, method, callback, options ){
     options = options || {};
@@ -1532,7 +1580,7 @@ MMTDrop.tools = function () {
           contentType: options.contentType ? options.contentType : "application/json",
           data       : data,
           cache      : (method == "GET" ? true: false),
-          timeout    : MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 30000, //30 seconds
+          timeout    : options.timeout? options.timeout : (MMTDrop.config.db_timeout ? MMTDrop.config.db_timeout : 60000), //60 seconds
           error      : callback.error, // (xhr, status, error),
           success    : function(data) {
             callback.success(data);
@@ -1620,7 +1668,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     this.afterReload = function( cb ){
         _reloadCallback.push( cb );
     }
-    this.updateParameter = function(){};
+    this.updateParameter = null;
 
     this.delete = function(){
         _data = [];
@@ -1673,7 +1721,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       if( user_param != undefined )
         _param = MMTDrop.tools.mergeObjects(_param, user_param);
     }
-    if (new_param)
+    if (new_param && _param.no_override_when_reload !== true )
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
 
     if( isFirstTime ){
@@ -3138,7 +3186,7 @@ MMTDrop.filterFactory = {
 
           for( var path in obj){
             var parentKey = MMTDrop.constants.getParentPath( path );
-            var parentApp       = MMTDrop.constants.getAppIdFromPath( parentKey );
+            var parentApp = MMTDrop.constants.getAppIdFromPath( parentKey );
             //keys[j] is a children of parentApp
             if(  parentApp in data ){
               data[ parentApp ] = data[parentApp].concat( obj[path] );
@@ -3154,7 +3202,12 @@ MMTDrop.filterFactory = {
         for (var i in keys){
           opts.push({id:  keys[i], label: MMTDrop.constants.getProtocolNameFromID( keys[i] ) });
         }
-
+        //alphabet of labels
+        opts.sort( function( a,b ){
+          if(a.label < b.label) return -1;
+          if(a.label > b.label) return 1;
+          return 0;
+        });
         //if there are more than one option or no option ==> add "All" to top
         if (opts.length != 1)
           opts.unshift(MMTDrop.tools.cloneData(options[0]));
@@ -4736,7 +4789,7 @@ MMTDrop.Chart = function(option, renderFn){
                 console.log( "no data" );
       }
             this.chart = renderFn(_elemID, _option, data);
-
+            this.chart.parent = this;
             if( MMTDrop.tools.isFunction( _option.afterRender )  ){
                 _option.afterRender( _this );
                 _option.afterRender = null;
@@ -4754,16 +4807,22 @@ MMTDrop.Chart = function(option, renderFn){
 
             if( _option.bgPercentage ){
                 setTimeout( function( opt ){
-                    $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
-                        var $this = $(this);
-                        $this.addClass( opt.css );
-                        });
+                    if( !Array.isArray( opt.column ))
+                      opt.column = [ opt.column ];
+                    for( var i in opt.column)
+                      $(opt.table + " tr td:nth-child("+ opt.column[i] +")" ).each( function( index ){
+                          var $this = $(this);
+                          $this.addClass( opt.css );
+                          });
                 }, 1000, _option.bgPercentage);
 
                 //aimation
                 //change background-size
                 setTimeout( function( opt ){
-                    $(opt.table + " tr td:nth-child("+ opt.column +")" ).each( function( index ){
+                  if( !Array.isArray( opt.column ))
+                      opt.column = [ opt.column ];
+                  for( var i in opt.column)
+                    $(opt.table + " tr td:nth-child("+ opt.column[i] +")" ).each( function( index ){
                         var $this = $(this);
                         var val = 0;
                         if( opt.attr )
@@ -4836,6 +4895,7 @@ MMTDrop.Chart = function(option, renderFn){
             if( obj.addZeroPoints )
                 opt.addZeroPoints = obj.addZeroPoints;
       //dynamically create option for rendering chart
+
       if( obj.chart )
         opt.chart = MMTDrop.tools.mergeObjects( opt.chart, obj.chart );
     }
@@ -4871,9 +4931,10 @@ MMTDrop.chartFactory = {
       var _param = {};
       _param = MMTDrop.tools.mergeObjects( _param, param );
 
-      var chart = new MMTDrop.Chart( _param,
 
+      var chart = new MMTDrop.Chart( _param,
           function (elemID, option, data){
+
         //flat data: retain the first columns
         //the next ones are of each probe
         //get list of probes
@@ -4928,7 +4989,8 @@ MMTDrop.chartFactory = {
           bindto: "#" + elemID,
           data: {
             type: 'bar',
-            columns: arrData
+            columns: arrData,
+            order: null
           },
           axis : {
             x : {
@@ -4943,10 +5005,39 @@ MMTDrop.chartFactory = {
                 }
               }
             }
-          }
+          },
+          tooltip:{
+            contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                  var $$ = this, config = $$.config,
+                      titleFormat = config.tooltip_format_title || defaultTitleFormat,
+                      nameFormat  = config.tooltip_format_name  || function (name) { return name; },
+                      valueFormat = config.tooltip_format_value || defaultValueFormat,
+                      text, i, title, value, name, bgcolor;
+                  for (i = 0; i < d.length; i++) {
+                      if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
+
+                      if (! text) {
+                          title = titleFormat ? titleFormat(d[i].x) : d[i].x;
+                          text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
+                      }
+
+                      name = nameFormat(d[i].name);
+                      value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
+                      bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+
+                      text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
+                      text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
+                      text += "<td class='value'>" + value + "</td>";
+                      text += "</tr>";
+                  }
+                  return text + "</table>";
+              },
+            grouped: true
+          },
         };
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+        if( option.chart )
+          chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
         var chart = c3.generate( chart_opt );
         return chart;
       });
@@ -4954,6 +5045,7 @@ MMTDrop.chartFactory = {
       chart.getIcon = function(){
         return $('<i>', {'class': 'fa fa-bar-chart'});
       };
+
       return chart;
     },
 
@@ -5085,8 +5177,9 @@ MMTDrop.chartFactory = {
                   },
 
               };
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+              if( option.chart )
+                chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
                 var chart = c3.generate( chart_opt );
                 chart.color = function( key ){
                     if( chart.colors == undefined )
@@ -5558,7 +5651,7 @@ MMTDrop.chartFactory = {
 
             for( var j=1; j<n; j++){
                 var val = arrData[i][j];
-                if( val == undefined )
+                if( val === undefined )
                     val = 0;
                 obj[j].push( val );  //y
             }
@@ -5579,14 +5672,14 @@ MMTDrop.chartFactory = {
         for (var j=1; j<columns.length; j++){
           //not root
           //if( columns[j].label.indexOf("/") > 0 )
-                    if( columns[j].type == "area-stack" ){
-                        columns[j].type = "area";
-            groups.push( columns[j].label );
-                    }
-                    else if( columns[j].type == "area-step-stack" ){
-                        columns[j].type = "area-step";
-            groups.push( columns[j].label );
-                    }
+          if( columns[j].type == "area-stack" ){
+              columns[j].type = "area";
+              groups.push( columns[j].label );
+          }
+          else if( columns[j].type == "area-step-stack" ){
+              columns[j].type = "area-step";
+              groups.push( columns[j].label );
+          }
         }
 
         var types = {};
@@ -5616,9 +5709,9 @@ MMTDrop.chartFactory = {
                   type   : (type === "scatter")? type:  "",
                   types  : types,
                   groups : [ groups ],
-                            //order  : 'desc' // stack order by sum of values descendantly. this is default.
-                            //order: 'asc'  // stack order by sum of values ascendantly.
-                            order: null,   // stack order by data definition.}
+                  //order  : 'desc' // stack order by sum of values descendantly. this is default.
+                  //order: 'asc'  // stack order by sum of values ascendantly.
+                  order: null,   // stack order by data definition.}
                 },
                         size:{
                             height: height
@@ -5657,32 +5750,32 @@ MMTDrop.chartFactory = {
                   format: {
                     title: MMTDrop.tools.formatDateTime
                   },
-                            contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
-                                  var $$ = this, config = $$.config,
-                                      titleFormat = config.tooltip_format_title || defaultTitleFormat,
-                                      nameFormat = config.tooltip_format_name || function (name) { return name; },
-                                      valueFormat = config.tooltip_format_value || defaultValueFormat,
-                                      text, i, title, value, name, bgcolor;
-                                  for (i = 0; i < d.length; i++) {
-                                      if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
+                  contents: function (d, defaultTitleFormat, defaultValueFormat, color) {
+                        var $$ = this, config = $$.config,
+                            titleFormat = config.tooltip_format_title || defaultTitleFormat,
+                            nameFormat  = config.tooltip_format_name  || function (name) { return name; },
+                            valueFormat = config.tooltip_format_value || defaultValueFormat,
+                            text, i, title, value, name, bgcolor;
+                        for (i = 0; i < d.length; i++) {
+                            if (! (d[i] && (d[i].value || d[i].value === 0))) { continue; }
 
-                                      if (! text) {
-                                          title = titleFormat ? titleFormat(d[i].x) : d[i].x;
-                                          text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
-                                      }
+                            if (! text) {
+                                title = titleFormat ? titleFormat(d[i].x) : d[i].x;
+                                text = "<table class='" + $$.CLASS.tooltip + "'>" + (title || title === 0 ? "<tr><th colspan='2'>" + title + "</th></tr>" : "");
+                            }
 
-                                      name = nameFormat(d[i].name);
-                                      value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
-                                      bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
+                            name = nameFormat(d[i].name);
+                            value = valueFormat(d[i].value, d[i].ratio, d[i].id, d[i].index);
+                            bgcolor = $$.levelColor ? $$.levelColor(d[i].value) : color(d[i].id);
 
-                                      text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
-                                      text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
-                                      text += "<td class='value'>" + value + "</td>";
-                                      text += "</tr>";
-                                  }
-                                  return text + "</table>";
-                              },
-                            grouped: true
+                            text += "<tr class='" + $$.CLASS.tooltipName + "-" + d[i].id + "'>";
+                            text += "<td class='name'><span style='background-color:" + bgcolor + "'></span>" + name + "</td>";
+                            text += "<td class='value'>" + value + "</td>";
+                            text += "</tr>";
+                        }
+                        return text + "</table>";
+                    },
+                  grouped: true
                 },
                 grid: {
                   x: {
@@ -5710,9 +5803,9 @@ MMTDrop.chartFactory = {
                   }
             };
             //console.log( chart_opt );
-                if( param.chart ){
-                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
-                }
+            if( option.chart )
+              chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
                 var nb_real_points = 0;
                 if( obj[1] )
                     for( var i = 0; i<obj[0].length; i++)
@@ -5957,8 +6050,9 @@ MMTDrop.chartFactory = {
         };
 
                 //console.log( chart_opt );
-                if( param.chart )
-                    chart_opt = MMTDrop.tools.mergeObjects( chart_opt, param.chart );
+                if( option.chart )
+                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
 
                 table.treetable( chart_opt );
 
@@ -6130,15 +6224,18 @@ MMTDrop.chartFactory = {
         });
                  */
         //add each element to a row
-                if( param.chart && param.chart.deferRender === true){
-                    param.chart.data = arrData;
-                    param.chart.columns = [];
+
+                if( option.chart && option.chart.deferRender === true){
+                   option.chart.data = arrData;
+                     option.chart.columns = [];
 
                     for( var i in option.columns )
                         if( option.columns[i].align === "right" )
-                            param.chart.columns.push( {className: "text-right"} );
+                           option.chart.columns.push( {className: "text-right"} );
+                        else if( option.columns[i].class )
+                           option.chart.columns.push( {className: option.columns[i].class } );
                         else
-                            param.chart.columns.push( [] );
+                          option.chart.columns.push( [] );
 
                 }else
                     for (var i in arrData) {
@@ -6196,13 +6293,14 @@ MMTDrop.chartFactory = {
                     }
 
         tbody.appendTo(table);
-                var chart_option = {
-                    //fixedHeader: true,
-                };
-                if( param.chart )
-                   chart_option = MMTDrop.tools.mergeObjects( chart_option, param.chart );
+                var chart_opt = {
 
-               table.dataTable(chart_option);
+                };
+                if( option.chart )
+                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+
+
+               table.dataTable(chart_opt);
 
         //when user click on a row
                 if (option.click) {

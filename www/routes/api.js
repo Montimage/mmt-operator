@@ -19,14 +19,12 @@ function proc_request(req, res, next) {
 			if (err)
 				return next(err);
 
-			console.log("lastime: " + time + " "
-					+ (new Date(time)).toTimeString());
-
 			var inteval = action;
 
 			var time = {
 				begin : time - inteval,
-				end   : time
+				end   : time,
+				now   : (new Date()).getTime()
 			};
 
 			//probe status: stat_time, stop_time

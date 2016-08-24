@@ -90,10 +90,11 @@ var MMTDrop = {
         RTT_MAX_CLIENT      : 30,
         RTT_AVG_SERVER      : 31,
         RTT_AVG_CLIENT      : 32,
-        RETRANSMISSION_COUNT: 33,
+        DATA_TRANSFER_TIME  : 33, //Time difference between first data packet time and the last packet time received in the sample interval
+        RETRANSMISSION_COUNT: 34,
 
 
-        FORMAT_TYPE         : 34, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
+        FORMAT_TYPE         : 35, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
 
         SRC_LOCATION            : 40,
         DST_LOCATION            : 41,
@@ -147,7 +148,7 @@ var MMTDrop = {
         APP_FAMILY         : 50,
         CONTENT_CLASS      : 51,
         RESPONSE_TIME      : 52, /**< Index of the response time column */
-        TRANSACTIONS_COUNT : 53, /**< Index of the HTTP transactions count (req/res number) column */
+        TRANSACTIONS_COUNT : 53, /**< Index of the HTTP transactions count (req/res number) per TCP session */
         INTERACTION_TIME   : 54, /**< Index of the interaction time (between client and server) column */
         HOSTNAME           : 55, /**< Index of the hostname column */
         MIME_TYPE          : 56, /**< Index of the MIME type column */
@@ -157,8 +158,7 @@ var MMTDrop = {
         METHOD             : 60,
         RESPONSE           : 61,
         CONTENT_LENGTH     : 62,
-        FRAGMENTATION      : 63,
-        REQUEST_ID         : 64
+        REQUEST_INDICATOR  : 63, //It indicates that a particular request is finished with a response( 1: yes, 0: no)
     },
 
     TlsStatsColumnId : {
@@ -184,6 +184,9 @@ var MMTDrop = {
 			PASSWORD          : 93,
 			FILE_SIZE         : 94,
 			FILE_NAME         : 95,
+      DIRECTION         : 96, // direction of the flow
+      CONTROL_SESSION_ID: 97, // control session session_id of the corresponding data section
+      RESPONSE_TIME     : 98, // Response time of the file transfer only
     },
 
      LicenseColumnId           : {
@@ -441,11 +444,14 @@ var MMTDrop = {
         var COL       = this.StatsColumnId;
 
         msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
+        if ( this.isLocalIP( msg[COL.IP_SRC] ) )
+          return msg;
 
         if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
           msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
           return this.inverseStatDirection( msg )
         }
+
         return msg;
     },
 
@@ -566,6 +572,14 @@ ETHERIP
         341,354,376,461,
     ],
     ProtocolsIDName: {99: "ETH", 153: "HTTP", 154: "HTTP_CONNECT", 155: "HTTP_PROXY", 178: "IP", 179: "IP_IN_IP", 180: "IPP", 181: "IPSEC", 182: "IPV6", 341: "SSL", 354: "TCP", 376: "UDP", 461: "ETHERIP"
+    },
+
+    cloneData : function( obj ){
+      if( Array.isArray( obj ))
+        return obj.slice( 0 );
+      else if ( typeof(obj) === 'object' )
+        return  JSON.parse(JSON.stringify(obj));
+      return obj;
     }
 };
 
@@ -668,13 +682,17 @@ function format_session_report( msg ){
   //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
   var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
       i,
-      new_msg = msg.slice( 0  );//clone: avoid being overrided
+      new_msg = {};//clone: avoid being overrided
+
+  for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<cols.APP_FAMILY; i++){
+    new_msg[ i ] = msg[ i ];
+    msg[ i ]     = null;
+  }
 
   for( var k in cols ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
     i               = cols[ k ];
     msg[ i ]        = new_msg[ i - _new ];
-    msg[ i - _new ] = -2;
   }
 
   return msg;

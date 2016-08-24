@@ -98,7 +98,7 @@ app.use(express.static(path.join(__dirname, 'public'),{
     lastModified: true
 }));
 //log http req/res
-morgan.token('time', function(req, res){ return  moment().format("YYYY-MM-DD");} )
+morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',
                {
                  stream: config.outStream

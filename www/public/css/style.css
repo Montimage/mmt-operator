@@ -7,7 +7,15 @@ body {
     padding-top: 95px;
     background-color: #ddd;
 }
-
+.logo{
+  height: 30px;
+  padding: 0px;
+  margin: 0px;
+  opacity: 0.7;
+}
+.logo:hover{
+  opacity: 1
+}
 /*
  * Global add-ons
  */
@@ -70,13 +78,18 @@ body {
     max-width: 300px;
 }
 .dataTable td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    -o-text-overflow: ellipsis;
-    -ms-text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.truncate{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -o-text-overflow: ellipsis;
+  -ms-text-overflow: ellipsis;
+  max-width: 1px;
+  width: 60%;
+}
 
 .bg-img-1-red-pixel{
     /*1 red pixel*/
@@ -228,7 +241,7 @@ table.treetable >tbody>tr:last-child>td:first-child {
     border-bottom: thin solid #efefef;
 }
 table.treetable>tbody>tr>td {
-    cursor: pointer;
+    cursor: pointer;;
     border-collapse: collapse;
     border: thin solid #efefef;
     color: #428bca;
@@ -251,19 +264,38 @@ tr.selected a {
 .c3-area {
     opacity: 0.8;
 }
-.c3-line {
+.c3-line,.c3-ygrid-line {
     stroke-width: 2px !important;
 }
 
 .c3-axis-y-label{
 }
 
+.c3-bar {
+    cursor: pointer;
+}
+.c3-circle {
+  cursor:pointer !important;
+}
+
 .dataTable, .dataTables_filter, .dataTables_info{
     font-size: 12px;
 }
 
-a {
-    cursor: pointer;
+a, .ahref {
+  cursor: pointer;
+  color : "#337ab7";
+  text-decoration: none;
+}
+
+a:hover, .ahref:hover{
+  text-decoration: none;
+}
+
+a[disabled], .ahrefl[disabled]{
+  color: #999;
+  pointer-events:none;;
+  cursor: not-allowed;
 }
 
 .modal.modal-wide .modal-dialog {
@@ -278,7 +310,7 @@ a {
     animation: 2s linear;
 }
 
-.c3-chart-line {
+.c3-chart-lines {
     opacity: 0;
     animation-name    : draw_c3j_line;
     animation-duration: 2s;
@@ -295,7 +327,33 @@ a {
     100%  { opacity: 1;}
 }
 
+.c3-chart-bars,.mmt-c3-chart-bars-animation, .mmt-c3-chart-bars-animation-inverted {
+    opacity: 0;
+    animation-name    : draw_c3j_bar;
+    animation-duration: 2s;
 
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-out;
+}
+
+@keyframes draw_c3j_bar {
+    0%    { opacity: 0}
+    40%   { opacity: 0;   transform: translate(-100px,0px);}
+    80%   { opacity: 0.7; transform: translate(0px,0px);}
+    100%  { opacity: 1;}
+}
+
+.mmt-c3-chart-bars-animation-inverted {
+    animation-name    : draw_c3j_bar_inverted;
+}
+
+@keyframes draw_c3j_bar_inverted {
+    0%    { opacity: 0}
+    40%   { opacity: 0;   transform: translate(100px,0px);}
+    80%   { opacity: 0.7; transform: translate(0px,0px);}
+    100%  { opacity: 1;}
+}
 
 .c3-chart-arc {
     opacity: 0;
