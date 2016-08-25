@@ -463,11 +463,11 @@ var MMTDrop = {
     isLocalIP : function( ip ){
         if( ip == undefined || ip === "undefined" || ip === "null")
             return false;
-        if( this._localCacheIPs == undefined )
+        if( this._localCacheIPs === undefined )
           this._localCacheIPs = {};
 
         //check in the cache
-        if( this._localCacheIPs[ ip ] !== undefined )
+        else if( this._localCacheIPs[ ip ] !== undefined )
           return this._localCacheIPs[ ip ];
 
         if( this._localIPs === undefined ){
