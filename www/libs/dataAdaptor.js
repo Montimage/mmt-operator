@@ -286,9 +286,9 @@ var MMTDrop = {
      */
     getCategoryIdFromAppId : function( appId ){
       //cache last found
-      if( this._cacheCategoryIdFromAppId == undefined )
+      if( this._cacheCategoryIdFromAppId === undefined )
         this._cacheCategoryIdFromAppId = {};
-      if( this._cacheCategoryIdFromAppId[ appId] != undefined )
+      if( this._cacheCategoryIdFromAppId[ appId] !== undefined )
         return this._cacheCategoryIdFromAppId[ appId ];
 
       appId = parseInt( appId );
@@ -607,7 +607,7 @@ MMTDrop.formatReportItem = function(entry) {
     }
 
     var obj = {};
-    for( var i in entry ){
+    for( var i=0; i<entry.length; i++ ){
         obj[ i ] = entry[ i ];
     }
     return obj;
@@ -662,42 +662,49 @@ function format_session_report( msg ){
       msg[ PATH_INDEX ] = UP_PATH;
 
   var format_type = msg[ MMTDrop.StatsColumnId.FORMAT_TYPE ];
-  var cols = [];
+  var _start = 0, _end = 0 ;
   switch (format_type) {
     case MMTDrop.CsvFormat.WEB_APP_FORMAT:
-      cols = MMTDrop.HttpStatsColumnId;
+      _start = MMTDrop.HttpStatsColumnId.APP_FAMILY;
+      _end   = MMTDrop.HttpStatsColumnId.REQUEST_INDICATOR;
       break;
     case MMTDrop.CsvFormat.SSL_APP_FORMAT:
-      cols = MMTDrop.TlsStatsColumnId;
+      _start = MMTDrop.TlsStatsColumnId.APP_FAMILY;
+      _end   = MMTDrop.TlsStatsColumnId.CDN_FLAG;
       break;
     case MMTDrop.CsvFormat.RTP_APP_FORMAT:
-      cols = MMTDrop.RtpStatsColumnId;
+      _start = MMTDrop.RtpStatsColumnId.APP_FAMILY;
+      _end   = MMTDrop.RtpStatsColumnId.ORDER_ERROR;
       break;
     case MMTDrop.CsvFormat.FTP_APP_FORMAT:
-      cols = MMTDrop.FtpStatsColumnId;
+      _start = MMTDrop.FtpStatsColumnId.APP_FAMILY;
+      _end   = MMTDrop.FtpStatsColumnId.RESPONSE_TIME;
       break;
     default:
       return msg;
   }
   //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
-  var _new = cols.APP_FAMILY - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
+  var _new = _start - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
       i,
       new_msg = {};//clone: avoid being overrided
 
-  for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<cols.APP_FAMILY; i++){
+  for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<_start; i++){
     new_msg[ i ] = msg[ i ];
     msg[ i ]     = null;
   }
-
-  for( var k in cols ){
+  
+  for( var i=_start; i<=_end; i++ ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
-    i               = cols[ k ];
-    msg[ i ]        = new_msg[ i - _new ];
+    msg[ i ] = new_msg[ i - _new ];
   }
 
   return msg;
 }
 
+var formatTime = function( ts ){
+   var time = Math.ceil( ts * 1000 ) ; //ceil: returns the smallest integer greater than or equal to a given number
+   return time;
+}
 /**
  * Convert a message in string format to an array
  * @param {[[Type]]} message [[Description]]
@@ -705,10 +712,6 @@ function format_session_report( msg ){
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
 
-    var formatTime = function( ts ){
-        var time = Math.ceil( ts * 1000 ) ; //ceil: returns the smallest integer greater than or equal to a given number
-        return time;
-    }
     //timestamp
     msg[ 3 ] = formatTime( msg[3] );
     //format

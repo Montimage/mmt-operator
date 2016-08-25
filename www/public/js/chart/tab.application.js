@@ -340,7 +340,7 @@ var ReportFactory = {
                     }
 
                     var length = 0, total  = 0, val;
-                    for( var i in data ){
+                    for( var i=0; i<data.length; i++ ){
                       val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ COL.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
                       //val = -3
                       if( val >= 0 ){

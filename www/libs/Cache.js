@@ -136,8 +136,8 @@ function Cache ( option ) {
 
         //flush data in _data to database
         //need messages arrive in time order???
-        if( _period_to_update_value == 0 //or the cache is updated in realtime
-          || ts - _lastUpdateTime > _period_to_update_value //when it timestamp > period_to_update
+        if( ts - _lastUpdateTime > _period_to_update_value //when it timestamp > period_to_update
+          ||  _period_to_update_value == 0 //or the cache is updated in realtime
           || _data_size >= config.buffer.max_length_size
         ){
             var data = [];
@@ -148,11 +148,10 @@ function Cache ( option ) {
 
             _this.removeOldDataFromDatabase( ts );
 
-            if( cb != null )
+            if( cb !== undefined )
                 cb( data );
             return;
         }
-        if( cb != null ) cb( [] );
     };
 
     this.addArray = function (arr, cb ) {
@@ -219,11 +218,11 @@ function Cache ( option ) {
         _data_size = 0;
     };
 
-    var _is_real_or_special  = (_period_to_update_name === "real" || _period_to_update_name === "special");
-    var key_id_arr   = option.message_format.key;
-    var key_inc_arr  = option.message_format.data["$inc"]  || [];
-    var key_set_arr  = option.message_format.data["$set"]  || [] ;
-    var key_init_arr = option.message_format.data["$init"] || [];
+    const _is_real_or_special  = (_period_to_update_name === "real" || _period_to_update_name === "special");
+    const key_id_arr           = option.message_format.key;
+    const key_inc_arr          = option.message_format.data["$inc"]  || [];
+    const key_set_arr          = option.message_format.data["$set"]  || [] ;
+    const key_init_arr         = option.message_format.data["$init"] || [];
     /**
      * calculate data to be $inc, $set and $init then store them to _data
      * @param {Object/Array} msg message tobe added
@@ -241,28 +240,30 @@ function Cache ( option ) {
 
         var txt = JSON.stringify( key_obj );
 
+        var oo = key_obj;
         //first msg in the group identified by key_obj
         if (_data[txt] == undefined){
             _data[txt] = key_obj;
             _data_size ++;
-          }
+        }
+        else
+             oo = _data[ txt ];
 
-        var oo = _data[ txt ];
         //ts is the max ts of the reports in its period
         if( _is_real_or_special ){
-          if( oo[ TIMESTAMP ] == undefined ||  oo[ TIMESTAMP ] < msg[ TIMESTAMP ] )
+          if(  oo[ TIMESTAMP ] < msg[ TIMESTAMP ] || oo[ TIMESTAMP ] == undefined )
             oo[ TIMESTAMP ] = msg[ TIMESTAMP ];
         }
 
         //increase
         for (var j=0; j<key_inc_arr.length; j++){
             var key = key_inc_arr[ j ];
-
             var val = msg[ key ];
-            if( val == undefined  || typeof val  !== "number" )
-                val = 0;
 
-            if (oo[ key ] == undefined)
+            //if( val == undefined  || typeof val  !== "number" )
+            //    val = 0;
+
+            if (oo[ key ] === undefined)
                 oo[ key ]  = val;
             else
                 oo[ key ] += val;
@@ -271,9 +272,10 @@ function Cache ( option ) {
         //set
         for (var j=0; j<key_set_arr.length; j++){
             var key = key_set_arr[ j ];
+            var val = msg[ key ];
 
-            if( msg[key] != undefined )
-                oo[ key ] = msg[ key ];
+            if( val !== undefined )
+                oo[ key ] = val;
         }
 
 
@@ -281,7 +283,6 @@ function Cache ( option ) {
         //init
         for( var j=0; j<key_init_arr.length; j++ ){
             var key = key_init_arr[ j ];
-
             var val = msg[ key ];
 
             //init for the data in a period: minute, hour, day, month,
