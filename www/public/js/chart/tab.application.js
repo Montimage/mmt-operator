@@ -412,7 +412,7 @@ var ReportFactory = {
                               //override the default format
                               format: function( v ){
                                   if( v < 0 ) return 0;
-                                  return  MMTDrop.tools.formatDataVolume(v, true);
+                                  return  MMTDrop.tools.formatDataVolume(v);
                               }
                           },
                           min: 0
@@ -832,7 +832,7 @@ var ReportFactory = {
                     format: function( val ){
                       if( val < 0 )
                         val = -val;
-                      return MMTDrop.tools.formatDataVolume( val, true );
+                      return MMTDrop.tools.formatDataVolume( val );
                     },
                     count: is_trans? 4 : 4
                   },

@@ -197,7 +197,7 @@ var MongoConnector = function () {
             report_number = msg[ REPORT_NUMBER],
             last_update   = msg[ TIMESTAMP ];
 
-          if( self.probeStatus.data[ id ] == undefined ){
+          if( self.probeStatus.data[ id ] === undefined ){
             console.log( "First message comming from probe " + id + " at " + (new Date(last_update)).toLocaleString() );
             //there are no report_number in report 200
             if( isNaN( report_number ))
@@ -211,7 +211,7 @@ var MongoConnector = function () {
             };
           }
 
-          if( self.probeStatus.time.start == 0 )
+          if( self.probeStatus.time.start === 0 )
             self.probeStatus.time.start = last_update;
           if( self.probeStatus.time.last_update < last_update )
             self.probeStatus.time.last_update = last_update;
@@ -558,15 +558,6 @@ var MongoConnector = function () {
 
         //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
-            if( self._lastUpdateDataBaseTime == undefined )
-              self._lastUpdateDataBaseTime = ts;
-
-            if( ts - self._lastUpdateDataBaseTime > config.buffer.max_interval*1000 ){
-              self._lastUpdateDataBaseTime = ts;
-              for( var i in self.dataCache )
-                self.dataCache[i].flushCaches( "real" );
-            }
-
             return;
         }
 

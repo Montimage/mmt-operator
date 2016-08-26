@@ -62,13 +62,25 @@ function Cache ( option ) {
         return _collection_name;
     };
 
+    //moment we removed old data from DB 
+    var _last_remove_ts = 0;
     this.removeOldDataFromDatabase = function( ts, cb ){
+ 
         //retain all
         if( _retain_period === -1 ){
             if( cb != null ) cb(null, 0);
-            return;
+            return [];
         }
-        ts -= _retain_period;
+
+         //avoid 2 consecutive  flushes in 5 seconds
+        var now = (new Date()).getTime();
+         if ( now - _last_remove_ts < 5000 ){
+            if( cb ) cb( [] );
+            return [];
+         }
+         _last_remove_ts = now;
+
+       ts -= _retain_period;
 
         var query = {}
         query[ TIMESTAMP ] = { "$lt" :  ts };
@@ -76,13 +88,22 @@ function Cache ( option ) {
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
 
             //if( _period_to_update_name !== "real" && result.deletedCount > 0 )
-            //console.log("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
+            console.info("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
 
             if( cb != null ) cb( err, result.deletedCount );
         });
     }
 
+    var _last_flush_ts = 0; //real moment (of this machine, not ts from packets of mmt-probe) we flushed cache to DB
     this.flushDataToDatabase = function( cb ){
+         //avoid 2 consecutive  flushes in 5 seconds
+        var now = (new Date()).getTime();
+         if ( now - _last_flush_ts < 5000 ){
+            if( cb ) cb( [] );
+            return [];
+         }
+         _last_flush_ts = now;
+         
       //convert object to array
         var data = [];
         for( var i in _data )
@@ -97,7 +118,7 @@ function Cache ( option ) {
 
         _mdb.collection( _collection_name ).insert( data, function( err, result){
             //if( _period_to_update_name !== "real")
-            //console.log(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            console.info(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
 
             if( err ){
                 console.error( err );
@@ -137,7 +158,7 @@ function Cache ( option ) {
         //flush data in _data to database
         //need messages arrive in time order???
         if( ts - _lastUpdateTime > _period_to_update_value //when it timestamp > period_to_update
-          ||  _period_to_update_value == 0 //or the cache is updated in realtime
+          ||  _period_to_update_value === 0 //or the cache is updated in realtime
           || _data_size >= config.buffer.max_length_size
         ){
             var data = [];
@@ -157,30 +178,9 @@ function Cache ( option ) {
     this.addArray = function (arr, cb ) {
         if( arr == null || !(arr.length > 0) )
             return;
-
-        var ts = 0;
-        for( var i=0; i<arr.length; i++ ){
-          var el = arr[i];
-          _addMessage( el );
-
-          //get the latest timestamp
-          if( el[ TIMESTAMP ] > ts )
-            ts = el[ TIMESTAMP ];
-        };
-
-        if( ts - _lastUpdateTime > _period_to_update_value
-          || _period_to_update_value == 0
-          || _data_size >= config.buffer.max_length_size
-        ){
-            var data = [];
-            if( _lastUpdateTime !== 0  || _period_to_update_value == 0)
-                data = _this.flushDataToDatabase();
-
-          	_this.removeOldDataFromDatabase( ts );
-          	_lastUpdateTime = ts;
-
-            if( cb != null ) cb( data );
-        }
+        
+        for( var i=0; i<arr.length; i++ )
+          this.addMessage( arr[i], cb );
     }
 
     /**
