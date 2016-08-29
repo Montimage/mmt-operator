@@ -32,13 +32,20 @@ set_default_value( config.database_server, "port", 27017 );
 set_default_value( config.redis_server, "host", "127.0.0.1" );
 set_default_value( config.redis_server, "port", 6379 );
 
+set_default_value( config.micro_flow, "packet", 7 );
+set_default_value( config.micro_flow, "byte"  , 448 );
+
+//period to retain detail reports (1 report for 1 session during sample period, e.g. sconds)
+//retain 7days
+set_default_value( config, "retain_detail_report_period", 7*24*3600 );
+
 set_default_value( config, "probe_stats_period", 5);
 config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
 
 //use in Cache to decide when we will push caches to DB:
 //- either their size >= max_length_size
 //- or interval between 2 reports >= max_interval
-set_default_value( config.buffer, "max_length_size", 50000 );
+set_default_value( config.buffer, "max_length_size", 10000 );
 set_default_value( config.buffer, "max_interval", 30 );
 
 // ensure log directory exists

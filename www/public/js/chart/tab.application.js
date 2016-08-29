@@ -148,7 +148,7 @@ var ReportFactory = {
 
 
 
-        var database = new MMTDrop.Database( {action: "aggregate"},
+        var database = new MMTDrop.Database( {action: "aggregate", raw:true},
           //this function is called when database got data from server
           function( data ){
             //reload list of app/proto
@@ -586,7 +586,7 @@ var ReportFactory = {
 
 
 
-        var database = new MMTDrop.Database({action: "aggregate"});
+        var database = new MMTDrop.Database({action: "aggregate", raw: true});
         //this is called each time database is reloaded to update parameters of database
         database.updateParameter = function( _old_param ){
           //mongoDB aggregate

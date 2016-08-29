@@ -24,27 +24,48 @@ var MongoConnector = function () {
 
     var connectString = 'mongodb://' + host + ":" + port + "/" + self.db_name;
 
+    var no_1_packet_reports = 0;
 
-    var COL  = dataAdaptor.StatsColumnId;
-    var HTTP = dataAdaptor.HttpStatsColumnId;
-    var NDN  = dataAdaptor.NdnColumnId;
-    var FTP  = dataAdaptor.FtpStatsColumnId;
+    var COL      = dataAdaptor.StatsColumnId;
+    var HTTP     = dataAdaptor.HttpStatsColumnId;
+    var NDN      = dataAdaptor.NdnColumnId;
+    var TLS      = dataAdaptor.TlsStatsColumnId;
+    var RTP      = dataAdaptor.RtpStatsColumnId;
+    var FTP      = dataAdaptor.FtpStatsColumnId;
+    var LICENSE  = dataAdaptor.LicenseColumnId;
+    var OTT      = dataAdaptor.OTTQoSColumnId;
 
     var FORMAT_ID     = COL.FORMAT_ID,
         PROBE_ID      = COL.PROBE_ID,
         SOURCE_ID     = COL.SOURCE_ID,
         TIMESTAMP     = COL.TIMESTAMP,
         REPORT_NUMBER = COL.REPORT_NUMBER;
+
     var FLOW_SESSION_INIT_DATA = {};//init data of each session
 
     //all columns of HTTP, SSL,RTP et FTP
+    //attributes will be stored in data_session collection
     var init_session_set = [];
-    for( var i = COL.FORMAT_TYPE ; i <= FTP.FILE_NAME; i++){
+    for( var i = COL.FORMAT_TYPE ; i <= FTP.RESPONSE_TIME; i++){
+        if( dataAdaptor.objectHasAttributeWithValue( COL, i)      == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( HTTP, i)    == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( NDN, i)     == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( TLS, i)     == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( RTP, i)     == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( FTP, i)     == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( LICENSE, i) == undefined 
+            &&  dataAdaptor.objectHasAttributeWithValue( OTT, i)     == undefined 
+        ) continue;
+
         //exclude set
-        if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.REQUEST_INDICATOR ].indexOf( i ) == -1 )
-            init_session_set.push( i );
+        if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.REQUEST_INDICATOR,
+               FTP.RESPONSE_TIME ].indexOf( i ) >= 0 )
+          continue;
+
+        init_session_set.push( i );
     }
     init_session_set.push( COL.START_TIME );
+
 
     MongoClient.connect( connectString, function (err, db) {
         if (err) throw err;
@@ -61,10 +82,10 @@ var MongoConnector = function () {
                                  [COL.FORMAT_ID, COL.PROBE_ID],
                                  //inc
                                  [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
-                                 COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                 COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                                 //not need at the moment 2016-08-29
+                                 //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                 //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                  ],
                                  []),
 
@@ -92,11 +113,13 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                COL.RETRANSMISSION_COUNT,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,],
+                                //no need at the moment 2016-08-29
+                                //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                //COL.RETRANSMISSION_COUNT,
+                                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                               ],
                                //set
                                [COL.MAC_SRC, "isGen"]),
            location: new DataCache(db, "data_location",
@@ -105,11 +128,12 @@ var MongoConnector = function () {
                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                               COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                               COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                               COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                               COL.RETRANSMISSION_COUNT,
-                               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
+                              //not need at the moment 2016-08-29
+                               //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                               //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                               //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                               //COL.RETRANSMISSION_COUNT,
+                               //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
                              ],
                               //set
                               [COL.MAC_SRC]),
@@ -119,15 +143,34 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                COL.RETRANSMISSION_COUNT,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT],
+                              //not need at the moment 2016-08-29
+                                //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                //COL.RETRANSMISSION_COUNT,
+                                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT
+                               ],
                                //set
                                [COL.MAC_SRC, COL.MAC_DEST]),
 
             session: new DataCache(db, "data_session",
+                                   //key
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH, COL.IP_SRC, COL.IP_DEST],
+                                   //inc
+                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
+                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
+                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RETRANSMISSION_COUNT,
+                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                               ],
+                                   //set
+                               [COL.APP_ID, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
+                               COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR]
+                                  ),
+            detail: new DataCache(db, "data_detail",
                                    //key
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
                                    //inc
@@ -144,15 +187,23 @@ var MongoConnector = function () {
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR],
                                   //init
-                               init_session_set
+                               init_session_set,
+                                 //retain
+                                config.retain_detail_report_period * 1000 //change second ==> milisecond
                                   ),
 
             mac: new DataCache(db, "data_mac",
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
+                                 //increase
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
-                                ["isGen"], [COL.START_TIME], 5*60*1000),
+                                 //init
+                                ["isGen"],
+                                 //set
+                                [COL.START_TIME], 
+                                 //keep only data comming from the last 5 minutes
+                                5*60*1000),
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn",
@@ -379,6 +430,7 @@ var MongoConnector = function () {
         var ts       = msg[ TIMESTAMP ];
         var format   = msg[ FORMAT_ID ];
         var probe_id = msg[ PROBE_ID ];
+        var is_micro_flow = false;
 
         //receive this msg when probe is starting
         if ( format === dataAdaptor.CsvFormat.LICENSE) {
@@ -394,9 +446,12 @@ var MongoConnector = function () {
         if ( format === 100 || format === 99 ){
 
             //a dummy report when session expired
-            if( msg[ COL.PACKET_COUNT ] === 0 )
+            if( msg[ COL.PACKET_COUNT ] < 2 ){
+              no_1_packet_reports ++;
               return;
-            
+            }
+            //micro flow
+            is_micro_flow = ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte );
 
             msg.isGen = false;//this is original message comming from mmt-probe
 
@@ -406,7 +461,11 @@ var MongoConnector = function () {
 
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is unique
-            msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            if( is_micro_flow )
+               msg[ COL.SESSION_ID ] = "micro";
+            else
+               msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+
 
             //update timestamp of msg based on its report_number
             update_packet_timestamp( msg );
@@ -431,7 +490,10 @@ var MongoConnector = function () {
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] === 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
-                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
+                  if( is_micro_flow )
+                     msg[ COL.SESSION_ID ] = "micro";
+                  else 
+                     msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
                   //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
 
                   //same as ACTIVE_FLOWS
@@ -467,6 +529,7 @@ var MongoConnector = function () {
                 update_proto_name( msg );
                 //each session
                 self.dataCache.session.addMessage( msg );
+                self.dataCache.detail.addMessage( msg );
 
                                 //for each IP src
                 self.dataCache.ip.addMessage(      msg );
@@ -558,6 +621,8 @@ var MongoConnector = function () {
 
         //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
+            console.log("Number of reports containing only 1 packet: " + no_1_packet_reports );
+            no_1_packet_reports  = 0;
             return;
         }
 

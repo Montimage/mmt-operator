@@ -511,6 +511,13 @@ var MMTDrop = {
 
         return msg;
     },
+    
+    //check whenther object obj having an attribute's value that equals to val
+    objectHasAttributeWithValue: function( obj, val ){
+      for( var i in obj)
+         if( obj[i] == val ) return i;
+      return;
+    },
 
     //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
     PureProtocol :  [

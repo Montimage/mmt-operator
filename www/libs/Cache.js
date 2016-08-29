@@ -88,7 +88,7 @@ function Cache ( option ) {
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
 
             //if( _period_to_update_name !== "real" && result.deletedCount > 0 )
-            console.info("<<<<< deleted " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
+            console.info("del " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
 
             if( cb != null ) cb( err, result.deletedCount );
         });
@@ -115,17 +115,20 @@ function Cache ( option ) {
             if( cb ) cb( null, data );
             return data;
         }
-
-        _mdb.collection( _collection_name ).insert( data, function( err, result){
+        var method = "insert", opt = {};
+        if( data.length > 1 ){
+            method = "insertMany";
+        }
+        _mdb.collection( _collection_name )[method]( data, function( err, result){
             //if( _period_to_update_name !== "real")
-            console.info(">>>>>>> flushed " + data.length + " records to [" + _collection_name + "]" );
+            console.info("flushed " + data.length + " records to [" + _collection_name + "]" );
 
             if( err ){
                 console.error( err );
                 console.log( result );
             }
             if( cb ) cb( err, data );
-        } );
+        }  );
 
         return data;
     }
@@ -259,10 +262,8 @@ function Cache ( option ) {
         for (var j=0; j<key_inc_arr.length; j++){
             var key = key_inc_arr[ j ];
             var val = msg[ key ];
-
-            //if( val == undefined  || typeof val  !== "number" )
-            //    val = 0;
-
+            if( isNaN( val ) )
+               val = 0;
             if (oo[ key ] === undefined)
                 oo[ key ]  = val;
             else

@@ -132,10 +132,11 @@ var ReportFactory = {
         var FTP     = MMTDrop.constants.FtpStatsColumn;
         var FORMAT  = MMTDrop.constants.CsvFormat;
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "find" });
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_detail", action: "find", no_group : true });
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
+          $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
           //query by app_id
           if( $match != undefined ){
             param.query = [$match];

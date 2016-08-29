@@ -57,8 +57,8 @@ var ReportFactory = {
 
       var self    = this;
 
-      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
-                      period_groupby: URL_PARAM.groupby, no_override_when_reload: true, raw:true });
+      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+                      no_group : true, no_override_when_reload: true, raw:true });
       database.updateParameter = function( _old_param ){
 
         //get list of transactions at the moment URL_PARAM.ts;
@@ -88,8 +88,8 @@ var ReportFactory = {
         return {query: [{$match: $match}, {$group: $group}]};
       }
 
-      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
-                      period_groupby: URL_PARAM.groupby });
+      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+                      no_group : true });
 
       database.afterReload(
         //this is called when database is reloaded successfully
