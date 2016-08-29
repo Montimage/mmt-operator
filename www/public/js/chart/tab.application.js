@@ -340,7 +340,7 @@ var ReportFactory = {
                     }
 
                     var length = 0, total  = 0, val;
-                    for( var i in data ){
+                    for( var i=0; i<data.length; i++ ){
                       val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ COL.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
                       //val = -3
                       if( val >= 0 ){
@@ -412,7 +412,7 @@ var ReportFactory = {
                               //override the default format
                               format: function( v ){
                                   if( v < 0 ) return 0;
-                                  return  MMTDrop.tools.formatDataVolume(v, true);
+                                  return  MMTDrop.tools.formatDataVolume(v);
                               }
                           },
                           min: 0
@@ -832,7 +832,7 @@ var ReportFactory = {
                     format: function( val ){
                       if( val < 0 )
                         val = -val;
-                      return MMTDrop.tools.formatDataVolume( val, true );
+                      return MMTDrop.tools.formatDataVolume( val );
                     },
                     count: is_trans? 4 : 4
                   },

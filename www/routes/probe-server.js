@@ -1,14 +1,17 @@
 var fs               = require('fs');
 var path             = require('path');
-var mmtAdaptor       = require('../libs/dataAdaptor');
 var LineByLineReader = require('line-by-line');
+var mmtAdaptor       = require('../libs/dataAdaptor');
+var config           = require('../libs/config');
 var path             = require('path');
 var CURRENT_PROFILE = {};
 
 var router = {};
 var COL = mmtAdaptor.StatsColumnId;
 
+//DONOT remove this block
 //this is for Video QoS
+/*
 var qos_reports = [];
 function send_to_client( msg ){
     qos_reports.push( msg );
@@ -30,7 +33,10 @@ setInterval( function(){
 
     qos_reports = [];
 }, 1000);
+*/
 //end Video QoS
+
+const _is_offline = (config.probe_analysis_mode === "offline");
 
 router.process_message = function (db, message) {
     if( ! db ) return;
@@ -39,6 +45,7 @@ router.process_message = function (db, message) {
     try {
         //message = message.replace(/\(null\)/g, 'null');
         var msg = mmtAdaptor.formatMessage( message );
+
         if( msg === null )
             return;
 
@@ -51,7 +58,7 @@ router.process_message = function (db, message) {
             }
         }
 
-        if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
+        else if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
             if (msg[4] == 0) {
                 console.log("[META  ] " + message);
                 return;
@@ -68,13 +75,13 @@ router.process_message = function (db, message) {
             }
         }
 
-        if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
+        else if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
              || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT
              || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
             return;
         }
 
-        if( format === mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) {
+        else if( format === mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT ) {
             if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ||
               msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                 console.log( message )
@@ -83,7 +90,7 @@ router.process_message = function (db, message) {
             }
         }
 
-        if( format === mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT ){
+        else if( format === mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT ){
             if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
                  //|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
                  || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
@@ -93,15 +100,20 @@ router.process_message = function (db, message) {
             }
         }
 
-        //replace pcap filename ../test_files/exemple_pcap_60.pcap
-        if( router.config.probe_analysis_mode == "offline" ){
-            msg[ 2 ] = path.basename( msg[2] );
-        }
 
-        if( format == mmtAdaptor.CsvFormat.LICENSE ){
+        else if( format == mmtAdaptor.CsvFormat.LICENSE ){
 
             if( router.dbadmin )
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
+        }
+        else if( format === mmtAdaptor.CsvFormat.OTT_QOS ){
+            send_to_client( msg );
+        }
+
+
+        //replace pcap filename ../test_files/exemple_pcap_60.pcap
+        if( _is_offline ){
+            msg[ 2 ] = path.basename( msg[2] );
         }
 
          //TODO: to be remove, this chages probe ID, only for Thales demo
@@ -111,13 +123,8 @@ router.process_message = function (db, message) {
         //msg[1] = Math.random() > 0.5 ? 1 : 0;
 
 
-        if( format == mmtAdaptor.CsvFormat.OTT_QOS ){
-            send_to_client( msg );
-        }
 
-
-        if (db && msg)
-            db.addProtocolStats(msg, function (err, err_msg) {});
+        db.addProtocolStats(msg, function (err, err_msg) {});
 
     } catch (err) {
         //console.error("Error when processing the message: $" + message + "$");
@@ -183,9 +190,11 @@ router.startListeningAtFolder = function (db, folder_path) {
             // All lines are read, file is closed now.
             start_ts = (new Date()).getTime() - start_ts;
             console.log(" ==> DONE ("+ totalLines +" lines, "+ start_ts +" ms)");
+
             //remove data file
-            if( router.config.delete_data ){
-                fs.unlinkSync( file_name );
+            if( config.delete_data ){
+                //we can use async function, delete its semaphore is enough
+                fs.unlink( file_name );
                 //remove semaphore file
                 fs.unlinkSync( file_name + ".sem" );
                 cb( totalLines );
@@ -207,24 +216,28 @@ router.startListeningAtFolder = function (db, folder_path) {
           //delete the first element from _cache_files and return the element
           return _cache_files.splice(0, 1)[0];
         }
-        var files = fs.readdirSync(dir);
-        var arr = [];
 
-        for (var i in files) {
+         //Returns an array of filenames excluding '.' and '..'.
+        var files = fs.readdirSync(dir);
+        var arr = []; //will contain list of csv files
+
+        for (var i=0; i<files.length; i++) {
             var file_name = files[i];
-            //file was read
-            if( router.config.delete_data !== true )
+
+            //file was read (check in database when the read files are not deleted)
+            if( config.delete_data !== true )
                 if( read_files.indexOf( dir + file_name ) > -1 )
                     continue;
+
             //need to end with csv
             if (file_name.match(/csv$/i) == null)
                 continue;
 
-            var lock_file = dir + file_name + ".sem";
+            var lock_file = file_name + ".sem";
 
-            if (fs.existsSync(lock_file) == true) {
+            //check if there exists its semaphore
+            if ( files.indexOf( lock_file ) > -1 )
                 arr.push(dir + file_name);
-            }
         }
 
         if( arr.length == 0 )
@@ -241,7 +254,7 @@ router.startListeningAtFolder = function (db, folder_path) {
     var process_folder = function () {
         var file_name = get_csv_file( folder_path );
         if (file_name == null) {
-            setTimeout(process_folder, 1500);
+            setTimeout(process_folder, 500);
             return;
         }
         try{
@@ -256,10 +269,11 @@ router.startListeningAtFolder = function (db, folder_path) {
 
     process.stdout.write("\nWaiting for data in the folder [" + folder_path + "] ...\n");
     //need to delete .csv and .sem files after reading
-    if( router.config.delete_data ){
+    if( config.delete_data ){
         //start after 2 seconds
         setTimeout( process_folder, 2000);
     }else{
+        //connect to DB to store list of read files
         var start_process = function(){
             router.dbadmin.connect( function( err, mdb ) {
                 if( err ){

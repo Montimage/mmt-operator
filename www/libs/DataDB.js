@@ -197,7 +197,7 @@ var MongoConnector = function () {
             report_number = msg[ REPORT_NUMBER],
             last_update   = msg[ TIMESTAMP ];
 
-          if( self.probeStatus.data[ id ] == undefined ){
+          if( self.probeStatus.data[ id ] === undefined ){
             console.log( "First message comming from probe " + id + " at " + (new Date(last_update)).toLocaleString() );
             //there are no report_number in report 200
             if( isNaN( report_number ))
@@ -211,7 +211,7 @@ var MongoConnector = function () {
             };
           }
 
-          if( self.probeStatus.time.start == 0 )
+          if( self.probeStatus.time.start === 0 )
             self.probeStatus.time.start = last_update;
           if( self.probeStatus.time.last_update < last_update )
             self.probeStatus.time.last_update = last_update;
@@ -246,6 +246,7 @@ var MongoConnector = function () {
             self.mdb.collection("operator_status").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );
         }
     };
+
     self.splitDomainName = function( domain_name ){
         //192.168.0.7
         if( ipLib.isV4Format( domain_name) || ipLib.isV6Format( domain_name) )
@@ -263,6 +264,8 @@ var MongoConnector = function () {
         return domain_name;
     };
 
+    //this const is used in the function just after to avoid re-calculation
+    const _2times_probe_stats_period_in_ms = 2*config.probe_stats_period_in_ms;
     var update_packet_timestamp = function( msg ){
       var ts       = msg[ TIMESTAMP ];
       var probe_id = msg[ PROBE_ID ];
@@ -270,7 +273,7 @@ var MongoConnector = function () {
 
       //I received reports from a probe before its starting
       //or starting message is sent after reports
-      if( probe == undefined ){
+      if( probe === undefined ){
         self.probeStatus.set( msg );
         return;
       }
@@ -279,13 +282,13 @@ var MongoConnector = function () {
 
       //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
       //probe is restarted
-      if( ts > new_ts + 2*config.probe_stats_period_in_ms ){
+      if( ts > new_ts + _2times_probe_stats_period_in_ms ){
         console.log("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
         self.probeStatus.set( msg );
         return;
-      }else if( ts < new_ts - 2*config.probe_stats_period_in_ms ){
+      }else if( ts < new_ts - _2times_probe_stats_period_in_ms ){
         console.log("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
@@ -300,16 +303,17 @@ var MongoConnector = function () {
       //update status of probe ==> it is alive
       self.probeStatus.set( msg );
     };
+
     var default_port = {
       //proto : port
       153: 80, //HTTP
       341: 443, //SSL
-
     }
+
     var get_port = function( msg ){
       var val = default_port[ msg[ COL.APP_ID ] ];
 
-      if( msg[ COL.PORT_SRC ] == val || msg[ COL.PORT_DEST ] == val )
+      if( msg[ COL.PORT_SRC ] === val || msg[ COL.PORT_DEST ] === val )
         return val;
       if( msg[ COL.IP_SRC_INIT_CONNECTION] )
         //remote_port
@@ -369,9 +373,8 @@ var MongoConnector = function () {
      * @param {[[Type]]} message [[Description]]
      */
     self.addProtocolStats = function (message) {
-        if (self.mdb == null) return;
-
-        var msg = dataAdaptor.formatReportItem(message);
+        if (self.mdb === null) return;
+        var msg = dataAdaptor.formatReportItem( message );
         var msg2;
         var ts       = msg[ TIMESTAMP ];
         var format   = msg[ FORMAT_ID ];
@@ -391,8 +394,9 @@ var MongoConnector = function () {
         if ( format === 100 || format === 99 ){
 
             //a dummy report when session expired
-            if( msg[ COL.DATA_VOLUME ] == 0 )
+            if( msg[ COL.PACKET_COUNT ] === 0 )
               return;
+            
 
             msg.isGen = false;//this is original message comming from mmt-probe
 
@@ -411,12 +415,21 @@ var MongoConnector = function () {
 
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
+            //get total bandwidth/packets of the network
+            self.dataCache.total.addMessage( msg );
+            //for each MAC SRC
+            self.dataCache.mac.addMessage(   msg );
+
+            //session
             if( format === 100 ){
               //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
+
+              //this should not happen
               if( msg[ COL.DATA_TRANSFER_TIME ] > config.probe_stats_period_in_ms*1000*2 )
                 msg[ COL.DATA_TRANSFER_TIME ] = 0;
+
               //HTTP
-              if( msg[ COL.FORMAT_TYPE ] == 1 ){
+              if( msg[ COL.FORMAT_TYPE ] === 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
                   msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
                   //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
@@ -426,18 +439,12 @@ var MongoConnector = function () {
                   msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
 
                   //HTTP data is not yet completely transfered
-                  if( msg[ HTTP.REQUEST_INDICATOR ] == 0 ){
+                  //if( msg[ HTTP.REQUEST_INDICATOR ] === 0 ){
                     //this msg reports a part of HTTP transaction
                     //==> we reset its RESPONSE_TIME to zero as it was reported
                     //msg[ HTTP.RESPONSE_TIME ] = 0;
-                  }
+                  //}
               }
-            }
-
-            self.dataCache.total.addMessage(   msg );
-
-            //session
-            if( format === 100 ){
 
                 //save init data of one session
                 /*
@@ -460,9 +467,8 @@ var MongoConnector = function () {
                 update_proto_name( msg );
                 //each session
                 self.dataCache.session.addMessage( msg );
-                //for each MAC SRC
-                self.dataCache.mac.addMessage(     msg );
-                //for each IP src
+
+                                //for each IP src
                 self.dataCache.ip.addMessage(      msg );
                 //for each link IP_SRC - IP_DEST
                 self.dataCache.link.addMessage(    msg );
@@ -470,13 +476,9 @@ var MongoConnector = function () {
                 self.dataCache.location.addMessage(msg );
 
                 //add traffic for the other side (src <--> dest )
-                msg2 = JSON.parse( JSON.stringify( msg ) ); //clone
+                msg2 = dataAdaptor.cloneData( msg ); //clone
                 msg2.isGen = true;
                 msg2 = dataAdaptor.inverseStatDirection( msg2 );
-                //we must not increase number of active flows
-                msg2[ COL.ACTIVE_FLOWS ] = 0;
-                msg2[ HTTP.TRANSACTIONS_COUNT ] = 0;
-                msg2[ HTTP.RESPONSE_TIME ] = 0;
                 //change session_id of this clone message
                 msg2[ COL.SESSION_ID ] = "-" + msg2[ COL.SESSION_ID ];
                 //only if it is local
@@ -493,24 +495,22 @@ var MongoConnector = function () {
 
 
             //add traffic for each app in the app_path
-            msg2 = JSON.parse(JSON.stringify( msg ));
+            msg2 = msg;
             msg2.isGen = false;//this means that this report is given by mmt-probe
-            var arr = [msg2];
+            self.dataCache.app.addMessage( msg2 );
             do{
                 index = msg2[ COL.APP_PATH ].lastIndexOf(".");
-                if( index === -1 ) break; //root
+                if( index === -1 ) break; //we reach root
                 //clone
-                msg2                  = JSON.parse(JSON.stringify( msg2 )); //clone
                 msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index  );
                 index                 = msg2[ COL.APP_PATH ].lastIndexOf(".");
                 msg2[ COL.APP_ID   ]  = parseInt( msg2[ COL.APP_PATH ].substr( index + 1 ) );
                 //this mean that this report is generated by mmt-operator
                 //to get the parents of the report that was generated by mmt-probe
                 msg2.isGen = true;
-                arr.push( msg2 );
+                self.dataCache.app.addMessage( msg2 );
             }
             while( true );
-            self.dataCache.app.addArray( arr );
 
             return;
         }else if (format === 0 || format == 1 || format == 2){
@@ -558,15 +558,6 @@ var MongoConnector = function () {
 
         //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
-            if( self._lastUpdateDataBaseTime == undefined )
-              self._lastUpdateDataBaseTime = ts;
-
-            if( ts - self._lastUpdateDataBaseTime > config.buffer.max_interval*1000 ){
-              self._lastUpdateDataBaseTime = ts;
-              for( var i in self.dataCache )
-                self.dataCache[i].flushCaches( "real" );
-            }
-
             return;
         }
 

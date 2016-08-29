@@ -270,6 +270,7 @@ process.on('SIGINT',function(){
       is_existing = true;
       cleanup();
     }catch( err ){
+        console.error( "Error while quiting");
         console.error( err );
         exit();
     }
