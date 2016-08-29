@@ -379,8 +379,10 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     };
 
     this.flushDataToDatabase = function( cb ){
+        cb = cb || function(){};
+
         if( !self.havingMessage || is_retain_all === true ) {
-            if( cb ) cb();
+            cb();
             return;
         }
 
