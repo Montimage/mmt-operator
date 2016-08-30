@@ -4,7 +4,7 @@ var maxmind = require('maxmind');
 var path    = require("path");
 var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Country.mmdb'), {
     cache: {
-        max: 1000, // max items in cache
+        max: 10000, // max items in cache
         maxAge: 1000 * 60 * 60 // life time in milliseconds
     }
 });
@@ -511,7 +511,7 @@ var MMTDrop = {
 
         return msg;
     },
-    
+
     //check whenther object obj having an attribute's value that equals to val
     objectHasAttributeWithValue: function( obj, val ){
       for( var i in obj)
@@ -699,7 +699,7 @@ function format_session_report( msg ){
     new_msg[ i ] = msg[ i ];
     msg[ i ]     = null;
   }
-  
+
   for( var i=_start; i<=_end; i++ ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
     msg[ i ] = new_msg[ i - _new ];

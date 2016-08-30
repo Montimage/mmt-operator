@@ -8,6 +8,12 @@ var _tools = {
   isNodeVersionGreaterThan : function( v ){
     var currentVersion = process.version;
 
+  },
+  daysInMonth : function (month,year) {
+    const NOW = (new Date());
+    year  = year || NOW.getFullYear();
+    month = month || NOW.getMonth();
+    return new Date(year, month, 0).getDate();
   }
 }
 

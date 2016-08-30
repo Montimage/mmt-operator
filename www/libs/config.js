@@ -48,6 +48,9 @@ config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
 set_default_value( config.buffer, "max_length_size", 10000 );
 set_default_value( config.buffer, "max_interval", 30 );
 
+
+config.json = JSON.stringify( config );
+
 // ensure log directory exists
 fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
 //overwrite console.log
@@ -80,9 +83,6 @@ console.debug = function( msg ){
 }
 
 console.info = console.log;
-
-console.log( "Start MMT-Operator" );
-console.info( JSON.stringify( config ) );
 
 config.logStdout = logStdout;
 config.logFile   = logFile;

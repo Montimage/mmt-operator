@@ -31,6 +31,9 @@ config.version = VERSION;
 var REDIS_STR = "redis",
     FILE_STR  = "file";
 
+console.log( "Start MMT-Operator" );
+console.info( config.json );
+
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
