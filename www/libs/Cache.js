@@ -31,20 +31,20 @@ function Cache ( option ) {
     var _init_data_obj          = {};
 
     if( _period_to_update_name == "real" ){
-        _period_to_update_value = 60*1000; //each min//config.probe_stats_period*5*1000;         //each 25 seconds, for example
-        _retain_period         = 60*60*1000; //retain data of the last 60 minutes
+        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
+        _retain_period          = 60*60*1000; //retain data of the last 60 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
-        _retain_period         = 24*60*60*1000;   //retain data of the last day
+        _retain_period          = 24*60*60*1000;   //retain data of the last day
     }else if( _period_to_update_name == "hour" ){
         _period_to_update_value = 60*60*1000;     //update each hour
-        _retain_period         = 7*24*60*60*1000; //retain data of the last week
+        _retain_period          = 7*24*60*60*1000; //retain data of the last week
     }else if( _period_to_update_name == "day" ){
         _period_to_update_value = 24*60*60*1000;  //update each day
-        _retain_period         = -1;              //retain all data
+        _retain_period          = -1;              //retain all data
     }else if( option.retain_period != undefined ){
         _retain_period          = option.retain_period;
-        _period_to_update_value = 60*1000;
+        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
         _collection_name        = option.collection_name;
     }
 
@@ -73,12 +73,11 @@ function Cache ( option ) {
         }
 
          //avoid 2 consecutive  flushes in 5 seconds
-        var now = (new Date()).getTime();
-         if ( now - _last_remove_ts < 5000 ){
+         if ( ts - _last_remove_ts <= 2*_period_to_update_value ){
             if( cb ) cb( [] );
             return [];
          }
-         _last_remove_ts = now;
+         _last_remove_ts = ts;
 
        ts -= _retain_period;
 
@@ -88,7 +87,7 @@ function Cache ( option ) {
         _mdb.collection( _collection_name ).deleteMany( query, function( err, result){
 
             //if( _period_to_update_name !== "real" && result.deletedCount > 0 )
-            console.info("del " + result.deletedCount + " records in [" + _collection_name + "] older than " + (new Date(ts)));
+            console.info("  del " + result.deletedCount + " in [" + _collection_name + "] older than " + (new Date(ts)));
 
             if( cb != null ) cb( err, result.deletedCount );
         });
@@ -133,14 +132,14 @@ function Cache ( option ) {
         return data;
     }
 
-    var _is_ndn_collection = (_collection_name === "data_ndn_real");
+    const _IS_NDN_COLLECTION = (_collection_name === "data_ndn_real");
     this.addMessage = function ( msg, cb ) {
 
         var ts = msg[ TIMESTAMP ];
         _addMessage( msg );
 
         //only for ndn offline
-        if( _is_ndn_collection ){
+        if( _IS_NDN_COLLECTION ){
             var data = _this.flushDataToDatabase();
             _this.removeOldDataFromDatabase( ts );
 

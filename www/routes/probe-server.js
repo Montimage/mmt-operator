@@ -51,7 +51,7 @@ router.process_message = function (db, message) {
 
         var format = msg[0];
 
-        if (format == mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
+        if (format === mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
             if( router.config.only_ip_session === true ){
                 //console.log( message );
                 return;
@@ -64,20 +64,20 @@ router.process_message = function (db, message) {
                 return;
             }
 
-            if( msg[ COL.IP_SRC ] == "undefined" ){
+            if( msg[ COL.IP_SRC ] === "undefined" ){
                 console.log("[DONT 1] " + message);
                 return;
             }
 
-            if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+            if( mmtAdaptor.setDirectionStatFlowByIP(msg) === null) {
                 console.log("[DONT KNOW DIRECTION] " + message);
                 return;
             }
         }
 
-        else if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
-             || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT
-             || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
+        else if ( format === mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
+             ||   format === mmtAdaptor.CsvFormat.WEB_APP_FORMAT
+             ||   format === mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
             return;
         }
 
@@ -101,7 +101,7 @@ router.process_message = function (db, message) {
         }
 
 
-        else if( format == mmtAdaptor.CsvFormat.LICENSE ){
+        else if( format === mmtAdaptor.CsvFormat.LICENSE ){
 
             if( router.dbadmin )
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
@@ -121,8 +121,6 @@ router.process_message = function (db, message) {
 
         //to test mult-probe
         //msg[1] = Math.random() > 0.5 ? 1 : 0;
-
-
 
         db.addProtocolStats(msg, function (err, err_msg) {});
 
@@ -233,10 +231,8 @@ router.startListeningAtFolder = function (db, folder_path) {
             if (file_name.match(/csv$/i) == null)
                 continue;
 
-            var lock_file = file_name + ".sem";
-
             //check if there exists its semaphore
-            if ( files.indexOf( lock_file ) > -1 )
+            if ( files.indexOf( file_name + ".sem" ) > -1 )
                 arr.push(dir + file_name);
         }
 

@@ -184,8 +184,6 @@ var ReportFactory = {
               data[i][ COL.PAYLOAD_VOLUME.id ] = _this.divide( data[i][ COL.PAYLOAD_VOLUME.id ]*100, data[i][ COL.DATA_VOLUME.id ] );
               //bit per second
               data[i][ COL.DATA_VOLUME.id ]    = _this.divide( data[i][ COL.DATA_VOLUME.id ]*8, time_interval );
-              //fps
-              data[i][ COL.ACTIVE_FLOWS.id ]    = _this.divide( data[i][ COL.ACTIVE_FLOWS.id ], time_interval );
               //pps
               data[i][ COL.PACKET_COUNT.id ]   = _this.divide( data[i][ COL.PACKET_COUNT.id ], time_interval );
             }
@@ -471,7 +469,7 @@ var ReportFactory = {
                                 {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)" , align: "right"},
                                 {id: COL.DATA_TRANSFER_TIME.id   , label: "DTT (ms/flow)"   , align: "right"},
                                 {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."    , align: "right"},
-                                {id: COL.ACTIVE_FLOWS.id         , label: "Flows (fps)"     , align: "right"},
+                                {id: COL.ACTIVE_FLOWS.id         , label: "#Flows"          , align: "right"},
                                 {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
                                 {id: COL.RETRANSMISSION_COUNT.id , label: "%Retrans."       , align: "right"},
                                 {id: COL.DATA_VOLUME.id          , label: "Data Rate (bps)" , align: "right"},
