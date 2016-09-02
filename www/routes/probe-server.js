@@ -191,11 +191,14 @@ router.startListeningAtFolder = function (db, folder_path) {
 
             //remove data file
             if( config.delete_data ){
-                //we can use async function, delete its semaphore is enough
-                fs.unlink( file_name );
                 //remove semaphore file
-                fs.unlinkSync( file_name + ".sem" );
-                cb( totalLines );
+                fs.unlink( file_name + ".sem", function(err){
+                  if( err ) console.error( err );
+                  fs.unlink( file_name, function( e ){
+                     if( err ) console.error( err );
+                     cb( totalLines );
+                  });
+                });
             }
             else{
                 read_files.push( file_name );

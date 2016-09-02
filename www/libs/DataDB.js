@@ -165,9 +165,10 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RTT, 
+                                //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
@@ -182,9 +183,10 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+                                COL.RTT, 
+                                //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
+                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
@@ -498,9 +500,7 @@ var MongoConnector = function () {
               //HTTP
               if( msg[ COL.FORMAT_TYPE ] === 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
-                  if( is_micro_flow )
-                     msg[ COL.SESSION_ID ] = "micro";
-                  else 
+                  if( !is_micro_flow )
                      msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
                   //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
 

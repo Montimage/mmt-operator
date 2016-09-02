@@ -31,7 +31,7 @@ function Cache ( option ) {
     var _init_data_obj          = {};
 
     if( _period_to_update_name == "real" ){
-        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
+        _period_to_update_value = config.buffer.max_interval*1000;         //each 5 seconds, for example
         _retain_period          = 60*60*1000; //retain data of the last 60 minutes
     }else if( _period_to_update_name == "minute" ){
         _period_to_update_value = 60*1000;        //update each minute
@@ -44,7 +44,7 @@ function Cache ( option ) {
         _retain_period          = -1;              //retain all data
     }else if( option.retain_period != undefined ){
         _retain_period          = option.retain_period;
-        _period_to_update_value = config.probe_stats_period*1000;         //each 5 seconds, for example
+        _period_to_update_value = config.buffer.max_interval*1000;         //each 5 seconds, for example
         _collection_name        = option.collection_name;
     }
 
@@ -97,7 +97,7 @@ function Cache ( option ) {
     this.flushDataToDatabase = function( cb ){
          //avoid 2 consecutive  flushes in 5 seconds
         var now = (new Date()).getTime();
-         if ( now - _last_flush_ts < 5000 ){
+         if ( now - _last_flush_ts < 10000 ){
             if( cb ) cb( [] );
             return [];
          }
@@ -118,9 +118,10 @@ function Cache ( option ) {
         if( data.length > 1 ){
             method = "insertMany";
         }
+        console.info(now + " flush " + _collection_name );
         _mdb.collection( _collection_name )[method]( data, function( err, result){
             //if( _period_to_update_name !== "real")
-            console.info("flushed " + data.length + " records to [" + _collection_name + "]" );
+            console.info(now + " flushed " + data.length + " records to [" + _collection_name + "]" );
 
             if( err ){
                 console.error( err );
@@ -128,7 +129,6 @@ function Cache ( option ) {
             }
             if( cb ) cb( err, data );
         }  );
-
         return data;
     }
 
