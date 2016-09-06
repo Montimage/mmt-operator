@@ -85,7 +85,8 @@ var ReportFactory = {
         var $group = {};
         $group._id = "$" + COL.SESSION_ID.id;
         $group[ COL.SESSION_ID.id ] = {$first : "$" + COL.SESSION_ID.id};
-        return {query: [{$match: $match}, {$group: $group}]};
+
+        return {query: [{$match: $match}, {$limit: 100}, {$group: $group}]};
       }
 
       var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
