@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 3,
+        height: 4,
         type: "success",
         userData: {
             fn: "createUploadForm"
@@ -17,12 +17,53 @@ var availableReports = {
 }
 
 
+//initial value of components and metrix, that are supposed to receive from SLA file
+var init_components = [
+  {id: "0", title: "Journey Planner Component", url: "192.168.0.8", metrics : []},
+  {id: "1", title: "Database", url: "192.168.0.9", metrics:[]},
+  {id: "2", title: "ITS Factory", url: "192.168.0.9", metrics : []},
+];
+
+var init_metrics = [
+  {id: "1", name: "availability", alert: "= 0", violation: "= 0", title: "Availability" },
+  {id: "2", name: "rtt", alert: ">= 1000", violation: ">= 3000", title: "Response Time" },
+  {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location" },
+];
+
 
 //create reports
 var ReportFactory = {
 	createUploadForm: function( fPeriod ){
     fPeriod.hide();
     fAutoReload.hide();
+
+    var app_id = MMTDrop.tools.getURLParameters().app_id || 0;
+    var sla_inputs = [];
+    for( var i=0; i<init_components.length; i++){
+      var com = init_components[i];
+
+      sla_inputs.push({
+        label : com.title,
+        type  : "<input>",
+        attr  : {
+          id      : "filename_" + com.id,
+          type    : "file",
+          name    : "filename_" + com.id,
+          multiple: false,
+          accept  : ".xml",
+          required: true
+        }
+      });
+
+      sla_inputs.push( {
+        type : "<input>",
+        attr : {
+          type : "hidden",
+          value: JSON.stringify( com ),
+          name : "com_" + com.id
+        }
+      } )
+    }
 
     var form_config = {
       type: "<div>",
@@ -40,19 +81,23 @@ var ReportFactory = {
             {
               type: "<form>",
               attr: {
-                "class"   :"form-horizontal",
+                "class"   : "form-horizontal",
+                "enctype" : "multipart/form-data",
                 "method"  : "POST",
+                "action"  : "/sla/upload/" + app_id,
                 "onsubmit": "return window._checkSubmit()"
               },
-              children: [
-                {
-                  label : "Select SLA file",
-                  type  : "<input>",
-                  attr  : {
-                    id      : "filename",
-                    type    : "file",
-                    required: true
+              children: [{
+                  type : "<div>",
+                  attr : {
+                    class: "text-center",
+                    style: "font-weight:bold; margin-bottom: 10px",
+                    text : "Select SLA file for each component"
                   }
+                },
+                {
+                  type: "<div>",
+                  children: sla_inputs
                 },
                 {
                   type: "<div>",
@@ -157,61 +202,8 @@ var ReportFactory = {
 
     //upload file
     var upload_sla_file = function(){
-      var app_id = MMTDrop.tools.getURLParameters().app_id;
       if( app_id == undefined )
         app_id = "_undefined";
-
-      //initial value of components and metrix, that are supposed to receive from SLA file
-      var init_components = [
-        {id: "0", title: "Journey Planner Component", url: "192.168.0.8", metrics : [
-          {id: "101", name: "", title: "Vulnerability Measure", alert: ">= 0", violation: ">= 0"},
-          {id: "102", name: "", title: "Risk Assessment Vulnerability Measure", alert: "> 0", violation: "> 0"},
-          {id: "103",  name: "", title: "Up Report Frequency", alert:  "= 24", violation : "= 24"},
-          {id: "104",  name: "", title: "Resilience to attacks", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "105",  name: "", title: "Vulnerability and malware", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "106",  name: "", title: "Level of Diversity", alert:  "> 1", violation : "> 1"},
-          {id: "107",  name: "", title: "List Update Frequency", alert:  "= 24", violation : "= 24"},
-          {id: "108",  name: "", title: "Personal data disclosure", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "109",  name: "", title: "Database activity monitoring", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "110",  name: "", title: "Level of Redundancy", alert:  ">=3", violation : ">=3"},
-          {id: "111",  name: "", title: "Forward Secrecy", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "112",  name: "", title: "Client-side Encryption Certification", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "113",  name: "", title: "System and Communication Protection Measure", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "114",  name: "", title: "TLS Cryptographic Strength", alert:  "= 6", violation : "= 6"},
-          {id: "115",  name: "", title: "SQL injection", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "116",  name: "", title: "Identity Assurance", alert:  "= 2", violation : "= 2"},
-        ]},
-        {id: "1", title: "Database", url: "192.168.0.9", metrics:[
-          {id: "201", name: "", title: "Resiliance to attacks", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "202", name: "", title: "Vulnerability and malware", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "203", name: "", title: "Vulnerability Measure", alert: ">=0", violation: ">=0"},
-          {id: "204", name: "", title: "Data encryption", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "205", name: "", title: "Personal data disclosure", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "206", name: "", title: "Database activity monitoring", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "207", name: "", title: "Level of confidentiality", alert: "= 0", violation: "= 0"},
-          {id: "208", name: "", title: "TLS Cryptographic Strength", alert: "= 7", violation: "= 7"},
-          {id: "209", name: "", title: "SQL injection", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "210", name: "", title: "HTTP to HTTPS Redirects", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "211", name: "", title: "Type of incident notification", alert: "= 0", violation: "= 0"},
-          {id: "212", name: "", title: "Number of Data Subject Access Requests", alert: ">=1", violation: ">=1"},
-
-        ]},
-        {id: "2", title: "ITS Factory", url: "192.168.0.9", metrics : [
-          {id : "301", name: "", title: "Database activity monitoring", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "302", name: "", title: "Vulnerability Measure", alert: " >=0", violation: " >=0"},
-          {id : "303", name: "", title: "Resiliance to attacks", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "304", name: "", title: "Client-side Encryption Certification", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "305", name: "", title: "System and Communication Protection Measure", alert: " >=0", violation: " >=0"},
-          {id : "306", name: "", title: "TLS Cryptographic Strength", alert: "= 7", violation: "= 7"},
-          {id : "307", name: "", title: "Identity Assurance", alert: "= 0", violation: "= 0"},
-        ]},
-      ];
-
-      var init_metrics = [
-        {id: "1", name: "availability", alert: "= 0", violation: "= 0", title: "Availability" },
-        {id: "2", name: "rtt", alert: ">= 1000", violation: ">= 3000", title: "Response Time" },
-        {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location" },
-      ];
 
       //save to db
       MMTDrop.tools.ajax("/api/metrics/update", {
@@ -234,41 +226,53 @@ var ReportFactory = {
         },
         success : function(){
           //goto here to modify the uploaded metrics
-
         }
       })
     };
 
     window._checkSubmit = function(){
-      $container.children().replaceWith( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
-
       upload_sla_file();
 
-      $("#bar1").addClass("active progress-bar-striped").show().width("15%");
-      setTimeout( function(){
-        $("#bar1").removeClass("active progress-bar-striped").text("uploaded");
+      $container.children().replaceWith( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
 
-        $("#bar2").addClass("active progress-bar-striped").show().width("25%");
-      }, 2000);
+      var timer = setInterval( function(){
+        MMTDrop.tools.ajax("/sla/upload/" + app_id, {}, "GET", {
+          error: function( request, status, error ){
+            clearInterval( timer );
+            $("#bar1").removeClass("active progress-bar-striped");
+            $("#bar2").removeClass("active progress-bar-striped");
+            $("#bar3").removeClass("active progress-bar-striped").text( request.responseText || error.message );
+          },
+          success: function( obj ){
+            console.log( obj );
+            var progress = obj.progress, message = obj.message;
+            if( progress <= 30 ){
+              $("#bar1").addClass("active progress-bar-striped").show().width( progress + "%").text( message );
+            }
+            else if( progress <= 60 ){
+              $("#bar1").removeClass("active progress-bar-striped");
+              $("#bar2").addClass("active progress-bar-striped").show().width( progress + "%").text( message );
+            }
+            else {
+              $("#bar1").removeClass("active progress-bar-striped");
+              $("#bar2").removeClass("active progress-bar-striped");
+              $("#bar3").removeClass("active progress-bar-striped").show().width( progress + "%").text( message );
 
+              if( progress == 100 ){
+                clearInterval( timer );
 
-      setTimeout( function(){
-        $("#bar2").removeClass("active progress-bar-striped").text("analyzed");
+                if( !obj.error ){
+                  $("#btnDone").show();
+                  alert("Created successfully application");
+                  //MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } );
+                }
+              }
+            }
+          }
+        });//end ajax
+      }, 1000);
 
-        $("#bar3").addClass("active progress-bar-striped").show().width("60%");
-      }, 3500);
-
-
-      setTimeout( function(){
-        $("#bar3").removeClass("active progress-bar-striped").text("created application");
-
-        $("#btnDone").show();
-
-        alert("Created successfully application");
-        MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } );
-      }, 5000);
-
-      return false;
+      return true;
     }
 
 	}

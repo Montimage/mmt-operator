@@ -234,6 +234,9 @@ var ReportFactory = {
             children : table_rows
           },{
             type: "<div>",
+            attr: {
+              style: "margin-top:10px; margin-bottom: 20px"
+            },
             children : [
               {
                 type: "<button>",

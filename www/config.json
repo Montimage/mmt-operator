@@ -4,12 +4,12 @@
     "port": 27017
   },
   "redis_server": {
-    "host": "localhost",
+    "host": "52.208.72.84",
     "port": 6379
   },
-  "data_folder": "/opt/mmt/probe/result/report/online/",
+  "data_folder": "/tmp/",
   "delete_data": true,
-  "input_mode": "file",
+  "input_mode": "redis",
   "probe_analysis_mode": "online",
   "local_network": [
     {
@@ -51,7 +51,7 @@
     "byte"   : 448
   },
   "retain_detail_report_period": 604800,
-  "port_number": 80,
+  "port_number": 8088,
   "log_folder": "/tmp/mmt-operator-log",
   "is_in_debug_mode": true
 }

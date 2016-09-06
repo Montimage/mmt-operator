@@ -1,29 +1,34 @@
-var VERSION         = require("./version.json").VERSION;
+const VERSION         = require("./version.json").VERSION;
 
-var express         = require('express');
-var session         = require('express-session')
-const MongoStore    = require('connect-mongo')(session);
-var path            = require('path');
-var favicon         = require('serve-favicon');
-var morgan          = require('morgan');
-var cookieParser    = require('cookie-parser');
-var bodyParser      = require('body-parser');
-var compress        = require('compression');
-var util            = require('util');
-var moment          = require('moment');
-var fs              = require('fs');
+//expressjs
+const express         = require('express');
+const session         = require('express-session')
+const favicon         = require('serve-favicon');
+const morgan          = require('morgan');
+const cookieParser    = require('cookie-parser');
+const bodyParser      = require('body-parser');
 
-var config          = require("./libs/config");
-var redis           = require("./libs/redis");
-var routes          = require('./routes/index');
-var chartRoute      = require('./routes/chart');
-var api             = require('./routes/api');
-var probeRoute      = require('./routes/probe-server.js');
+//core
+const path            = require('path');
+const compress        = require('compression');
+const util            = require('util');
+const moment          = require('moment');
+const fs              = require('fs');
 
-var mmtAdaptor      = require('./libs/dataAdaptor');
-var DBC             = require('./libs/DataDB');
-var AdminDB         = require('./libs/AdminDB');
-var Probe           = require('./libs/Probe');
+//3rd lib
+const MongoStore      = require('connect-mongo')(session);
+
+const config          = require("./libs/config");
+const redis           = require("./libs/redis");
+const routes          = require('./routes/index');
+const chartRoute      = require('./routes/chart');
+const api             = require('./routes/api');
+const probeRoute      = require('./routes/probe-server.js');
+
+const mmtAdaptor      = require('./libs/dataAdaptor');
+const DBC             = require('./libs/DataDB');
+const AdminDB         = require('./libs/AdminDB');
+const Probe           = require('./libs/Probe');
 
 
 config.version = VERSION;
@@ -38,13 +43,13 @@ console.log( "node version: %s, platform: %s", process.version, process.platform
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 
-var dbconnector = new DBC();
+const dbconnector = new DBC();
 dbconnector.config = config;
 
-var dbadmin = new AdminDB();
-var probe   = new Probe();
+const dbadmin = new AdminDB();
+const probe   = new Probe();
 
-var app = express();
+const app = express();
 app.config = config;
 
 var socketio = require('socket.io')();
@@ -124,7 +129,6 @@ app.use(session({
     })
 }))
 
-
 routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';
 routes.dbconnector        = dbconnector;
 app.use('/', routes);
@@ -152,6 +156,8 @@ route_db._objRef = _objRef;
 app.use("/info/db", route_db);
 
 app.use("/export", require("./routes/html2img.js"));
+
+app.use("/sla", require("./routes/sla.js"));
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
@@ -214,8 +220,7 @@ app.use(function(err, req, res, next) {
     console.error( err );
 
     res.status(err.status || 500);
-    if(config.is_in_debug_mode !== true)
-        err.stack = {};
+    err.stack = null;
 
     res.render('error', {message: err.message, error: err} );
 });
