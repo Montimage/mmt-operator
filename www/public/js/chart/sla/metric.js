@@ -66,6 +66,11 @@ var ReportFactory = {
             attr : {
               text : "Enable"
             }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Supported"
+            }
           }]
         }]
       }];
@@ -127,7 +132,8 @@ var ReportFactory = {
                 class   : "form-control",
                 type    : "text",
                 required: true,
-                value   : me.alert
+                value   : me.alert,
+                disabled: me.support === false
               }
             }]
           });
@@ -141,7 +147,8 @@ var ReportFactory = {
                 class   : "form-control",
                 type    : "text",
                 required: true,
-                value   : me.violation
+                value   : me.violation,
+                disabled: me.support === false
               }
             }]
           });
@@ -154,24 +161,28 @@ var ReportFactory = {
                 id      : "priority-" + comp.id + "-" + me.id,
                 class   : "form-control",
                 required: true,
+                disabled: me.support === false
               },
               children : [{
                 type : "<option>",
                 attr : {
-                  value : 0,
-                  text  : "High"
+                  value   : "HIGH",
+                  text    : "HIGH",
+                  selected: (me.priority == "HIGH")
                 }
               },{
                 type : "<option>",
                 attr : {
-                  value : 1,
-                  text  : "Default"
+                  value   : "MEDIUM",
+                  text    : "MEDIUM",
+                  selected: (me.priority == "MEDIUM")
                 }
               },{
                 type : "<option>",
                 attr : {
-                  value : 2,
-                  text  : "Low"
+                  value   : "LOW",
+                  text    : "LOW",
+                  selected: (me.priority == "LOW")
                 }
               }]
             }]
@@ -191,7 +202,8 @@ var ReportFactory = {
                   id      : "enable-" + comp.id + "-" + me.id,
                   class   : "onoffswitch-checkbox",
                   type    : "checkbox",
-                  checked : (me.name == "" ? false: true)//TODO to enable
+                  checked : me.enable, //(me.name == "" ? false: me.enable)//TODO to enable
+                  disabled: me.support === false
                 }
               },{
                 type    : "<label>",
@@ -211,6 +223,19 @@ var ReportFactory = {
                   }
                 }]
               }]
+            }]
+          });
+
+          row.children.push({
+            type : "<td>",
+            attr : {
+              align: "center"
+            },
+            children: [{
+              type : "<i>",
+              attr : {
+                class : "fa " + (me.support? "fa-check text-success" : "fa-times text-danger")
+              }
             }]
           });
           table_rows.push( row );
