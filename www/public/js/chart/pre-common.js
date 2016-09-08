@@ -1,4 +1,4 @@
-var Loading = function( ){
+const Loading = function( ){
     this.chartLoaded = 0;
     this.totalChart  = 0;
     var _his = this;
@@ -24,8 +24,9 @@ var Loading = function( ){
         ts_start = (new Date()).getTime();
     }
 }
+const URL_PARAM = MMTDrop.tools.getURLParameters();
+const loading = new Loading();
 
-var loading = new Loading();
 MMTDrop.callback = {
     chart : {
         afterRender : loading.onChartLoad

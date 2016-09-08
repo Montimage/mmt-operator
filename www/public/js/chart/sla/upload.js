@@ -25,7 +25,7 @@ var init_components = [
 ];
 
 var init_metrics = [
-  {id: "1", name: "availability", alert: "<= 98%", violation: "<= 95%", title: "Availability", enable: true, support: true },
+  {id: "1", name: "availability", alert: "<= 0.98", violation: "<= 0.95", title: "Availability", enable: true, support: true },
   {id: "2", name: "rtt", alert: ">= 2000", violation: ">= 3000", title: "Response Time", enable: true, support: true },
   {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location", enable: true, support: true },
 ];
@@ -245,7 +245,7 @@ var ReportFactory = {
                   setTimeout(function(){
                     alert("Created successfully application");
                     MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } );
-                  }, 500);
+                  }, 1000);
                 }
               }
             }

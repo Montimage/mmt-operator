@@ -1533,9 +1533,14 @@ MMTDrop.tools = function () {
         arr.push( param[i] + "=" +  val);
     }
 
+    for(  var i in add_obj ){
+      if( !(add_obj[i] == undefined || add_obj[i] == "undefined" || add_obj[i] == "null" ))
+        arr.push( i + "=" + add_obj[i] )
+    }
+    /*
     if( add_query_str !== undefined && add_query_str !== "" ){
       arr.push( add_query_str );
-    }
+    }*/
 
     if( arr.length > 0 )
       arr = "?" + arr.join("&");
@@ -2571,6 +2576,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
   var _option = {};
   var _this = this;
+  _this.storeState = true;
     this.getId = function(){
         return param.id;
     }
@@ -2613,28 +2619,29 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
     //handle when the filter changing
     filter.change(function(e){
-            //annonce to its callback registors
-            for (var i in _onChangeCallbacks){
-                var callback = _onChangeCallbacks[i];
-                callback[0](_currentSelectedOption, _database, callback[1]);
-            }
+      //annonce to its callback registors
+      for (var i in _onChangeCallbacks){
+          var callback = _onChangeCallbacks[i];
+          callback[0](_currentSelectedOption, _database, callback[1]);
+      }
 
       _currentSelectedOption = _option[this.selectedIndex];   //the selected option of the filter
 
       console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
 
       //save the current selected index
-      MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
+      if( _this.storeState )
+        MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
 
-            for (var i in _afterChangeCallbacks){
-                var callback = _afterChangeCallbacks[i];
-                callback[0](_currentSelectedOption, _database, callback[1]);
-            }
+      for (var i in _afterChangeCallbacks){
+          var callback = _afterChangeCallbacks[i];
+          callback[0](_currentSelectedOption, _database, callback[1]);
+      }
 
       //applying the filter to the current selection
-            setTimeout( function(){
-          _filter();
-            }, 10);
+      setTimeout( function(){
+        _filter();
+      }, 10);
     });
   };
 
@@ -2652,16 +2659,14 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
       return _currentSelectedOption;
     }
     else{
-            //check if the defaultOption is in the current option list
-        for (var i in _option){
-          if (opt.id == _option[i].id){
-                    MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
-            break;
-          }
+      //check if the defaultOption is in the current option list
+      for (var i in _option){
+        if (opt.id == _option[i].id){
+          MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
+          break;
         }
-
-
-        }
+      }
+    }
     return this;
   };
 
@@ -2706,7 +2711,9 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
       opt.appendTo(filter);
     }
 
-    var defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
+    var defaultOption;
+    if( _this.storeState )
+      defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
     var isExist = false;
 
     //check if the defaultOption is in the current option list

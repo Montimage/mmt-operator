@@ -52,7 +52,7 @@ var all_pages = {
     'sla': {
         title: "SLA",
         children: {
-          "metric": {
+          "../sla": {
             title: "Metrics"
           },
           "separator":true,

@@ -39,6 +39,7 @@ var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
 var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 var reports = [];
 var COL     = MMTDrop.constants.StatsColumn;
+
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
 var status_db = new MMTDrop.Database({collection: "status"});
@@ -76,7 +77,38 @@ $(function () {
     if( MMTDrop.tools.object2Array(availableReports).length == 0 )
       $("#addBtn").hide();
 
-    //fProbe.renderTo("toolbar-box");
+    //fProbe: list of available probes in the period selected by fPeriod
+    fProbe.storeState = false;
+    fProbe.renderTo("toolbar-box");
+    fProbe.onFilter( function( opt ){
+      MMTDrop.tools.reloadPage("probe_id=" + opt.id );
+    });
+    //update options of this combobox based on value in status_db
+    fProbe.reloadOptions = function(){
+      var probes_status = status_db.probeStatus;
+      var arr = [];
+      const select_id = URL_PARAM.probe_id;
+      for( var i in probes_status ){
+        if( i == select_id )
+          arr.push({ id: i, label: "Probe " + i, selected: true });
+        else
+          arr.push({ id: i, label: "Probe " + i});
+      }
+
+      if( arr.length > 1 ){
+        if( select_id == undefined || select_id == "all" )
+          arr.unshift({id: "undefined", label: "All", selected: true});
+        else
+          arr.unshift({id: "undefined", label: "All"})
+
+        fProbe.option( arr );
+        fProbe.redraw();
+        fProbe.show();
+      }else {
+        fProbe.hide();
+      }
+    }
+    //end fProbe
 
     fPeriod.renderTo("toolbar-box");
     fPeriod.onChange( loading.onShowing  );
@@ -118,6 +150,9 @@ $(function () {
 
     //reload databases of reports
     var reloadReports = function( data, group_by ){
+      //reload options of fProbe
+      fProbe.reloadOptions();
+
       //there are no reports
       if (reports.length == 0 ){
         loading.onHide();

@@ -51,7 +51,6 @@ var availableReports = {
     "createResponseTimeReport": "Response Time",
 };
 
-var URL_PARAM = MMTDrop.tools.getURLParameters();
 if( URL_PARAM.app == "All")
   delete( URL_PARAM.app );
 

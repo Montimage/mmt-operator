@@ -76,6 +76,11 @@ var ReportFactory = {
       }];
       for( var i=0; i<init_components.length; i++){
         var comp = init_components[ i ];
+        //show only probe that is indicated in URL by probe_id
+        if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
+          continue;
+
+
         var $row = {
           type    : "<tr>",
           children: [{
@@ -301,7 +306,7 @@ var ReportFactory = {
                   class   : "btn btn-success pull-right",
                   style   : "margin-left: 30px",
                   text    : "Cancel",
-                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id"])
+                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
                 }
               },
             ]

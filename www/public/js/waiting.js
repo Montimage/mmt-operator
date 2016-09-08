@@ -1,4 +1,4 @@
-var waiting = {
+const waiting = {
     hide : function(){
         $("#waiting").hide();
     },
@@ -13,7 +13,7 @@ var waiting = {
 
 
 //Indicate the current page's location within a navigational hierarchy.
-var breadcrumbs = {
+const breadcrumbs = {
   setData : function( data ){
     if( !Array.isArray( data ) || data.length == 0)
       return;
@@ -39,6 +39,11 @@ var breadcrumbs = {
     var url = null;
     var last= "";
     for( var key in obj ){
+      //omit probe as we have fProbe in the toolbar
+      //app_id is used on MUSA probject
+      if( key == "probe_id" || key == "app_id" )
+        continue;
+      //first time
       if (url == undefined )
         url = MMTDrop.tools.getCurrentURL([key]);
       else

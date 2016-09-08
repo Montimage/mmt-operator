@@ -1,3 +1,5 @@
+const MUSA = true; //active when using for MUSA project
+
 const VERSION         = require("./version.json").VERSION;
 
 //expressjs
@@ -90,9 +92,7 @@ else{
 }
 
 
-//active checking for MUSA
-//TODO to remove in final product
-//require("./libs/active_check.js").start( redis, dbconnector );
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -157,13 +157,19 @@ app.use("/info/db", route_db);
 
 app.use("/export", require("./routes/html2img.js"));
 
-const sla = require("./routes/musa/sla.js");
-sla.dbconnector = dbconnector;
-app.use("/musa/sla", sla);
+//active checking for MUSA
+//TODO to remove in final product
+if( MUSA ){
+  require("./routes/musa/active_check.js").start( redis, dbconnector );
 
-const connector = require("./routes/musa/connector.js");
-connector.dbconnector = dbconnector;
-app.use("/musa/connector", connector);
+  const sla = require("./routes/musa/sla.js");
+  sla.dbconnector = dbconnector;
+  app.use("/musa/sla", sla);
+
+  const connector = require("./routes/musa/connector.js");
+  connector.dbconnector = dbconnector;
+  app.use("/musa/connector", connector);
+}
 
 function license_alert(){
     dbadmin.getLicense( function( err, msg){

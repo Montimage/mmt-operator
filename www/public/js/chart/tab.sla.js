@@ -103,6 +103,7 @@ var ReportFactory = {
     var app_id = MMTDrop.tools.getURLParameters().app_id;
     if( app_id == undefined )
         app_id = "_undefined";
+
     //reder table of components and their metrics
     var loadForm = function( obj ){
       var table_rows = [];
@@ -125,6 +126,9 @@ var ReportFactory = {
 
       //creat each row for each metric of a component
       for( var comp_id in obj.selectedMetric ){
+        //show only probe that is indicated in URL by probe_id
+        if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp_id )
+          continue;
         var selMetrics = obj.selectedMetric[ comp_id ];
         var comp       = getObject("components", comp_id)
         var $row = {
@@ -283,7 +287,7 @@ var ReportFactory = {
                 class   : "btn btn-danger pull-right",
                 style   : "margin-left: 30px",
                 text    : "Modify Metrics",
-                href    : '/chart/sla/metric' + MMTDrop.tools.getQueryString(["app_id"])
+                href    : '/chart/sla/metric' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
               }
             }
           ]
