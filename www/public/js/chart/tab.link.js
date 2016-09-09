@@ -54,8 +54,6 @@ function inDetailMode() {
 
 var ReportFactory = {
     getCol: function (col, isIn) {
-        var COL = MMTDrop.constants.StatsColumn;
-
         var tmp = "PAYLOAD_VOLUME";
         if (col.id == COL.DATA_VOLUME.id)
             tmp = "DATA_VOLUME";
@@ -121,11 +119,10 @@ var ReportFactory = {
         match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,5}$", "$options" : ""};
 
 
-        var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",
+        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
           query: [{"$match": match}, {"$group" : group}]});
 
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
 
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
@@ -582,14 +579,11 @@ var ReportFactory = {
         //
 
         var dataFlow = [{
-                object: fProbe,
-                effect: [{
                     object: fMetric,
                     effect: [{
                         object: cLine
                     }]
-				}, ]
-			}, ];
+		                },];
 
         var report = new MMTDrop.Report(
             // title
@@ -599,14 +593,14 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
-                {
-                    charts: [cLine],
-                    width: 12
-                },
+            {
+              charts: [cLine],
+              width: 12
+            },
 					 ],
 
             //order of data flux
@@ -617,15 +611,28 @@ var ReportFactory = {
     },
     createNodeReport: function (fPeriod) {
         var DETAIL = {};//data detail of each MAC
-        var COL = MMTDrop.constants.StatsColumn;
-
-        var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true, no_override_when_reload: true});
+        var database = new MMTDrop.Database({collection: "data_session_real", action: "aggregate", no_group : true, no_override_when_reload: true});
         //this is called each time database is reloaded to update parameters of database
         database.updateParameter = function( _old_param ){
           var last5Minute = status_db.time.end - 5*60*1000;
           var $match = {};
           $match[ COL.TIMESTAMP.id ] = {$gte: last5Minute, $lte: status_db.time.end };
-          return {query: [{$match: $match}]};
+
+          var group = { _id : {} };
+
+          [ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DEST.id, COL.PROBE_ID.id ].forEach( function( el, index){
+            group["_id"][ el ] = "$" + el;
+          } );
+          [ COL.UL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id, COL.DL_DATA_VOLUME.id, COL.DL_PACKET_COUNT.id,
+            COL.DATA_VOLUME.id, COL.PACKET_COUNT.id
+          ].forEach( function( el, index){
+            group[ el ] = {"$sum" : "$" + el};
+          });
+          [ COL.TIMESTAMP.id, COL.PROBE_ID.id, COL.MAC_SRC.id ].forEach( function( el, index){
+            group[ el ] = {"$last" : "$"+ el};
+          } );
+
+          return {query: [{$match: $match}, {$group : group}]};
         }
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
@@ -801,9 +808,8 @@ var ReportFactory = {
         return report;
     },
 
-    createRealtimeTrafficReport: function (fProbe) {
+    createRealtimeTrafficReport: function () {
         var _this = this;
-        var COL = MMTDrop.constants.StatsColumn;
         var group = { _id : {} };
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
@@ -814,10 +820,10 @@ var ReportFactory = {
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group[ el ] = {"$last" : "$"+ el};
         });
-        var database = new MMTDrop.Database({collection: "data_total", action: "aggregate",
+        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
           query: [{"$group" : group}]});
 
-        var rep = _this.createTrafficReport(fProbe, database, true);
+        var rep = _this.createTrafficReport(database, true);
 
 
         var cLine = rep.groupCharts[0].charts[0];
@@ -857,8 +863,6 @@ var ReportFactory = {
             }
         }
 
-
-        fProbe.onFilter(initData);
         fMetric.onFilter(initData);
 
         var samplePeriod = fPeriod.getDistanceBetweenToSamples();
@@ -1016,10 +1020,8 @@ var ReportFactory = {
         return rep;
     },
 
-    createTrafficReport: function (fProbe, database) {
+    createTrafficReport: function ( database) {
         var _this = this;
-        var COL = MMTDrop.constants.StatsColumn;
-
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
         var cLine = MMTDrop.chartFactory.createTimeline({

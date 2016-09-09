@@ -160,7 +160,7 @@ app.use("/export", require("./routes/html2img.js"));
 //active checking for MUSA
 //TODO to remove in final product
 if( MUSA ){
-  require("./routes/musa/active_check.js").start( redis, dbconnector );
+  //require("./routes/musa/active_check.js").start( redis, dbconnector );
 
   const sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;

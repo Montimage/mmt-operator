@@ -31,12 +31,25 @@ var ReportFactory = {
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
     createNodeReport: function ( fPeriod ) {
-        var _this    = this;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var detail_db= new MMTDrop.Database({id : "dpi.detail", format: [99,100], userData: {}});
-        var database = new MMTDrop.Database({id : "dpi.app", format: [99,100]});
-        var COL      = MMTDrop.constants.StatsColumn;
+        var _this     = this;
 
+        var detail_db = new MMTDrop.Database({id : "dpi.detail", format: [99,100], userData: {}});
+
+        var $match = {};
+        $match[ COL.FORMAT_ID.id ] = {$in: [99,100]};
+        var $group = {_id : {} };
+        [ "app_paths", COL.PROBE_ID.id ].forEach( function( el, index){
+          $group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
+        ].forEach( function( el, index){
+          $group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.PROBE_ID.id, COL.APP_ID.id, COL.APP_PATH.id ].forEach( function( el, index){
+          $group[ el ] = {"$last" : "$"+ el};
+        } );
+
+        var database = new MMTDrop.Database({collection : "data_session", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]});
         var cTree    = MMTDrop.chartFactory.createTree({
             getData: {
                 getDataFn: function (db) {
@@ -295,14 +308,6 @@ var ReportFactory = {
         fMetric.onFilter(function () {
             cLine.redraw();
         });
-        var dataFlow = [{
-                object: fProbe,
-                effect: [{
-                    object: cTree,
-                    effect: []
-                            }, ]
-                            }];
-
         var report = new MMTDrop.Report(
             // title
             "",
@@ -311,7 +316,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -326,7 +331,7 @@ var ReportFactory = {
 					 ],
 
             //order of data flux
-            dataFlow
+            [{  object: cTree }]
         );
         return report;
     },

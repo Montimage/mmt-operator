@@ -1726,8 +1726,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       if( user_param != undefined )
         _param = MMTDrop.tools.mergeObjects(_param, user_param);
     }
-    if (new_param && _param.no_override_when_reload !== true )
+    if (new_param && _param.no_override_when_reload !== true ){
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
+    }
 
     if( isFirstTime ){
         _param.isReload = false;
@@ -1944,9 +1945,21 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     if( param.query != undefined )
       query = param.query.slice(0);
 
-    if( param.period )
-      query.unshift( {"$match" : {3: {"$gte": param.period.begin, "$lte" : param.period.end }}} );
 
+    if( param.period || param.probe ){
+      var $match = {};
+      //timestamp
+      if( param.period )
+        $match[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] =  {"$gte": param.period.begin, "$lte" : param.period.end };
+      if( param.probe ){
+        if( ! Array.isArray( param.probe ) )
+          $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = param.probe;
+        else
+          $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = {$in:  param.probe};
+      }
+
+      query.unshift( {"$match" : $match} );
+    }
     //need for "POST"
     query = JSON.stringify( query );
     MMTDrop.tools.ajax(url, query, "POST", callback);

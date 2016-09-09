@@ -16,7 +16,6 @@ var arr = [
 var availableReports = {
 };
 
-var URL_PARAM = MMTDrop.tools.getURLParameters();
 if( URL_PARAM.app == "All")
   delete( URL_PARAM.app );
 
@@ -36,12 +35,7 @@ if( URL_PARAM.ts == 0 || isNaN( URL_PARAM.ts ) ){
 
 arr[0].title = "Details of Flows at " + MMTDrop.tools.formatDateTime( URL_PARAM.ts );
 
-var COL     = MMTDrop.constants.StatsColumn;
-var HTTP    = MMTDrop.constants.HttpStatsColumn;
-var TLS     = MMTDrop.constants.TlsStatsColumn;
-var RTP     = MMTDrop.constants.RtpStatsColumn;
-var FTP     = MMTDrop.constants.FtpStatsColumn;
-var FORMAT  = MMTDrop.constants.CsvFormat;
+const FORMAT  = MMTDrop.constants.CsvFormat;
 
 //create reports
 var ReportFactory = {

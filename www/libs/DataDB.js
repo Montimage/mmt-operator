@@ -77,90 +77,10 @@ var MongoConnector = function () {
 
         self.dataCache = {
 
-            total: new DataCache(db, "data_total",
-                                 //key
-                                 [COL.FORMAT_ID, COL.PROBE_ID],
-                                 //inc
-                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
-                                 //not need at the moment 2016-08-29
-                                 //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                 //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-                                 ],
-                                 []),
-
-            //this contain an app (E.IP.TCP.HTTP ) and its parents (E, E.IP, E.IP.TCP)
-            //the parents is marked by isGen = true
-            app: new DataCache(db, "data_app",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH],
-                               //inc
-                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-
-                                COL.RTT,
-                                //no need at the moment 2016-08-31
-                                //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                COL.RETRANSMISSION_COUNT,
-                                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
-                                FTP.RESPONSE_TIME
-                                ],
-                                //set
-                                ["isGen", COL.PROFILE_ID, COL.APP_ID]),
-
-            ip: new DataCache(db, "data_ip",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC],
-                               //inc
-                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                //no need at the moment 2016-08-29
-                                //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                //COL.RETRANSMISSION_COUNT,
-                                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-                               ],
-                               //set
-                               [COL.MAC_SRC, "isGen"]),
-           location: new DataCache(db, "data_location",
-                              [COL.FORMAT_ID, COL.PROBE_ID, COL.DST_LOCATION],
-                              //inc
-                              [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                               COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                               COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                              //not need at the moment 2016-08-29
-                               //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                               //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                               //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                               //COL.RETRANSMISSION_COUNT,
-                               //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME,
-                             ],
-                              //set
-                              [COL.MAC_SRC]),
-            link: new DataCache(db, "data_link",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.IP_SRC, COL.IP_DEST],
-                               //inc
-                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                              //not need at the moment 2016-08-29
-                                //COL.RTT, COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-                                //COL.RETRANSMISSION_COUNT,
-                                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT
-                               ],
-                               //set
-                               [COL.MAC_SRC, COL.MAC_DEST]),
-
             session: new DataCache(db, "data_session",
                                    //key
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH, COL.IP_SRC, COL.IP_DEST],
+                               [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH,
+                                 COL.IP_SRC, COL.IP_DEST, COL.MAC_SRC, COL.MAC_DEST],
                                    //inc
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
@@ -174,8 +94,10 @@ var MongoConnector = function () {
                                ],
                                    //set
                                [COL.APP_ID, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-                               COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR]
-                                  ),
+                               COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
+                               COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
+                                ),
+
             detail: new DataCache(db, "data_detail",
                                    //key
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
@@ -192,25 +114,13 @@ var MongoConnector = function () {
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-                               COL.PROFILE_ID, "isGen", HTTP.REQUEST_INDICATOR],
+                               COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR],
                                   //init
                                init_session_set,
                                  //retain
                                 config.retain_detail_report_period * 1000 //change second ==> milisecond
                                   ),
 
-            mac: new DataCache(db, "data_mac",
-                               [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
-                                 //increase
-                               [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-                                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-                                COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME],
-                                 //init
-                                ["isGen"],
-                                 //set
-                                [COL.START_TIME],
-                                 //keep only data comming from the last 5 minutes
-                                5*60*1000),
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn",
@@ -425,6 +335,23 @@ var MongoConnector = function () {
         //    msg[ COL.APP_ID   ] = msg[ COL.APP_ID   ];
     }
 
+
+    function flat_app_path( str ){
+      if( str == undefined )
+        return [];
+
+      var arr = [ str ];
+      var index;
+      do{
+          index = str.lastIndexOf(".");
+          if( index === -1 )
+            //we reach root
+            return arr;
+          str = str.substr( 0, index );
+          arr.push( str );
+      } while( true );
+      return arr;
+    }
     self.lastPacketTimestamp = 0;
     /**
      * Stock a report to database
@@ -484,11 +411,6 @@ var MongoConnector = function () {
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
 
-            //get total bandwidth/packets of the network
-            self.dataCache.total.addMessage( msg );
-            //for each MAC SRC
-            self.dataCache.mac.addMessage(   msg );
-
             //session
             if( format === 100 ){
               //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
@@ -535,54 +457,25 @@ var MongoConnector = function () {
                 */
 
                 update_proto_name( msg );
-                //each session
-                self.dataCache.session.addMessage( msg );
-                self.dataCache.detail.addMessage( msg );
+            }
 
-                                //for each IP src
-                self.dataCache.ip.addMessage(      msg );
-                //for each link IP_SRC - IP_DEST
-                self.dataCache.link.addMessage(    msg );
-                //remote location
-                self.dataCache.location.addMessage(msg );
+            msg.app_paths = flat_app_path( msg[ COL.APP_PATH ] );
 
+            //each session
+            self.dataCache.session.addMessage( msg );
+            self.dataCache.detail.addMessage(  msg );
+
+            //only if its partner is local
+            if( dataAdaptor.isLocalIP( msg[ COL.IP_DEST ] )){
                 //add traffic for the other side (src <--> dest )
-                msg2 = dataAdaptor.cloneData( msg ); //clone
-                msg2.isGen = true;
-                msg2 = dataAdaptor.inverseStatDirection( msg2 );
+                msg.isGen = true;
+                msg = dataAdaptor.inverseStatDirection( msg );
                 //change session_id of this clone message
-                msg2[ COL.SESSION_ID ] = "-" + msg2[ COL.SESSION_ID ];
-                //only if it is local
-                //as the message is swapped: msg2.COL.IP_SRC == msg.COL.IP_DEST
-                if( dataAdaptor.isLocalIP( msg2[ COL.IP_SRC ] )){
-                    self.dataCache.session.addMessage(  msg2 );
-                    //for each ip dest
-                    self.dataCache.ip.addMessage(  msg2 );
-                }
+                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 
-                //for eac mac dest
-                self.dataCache.mac.addMessage( msg2 );
+                self.dataCache.session.addMessage( msg );
+                self.dataCache.detail.addMessage(  msg );
             }
-
-
-            //add traffic for each app in the app_path
-            msg2 = msg;
-            msg2.isGen = false;//this means that this report is given by mmt-probe
-            self.dataCache.app.addMessage( msg2 );
-            do{
-                index = msg2[ COL.APP_PATH ].lastIndexOf(".");
-                if( index === -1 ) break; //we reach root
-                //clone
-                msg2[ COL.APP_PATH ]  = msg2[ COL.APP_PATH ].substr( 0, index  );
-                index                 = msg2[ COL.APP_PATH ].lastIndexOf(".");
-                msg2[ COL.APP_ID   ]  = parseInt( msg2[ COL.APP_PATH ].substr( index + 1 ) );
-                //this mean that this report is generated by mmt-operator
-                //to get the parents of the report that was generated by mmt-probe
-                msg2.isGen = true;
-                self.dataCache.app.addMessage( msg2 );
-            }
-            while( true );
-
             return;
         }else if (format === 0 || format == 1 || format == 2){
             self.lastPacketTimestamp = ts;

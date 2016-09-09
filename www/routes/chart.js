@@ -107,7 +107,7 @@ router.get('/*', function(req, res, next) {
 
     //maintain query string between pages
     var query_string = [];
-    var arr = ["period", "probe_id", "app_id", "period_id"];
+    var arr = ["period", "probe_id", "app_id", "period_id", "alert", "violation"];
     for (var i in arr) {
         var el = arr[i];
         if (req.query[el] != undefined)
