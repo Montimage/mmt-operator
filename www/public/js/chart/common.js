@@ -103,9 +103,7 @@ $(function () {
 
         fProbe.option( arr );
         fProbe.redraw();
-        fProbe.show();
       }else {
-        fProbe.hide();
       }
     }
     //end fProbe

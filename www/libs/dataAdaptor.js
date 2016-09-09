@@ -644,9 +644,16 @@ MMTDrop.reverseFormatReportItem = function(entry) {
     }
 
     var arr = [];
-    for( var i in entry ){
-        arr[ parseInt( i ) ] = entry[ i ];
-    }
+    //faster
+    const MAX = 100;
+    for( var i=0; i<MAX; i++ )
+      if( entry[ i ] != undefined )
+        arr[ i ] = entry[ i ];
+
+    /*
+    for( var i in entry )
+      arr[ parseInt( i ) ] = entry[ i ];
+    */
     return arr;
 };
 

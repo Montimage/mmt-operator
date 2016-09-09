@@ -55,6 +55,7 @@ var REFRESH_INFO_INTERVAL = 5000; //5seconds
 var ReportFactory = {
 	createSystemInformationReport: function( fPeriod ){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
     var form_config = {
       type : "<div>",
@@ -180,6 +181,7 @@ var ReportFactory = {
 
   createDatabaseInformationReport: function(){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
     var form_config = {
       type : "<div>",
@@ -530,6 +532,7 @@ var ReportFactory = {
 
   createProbesReport: function(){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
 
     var form_config = {
@@ -775,6 +778,7 @@ var ReportFactory = {
 
   createConfigReport: function(){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
 
     var form_config = {

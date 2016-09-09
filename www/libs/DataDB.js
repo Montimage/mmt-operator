@@ -47,14 +47,14 @@ var MongoConnector = function () {
     //attributes will be stored in data_session collection
     var init_session_set = [];
     for( var i = COL.FORMAT_TYPE ; i <= FTP.RESPONSE_TIME; i++){
-        if( dataAdaptor.objectHasAttributeWithValue( COL, i)      == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( HTTP, i)    == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( NDN, i)     == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( TLS, i)     == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( RTP, i)     == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( FTP, i)     == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( LICENSE, i) == undefined 
-            &&  dataAdaptor.objectHasAttributeWithValue( OTT, i)     == undefined 
+        if( dataAdaptor.objectHasAttributeWithValue( COL, i)      == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( HTTP, i)    == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( NDN, i)     == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( TLS, i)     == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( RTP, i)     == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( FTP, i)     == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( LICENSE, i) == undefined
+            &&  dataAdaptor.objectHasAttributeWithValue( OTT, i)     == undefined
         ) continue;
 
         //exclude set
@@ -81,8 +81,8 @@ var MongoConnector = function () {
                                  //key
                                  [COL.FORMAT_ID, COL.PROBE_ID],
                                  //inc
-                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT, 
-                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME, 
+                                 [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
+                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                  COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                                  //not need at the moment 2016-08-29
                                  //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
@@ -100,7 +100,7 @@ var MongoConnector = function () {
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
 
-                                COL.RTT, 
+                                COL.RTT,
                                 //no need at the moment 2016-08-31
                                 //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
@@ -165,7 +165,7 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, 
+                                COL.RTT,
                                 //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
@@ -183,7 +183,7 @@ var MongoConnector = function () {
                                [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-                                COL.RTT, 
+                                COL.RTT,
                                 //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                                 //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
@@ -208,7 +208,7 @@ var MongoConnector = function () {
                                  //init
                                 ["isGen"],
                                  //set
-                                [COL.START_TIME], 
+                                [COL.START_TIME],
                                  //keep only data comming from the last 5 minutes
                                 5*60*1000),
             //for DOCTOR project
@@ -734,8 +734,9 @@ var MongoConnector = function () {
           var cache = self.dataCache[ i ];
           if( collection.indexOf( cache.option.collection_name ) == 0 ){
             //data_total_real => real
-            var level = collection.split("_")[2];
-            if( level )
+            var arr = collection.split("_");
+            var level = arr[ arr.length - 1 ]; //get the last element
+            if( ["real", "minute", "hour", "day"].indexOf( level ) > -1 )
               cache.flushCaches( level, function(){
                 self._queryDB( collection, action, query, callback, raw );
               });
@@ -807,7 +808,7 @@ var MongoConnector = function () {
 
             if (raw === undefined || raw === true) {
                 var data = [];
-                for (i in doc) {
+                for ( var i=0; i<doc.length; i++ ) {
                     var record = doc[i];
                     //if( record.last_time )
                     //    record.time = record.last_time;

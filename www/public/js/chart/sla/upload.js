@@ -35,6 +35,7 @@ var init_metrics = [
 var ReportFactory = {
 	createUploadForm: function( fPeriod ){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
 
     var app_id = MMTDrop.tools.getURLParameters().app_id || "_undefined";
