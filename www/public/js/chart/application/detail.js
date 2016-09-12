@@ -65,7 +65,7 @@ var ReportFactory = {
         $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
         if (URL_PARAM.probe_id )
-          $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
+          $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
         if (URL_PARAM.app_id() )
           $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
         if (URL_PARAM.ip )
@@ -687,7 +687,7 @@ $( function(){
   var url = null;
   var last = "";
   for( var key in obj ){
-    if( key == "groupby" || key == "EURT")
+    if( key == "groupby" || key == "EURT" || key == "probe_id")
       continue;
     if( key == "ts" )
       obj[key] = MMTDrop.tools.formatDateTime(new Date( parseInt(obj[key]) ));

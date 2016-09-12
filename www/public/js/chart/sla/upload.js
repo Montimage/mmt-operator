@@ -4,11 +4,22 @@ var arr = [
         title: "Upload SLA",
         x: 0,
         y: 0,
-        width: 12,
+        width: 6,
         height: 4,
         type: "success",
         userData: {
             fn: "createUploadForm"
+        },
+    },{
+        id: "remote",
+        title: "Get SLA from Repository",
+        x: 6,
+        y: 0,
+        width: 6,
+        height: 4,
+        type: "primary",
+        userData: {
+            fn: "createGetForm"
         },
     }
 ];
@@ -19,9 +30,9 @@ var availableReports = {
 
 //initial value of components and metrix, that are supposed to receive from SLA file
 var init_components = [
-  {id: "0", title: "Journey Planner Component", url: "192.168.0.8", metrics : []},
-  {id: "1", title: "Database", url: "192.168.0.9", metrics:[]},
-  {id: "2", title: "ITS Factory", url: "192.168.0.9", metrics : []},
+  {id: "0", title: "Database", url: "192.168.1.8", metrics:[]},
+  {id: "1", title: "ITS Factory", url: "192.168.1.10", metrics : []},
+  {id: "2", title: "Journey Planner Component", url: "52.208.72.84", metrics : []},
 ];
 
 var init_metrics = [
@@ -33,35 +44,81 @@ var init_metrics = [
 
 //create reports
 var ReportFactory = {
+	createGetForm: function( fPeriod ){
+    var form_config = {
+      type : "<div>",
+      attr: {
+        "class" : "col-md-8 col-md-offset-3",
+        "style" : "margin-top: 60px"
+      },
+      children:[
+        {
+          type: "<div>",
+          attr: {
+            "class" : "row"
+          },
+          children : [
+            {
+              type: "<form>",
+              attr: {
+                "class"   : "form-horizontal",
+                "method"  : "POST",
+                "action"  : "/musa/sla/get/", //+ app_id,
+              },
+              children: [
+                {
+                  type : "<input>",
+                  label: "App ID:",
+                  attr : {
+                    type : "text",
+                    name : "id"
+                  }
+                },
+                {
+                  type: "<div>",
+                  children : [
+                    {
+                      type: "<button>",
+                      attr: {
+                        class   : "btn btn-danger",
+                        type    : "submit",
+                        text    : "Get SLA",
+                        disabled: true
+                      }
+                    },{
+                      type: "<button>",
+                      attr: {
+                        id      : "btnCancel",
+                        class   : "btn btn-success",
+                        style   : "margin-left: 30px",
+                        type    : "button",
+                        text    : "Cancel",
+                        onclick : 'MMTDrop.tools.gotoURL("/chart/sla", {param: ["app_id", "probe_id"] } )'
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+		var $container = $("#" + arr[1].id + "-content" );
+	  $container.append( MMTDrop.tools.createForm( form_config ) ) ;
+
+	},
 	createUploadForm: function( fPeriod ){
     fPeriod.hide();
     fProbe.hide();
     fAutoReload.hide();
 
     var app_id = MMTDrop.tools.getURLParameters().app_id || "_undefined";
-    var sla_inputs = [];
-    for( var i=0; i<init_components.length; i++){
-      var com = init_components[i];
-
-      //file inputs containing SLA
-      sla_inputs.push({
-        label : com.title,
-        type  : "<input>",
-        attr  : {
-          id      : "filename_" + com.id,
-          type    : "file",
-          name    : com.id,
-          multiple: false,
-          accept  : ".xml",
-          //required: true
-        }
-      });
-    }
-
-    var form_config = {
+    var form_config = function( com ){ 
+      return {
       type: "<div>",
       attr: {
-        "class" : "col-md-8 col-md-offset-3",
+        "class" : "col-md-8 col-md-offset-1",
         "style" : "margin-top: 50px"
       },
       children:[
@@ -83,15 +140,28 @@ var ReportFactory = {
               children: [{
                   type : "<div>",
                   attr : {
-                    class: "text-center",
-                    style: "font-weight:bold; margin-bottom: 10px",
-                    text : "Select SLA file for each component"
+                    text : "Select SLA to upload",
+                    style: "font-weight: bold; text-align: center; margin-bottom: 20px",
                   }
-                },
-                {
-                  type: "<div>",
-                  children: sla_inputs
-                },
+                },{
+                label : "component " + (com + 1),
+                type  : "<input>",
+                attr  : {
+                  id      : "filename",
+                  type    : "file",
+                  name    : "filename",
+                  multiple: false,
+                  accept  : ".xml",
+                  //required: true
+                }
+              },{
+                type :  "<input>",
+                attr : {
+                  type: "hidden",
+                  value: com,
+                  name: "component_id",
+                }
+              },
                 {
                   type : "<input>",
                   attr : {
@@ -126,7 +196,17 @@ var ReportFactory = {
                         style   : "margin-left: 30px",
                         type    : "button",
                         text    : "Cancel",
-                        onclick : 'MMTDrop.tools.gotoURL("/chart/sla", {param: ["app_id", "probe_id"] } )'
+                        onclick : 'MMTDrop.tools.gotoURL("/musa/sla/upload/'+ app_id +'", {param: ["app_id", "probe_id"], add: "act=cancel" } )'
+                      }
+                    },{
+                      type: "<button>",
+                      attr: {
+                        id      : "btnFinish",
+                        class   : "btn btn-primary",
+                        style   : "margin-left: 30px",
+                        type    : "button",
+                        text    : "Finish",
+                        onclick : 'MMTDrop.tools.gotoURL("/musa/sla/upload/'+ app_id +'", {param: ["app_id", "probe_id"], add:"act=finish" } )'
                       }
                     }
                   ]
@@ -137,6 +217,7 @@ var ReportFactory = {
         }
       ]
     };
+  };
 
     var uploading_progress_bar_config = {
       type : "<div>",
@@ -148,7 +229,7 @@ var ReportFactory = {
           type: "<div>",
           attr: {
             id   : "uploading",
-            class: "col-md-8 col-md-offset-2",
+            class: "col-md-10 col-md-offset-1",
           },
           children: [
             {
@@ -185,33 +266,16 @@ var ReportFactory = {
               ]
             }
           ]
-        },{
-          type : "<div>",
-          attr : {
-            class : "col-md-2"
-          },
-          children: [{
-            type:  "<a>",
-            attr: {
-              id      : "btnDone",
-              class   : "btn btn-success",
-              type    : "button",
-              href    : "#",
-              style   : "display: none",
-              text    : "Done",
-              onclick : 'MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } )'
-            }
-          }]
-        }
-      ]
+        } ]
     }
 
-    var $container = $("#" + arr[0].id + "-content" );
-    $container.append( MMTDrop.tools.createForm( form_config ) ) ;
+    var $upload_container = $("#" + arr[0].id + "-content" );
+    $upload_container.append( MMTDrop.tools.createForm( form_config( 0 ) ) ) ;
+    var com = 0;
 
     window._checkSubmit = function(){
 
-      $container.children().replaceWith( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
+      $upload_container.html( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
 
       var timer = setInterval( function(){
         MMTDrop.tools.ajax("/musa/sla/upload/" + app_id, {}, "GET", {
@@ -242,10 +306,11 @@ var ReportFactory = {
                 clearInterval( timer );
 
                 if( !obj.error ){
-                  $("#btnDone").show();
-                  setTimeout(function(){
-                    alert("Created successfully application");
-                    MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } );
+                  setTimeout( function(){
+                    //com starts from 0, 
+                    alert("Successfully uploaded SLA for component " + (com+1) );
+                    com ++;
+                    $upload_container.html( MMTDrop.tools.createForm( form_config( com ) ) ) ;
                   }, 1000);
                 }
               }

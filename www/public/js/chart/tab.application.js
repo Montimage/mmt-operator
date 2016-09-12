@@ -1045,7 +1045,6 @@ var ReportFactory = {
 
                         obj[ col_key.id ] = '<a href="'+ href +'">' + obj[ col_key.id ] + "</a>";
 
-
                         obj[ COL.START_TIME.id ]    = moment( obj[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
                         obj[ "LastUpdated" ]        = moment( obj["LastUpdated"] )    .format("YYYY/MM/DD HH:mm:ss");
                         obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.UL_DATA_VOLUME.id] );
@@ -1120,7 +1119,7 @@ function loadDetail(timestamp) {
     //only on TCP: ETH.VLAN?.IP?.*.TCP
     $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
     if (URL_PARAM.probe_id )
-      $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
+      $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
     if (URL_PARAM.app_id() )
       $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
     if (URL_PARAM.ip )
@@ -1150,7 +1149,7 @@ function loadDetail(timestamp) {
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );
     });
-    [ COL.APP_ID.id, COL.IP_DEST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
+    [ COL.START_TIME.id, COL.APP_ID.id, COL.IP_DEST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
       $group[ el ] = {"$first" : "$"+ el};
     } );
     [ COL.TIMESTAMP.id ].forEach( function( el, index){

@@ -97,30 +97,32 @@ var ReportFactory = {
         //mongoDB aggregate
         var group = { _id : {} };
 
-        [ COL.TIMESTAMP.id , COL.APP_PATH.id ].forEach( function( el, index){
+        [ COL.TIMESTAMP.id , "app_paths.path" ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.APP_PATH.id, COL.FORMAT_ID.id ].forEach( function( el, index){
+        [ COL.TIMESTAMP.id ,COL.FORMAT_ID.id ].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
+        group[ COL.APP_PATH.id ] = {"$first" : "$app_paths.path"};
+        group[ COL.APP_ID.id ] = {"$first" : "$app_paths.app"};
 
-        var match = {};
-        //get only pure protocols such as ETH, IP (not application, such as FACEBOOK, GOOGLE)
-        var p1 ={}, p2 = {};
-        p1[ COL.APP_ID.id ] = {"$in" : PUREPROTOCOLS }; //pure protocols
-        p2[ COL.APP_ID.id ] = {"$lt" : 0}; //pure protocols with port numbers
-        match[ "$or" ]      = [ p1, p2 ];
-
+        var match = {isGen: false};
         //get maximum of 5 levels: eth.vlan.ip.tcp.http
         //I need eth (99) to get the total
         match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,5}$", "$options" : ""};
 
+        var $match2 = {};
+        //get only pure protocols such as ETH, IP (not application, such as FACEBOOK, GOOGLE)
+        var p1 ={}, p2 = {};
+        p1[ "app_paths.app" ] = {"$in" : PUREPROTOCOLS }; //pure protocols
+        p2[ "app_paths.app" ] = {"$lt" : 0}; //pure protocols with port numbers
+        $match2[ "$or" ]      = [ p1, p2 ];
 
         var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
-          query: [{"$match": match}, {"$group" : group}]});
+          query: [{"$match": match}, { $unwind : "$app_paths" }, {$match: $match2}, {"$group" : group}]});
 
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 

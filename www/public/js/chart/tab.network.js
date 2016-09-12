@@ -386,7 +386,6 @@ var ReportFactory = {
           }
           return param;
         }
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -711,13 +710,12 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
                 }]
-        }, ] }];
+        }];
 
         var report = new MMTDrop.Report(
             // title
@@ -727,7 +725,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -765,7 +763,6 @@ var ReportFactory = {
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -1068,12 +1065,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1084,7 +1079,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -1124,7 +1119,6 @@ var ReportFactory = {
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -1425,12 +1419,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1441,7 +1433,7 @@ var ReportFactory = {
             database,
 
             // filers
-          [fProbe, fMetric],
+          [fMetric],
 
             //charts
           [
@@ -1484,7 +1476,6 @@ var ReportFactory = {
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -1779,12 +1770,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1795,7 +1784,7 @@ var ReportFactory = {
             database,
 
             // filers
-                    [fProbe, fMetric],
+                    [fMetric],
 
             //charts
                     [

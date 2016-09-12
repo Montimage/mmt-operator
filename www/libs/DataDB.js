@@ -93,7 +93,7 @@ var MongoConnector = function () {
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
                                    //set
-                               [COL.APP_ID, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
+                               [COL.APP_ID, COL.START_TIME, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
                                COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
                                 ),
@@ -340,15 +340,13 @@ var MongoConnector = function () {
       if( str == undefined )
         return [];
 
-      var arr = [ str ];
-      var index;
+      var arr = [ {path: str, app: dataAdaptor.getAppIdFromPath( str )} ];
       do{
-          index = str.lastIndexOf(".");
-          if( index === -1 )
+          str = dataAdaptor.getParentPath( str );
+          if( str === "." )
             //we reach root
             return arr;
-          str = str.substr( 0, index );
-          arr.push( str );
+          arr.push( {path: str, app: dataAdaptor.getAppIdFromPath( str )} );
       } while( true );
       return arr;
     }

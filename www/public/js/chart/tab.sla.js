@@ -20,6 +20,7 @@ var availableReports = {
 
 var ReportFactory = {
 	createUploadForm: function( fPeriod ){
+    var COL = MMTDrop.constants.StatsColumn;
     //UPDATE VALUE OF METRIX AFTER REDERING
     var isFirstUpdate = true;
     var updateValue = function (){
@@ -104,7 +105,10 @@ var ReportFactory = {
           continue;
         var selMetrics = obj.selectedMetric[ comp_id ];
         var comp       = getObject("components", comp_id)
-        var $row = {
+        if( comp.metrics == undefined || comp.metrics.length == 0 ) 
+          continue;
+
+       var $row = {
           type    : "<tr>",
           children: [{
             type :  "<td>",
@@ -303,7 +307,7 @@ var ReportFactory = {
 
 
     window._gotoURL = function( name, probe_id, alert_thr, violation_thr){
-
+    
       alert_thr = alert_thr
       .replace(">=", '"$gte":').replace(">", '"$gt" :')
       .replace("<=", '"$lte":').replace("<", '"$lt" :')

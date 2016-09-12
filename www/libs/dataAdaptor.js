@@ -737,7 +737,7 @@ MMTDrop.formatMessage = function( message ){
             msg = format_session_report( msg );
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
-            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = "_local";
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             //continue in NO_SESSION_STATS_FORMAT
         case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:

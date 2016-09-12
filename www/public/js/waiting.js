@@ -27,7 +27,17 @@ const breadcrumbs = {
       });
       $dom.appendTo( $("#toolbar") )
     }
-    var arr = [ '<li><a href="/chart/'+ page.id +'" title="'+ page.title +'"><i class="fa fa-home" aria-hidden="true"></i></a></li>' ];
+    var param = [];
+    if( URL_PARAM.probe_id )
+      param.push("probe_id=" + URL_PARAM.probe_id );
+    if( URL_PARAM.period )
+      param.push("period=" + URL_PARAM.period );
+    if( param.length > 0 )
+      param = "?" + param.join("&");
+    else
+      param = "";
+
+    var arr = [ '<li><a href="/chart/'+ page.id + param +'" title="'+ page.title +'"><i class="fa fa-home" aria-hidden="true"></i></a></li>' ];
     data.forEach( function(el){
         arr.push('<li>' + el + '</li>')
     })

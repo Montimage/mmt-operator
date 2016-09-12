@@ -113,9 +113,16 @@ $(function () {
       }
     }
     //end fProbe
-
+    
+    //
+    fPeriod.storeState = false;
     fPeriod.renderTo("toolbar-box");
-    fPeriod.onChange( loading.onShowing  );
+    if( URL_PARAM.period )
+      fPeriod.selectedOption({id: URL_PARAM.period});
+    fPeriod.onFilter( function( opt ){
+      MMTDrop.tools.reloadPage("period=" + opt.id );
+    });
+
 
     var renderReport = function (node) {
         try {
@@ -194,19 +201,11 @@ $(function () {
       }//end if
     }
 
-    fPeriod.onFilter( function( opt ){
-        console.log("fPeriod filtering");
-        var period = MMTDrop.tools.getURLParameters().period;
-        if( period == undefined )
-          status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
-        else
-          status_db.reload({ action: period }, reloadReports, opt.id );
-    });
-
     //fire the chain of filters
     setTimeout( function(){
-        fPeriod.filter();
-    }, 0 );
+      console.log("loading status_db");
+      status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, URL_PARAM.period );
+    }, 500 );
 
     //update the modal show list of reports to user
     var $modal = $("#modal");
@@ -277,7 +276,7 @@ $(function () {
             }
 
             loading.onShowing();
-            fPeriod.filter();
+            status_db.reload({}, reloadReports, URL_PARAM.period );
         }, p);
     }
     $("#isAutoReloadChk").change( function(){

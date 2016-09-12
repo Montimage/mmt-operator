@@ -1558,10 +1558,13 @@ MMTDrop.tools = function () {
     return href + _this.getQueryString( param, add_query_str);
   };
   _this.gotoURL = function( url, options ){
+    var param = "";
     if( options && options.param )
-      url += _this.getQueryString( options.param );
+    param = _this.getQueryString( options.param );
+    if( options && options.add )
+    param += (param == "" ? "?": "&") + options.add;
 
-    document.location.href = url;
+    document.location.href = url + param;
     throw new Error("abort to goto " + url);
   },
   _this.reloadPage = function( add_param_string ){
@@ -1946,12 +1949,12 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       query = param.query.slice(0);
 
 
-    if( param.period || param.probe ){
+    if( param.period != undefined || param.probe != undefined ){
       var $match = {};
       //timestamp
-      if( param.period )
+      if( param.period != undefined )
         $match[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] =  {"$gte": param.period.begin, "$lte" : param.period.end };
-      if( param.probe ){
+      if( param.probe != undefined ){
         if( ! Array.isArray( param.probe ) )
           $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = param.probe;
         else
@@ -2586,8 +2589,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     var _afterChangeCallbacks = [];
   //database attached to this filter
   var _database = null;
-
-  var _option = {};
+  var _option = param.options;
   var _this = this;
   _this.storeState = true;
     this.getId = function(){
@@ -2627,7 +2629,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
         _this.domElement = fcontainer;
     //add a list of options to the filter
-    _this.option( param.options );
+
     _this.redraw();
 
     //handle when the filter changing
@@ -2643,7 +2645,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
       console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
 
       //save the current selected index
-      if( _this.storeState )
+      if( _this.storeState === true)
         MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
 
       for (var i in _afterChangeCallbacks){
@@ -2673,11 +2675,24 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     }
     else{
       //check if the defaultOption is in the current option list
-      for (var i in _option){
-        if (opt.id == _option[i].id){
-          MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
-          break;
+      if( _this.storeState === true )
+        for (var i in _option){
+          if (opt.id == _option[i].id){
+            MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
+            break;
+          }
         }
+      else{
+        for( var i=0; i<_option.length; i++ )
+          if( _option[i].selected )
+            delete( _option[i].selected );
+        for( var i=0; i<_option.length; i++ )
+          if( _option[i].id == opt.id ){
+            _option[i].selected  = true;
+            _currentSelectedOption = _option[i];
+            break;
+          }
+        _this.select.val( opt.id );
       }
     }
     return this;
@@ -2725,7 +2740,7 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     }
 
     var defaultOption;
-    if( _this.storeState )
+    if( _this.storeState === true )
       defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
     var isExist = false;
 
