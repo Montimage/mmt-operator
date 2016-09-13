@@ -99,14 +99,11 @@ var MongoConnector = function () {
                                 COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                                 COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                                 COL.RTT,
-                                //COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-                                //COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-                                //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
                                    //set
-                               [COL.APP_ID, COL.START_TIME, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
+                               [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
                                COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
                                 ),
@@ -391,15 +388,14 @@ var MongoConnector = function () {
         if ( format === 100 || format === 99 ){
 
             //a dummy report when session expired
-            if( msg[ COL.PACKET_COUNT ] == 0 ){
+            if( msg[ COL.PACKET_COUNT ] === 0 ){
               return;
             }
-            else if( msg[ COL.PACKET_COUNT ] == 1 ){
+            else if( msg[ COL.PACKET_COUNT ] === 1 ){
               no_1_packet_reports ++;
-              return;
             }
             //micro flow
-            is_micro_flow = ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte );
+            is_micro_flow = (format === 100 && ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte ));
 
             msg.isGen = false;//this is original message comming from mmt-probe
 
@@ -412,11 +408,17 @@ var MongoConnector = function () {
 
             self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
 
-            if( is_micro_flow )
+            if( is_micro_flow ){
              //this allows to distinguish 2 micro flow of 2 differents sample periods
              //there is at most 1 micro flow during one sample period
                msg[ COL.SESSION_ID ] = "m-" + ts ;
-            else
+               //msg[ COL.APP_PATH   ] = "99";  //ethernet
+               //msg[ COL.APP_ID     ] = 99;  //ethernet
+               msg[ COL.IP_SRC     ] = "micro-flow";
+               msg[ COL.IP_DEST    ] = "micro-flow";
+               msg[ COL.MAC_SRC    ] = "micro-flow";
+               msg[ COL.MAC_DEST   ] = "m-" + ts; //this uses to create 2 different rows in data_session_real/min/hour/day
+            }else
             //as 2 threads may produce a same session_ID for 2 different sessions
             //this ensures that session_id is uniqueelse
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
@@ -478,18 +480,20 @@ var MongoConnector = function () {
             self.dataCache.mac.addMessage(     msg );
 
 
-            //add traffic for the other side (src <--> dest )
-            msg.isGen = true;
-            msg = dataAdaptor.inverseStatDirection( msg );
-            //change session_id of this clone message
-            msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
+            if( !is_micro_flow ){
+               //add traffic for the other side (src <--> dest )
+               msg.isGen = true;
+               msg = dataAdaptor.inverseStatDirection( msg );
+               //change session_id of this clone message
+               msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 
-            self.dataCache.mac.addMessage( msg );
+               self.dataCache.mac.addMessage( msg );
 
-            //only if its partner is local
-            if( dataAdaptor.isLocalIP( msg[ COL.IP_SRC ] )){
-                self.dataCache.session.addMessage( msg );
-                self.dataCache.detail.addMessage(  msg );
+               //only if its partner is local
+               if( dataAdaptor.isLocalIP( msg[ COL.IP_SRC ] )){
+                   self.dataCache.session.addMessage( msg );
+                   self.dataCache.detail.addMessage(  msg );
+                }
             }
             return;
         }else if (format === 0 || format == 1 || format == 2){

@@ -4,7 +4,7 @@ var maxmind = require('maxmind');
 var path    = require("path");
 var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Country.mmdb'), {
     cache: {
-        max: 10000, // max items in cache
+        max: 50000, // max items in cache
         maxAge: 1000 * 60 * 60 // life time in milliseconds
     }
 });
