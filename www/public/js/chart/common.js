@@ -113,7 +113,7 @@ $(function () {
       }
     }
     //end fProbe
-    
+
     //
     fPeriod.storeState = false;
     fPeriod.renderTo("toolbar-box");
@@ -627,7 +627,8 @@ function createTrafficReport( collection, key, id ){
 
 
 function createPopupReport( collection, key, id, title, probe_id  ){
-  collection = "session";
+  if( collection != "mac")
+    collection = "session";
 
   var formatTime = function( date ){
         return moment( (new Date(date)).getTime() ).format( fPeriod.getTimeFormat() );

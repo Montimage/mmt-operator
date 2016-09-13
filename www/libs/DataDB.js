@@ -76,7 +76,20 @@ var MongoConnector = function () {
         self.operatorStatus.set("start");
 
         self.dataCache = {
-
+          mac: new DataCache(db, "data_mac",
+                                 //key
+                             [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
+                                 //inc
+                             [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
+                               COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
+                              COL.DATA_VOLUME, COL.PACKET_COUNT
+                             ],
+                                 //set
+                             ["isGen"],
+                             //init
+                             [COL.START_TIME],
+                             5*60*1000//retain data in 5 minutes
+                              ),
             session: new DataCache(db, "data_session",
                                    //key
                                [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH,
@@ -462,15 +475,19 @@ var MongoConnector = function () {
             //each session
             self.dataCache.session.addMessage( msg );
             self.dataCache.detail.addMessage(  msg );
+            self.dataCache.mac.addMessage(     msg );
+
+
+            //add traffic for the other side (src <--> dest )
+            msg.isGen = true;
+            msg = dataAdaptor.inverseStatDirection( msg );
+            //change session_id of this clone message
+            msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
+
+            self.dataCache.mac.addMessage( msg );
 
             //only if its partner is local
-            if( dataAdaptor.isLocalIP( msg[ COL.IP_DEST ] )){
-                //add traffic for the other side (src <--> dest )
-                msg.isGen = true;
-                msg = dataAdaptor.inverseStatDirection( msg );
-                //change session_id of this clone message
-                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
-
+            if( dataAdaptor.isLocalIP( msg[ COL.IP_SRC ] )){
                 self.dataCache.session.addMessage( msg );
                 self.dataCache.detail.addMessage(  msg );
             }

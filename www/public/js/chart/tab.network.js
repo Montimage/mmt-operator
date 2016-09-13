@@ -77,7 +77,7 @@ if( param.profile ){
 //==> only one report is shown
 if( param.profile && param.app && param.link )
   arr = [{
-      id: "detail_location",
+      id: "detail",
       title: "Details",
       x: 0,
       y: 0,
@@ -182,10 +182,10 @@ var ReportFactory = {
                       var obj     = {};
                       HISTORY.push( msg );
 
-                      obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
-                      obj[ COL.TIMESTAMP.id ]     = moment( msg[COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm:ss");
-                      obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
-                      obj[ COL.FORMAT_TYPE.id ]   = msg[ COL.FORMAT_TYPE.id ];
+                      obj[ COL.START_TIME.id ]  = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                      obj[ COL.TIMESTAMP.id ]   = moment( msg[COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm:ss");
+                      obj[ COL.APP_PATH.id ]    = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
+                      obj[ COL.FORMAT_TYPE.id ] = msg[ COL.FORMAT_TYPE.id ];
                       var host =  "";
                       if( type == 0 || type == undefined)
                         type = msg[ COL.FORMAT_TYPE.id ];
@@ -557,7 +557,7 @@ var ReportFactory = {
                           }).appendTo($tr);
                         }else{
                           $a = $("<a>", {
-                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile"], "app=" + key ),
+                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile", "probe_id", "period"], "app=" + key ),
                              title: "click to show detail of this application/protocol",
                              text : key,
                            });
@@ -565,7 +565,7 @@ var ReportFactory = {
                          }
                       }else{
                        $a = $("<a>", {
-                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip"], "profile=" + key ),
+                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "probe_id", "period"], "profile=" + key ),
                           title: "click to show detail of this profile",
                           text : key,
 
@@ -928,7 +928,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           html : key,
                           title: "click to show detail of this user",
-                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip", "app"], "link="+ link)
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip", "app", "probe_id", "period"], "link="+ link)
                       });
 
                       $("<td>").append($label).appendTo($tr);
@@ -1275,7 +1275,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           text : key,
                           title: "click to show detail of this user",
-                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link", "app"], "ip="+ key)
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link", "app", "probe_id", "period"], "ip="+ key)
                       });
 
                       $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -1629,7 +1629,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           text : key,
                           title: "click to show detail of this location",
-                          href : MMTDrop.tools.getCurrentURL(["ip","link","profile", "app"], "loc=" + key),
+                          href : MMTDrop.tools.getCurrentURL(["ip","link","profile", "app", "probe_id", "period"], "loc=" + key),
                       });
 
                       $("<td>", {align: "left"}).append($label).appendTo($tr);

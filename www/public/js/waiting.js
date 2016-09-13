@@ -47,22 +47,41 @@ const breadcrumbs = {
     var obj = MMTDrop.tools.getURLParameters();
     var arr = [];
     var url = null;
-    var last= "";
+    var title= "";
     for( var key in obj ){
       //omit probe as we have fProbe in the toolbar
       //app_id is used on MUSA probject
       if( key == "probe_id" || key == "app_id" )
         continue;
+      var val = obj[key]
       //first time
       if (url == undefined )
-        url = MMTDrop.tools.getCurrentURL([key]);
+        url = MMTDrop.tools.getCurrentURL([]);
       else
-        url += "&"+ key + "=" + obj[key];
-      arr.push( '<a href="'+ url +'" title="'+ key +'='+ obj[key] +'">' + obj[key] + '</a>' );
-      last = obj[key];
+        url += "&"+ key + "=" + val;
+
+      title = val;
+      if( key == "period" ){
+        if( val == "minute" )
+          title = "Last 5 minutes";
+        else if( val == "hour" )
+          title = "Last hour";
+        else if( val == "6hours" )
+          title = "Last 6 hours";
+        else if( val == "12hours" )
+          title = "Last 12 hours";
+        else if( val == "day" )
+          title = "Last 24 hours";
+        else if( val == "week" )
+          title = "Last 7 days";
+        else if( val == "month" )
+          title = "Last 30 days";
+      }
+
+      arr.push( '<a href="'+ url +'" title="'+ key +'='+ val +'">' + title + '</a>' );
     }
     if( arr.length > 0 )
-      arr[ arr.length - 1 ] = last;
+      arr[ arr.length - 1 ] = title;
     breadcrumbs.setData( arr );
   }
 }

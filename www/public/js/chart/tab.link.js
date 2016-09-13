@@ -613,7 +613,7 @@ var ReportFactory = {
     },
     createNodeReport: function (fPeriod) {
         var DETAIL = {};//data detail of each MAC
-        var database = new MMTDrop.Database({collection: "data_session_real", action: "aggregate", no_group : true, no_override_when_reload: true});
+        var database = new MMTDrop.Database({collection: "data_mac", action: "aggregate", no_group : true, no_override_when_reload: true, raw:true});
         //this is called each time database is reloaded to update parameters of database
         database.updateParameter = function( _old_param ){
           var last5Minute = status_db.time.end - 5*60*1000;
@@ -621,8 +621,7 @@ var ReportFactory = {
           $match[ COL.TIMESTAMP.id ] = {$gte: last5Minute, $lte: status_db.time.end };
 
           var group = { _id : {} };
-
-          [ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DEST.id, COL.PROBE_ID.id ].forEach( function( el, index){
+          [ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.PROBE_ID.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
           } );
           [ COL.UL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id, COL.DL_DATA_VOLUME.id, COL.DL_PACKET_COUNT.id,
@@ -633,7 +632,9 @@ var ReportFactory = {
           [ COL.TIMESTAMP.id, COL.PROBE_ID.id, COL.MAC_SRC.id ].forEach( function( el, index){
             group[ el ] = {"$last" : "$"+ el};
           } );
-
+          [ COL.START_TIME.id ].forEach( function( el, index){
+            group[ el ] = {"$first" : "$"+ el};
+          } );
           return {query: [{$match: $match}, {$group : group}]};
         }
         var cTable = MMTDrop.chartFactory.createTable({
@@ -812,6 +813,9 @@ var ReportFactory = {
 
     createRealtimeTrafficReport: function () {
         var _this = this;
+        //get true-traffic given by mmt-probe
+        var $match = {isGen: false};
+
         var group = { _id : {} };
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
@@ -823,7 +827,7 @@ var ReportFactory = {
           group[ el ] = {"$last" : "$"+ el};
         });
         var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
-          query: [{"$group" : group}]});
+          query: [{"$match":$match},{"$group" : group}]});
 
         var rep = _this.createTrafficReport(database, true);
 
