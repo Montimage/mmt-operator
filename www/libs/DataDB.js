@@ -395,6 +395,7 @@ var MongoConnector = function () {
               no_1_packet_reports ++;
             }
             //micro flow
+            //only based-on TCP
             is_micro_flow = (format === 100 && ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte ));
 
             msg.isGen = false;//this is original message comming from mmt-probe
@@ -470,6 +471,9 @@ var MongoConnector = function () {
                 */
 
                 update_proto_name( msg );
+
+               //do not add report 99 to data_mac collection as it has no MAC
+               self.dataCache.mac.addMessage( msg );
             }
 
             msg.app_paths = flat_app_path( msg[ COL.APP_PATH ] );
@@ -477,7 +481,6 @@ var MongoConnector = function () {
             //each session
             self.dataCache.session.addMessage( msg );
             self.dataCache.detail.addMessage(  msg );
-            self.dataCache.mac.addMessage(     msg );
 
 
             if( !is_micro_flow ){
@@ -487,7 +490,9 @@ var MongoConnector = function () {
                //change session_id of this clone message
                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 
-               self.dataCache.mac.addMessage( msg );
+               //do not add report 99 to data_mac collection as it has no MAC
+               if( format === 100 )
+                  self.dataCache.mac.addMessage( msg );
 
                //only if its partner is local
                if( dataAdaptor.isLocalIP( msg[ COL.IP_SRC ] )){
