@@ -66,17 +66,29 @@ var ReportFactory = {
             attr : {
               text : "Enable"
             }
+          },{
+            type : "<th>",
+            attr : {
+              text : "Supported"
+            }
           }]
         }]
       }];
       for( var i=0; i<init_components.length; i++){
         var comp = init_components[ i ];
+        //show only probe that is indicated in URL by probe_id
+        if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
+          continue;
+        if( comp.metrics == undefined || comp.metrics.length == 0 )
+          continue;
+
+
         var $row = {
           type    : "<tr>",
           children: [{
             type :  "<td>",
             attr : {
-              colspan : 6,
+              colspan : 7,
               style   : "font-weight: bold",
               text    : comp.title + " ("+ comp.url +")"
             }
@@ -127,7 +139,8 @@ var ReportFactory = {
                 class   : "form-control",
                 type    : "text",
                 required: true,
-                value   : me.alert
+                value   : me.alert,
+                disabled: me.support === false
               }
             }]
           });
@@ -141,7 +154,8 @@ var ReportFactory = {
                 class   : "form-control",
                 type    : "text",
                 required: true,
-                value   : me.violation
+                value   : me.violation,
+                disabled: me.support === false
               }
             }]
           });
@@ -154,24 +168,28 @@ var ReportFactory = {
                 id      : "priority-" + comp.id + "-" + me.id,
                 class   : "form-control",
                 required: true,
+                disabled: me.support === false
               },
               children : [{
                 type : "<option>",
                 attr : {
-                  value : 0,
-                  text  : "High"
+                  value   : "HIGH",
+                  text    : "HIGH",
+                  selected: (me.priority == "HIGH")
                 }
               },{
                 type : "<option>",
                 attr : {
-                  value : 1,
-                  text  : "Default"
+                  value   : "MEDIUM",
+                  text    : "MEDIUM",
+                  selected: (me.priority == "MEDIUM")
                 }
               },{
                 type : "<option>",
                 attr : {
-                  value : 2,
-                  text  : "Low"
+                  value   : "LOW",
+                  text    : "LOW",
+                  selected: (me.priority == "LOW")
                 }
               }]
             }]
@@ -191,7 +209,8 @@ var ReportFactory = {
                   id      : "enable-" + comp.id + "-" + me.id,
                   class   : "onoffswitch-checkbox",
                   type    : "checkbox",
-                  checked : (me.name == "" ? false: true)//TODO to enable
+                  checked : me.enable, //(me.name == "" ? false: me.enable)//TODO to enable
+                  disabled: me.support === false
                 }
               },{
                 type    : "<label>",
@@ -211,6 +230,19 @@ var ReportFactory = {
                   }
                 }]
               }]
+            }]
+          });
+
+          row.children.push({
+            type : "<td>",
+            attr : {
+              align: "center"
+            },
+            children: [{
+              type : "<i>",
+              attr : {
+                class : "fa " + (me.support? "fa-check text-success" : "fa-times text-danger")
+              }
             }]
           });
           table_rows.push( row );
@@ -234,6 +266,9 @@ var ReportFactory = {
             children : table_rows
           },{
             type: "<div>",
+            attr: {
+              style: "margin-top:10px; margin-bottom: 20px"
+            },
             children : [
               {
                 type: "<button>",
@@ -273,7 +308,7 @@ var ReportFactory = {
                   class   : "btn btn-success pull-right",
                   style   : "margin-left: 30px",
                   text    : "Cancel",
-                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id"])
+                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
                 }
               },
             ]

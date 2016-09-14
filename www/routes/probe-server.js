@@ -1,9 +1,9 @@
-var fs               = require('fs');
-var path             = require('path');
-var LineByLineReader = require('line-by-line');
-var mmtAdaptor       = require('../libs/dataAdaptor');
-var config           = require('../libs/config');
-var path             = require('path');
+var fs         = require('fs');
+var path       = require('path');
+var lineReader = require('readline');
+var mmtAdaptor = require('../libs/dataAdaptor');
+var config     = require('../libs/config');
+var path       = require('path');
 var CURRENT_PROFILE = {};
 
 var router = {};
@@ -51,7 +51,7 @@ router.process_message = function (db, message) {
 
         var format = msg[0];
 
-        if (format == mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
+        if (format === mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT){
             if( router.config.only_ip_session === true ){
                 //console.log( message );
                 return;
@@ -64,20 +64,20 @@ router.process_message = function (db, message) {
                 return;
             }
 
-            if( msg[ COL.IP_SRC ] == "undefined" ){
+            if( msg[ COL.IP_SRC ] === "undefined" ){
                 console.log("[DONT 1] " + message);
                 return;
             }
 
-            if( mmtAdaptor.setDirectionStatFlowByIP(msg) == null) {
+            if( mmtAdaptor.setDirectionStatFlowByIP(msg) === null) {
                 console.log("[DONT KNOW DIRECTION] " + message);
                 return;
             }
         }
 
-        else if ( format == mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
-             || format == mmtAdaptor.CsvFormat.WEB_APP_FORMAT
-             || format == mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
+        else if ( format === mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT
+             ||   format === mmtAdaptor.CsvFormat.WEB_APP_FORMAT
+             ||   format === mmtAdaptor.CsvFormat.SSL_APP_FORMAT ) {
             return;
         }
 
@@ -101,7 +101,7 @@ router.process_message = function (db, message) {
         }
 
 
-        else if( format == mmtAdaptor.CsvFormat.LICENSE ){
+        else if( format === mmtAdaptor.CsvFormat.LICENSE ){
 
             if( router.dbadmin )
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
@@ -121,8 +121,6 @@ router.process_message = function (db, message) {
 
         //to test mult-probe
         //msg[1] = Math.random() > 0.5 ? 1 : 0;
-
-
 
         db.addProtocolStats(msg, function (err, err_msg) {});
 
@@ -167,37 +165,48 @@ router.startListening = function (db, redis) {
 
 
 router.startListeningAtFolder = function (db, folder_path) {
+    // ensure data directory exists
+    if( !fs.existsSync( folder_path ) ){
+      console.error("Error: Data folder [" + config.log_folder + "] does not exists.");
+      process.exit();
+    }
+
     //load list of read csv file from db
     var read_files = null;
 
     if (folder_path.charAt(folder_path.length - 1) != "/")
         folder_path += "/";
 
-    var process_file = function (file_name, cb) {
-        var lr = new LineByLineReader(file_name);
+    const process_file = function (file_name, cb) {
+        const lr = lineReader.createInterface({
+         input: fs.createReadStream( file_name )
+        });
         var totalLines = 0;
 
         var start_ts = (new Date()).getTime();
         console.log("file " + path.basename( file_name ));
-        
+
         lr.on('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
             router.process_message(db, "[" + line + "]");
             totalLines ++;
         });
 
-        lr.on('end', function () {
+        lr.on('close', function () {
             // All lines are read, file is closed now.
             start_ts = (new Date()).getTime() - start_ts;
             console.log(" ==> DONE ("+ totalLines +" lines, "+ start_ts +" ms)");
 
             //remove data file
             if( config.delete_data ){
-                //we can use async function, delete its semaphore is enough
-                fs.unlink( file_name );
                 //remove semaphore file
-                fs.unlinkSync( file_name + ".sem" );
-                cb( totalLines );
+                fs.unlink( file_name + ".sem", function(err){
+                  if( err ) console.error( err );
+                  fs.unlink( file_name, function( e ){
+                     if( err ) console.error( err );
+                     cb( totalLines );
+                  });
+                });
             }
             else{
                 read_files.push( file_name );
@@ -233,10 +242,8 @@ router.startListeningAtFolder = function (db, folder_path) {
             if (file_name.match(/csv$/i) == null)
                 continue;
 
-            var lock_file = file_name + ".sem";
-
             //check if there exists its semaphore
-            if ( files.indexOf( lock_file ) > -1 )
+            if ( files.indexOf( file_name + ".sem" ) > -1 )
                 arr.push(dir + file_name);
         }
 

@@ -91,5 +91,40 @@ function AdminDB() {
             db.collection("license").insert(license, callback);
         });
     };
+
+    this.getBackupInfo = function( callback ){
+      callback = callback || function(){};
+
+      self.connect( function(err, db){
+        if( err )
+          return callback( err );
+
+        db.collection("db-backup").find( {_id : 1} ).limit(1)
+          .toArray( function( err, doc){
+            if( err || doc.length != 1){
+                callback( err );
+                return;
+            }
+            callback( null, doc[0] );
+        } );
+      });
+    };
+
+    this.setBackupInfo = function( data, allback ){
+      callback = callback || function(){};
+
+      self.connect( function(err, db){
+        if( err )
+          return callback( err );
+
+        if( data["$set"] == undefined )
+          data._id = 1;
+
+        db.collection("db-backup").update( {_id : 1}, data, {upsert: true}, function(err, ret){
+          if( err ) return callback( err );
+          callback();
+        } );
+      });
+    }
 }
 module.exports = AdminDB;

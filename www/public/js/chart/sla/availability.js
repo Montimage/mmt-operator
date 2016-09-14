@@ -15,13 +15,26 @@ var arr = [
 
 var availableReports = {
 }
-
-
+el = {}
+if (URL_PARAM.length > 0){
+  el = {
+    compid: URL_PARAM.probe_id,
+    metricid: "1",
+    metricname: "availability",
+    value: URL_PARAM.violation
+  }
+}else{
+  el = {
+    compid: URL_PARAM.probe_id,
+    metricid: "1",
+    metricname: "availability",
+    value: "<= 0.95"
+  }
+}
 
 MMTDrop.setOptions({
     format_payload: true
 });
-
 
 //create reports
 
@@ -30,25 +43,20 @@ var ReportFactory = {
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
     createNodeReport: function ( fPeriod ) {
+
         var _this    = this;
         var COL      = MMTDrop.constants.StatsColumn;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var database = new MMTDrop.Database({collection : "availability", action: "find"}, function( data ){
-          //add a new column for "not-availability"
-          for( var i in data ){
-            var msg = data[i];
-            if( msg[4] == 0 ){
-              msg.push( 1 );//5: not availability
-            }else {
-              msg.push( 0 );//5: not availability
-            }
-          }
+
+        var database = new MMTDrop.Database({collection: "availability", action: "aggregate", raw: true,  no_override_when_reload: true},
+          function( data) {
+
+            return data;
 
           //add zero points for the timestamp that have no data
           var start_time = status_db.time.begin,
               end_time   = status_db.time.end,
               period_sampling = fPeriod.getDistanceBetweenToSamples() * 1000,
-              time_id = 3;
+              time_id = "_id";
           //sort data ascending by time
           data.sort( function( a, b ){
             return a[ time_id ] - b[ time_id ];
@@ -71,8 +79,7 @@ var ReportFactory = {
               if( inActivePeriod( ts ) )
                   default_value = 0;
 
-              zero[4] = default_value;
-              zero[5] = default_value;
+              zero['result'] = default_value;
               return zero;
           }
 
@@ -107,6 +114,11 @@ var ReportFactory = {
           return arr;
         });
 
+        database.updateParameter = function( _old_param ){
+          var query = getQuery("availability", 4, el, status_db)
+	  query.query.splice( query.query.length - 1, 1);
+          return query;
+        }
 
         var cLine = MMTDrop.chartFactory.createTimeline({
             //columns: [MMTDrop.constants.StatsColumn.APP_PATH]
@@ -115,9 +127,8 @@ var ReportFactory = {
                     var data = db.data();
 
                     var columns = [
-                      COL.TIMESTAMP,
-                      {id: 4, label: "Available"},
-                      {id: 5, label: "Not Available"}
+                      {id: "_id"},
+                      {id: "result", label: "Availability (%)"}
                     ]
 
                     var ret = {
@@ -183,15 +194,15 @@ var ReportFactory = {
 
                     for( var i in data ){
                       var msg = data[i];
-                      obj[0][1] += msg[ 4 ];
-                      obj[1][1] += msg[ 5 ];
+                      obj[0][1] += msg['result'];
+                      obj[1][1] += 1 - msg['result'];
                     }
 
                     var columns = [
                       {id: "0"}, //label
                       {id: "1"}, //data
                     ]
-                    console.log( obj );
+
                     return {
                         data   : obj,
                         columns: columns,
@@ -202,12 +213,9 @@ var ReportFactory = {
         });
 
         var dataFlow = [{
-                object: fProbe,
-                effect: [{
                     object: cPie
                             },{
                     object: cLine
-                            }, ]
                             }];
 
         var report = new MMTDrop.Report(
@@ -218,7 +226,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe],
+					[],
 
             //charts
 					[

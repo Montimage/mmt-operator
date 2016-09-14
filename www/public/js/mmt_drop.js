@@ -1533,9 +1533,14 @@ MMTDrop.tools = function () {
         arr.push( param[i] + "=" +  val);
     }
 
+    for(  var i in add_obj ){
+      if( !(add_obj[i] == undefined || add_obj[i] == "undefined" || add_obj[i] == "null" ))
+        arr.push( i + "=" + add_obj[i] )
+    }
+    /*
     if( add_query_str !== undefined && add_query_str !== "" ){
       arr.push( add_query_str );
-    }
+    }*/
 
     if( arr.length > 0 )
       arr = "?" + arr.join("&");
@@ -1553,10 +1558,13 @@ MMTDrop.tools = function () {
     return href + _this.getQueryString( param, add_query_str);
   };
   _this.gotoURL = function( url, options ){
+    var param = "";
     if( options && options.param )
-      url += _this.getQueryString( options.param );
+    param = _this.getQueryString( options.param );
+    if( options && options.add )
+    param += (param == "" ? "?": "&") + options.add;
 
-    document.location.href = url;
+    document.location.href = url + param;
     throw new Error("abort to goto " + url);
   },
   _this.reloadPage = function( add_param_string ){
@@ -1721,8 +1729,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       if( user_param != undefined )
         _param = MMTDrop.tools.mergeObjects(_param, user_param);
     }
-    if (new_param && _param.no_override_when_reload !== true )
+    if (new_param && _param.no_override_when_reload !== true ){
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
+    }
 
     if( isFirstTime ){
         _param.isReload = false;
@@ -1939,9 +1948,21 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
     if( param.query != undefined )
       query = param.query.slice(0);
 
-    if( param.period )
-      query.unshift( {"$match" : {3: {"$gte": param.period.begin, "$lte" : param.period.end }}} );
 
+    if( param.period != undefined || param.probe != undefined ){
+      var $match = {};
+      //timestamp
+      if( param.period != undefined )
+        $match[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] =  {"$gte": param.period.begin, "$lte" : param.period.end };
+      if( param.probe != undefined ){
+        if( ! Array.isArray( param.probe ) )
+          $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = param.probe;
+        else
+          $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = {$in:  param.probe};
+      }
+
+      query.unshift( {"$match" : $match} );
+    }
     //need for "POST"
     query = JSON.stringify( query );
     MMTDrop.tools.ajax(url, query, "POST", callback);
@@ -2568,9 +2589,9 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     var _afterChangeCallbacks = [];
   //database attached to this filter
   var _database = null;
-
-  var _option = {};
+  var _option = param.options;
   var _this = this;
+  _this.storeState = true;
     this.getId = function(){
         return param.id;
     }
@@ -2608,33 +2629,34 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
 
         _this.domElement = fcontainer;
     //add a list of options to the filter
-    _this.option( param.options );
+
     _this.redraw();
 
     //handle when the filter changing
     filter.change(function(e){
-            //annonce to its callback registors
-            for (var i in _onChangeCallbacks){
-                var callback = _onChangeCallbacks[i];
-                callback[0](_currentSelectedOption, _database, callback[1]);
-            }
+      //annonce to its callback registors
+      for (var i in _onChangeCallbacks){
+          var callback = _onChangeCallbacks[i];
+          callback[0](_currentSelectedOption, _database, callback[1]);
+      }
 
       _currentSelectedOption = _option[this.selectedIndex];   //the selected option of the filter
 
       console.log(param.label + " - selection index change: " + JSON.stringify( _currentSelectedOption ));
 
       //save the current selected index
-      MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
+      if( _this.storeState === true)
+        MMTDrop.tools.localStorage.set(param.id, _currentSelectedOption, param.useFullURI);
 
-            for (var i in _afterChangeCallbacks){
-                var callback = _afterChangeCallbacks[i];
-                callback[0](_currentSelectedOption, _database, callback[1]);
-            }
+      for (var i in _afterChangeCallbacks){
+          var callback = _afterChangeCallbacks[i];
+          callback[0](_currentSelectedOption, _database, callback[1]);
+      }
 
       //applying the filter to the current selection
-            setTimeout( function(){
-          _filter();
-            }, 10);
+      setTimeout( function(){
+        _filter();
+      }, 10);
     });
   };
 
@@ -2652,16 +2674,27 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
       return _currentSelectedOption;
     }
     else{
-            //check if the defaultOption is in the current option list
+      //check if the defaultOption is in the current option list
+      if( _this.storeState === true )
         for (var i in _option){
           if (opt.id == _option[i].id){
-                    MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
+            MMTDrop.tools.localStorage.set(param.id, _option[i], param.useFullURI);
             break;
           }
         }
-
-
-        }
+      else{
+        for( var i=0; i<_option.length; i++ )
+          if( _option[i].selected )
+            delete( _option[i].selected );
+        for( var i=0; i<_option.length; i++ )
+          if( _option[i].id == opt.id ){
+            _option[i].selected  = true;
+            _currentSelectedOption = _option[i];
+            break;
+          }
+        _this.select.val( opt.id );
+      }
+    }
     return this;
   };
 
@@ -2706,7 +2739,9 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
       opt.appendTo(filter);
     }
 
-    var defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
+    var defaultOption;
+    if( _this.storeState === true )
+      defaultOption = MMTDrop.tools.localStorage.get(param.id, param.useFullURI);
     var isExist = false;
 
     //check if the defaultOption is in the current option list

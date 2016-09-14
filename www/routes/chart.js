@@ -50,7 +50,23 @@ var all_pages = {
         title: "Video QoS"
     },
     'sla': {
-        title: "SLA"
+        title: "SLA",
+        children: {
+          "../sla": {
+            title: "Metrics"
+          },
+          "separator":true,
+          "availability": {
+            title: "Availability"
+          },
+          "rtt":{
+            title: "Response Time"
+          },
+          "location": {
+            title: "Location"
+          }
+
+        }
     },
     'setting':{
       title: "Settings"
@@ -58,7 +74,7 @@ var all_pages = {
 };
 
 var pages_to_show = {};
-['link', 'network', 'application', 'dpi', 'security', 'evasion', 'ndn'].forEach(
+['link', 'network', 'application', 'dpi', 'security', 'evasion', 'ndn', 'video','sla'].forEach(
   function(key){
     pages_to_show[ key ] = all_pages[ key ];
   });
@@ -91,7 +107,7 @@ router.get('/*', function(req, res, next) {
 
     //maintain query string between pages
     var query_string = [];
-    var arr = ["period", "probe_id", "app_id", "period_id"];
+    var arr = ["period", "probe_id", "app_id", "period_id", "alert", "violation"];
     for (var i in arr) {
         var el = arr[i];
         if (req.query[el] != undefined)

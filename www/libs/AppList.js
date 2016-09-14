@@ -1,5 +1,5 @@
 function AppList( db ){
-    var obj    = {};
+    var obj    = {}; //appname ==> app_id
     var length = -1;
     this.upsert = function( name ){
         if( obj[ name ] === undefined ){

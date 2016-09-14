@@ -1,29 +1,36 @@
-var VERSION         = require("./version.json").VERSION;
+const MUSA = false; //active when using for MUSA project
 
-var express         = require('express');
-var session         = require('express-session')
-const MongoStore    = require('connect-mongo')(session);
-var path            = require('path');
-var favicon         = require('serve-favicon');
-var morgan          = require('morgan');
-var cookieParser    = require('cookie-parser');
-var bodyParser      = require('body-parser');
-var compress        = require('compression');
-var util            = require('util');
-var moment          = require('moment');
-var fs              = require('fs');
+const VERSION         = require("./version.json").VERSION;
 
-var config          = require("./libs/config");
-var redis           = require("./libs/redis");
-var routes          = require('./routes/index');
-var chartRoute      = require('./routes/chart');
-var api             = require('./routes/api');
-var probeRoute      = require('./routes/probe-server.js');
+//expressjs
+const express         = require('express');
+const session         = require('express-session')
+const favicon         = require('serve-favicon');
+const morgan          = require('morgan');
+const cookieParser    = require('cookie-parser');
+const bodyParser      = require('body-parser');
 
-var mmtAdaptor      = require('./libs/dataAdaptor');
-var DBC             = require('./libs/DataDB');
-var AdminDB         = require('./libs/AdminDB');
-var Probe           = require('./libs/Probe');
+//core
+const path            = require('path');
+const compress        = require('compression');
+const util            = require('util');
+const moment          = require('moment');
+const fs              = require('fs');
+
+//3rd lib
+const MongoStore      = require('connect-mongo')(session);
+
+const config          = require("./libs/config");
+const redis           = require("./libs/redis");
+const routes          = require('./routes/index');
+const chartRoute      = require('./routes/chart');
+const api             = require('./routes/api');
+const probeRoute      = require('./routes/probe-server.js');
+
+const mmtAdaptor      = require('./libs/dataAdaptor');
+const DBC             = require('./libs/DataDB');
+const AdminDB         = require('./libs/AdminDB');
+const Probe           = require('./libs/Probe');
 
 
 config.version = VERSION;
@@ -31,17 +38,20 @@ config.version = VERSION;
 var REDIS_STR = "redis",
     FILE_STR  = "file";
 
+console.log( "Start MMT-Operator" );
+console.info( config.json );
+
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
 console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
 
-var dbconnector = new DBC();
+const dbconnector = new DBC();
 dbconnector.config = config;
 
-var dbadmin = new AdminDB();
-var probe   = new Probe();
+const dbadmin = new AdminDB();
+const probe   = new Probe();
 
-var app = express();
+const app = express();
 app.config = config;
 
 var socketio = require('socket.io')();
@@ -82,9 +92,7 @@ else{
 }
 
 
-//active checking for MUSA
-//TODO to remove in final product
-//require("./libs/active_check.js").start( redis, dbconnector );
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -121,7 +129,6 @@ app.use(session({
     })
 }))
 
-
 routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';
 routes.dbconnector        = dbconnector;
 app.use('/', routes);
@@ -150,16 +157,30 @@ app.use("/info/db", route_db);
 
 app.use("/export", require("./routes/html2img.js"));
 
+//active checking for MUSA
+//TODO to remove in final product
+if( MUSA ){
+  //require("./routes/musa/active_check.js").start( redis, dbconnector );
+
+  const sla = require("./routes/musa/sla.js");
+  sla.dbconnector = dbconnector;
+  app.use("/musa/sla", sla);
+
+  const connector = require("./routes/musa/connector.js");
+  connector.dbconnector = dbconnector;
+  app.use("/musa/connector", connector);
+}
+
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){
             //TODO
-            //throw new Error("No License");
+            return console.error("Not found Licence");
         }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
-        console.log( "time", ts - now );
+        console.log( "Licence expired on ", ts - now );
         if( ts - now <= 15*24*60*60*1000 ){ //15day
             var alert       = null;
             var expire_time = (new Date( ts )).toString();
@@ -211,8 +232,7 @@ app.use(function(err, req, res, next) {
     console.error( err );
 
     res.status(err.status || 500);
-    if(config.is_in_debug_mode !== true)
-        err.stack = {};
+    err.stack = null;
 
     res.render('error', {message: err.message, error: err} );
 });

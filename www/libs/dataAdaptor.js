@@ -4,7 +4,7 @@ var maxmind = require('maxmind');
 var path    = require("path");
 var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Country.mmdb'), {
     cache: {
-        max: 1000, // max items in cache
+        max: 50000, // max items in cache
         maxAge: 1000 * 60 * 60 // life time in milliseconds
     }
 });
@@ -512,6 +512,13 @@ var MMTDrop = {
         return msg;
     },
 
+    //check whenther object obj having an attribute's value that equals to val
+    objectHasAttributeWithValue: function( obj, val ){
+      for( var i in obj)
+         if( obj[i] == val ) return i;
+      return;
+    },
+
     //this contains a list of protocols (not applications, for example: GOOGLE, HOTMAIL, ...)
     PureProtocol :  [
         30,81,82,85,99,117,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,228,
@@ -637,9 +644,16 @@ MMTDrop.reverseFormatReportItem = function(entry) {
     }
 
     var arr = [];
-    for( var i in entry ){
-        arr[ parseInt( i ) ] = entry[ i ];
-    }
+    //faster
+    const MAX = 100;
+    for( var i=0; i<MAX; i++ )
+      if( entry[ i ] != undefined )
+        arr[ i ] = entry[ i ];
+
+    /*
+    for( var i in entry )
+      arr[ parseInt( i ) ] = entry[ i ];
+    */
     return arr;
 };
 
@@ -692,7 +706,7 @@ function format_session_report( msg ){
     new_msg[ i ] = msg[ i ];
     msg[ i ]     = null;
   }
-  
+
   for( var i=_start; i<=_end; i++ ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
     msg[ i ] = new_msg[ i - _new ];
@@ -723,7 +737,7 @@ MMTDrop.formatMessage = function( message ){
             msg = format_session_report( msg );
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
-            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = "_local";
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             //continue in NO_SESSION_STATS_FORMAT
         case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:

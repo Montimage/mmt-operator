@@ -35,10 +35,17 @@ for (var i in ReportFactory)
 
 ReportFactory = MMTDrop.reportFactory;
 
-var fPeriod = MMTDrop.filterFactory.createPeriodFilter();
-var fProbe  = MMTDrop.filterFactory.createProbeFilter();
-var reports = [];
-var COL     = MMTDrop.constants.StatsColumn;
+const fPeriod = MMTDrop.filterFactory.createPeriodFilter();
+const fProbe  = MMTDrop.filterFactory.createProbeFilter();
+const reports = [];
+
+const COL     = MMTDrop.constants.StatsColumn;
+const HTTP    = MMTDrop.constants.HttpStatsColumn;
+const SSL     = MMTDrop.constants.TlsStatsColumn;
+const TLS     = MMTDrop.constants.TlsStatsColumn;
+const RTP     = MMTDrop.constants.RtpStatsColumn;
+const FTP     = MMTDrop.constants.FtpStatsColumn;
+
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
 var status_db = new MMTDrop.Database({collection: "status"});
@@ -76,10 +83,46 @@ $(function () {
     if( MMTDrop.tools.object2Array(availableReports).length == 0 )
       $("#addBtn").hide();
 
-    //fProbe.renderTo("toolbar-box");
+    //fProbe: list of available probes in the period selected by fPeriod
+    fProbe.storeState = false;
+    fProbe.renderTo("toolbar-box");
+    fProbe.onFilter( function( opt ){
+      MMTDrop.tools.reloadPage("probe_id=" + opt.id );
+    });
+    //update options of this combobox based on value in status_db
+    fProbe.reloadOptions = function(){
+      var probes_status = status_db.probeStatus;
+      var arr = [];
+      const select_id = URL_PARAM.probe_id;
+      for( var i in probes_status ){
+        if( i == select_id )
+          arr.push({ id: i, label: "Probe " + i, selected: true });
+        else
+          arr.push({ id: i, label: "Probe " + i});
+      }
 
+      if( arr.length > 1 ){
+        if( select_id == undefined || select_id == "all" )
+          arr.unshift({id: "undefined", label: "All", selected: true});
+        else
+          arr.unshift({id: "undefined", label: "All"})
+
+        fProbe.option( arr );
+        fProbe.redraw();
+      }else {
+      }
+    }
+    //end fProbe
+
+    //
+    fPeriod.storeState = false;
     fPeriod.renderTo("toolbar-box");
-    fPeriod.onChange( loading.onShowing  );
+    if( URL_PARAM.period )
+      fPeriod.selectedOption({id: URL_PARAM.period});
+    fPeriod.onFilter( function( opt ){
+      MMTDrop.tools.reloadPage("period=" + opt.id );
+    });
+
 
     var renderReport = function (node) {
         try {
@@ -114,25 +157,24 @@ $(function () {
         renderReport( node);
     }
 
-
-
     //reload databases of reports
     var reloadReports = function( data, group_by ){
+      //reload options of fProbe
+      fProbe.reloadOptions();
+
       //there are no reports
       if (reports.length == 0 ){
         loading.onHide();
       }else{
-        var probe_id = MMTDrop.tools.getURLParameters().probe_id;
+        var probe_id = URL_PARAM.probe_id;
         try{
             for( var i=0; i<reports.length; i++ ){
-              var param = reports[ i ].database.param;
-              var param = {period: status_db.time, period_groupby: group_by};
+              //update parameter
+              var param = {};
+              param.period = status_db.time;
+              param.period_groupby = group_by;
               if( probe_id != undefined ){
-                param.probe = [ parseInt( probe_id ) ];
-
-                var $match = {};
-                $match[ COL.PROBE_ID.id ] =  parseInt( probe_id ) ;
-                param.query = [{$match: $match}];
+                param.probe = parseInt( probe_id );
               }
 
 
@@ -159,19 +201,11 @@ $(function () {
       }//end if
     }
 
-    fPeriod.onFilter( function( opt ){
-        console.log("fProbe filtering");
-        var period = MMTDrop.tools.getURLParameters().period;
-        if( period == undefined )
-          status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, opt.id );
-        else
-          status_db.reload({ action: period }, reloadReports, opt.id );
-    });
-
     //fire the chain of filters
     setTimeout( function(){
-        fPeriod.filter();
-    }, 0 );
+      console.log("loading status_db");
+      status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, URL_PARAM.period );
+    }, 500 );
 
     //update the modal show list of reports to user
     var $modal = $("#modal");
@@ -242,7 +276,7 @@ $(function () {
             }
 
             loading.onShowing();
-            fPeriod.filter();
+            status_db.reload({}, reloadReports, URL_PARAM.period );
         }, p);
     }
     $("#isAutoReloadChk").change( function(){
@@ -593,12 +627,15 @@ function createTrafficReport( collection, key, id ){
 
 
 function createPopupReport( collection, key, id, title, probe_id  ){
+  if( collection != "mac")
+    collection = "session";
+
   var formatTime = function( date ){
         return moment( (new Date(date)).getTime() ).format( fPeriod.getTimeFormat() );
   };
   var rep   = createTrafficReport( collection, key, id );
   var $modal = MMTDrop.tools.getModalWindow("_pop_report");
-  $modal.$title.html("Traffic of " + title + " (from "+ formatTime( status_db.time.begin )  +" to "+
+  $modal.$title.html("Traffic of " + title + " (in period from "+ formatTime( status_db.time.begin )  +" to "+
     formatTime( status_db.time.end )  +")" );
   $modal.$content.html('<div id="_pop_report_graphs" style="height: 200px; width: 100%" class="">'
                       +'<div class="center-block loading text-center" style="width: 100px; margin-top: 150px"> <i class="fa fa-refresh fa-spin fa-3x fa-fw"></i>'

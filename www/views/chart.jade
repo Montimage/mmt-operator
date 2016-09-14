@@ -48,7 +48,8 @@ block header
     script( type='text/javascript', src= '/js/waiting.js')
     script( type='text/javascript', src= '/js/grid.js')
     script( type='text/javascript', src= '/js/event.js')
-
+    script( type='text/javascript', src= '/js/metric_utils.js')
+    
     script( type='text/javascript', src= '/js/mmt_drop.js')
     
     script( type='text/javascript', src= '/js/chart/pre-common.js')
@@ -69,10 +70,14 @@ mixin ahref( index, query_string, val )
 
 mixin dropdown( index, query_string, val )
   a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")= val.title
+    span.caret
   ul.dropdown-menu
     each vv, ii in val.children
-      li
-        a( href="/chart/#{ index }/#{ ii }#{ query_string }" )= vv.title
+      if( ii == "separator")
+        li.divider( role="separator" )
+      else
+        li
+          a( href="/chart/#{ index }/#{ ii }#{ query_string }" )= vv.title
       
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")

@@ -1,0 +1,47 @@
+#!/usr/bin/env node
+
+/**
+ * This program will be started automatically evry hours by cron program of Unix system.
+ * It is started separtely with the main program, app.js.
+ *  Once started, it will all scripts finding in  "../cron/"
+ */
+
+ const
+     fs      = require("fs"),
+     path    = require("path"),
+     cp      = require('child_process'),
+     util    = require("util"),
+     os      = require("os"),
+     config   = require("../libs/config"),
+     VERSION  = require("../version.json").VERSION
+  ;
+
+const PLATFORM  = os.platform();
+const CRON_PATH = path.join(__dirname, '..' , "cron" );
+const ROOT_PATH = path.join(__dirname, '..' , ".." );
+
+//get all files ending by .js in the folder CRON_PATH
+function get_script_files() {
+     //Returns an array of filenames excluding '.' and '..'.
+    var files = fs.readdirSync( CRON_PATH );
+    var arr = []; //will contain list of csv files
+
+    for (var i=0; i<files.length; i++) {
+        var file_name = files[i];
+
+        //need to end with js
+        if (path.extname( file_name ) === ".js")
+          arr.push( path.join( CRON_PATH, file_name));
+    }
+
+    return arr;
+};
+
+
+var scripts = get_script_files();
+for( var i=0; i< scripts.length; i++){
+  var script = scripts[i];
+
+  console.log( (i+1) + ": fork " + script );
+  cp.fork( script, {}, {cwd : ROOT_PATH} );
+}

@@ -4,11 +4,22 @@ var arr = [
         title: "Upload SLA",
         x: 0,
         y: 0,
-        width: 12,
-        height: 3,
+        width: 6,
+        height: 4,
         type: "success",
         userData: {
             fn: "createUploadForm"
+        },
+    },{
+        id: "remote",
+        title: "Get SLA from Repository",
+        x: 6,
+        y: 0,
+        width: 6,
+        height: 4,
+        type: "primary",
+        userData: {
+            fn: "createGetForm"
         },
     }
 ];
@@ -17,18 +28,28 @@ var availableReports = {
 }
 
 
+//initial value of components and metrix, that are supposed to receive from SLA file
+var init_components = [
+  {id: "0", title: "Database", url: "192.168.1.8", metrics:[]},
+  {id: "1", title: "ITS Factory", url: "192.168.1.10", metrics : []},
+  {id: "2", title: "Journey Planner Component", url: "52.208.72.84", metrics : []},
+];
+
+var init_metrics = [
+  {id: "1", name: "availability", alert: "<= 0.98", violation: "<= 0.95", title: "Availability", enable: true, support: true },
+  {id: "2", name: "rtt", alert: ">= 2000", violation: ">= 3000", title: "Response Time", enable: true, support: true },
+  {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location", enable: true, support: true },
+];
+
 
 //create reports
 var ReportFactory = {
-	createUploadForm: function( fPeriod ){
-    fPeriod.hide();
-    fAutoReload.hide();
-
+	createGetForm: function( fPeriod ){
     var form_config = {
-      type: "<div>",
+      type : "<div>",
       attr: {
         "class" : "col-md-8 col-md-offset-3",
-        "style" : "margin-top: 50px"
+        "style" : "margin-top: 60px"
       },
       children:[
         {
@@ -40,18 +61,17 @@ var ReportFactory = {
             {
               type: "<form>",
               attr: {
-                "class"   :"form-horizontal",
+                "class"   : "form-horizontal",
                 "method"  : "POST",
-                "onsubmit": "return window._checkSubmit()"
+                "action"  : "/musa/sla/get/", //+ app_id,
               },
               children: [
                 {
-                  label : "Select SLA file",
-                  type  : "<input>",
-                  attr  : {
-                    id      : "filename",
-                    type    : "file",
-                    required: true
+                  type : "<input>",
+                  label: "App ID:",
+                  attr : {
+                    type : "text",
+                    name : "id"
                   }
                 },
                 {
@@ -62,7 +82,8 @@ var ReportFactory = {
                       attr: {
                         class   : "btn btn-danger",
                         type    : "submit",
-                        text    : "Upload"
+                        text    : "Get SLA",
+                        disabled: true
                       }
                     },{
                       type: "<button>",
@@ -83,6 +104,120 @@ var ReportFactory = {
         }
       ]
     };
+		var $container = $("#" + arr[1].id + "-content" );
+	  $container.append( MMTDrop.tools.createForm( form_config ) ) ;
+
+	},
+	createUploadForm: function( fPeriod ){
+    fPeriod.hide();
+    fProbe.hide();
+    fAutoReload.hide();
+
+    var app_id = MMTDrop.tools.getURLParameters().app_id || "_undefined";
+    var form_config = function( com ){ 
+      return {
+      type: "<div>",
+      attr: {
+        "class" : "col-md-8 col-md-offset-1",
+        "style" : "margin-top: 50px"
+      },
+      children:[
+        {
+          type: "<div>",
+          attr: {
+            "class" : "row"
+          },
+          children : [
+            {
+              type: "<form>",
+              attr: {
+                "class"   : "form-horizontal",
+                "enctype" : "multipart/form-data",
+                "method"  : "POST",
+                "action"  : "/musa/sla/upload/" + app_id,
+                "onsubmit": "return window._checkSubmit()"
+              },
+              children: [{
+                  type : "<div>",
+                  attr : {
+                    text : "Select SLA to upload",
+                    style: "font-weight: bold; text-align: center; margin-bottom: 20px",
+                  }
+                },{
+                label : "component " + (com + 1),
+                type  : "<input>",
+                attr  : {
+                  id      : "filename",
+                  type    : "file",
+                  name    : "filename",
+                  multiple: false,
+                  accept  : ".xml",
+                  //required: true
+                }
+              },{
+                type :  "<input>",
+                attr : {
+                  type: "hidden",
+                  value: com,
+                  name: "component_id",
+                }
+              },
+                {
+                  type : "<input>",
+                  attr : {
+                    type : "hidden",
+                    value: JSON.stringify( init_metrics ),
+                    name : "init_metrics"
+                  }
+                },
+                {
+                  type : "<input>",
+                  attr : {
+                    type : "hidden",
+                    value: JSON.stringify( init_components ),
+                    name : "init_components"
+                  }
+                },
+                {
+                  type: "<div>",
+                  children : [
+                    {
+                      type: "<button>",
+                      attr: {
+                        class   : "btn btn-danger",
+                        type    : "submit",
+                        text    : "Upload"
+                      }
+                    },{
+                      type: "<button>",
+                      attr: {
+                        id      : "btnCancel",
+                        class   : "btn btn-success",
+                        style   : "margin-left: 30px",
+                        type    : "button",
+                        text    : "Cancel",
+                        onclick : 'MMTDrop.tools.gotoURL("/musa/sla/upload/'+ app_id +'", {param: ["app_id", "probe_id"], add: "act=cancel" } )'
+                      }
+                    },{
+                      type: "<button>",
+                      attr: {
+                        id      : "btnFinish",
+                        class   : "btn btn-primary",
+                        style   : "margin-left: 30px",
+                        type    : "button",
+                        text    : "Finish",
+                        onclick : 'MMTDrop.tools.gotoURL("/musa/sla/upload/'+ app_id +'", {param: ["app_id", "probe_id"], add:"act=finish" } )'
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  };
 
     var uploading_progress_bar_config = {
       type : "<div>",
@@ -94,7 +229,7 @@ var ReportFactory = {
           type: "<div>",
           attr: {
             id   : "uploading",
-            class: "col-md-8 col-md-offset-2",
+            class: "col-md-10 col-md-offset-1",
           },
           children: [
             {
@@ -131,144 +266,60 @@ var ReportFactory = {
               ]
             }
           ]
-        },{
-          type : "<div>",
-          attr : {
-            class : "col-md-2"
-          },
-          children: [{
-            type:  "<a>",
-            attr: {
-              id      : "btnDone",
-              class   : "btn btn-success",
-              type    : "button",
-              href    : "#",
-              style   : "display: none",
-              text    : "Done",
-              onclick : 'MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } )'
-            }
-          }]
-        }
-      ]
+        } ]
     }
 
-    var $container = $("#" + arr[0].id + "-content" );
-    $container.append( MMTDrop.tools.createForm( form_config ) ) ;
-
-    //upload file
-    var upload_sla_file = function(){
-      var app_id = MMTDrop.tools.getURLParameters().app_id;
-      if( app_id == undefined )
-        app_id = "_undefined";
-
-      //initial value of components and metrix, that are supposed to receive from SLA file
-      var init_components = [
-        {id: "0", title: "Journey Planner Component", url: "192.168.0.8", metrics : [
-          {id: "101", name: "", title: "Vulnerability Measure", alert: ">= 0", violation: ">= 0"},
-          {id: "102", name: "", title: "Risk Assessment Vulnerability Measure", alert: "> 0", violation: "> 0"},
-          {id: "103",  name: "", title: "Up Report Frequency", alert:  "= 24", violation : "= 24"},
-          {id: "104",  name: "", title: "Resilience to attacks", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "105",  name: "", title: "Vulnerability and malware", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "106",  name: "", title: "Level of Diversity", alert:  "> 1", violation : "> 1"},
-          {id: "107",  name: "", title: "List Update Frequency", alert:  "= 24", violation : "= 24"},
-          {id: "108",  name: "", title: "Personal data disclosure", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "109",  name: "", title: "Database activity monitoring", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "110",  name: "", title: "Level of Redundancy", alert:  ">=3", violation : ">=3"},
-          {id: "111",  name: "", title: "Forward Secrecy", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "112",  name: "", title: "Client-side Encryption Certification", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "113",  name: "", title: "System and Communication Protection Measure", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "114",  name: "", title: "TLS Cryptographic Strength", alert:  "= 6", violation : "= 6"},
-          {id: "115",  name: "", title: "SQL injection", alert:  "= \"Yes\"", violation : "= \"Yes\""},
-          {id: "116",  name: "", title: "Identity Assurance", alert:  "= 2", violation : "= 2"},
-        ]},
-        {id: "1", title: "Database", url: "192.168.0.9", metrics:[
-          {id: "201", name: "", title: "Resiliance to attacks", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "202", name: "", title: "Vulnerability and malware", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "203", name: "", title: "Vulnerability Measure", alert: ">=0", violation: ">=0"},
-          {id: "204", name: "", title: "Data encryption", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "205", name: "", title: "Personal data disclosure", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "206", name: "", title: "Database activity monitoring", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "207", name: "", title: "Level of confidentiality", alert: "= 0", violation: "= 0"},
-          {id: "208", name: "", title: "TLS Cryptographic Strength", alert: "= 7", violation: "= 7"},
-          {id: "209", name: "", title: "SQL injection", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "210", name: "", title: "HTTP to HTTPS Redirects", alert: "= \"Yes\"", violation: "= \"Yes\""},
-          {id: "211", name: "", title: "Type of incident notification", alert: "= 0", violation: "= 0"},
-          {id: "212", name: "", title: "Number of Data Subject Access Requests", alert: ">=1", violation: ">=1"},
-
-        ]},
-        {id: "2", title: "ITS Factory", url: "192.168.0.9", metrics : [
-          {id : "301", name: "", title: "Database activity monitoring", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "302", name: "", title: "Vulnerability Measure", alert: " >=0", violation: " >=0"},
-          {id : "303", name: "", title: "Resiliance to attacks", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "304", name: "", title: "Client-side Encryption Certification", alert: " = \"Yes\"", violation: " = \"Yes\""},
-          {id : "305", name: "", title: "System and Communication Protection Measure", alert: " >=0", violation: " >=0"},
-          {id : "306", name: "", title: "TLS Cryptographic Strength", alert: "= 7", violation: "= 7"},
-          {id : "307", name: "", title: "Identity Assurance", alert: "= 0", violation: "= 0"},
-        ]},
-      ];
-
-      var init_metrics = [
-        {id: "1", name: "availability", alert: "= 0", violation: "= 0", title: "Availability" },
-        {id: "2", name: "rtt", alert: ">= 1000", violation: ">= 3000", title: "Response Time" },
-        {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location" },
-      ];
-
-      //save to db
-      MMTDrop.tools.ajax("/api/metrics/update", {
-        "$match"   : {"_id" : app_id},
-        "$data"    : {
-          _id        : app_id,
-          app_id     : app_id,
-          components : init_components,
-          metrics    : init_metrics
-        },
-        "$options" : {
-          upsert : true
-        }
-      },
-      "POST",
-      //callback
-      {
-        error   : function(){
-          console.error( "AJAX Error" )
-        },
-        success : function(){
-          //goto here to modify the uploaded metrics
-
-        }
-      })
-    };
+    var $upload_container = $("#" + arr[0].id + "-content" );
+    $upload_container.append( MMTDrop.tools.createForm( form_config( 0 ) ) ) ;
+    var com = 0;
 
     window._checkSubmit = function(){
-      $container.children().replaceWith( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
 
-      upload_sla_file();
+      $upload_container.html( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
 
-      $("#bar1").addClass("active progress-bar-striped").show().width("15%");
-      setTimeout( function(){
-        $("#bar1").removeClass("active progress-bar-striped").text("uploaded");
+      var timer = setInterval( function(){
+        MMTDrop.tools.ajax("/musa/sla/upload/" + app_id, {}, "GET", {
+          error: function( request, status, error ){
+            clearInterval( timer );
+            $("#bar1").removeClass("active progress-bar-striped");
+            $("#bar2").removeClass("active progress-bar-striped");
+            $("#bar3").removeClass("active progress-bar-striped").text( request.responseText || error.message );
+          },
+          success: function( obj ){
+            console.log( obj );
+            var progress = obj.progress, message = obj.message;
+            if( progress <= 30 ){
+              if( progress > 30 ) progress = 30;
+              $("#bar1").addClass("active progress-bar-striped").show().width( progress + "%").text( message );
+            }
+            else if( progress <= 60 ){
+              if( progress > 30 ) progress = 30;
+              $("#bar1").removeClass("active progress-bar-striped").width("30%");
+              $("#bar2").addClass("active progress-bar-striped").show().width( progress + "%").text( message );
+            }
+            else {
+              $("#bar1").removeClass("active progress-bar-striped").width("30%");
+              $("#bar2").removeClass("active progress-bar-striped").width("30%");
+              $("#bar3").removeClass("active progress-bar-striped").show().width( (progress>40?40:progress) + "%").text( message );
 
-        $("#bar2").addClass("active progress-bar-striped").show().width("25%");
-      }, 2000);
+              if( progress == 100 ){
+                clearInterval( timer );
 
+                if( !obj.error ){
+                  setTimeout( function(){
+                    //com starts from 0, 
+                    alert("Successfully uploaded SLA for component " + (com+1) );
+                    com ++;
+                    $upload_container.html( MMTDrop.tools.createForm( form_config( com ) ) ) ;
+                  }, 1000);
+                }
+              }
+            }
+          }
+        });//end ajax
+      }, 1000);
 
-      setTimeout( function(){
-        $("#bar2").removeClass("active progress-bar-striped").text("analyzed");
-
-        $("#bar3").addClass("active progress-bar-striped").show().width("60%");
-      }, 3500);
-
-
-      setTimeout( function(){
-        $("#bar3").removeClass("active progress-bar-striped").text("created application");
-
-        $("#btnDone").show();
-
-        alert("Created successfully application");
-        MMTDrop.tools.gotoURL("/chart/sla/metric", {param: ["app_id", "probe_id"] } );
-      }, 5000);
-
-      return false;
+      return true;
     }
 
 	}

@@ -16,7 +16,6 @@ var arr = [
 var availableReports = {
 };
 
-var URL_PARAM = MMTDrop.tools.getURLParameters();
 if( URL_PARAM.app == "All")
   delete( URL_PARAM.app );
 
@@ -36,12 +35,7 @@ if( URL_PARAM.ts == 0 || isNaN( URL_PARAM.ts ) ){
 
 arr[0].title = "Details of Flows at " + MMTDrop.tools.formatDateTime( URL_PARAM.ts );
 
-var COL     = MMTDrop.constants.StatsColumn;
-var HTTP    = MMTDrop.constants.HttpStatsColumn;
-var TLS     = MMTDrop.constants.TlsStatsColumn;
-var RTP     = MMTDrop.constants.RtpStatsColumn;
-var FTP     = MMTDrop.constants.FtpStatsColumn;
-var FORMAT  = MMTDrop.constants.CsvFormat;
+const FORMAT  = MMTDrop.constants.CsvFormat;
 
 //create reports
 var ReportFactory = {
@@ -57,8 +51,8 @@ var ReportFactory = {
 
       var self    = this;
 
-      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
-                      period_groupby: URL_PARAM.groupby, no_override_when_reload: true, raw:true });
+      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+                      no_group : true, no_override_when_reload: true, raw:true });
       database.updateParameter = function( _old_param ){
 
         //get list of transactions at the moment URL_PARAM.ts;
@@ -71,7 +65,7 @@ var ReportFactory = {
         $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 
         if (URL_PARAM.probe_id )
-          $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
+          $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
         if (URL_PARAM.app_id() )
           $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
         if (URL_PARAM.ip )
@@ -85,11 +79,12 @@ var ReportFactory = {
         var $group = {};
         $group._id = "$" + COL.SESSION_ID.id;
         $group[ COL.SESSION_ID.id ] = {$first : "$" + COL.SESSION_ID.id};
-        return {query: [{$match: $match}, {$group: $group}]};
+
+        return {query: [{$match: $match}, {$limit: 100}, {$group: $group}]};
       }
 
-      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_session", action : "aggregate",
-                      period_groupby: URL_PARAM.groupby });
+      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+                      no_group : true });
 
       database.afterReload(
         //this is called when database is reloaded successfully
@@ -692,7 +687,7 @@ $( function(){
   var url = null;
   var last = "";
   for( var key in obj ){
-    if( key == "groupby" || key == "EURT")
+    if( key == "groupby" || key == "EURT" || key == "probe_id")
       continue;
     if( key == "ts" )
       obj[key] = MMTDrop.tools.formatDateTime(new Date( parseInt(obj[key]) ));
