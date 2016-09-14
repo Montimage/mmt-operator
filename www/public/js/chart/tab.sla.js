@@ -16,8 +16,6 @@ var arr = [
 var availableReports = {
 }
 
-
-
 //create reports
 
 var ReportFactory = {
@@ -58,40 +56,16 @@ var ReportFactory = {
       } );
     }
 
-    function getQuery( col_id, el ){
-      var obj  = el.dataset;
-      var expr = obj.value;
-      expr = expr
-          .replace(">=", '"$gte":').replace(">", '"$gt" :')
-          .replace("<=", '"$lte":').replace("<", '"$lt" :')
-          .replace("!=", '"$ne":')
-          .replace("=",  '"$eq" :');
-      expr = JSON.parse( "{" + expr + "}" );
-
-      var $match = {};
-      //timestamp
-      $match[ COL.TIMESTAMP.id ] = {"$gte": status_db.time.begin, "$lt" : status_db.time.end };
-      //probeid
-      $match[1] = parseInt( obj.compid );
-
-      $match[ col_id ] = expr;
-      var $group = {"_id": null, "count": {"$sum":1}};
-
-      return { query: [ {"$match" : $match}, {"$group": $group}], period_groupby: fPeriod.selectedOption().id };
-    }
-
-    window._getQueryParam = getQuery;
-
     var total_db = new MMTDrop.Database({collection: "__", action: "aggregate", raw: true});
 
     function getData( el, collection, col_id ){
       //get number of alerts from database
-      var param = getQuery( col_id, el );
+      var param = getQuery( collection, col_id, el, status_db );
       param.collection = collection;
       total_db.reload( param, function( data ){
         var val = 0;
         if( data.length > 0 )
-          val = data[0].count;
+          val = data.length;
 
         $(el).html( '<span class="badge">' + val + '</span>' );
       });
@@ -131,7 +105,10 @@ var ReportFactory = {
           continue;
         var selMetrics = obj.selectedMetric[ comp_id ];
         var comp       = getObject("components", comp_id)
-        var $row = {
+        if( comp.metrics == undefined || comp.metrics.length == 0 ) 
+          continue;
+
+       var $row = {
           type    : "<tr>",
           children: [{
             type :  "<td>",
@@ -255,7 +232,7 @@ var ReportFactory = {
                 class   : "btn btn-info",
                 type    : "button",
                 text    : "Report",
-                onclick : "window._gotoURL( '" + me.name + "',"+ comp.id +" )"
+                onclick : "window._gotoURL( '" + me.name + "',"+ comp.id + ",'"+ sel.alert + "','" + sel.violation + "' )"
               }
             }]
           });
@@ -329,9 +306,21 @@ var ReportFactory = {
     } );
 
 
-    window._gotoURL = function( name, probe_id ){
+    window._gotoURL = function( name, probe_id, alert_thr, violation_thr){
+    
+      alert_thr = alert_thr
+      .replace(">=", '"$gte":').replace(">", '"$gt" :')
+      .replace("<=", '"$lte":').replace("<", '"$lt" :')
+      .replace("!=", '"$ne":')
+      .replace("=",  '"$eq" :');
+      violation_thr = violation_thr
+      .replace(">=", '"$gte":').replace(">", '"$gt" :')
+      .replace("<=", '"$lte":').replace("<", '"$lt" :')
+      .replace("!=", '"$ne":')
+      .replace("=",  '"$eq" :');
+
       MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
-        MMTDrop.tools.getQueryString( ["app_id"], "probe_id=" + probe_id + "&period_id=" + fPeriod.selectedOption().id ) );
+        MMTDrop.tools.getQueryString( ["app_id"], "probe_id=" + probe_id + "&period_id=" + fPeriod.selectedOption().id + "&alert=" + alert_thr + "&violation=" + violation_thr ) );
     }
 	}
 }

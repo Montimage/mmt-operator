@@ -1,4 +1,4 @@
-const MUSA = true; //active when using for MUSA project
+const MUSA = false; //active when using for MUSA project
 
 const VERSION         = require("./version.json").VERSION;
 
@@ -160,7 +160,7 @@ app.use("/export", require("./routes/html2img.js"));
 //active checking for MUSA
 //TODO to remove in final product
 if( MUSA ){
-  require("./routes/musa/active_check.js").start( redis, dbconnector );
+  //require("./routes/musa/active_check.js").start( redis, dbconnector );
 
   const sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
@@ -175,12 +175,12 @@ function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){
             //TODO
-            //throw new Error("No License");
+            return console.error("Not found Licence");
         }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
-        console.log( "time", ts - now );
+        console.log( "Licence expired on ", ts - now );
         if( ts - now <= 15*24*60*60*1000 ){ //15day
             var alert       = null;
             var expire_time = (new Date( ts )).toString();

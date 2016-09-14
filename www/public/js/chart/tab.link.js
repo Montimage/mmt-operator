@@ -54,8 +54,6 @@ function inDetailMode() {
 
 var ReportFactory = {
     getCol: function (col, isIn) {
-        var COL = MMTDrop.constants.StatsColumn;
-
         var tmp = "PAYLOAD_VOLUME";
         if (col.id == COL.DATA_VOLUME.id)
             tmp = "DATA_VOLUME";
@@ -99,33 +97,34 @@ var ReportFactory = {
         //mongoDB aggregate
         var group = { _id : {} };
 
-        [ COL.TIMESTAMP.id , COL.APP_PATH.id ].forEach( function( el, index){
+        [ COL.TIMESTAMP.id , "app_paths.path" ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.APP_PATH.id, COL.FORMAT_ID.id ].forEach( function( el, index){
+        [ COL.TIMESTAMP.id ,COL.FORMAT_ID.id ].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
+        group[ COL.APP_PATH.id ] = {"$first" : "$app_paths.path"};
+        group[ COL.APP_ID.id ] = {"$first" : "$app_paths.app"};
 
-        var match = {};
-        //get only pure protocols such as ETH, IP (not application, such as FACEBOOK, GOOGLE)
-        var p1 ={}, p2 = {};
-        p1[ COL.APP_ID.id ] = {"$in" : PUREPROTOCOLS }; //pure protocols
-        p2[ COL.APP_ID.id ] = {"$lt" : 0}; //pure protocols with port numbers
-        match[ "$or" ]      = [ p1, p2 ];
-
+        var match = {isGen: false};
         //get maximum of 5 levels: eth.vlan.ip.tcp.http
         //I need eth (99) to get the total
         match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.-?\\d+){0,5}$", "$options" : ""};
 
+        var $match2 = {};
+        //get only pure protocols such as ETH, IP (not application, such as FACEBOOK, GOOGLE)
+        var p1 ={}, p2 = {};
+        p1[ "app_paths.app" ] = {"$in" : PUREPROTOCOLS }; //pure protocols
+        p2[ "app_paths.app" ] = {"$lt" : 0}; //pure protocols with port numbers
+        $match2[ "$or" ]      = [ p1, p2 ];
 
-        var database = new MMTDrop.Database({collection: "data_app", action: "aggregate",
-          query: [{"$match": match}, {"$group" : group}]});
+        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
+          query: [{"$match": match}, { $unwind : "$app_paths" }, {$match: $match2}, {"$group" : group}]});
 
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
 
         var setName = function (name) {
             name = MMTDrop.constants.getPathFriendlyName( name );
@@ -582,14 +581,11 @@ var ReportFactory = {
         //
 
         var dataFlow = [{
-                object: fProbe,
-                effect: [{
                     object: fMetric,
                     effect: [{
                         object: cLine
                     }]
-				}, ]
-			}, ];
+		                },];
 
         var report = new MMTDrop.Report(
             // title
@@ -599,14 +595,14 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
-                {
-                    charts: [cLine],
-                    width: 12
-                },
+            {
+              charts: [cLine],
+              width: 12
+            },
 					 ],
 
             //order of data flux
@@ -617,15 +613,29 @@ var ReportFactory = {
     },
     createNodeReport: function (fPeriod) {
         var DETAIL = {};//data detail of each MAC
-        var COL = MMTDrop.constants.StatsColumn;
-
-        var database = new MMTDrop.Database({collection: "data_mac", action: "find", no_group : true, no_override_when_reload: true});
+        var database = new MMTDrop.Database({collection: "data_mac", action: "aggregate", no_group : true, no_override_when_reload: true, raw:true});
         //this is called each time database is reloaded to update parameters of database
         database.updateParameter = function( _old_param ){
           var last5Minute = status_db.time.end - 5*60*1000;
           var $match = {};
           $match[ COL.TIMESTAMP.id ] = {$gte: last5Minute, $lte: status_db.time.end };
-          return {query: [{$match: $match}]};
+
+          var group = { _id : {} };
+          [ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.PROBE_ID.id ].forEach( function( el, index){
+            group["_id"][ el ] = "$" + el;
+          } );
+          [ COL.UL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id, COL.DL_DATA_VOLUME.id, COL.DL_PACKET_COUNT.id,
+            COL.DATA_VOLUME.id, COL.PACKET_COUNT.id
+          ].forEach( function( el, index){
+            group[ el ] = {"$sum" : "$" + el};
+          });
+          [ COL.TIMESTAMP.id, COL.PROBE_ID.id, COL.MAC_SRC.id ].forEach( function( el, index){
+            group[ el ] = {"$last" : "$"+ el};
+          } );
+          [ COL.START_TIME.id ].forEach( function( el, index){
+            group[ el ] = {"$first" : "$"+ el};
+          } );
+          return {query: [{$match: $match}, {$group : group}]};
         }
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
@@ -801,9 +811,11 @@ var ReportFactory = {
         return report;
     },
 
-    createRealtimeTrafficReport: function (fProbe) {
+    createRealtimeTrafficReport: function () {
         var _this = this;
-        var COL = MMTDrop.constants.StatsColumn;
+        //get true-traffic given by mmt-probe
+        var $match = {isGen: false};
+
         var group = { _id : {} };
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
@@ -814,10 +826,10 @@ var ReportFactory = {
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group[ el ] = {"$last" : "$"+ el};
         });
-        var database = new MMTDrop.Database({collection: "data_total", action: "aggregate",
-          query: [{"$group" : group}]});
+        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
+          query: [{"$match":$match},{"$group" : group}]});
 
-        var rep = _this.createTrafficReport(fProbe, database, true);
+        var rep = _this.createTrafficReport(database, true);
 
 
         var cLine = rep.groupCharts[0].charts[0];
@@ -857,8 +869,6 @@ var ReportFactory = {
             }
         }
 
-
-        fProbe.onFilter(initData);
         fMetric.onFilter(initData);
 
         var samplePeriod = fPeriod.getDistanceBetweenToSamples();
@@ -1016,10 +1026,8 @@ var ReportFactory = {
         return rep;
     },
 
-    createTrafficReport: function (fProbe, database) {
+    createTrafficReport: function ( database) {
         var _this = this;
-        var COL = MMTDrop.constants.StatsColumn;
-
         var fMetric = MMTDrop.filterFactory.createMetricFilter();
 
         var cLine = MMTDrop.chartFactory.createTimeline({

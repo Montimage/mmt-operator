@@ -62,8 +62,6 @@ function getHMTL( tag ){
     return html;
 }
 
-var COL = MMTDrop.constants.StatsColumn;
-
 //change title of each report
 var param = MMTDrop.tools.getURLParameters();
 //top profile => detail of 1 profile (list app) => one app
@@ -79,7 +77,7 @@ if( param.profile ){
 //==> only one report is shown
 if( param.profile && param.app && param.link )
   arr = [{
-      id: "detail_location",
+      id: "detail",
       title: "Details",
       x: 0,
       y: 0,
@@ -126,17 +124,12 @@ var ReportFactory = {
      */
     createDetailReport: function ( ) {
         var self    = this;
-        var HTTP    = MMTDrop.constants.HttpStatsColumn;
-        var SSL     = MMTDrop.constants.TlsStatsColumn;
-        var RTP     = MMTDrop.constants.RtpStatsColumn;
-        var FTP     = MMTDrop.constants.FtpStatsColumn;
         var FORMAT  = MMTDrop.constants.CsvFormat;
 
         var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_detail", action: "find", no_group : true });
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
-          $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
           //query by app_id
           if( $match != undefined ){
             param.query = [$match];
@@ -189,10 +182,10 @@ var ReportFactory = {
                       var obj     = {};
                       HISTORY.push( msg );
 
-                      obj[ COL.START_TIME.id ]    = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
-                      obj[ COL.TIMESTAMP.id ]     = moment( msg[COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm:ss");
-                      obj[ COL.APP_PATH.id ]      = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
-                      obj[ COL.FORMAT_TYPE.id ]   = msg[ COL.FORMAT_TYPE.id ];
+                      obj[ COL.START_TIME.id ]  = moment( msg[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
+                      obj[ COL.TIMESTAMP.id ]   = moment( msg[COL.TIMESTAMP.id] ).format("YYYY/MM/DD HH:mm:ss");
+                      obj[ COL.APP_PATH.id ]    = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ] );
+                      obj[ COL.FORMAT_TYPE.id ] = msg[ COL.FORMAT_TYPE.id ];
                       var host =  "";
                       if( type == 0 || type == undefined)
                         type = msg[ COL.FORMAT_TYPE.id ];
@@ -332,20 +325,13 @@ var ReportFactory = {
             }
         });
 
-        var dataFlow = [{
-          object:fProbe,
-          effect:[{
-            object: cTable
-          }]
-        }];
-
         var report = new MMTDrop.Report(
             // title
             null,
             // database
             database,
             // filers
-          [fProbe],
+          [],
             //charts
           [
             {
@@ -354,7 +340,7 @@ var ReportFactory = {
             },
            ],
             //order of data flux
-            dataFlow
+            [{ object:cTable }]
         );
         return report;
 
@@ -375,20 +361,19 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var query_by_app = MMTDrop.tools.getURLParameters()["profile"] !== undefined;
+        var query_by_app = URL_PARAM.profile!== undefined;
         //param.raw = true;
 
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]} );
 
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           //query by app_id
           if( $match != undefined ){
-            param.collection = "data_session";
-            param.query      = [$match, {$group: group}];
+            param.query = [$match, {$group: group}];
 
             group._id = {};
             [ COL.APP_ID.id ].forEach( function( el, index){
@@ -401,7 +386,6 @@ var ReportFactory = {
           }
           return param;
         }
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -573,7 +557,7 @@ var ReportFactory = {
                           }).appendTo($tr);
                         }else{
                           $a = $("<a>", {
-                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile"], "app=" + key ),
+                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile", "probe_id", "period"], "app=" + key ),
                              title: "click to show detail of this application/protocol",
                              text : key,
                            });
@@ -581,7 +565,7 @@ var ReportFactory = {
                          }
                       }else{
                        $a = $("<a>", {
-                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip"], "profile=" + key ),
+                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "probe_id", "period"], "profile=" + key ),
                           title: "click to show detail of this profile",
                           text : key,
 
@@ -726,13 +710,12 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
                 }]
-        }, ] }];
+        }];
 
         var report = new MMTDrop.Report(
             // title
@@ -742,7 +725,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -760,7 +743,6 @@ var ReportFactory = {
     },
     createTopLinkReport: function (filter) {
         var self = this;
-        var COL  = MMTDrop.constants.StatsColumn;
         //mongoDB aggregate
         var group = { _id : {} };
         [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
@@ -773,16 +755,14 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.collection = "data_session";
-            param.query      = [$match, {$group: group}];
+            param.query = [$match, {$group: group}];
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -948,7 +928,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           html : key,
                           title: "click to show detail of this user",
-                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip", "app"], "link="+ link)
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "ip", "app", "probe_id", "period"], "link="+ link)
                       });
 
                       $("<td>").append($label).appendTo($tr);
@@ -1085,12 +1065,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1101,7 +1079,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -1119,9 +1097,6 @@ var ReportFactory = {
     },
     createTopUserReport: function (filter, userData) {
         var self = this;
-        var COL  = MMTDrop.constants.StatsColumn;
-
-
         //mongoDB aggregate
         var group = { _id : {} };
 
@@ -1135,17 +1110,15 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_ip", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
         //this is call each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.collection = "data_session";
-            param.query      = [$match, {$group: group}];
+            param.query = [$match, {$group: group}];
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -1302,7 +1275,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           text : key,
                           title: "click to show detail of this user",
-                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link", "app"], "ip="+ key)
+                          href : MMTDrop.tools.getCurrentURL(["loc", "profile", "link", "app", "probe_id", "period"], "ip="+ key)
                       });
 
                       $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -1446,12 +1419,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1462,7 +1433,7 @@ var ReportFactory = {
             database,
 
             // filers
-          [fProbe, fMetric],
+          [fMetric],
 
             //charts
           [
@@ -1496,17 +1467,15 @@ var ReportFactory = {
         } );
 
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_location", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match       = get_match_query();
           if( $match != undefined ){
-            param.collection = "data_session";
-            param.query      = [$match, {$group: group}];
+            param.query = [$match, {$group: group}];
           }
         }
 
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
 
         var cPie = MMTDrop.chartFactory.createPie({
@@ -1660,7 +1629,7 @@ var ReportFactory = {
                       var $label = $("<a>", {
                           text : key,
                           title: "click to show detail of this location",
-                          href : MMTDrop.tools.getCurrentURL(["ip","link","profile", "app"], "loc=" + key),
+                          href : MMTDrop.tools.getCurrentURL(["ip","link","profile", "app", "probe_id", "period"], "loc=" + key),
                       });
 
                       $("<td>", {align: "left"}).append($label).appendTo($tr);
@@ -1801,12 +1770,10 @@ var ReportFactory = {
         });
         //
 
-        var dataFlow = [{object:fProbe,
-                         effect:[{
+        var dataFlow = [{
                 object: fMetric,
                 effect: [{
                     object: cPie
-                }]
         }, ] }];
 
         var report = new MMTDrop.Report(
@@ -1817,7 +1784,7 @@ var ReportFactory = {
             database,
 
             // filers
-                    [fProbe, fMetric],
+                    [fMetric],
 
             //charts
                     [

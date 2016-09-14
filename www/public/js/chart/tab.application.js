@@ -92,7 +92,7 @@ var ReportFactory = {
         });
 
         var appList_db = MMTDrop.databaseFactory.createStatDB(
-          {collection: "data_app", action: "aggregate"}
+          {collection: "data_session", action: "aggregate"}
         );
         appList_db._reload = function(){
           var group = { _id : {} };
@@ -147,7 +147,8 @@ var ReportFactory = {
 
 
 
-        var database = new MMTDrop.Database( {action: "aggregate", raw:true},
+        var database = new MMTDrop.Database( {collection: "data_session", action: "aggregate", raw:true,
+                        no_override_when_reload: true, period_groupby: fPeriod.selectedOption().id },
           //this function is called when database got data from server
           function( data ){
             //reload list of app/proto
@@ -276,9 +277,6 @@ var ReportFactory = {
           //mongoDB aggregate
           var group = { _id : {} };
 
-          //[ COL.TIMESTAMP.id ].forEach( function( el, index){
-          //  group["_id"][ el ] = "$" + el;
-          //} );
           [ COL.TIMESTAMP.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
           } );
@@ -293,6 +291,8 @@ var ReportFactory = {
           } );
 
           var $match = {};
+          //timestamp
+          $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
           //only IP (session report)
           $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
           $match.isGen  = false;
@@ -312,12 +312,8 @@ var ReportFactory = {
           if( URL_PARAM.remote )
             $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
 
-          var collection = "data_session";
-          if ( URL_PARAM.app_id() != undefined && URL_PARAM.ip == undefined && URL_PARAM.remote == undefined ){
-            collection    = "data_app";
-          }
 
-          return {collection: collection, query : [{"$match": $match},{"$group" : group}]};
+          return {query : [{"$match": $match},{"$group" : group}]};
         };//end database.updateParameter
 
         //line chart on the top
@@ -585,7 +581,7 @@ var ReportFactory = {
 
 
 
-        var database = new MMTDrop.Database({action: "aggregate", raw: true});
+        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate", raw: true, no_override_when_reload: true, period_groupby: fPeriod.selectedOption().id });
         //this is called each time database is reloaded to update parameters of database
         database.updateParameter = function( _old_param ){
           //mongoDB aggregate
@@ -606,6 +602,8 @@ var ReportFactory = {
           } );
 
           var $match = {} ;
+          //timestamp
+          $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
           //query on data_app ==> selection only real applications/protocols
           $match.isGen = false;
           //only IP (session report)
@@ -621,18 +619,11 @@ var ReportFactory = {
             $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
 
           //load data corresponding to the selected app
-          var probe_id   = MMTDrop.tools.getURLParameters().probe_id;
+          var probe_id   = URL_PARAM.probe_id;
           if( probe_id != undefined )
             $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
 
-            //query on either "ip", "app" or "session"
-            var collection = "data_session";
-            if( is_app ){
-              if( URL_PARAM.ip  == undefined && URL_PARAM.remote  == undefined){
-                collection   = "data_app";
-              }
-            }
-          return {collection: collection, query : [{"$match": $match},{"$group" : $group}]};
+          return { query : [{"$match": $match},{"$group" : $group}] };
         }//end database.updateParameter
 
         //is_trans : show only transactions
@@ -1054,7 +1045,6 @@ var ReportFactory = {
 
                         obj[ col_key.id ] = '<a href="'+ href +'">' + obj[ col_key.id ] + "</a>";
 
-
                         obj[ COL.START_TIME.id ]    = moment( obj[COL.START_TIME.id] ).format("YYYY/MM/DD HH:mm:ss");
                         obj[ "LastUpdated" ]        = moment( obj["LastUpdated"] )    .format("YYYY/MM/DD HH:mm:ss");
                         obj[ COL.UL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( obj[ COL.UL_DATA_VOLUME.id] );
@@ -1129,7 +1119,7 @@ function loadDetail(timestamp) {
     //only on TCP: ETH.VLAN?.IP?.*.TCP
     $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
     if (URL_PARAM.probe_id )
-      $match[ COL.APP_ID.id ] = URL_PARAM.probe_id;
+      $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
     if (URL_PARAM.app_id() )
       $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
     if (URL_PARAM.ip )
@@ -1159,7 +1149,7 @@ function loadDetail(timestamp) {
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );
     });
-    [ COL.APP_ID.id, COL.IP_DEST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
+    [ COL.START_TIME.id, COL.APP_ID.id, COL.IP_DEST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
       $group[ el ] = {"$first" : "$"+ el};
     } );
     [ COL.TIMESTAMP.id ].forEach( function( el, index){

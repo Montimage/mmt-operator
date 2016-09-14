@@ -79,6 +79,8 @@ var ReportFactory = {
         //show only probe that is indicated in URL by probe_id
         if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
           continue;
+        if( comp.metrics == undefined || comp.metrics.length == 0 )
+          continue;
 
 
         var $row = {
@@ -86,7 +88,7 @@ var ReportFactory = {
           children: [{
             type :  "<td>",
             attr : {
-              colspan : 6,
+              colspan : 7,
               style   : "font-weight: bold",
               text    : comp.title + " ("+ comp.url +")"
             }

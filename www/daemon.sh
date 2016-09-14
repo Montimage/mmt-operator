@@ -23,7 +23,7 @@ DESC="MMT-Operator"
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || (echo "Cannot find $DAEMON"; exit 1) || exit 0
-[ -x "$DAEMON_ARGS" ] || (echo "Cannot find $DAEMON_ARGS"; exit 1) || exit 0
+[ -r "$DAEMON_ARGS" ] || (echo "Cannot find $DAEMON_ARGS"; exit 1) || exit 0
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME

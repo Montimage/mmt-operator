@@ -1,9 +1,9 @@
-var fs               = require('fs');
-var path             = require('path');
-var LineByLineReader = require('line-by-line');
-var mmtAdaptor       = require('../libs/dataAdaptor');
-var config           = require('../libs/config');
-var path             = require('path');
+var fs         = require('fs');
+var path       = require('path');
+var lineReader = require('readline');
+var mmtAdaptor = require('../libs/dataAdaptor');
+var config     = require('../libs/config');
+var path       = require('path');
 var CURRENT_PROFILE = {};
 
 var router = {};
@@ -165,26 +165,34 @@ router.startListening = function (db, redis) {
 
 
 router.startListeningAtFolder = function (db, folder_path) {
+    // ensure data directory exists
+    if( !fs.existsSync( folder_path ) ){
+      console.error("Error: Data folder [" + config.log_folder + "] does not exists.");
+      process.exit();
+    }
+
     //load list of read csv file from db
     var read_files = null;
 
     if (folder_path.charAt(folder_path.length - 1) != "/")
         folder_path += "/";
 
-    var process_file = function (file_name, cb) {
-        var lr = new LineByLineReader(file_name);
+    const process_file = function (file_name, cb) {
+        const lr = lineReader.createInterface({
+         input: fs.createReadStream( file_name )
+        });
         var totalLines = 0;
 
         var start_ts = (new Date()).getTime();
         console.log("file " + path.basename( file_name ));
-        
+
         lr.on('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
             router.process_message(db, "[" + line + "]");
             totalLines ++;
         });
 
-        lr.on('end', function () {
+        lr.on('close', function () {
             // All lines are read, file is closed now.
             start_ts = (new Date()).getTime() - start_ts;
             console.log(" ==> DONE ("+ totalLines +" lines, "+ start_ts +" ms)");

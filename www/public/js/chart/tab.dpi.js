@@ -31,13 +31,33 @@ var ReportFactory = {
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
     },
     createNodeReport: function ( fPeriod ) {
-        var _this    = this;
-        var fProbe   = MMTDrop.filterFactory.createProbeFilter();
-        var detail_db= new MMTDrop.Database({id : "dpi.detail", format: [99,100], userData: {}});
-        var database = new MMTDrop.Database({id : "dpi.app", format: [99,100]});
-        var COL      = MMTDrop.constants.StatsColumn;
+        var _this     = this;
 
-        var cTree    = MMTDrop.chartFactory.createTree({
+        //this database will be reloaded when user clicks on one row of the left-tree
+        //it will be given the parameter corresponding to the selected protocols
+        var detail_db = new MMTDrop.Database({collection : "data_session", action : "aggregate"});
+
+
+
+        var $match = {isGen: false};
+        
+        var $group = {_id : {} };
+        [ "app_paths.path", COL.PROBE_ID.id ].forEach( function( el, index){
+          $group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
+        ].forEach( function( el, index){
+          $group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.PROBE_ID.id, COL.APP_ID.id ].forEach( function( el, index){
+          $group[ el ] = {"$last" : "$"+ el};
+        } );
+        $group[COL.APP_PATH.id] = {"$first" : "$app_paths.path"};
+        $group[COL.APP_ID.id] = {"$first" : "$app_paths.app"};
+
+        var database = new MMTDrop.Database({collection : "data_session", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]} );
+
+        var cTree = MMTDrop.chartFactory.createTree({
             getData: {
                 getDataFn: function (db) {
                     var args = [{
@@ -159,10 +179,29 @@ var ReportFactory = {
                     app_path_arr.length = 10;
                 }
 
-                //load data corresponding to the selected app
-                var group_by = fPeriod.selectedOption().id;
-                var period   = JSON.stringify( status_db.time );
-                var db_options = {period: period, period_groupby: group_by, userData : { app_path: app_path_arr} };
+                //load data corresponding to the selected apps
+                var $match = {isGen: false};
+                $match[ "app_paths.path" ] = (app_path_arr.length == 1) ? app_path_arr[0] : {$in : app_path_arr };
+
+                var $group = {_id : {} };
+                [ "app_paths.path", COL.TIMESTAMP.id, COL.PROBE_ID.id ].forEach( function( el, index){
+                  $group["_id"][ el ] = "$" + el;
+                } );
+                [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
+                ].forEach( function( el, index){
+                  $group[ el ] = {"$sum" : "$" + el};
+                });
+                [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el, index){
+                  $group[ el ] = {"$last" : "$"+ el};
+                } );
+                $group[ COL.APP_PATH.id ] = {"$first" : "$app_paths.path"};
+                $group[ COL.APP_ID.id ]   = {"$first" : "$app_paths.app"};
+                //sort by asc of timestamp
+                var $sort ={};
+                [ COL.TIMESTAMP.id ].forEach( function( el, index){
+                  $sort[ el ] = 1;
+                } );
+                var db_options = {period: status_db.time, period_groupby: fPeriod.selectedOption().id, query : [{ $unwind : "$app_paths" }, {$match: $match},  {$group: $group}, {$sort: $sort}] };
 
                 detail_db.reload( db_options, function( new_data ){
                     cLine.attachTo( detail_db );
@@ -243,7 +282,7 @@ var ReportFactory = {
                         height : height,
                         addZeroPoints:{
                             time_id       : 3,
-                            time          : db.time,
+                            time          : status_db.time,
                             sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
                             probeStatus   : status_db.probeStatus,
                         },
@@ -295,14 +334,6 @@ var ReportFactory = {
         fMetric.onFilter(function () {
             cLine.redraw();
         });
-        var dataFlow = [{
-                object: fProbe,
-                effect: [{
-                    object: cTree,
-                    effect: []
-                            }, ]
-                            }];
-
         var report = new MMTDrop.Report(
             // title
             "",
@@ -311,7 +342,7 @@ var ReportFactory = {
             database,
 
             // filers
-					[fProbe, fMetric],
+					[fMetric],
 
             //charts
 					[
@@ -326,7 +357,7 @@ var ReportFactory = {
 					 ],
 
             //order of data flux
-            dataFlow
+            [{  object: cTree }]
         );
         return report;
     },
