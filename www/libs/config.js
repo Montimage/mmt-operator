@@ -1,11 +1,16 @@
-var config  = require("../config.json"),
+const
+    config  = require("../config.json"),
     fs      = require("fs"),
     util    = require("util"),
     moment  = require('moment'),
-    path    = require('path');
+    path    = require('path'),
+    VERSION = require("../version.json").VERSION
+;
+
+config.version = VERSION;
 
 //config parser
-var REDIS_STR = "redis",
+const REDIS_STR = "redis",
     FILE_STR  = "file";
 
 if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
@@ -18,6 +23,8 @@ function set_default_value( variable, prop, value ){
   if( variable[prop] == undefined )
     variable[prop] = value;
 }
+
+
 
 set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
@@ -52,7 +59,13 @@ set_default_value( config.buffer, "max_interval", 30 );
 config.json = JSON.stringify( config );
 
 // ensure log directory exists
-fs.existsSync( config.log_folder ) || fs.mkdirSync( config.log_folder )
+if( !fs.existsSync( config.log_folder ) ){
+  console.error("Error: Log folder [" + config.log_folder + "] does not exists.");
+  console.info( "\nConfiguration: " );
+  console.info( config.json );
+  console.info( "node version: %s, platform: %s", process.version, process.platform );
+  process.exit();
+}
 //overwrite console.log
 var logFile   = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
 var logStdout = process.stdout;

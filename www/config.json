@@ -4,7 +4,7 @@
     "port": 27017
   },
   "redis_server": {
-    "host": "52.208.72.84",
+    "host": "localhost",
     "port": 6379
   },
   "data_folder": "/opt/mmt/probe/result/report/online/",
@@ -52,6 +52,6 @@
   },
   "retain_detail_report_period": 604800,
   "port_number": 80,
-  "log_folder": "/tmp/mmt-operator-log",
+  "log_folder": "/opt/mmt/operator/log/",
   "is_in_debug_mode": true
 }

@@ -546,9 +546,11 @@ var MongoConnector = function () {
 
         //this report is sent at each end of x seconds (after seding all other reports)
         if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
+          if( no_1_packet_reports > 0 ){
             console.log("Number of reports containing only 1 packet: " + no_1_packet_reports );
             no_1_packet_reports  = 0;
-            return;
+          }
+          return;
         }
 
 
