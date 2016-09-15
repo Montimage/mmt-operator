@@ -124,7 +124,7 @@ MMTDrop.constants = {
       STATS_FORMAT : 100,
       SECURITY_FORMAT: 10,
       BA_PROFILE_FORMAT: 12,
-      BA_BANDWIDTH_FORMAT: 11
+      BA_BANDWIDTH_FORMAT: 11,
     },
 
     /**
@@ -1484,8 +1484,7 @@ MMTDrop.tools = function () {
 
     for(var i = 0; i < hashes.length; i++){
         hash = hashes[i].split('=');
-
-        obj[hash[0]] = decodeURIComponent(hash[1]);
+        obj[hash[0]] = hash[1];
     }
     return obj;
   };
@@ -1945,9 +1944,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       url += "?raw";
 
     var query = [];
-    if( param.query != undefined )
-      query = param.query.slice(0);
+    if( param.query != undefined ){
+      if( !Array.isArray( param.query ))
+        throw new Error("query must be an Array");
 
+      //clone
+      query = param.query.slice(0);
+    }
 
     if( param.period != undefined || param.probe != undefined ){
       var $match = {};

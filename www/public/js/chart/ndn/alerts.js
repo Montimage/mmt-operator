@@ -30,7 +30,6 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
     var COL = MMTDrop.constants.SecurityColumn;
     var NDN = MMTDrop.constants.NdnColumn;
-    var fProbe  = MMTDrop.filterFactory.createProbeFilter();
 
     var database = new MMTDrop.Database({ collection: "ndn_alerts", action: "aggregate",
                 no_group : true}, null, false);
@@ -51,7 +50,12 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
               .replace("<=", '"$lte":').replace("<", '"$lt" :')
               .replace("!=", '"$ne":')
               .replace("=",  '"$eq" :');
-          expr = JSON.parse( "{" + expr + "}" );
+          try{
+            expr = JSON.parse( "{" + expr + "}" );
+          }catch( err ){
+            alert( "Incorrect filter expression ["+ expr +"]");
+            return;
+          }
           var $match = {};
           $match[ NDN.IFA.id ] = expr;
 
@@ -404,7 +408,6 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                     setTimeout( function(){
                       document.location.href = document.location.href;
                     }, 1000 );
-
                   }
                 })
                 return false;
@@ -507,7 +510,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         database,
 
         // filers
-					[fProbe],
+					[],
 
         // charts
 					[
@@ -518,7 +521,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 					 ],
 
         //order of data flux
-        [{object: fProbe, effect:[ {object: cTable}]}]
+        [ {object: cTable}]
     );
 
     return report;

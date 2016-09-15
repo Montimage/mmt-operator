@@ -256,6 +256,9 @@ var MongoConnector = function () {
         return;
       }
 
+      if( config.is_probe_analysis_mode_offline )
+         return;
+
       var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
 
       //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
@@ -1129,22 +1132,35 @@ var MongoConnector = function () {
             return;
         }
 
-        self.mdb.collection("data_total_real").find({}).sort({
-            "3": -1 //timestamp
-        }).limit(1).toArray(function (err, doc) {
-            if (err) {
-                console.err( err );
-                self.lastPacketTimestamp = (new Date()).getTime();
-            } else if (Array.isArray(doc) && doc.length > 0)
-                self.lastPacketTimestamp = doc[0][3];
+        self.getLastTimestampOfCollection( "data_total_real", function( time ){
+          self.lastPacketTimestamp = time;
+          if( time > 0 )
+            return cb(null, time );
 
-
-            //as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
-            //=> get the reports imediately whe they are availables
-            cb(null, self.lastPacketTimestamp ) ;
-        });
+          //for NDN
+          self.getLastTimestampOfCollection( "data_ndn_real", function( time ){
+            self.lastPacketTimestamp = time;
+            if( time > 0 )
+              return cb(null, time );
+            self.lastPacketTimestamp = (new Date()).getTime();
+            cb( null, self.lastPacketTimestamp);
+          })
+        })
     };
 
+
+    self.getLastTimestampOfCollection = function( collection_name, callback ){
+      self.mdb.collection( collection_name ).find({}).sort({
+          "3": -1 //timestamp
+      }).limit(1).toArray(function (err, doc) {
+          if (!err && Array.isArray(doc) && doc.length > 0){
+            return callback( doc[0][ TIMESTAMP ] );
+          }
+          //as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
+          //=> get the reports imediately whe they are availables
+          callback( 0 ) ;
+      });
+    }
 
     self.emptyDatabase = function (cb) {
         if( self.appList )

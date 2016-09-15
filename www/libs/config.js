@@ -31,6 +31,8 @@ set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
   config.probe_analysis_mode = "offline";
 
+config.is_probe_analysis_mode_offline = (config.probe_analysis_mode === "offline");
+
 set_default_value( config, "database_server", {} );
 
 set_default_value( config.database_server, "host", "127.0.0.1" );

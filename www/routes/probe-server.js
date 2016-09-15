@@ -167,7 +167,7 @@ router.startListening = function (db, redis) {
 router.startListeningAtFolder = function (db, folder_path) {
     // ensure data directory exists
     if( !fs.existsSync( folder_path ) ){
-      console.error("Error: Data folder [" + config.log_folder + "] does not exists.");
+      console.error("Error: Data folder [" + folder_path + "] does not exists.");
       process.exit();
     }
 

@@ -51,7 +51,7 @@ const breadcrumbs = {
     for( var key in obj ){
       //omit probe as we have fProbe in the toolbar
       //app_id is used on MUSA probject
-      if( key == "probe_id" || key == "app_id" )
+      if( key == "probe_id" || key == "app_id" || key == "period" )
         continue;
       var val = obj[key]
       //first time
@@ -60,28 +60,11 @@ const breadcrumbs = {
       else
         url += "&"+ key + "=" + val;
 
-      title = val;
-      if( key == "period" ){
-        if( val == "minute" )
-          title = "Last 5 minutes";
-        else if( val == "hour" )
-          title = "Last hour";
-        else if( val == "6hours" )
-          title = "Last 6 hours";
-        else if( val == "12hours" )
-          title = "Last 12 hours";
-        else if( val == "day" )
-          title = "Last 24 hours";
-        else if( val == "week" )
-          title = "Last 7 days";
-        else if( val == "month" )
-          title = "Last 30 days";
-      }
-
+      title = decodeURIComponent( val );
       arr.push( '<a href="'+ url +'" title="'+ key +'='+ val +'">' + title + '</a>' );
     }
     if( arr.length > 0 )
-      arr[ arr.length - 1 ] = title;
+      arr[ arr.length - 1 ] = '<span title="'+ key +'='+ val +'">' + title + '</span>';
     breadcrumbs.setData( arr );
   }
 }
