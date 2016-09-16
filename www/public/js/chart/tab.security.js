@@ -27,74 +27,73 @@ MMTDrop.callback = {
 var ReportFactory = {};
 
 ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
-    var fProbe  = MMTDrop.filterFactory.createProbeFilter();
     var database = new MMTDrop.Database({
         format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT,
         userData: {
             type: "security"
         }
     }, null, false);
-    
+
     var COL = MMTDrop.constants.SecurityColumn;
-    
+
     var DATA    = [];
     var VERDICT = {};
-    
+
     var reset = function(){
         DATA    = [];
         VERDICT = {
         "detected"      : 0,
-        "not_detected"  : 0, 
-        "respected"     : 0, 
-        "not_respected" : 0, 
+        "not_detected"  : 0,
+        "respected"     : 0,
+        "not_respected" : 0,
         "unknown"       : 0
     };
     };
-    
+
     reset();
     fPeriod.onChange( reset );
-    
+
     var appendData = function( msg ){
         var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ];
         var vdict = msg[ COL.VERDICT.id ];
         var ts    = msg[ COL.TIMESTAMP.id ];
         var num_verdict = 1;
-        
-        if( msg[ COL.VERDICT_COUNT.id ] > 0 ) 
+
+        if( msg[ COL.VERDICT_COUNT.id ] > 0 )
             num_verdict = msg[ COL.VERDICT_COUNT.id ];
-        
+
         VERDICT[ vdict ] += num_verdict;
-        
+
         for( var i=0; i<DATA.length; i++ ){
             var obj = DATA[ i ];
             if( obj.key == key ){
                 obj.verdict[ vdict ] += num_verdict;
-                
+
                 obj.detail.push( msg ) ;
-                
+
                 //update time
                 obj.data[ COL.TIMESTAMP.id ] = msg[ COL.TIMESTAMP.id ];
-                
+
                 return i;
             }
         }
-        
+
         var obj = {};
         obj.key              = key;
         obj.index            = DATA.length;
         obj.verdict          = {
             "detected"      : 0,
-            "not_detected"  : 0, 
-            "respected"     : 0, 
-            "not_respected" : 0, 
+            "not_detected"  : 0,
+            "respected"     : 0,
+            "not_respected" : 0,
             "unknown"       : 0
         };
         obj.verdict[ vdict ] += num_verdict ;
         obj.detail           = [ msg ];
         obj.data             = MMTDrop.tools.cloneData( msg );    //data to show to the table
-        
+
         DATA.push( obj );
-        
+
         return -1;
     };
 
@@ -124,13 +123,13 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
             label: "Description" //(will be hidden)"
         }
         ];
-    
+
     var getVerdictHTML = function( verdict ){
         var bootstrap_class_name = {
             "detected"      : "label-danger",
-            "not_detected"  : "label-info", 
-            "respected"     : "label-success", 
-            "not_respected" : "label-warning", 
+            "not_detected"  : "label-info",
+            "respected"     : "label-success",
+            "not_respected" : "label-warning",
             "unknown"       : "label-default"
         };
         var html = "";
@@ -141,7 +140,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         }
         return html;
     };
-    
+
     //detail of each property
     var detailOfPopupProperty = null;
     var openingRow = null;
@@ -263,8 +262,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     var updateTotalVerdictDisplay = function(){
         $("#mmt-verdict-total").html( "<strong>Total:</strong> " + getVerdictHTML( VERDICT ) );
     };
-    
-    
+
+
     //this is applied for each element of data
     var getDataToShow = function( obj ){
         var msg = obj.data;
@@ -276,14 +275,14 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                 val = getVerdictHTML( obj.verdict ) ;
             else if( col == COL.TIMESTAMP.id )
                 val = MMTDrop.tools.formatDateTime( new Date( val ) ) ;
-            
+
             if( arr.length == 0 )
                 val = '<span data-index="' + obj.index + '">' + val + '</span>';
             arr.push( val );
         }
         return arr;
     };
-    
+
     var cTable = MMTDrop.chartFactory.createTable({
         getData: {
             getDataFn: function (db) {
@@ -296,7 +295,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                 for( var i in DATA ){
                     arr.push( getDataToShow( DATA[i] ) );
                 }
-                
+
                 var cols = [];
                 for( var i=0; i<columnsToShow.length; i++)
                     cols.push( {id: i, label: columnsToShow[i].label, align: "left" } );
@@ -314,11 +313,11 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
             ///configuration of interface: arrange components
             //hide the filers of report (not the one of Datatable)
             $("#report_filters").hide();
-            
+
             var table = _chart.chart;
             if( table == undefined )
                 return;
-            
+
             updateTotalVerdictDisplay();
             if( $("#modalWindow").length === 0 ){
                 var modal = '<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" id="modalWindow">'
@@ -369,15 +368,15 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                     var prop = 0;
                     var des  = "";
                     for( var i in data )
-                        if( prop !== 0 && des != "") 
+                        if( prop !== 0 && des != "")
                             break;
                         else{
                             prop = data[i][4];
                             des  = data[i][7]
                         }
-                    
+
                     $("#detailItem").html("<strong>Property " + prop + "</strong><br/>" + des + '<br/><div id="popupTable"/>');
-                    
+
                     var db = new MMTDrop.Database( {}, null, false );
                     db.data( data );
                     popupTable.attachTo( db, false );
@@ -386,11 +385,11 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
                     if( loading )
                         loading.onHide();
-                    
-                    $("#modalWindow").modal();               
+
+                    $("#modalWindow").modal();
                 };
-                
-                    //set the current selected row 
+
+                    //set the current selected row
                 $currentRow = $(this);
                 //$currentRow.addClass('active');
 
@@ -400,7 +399,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                 if ( item ){
                     if( loading && item.length > 200)
                         loading.onShowing();
-                        
+
                     setTimeout(showModal, 100, item );
                 }
                 return false;
@@ -409,7 +408,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
         }
     });
-    
+
     var indexOfNewRow = [];
     var indexToUpdate = [];
     var lastUpdateTime = (new Date()).getTime();
@@ -417,7 +416,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     function addAlerts( data ) {
         if( data === undefined || data.length === 0 )
             return;
-        
+
         for( var i in data ){
             var msg = data[i];
             var index = appendData( msg );
@@ -428,42 +427,42 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
             }else
                 indexOfNewRow.push( DATA.length - 1 );
         }
-        
-        
+
+
         var now = (new Date()).getTime();
         if( now - lastUpdateTime <= 500 )
             return;
-        
-        
+
+
         lastUpdateTime = now;
-        
+
         updateTotalVerdictDisplay();
 
-        
+
         var table = cTable.chart;
-       
-        
+
+
         for( var i in indexToUpdate  ){
             var index = indexToUpdate[ i ];
-            
+
             var row_data = getDataToShow( DATA[ index ] );
             var row      = table.api().row( index );
-            
+
             row.data( row_data );
-            
+
             //flash the updated row
             $( row.node() ).stop().flash();;
         }
         indexToUpdate = [];
-        
+
         //there are no new rows to add
         if( indexOfNewRow.length == 0 ){
             table.DataTable().columns.adjust();
             return;
         }
-        
+
         for( var i in indexOfNewRow ){
-            var index = indexOfNewRow[ i ]; 
+            var index = indexOfNewRow[ i ];
             //need to append to the table a new row
             var new_row = getDataToShow( DATA[ index ] );
 
@@ -471,7 +470,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
             table.api().row.add( new_row );
         }
         indexOfNewRow = [];
-        
+
         var inLastPage = false;
         var o = table.api().page.info();
         var currentPage = o.page;
@@ -494,7 +493,16 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         //console.log(new Date() + "  Add a new Row");
     };
 
-    
+    window.addAlerts = addAlerts;
+
+    //update report received from server
+    io().on('security',  function( arr ){
+      for( var i=0; i<arr.length; i++)
+        if( typeof(arr[ i][ COL.HISTORY.id ]) === "string")
+          arr[ i][ COL.HISTORY.id ] = JSON.parse( arr[ i][ COL.HISTORY.id ] );
+      addAlerts( arr );
+    });
+
     var report = new MMTDrop.Report(
         // title
         null,
@@ -503,7 +511,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         database,
 
         // filers
-					[fProbe],
+					[],
 
         // charts
 					[
@@ -514,8 +522,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 					 ],
 
         //order of data flux
-        [{object: fProbe, effect:[ {object: cTable}]}]
+        [{object: cTable}]
     );
-    
+
     return report;
 }

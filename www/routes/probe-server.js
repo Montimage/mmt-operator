@@ -10,31 +10,42 @@ var router = {};
 var COL = mmtAdaptor.StatsColumnId;
 
 //DONOT remove this block
-//this is for Video QoS
-/*
-var qos_reports = [];
-function send_to_client( msg ){
-    qos_reports.push( msg );
+//this is for sending data to web clients vi socketio
+var caches = {};
+function send_to_client( channel, msg ){
+  if( caches[ channel ] == undefined )
+    caches[ channel ] = [];
+  //add msg to caches
+  //caches will be verified each seconds and sent to client
+  caches[ channel ].push( msg );
 }
 
 setInterval( function(){
-    if( qos_reports.length == 0 )
-        return;
+  for( var channel in caches ){
+    var cache = caches[ channel ];
+    //no data in this cache
+    if( cache.length == 0 )
+        continue;
     //avg
-    for( var j=1; j<qos_reports.length; j++)
-        for( var i=4; i<13;i++ )
-            qos_reports[0][i] += qos_reports[j][i];
+    if (channel === "qos" ){
+      for( var j=1; j<cache.length; j++)
+          for( var i=4; i<13;i++ )
+              cache[0][i] += cache[j][i];
 
-    for( var i=4; i<13;i++ )
-        if( i != 9 || i != 10 )
-            qos_reports[0][i] /= qos_reports.length;
+      for( var i=4; i<13;i++ )
+          if( i != 9 || i != 10 )
+              cache[0][i] /= cache.length;
 
-    router.socketio.emit( "qos", qos_reports[0] );
+      router.socketio.emit( "qos", cache[0] );
+    }else {
+      router.socketio.emit( channel, cache );
+    }
 
-    qos_reports = [];
+    //reset this cache to zero
+    caches[ channel ] = [];
+  }
 }, 1000);
-*/
-//end Video QoS
+//end caches
 
 const _is_offline = (config.probe_analysis_mode === "offline");
 
@@ -107,7 +118,10 @@ router.process_message = function (db, message) {
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
         }
         else if( format === mmtAdaptor.CsvFormat.OTT_QOS ){
-            send_to_client( msg );
+            send_to_client( "qos", msg );
+        }
+        else if( format === mmtAdaptor.CsvFormat.SECURITY_FORMAT ){
+            send_to_client( "security", msg );
         }
 
 
