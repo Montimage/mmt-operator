@@ -105,20 +105,6 @@ var ReportFactory = {
         var isMAC = URL_PARAM.mac !== undefined;
 
         var $group = {_id : {}};
-        if( isMAC )
-          [NDN.NAME.id].forEach( function( el, index){
-            $group["_id"][ el ] = "$" + el;
-          } );
-        else {
-          [NDN.MAC_SRC.id, NDN.MAC_DEST.id].forEach( function( el, index){
-            $group["_id"][ el ] = "$" + el;
-          } );
-        }
-        [ NDN.NAME, NDN.MAC_SRC, NDN.MAC_DEST, NDN.IS_OVER_TCP, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST ].forEach( function( el, index){
-          $group[ el.id ] = {"$first" : "$" + el.id};
-        });
-        for( var i = NDN.NB_INTEREST_PACKET.id; i<= NDN.IFA.id; i++)
-          $group[ i ] = {"$sum" : "$" + i};
 
         var $match ={};
         if( URL_PARAM.mac ){
@@ -132,49 +118,27 @@ var ReportFactory = {
         if( URL_PARAM.host )
           $match[ NDN.NAME.id ] = {$regex: URL_PARAM.host};
 
-        var database = new MMTDrop.Database( {collection: "data_ndn", action: "aggregate",
-          query: [{$match: $match},{$group: $group}], raw : true } );
+        var database = new MMTDrop.Database( {collection: "data_ndn", action: "find",
+          query: [{$match: $match}], raw : true } );
 
 
         var cTable = MMTDrop.chartFactory.createTable({
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
-
-                    var obj = {};
-                    var ID  = (isMAC ? NDN.NAME: NDN.MAC_SRC);
-                    //index
+                    data.sort( function( a, b){
+                      return a[3] - b[3];
+                    })
                     for( var i=0; i<data.length; i++ ){
-                        var msg = data[i];
-                        var key = {id: msg[ ID.id ], mac_dest: msg[ NDN.MAC_DEST.id ]};
-                        key     = JSON.stringify( key );
-
-                        if( obj[ key ] == undefined )
-                            obj[ key ] = msg;
-                        else{
-                            for( var j=13; j<24; j++)
-                                //time
-                                if( j == 14 || j == 18 || j == 21 || j==22 || j==23){
-                                    obj[key][ j ] = msg[ j ];
-                                }else
-                                    obj[key][ j ] += msg[ j ];
-                        }
-                    }
-
-                    data = [];
-                    for( var i in obj ){
-                        obj[i][ 0 ] = data.length + 1;
-                        data.push( obj[i] );
+                      data[i][0] = (i+1);
+                      data[i][3] = MMTDrop.tools.formatDateTime( data[i][3] );
                     }
 
                     var columns = [{id: 0, label: ""         , align: "left"},
-                                   {id: 7, label: "Name"     , align: "left"},
-                                   {id: 5, label: "MAC Src." , align: "right"},
-                                   {id: 6, label: "MAC Dst." , align: "left"},
-                                  ];
+                                   ];
 
                     for(var i in NDN )
-                        if( NDN[i].id > 7 && NDN[i].id != 12)
+                        if( NDN[i].id > 2 )
                             columns.push( NDN[i] );
                     //data.length = 1000;
                     return {
@@ -264,7 +228,7 @@ var ReportFactory = {
             $group[ el ]        = {"$first" : "$"+ el};
           } );
         }
-        [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA, NDN.DATA_FRESHNESS_PERIOD,NDN.INTEREST_LIFETIME ].forEach( function(el, index ){
+        [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD ].forEach( function(el, index ){
              $group[ el.id ] = { "$sum" : "$" + el.id };
          });
        [NDN.IFA ].forEach( function(el, index ){
@@ -736,7 +700,7 @@ $(str).appendTo("head");
               for( var i=0; i<data.length; i++ ){
                 var msg = data[i];
                 var name = msg[ NDN.MAC_SRC.id ];
-                var val  = msg[ NDN.NB_INTEREST_PACKET.id ];
+                var val  = msg[ NDN.CAP_LEN.id ];
                 if( max < val )
                   max = val;
                 msg.source = name;
@@ -767,7 +731,7 @@ $(str).appendTo("head");
                 msg.source = obj[ msg.source ].index;
                 msg.target = obj[ msg.target ].index;
                 //line width of the links
-                msg.weight = msg[ NDN.NB_INTEREST_PACKET.id ] ;
+                msg.weight = msg[ NDN.CAP_LEN.id ] ;
                 if( data.length == 1 )
                   msg.weight = 1.25;
                 else{
@@ -783,8 +747,7 @@ $(str).appendTo("head");
                     msg.weight = 2;
                 }
                 //label
-                msg.label = msg[ NDN.NB_INTEREST_PACKET.id ] + " pkt, " + msg[ NDN.DATA_VOLUME_INTEREST.id ] + " B / "
-                    + msg[ NDN.NB_DATA_PACKET.id ] + " pkt, " + msg[ NDN.DATA_VOLUME_DATA.id ] + " B";
+                msg.label =  msg[ NDN.CAP_LEN.id ] + " pkt, " + msg[ NDN.NDN_DATA.id ] + " B";
               }
 
               //Set up the force layout
@@ -816,7 +779,7 @@ $(str).appendTo("head");
                     return d.weight;
                   })
                   .style("stroke-dasharray", function (d) {
-                    if( d[ NDN.NB_INTEREST_PACKET.id ] == 0 )
+                    if( d[ NDN.CAP_LEN.id ] == 0 )
                       return "3,2";
                     return "3,0";
                   })
@@ -1021,7 +984,7 @@ $(str).appendTo("head");
           $group["_id"][ el ] = "$" + el;
           $group[ el ]        = {"$first" : "$"+ el};
         } );
-      [ NDN.NB_INTEREST_PACKET.id, NDN.DATA_VOLUME_INTEREST.id, NDN.NB_DATA_PACKET.id, NDN.DATA_VOLUME_DATA.id, NDN.IFA.id ].forEach( function( el, index){
+      [ NDN.CAP_LEN.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id, NDN.IFA.id ].forEach( function( el, index){
           $group[ el ] = {"$sum" : "$" + el};
       });
 
@@ -1039,7 +1002,7 @@ $(str).appendTo("head");
 
       var $project = {}
       $project[ NDN.IFA.id ] = { $cond: { if: { $gte: [ "$" + NDN.IFA.id, 0 ] }, then: 1, else: 0 } };
-      [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.NB_INTEREST_PACKET.id, NDN.DATA_VOLUME_INTEREST.id, NDN.NB_DATA_PACKET.id, NDN.DATA_VOLUME_DATA.id ].forEach( function( el, index){
+      [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.CAP_LEN.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
           $project[ el ] = 1;
       });
 

@@ -136,9 +136,10 @@ var MongoConnector = function () {
             ndn: new DataCache(db, "data_ndn",
                               [COL.FORMAT_ID, COL.PROBE_ID, NDN.MAC_SRC, NDN.NAME],
                                //inc
-                              [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
+                              [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD],
                               //set
-                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME, NDN.NDN_MAX_RESPONSED_TIME, NDN.NDN_MIN_RESPONSED_TIME, NDN.NDN_AVR_RESPONSED_TIME, NDN.IFA]),
+                              [NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
+                                NDN.QUERY, NDN.PACKET_TYPE, NDN.IFA]),
 
             //MUSA project
             //TODO to remove
