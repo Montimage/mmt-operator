@@ -759,7 +759,8 @@ $(str).appendTo("head");
                     msg.weight = 2;
                 }
                 //label
-                msg.label =  msg[ NDN.INTEREST_NONCE.id ] + " pkt, " + msg[ NDN.NDN_DATA.id ] + " B";
+                msg.label =  msg[ NDN.INTEREST_NONCE.id ] + " pkt, " + msg[ NDN.NDN_DATA.id ] + " B / "
+                  + msg[ NDN.INTEREST_NONCE.id + 100 ] + " pkt, " + msg[ NDN.NDN_DATA.id + 100 ] + " B";
               }
 
               //Set up the force layout
@@ -996,12 +997,17 @@ $(str).appendTo("head");
           $group["_id"][ el ] = "$" + el;
           $group[ el ]        = {"$first" : "$"+ el};
         } );
-      [NDN.CAP_LEN, NDN.NDN_DATA,NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD, NDN.IFA ].forEach( function(el, index ){
-         $group[ el.id ] = { "$sum" : "$" + el.id };
-     });
-     [NDN.INTEREST_NONCE ].forEach( function(el, index ){
-          $group[ el.id ] = { "$sum" : 1 };
-      });
+      [NDN.IFA.id].forEach( function( el, index){
+          $group[ el ]        = {"$sum" : "$"+ el};
+        } );
+      //packet : interest and data
+     $group[ NDN.INTEREST_NONCE.id ] = { "$sum" : { $cond: { if: { "$eq" : ["$" + NDN.PACKET_TYPE.id, 5] }, then: 1, else: 0 } } };
+
+      $group[ NDN.INTEREST_NONCE.id + 100 ] = { "$sum" : { $cond: { if: { "$eq" : ["$" + NDN.PACKET_TYPE.id, 6] }, then: 1, else: 0 } } };
+
+      //volume: interest and data
+      $group[ NDN.NDN_DATA.id ] = { "$sum" : { $cond: { if: { "$eq" : ["$" + NDN.PACKET_TYPE.id, 5] }, then: "$"+ NDN.NDN_DATA.id, else: 0 } } };
+      $group[ NDN.NDN_DATA.id + 100] = { "$sum" : { $cond: { if: { "$eq" : ["$" + NDN.PACKET_TYPE.id, 6] }, then: "$"+ NDN.NDN_DATA.id, else: 0 } } };
 
       var $match ={};
       if( URL_PARAM.mac ){
@@ -1017,7 +1023,8 @@ $(str).appendTo("head");
 
       var $project = {}
       $project[ NDN.IFA.id ] = { $cond: { if: { $gt: [ "$" + NDN.IFA.id, 0 ] }, then: 1, else: 0 } };
-      [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.CAP_LEN.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
+
+      [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.PACKET_TYPE.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
           $project[ el ] = 1;
       });
 
