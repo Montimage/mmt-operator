@@ -712,7 +712,7 @@ $(str).appendTo("head");
               for( var i=0; i<data.length; i++ ){
                 var msg = data[i];
                 var name = msg[ NDN.MAC_SRC.id ];
-                var val  = msg[ NDN.CAP_LEN.id ];
+                var val  = msg[ NDN.INTEREST_NONCE.id ];
                 if( max < val )
                   max = val;
                 msg.source = name;
@@ -743,7 +743,7 @@ $(str).appendTo("head");
                 msg.source = obj[ msg.source ].index;
                 msg.target = obj[ msg.target ].index;
                 //line width of the links
-                msg.weight = msg[ NDN.CAP_LEN.id ] ;
+                msg.weight = msg[ NDN.INTEREST_NONCE.id ] ;
                 if( data.length == 1 )
                   msg.weight = 1.25;
                 else{
@@ -759,7 +759,7 @@ $(str).appendTo("head");
                     msg.weight = 2;
                 }
                 //label
-                msg.label =  msg[ NDN.CAP_LEN.id ] + " pkt, " + msg[ NDN.NDN_DATA.id ] + " B";
+                msg.label =  msg[ NDN.INTEREST_NONCE.id ] + " pkt, " + msg[ NDN.NDN_DATA.id ] + " B";
               }
 
               //Set up the force layout
