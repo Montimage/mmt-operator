@@ -133,14 +133,22 @@ var ReportFactory = {
                     for( var i=0; i<data.length; i++ ){
                       data[i][0] = (i+1);
                       data[i][3] = MMTDrop.tools.formatDateTime( data[i][3] );
+                      if( data[i][ NDN.PACKET_TYPE.id ] == 5)
+                        data[i][ NDN.PACKET_TYPE.id ] = "Interest";
+                      else
+                        data[i][ NDN.PACKET_TYPE.id ] = "Data";
                     }
 
                     var columns = [{id: 0, label: ""         , align: "left"},
                                    ];
 
                     for(var i in NDN )
-                        if( NDN[i].id > 2 )
+                        if( NDN[i].id > 2 ){
+                            if( URL_PARAM.name && NDN[i].id === NDN.QUERY.id )
+                              continue;
+
                             columns.push( NDN[i] );
+                        }
                     //data.length = 1000;
                     return {
                         data   : data,
@@ -229,9 +237,12 @@ var ReportFactory = {
             $group[ el ]        = {"$first" : "$"+ el};
           } );
         }
-        [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD ].forEach( function(el, index ){
+        [NDN.CAP_LEN, NDN.NDN_DATA,NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD ].forEach( function(el, index ){
              $group[ el.id ] = { "$sum" : "$" + el.id };
          });
+         [NDN.INTEREST_NONCE ].forEach( function(el, index ){
+              $group[ el.id ] = { "$sum" : 1 };
+          });
        [NDN.IFA ].forEach( function(el, index ){
             $group[ el.id ] = { "$last" : "$" + el.id };
         });
@@ -985,8 +996,11 @@ $(str).appendTo("head");
           $group["_id"][ el ] = "$" + el;
           $group[ el ]        = {"$first" : "$"+ el};
         } );
-      [ NDN.CAP_LEN.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id, NDN.IFA.id ].forEach( function( el, index){
-          $group[ el ] = {"$sum" : "$" + el};
+      [NDN.CAP_LEN, NDN.NDN_DATA,NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD, NDN.IFA ].forEach( function(el, index ){
+         $group[ el.id ] = { "$sum" : "$" + el.id };
+     });
+     [NDN.INTEREST_NONCE ].forEach( function(el, index ){
+          $group[ el.id ] = { "$sum" : 1 };
       });
 
       var $match ={};
@@ -1002,7 +1016,7 @@ $(str).appendTo("head");
         $match[ NDN.NAME.id ] = {$regex: URL_PARAM.host};
 
       var $project = {}
-      $project[ NDN.IFA.id ] = { $cond: { if: { $gte: [ "$" + NDN.IFA.id, 0 ] }, then: 1, else: 0 } };
+      $project[ NDN.IFA.id ] = { $cond: { if: { $gt: [ "$" + NDN.IFA.id, 0 ] }, then: 1, else: 0 } };
       [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.CAP_LEN.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
           $project[ el ] = 1;
       });

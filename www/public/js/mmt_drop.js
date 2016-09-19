@@ -462,10 +462,8 @@ MMTDrop.constants = {
 			IFA 										 : {id: 18,  label: "IFA"}
 		},
 		NdnMetricFilter : {
-      NDN_DATA              : {id: 14, label: "NDN Data"},
-      INTEREST_NONCE        : {id: 15, label: "Interest Packet"},
-      INTEREST_LIFETIME     : {id: 16, label: "Life Time"},
-      DATA_FRESHNESS_PERIOD : {id: 17, label: "Refresh Period"},
+      NDN_DATA              : {id: 14, label: "Data"},
+      INTEREST_NONCE        : {id: 15, label: "Packet"},
 		},
 
 		OTTQoSColumn: {
