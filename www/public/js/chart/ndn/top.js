@@ -114,7 +114,7 @@ var ReportFactory = {
           $match["$or"][1][ NDN.MAC_DEST.id ] = URL_PARAM.mac;
         }
         if( URL_PARAM.name )
-          $match[ NDN.NAME.id ] = URL_PARAM.name;
+          $match[ NDN.QUERY.id ] = URL_PARAM.name;
         if( URL_PARAM.host )
           $match[ NDN.NAME.id ] = {$regex: URL_PARAM.host};
 
@@ -126,8 +126,9 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var data = db.data();
+                    //sort by asceding of PACKET_ID
                     data.sort( function( a, b){
-                      return a[3] - b[3];
+                      return a[ NDN.PACKET_ID.id ] - b[ NDN.PACKET_ID.id ];
                     })
                     for( var i=0; i<data.length; i++ ){
                       data[i][0] = (i+1);
@@ -223,7 +224,7 @@ var ReportFactory = {
         }
         else{
           //group by NAME
-          [NDN.NAME.id].forEach( function( el, index){
+          [NDN.QUERY.id].forEach( function( el, index){
             $group["_id"][ el ] = "$" + el;
             $group[ el ]        = {"$first" : "$"+ el};
           } );
@@ -260,7 +261,7 @@ var ReportFactory = {
                     for( var i=0; i< db_data.length; i++){
                         var val  = db_data[i][ col.id ];
                         var val2 = db_data[i][ NDN.IFA.id ];
-                        var name = db_data[i][ NDN.NAME.id ];
+                        var name = db_data[i][ NDN.QUERY.id ];
                         if( isMAC )
                             name = db_data[i][ NDN.MAC_SRC.id ];
                         if( fn ){
@@ -996,7 +997,7 @@ $(str).appendTo("head");
         $match["$or"][1][ NDN.MAC_DEST.id ] = URL_PARAM.mac;
       }
       if( URL_PARAM.name )
-        $match[ NDN.NAME.id ] = URL_PARAM.name;
+        $match[ NDN.QUERY.id ] = URL_PARAM.name;
       if( URL_PARAM.host )
         $match[ NDN.NAME.id ] = {$regex: URL_PARAM.host};
 

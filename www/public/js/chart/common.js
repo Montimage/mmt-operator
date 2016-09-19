@@ -204,7 +204,7 @@ $(function () {
     //fire the chain of filters
     setTimeout( function(){
       console.log("loading status_db");
-      status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, URL_PARAM.period );
+      status_db.reload({ action: fPeriod.getSamplePeriodTotal()*1000 }, reloadReports, fPeriod.selectedOption().id );
     }, 500 );
 
     //update the modal show list of reports to user

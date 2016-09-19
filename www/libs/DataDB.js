@@ -134,13 +134,12 @@ var MongoConnector = function () {
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn",
-                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.MAC_SRC, NDN.NAME],
+                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.PACKET_ID],
                                //inc
                               [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD],
                               //set
-                              [NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
+                              [NDN.MAC_SRC, NDN.NAME, NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
                                 NDN.QUERY, NDN.PACKET_TYPE, NDN.IFA]),
-
             //MUSA project
             //TODO to remove
             avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
@@ -1067,12 +1066,12 @@ var MongoConnector = function () {
 
         if( options.id  == "ndn.name" ){
                                //inc
-             var groupby = { "_id": {name: "$" + NDN.NAME, probe: "$" + COL.PROBE_ID } };
+             var groupby = { "_id": {name: "$" + NDN.QUERY, probe: "$" + COL.PROBE_ID } };
             [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA ].forEach(
                 function(el, index ){
                     groupby[ el ] = { "$sum" : "$" + el };
             });
-            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.NAME ].forEach(
+            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.NAME, NDN.QUERY ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
