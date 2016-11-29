@@ -568,6 +568,8 @@ MMTDrop.constants = {
             628: 'ORACLE',
             629: 'REDIS',
             630: 'VMWARE'
+            ,631:'MP2T'
+            ,632: 'M3U8'
     },
 
     /**
