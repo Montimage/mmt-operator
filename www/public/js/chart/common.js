@@ -262,10 +262,12 @@ $(function () {
     function start_auto_reload_timer(){
         if( auto_reload_timer )
             clearInterval( auto_reload_timer );
+
         var p = fPeriod.getDistanceBetweenToSamples() * 1000;
         if( p <= 60*1000 )
             p = 60*1000;
-        //p = 10*1000;
+        //always reload each 60 seconds
+        p = 60*1000;
         auto_reload_timer = setInterval( function(){
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
@@ -276,7 +278,7 @@ $(function () {
             }
 
             loading.onShowing();
-            status_db.reload({}, reloadReports, URL_PARAM.period );
+            status_db.reload({}, reloadReports, URL_PARAM.period, fPeriod.selectedOption().id);
         }, p);
     }
     $("#isAutoReloadChk").change( function(){

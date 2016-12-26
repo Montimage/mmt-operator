@@ -32,13 +32,7 @@ var availableReports = {
 
 
 //set options of period
-MMTDrop.config.periodFilterOptions = [
-    { id: MMTDrop.constants.period.QUARTER_DAY, label: "Last 6 hours"   },
-    { id: MMTDrop.constants.period.HALF_DAY   , label: "Last 12 hours"  },
-    { id: MMTDrop.constants.period.DAY        , label: "Last 24 hours"  , selected: true },
-    { id: MMTDrop.constants.period.WEEK       , label: "Last 7 days"    },
-    { id: MMTDrop.constants.period.MONTH      , label: "Last 30 days"   },
-];
+
 
 /**
  * split db.data into two parts having timestamp (1) same as the db.time.end and (2) the rest
@@ -611,7 +605,7 @@ var ReportFactory = {
             chart: {
                 "paging": false,
                 "info": true,
-                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-profile-table overflow-auto-xy" t>',
+                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-profile-table overflow-auto-xy row-cursor-pointer" t>',
                 "order": [[0, "desc"]],
             },
             afterEachRender: function (_chart) {
@@ -868,7 +862,7 @@ var ReportFactory = {
             chart: {
                 "paging": false,
                 "info": true,
-                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-bandwidth-table overflow-auto-xy" t>',
+                "dom": '<"row" <"col-md-6" i><"col-md-6" f>> <"ba-bandwidth-table overflow-auto-xy row-cursor-pointer" t>',
                 "order": [[0, "desc"]],
             },
             afterEachRender: function (_chart) {

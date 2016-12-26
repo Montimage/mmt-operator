@@ -231,8 +231,23 @@ router.post("/profile", function (req, res, next) {
 router.get("/setting", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
 
+    //maintain query string between pages
+    var query_string = []; 
+    var arr = ["period", "probe_id", "app_id", "period_id", "alert", "violation"];
+    for (var i in arr) {
+        var el = arr[i];
+        if (req.query[el] != undefined)
+            query_string.push(el + "=" + req.query[el]);
+    }   
+
+    if (query_string.length > 0)
+        query_string = "?" + query_string.join("&");
+    else
+        query_string = ""; 
+
     res.render('setting', {
-        title: 'Setting'
+        title: 'Setting',
+        query_string: query_string
     });
 });
 
