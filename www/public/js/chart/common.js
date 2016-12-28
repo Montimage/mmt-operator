@@ -278,7 +278,7 @@ $(function () {
             }
 
             loading.onShowing();
-            status_db.reload({}, reloadReports, URL_PARAM.period, fPeriod.selectedOption().id);
+            status_db.reload({}, reloadReports, fPeriod.selectedOption().id);
         }, p);
     }
     $("#isAutoReloadChk").change( function(){
