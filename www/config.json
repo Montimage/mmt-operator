@@ -7,7 +7,7 @@
     "host": "localhost",
     "port": 6379
   },
-  "data_folder": "/Users/nhnghia/temps/share_vbox/output/",
+  "data_folder": "/data/montimage/",
   "delete_data": true,
   "input_mode": "file",
   "probe_analysis_mode": "offline",

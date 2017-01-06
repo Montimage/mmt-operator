@@ -34,7 +34,7 @@ var MongoConnector = function () {
     const FTP      = dataAdaptor.FtpStatsColumnId;
     const LICENSE  = dataAdaptor.LicenseColumnId;
     const OTT      = dataAdaptor.OTTQoSColumnId;
-
+    
     const FORMAT_ID   = COL.FORMAT_ID,
         PROBE_ID      = COL.PROBE_ID,
         SOURCE_ID     = COL.SOURCE_ID,
@@ -122,9 +122,12 @@ var MongoConnector = function () {
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                                ],
+                               [COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR],
+                               
+                               
                                   //init
                                init_session_set,
                                  //retain
@@ -472,9 +475,8 @@ var MongoConnector = function () {
                     }
                 }
                 */
-
-                update_proto_name( msg );
-
+              	update_proto_name( msg );
+                
                //do not add report 99 to data_mac collection as it has no MAC
                self.dataCache.mac.addMessage( msg );
             }

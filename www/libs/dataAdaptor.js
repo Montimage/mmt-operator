@@ -95,14 +95,20 @@ var MMTDrop = {
 
 
         FORMAT_TYPE         : 35, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
-
+        
         SRC_LOCATION            : 40,
         DST_LOCATION            : 41,
         IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
         PROFILE_ID              : 43, // profile id
         ORG_APP_ID              : 44, //original APP_ID given by probe
         ORG_TIMESTAMP           : 45, //original TIMESTAMP given by probe
-    },
+        
+        CPU_USAGE				: 99, //in %
+        MEM_USAGE				: 100, //in %
+        P_DROP					: 101, //in %
+        P_DROP_NIC				: 102, //in %
+        P_DROP_KERNEL			: 103, //in %
+     },
 
     SecurityColumnId           : {
         FORMAT_ID               : 0, /**< Index of the format id column */
@@ -654,7 +660,7 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 function format_session_report( msg ){
   var PATH_INDEX = MMTDrop.StatsColumnId.APP_PATH;
   var UP_PATH = msg[ PATH_INDEX ], DOWN_PATH = msg[ PATH_INDEX + 1 ];
-
+  
 
   /**
   * in the probe version 98f750c, on May 03 2016
@@ -689,7 +695,7 @@ function format_session_report( msg ){
       _end   = MMTDrop.FtpStatsColumnId.RESPONSE_TIME;
       break;
     default:
-      return msg;
+    	return msg;
   }
   //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
   var _new = _start - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
@@ -705,7 +711,6 @@ function format_session_report( msg ){
     //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
     msg[ i ] = new_msg[ i - _new ];
   }
-
   return msg;
 }
 
@@ -723,13 +728,22 @@ MMTDrop.formatMessage = function( message ){
     //timestamp
     msg[ 3 ] = formatTime( msg[3] );
     //format
-    switch( msg[0] ) {
+	//console.log("Msg:" +msg);//TODEL
+	//console.log(Object.keys(msg).length);//TODEL
+	switch( msg[0] ) {
         case MMTDrop.CsvFormat.NDN_FORMAT :
             break;
             //main report
         case MMTDrop.CsvFormat.STATS_FORMAT :
-            msg = format_session_report( msg );
-
+            msg = format_session_report( msg ); 
+        	//in any case, take the last 5 cols for cpu_mem usage report 
+        	var msg_len = Object.keys(msg).length;
+        	msg[ MMTDrop.StatsColumnId.CPU_USAGE ] 		= msg[msg_len-5];
+        	msg[ MMTDrop.StatsColumnId.MEM_USAGE ] 		= msg[msg_len-4];
+        	msg[ MMTDrop.StatsColumnId.P_DROP ] 		= msg[msg_len-3];
+        	msg[ MMTDrop.StatsColumnId.P_DROP_NIC ] 	= msg[msg_len-2];
+        	msg[ MMTDrop.StatsColumnId.P_DROP_KERNEL ]	= msg[msg_len-1];
+        	
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
             msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
             msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );

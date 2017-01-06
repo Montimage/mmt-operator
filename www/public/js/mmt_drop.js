@@ -215,6 +215,13 @@ MMTDrop.constants = {
       PROFILE_ID            : {id: 43, label: "Profile Id"},
       ORG_APP_ID            : {id: 44, label: "App ID"},  //original APP_ID given by probe
       ORG_TIMESTAMP         : {id: 45, label: "Timestamp"},//original TIMESTAMP given by probe
+      
+      //FOR CPU, MEM REPORT
+      CPU_USAGE				: {id: 99, label: "CPU usage"}, //in %
+      MEM_USAGE				: {id: 100, label: "Mem usage"}, //in %
+      P_DROP				: {id: 101, label: "Drop percentage"}, //in %
+      P_DROP_NIC			: {id: 102, label: "Drop percentage NIC"}, //in %
+      P_DROP_KERNEL			: {id: 103, label: "Drop percentage kernel"}, //in %
     },
 
 
