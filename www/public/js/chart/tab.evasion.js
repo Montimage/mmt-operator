@@ -421,6 +421,9 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         
         for( var i in data ){
             var msg = data[i];
+            if( msg[ COL.TYPE.id ] != "evasion" )
+                continue;
+
             var index = appendData( msg );
             if( index >= 0 ){
                 //the row is not yet in the list to update
@@ -494,6 +497,23 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
         //console.log(new Date() + "  Add a new Row");
     };
+
+    window.addAlerts = addAlerts;
+
+    //update report received from server
+    io().on('security',  function( arr ){
+
+      console.log("new alerts " + arr.length );
+
+      var autoreload = MMTDrop.tools.localStorage.get("autoreload", false);
+      if( autoreload === false ) return; 
+
+      for( var i=0; i<arr.length; i++)
+        if( typeof(arr[ i][ COL.HISTORY.id ]) === "string")
+          arr[ i][ COL.HISTORY.id ] = JSON.parse( arr[ i][ COL.HISTORY.id ] );
+
+      addAlerts( arr );
+    }); 
 
     
     var report = new MMTDrop.Report(

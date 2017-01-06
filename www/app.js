@@ -102,7 +102,7 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
-    maxAge: 30*24*60*60*1000,    //30 day
+    maxAge: 1*24*60*60*1000,    //1 day
     lastModified: true
 }));
 //log http req/res
@@ -180,10 +180,12 @@ function license_alert(){
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
-        console.log( "Licence expired on ", ts - now );
+        var expire_time = (new Date( ts )).toString();
+
+        console.log( "Licence expired on ",  expire_time );
+
         if( ts - now <= 15*24*60*60*1000 ){ //15day
             var alert       = null;
-            var expire_time = (new Date( ts )).toString();
             switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
                 case 1:
                     alert = {type: "error", html: "Buy license for this device!"};
