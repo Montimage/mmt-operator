@@ -669,6 +669,14 @@ function format_session_report( msg ){
   */
   //remove one path: UP_PATH, retain DOWN_PATH
   msg.splice( PATH_INDEX, 1 );
+  
+//in any case, take the last 5 cols for cpu_mem usage report 
+	var msg_len = Object.keys(msg).length;
+	msg[ MMTDrop.StatsColumnId.CPU_USAGE ] 		= msg[msg_len-5];
+	msg[ MMTDrop.StatsColumnId.MEM_USAGE ] 		= msg[msg_len-4];
+	msg[ MMTDrop.StatsColumnId.P_DROP ] 		= msg[msg_len-3];
+	msg[ MMTDrop.StatsColumnId.P_DROP_NIC ] 	= msg[msg_len-2];
+	msg[ MMTDrop.StatsColumnId.P_DROP_KERNEL ]	= msg[msg_len-1];
 
   //retain the path having more information
   //not really relevance
@@ -728,21 +736,12 @@ MMTDrop.formatMessage = function( message ){
     //timestamp
     msg[ 3 ] = formatTime( msg[3] );
     //format
-	//console.log("Msg:" +msg);//TODEL
-	//console.log(Object.keys(msg).length);//TODEL
 	switch( msg[0] ) {
         case MMTDrop.CsvFormat.NDN_FORMAT :
             break;
             //main report
         case MMTDrop.CsvFormat.STATS_FORMAT :
             msg = format_session_report( msg ); 
-        	//in any case, take the last 5 cols for cpu_mem usage report 
-        	var msg_len = Object.keys(msg).length;
-        	msg[ MMTDrop.StatsColumnId.CPU_USAGE ] 		= msg[msg_len-5];
-        	msg[ MMTDrop.StatsColumnId.MEM_USAGE ] 		= msg[msg_len-4];
-        	msg[ MMTDrop.StatsColumnId.P_DROP ] 		= msg[msg_len-3];
-        	msg[ MMTDrop.StatsColumnId.P_DROP_NIC ] 	= msg[msg_len-2];
-        	msg[ MMTDrop.StatsColumnId.P_DROP_KERNEL ]	= msg[msg_len-1];
         	
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
             msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
