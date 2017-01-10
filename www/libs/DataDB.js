@@ -101,6 +101,7 @@ var MongoConnector = function () {
                                 COL.RTT,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                                COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
                                ],
                                    //set
                                [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
@@ -121,8 +122,8 @@ var MongoConnector = function () {
                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                                COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
                                ],
-                               [COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR],
