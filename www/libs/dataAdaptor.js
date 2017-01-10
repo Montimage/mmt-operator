@@ -103,11 +103,11 @@ var MMTDrop = {
         ORG_APP_ID              : 44, //original APP_ID given by probe
         ORG_TIMESTAMP           : 45, //original TIMESTAMP given by probe
         
-        CPU_USAGE				: 99, //in %
-        MEM_USAGE				: 100, //in %
-        P_DROP					: 101, //in %
-        P_DROP_NIC				: 102, //in %
-        P_DROP_KERNEL			: 103, //in %
+        CPU_USAGE				: 95, //in %
+        MEM_USAGE				: 96, //in %
+        P_DROP					: 97, //in %
+        P_DROP_NIC				: 98, //in %
+        P_DROP_KERNEL			: 99, //in %
      },
 
     SecurityColumnId           : {

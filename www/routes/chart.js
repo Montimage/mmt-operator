@@ -69,7 +69,7 @@ var all_pages = {
         }
     },
     'cpu_mem':{
-     title: "CPU Memory"
+     title: "CPU-Memory-Drop"
     },
     'setting':{
       title: "Settings"

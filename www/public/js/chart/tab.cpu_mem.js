@@ -37,7 +37,7 @@ var ReportFactory = {
 	    },
 		createCPUMemReport: function(){
 			var _this = this;
-	        var fMetric = MMTDrop.filterFactory.createMetricFilter();
+	        var fMetric = MMTDrop.filterFactory.createProbeFilter();
 	        var $match = {};
 	        //var $match = {isGen: false};
 	        $match.isGen = false;
@@ -59,8 +59,7 @@ var ReportFactory = {
 	        var cLine = MMTDrop.chartFactory.createTimeline({
 	            getData: {
 	                getDataFn: function (db) {
-	                    var col = fMetric.selectedOption();
-	                	var ylabel = "CPU/MEM Usage (%)";
+	                    var ylabel = "CPU/MEM Usage (%)";
 	                	
 	                    var cols = [COL.CPU_USAGE, COL.MEM_USAGE];
 
@@ -69,7 +68,7 @@ var ReportFactory = {
 
 	                    var obj  = {};
 	                    var data = db.data();
-	                    //console.log("data[0][COL.CPU_USAGE.id]:"+data[0][COL.CPU_USAGE.id] + "data[0][COL.MEM_USAGE.id]"+data[0][COL.MEM_USAGE.id]);//TODEL
+	                    console.log("data[0][COL.CPU_USAGE.id]:"+data[0][COL.CPU_USAGE.id] + "data[0][COL.MEM_USAGE.id]"+data[0][COL.MEM_USAGE.id]);//TODEL
 
 	                    for (var i in data) {
 	                        var msg   = data[i];
@@ -86,10 +85,11 @@ var ReportFactory = {
 
 	                        for (var j in cols) {
 	                            var id = cols[j].id;
-	                        	if( msg[id] == undefined )
+	                            if( msg[id] == undefined )
 	                                msg[id] = 0;
-	                        	obj[time][id] = msg[id];
-	                        	//console.log("msg:"+msg[COL.MEM_USAGE.id]);//TODEL
+	                        	if( msg[id] > 100 ) //incorrect report
+	                        		obj[time][id] = 100;
+	                        	else obj[time][id] = msg[id];
 	                          }
 
 	                    }
@@ -195,7 +195,7 @@ var ReportFactory = {
 	    
 	    createDropPercentageReport: function(){
 			var _this = this;
-	        var fMetric = MMTDrop.filterFactory.createMetricFilter();
+	        var fMetric = MMTDrop.filterFactory.createProbeFilter();
 	        //var $match = {};
 	        var $match = {isGen: false};
 	        //$match.isGen = false;
@@ -228,7 +228,7 @@ var ReportFactory = {
 
 	                    var obj  = {};
 	                    var data = db.data();
-	                    //console.log("data[0]:"+data[0] + "data[1]"+data[1]);//TODEL
+	                    console.log("data[0]:"+data[0]);//TODEL
 
 	                    for (var i in data) {
 	                        var msg   = data[i];
@@ -249,7 +249,9 @@ var ReportFactory = {
 	                            var id = cols[j].id;
 	                        	if( msg[id] == undefined )
 	                                msg[id] = 0;
-	                        	obj[time][id] = msg[id];
+	                        	if( msg[id] > 100 ) //incorrect report
+	                        		obj[time][id] = 100;
+	                        	else obj[time][id] = msg[id];
 	                        	//console.log("msg:"+msg[COL.P_DROP.id]);//TODEL
 	                          }
 	                    }

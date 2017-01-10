@@ -217,11 +217,11 @@ MMTDrop.constants = {
       ORG_TIMESTAMP         : {id: 45, label: "Timestamp"},//original TIMESTAMP given by probe
       
       //FOR CPU, MEM REPORT
-      CPU_USAGE				: {id: 99, label: "CPU usage"}, //in %
-      MEM_USAGE				: {id: 100, label: "Mem usage"}, //in %
-      P_DROP				: {id: 101, label: "Drop percentage"}, //in %
-      P_DROP_NIC			: {id: 102, label: "Drop percentage NIC"}, //in %
-      P_DROP_KERNEL			: {id: 103, label: "Drop percentage kernel"}, //in %
+      CPU_USAGE				: {id: 95, label: "CPU usage"}, //in % //TODO: verify if these IDs ok?
+      MEM_USAGE				: {id: 96, label: "Mem usage"}, //in %
+      P_DROP				: {id: 97, label: "Drop percentage"}, //in %
+      P_DROP_NIC			: {id: 98, label: "Drop percentage NIC"}, //in %
+      P_DROP_KERNEL			: {id: 99, label: "Drop percentage kernel"}, //in %
     },
 
 
