@@ -42,9 +42,11 @@ var ReportFactory = {
         var $match = {isGen: false};
         
         var $group = {_id : {} };
-        [ "app_paths.path", COL.PROBE_ID.id ].forEach( function( el, index){
+        [ COL.PROBE_ID.id ].forEach( function( el, index){
           $group["_id"][ el ] = "$" + el;
         } );
+        $group["_id"]["app_paths"] = { "path" : "$app_paths.path" };
+        
         [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
         ].forEach( function( el, index){
           $group[ el ] = {"$sum" : "$" + el};
@@ -184,9 +186,11 @@ var ReportFactory = {
                 $match[ "app_paths.path" ] = (app_path_arr.length == 1) ? app_path_arr[0] : {$in : app_path_arr };
 
                 var $group = {_id : {} };
-                [ "app_paths.path", COL.TIMESTAMP.id, COL.PROBE_ID.id ].forEach( function( el, index){
+                [ COL.TIMESTAMP.id, COL.PROBE_ID.id ].forEach( function( el, index){
                   $group["_id"][ el ] = "$" + el;
                 } );
+                $group["_id"]["app_paths"] = { "path" : "$app_paths.path" };
+                
                 [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
                 ].forEach( function( el, index){
                   $group[ el ] = {"$sum" : "$" + el};
