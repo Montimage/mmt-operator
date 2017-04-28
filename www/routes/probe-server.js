@@ -55,7 +55,7 @@ router.process_message = function (db, message) {
     //console.log( message );
     try {
         //message = message.replace(/\(null\)/g, 'null');
-        var msg = mmtAdaptor.formatMessage( message );
+        var msg = mmtAdaptor.formatMessage( '[' + message + ']' );
 
         if( msg === null )
             return;
@@ -139,7 +139,7 @@ router.process_message = function (db, message) {
         db.addProtocolStats(msg, function (err, err_msg) {});
         
     } catch (err) {
-        //console.error("Error when processing the message: $" + message + "$");
+        console.error("Error when processing the message: $" + message + "$");
         console.error(err.stack);
         //process.exit(0);
     }
@@ -200,9 +200,14 @@ router.startListeningAtFolder = function (db, folder_path) {
         var start_ts = (new Date()).getTime();
         console.log("file " + path.basename( file_name ));
 
-        lr.on('line', function (line) {
+        lr.on ('line', function (line) {
             // 'line' contains the current line without the trailing newline character.
-            router.process_message(db, "[" + line + "]");
+        	try{
+        		router.process_message(db, line );
+        	}catch( e ){
+        		console.error( "Error when processing line " + totalLines + " of file " + file_name );
+        		console.error( e );
+        	}
             totalLines ++;
         });
 

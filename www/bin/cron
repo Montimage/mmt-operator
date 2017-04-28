@@ -3,7 +3,7 @@
 /**
  * This program will be started automatically evry hours by cron program of Unix system.
  * It is started separtely with the main program, app.js.
- *  Once started, it will all scripts finding in  "../cron/"
+ *  Once started, it will execute all scripts finding in  "../cron/"
  */
 
  const

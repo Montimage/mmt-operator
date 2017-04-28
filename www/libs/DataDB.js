@@ -150,7 +150,7 @@ var MongoConnector = function () {
                               [4] ),
         };
 
-        console.log("Connected to Database");
+        //console.log("Connected to Database");
     });
 
 
@@ -248,6 +248,7 @@ var MongoConnector = function () {
 
     //this const is used in the function just after to avoid re-calculation
     const _2TIMES_PROBE_STATS_PERIOD_IN_MS = 2*config.probe_stats_period_in_ms;
+    //this function ajusts timestamp of a message based on its sequence number
     var update_packet_timestamp = function( msg ){
       var ts       = msg[ TIMESTAMP ];
       var probe_id = msg[ PROBE_ID ];
@@ -268,19 +269,18 @@ var MongoConnector = function () {
       //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
       //probe is restarted
       if( ts > new_ts + _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-        console.log("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
+        console.warn("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
         self.probeStatus.set( msg );
         return;
       }else if( ts < new_ts - _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-        console.log("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
+        console.warn("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
         self.probeStatus.set( msg );
         return;
       }
-
 
       msg[ TIMESTAMP ]         = new_ts;
       msg[ COL.ORG_TIMESTAMP ] = ts;
@@ -368,8 +368,9 @@ var MongoConnector = function () {
       return arr;
     }
     self.lastPacketTimestamp = 0;
+    
     /**
-     * Stock a report to database
+     * Stock a report in database
      * @param {[[Type]]} message [[Description]]
      */
     self.addProtocolStats = function (message) {
@@ -730,6 +731,9 @@ var MongoConnector = function () {
             var ts     = end_ts - start_ts;
 
             console.log("got " + doc.length + " records, took " + ts + " ms");
+            
+            if( doc.length == 0 )
+                return callback( null, [] );
 
             if (raw === undefined || raw === true) {
                 var data = [];

@@ -21,7 +21,6 @@ const fs              = require('fs');
 const MongoStore      = require('connect-mongo')(session);
 
 const config          = require("./libs/config");
-const redis           = require("./libs/redis");
 const routes          = require('./routes/index');
 const chartRoute      = require('./routes/chart');
 const api             = require('./routes/api');
@@ -35,7 +34,8 @@ const Probe           = require('./libs/Probe');
 
 config.version = VERSION;
 //config parser
-var REDIS_STR = "redis",
+const REDIS_STR = "redis",
+	KAFKA_STR = "kafka",
     FILE_STR  = "file";
 
 console.log( "Start MMT-Operator" );
@@ -43,7 +43,7 @@ console.info( config.json );
 
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
-console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
+console.logStdout("MMT-Operator version %s is running on port %d ...\n", VERSION, config.port_number );
 
 const dbconnector = new DBC();
 dbconnector.config = config;
@@ -84,13 +84,16 @@ api.socketio           = socketio;
 api.config             = config;
 api.dbconnector        = dbconnector;
 
-if( config.input_mode == REDIS_STR ){
-    probeRoute.startListening(dbconnector, redis);
-}
-else{
+switch( config.input_mode ){
+case REDIS_STR:
+    probeRoute.startListening( dbconnector, require("./libs/redis") );
+    break;
+case KAFKA_STR:
+	probeRoute.startListening( dbconnector, require("./libs/kafka") );
+    break;
+default:
     probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
 }
-
 
 
 
@@ -175,7 +178,7 @@ function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){
             //TODO
-            return console.error("Not found Licence");
+            return console.error("Not found Licence information");
         }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
