@@ -97,9 +97,11 @@ var ReportFactory = {
         //mongoDB aggregate
         var group = { _id : {} };
 
-        [ COL.TIMESTAMP.id , "app_paths.path" ].forEach( function( el, index){
+        [ COL.TIMESTAMP.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
+        group["_id"]["app_paths"] = { "path" : "$app_paths.path" };
+        
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });

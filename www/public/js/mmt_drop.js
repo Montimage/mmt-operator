@@ -124,7 +124,7 @@ MMTDrop.constants = {
       STATS_FORMAT : 100,
       SECURITY_FORMAT: 10,
       BA_PROFILE_FORMAT: 12,
-      BA_BANDWIDTH_FORMAT: 11
+      BA_BANDWIDTH_FORMAT: 11,
     },
 
     /**
@@ -215,6 +215,13 @@ MMTDrop.constants = {
       PROFILE_ID            : {id: 43, label: "Profile Id"},
       ORG_APP_ID            : {id: 44, label: "App ID"},  //original APP_ID given by probe
       ORG_TIMESTAMP         : {id: 45, label: "Timestamp"},//original TIMESTAMP given by probe
+      
+      //FOR CPU, MEM REPORT
+      CPU_USAGE				: {id: 95, label: "CPU usage"}, //in % //TODO: verify if these IDs ok?
+      MEM_USAGE				: {id: 96, label: "Mem usage"}, //in %
+      P_DROP				: {id: 97, label: "Drop percentage"}, //in %
+      P_DROP_NIC			: {id: 98, label: "Drop percentage NIC"}, //in %
+      P_DROP_KERNEL			: {id: 99, label: "Drop percentage kernel"}, //in %
     },
 
 
@@ -442,49 +449,28 @@ MMTDrop.constants = {
       /** Index of the format id column */
       TIMESTAMP         : {id: 3,  label: "Timestamp"},
       /** Index of the application id column */
-      SESSION_ID        : {id: 4,  label: "App"},
+      PACKET_ID        : {id: 4,  label: "Pkt. ID"},
 
 			/** Index of the MAC address source column */
-			MAC_SRC           : {id: 5, label: "MAC Source"},
+			MAC_SRC           : {id: 5, label: "MAC Src."},
 			/** Index of the MAC address source column */
-			MAC_DEST          : {id: 6 , label: "MAC Destination"},
-
-			NAME              : {id: 7,  label: "Name"},
-
-			IS_OVER_TCP       : {id: 8,  label: "Parent Protocol"},
-
-			IP_SRC            : {id: 9, label: "IP Source"},
-			IP_DEST           : {id: 10, label: "IP Destination"} ,
-
-			PORT_SRC          : {id: 11 , label: "Port Source"},
-			PORT_DEST         : {id: 12 , label: "Port Destination"},
-
-			//DIRECTION         : {id: 13,  label: "Direction"},
-
-			NB_INTEREST_PACKET       : {id: 13,  label: "Interest Packet"},
-			INTEREST_LIFETIME        : {id: 14,  label: "Interest LifeTime"},
-			DATA_VOLUME_INTEREST     : {id: 15,  label: "Interest Volume"},
-			NDN_VOLUME_INTEREST      : {id: 16,  label: "Interest Payload"},
-
-			NB_DATA_PACKET           : {id: 17,  label: "Data Packet"},
-			DATA_FRESHNESS_PERIOD    : {id: 18,  label: "Data Freshness Period"},
-			DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
-			NDN_VOLUME_DATA          : {id: 20,  label: "Data Payload"},
-			NDN_MAX_RESPONSED_TIME   : {id: 21,  label: "MAX RT(ms)"},
-			NDN_MIN_RESPONSED_TIME   : {id: 22,  label: "MIN RT(ms)"},
-			NDN_AVR_RESPONSED_TIME   : {id: 23,  label: "AVR RT(ms)"},
-			IFA 										 : {id: 24,  label: "IFA"}
+			MAC_DEST          : {id: 6 , label: "MAC Dst."},
+      IS_OVER_TCP       : {id: 7,  label: "Parent Protocol"},
+      IP_SRC            : {id: 8, label: "IP Src."},
+			IP_DEST           : {id: 9, label: "IP Dst."} ,
+      QUERY             : {id: 10, label: "Query"},
+			NAME              : {id: 11,  label: "Name"},
+      PACKET_TYPE           : {id: 12, label: "Pkt. Type"},
+      CAP_LEN               : {id: 13, label: "Cap. len."},
+      NDN_DATA              : {id: 14, label: "NDN Data"},
+      INTEREST_NONCE        : {id: 15, label: "Int. Nonce"},
+      INTEREST_LIFETIME     : {id: 16, label: "Int. Lifetime"},
+      DATA_FRESHNESS_PERIOD : {id: 17, label: "Refresh Period"},
+			IFA 										 : {id: 18,  label: "IFA"}
 		},
 		NdnMetricFilter : {
-			NB_INTEREST_PACKET       : {id: 13,  label: "Interest Packet"},
-			INTEREST_LIFETIME        : {id: 14,  label: "Interest LifeTime"},
-			DATA_VOLUME_INTEREST     : {id: 15,  label: "Interest Volume"},
-			NDN_VOLUME_INTEREST      : {id: 16,  label: "Interest Payload"},
-
-			NB_DATA_PACKET           : {id: 17,  label: "Data Packet"},
-			DATA_FRESHNESS_PERIOD    : {id: 18,  label: "Data Freshness Period"},
-			DATA_VOLUME_DATA         : {id: 19,  label: "Data Volume"},
-			NDN_VOLUME_DATA          : {id: 20,  label: "Data Payload"},
+      NDN_DATA              : {id: 14, label: "Data"},
+      INTEREST_NONCE        : {id: 15, label: "Packet"},
 		},
 
 		OTTQoSColumn: {
@@ -589,6 +575,8 @@ MMTDrop.constants = {
             628: 'ORACLE',
             629: 'REDIS',
             630: 'VMWARE'
+            ,631:'MP2T'
+            ,632: 'M3U8'
     },
 
     /**
@@ -1484,8 +1472,7 @@ MMTDrop.tools = function () {
 
     for(var i = 0; i < hashes.length; i++){
         hash = hashes[i].split('=');
-
-        obj[hash[0]] = decodeURIComponent(hash[1]);
+        obj[hash[0]] = hash[1];
     }
     return obj;
   };
@@ -1945,9 +1932,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       url += "?raw";
 
     var query = [];
-    if( param.query != undefined )
-      query = param.query.slice(0);
+    if( param.query != undefined ){
+      if( !Array.isArray( param.query ))
+        throw new Error("query must be an Array");
 
+      //clone
+      query = param.query.slice(0);
+    }
 
     if( param.period != undefined || param.probe != undefined ){
       var $match = {};

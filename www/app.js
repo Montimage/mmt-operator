@@ -1,6 +1,6 @@
 const MUSA = false; //active when using for MUSA project
 
-const VERSION         = require("./version.json").VERSION;
+const VERSION         = require("./version.json").VERSION_NUMBER + require("./version.json").VERSION_HASH;
 
 //expressjs
 const express         = require('express');
@@ -21,7 +21,6 @@ const fs              = require('fs');
 const MongoStore      = require('connect-mongo')(session);
 
 const config          = require("./libs/config");
-const redis           = require("./libs/redis");
 const routes          = require('./routes/index');
 const chartRoute      = require('./routes/chart');
 const api             = require('./routes/api');
@@ -35,7 +34,8 @@ const Probe           = require('./libs/Probe');
 
 config.version = VERSION;
 //config parser
-var REDIS_STR = "redis",
+const REDIS_STR = "redis",
+	KAFKA_STR = "kafka",
     FILE_STR  = "file";
 
 console.log( "Start MMT-Operator" );
@@ -43,7 +43,7 @@ console.info( config.json );
 
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
-console.logStdout("MMT-Operator version %s is running on port %d ...", VERSION, config.port_number );
+console.logStdout("MMT-Operator version %s is running on port %d ...\n", VERSION, config.port_number );
 
 const dbconnector = new DBC();
 dbconnector.config = config;
@@ -84,13 +84,16 @@ api.socketio           = socketio;
 api.config             = config;
 api.dbconnector        = dbconnector;
 
-if( config.input_mode == REDIS_STR ){
-    probeRoute.startListening(dbconnector, redis);
-}
-else{
+switch( config.input_mode ){
+case REDIS_STR:
+    probeRoute.startListening( dbconnector, require("./libs/redis") );
+    break;
+case KAFKA_STR:
+	probeRoute.startListening( dbconnector, require("./libs/kafka") );
+    break;
+default:
     probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
 }
-
 
 
 
@@ -102,7 +105,7 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
-    maxAge: 30*24*60*60*1000,    //30 day
+    maxAge: 1*24*60*60*1000,    //1 day
     lastModified: true
 }));
 //log http req/res
@@ -162,11 +165,11 @@ app.use("/export", require("./routes/html2img.js"));
 if( MUSA ){
   //require("./routes/musa/active_check.js").start( redis, dbconnector );
 
-  const sla = require("./routes/musa/sla.js");
+  var sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);
 
-  const connector = require("./routes/musa/connector.js");
+  var connector = require("./routes/musa/connector.js");
   connector.dbconnector = dbconnector;
   app.use("/musa/connector", connector);
 }
@@ -175,15 +178,17 @@ function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){
             //TODO
-            return console.error("Not found Licence");
+            return console.error("Not found Licence information");
         }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];
         var now = (new Date()).getTime();
-        console.log( "Licence expired on ", ts - now );
+        var expire_time = (new Date( ts )).toString();
+
+        console.log( "Licence expired on ",  expire_time );
+
         if( ts - now <= 15*24*60*60*1000 ){ //15day
             var alert       = null;
-            var expire_time = (new Date( ts )).toString();
             switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
                 case 1:
                     alert = {type: "error", html: "Buy license for this device!"};

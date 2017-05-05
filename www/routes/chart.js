@@ -68,13 +68,17 @@ var all_pages = {
 
         }
     },
+    'cpu_mem':{
+     title: "Stat"
+    },
     'setting':{
       title: "Settings"
     }
 };
 
+//list of tabs to be shown on the tab bar
 var pages_to_show = {};
-['link', 'network', 'application', 'dpi', 'security', 'evasion', 'ndn', 'video','sla'].forEach(
+['link', 'network', 'application', 'dpi', 'security', 'evasion', 'behavior', 'ndn', 'video','sla','cpu_mem'].forEach(
   function(key){
     pages_to_show[ key ] = all_pages[ key ];
   });

@@ -11,9 +11,10 @@ config.version = VERSION;
 
 //config parser
 const REDIS_STR = "redis",
-    FILE_STR  = "file";
+    FILE_STR  = "file",
+    KAFKA_STR = "kafka";
 
-if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR)
+if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR && config.input_mode != KAFKA_STR)
     config.input_mode = FILE_STR;
 
 if( isNaN( config.port_number ) || config.port_number < 0 )
@@ -30,6 +31,8 @@ set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
 if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
   config.probe_analysis_mode = "offline";
+
+config.is_probe_analysis_mode_offline = (config.probe_analysis_mode === "offline");
 
 set_default_value( config, "database_server", {} );
 
@@ -79,6 +82,8 @@ console.log = function () {
 
     logFile.write( prefix + util.format.apply(null, arguments) + '\n');
 }
+
+console.warn = console.log;
 
 console.error = function( err ){
     if( err == undefined ) return;

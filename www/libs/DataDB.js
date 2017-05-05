@@ -34,7 +34,7 @@ var MongoConnector = function () {
     const FTP      = dataAdaptor.FtpStatsColumnId;
     const LICENSE  = dataAdaptor.LicenseColumnId;
     const OTT      = dataAdaptor.OTTQoSColumnId;
-
+    
     const FORMAT_ID   = COL.FORMAT_ID,
         PROBE_ID      = COL.PROBE_ID,
         SOURCE_ID     = COL.SOURCE_ID,
@@ -68,7 +68,11 @@ var MongoConnector = function () {
 
 
     MongoClient.connect( connectString, function (err, db) {
-        if (err) throw err;
+        if (err){
+            console.error("Cannot connect to Database " + connectString );
+            process.exit( 1 );
+        }
+        
         self.mdb       = db;
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();
@@ -101,6 +105,7 @@ var MongoConnector = function () {
                                 COL.RTT,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+                                COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
                                ],
                                    //set
                                [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
@@ -121,10 +126,13 @@ var MongoConnector = function () {
                                 //COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                                 COL.RETRANSMISSION_COUNT,
                                 HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+//                                COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
                                ],
                                    //set
                                [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
                                COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR],
+                               
+                               
                                   //init
                                init_session_set,
                                  //retain
@@ -134,19 +142,19 @@ var MongoConnector = function () {
             //for DOCTOR project
             //TODO to remove
             ndn: new DataCache(db, "data_ndn",
-                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.MAC_SRC, NDN.NAME],
+                              [COL.FORMAT_ID, COL.PROBE_ID, NDN.PACKET_ID],
                                //inc
-                              [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA],
+                              [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD],
                               //set
-                              [NDN.IS_OVER_TCP, NDN.MAC_DEST, NDN.IP_SRC, NDN.IP_DEST, NDN.PORT_SRC, NDN.PORT_DEST, NDN.DATA_FRESHNESS_PERIOD, NDN.INTEREST_LIFETIME, NDN.NDN_MAX_RESPONSED_TIME, NDN.NDN_MIN_RESPONSED_TIME, NDN.NDN_AVR_RESPONSED_TIME, NDN.IFA]),
-
+                              [NDN.MAC_SRC, NDN.NAME, NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
+                                NDN.QUERY, NDN.PACKET_TYPE, NDN.IFA]),
             //MUSA project
             //TODO to remove
             avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
                               [4] ),
         };
 
-        console.log("Connected to Database");
+        //console.log("Connected to Database");
     });
 
 
@@ -244,6 +252,7 @@ var MongoConnector = function () {
 
     //this const is used in the function just after to avoid re-calculation
     const _2TIMES_PROBE_STATS_PERIOD_IN_MS = 2*config.probe_stats_period_in_ms;
+    //this function ajusts timestamp of a message based on its sequence number
     var update_packet_timestamp = function( msg ){
       var ts       = msg[ TIMESTAMP ];
       var probe_id = msg[ PROBE_ID ];
@@ -256,24 +265,26 @@ var MongoConnector = function () {
         return;
       }
 
+      if( config.is_probe_analysis_mode_offline )
+         return;
+
       var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
 
       //console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
       //probe is restarted
       if( ts > new_ts + _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-        console.log("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
+        console.warn("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
         self.probeStatus.set( msg );
         return;
       }else if( ts < new_ts - _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-        console.log("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
+        console.warn("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
         //new running period
         self.probeStatus.reset( probe_id );
         self.probeStatus.set( msg );
         return;
       }
-
 
       msg[ TIMESTAMP ]         = new_ts;
       msg[ COL.ORG_TIMESTAMP ] = ts;
@@ -361,8 +372,9 @@ var MongoConnector = function () {
       return arr;
     }
     self.lastPacketTimestamp = 0;
+    
     /**
-     * Stock a report to database
+     * Stock a report in database
      * @param {[[Type]]} message [[Description]]
      */
     self.addProtocolStats = function (message) {
@@ -469,9 +481,8 @@ var MongoConnector = function () {
                     }
                 }
                 */
-
-                update_proto_name( msg );
-
+              	update_proto_name( msg );
+                
                //do not add report 99 to data_mac collection as it has no MAC
                self.dataCache.mac.addMessage( msg );
             }
@@ -724,6 +735,9 @@ var MongoConnector = function () {
             var ts     = end_ts - start_ts;
 
             console.log("got " + doc.length + " records, took " + ts + " ms");
+            
+            if( doc.length == 0 )
+                return callback( null, [] );
 
             if (raw === undefined || raw === true) {
                 var data = [];
@@ -1063,12 +1077,12 @@ var MongoConnector = function () {
 
         if( options.id  == "ndn.name" ){
                                //inc
-             var groupby = { "_id": {name: "$" + NDN.NAME, probe: "$" + COL.PROBE_ID } };
+             var groupby = { "_id": {name: "$" + NDN.QUERY, probe: "$" + COL.PROBE_ID } };
             [NDN.NB_INTEREST_PACKET,  NDN.DATA_VOLUME_INTEREST, NDN.NDN_VOLUME_INTEREST, NDN.NB_DATA_PACKET,  NDN.DATA_VOLUME_DATA, NDN.NDN_VOLUME_DATA ].forEach(
                 function(el, index ){
                     groupby[ el ] = { "$sum" : "$" + el };
             });
-            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.NAME ].forEach(
+            [ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, NDN.NAME, NDN.QUERY ].forEach(
                     function(el, index ){
                         groupby[ el ] = { "$first" : "$" + el };
                 });
@@ -1129,22 +1143,35 @@ var MongoConnector = function () {
             return;
         }
 
-        self.mdb.collection("data_total_real").find({}).sort({
-            "3": -1 //timestamp
-        }).limit(1).toArray(function (err, doc) {
-            if (err) {
-                console.err( err );
-                self.lastPacketTimestamp = (new Date()).getTime();
-            } else if (Array.isArray(doc) && doc.length > 0)
-                self.lastPacketTimestamp = doc[0][3];
+        self.getLastTimestampOfCollection( "data_total_real", function( time ){
+          self.lastPacketTimestamp = time;
+          if( time > 0 )
+            return cb(null, time );
 
-
-            //as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
-            //=> get the reports imediately whe they are availables
-            cb(null, self.lastPacketTimestamp ) ;
-        });
+          //for NDN
+          self.getLastTimestampOfCollection( "data_ndn_real", function( time ){
+            self.lastPacketTimestamp = time;
+            if( time > 0 )
+              return cb(null, time );
+            self.lastPacketTimestamp = (new Date()).getTime();
+            cb( null, self.lastPacketTimestamp);
+          })
+        })
     };
 
+
+    self.getLastTimestampOfCollection = function( collection_name, callback ){
+      self.mdb.collection( collection_name ).find({}).sort({
+          "3": -1 //timestamp
+      }).limit(1).toArray(function (err, doc) {
+          if (!err && Array.isArray(doc) && doc.length > 0){
+            return callback( doc[0][ TIMESTAMP ] );
+          }
+          //as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
+          //=> get the reports imediately whe they are availables
+          callback( 0 ) ;
+      });
+    }
 
     self.emptyDatabase = function (cb) {
         if( self.appList )
