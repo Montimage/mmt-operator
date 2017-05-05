@@ -68,7 +68,11 @@ var MongoConnector = function () {
 
 
     MongoClient.connect( connectString, function (err, db) {
-        if (err) throw err;
+        if (err){
+            console.error("Cannot connect to Database " + connectString );
+            process.exit( 1 );
+        }
+        
         self.mdb       = db;
         self.appList   = new AppList( db );
         self.startTime = (new Date()).getTime();

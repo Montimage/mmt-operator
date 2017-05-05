@@ -1,6 +1,6 @@
 const MUSA = false; //active when using for MUSA project
 
-const VERSION         = require("./version.json").VERSION;
+const VERSION         = require("./version.json").VERSION_NUMBER + require("./version.json").VERSION_HASH;
 
 //expressjs
 const express         = require('express');
@@ -165,11 +165,11 @@ app.use("/export", require("./routes/html2img.js"));
 if( MUSA ){
   //require("./routes/musa/active_check.js").start( redis, dbconnector );
 
-  const sla = require("./routes/musa/sla.js");
+  var sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);
 
-  const connector = require("./routes/musa/connector.js");
+  var connector = require("./routes/musa/connector.js");
   connector.dbconnector = dbconnector;
   app.use("/musa/connector", connector);
 }

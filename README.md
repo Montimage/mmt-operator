@@ -39,15 +39,11 @@ Once MMT-Operator is up and running, open your favorite browser and goto
 
     localhost:8080
 
-## Build MMT-Operator as a service (daemon)
+## Build debian deb file of MMT-Operator 
 
 ```bash
- #Install MMT-Operator in /opt/mmt/operator
- npm run build
- sudo npm run install
-
- #Start
- sudo service operator_d start
+    # one will get a deb file such as www/dist/mmt-operator_1.6.2_05c27df_2017-05-05.deb
+    npm run build-deb
 ```
 
 ## Contributors
