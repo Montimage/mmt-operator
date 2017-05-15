@@ -10,7 +10,7 @@
  */
 var MMTDrop = {
     //The version of the MMTDrop library.
-    VERSION : "2.1.0"
+    VERSION : "2.1.1"
 };
 
 if( typeof Highcharts !== "undefined" )
@@ -160,7 +160,7 @@ MMTDrop.constants = {
        */
       APP_PATH          : {id: 6,  label: "App. Path"},
       /** Index of the active flows column */
-      ACTIVE_FLOWS      : {id: 7,  label: "Flow Count"},
+      ACTIVE_FLOWS      : {id: 7,  label: "Session Count"},
       /** Index of the data volume column */
       DATA_VOLUME       : {id: 8,  label: "Data Volume"},
       /** Index of the payload data volume column */
@@ -534,7 +534,7 @@ MMTDrop.constants = {
        *
        * This column must be created (id not in {@link MMTDrop.constants.FlowStatsColum})
        */
-      ACTIVE_FLOWS   : {id: 104, label:"Flow count"},
+      ACTIVE_FLOWS   : {id: 104, label:"Session count"},
 
       /** Number of upload packets
        *
