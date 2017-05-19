@@ -185,7 +185,7 @@ function build(built_type) {
                 const  DEB_PATH = path.join( BASE_PATH, NAME ),
                         OP_PATH = path.join( DEB_PATH, "opt", "mmt");
                 cp.execSync( "mkdir -p " + OP_PATH );
-                
+
                 //create DEBIAN/control file
                 cp.execSync( "mkdir -p " + path.join( DEB_PATH, "DEBIAN" ) );
                 fs.writeFileSync( path.join( DEB_PATH, "DEBIAN", "control"),
@@ -203,6 +203,11 @@ function build(built_type) {
                 
                 //copy source
                 cp.execSync("mv " + DIST_PATH + " " + OP_PATH );
+                
+                cp.execSync( "chmod +x " + path.join( OP_PATH, "operator", "bin", "www" ) );
+                //create symbol link mmt-operator to /opt/mmt/operator/bin/www
+                cp.execSync( "mkdir -p " + path.join( DEB_PATH, "usr", "bin" ) );
+                cp.execSync( "ln -s /opt/mmt/operator/bin/www " + path.join( DEB_PATH, "usr", "bin", "mmt-operator" ) );
                 
                 log("create " + NAME + ".deb")
                 //create deb file

@@ -70,6 +70,7 @@ var MongoConnector = function () {
     MongoClient.connect( connectString, function (err, db) {
         if (err){
             console.error("Cannot connect to Database " + connectString );
+            console.logStdout("Cannot connect to Database");
             process.exit( 1 );
         }
         
