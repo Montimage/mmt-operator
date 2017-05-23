@@ -283,7 +283,6 @@ function cleanup ( cb ){
     });
 };
 
-
 var is_existing = false;
 process.on('SIGINT',function(){
     try{

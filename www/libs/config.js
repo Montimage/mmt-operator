@@ -74,6 +74,7 @@ var logFile   = fs.createWriteStream(path.join(config.log_folder, (moment().form
 var logStdout = process.stdout;
 
 console.logStdout = console.log;
+console.errStdout = console.error;
 
 console.log = function () {
     var prefix = moment().format("HH:mm:ss") + " " ;
