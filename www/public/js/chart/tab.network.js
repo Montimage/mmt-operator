@@ -47,6 +47,18 @@ var arr = [
             fn: "createTopLinkReport"
         },
     },
+    {
+        id: "topo",
+        title: "Topology",
+        x: 6,
+        y: 9,
+        width: 12,
+        height: 9,
+        type: "danger",
+        userData: {
+            fn: "createTopoReport"
+        },
+    }
 ];
 
 var availableReports = {
@@ -90,18 +102,35 @@ if( param.profile && param.app && param.link )
   },]
 
 
+const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local";
 //MongoDB match expression
 var get_match_query = function( p ){
   var param = MMTDrop.tools.getURLParameters();
   var $match = {};
-  if( param.loc )
-    $match[ COL.DST_LOCATION.id ] = param.loc;
+  if( param.loc ){
+    $match[ COL.DST_LOCATION.id ] = decodeURI( param.loc );
+  }
   if( param.profile )
     $match[ COL.PROFILE_ID.id ] = MMTDrop.constants.getCategoryIdFromName( param.profile );
   if( param.app )
     $match[ COL.APP_ID.id ] = MMTDrop.constants.getProtocolIDFromName( param.app );
-  if( param.ip )
-    $match[ COL.IP_SRC.id ] = param.ip;
+  if( param.ip ){
+	if( param.ip == NO_IP ){
+		$match[ COL.IP_SRC.id ] = "null";
+	}else if( param.ip == LOCAL ) {
+		$match[ COL.SRC_LOCATION.id ] = LOCAL;
+	}else if( param.ip == REMOTE ) {
+		$match[ COL.DST_LOCATION.id ] = {"$ne" : LOCAL};
+	}else{
+	    var obj = {};
+	    obj[ COL.IP_SRC.id ]  = param.ip
+	    $match["$or"] = [ obj ];
+	    
+	    obj = {};
+	    obj[ COL.IP_DEST.id ] = param.ip;
+	    $match["$or"].push( obj );
+	} 
+  }
   if( param.link ){
     var link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
@@ -114,7 +143,7 @@ var get_match_query = function( p ){
 }
 
 //limit number of rows of a table/number of pies per chart
-var LIMIT_SIZE=500;
+const LIMIT_SIZE=500;
 //create reports
 var ReportFactory = {
     /**
@@ -1799,7 +1828,555 @@ var ReportFactory = {
         );
 
         return report;
-    }
+    },
+    
+    createTopoReport: function (filter) {
+
+      //draw topo chart
+      var topoChart = new MMTDrop.Chart({
+        getData: {
+          getDataFn: function (db) {
+            return {
+              data: [[db.data()]],
+              columns: [{id: 0}]
+            };
+          }
+        }
+      },
+      function (elemID, option, data) {
+//style defintion
+var str =
+function(){
+/**
+<style type="text/css">
+.node:hover {
+  cursor: pointer;
+}
+.link path {
+  fill: none;
+  stroke: #1f77b4;
+  pointer-events: none;
+}
+.link textPath {
+  pointer-events: none;
+  font: 10px sans-serif;
+  fill: #1f77b4;
+}
+
+.node circle {
+  stroke-width: 2px;
+}
+.node text {
+  cursor: pointer;
+  font: 12px sans-serif;
+}
+</style>
+*/
+}.toString().split('\n').slice(2, -2).join('\n');
+$(str).appendTo("head");
+
+          //draw a topo graph on a DOM element given by eID
+            //console.log( data );
+          return function( eID, data ){
+            var col = fMetric.selectedOption();
+            data = data[0][0]
+            if( data.length > 100)
+            	data.length = 100;
+            
+              //size of display content
+            var width = $(eID).getWidgetContentOfParent().innerWidth() - 20,
+                height = $(eID).getWidgetContentOfParent().innerHeight() - 60;
+
+            const COLOR = d3.scale.category10();
+
+            const svg = d3.select( eID ).append("svg")
+                .attr("width", width)
+                .attr("height", height);
+              
+            var obj = {};
+            
+            var remote_hosts = 0; //number of IP that is not local
+            var total_hosts  = 0;
+            //count remote and total hosts
+            for( var i=0; i<data.length; i++ ){
+                var msg = data[i];
+                var name = msg[ COL.IP_SRC.id ];
+                msg.is_src_local = (msg[ COL.SRC_LOCATION.id ] == LOCAL);
+
+                if( obj[ name ] == undefined ){
+                  obj[ name ] = true;
+                  total_hosts ++;
+                  if( !msg.is_src_local ) remote_hosts ++;
+                }
+                
+                //destination
+                name = msg[ COL.IP_DEST.id ];
+                msg.is_dst_local = (msg[ COL.DST_LOCATION.id ] == LOCAL);
+                
+                if( obj[ name ] == undefined ){
+                	obj[name] = true;
+                	total_hosts ++;
+                    if( !msg.is_dst_local ) remote_hosts ++;
+                }
+              }
+            
+            const local_hosts = total_hosts - remote_hosts;
+            var combine = false;
+            //combine the remote hosts into one
+            if( remote_hosts > 100 || (remote_hosts > 30 && local_hosts > 5) ){
+            	combine = true;
+            	for( var i=0; i<data.length; i++ ){
+                    var msg = data[i];
+                    if( ! msg.is_src_local && ! msg.is_dst_local )
+                    	continue;
+                    
+                    if( ! msg.is_src_local )
+                    	msg[ COL.IP_SRC.id ] = REMOTE;
+                    if( ! msg.is_dst_local )
+                    	msg[ COL.IP_DEST.id ] = REMOTE;
+            	}
+            }
+        	//combine local
+        	if( local_hosts > 100 ){
+        		combine = true;
+        		for( var i=0; i<data.length; i++ ){
+                    var msg = data[i];
+                    
+                    if( msg.is_src_local )
+                    	msg[ COL.IP_SRC.id ] = LOCAL;
+                    if( msg.is_dst_local )
+                    	msg[ COL.IP_DEST.id ] = LOCAL;
+            	}
+        	}
+        	
+        	//update source and target when combination
+            if( combine ){
+            	obj = {};
+            	for( var i=0; i<data.length; i++ ){
+            		let msg = data[i];
+            		let key = msg[ COL.IP_SRC.id ] + "-" + msg[COL.IP_DEST.id];
+            		if( obj[key] == undefined )
+            			obj[key] = msg;
+            		else
+            			obj[key][ col.id ] += msg[col.id];
+            	}
+            	
+            	data = [];
+            	for( var name in obj )
+            		data.push( obj[name] );
+            }
+                
+              //get set of nodes in obj
+              obj = {};
+              var max_val = 0;
+              
+              for( var i=0; i<data.length; i++ ){
+                var msg = data[i];
+                var name = msg[ COL.IP_SRC.id ];
+                var val  = msg[ col.id ];
+                if( name == "null" ) {
+                	name = NO_IP;
+                }
+                  
+                //source
+                if( val > max_val ) max_val = val;
+                msg.source = name;
+                if( obj[ name ] == undefined )
+                  obj[ name ] = { name: name, id: name.replace(/:/g, "_"), data: msg, val: 0, is_local: msg.is_src_local, link_count: 0 };
+                obj[ name ].val     +=  val;
+                
+                //destination
+                name = msg[ COL.IP_DEST.id ];
+                if( name == "null" ) 
+                    name = NO_IP;
+                msg.target = name;
+                if( obj[ name ] == undefined )
+                  obj[ name ] = { name: name, id: name.replace(/:/g, "_"), data: msg, val: 0, is_local: msg.is_dst_local, link_count: 0 };
+                  
+                obj[ name ].val += val;
+              }
+              
+              
+              var max_val = 0;
+              var min_val = 1000*1000*1000; //1M
+              
+              for( var name in obj ){
+                var val = obj[name].val;
+                if( max_val < val )
+                	max_val = val;
+                if( val < min_val )
+                	min_val = val;
+              }
+              
+              const radius_min = 5, radius_max = 50;
+              
+              for( var name in obj ){
+            	  //convert to a readable value
+                  var o = obj[ name ];
+                  if (o.val >= 1000000000)
+                    o.text = (o.val / 1000000000).toFixed(0) + "G";
+                  else if (o.val >= 1000000)
+                    o.text = (o.val / 1000000).toFixed(0) + "M";
+                  else if (o.val >= 1000)
+                    o.text = (o.val / 1000).toFixed(0) + "k";
+                  else o.text = o.val;
+                  
+                  o.show_detail = true;
+                  o.radius  = o.val/max_val*50;
+                  if( o.radius < radius_min ){
+                      o.radius = radius_min;
+                      o.show_detail = false;
+                  }
+                  else if( o.radius > radius_max )
+                      o.radius = radius_max;
+                  else if( o.radius < radius_max * 0.5)
+                	  o.show_detail = false;
+              }
+              
+
+              var nodes = [];
+              //convert obj 2 Array
+              for( var i in obj ){
+                var n = obj[ i ];
+                n.index = nodes.length;
+                nodes.push( n );
+              }
+              
+              //update index of source and target
+              var links = data;
+              for( var i=0; i<data.length; i++ ){
+                var msg = data[i];
+                obj[ msg.target ].link_count ++;
+                obj[ msg.source ].link_count ++;
+                
+                msg.source = obj[ msg.source ].index;
+                msg.target = obj[ msg.target ].index;
+
+                //line width of the links
+                msg.weight = msg[ col.id ];
+                  
+                if( data.length == 1 )
+                  msg.weight = 1.25;
+                else{
+                  msg.weight = msg.weight / max_val * 10;
+                  if( msg.weight < 1 )
+                      msg.weight = 1;
+                }
+                //label
+                msg.label =  MMTDrop.tools.formatDataVolume( msg[ col.id ], true ) + " ";
+              }
+
+              //Set up the force layout
+              var force = d3.layout.force()
+                  .gravity(0.1)
+                  //.charge(function(d, i) { return i ? 0 : 2000; })
+                  .charge(-1000)
+                  .friction(0.7)
+                  .linkDistance( function(d){
+                      return 70 + d.source.radius + d.target.radius;
+                  } )
+                  //.gravity(.7)
+                  .size([width, height]);
+
+              //Creates the graph data structure out of the json data
+              force.nodes(nodes)
+                  .links(links)
+                  .start();
+
+              //Create all the line svgs but without locations yet
+              var link = svg.selectAll(".link")
+                  .data(links)
+                  .enter()
+                  .append("g")
+                  .attr("class", "link")
+              ;
+              link.append("path")
+//                  .style("marker-end",  function( d ){
+//                    if( d.weight >= 1.5 )
+//                      return "url(#arrowhead2)";
+//                    return "url(#arrowhead1)";
+//                  })
+                  .style("stroke-width", function (d) {
+                    return d.weight;
+                  })
+                  .style("stroke-dasharray", function (d) {
+                    return "3,0";
+                  })
+                  .style("stroke-linejoin", "miter")
+                  .attr('id',function(d,i) {return 'edgepath'+i})
+              ;
+              link.append("text")
+                  .attr("dx", function(d){
+                      return d.source.radius + 10;
+                  })
+                  .attr("dy", function(d){
+                	  return -(d.weight + 3);
+                  })
+                  .attr("opacity", 0)
+                  .append("textPath")
+                  .text(function(d) { return d.label })
+                  .attr('xlink:href',function(d,i) {return '#edgepath'+i})
+                  .style("pointer-events", "none")
+              ;
+
+              var is_draging = false;
+              //Do the same with the circles for the nodes - no
+              var node = svg.selectAll(".node")
+                  .data( nodes )
+                  .enter()
+                  .append("g")
+                  .attr("class", "node")
+                  .on('mouseover', function( d ){
+                    if( is_draging === true )
+                      return;
+                    
+                    //Reduce the opacity of all but the neighbouring nodes
+                    node.style("opacity", function (o) {
+                      return d.index==o.index
+                              //|| d.index==o.data.target.index || d.index==o.data.source.index
+                              //|| d.data.target.index==o.index || d.data.source.index==o.index 
+                              ? 1 : 0.1;
+                    });
+
+                    link.style("opacity", function (o) {
+                      if( d.index==o.source.index || d.index==o.target.index ){
+                        return 1;
+                      }
+                      return 0.1;
+                    });
+                    
+                    if( d.link_count > 20 )
+                    	return;
+                    
+                    link.selectAll("text").style("opacity", function (o) {
+                      if( d.index==o.source.index || d.index==o.target.index ){
+                        return 1;
+                      }
+                      return 0;
+                    });
+                  })
+                  .on('mouseout', function(){
+                    //Put them back to opacity=1
+                    node.style("opacity", 1);
+                    link.style("opacity", 1);
+                    link.selectAll("text").style("opacity", 0);
+                  })
+                  .call(
+                    d3.behavior.drag()
+                      .on("dragstart", function(d, i) {
+                        d.draging  = true;
+                        is_draging = true;
+                        d.fixed    = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+                        force.stop() // stops the force auto positioning before you start dragging
+                      })
+                      .on("drag", function(p, i) {
+                        //ensure that the nodes do not go outside
+                        var x = d3.event.dx,
+                            y = d3.event.dy;
+
+                        p.px += x;
+                        p.py += y;
+                        p.x  += x;
+                        p.y  += y;
+
+                        var r = 15;
+                        if( p.y > height - r )
+                          p.y = height - r;
+                        if( p.y < r )
+                          p.y = r;
+                        if( p.x > width - r )
+                          p.x = width - r;
+                        if( p.x < r )
+                          p.x = r;
+
+                        if( p.py > height - r )
+                          p.py = height - r;
+                        if( p.py < r )
+                          p.py = r;
+                        if( p.px > width - r )
+                          p.px = width - r;
+                        if( p.px < r )
+                          p.px = r;
+
+                        updatePosition();
+                      })
+                      .on("dragend", function(d, i) {
+                    	  d.draging  = false;
+                          is_draging = false;
+                          force.resume();
+                      })
+                  )
+              ;
+
+              node.append("circle")
+                  .attr("r", function(d){
+                      return d.radius;
+                  })
+                  .style("fill", function (d) {
+                    if( d.is_local )
+                        return "green";
+                    else
+                        return "orange";
+                  })
+                  .on('dblclick', function(d) {
+                    d.fixed = false;
+                  })
+              ;
+              
+              node.append("text")
+                  .attr("dx", function( d ){
+                      return d.radius + 5;
+                  })
+                  .attr("dy", ".35em")
+                  .text(function(d) { 
+                      //IP
+                      return d.name 
+                  })
+                  .on("click", function(d){
+                    MMTDrop.tools.reloadPage( "ip="+ d.name );
+                  })
+                  .append("title").text("click here to view detail of this IP");
+              ;
+
+              node.append("text")
+                  .attr("text-anchor", "middle")
+                  .attr("dy", ".35em")
+                  .attr("fill", "white")
+                  .text(function(d) {
+                	  if( ! d.show_detail && (d.name != NO_IP || d.name != MICRO_FLOW) )
+                		  return "";
+                	  return d.text;
+                  })
+                  .on('dblclick', function(d) {
+                    d.fixed = false;
+                  })
+              ;
+              
+              function updatePosition() {
+//                  if (force.alpha() < 0.01) 
+//                      return;
+                  
+                  link.selectAll("path")
+                    .attr("d", function(d) {
+                      var dr = 0;
+                      return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+                    })
+                  ;
+                  //label of each link
+
+                  node.selectAll("circle")
+                    .attr("cx", function(d) { 
+                      //fix 2 nodes
+                      if( d.name == MICRO_FLOW || d.name == NO_IP )
+                          return d.x = 10 + d.radius;
+                      return d.x = Math.max(d.radius, Math.min(width  - d.radius, d.x)); 
+                    })
+                    .attr("cy", function(d) { 
+                      //fix 2 nodes
+                      if( d.name == MICRO_FLOW )
+                          return d.y = 10 + d.radius;
+                      if( d.name == NO_IP )
+                          return d.y = 50 + d.radius;
+                      
+                      return d.y = Math.max(d.radius, Math.min(height - d.radius, d.y)); 
+                    })
+                    .style("stroke", function (d) {
+                      if( d.fixed )
+                        return "red";
+                      return "grey";
+                    })
+                  ;
+                  node.selectAll("text")
+                    .attr("x", function (d) {
+                        return d.x;
+                    })
+                    .attr("y", function (d) {
+                        return d.y;
+                    })
+                  ;
+              }
+              
+              //Now we are giving the SVGs co-ordinates - the force layout is generating the co-ordinates which this code is using to update the attributes of the SVG elements
+              force.on("tick", updatePosition);
+
+              //style of end-arrow
+              svg.append('defs')
+                .append('marker')
+                .attr({'id':'arrowhead2',
+                       'refX':10,
+                       'refY':3,
+                       'orient':'auto',
+                       'markerWidth':3,
+                       'markerHeight':6,
+                })
+                .append('svg:path')
+                    .attr('d', 'M0,0 V6 L3,3 Z')
+                    .attr('fill', '#1f77b4')
+                ;
+                svg.append('defs')
+                  .append('marker')
+                  .attr({'id':'arrowhead1',
+                         'refX':15,
+                         'refY':3,
+                         'orient':'auto',
+                         'markerWidth':3,
+                         'markerHeight':6,
+                  })
+                  .append('svg:path')
+                      .attr('d', 'M0,0 V6 L3,3 Z')
+                      .attr('fill', '#1f77b4')
+                  ;
+              //---End style
+
+
+
+              return svg;
+            }( "#" + elemID, data );
+      });//end topoChart
+
+        //get data
+      //mongoDB aggregate
+        var group = { _id : {} };
+        [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+          group["_id"][ el ] = "$" + el;
+        } );
+        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+          group[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+          group[ el ] = {"$first" : "$"+ el};
+        } );
+
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
+        database.updateParameter = function( param ){
+          var $match = get_match_query();
+          if( $match != undefined ){
+            param.query = [$match, {$group: group}];
+          }
+        }
+        
+        
+      var fMetric  = MMTDrop.filterFactory.createMetricFilter();
+      var report = new MMTDrop.Report(
+          // title
+          null,
+          // database
+          database,
+          // filers
+        [fMetric],
+          //charts
+        [{ charts: [topoChart], width: 12 } ],
+          //order of data flux
+        [{
+                object: fMetric,
+                effect: [{
+                    object: topoChart
+        }, ] }]
+      );
+
+      return report;
+    },
+    
 
 }
 

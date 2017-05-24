@@ -48,19 +48,39 @@ const breadcrumbs = {
     var arr = [];
     var url = null;
     var title= "";
+
     for( var key in obj ){
-      //omit probe as we have fProbe in the toolbar
+    	//We donot need add period on the bar as we have fPeriod, fProbe
+    	//but we need to keep them on url bar
+    	if( ! (key == "period" || key == "probe_id" ))
+    		continue;
+
+    	var val = obj[key]
+    	//first time
+    	if (url == undefined ){
+    		url = MMTDrop.tools.getCurrentURL([""]) + "?" + key + "=" + val;
+    	}else
+    		url += "&"+ key + "=" + val;
+    }
+    
+    for( var key in obj ){
       //app_id is used on MUSA probject
-      if( key == "probe_id" || key == "app_id" || key == "period" )
+      //We donot need add period on the bar as we have fPeriod, fProbe
+      if( key == "app_id" || key == "period" || key == "probe_id" )
         continue;
+      
       var val = obj[key]
       //first time
-      if (url == undefined )
-        url = MMTDrop.tools.getCurrentURL([]);
-      else
+      if (url == undefined ){
+        url = MMTDrop.tools.getCurrentURL([""]) + "?" + key + "=" + val;
+      }else
         url += "&"+ key + "=" + val;
 
-      title = decodeURIComponent( val );
+      if( key == "link" ){
+    	  title = val.replace(",", " &#x21cb; ");
+      }else
+    	  title = decodeURIComponent( val );
+      
       arr.push( '<a href="'+ url +'" title="'+ key +'='+ val +'">' + title + '</a>' );
     }
     if( arr.length > 0 )

@@ -419,9 +419,6 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
         for( var i in data ){
             var msg = data[i];
-            if( msg[ COL.TYPE.id ] == "evasion" ) {
-                continue;
-            }
 
             var index = appendData( msg );
             if( index >= 0 ){
