@@ -628,10 +628,12 @@ var MongoConnector = function () {
             find_in_specific_table = true;
         }
         else if (options.format.indexOf(dataAdaptor.CsvFormat.SECURITY_FORMAT) >= 0 ) {
-            if( options.userData.type === "evasion" ){
-                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
-            }else
-                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = { "$ne" : "evasion" };
+        	if( options.userData ){
+	            if( options.userData.type === "evasion" ){
+	                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "evasion";
+	            }else if( options.userData.type === "security" )
+	                options.query[ dataAdaptor.SecurityColumnId.TYPE  ] = "security";
+        	}
             options.collection     = "security";
             find_in_specific_table = true;
         }

@@ -29,9 +29,6 @@ var ReportFactory = {};
 ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     var database = new MMTDrop.Database({
         format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT,
-        userData: {
-            type: "security"
-        }
     }, null, false);
 
     var COL = MMTDrop.constants.SecurityColumn;
