@@ -4,7 +4,8 @@ block body
     form( method="POST" )
         .form-group
             label( for="version" ) Version 
-            input.form-control( type="text", id="version", name="version", value="#{ version }", disabled)
+            textarea.form-control( type="text", id="version", name="version", disabled, rows=4)
+               | #{ version }
         .form-group
             label( for="deviceID" ) Device ID 
             input.form-control( type="text", id="deviceID", name="deviceID", value="#{ deviceID }", disabled)
