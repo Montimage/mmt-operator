@@ -494,6 +494,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     window.addAlerts = addAlerts;
 
     //update report received from server
+    /* Disable this part to avoid show alerts in realtime
     io().on('security',  function( arr ){
 
       console.log("new alerts " + arr.length );
@@ -507,7 +508,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
       addAlerts( arr );
     });
-
+	*/
+    
     var report = new MMTDrop.Report(
         // title
         null,
