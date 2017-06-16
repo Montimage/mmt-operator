@@ -1,7 +1,5 @@
 const MUSA = false; //active when using for MUSA project
 
-const VERSION         = require("./version.json").VERSION_NUMBER + require("./version.json").VERSION_HASH;
-
 //expressjs
 const express         = require('express');
 const session         = require('express-session')
@@ -32,7 +30,6 @@ const AdminDB         = require('./libs/AdminDB');
 const Probe           = require('./libs/Probe');
 
 
-config.version = VERSION;
 //config parser
 const REDIS_STR = "redis",
 	KAFKA_STR = "kafka",
@@ -43,7 +40,7 @@ console.info( config.json );
 
 console.log( "node version: %s, platform: %s", process.version, process.platform );
 
-console.logStdout("MMT-Operator version %s is running on port %d ...\n", VERSION, config.port_number );
+console.logStdout("MMT-Operator version %s is running on port %d ...\n", config.version, config.port_number );
 
 const dbconnector = new DBC();
 dbconnector.config = config;

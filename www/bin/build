@@ -138,6 +138,11 @@ function build(built_type) {
                 try {
                     if (includeArr.indexOf(file) == -1 && path.extname(file) != ".js")
                         return;
+                        
+                    //exclude
+                    if( ["tab.network.js"].indexOf( file ) != -1 )
+                        return content;
+                        
                     log("minify javascript: " + file);
                     var ret = UglifyJS.minify(content, {
                         fromString: true

@@ -1953,8 +1953,8 @@ $(str).appendTo("head");
             if( combine ){
             	obj = {};
             	for( var i=0; i<data.length; i++ ){
-            		let msg = data[i];
-            		let key = msg[ COL.IP_SRC.id ] + "-" + msg[COL.IP_DEST.id];
+            		var msg = data[i];
+            		var key = msg[ COL.IP_SRC.id ] + "-" + msg[COL.IP_DEST.id];
             		if( obj[key] == undefined )
             			obj[key] = msg;
             		else

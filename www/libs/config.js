@@ -4,7 +4,7 @@ const
     util    = require("util"),
     moment  = require('moment'),
     path    = require('path'),
-    VERSION = require("../version.json").VERSION
+    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH
 ;
 
 config.version = VERSION;
