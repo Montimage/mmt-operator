@@ -14,6 +14,31 @@ var _tools = {
     year  = year || NOW.getFullYear();
     month = month || NOW.getMonth();
     return new Date(year, month, 0).getDate();
+  },
+  /**
+   * Recursively merge properties of two objects 
+   */
+  merge : function(obj1, obj2) {
+	if( obj1 == undefined )
+		obj1 = {};
+	
+    for (var p in obj2) {
+      try {
+        // Property in destination object set; update its value.
+        if ( obj2[p].constructor==Object ) {
+          obj1[p] = _tools.merge(obj1[p], obj2[p]);
+        } else {
+          obj1[p] = obj2[p];
+        }
+
+      } catch(e) {
+        // Property in destination object not set; create it and set its value.
+        obj1[p] = obj2[p];
+
+      }
+    }
+
+    return obj1;
   }
 }
 

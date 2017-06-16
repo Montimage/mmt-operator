@@ -19,7 +19,7 @@ router.post("/upload/:id", function(req, res, next) {
   if( router._sla[ app_id ]  === undefined )
     router._sla[ app_id ] = {};
 
-  const status = router._data[ app_id ] = {progress: 0, message:""};
+  var status = router._data[ app_id ] = {progress: 0, message:"", error: false};
 
   const app_config = router._sla[ app_id ];
 
@@ -28,7 +28,7 @@ router.post("/upload/:id", function(req, res, next) {
     if( err ){
       status.progress = 100;
       status.error = true;
-      return status.message  = "Error while uploading SLA files: " + err.message;
+      return status.message  = "Error: " + JSON.stringify(err);
     }
 
     const file  = req.file;
@@ -51,38 +51,46 @@ router.post("/upload/:id", function(req, res, next) {
       status.progress = 100;
       status.error    = true;
       status.message  = msg;
+
+      console.error( status );
     }
     //waiting for 1 second before parsing SLA file
     //this gives times to show a message above on web browser
     setTimeout( function(){
-      if( comp_index >= 3)
+      if( comp_index >= 5)
         return raise_error( "unsupported");
       //read file's content
       fs.readFile( file.path, {
         encoding: 'utf8'
-      }, function (err, data) {
+      }, function (err_1, data) {
         //got content of SLA file
         //==> delete it
-        //fs.unlink( file.path );
+        fs.unlink( file.path );
 
-        if( err )
-          return raise_error( err );
+        if( err_1 )
+          return raise_error( JSON.stringify( err_1) );
 
         //parse file content as json
-        parser.parseString(data, function (err, result) {
-          if( err )
-            return raise_error( "Error while parsing file " + file.originalname + ": " + err );
+        parser.parseString(data, function (err_2, result) {
+          if( err_2 ){
+            console.error( err_2 );
+            return raise_error( err_2.message );
+          }
 
           app_config.sla[ comp_index ] = result;
 
+          status.error    = false;
           status.message  = "Parsed SLA";
           status.progress = 40;
 
           setTimeout( function(){
-            extract_metrics( app_config, comp_index, function( err, count, comp_name ){
-              if( err )
-                return raise_error( err.message );
+            extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
+              if( err_3 ){
+                console.error( err_3 );
+                return raise_error( err_3.message );
+              }
 
+              status.error    = false;
               status.progress = 100;
               status.message  = "Extracted "+ count +" metrics ";
 
@@ -128,54 +136,88 @@ function get_violation( expr, type ){
 }
 
 function extract_metrics( app_config, index, cb ){
-  var total = 0;
+	try{
+		var total = 0;
 
-    var comp = app_config.init_components[ index ];
-    var sla  = app_config.sla[ index ];
-    comp.sla = JSON.stringify( sla );
+		var comp = app_config.init_components[ index ];
+		var sla  = app_config.sla[ index ];
+		var sla_str = JSON.stringify( sla );
 
-    sla = get_value(sla, ["wsag:AgreementOffer", "wsag:Terms", 0, "wsag:All", 0] );
+		sla  = get_value(sla, ["wsag:AgreementOffer", "wsag:Terms", 0, "wsag:All", 0] );
+		var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
 
-    var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
-    if( title != undefined )
-      comp.title = title;
-    comp.id = parseInt( comp.id );
+		console.log("     title = " + title );
+		//not based on index but by title
+		for( var i=0; i<app_config.init_components.length; i++)
+			if( app_config.init_components[i].title == title ){
+				comp = app_config.init_components[i];
+				console.log( "found " + title );
+				break;
+			}
 
-    var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
-    comp.metrics = [];
+		comp.sla = sla_str;
 
-    //get data type of each metrics
-    const specs = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "specs:serviceDescription", 0, "specs:security_metrics", 0, "specs:Metric"]);
-    const TYPES = {};
-    for( var j=0; j<specs.length; j++ ){
-      var spec = specs[ j ];
-      var type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:enumUnit", 0, "specs:enumItemsType", 0]);
-      if( type == undefined )
-        type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:intervalUnit", 0, "specs:intervalItemsType", 0]);
-      TYPES[ get_value( spec, ["$", "name"] ) ] = type;
-    }
 
-    comp.metric_types = TYPES;
+		if( title != undefined )
+			comp.title = title;
+		comp.id = parseInt( comp.id );
 
-    for( var j=0; j<slos.length; j++ ){
-      var slo = slos[ j ],
-        title = get_value( slo, ["specs:MetricREF", 0] );
-        type  = TYPES[ title ]
-      ;
-      comp.metrics.push({
-        id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-        title    : title,
-        name     : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-        priority : get_value( slo, ["specs:importance_weight", 0]),
-        violation: get_violation( get_value( slo, ["specs:SLOexpression"] ), type ),
-        data_type: type,
-        enable   : false,
-        support  : false,
-      });
+		var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
+		comp.metrics = [];
 
-      total ++;
-    }
-  cb( null, total, title );
+		//get data type of each metrics
+		const specs = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "specs:serviceDescription", 0, "specs:security_metrics", 0, "specs:Metric"]);
+		const TYPES = {};
+		for( var j=0; j<specs.length; j++ ){
+			var spec = specs[ j ];
+			var type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:enumUnit", 0, "specs:enumItemsType", 0]);
+			if( type == undefined )
+				type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:intervalUnit", 0, "specs:intervalItemsType", 0]);
+			TYPES[ get_value( spec, ["$", "name"] ) ] = type;
+		}
+
+		comp.metric_types = TYPES;
+
+		for( var j=0; j<slos.length; j++ ){
+			var slo = slos[ j ],
+			title = get_value( slo, ["specs:MetricREF", 0] );
+			type  = TYPES[ title ],
+			name  = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
+			enable= false,
+			support= false
+			;
+
+			if( title.toLowerCase().indexOf("scan") >= 0  ){
+				name = "vuln_scan_freq";
+				enable = true;
+				support = true;
+			}else if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 || title.toLowerCase().indexOf("incident") >= 0 ){
+				name = "incident";
+				enable = true;
+				support = true;
+
+			}else if(["Vulnerability Measure","Resiliance to attacks","Database activity monitoring","SQL injection","Data encryption","M6-HTTP to HTTPS Redirects","Number of Data Subject Access Requests"].indexOf( title ) >= 0 ) {
+				support = true;
+			}
+
+			comp.metrics.push({
+				id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
+				title    : title,
+				name     : name, 
+				priority : get_value( slo, ["specs:importance_weight", 0]),
+				violation: get_violation( get_value( slo, ["specs:SLOexpression"] ), type ),
+				data_type: type,
+				enable   : enable,
+				support  : support,
+			});
+
+			total ++;
+		}
+		cb( null, total, title );
+	}catch( err ){
+		err.message = "SLA format is incorrect!!!";
+		cb( err, 0, null );
+	}
 }
 
 function insert_to_db( app_id, cb ) {
@@ -195,7 +237,6 @@ function insert_to_db( app_id, cb ) {
 router.get("/upload/:id", function( req, res, next ){
   const id     = req.params.id || "_undefined";
   const status = router._data[ id ];
-
   const act = req.query.act;
 
   if( act === "finish" ) {
@@ -208,7 +249,7 @@ router.get("/upload/:id", function( req, res, next ){
   }
 
   if( status === undefined )
-    return res.status(400).send("Not found");
+    return res.status(400).send("Not found!!!");
 
   res.setHeader("Content-Type", "application/json");
   res.send( status );

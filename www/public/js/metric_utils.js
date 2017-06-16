@@ -33,9 +33,9 @@ function getQuery( collection, col_id, el, status_db){
       "probe_id": "$1",
       "availability_count": "$5",
       "checks_count": "$6",
-          "mins": { "$ceil": { "$divide" : [ "$3" , 60 ] }  },
-          "hour": { "$ceil": { "$divide" : [ "$3" , 60 * 60 ] } },
-          "day":  { "$ceil": { "$divide" : [ "$3" , 60  * 60 * 60] } },
+          "mins":  { "$ceil": { "$divide" : [ "$3" , 60 ] }  },
+          "hour":  { "$ceil": { "$divide" : [ "$3" , 60 * 60 ] } },
+          "day":   { "$ceil": { "$divide" : [ "$3" , 60  * 60 * 60] } },
           "month": { "$ceil": { "$divide" : [ "$3" , 60 * 60 * 60 * 60] } }
       }
     };

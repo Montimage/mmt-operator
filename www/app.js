@@ -1,5 +1,3 @@
-const MUSA = false; //active when using for MUSA project
-
 //expressjs
 const express         = require('express');
 const session         = require('express-session')
@@ -28,12 +26,8 @@ const mmtAdaptor      = require('./libs/dataAdaptor');
 const DBC             = require('./libs/DataDB');
 const AdminDB         = require('./libs/AdminDB');
 const Probe           = require('./libs/Probe');
+const constant        = require('./libs/constant.js');
 
-
-//config parser
-const REDIS_STR = "redis",
-	KAFKA_STR = "kafka",
-    FILE_STR  = "file";
 
 console.log( "Start MMT-Operator" );
 console.info( config.json );
@@ -59,8 +53,12 @@ var _objRef = {
   config      : config,
   dbconnector : dbconnector,
   dbadmin     : dbadmin,
-  probe       : probe
+  probe       : probe,
+  __base      : __dirname + '/'
 };
+
+//define a global variable
+global._mmt = _objRef;
 
 probeRoute.socketio    = socketio;
 probeRoute.config      = config;
@@ -81,12 +79,16 @@ api.socketio           = socketio;
 api.config             = config;
 api.dbconnector        = dbconnector;
 
+var pub_sub = null;
+
 switch( config.input_mode ){
-case REDIS_STR:
-    probeRoute.startListening( dbconnector, require("./libs/redis") );
+case constant.REDIS_STR:
+	pub_sub = require("./libs/redis");
+	probeRoute.startListening( dbconnector, pub_sub );
     break;
-case KAFKA_STR:
-	probeRoute.startListening( dbconnector, require("./libs/kafka") );
+case constant.KAFKA_STR:
+	pub_sub = require("./libs/kafka");
+	probeRoute.startListening( dbconnector, pub_sub );
     break;
 default:
     probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
@@ -159,9 +161,13 @@ app.use("/export", require("./routes/html2img.js"));
 
 //active checking for MUSA
 //TODO to remove in final product
-if( MUSA ){
-  //require("./routes/musa/active_check.js").start( redis, dbconnector );
-
+if( config.isMusaProject ){
+  //module to check preodically if components of apps are available
+  require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
+ 
+  //module to verify preodically if the current data are violdated
+  require("./routes/musa/violation_check_engine.js").start( pub_sub, dbconnector );
+  
   var sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);

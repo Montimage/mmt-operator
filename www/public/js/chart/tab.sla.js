@@ -21,6 +21,7 @@ var availableReports = {
 var ReportFactory = {
 	createUploadForm: function( fPeriod ){
     var COL = MMTDrop.constants.StatsColumn;
+    
     //UPDATE VALUE OF METRIX AFTER REDERING
     var isFirstUpdate = true;
     var updateValue = function (){
@@ -40,32 +41,31 @@ var ReportFactory = {
       */
       $(".alerts").each( function( index, el ){
         $(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
-        var metricName = this.dataset["metricname"];
-        switch (metricName) {
-          case "rtt":
-            getData( this, "data_session", COL.RTT.id);
-            break;
-          case "availability":
-            getData( this, "availability", 4);
-            break;
-          case "location":
-            getData( this, "data_session", COL.DST_LOCATION.id);
-            break;
-          default:
-        }
+        getData( this );
       } );
     }
 
-    var total_db = new MMTDrop.Database({collection: "__", action: "aggregate", raw: true});
+    var total_db = new MMTDrop.Database({collection: "metrics_alerts", action: "aggregate", raw: true});
 
-    function getData( el, collection, col_id ){
+    function getData( el ){
+      var obj = {};
+      if (el.dataset)
+    	  obj  = el.dataset;
+      else
+    	  obj  = el;
+      
+      const comp_id  = parseInt( obj.compid ),
+      	  metric_id  = obj.metricid,
+      	  type       = obj.type; //either "alert" or "violation"
+      
       //get number of alerts from database
-      var param = getQuery( collection, col_id, el, status_db );
-      param.collection = collection;
-      total_db.reload( param, function( data ){
+      const match = { "0" : {"$gte": status_db.time.begin, "$lt" : status_db.time.end }, "2" : comp_id, "3": metric_id, "4": type },
+      		group = { "_id": "$4", "total" : {"$sum": 1} };
+      
+      total_db.reload( {query : [{$match: match},{$group : group}]}, function( data ){
         var val = 0;
         if( data.length > 0 )
-          val = data.length;
+          val = data[0].total;
 
         $(el).html( '<span class="badge">' + val + '</span>' );
       });
@@ -182,6 +182,7 @@ var ReportFactory = {
                 type     : "<span>",
                 attr     : {
                   "class"           : "alerts",
+                  "data-type"       : "alert",
                   "data-compid"     : comp.id,
                   "data-metricid"   : me.id,
                   "data-metricname" : me.name,
@@ -209,6 +210,7 @@ var ReportFactory = {
                 type     : "<span>",
                 attr     : {
                   "class"           : "alerts",
+                  "data-type"       : "violation",
                   "data-compid"     : comp.id,
                   "data-metricid"   : me.id,
                   "data-metricname" : me.name,

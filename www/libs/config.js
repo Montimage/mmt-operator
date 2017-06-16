@@ -4,28 +4,30 @@ const
     util    = require("util"),
     moment  = require('moment'),
     path    = require('path'),
-    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH
+    tools   = require('./tools.js'),
+    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH,
+    constant= require('./constant.js')
 ;
 
-config.version = VERSION;
+//is MMT-Operator running for a specific project?
+config.project = constant.project.NONE; //MUSA
 
-//config parser
-const REDIS_STR = "redis",
-    FILE_STR  = "file",
-    KAFKA_STR = "kafka";
+config.isMusaProject = ( config.project === constant.project.NONE );
 
-if( config.input_mode != REDIS_STR && config.input_mode != FILE_STR && config.input_mode != KAFKA_STR)
-    config.input_mode = FILE_STR;
+config.version = VERSION; 
+	
+if( config.input_mode != constant.REDIS_STR 
+		&& config.input_mode != constant.FILE_STR 
+		&& config.input_mode != constant.KAFKA_STR)
+    config.input_mode = constant.FILE_STR;
 
-if( isNaN( config.port_number ) || config.port_number < 0 )
+if( Number.isNaN( config.port_number ) || config.port_number < 0 )
     config.port_number = 80;
 
 function set_default_value( variable, prop, value ){
   if( variable[prop] == undefined )
     variable[prop] = value;
 }
-
-
 
 set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
@@ -77,7 +79,9 @@ console.logStdout = console.log;
 console.errStdout = console.error;
 
 console.log = function () {
-    var prefix = moment().format("HH:mm:ss") + " " ;
+	var logLineDetails = ((new Error().stack).split("at ")[2]).trim();
+	logLineDetails = logLineDetails.split("www/")[1];
+    var prefix = new Date().toLocaleString() + ", " + logLineDetails + "\n  ";
     if( config.is_in_debug_mode === true  )
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
 
@@ -109,5 +113,12 @@ config.outStream = logStdout;
 
 if( config.is_in_debug_mode == true )
   config.outStream = logFile
-
+  
+  
+//MUSA
+config.sla = tools.merge( {
+    "active_check_period"   : 5,
+    "violation_check_period": 5
+}, config.sla);
+  
 module.exports = config;

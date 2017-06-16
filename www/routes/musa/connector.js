@@ -3,7 +3,6 @@ const express = require('express');
 const router  = express.Router();
 const fs      = require("fs");
 
-//upload SLA files
 function now(){
   return (new Date()).getTime();
 }

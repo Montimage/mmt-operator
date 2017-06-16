@@ -17,6 +17,8 @@ var availableReports = {
 }
 el = {}
 if (URL_PARAM.length > 0){
+  console.log("URL PARAM EXISTE")
+  console.log(URL_PARAM)
   el = {
     compid: URL_PARAM.probe_id,
     metricid: "1",
@@ -24,6 +26,7 @@ if (URL_PARAM.length > 0){
     value: URL_PARAM.violation
   }
 }else{
+  console.log("URL PARAM NOOOOOOOOO EXISTE")
   el = {
     compid: URL_PARAM.probe_id,
     metricid: "1",
@@ -47,7 +50,7 @@ var ReportFactory = {
         var _this    = this;
         var COL      = MMTDrop.constants.StatsColumn;
 
-        var database = new MMTDrop.Database({collection: "availability", action: "aggregate", raw: true,  no_override_when_reload: true},
+        var database = new MMTDrop.Database({collection: "availability", action: "aggregate", raw: true,  no_override_when_reload: true}, 
           function( data) {
 
             return data;
@@ -113,7 +116,7 @@ var ReportFactory = {
           }
           return arr;
         });
-
+        
         database.updateParameter = function( _old_param ){
           var query = getQuery("availability", 4, el, status_db)
 	  query.query.splice( query.query.length - 1, 1);
@@ -152,8 +155,10 @@ var ReportFactory = {
                     },
                     y: {
                       tick: {
-                        count: 5
-                      }
+                        count: 2
+                      },
+                      max: 1,
+                      padding: 0
                     }
                 },
                 grid: {

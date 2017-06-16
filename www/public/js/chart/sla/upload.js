@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "realtime",
-        title: "Upload SLA",
+        title: "Upload SLAs",
         x: 0,
         y: 0,
         width: 6,
@@ -12,7 +12,7 @@ var arr = [
         },
     },{
         id: "remote",
-        title: "Get SLA from Repository",
+        title: "Get SLAs from Repository",
         x: 6,
         y: 0,
         width: 6,
@@ -30,15 +30,17 @@ var availableReports = {
 
 //initial value of components and metrix, that are supposed to receive from SLA file
 var init_components = [
-  {id: "0", title: "Database", url: "192.168.1.8", metrics:[]},
-  {id: "1", title: "ITS Factory", url: "192.168.1.10", metrics : []},
-  {id: "2", title: "Journey Planner Component", url: "52.208.72.84", metrics : []},
+  {id: "30", url: "37.48.247.117", metrics : [], title: "TSM engine"},
+  {id: "1", url: "192.168.1.10", metrics : [], title: "Consumption Estimation Calculator (CEC)"},
+//  {id: "2", url: "52.208.72.84", metrics : [], title: "ITS Factory"},
+  //{id: "13", url: "52.208.72.84", metrics : [], title: "Multimodal Journey Planner"},
+  //{id: "14", url: "192.168.1.8" , metrics : [], title: "Database"}, //fix based on the component name in SLA file
 ];
 
 var init_metrics = [
   {id: "1", name: "availability", alert: "<= 0.98", violation: "<= 0.95", title: "Availability", enable: true, support: true },
-  {id: "2", name: "rtt", alert: ">= 2000", violation: ">= 3000", title: "Response Time", enable: true, support: true },
-  {id: "3", name: "location", alert: "= \"France\"", violation: "= \"France\" ", title: "Location", enable: true, support: true },
+//  {id: "2", name: "incident", alert: "", violation: "< 0", title: "Incident", enable: true, support: true },
+//  {id: "3", name: "vul_scan_freq", alert: "", violation: "< 0", title: "Vulnerability Scan Frequency", enable: true, support: true },
 ];
 
 
@@ -82,8 +84,8 @@ var ReportFactory = {
                       attr: {
                         class   : "btn btn-danger",
                         type    : "submit",
-                        text    : "Get SLA",
-                        disabled: true
+                        text    : "Get SLAs",
+                        onclick : 'alert("SLA repository is not available."); return false;'
                       }
                     },{
                       type: "<button>",
@@ -152,7 +154,7 @@ var ReportFactory = {
                   name    : "filename",
                   multiple: false,
                   accept  : ".xml",
-                  //required: true
+                  required: true
                 }
               },{
                 type :  "<input>",
@@ -275,7 +277,11 @@ var ReportFactory = {
 
     window._checkSubmit = function(){
 
-      $upload_container.html( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
+      //hide the from, do not remove it as Google Chrome does not submit it when it was deleted
+      $upload_container.children().hide();
+
+      //append to the container, do not replace the one existing
+      $upload_container.append( MMTDrop.tools.createDOM( uploading_progress_bar_config ) );
 
       var timer = setInterval( function(){
         MMTDrop.tools.ajax("/musa/sla/upload/" + app_id, {}, "GET", {
@@ -305,14 +311,16 @@ var ReportFactory = {
               if( progress == 100 ){
                 clearInterval( timer );
 
-                if( !obj.error ){
-                  setTimeout( function(){
+                setTimeout( function(){
+                  if( !obj.error ){
                     //com starts from 0, 
                     alert("Successfully uploaded SLA for component " + (com+1) );
                     com ++;
-                    $upload_container.html( MMTDrop.tools.createForm( form_config( com ) ) ) ;
-                  }, 1000);
-                }
+                  }
+                  else 
+                    alert( message );
+                  $upload_container.html( MMTDrop.tools.createForm( form_config( com ) ) ) ;
+                }, 1000);
               }
             }
           }

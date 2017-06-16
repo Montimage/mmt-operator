@@ -17,7 +17,12 @@ var MongoConnector = function () {
 
     self.mdb = null;
     self.db_name = "mmt-data";
-
+    
+    self.onReadyCallback = [];
+    self.onReady = function( cb ){
+    	self.onReadyCallback.push( cb );
+    }
+    
     const host = config.database_server.host;
     const port = config.database_server.port;
 
@@ -152,10 +157,12 @@ var MongoConnector = function () {
             //MUSA project
             //TODO to remove
             avail: new DataCache(db, "availability", [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
-                              [4] ),
+                              [4, 5, 6 ] ),
         };
-
-        //console.log("Connected to Database");
+        
+        for( var i in self.onReadyCallback ){
+        	self.onReadyCallback[i]( self );
+        }
     });
 
 
@@ -660,8 +667,15 @@ var MongoConnector = function () {
     };
 
     self.queryDB = function (collection, action, query, callback, raw) {
-      console.log(action, " on [", collection, "] query : ", JSON.stringify(query) );
-
+      var startTime = (new Date()).getTime();
+      //override callback to printout debug message
+      var _callback = function( err, data ){
+    	  console.log( action, " on [", collection, "]\n query : ", JSON.stringify(query), 
+    			  "\n got " + ( err? "error" : data.length) + " records", 
+    			  "\n using " + ((new Date()).getTime() - startTime)  );
+    	  callback( err, data );
+      }
+      
       //flush caches to DB before doing query
       for( var i in self.dataCache ){
           var cache = self.dataCache[ i ];
@@ -671,18 +685,18 @@ var MongoConnector = function () {
             var level = arr[ arr.length - 1 ]; //get the last element
             if( ["real", "minute", "hour", "day"].indexOf( level ) > -1 )
               cache.flushCaches( level, function(){
-                self._queryDB( collection, action, query, callback, raw );
+                self._queryDB( collection, action, query, _callback, raw );
               });
             else{ //data_mac, data_detail
               cache.flushCaches( "real", function(){
-                self._queryDB( collection, action, query, callback, raw );
+                self._queryDB( collection, action, query, _callback, raw );
               });
             }
             return;//only one collection concernts to this query
           }
       }
 
-      self._queryDB( collection, action, query, callback, raw );
+      self._queryDB( collection, action, query, _callback, raw );
     }
     // Do a query on database. Action can be "find", "aggregate", ...
     self._queryDB = function (collection, action, query, callback, raw) {
@@ -734,18 +748,13 @@ var MongoConnector = function () {
                 return;
             }
 
-            var end_ts = (new Date()).getTime();
-            var ts     = end_ts - start_ts;
-
-            console.log("got " + doc.length + " records, took " + ts + " ms");
-            
             if( doc.length == 0 )
                 return callback( null, [] );
 
             if (raw === undefined || raw === true) {
                 var data = [];
                 for ( var i=0; i<doc.length; i++ ) {
-                    var record = doc[i];
+                    var record;// = doc[i];
                     //if( record.last_time )
                     //    record.time = record.last_time;
 
@@ -753,16 +762,16 @@ var MongoConnector = function () {
                     data.push(record);
                 }
 
-                ts = (new Date()).getTime() - end_ts;
-
-                console.log("converted " + doc.length + " records, took " + ts + " ms");
                 callback(null, data);
             } else {
                 callback(null, doc);
             }
         });
     }
-
+    
+    self._updateDB = function (collection, action, query, callback, options) {
+    	self.mdb.collection( collection )[action]( query, options, callback );
+    }
     self.queryTop = function (options, total, callback) {
         var groupby = { "_id": "$" + total.group_by }; //"$path",
 

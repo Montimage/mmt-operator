@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var HttpException = require('../libs/HttpException.js');
 var url = require("url");
+const config = require("../libs/config");
 
 var all_pages = {
     'link': {
@@ -78,14 +79,20 @@ var all_pages = {
 
 //list of tabs to be shown on the tab bar
 var pages_to_show = {};
-[
+const listOfPageIdToShow = [
     'link', 'network', 'application', 'dpi', 'security'
     //, 'evasion',
     //'behavior', 'ndn', 'video','sla','cpu_mem'
-].forEach(
+];
+
+if( config.isMusaProject )
+	listOfPageIdToShow.push( 'sla' );
+
+listOfPageIdToShow.forEach(
   function(key){
     pages_to_show[ key ] = all_pages[ key ];
   });
+
 
 router.get('/*', function(req, res, next) {
 
@@ -115,7 +122,12 @@ router.get('/*', function(req, res, next) {
 
     //maintain query string between pages
     var query_string = [];
-    var arr = ["period", "probe_id", "app_id", "period_id", "alert", "violation"];
+    var arr = ["period", "probe_id", "app_id", "period_id"];  
+
+    //for musa project
+    if (path == 'sla/availability')
+        arr.push( "alert", "violation" );
+    
     for (var i in arr) {
         var el = arr[i];
         if (req.query[el] != undefined)

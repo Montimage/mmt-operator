@@ -760,6 +760,10 @@ MMTDrop.formatMessage = function( message ){
         case MMTDrop.CsvFormat.LICENSE:
             msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] = formatTime( msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] );
             break;
+        //MUSA project, availability message
+        case 50:
+        	//console.log( msg );
+        	break;
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT :
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT :
         default :

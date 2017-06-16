@@ -147,8 +147,8 @@ router.process_message = function (db, message) {
 
 
 
-router.startListening = function (db, redis) {
-    var report_client = redis.createClient();
+router.startListening = function (db, pub_sub) {
+    var report_client = pub_sub.createClient();
     //*
     report_client.subscribe("license.stat");
     report_client.subscribe("security.report");
