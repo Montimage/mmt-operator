@@ -190,13 +190,22 @@ router.get("/profile", function (req, res, next) {
     if( !is_loggedin(req, res) ) return;
 
     router.dbadmin.getLicense( function( err, msg){
-        if( err ) throw new HttpException(req, res, "Not found");
-        if( msg == undefined ) 
-        	msg = {};
+        var version = "";
+        
+        if( msg == undefined ){ 
+            msg = {};
+            version = "No License";
+        }
+        else
+            version = "MMT-Operator: " + router.config.version 
+                  + "\nMMT-Probe   : " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] 
+                  + "\nMMT-SDK     : " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK]
+        
+        
         res.render('profile', {
             title     : 'Profile',
-            //version   : router.config.version + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] + ", " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK],
-            version   : " MMT-Operator 1.6.5-5dc7f4f,\n MMT-Probe 1.2.1-b5876c7,\n MMT-Security 1.1.4-8c20261,\n MMT-DPI 1.6.8.1-47e533f",
+            version   : version,
+            //version   : " MMT-Operator 1.6.5-5dc7f4f,\n MMT-Probe 1.2.1-b5876c7,\n MMT-Security 1.1.4-8c20261,\n MMT-DPI 1.6.8.1-47e533f",
             deviceID  : msg[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
             expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
         });
