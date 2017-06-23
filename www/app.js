@@ -177,6 +177,10 @@ if( config.isMusaProject ){
   app.use("/musa/connector", connector);
 }
 
+const dummy = require("./routes/dummy_report.js");
+dummy.pub_sub = pub_sub;
+app.use("/dummy", dummy);
+
 function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){

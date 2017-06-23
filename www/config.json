@@ -9,7 +9,9 @@
   },
   "kafka_server": {
     "host": "37.48.247.124",
-    "port": 2181
+    "_host": "192.168.0.7",
+    "port": 2181,
+    "ssl.ca.location": "data/kafka-ca.cert"
   },
   "data_folder": "/tmp/",
   "delete_data": true,

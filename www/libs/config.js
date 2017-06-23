@@ -71,17 +71,21 @@ if( !fs.existsSync( config.log_folder ) ){
   console.info( "node version: %s, platform: %s", process.version, process.platform );
   process.exit();
 }
+
+
 //overwrite console.log
 var logFile   = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
 var logStdout = process.stdout;
+var errStdout = process.stderr;
 
 console.logStdout = console.log;
 console.errStdout = console.error;
 
 console.log = function () {
 	var logLineDetails = ((new Error().stack).split("at ")[2]).trim();
-	logLineDetails = logLineDetails.split("www/")[1];
+	logLineDetails     = logLineDetails.split("www/")[1];
     var prefix = new Date().toLocaleString() + ", " + logLineDetails + "\n  ";
+    
     if( config.is_in_debug_mode === true  )
         logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
 
@@ -90,11 +94,10 @@ console.log = function () {
 
 console.warn = console.log;
 
-console.error = function( err ){
-    if( err == undefined ) return;
-    console.log( arguments );
-    if( err.stack )
-      console.log( err.stack );
+console.error = function( msg, err ){
+	console.log( msg );
+	if( err && err.stack )
+		console.log( err.stack );
 }
 
 console.debug = function( msg ){

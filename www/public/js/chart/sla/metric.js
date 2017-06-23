@@ -138,7 +138,7 @@ var ReportFactory = {
                 id      : "alert-" + comp.id + "-" + me.id,
                 class   : "form-control",
                 type    : "text",
-                required: true,
+                //required: true,
                 value   : me.alert,
                 disabled: me.support === false
               }
@@ -257,6 +257,9 @@ var ReportFactory = {
         },
         children : [{
           type     : "<form>",
+          attr     :{
+        	  onsubmit : "return window._checkSubmit();"  
+          },
           children : [{
             type     : "<table>",
             attr     : {
@@ -274,17 +277,16 @@ var ReportFactory = {
                 type: "<button>",
                 attr: {
                   class   : "btn btn-danger",
-                  type    : "button",
+                  type    : "submit",
                   text    : "Submit",
-                  onclick : "window._checkSubmit()",
                 }
               },{
-                type: "<a>",
+                type: "<button>",
                 attr: {
                   class   : "btn btn-success",
                   style   : "margin-left: 30px",
-                  text    : "Reset",
-                  onclick : "window._loadSelectedMetrics()"
+                  type    : "reset",
+                  text    : "Reset"
                 }
               },{
                 type: "<a>",
@@ -295,12 +297,12 @@ var ReportFactory = {
                   href    : '/chart/sla/upload' + MMTDrop.tools.getQueryString(["app_id"])
                 }
               },{
-                type: "<button>",
+                type: "<a>",
                 attr: {
                   class   : "btn btn-primary pull-right",
                   style   : "margin-left: 30px",
-                  type    : "reset",
                   text    : "Reset to Initial Value",
+                  onclick : "return window._loadSelectedMetrics()"
                 }
               },{
                 type: "<a>",
@@ -359,8 +361,9 @@ var ReportFactory = {
     //SUBMIT FORM
     window._checkSubmit = function(){
       var obj = window._mmt;
-
+      
       var selectedMetric = {};
+      
       for( var i=0; i<obj.components.length; i++){
         var comp = obj.components[ i ];
         //selected metrics of the compoment comp

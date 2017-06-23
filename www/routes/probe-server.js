@@ -113,7 +113,6 @@ router.process_message = function (db, message) {
 
 
         else if( format === mmtAdaptor.CsvFormat.LICENSE ){
-
             if( router.dbadmin )
                 router.dbadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
         }
@@ -139,8 +138,7 @@ router.process_message = function (db, message) {
         db.addProtocolStats(msg, function (err, err_msg) {});
         
     } catch (err) {
-        console.error("Error when processing the message: $" + message + "$");
-        console.error(err.stack);
+        console.error(err, "Error when processing the message: $" + message + "$");
         //process.exit(0);
     }
 };
@@ -167,6 +165,8 @@ router.startListening = function (db, pub_sub) {
     report_client.subscribe("ndn.report");
     report_client.subscribe("OTT.flow.report");
 
+    report_client.subscribe("cpu.report");
+    
     //for MUSA
     report_client.subscribe("metrics.availability");
     //*/

@@ -6,12 +6,11 @@ var dataAdaptor = require("../libs/dataAdaptor.js");
      database: mongo database, object,
      collection_name: ,string,
      message_format:{
-         key: array of string
-         data: {
-             $inc: array of string
-             $set: array of string
-             $init: array of string
-         }
+         key : array of string
+         inc : array of string
+         set : array of string
+         init: array of string
+         avg :
      },
      period: "real", "minute", "hour", "day"
  }
@@ -19,6 +18,11 @@ var dataAdaptor = require("../libs/dataAdaptor.js");
  */
 function Cache ( option ) {
 "use strict";
+	//check
+	if( !Array.isArray( option.message_format.key ) || option.message_format.key.length == 0){
+		return console.error( "Key must not empty" );
+	}
+
     var _this                   = this;
     var TIMESTAMP               = dataAdaptor.StatsColumnId.TIMESTAMP; //index of timestamp
     var REPORT_NUMBER           = dataAdaptor.StatsColumnId.REPORT_NUMBER;
@@ -222,9 +226,10 @@ function Cache ( option ) {
 
     const _is_real_or_special  = (_period_to_update_name === "real" || _period_to_update_name === "special");
     const key_id_arr           = option.message_format.key;
-    const key_inc_arr          = option.message_format.data["$inc"]  || [];
-    const key_set_arr          = option.message_format.data["$set"]  || [] ;
-    const key_init_arr         = option.message_format.data["$init"] || [];
+    const key_inc_arr          = option.message_format.inc  || [];
+    const key_set_arr          = option.message_format.set  || [] ;
+    const key_init_arr         = option.message_format.init || [];
+    const key_avg_arr          = option.message_format.avg  || [];
     /**
      * calculate data to be $inc, $set and $init then store them to _data
      * @param {Object/Array} msg message tobe added
@@ -236,7 +241,8 @@ function Cache ( option ) {
           key_obj [ key_id_arr[i] ] = msg[ key_id_arr[i] ];
 
         if( _is_real_or_special )
-            key_obj[ REPORT_NUMBER ] = msg[ REPORT_NUMBER ];
+            //key_obj[ REPORT_NUMBER ] = msg[ REPORT_NUMBER ];
+            key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ];
         else //each minute, hour, day, month
             key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _period_to_update_name ).valueOf();
 
@@ -261,15 +267,27 @@ function Cache ( option ) {
         for (var j=0; j<key_inc_arr.length; j++){
             var key = key_inc_arr[ j ];
             var val = msg[ key ];
-            if( isNaN( val ) )
+            if( Number.isNaN( val ) )
                val = 0;
             if (oo[ key ] === undefined)
                 oo[ key ]  = val;
             else
                 oo[ key ] += val;
         }
-
-        //set
+        
+        //avg: calculate average value
+        for (var j=0; j<key_avg_arr.length; j++){
+            var key = key_avg_arr[ j ];
+            var val = msg[ key ];
+            if( Number.isNaN( val ) )
+               val = 0;
+            if (oo[ key ] === undefined)
+                oo[ key ]  = val;
+            else
+                oo[ key ] += val;
+        }
+        
+        //set: override value by the last one
         for (var j=0; j<key_set_arr.length; j++){
             var key = key_set_arr[ j ];
             var val = msg[ key ];
@@ -277,19 +295,16 @@ function Cache ( option ) {
             if( val !== undefined )
                 oo[ key ] = val;
         }
-
-
         
-        //init
+        //init: initialise  value
         for( var j=0; j<key_init_arr.length; j++ ){
             var key = key_init_arr[ j ];
-            var val = msg[ key ];
 
             //init for the data in a period: minute, hour, day, month,
             //if( _period_to_update_name !== "special"){
 
                 if( oo[ key ] == undefined )
-                    oo[ key ] = val;
+                    oo[ key ] = msg[ key ];
 /*
             }else{
                 if( _init_data_obj[ txt ] == undefined )
@@ -307,35 +322,38 @@ function Cache ( option ) {
 };
 
 
-var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $set_ids, $init_ids, retain_period ){
+/**
+ * data = {
+ *  key : array
+ * 	init: array
+ * 	inc : array
+ *  set : array
+ *  avg : array
+ * }
+ */
+
+var DataCache = function( mongodb, collection_name_prefix, message_format, retain_period ){
     "use strict";
     var self = this;
 
     var option = {
-        database: mongodb,
+        database       : mongodb,
         collection_name: collection_name_prefix,
-        message_format:{
-            key: $key_ids,
-            data: {
-                $inc : $inc_ids,
-                $set : $set_ids,
-                $init: $init_ids,
-            }
-        },
-        period: "real"
+        message_format :message_format,
+        period         : "real"
     }
-    this.option = option;
-
-    var is_retain_all = (retain_period != undefined);
-
-    if( is_retain_all ){
+    this.option          = option;
+    var _cache           = { real : new Cache( option ) };
+    const _is_retain_all = (retain_period != undefined);
+    
+    //when <code>retain_period</code> is explicitly specified
+    //=> we retain only information at "real" level,
+    //   we do not calculate "minute", ... levels
+    if( _is_retain_all ){
         option[ "retain_period" ] = retain_period;
         option[ "period"        ] = "special";
     }
-
-    var _cache_real   = new Cache( option );
-
-    if( is_retain_all !== true ){
+    else{
 
         option.period = "minute";
         var _cache_minute = new Cache( option );
@@ -353,7 +371,7 @@ var DataCache = function( mongodb, collection_name_prefix, $key_ids, $inc_ids, $
     this.addMessage = function( msg ){
         self.havingMessage = true;
         _cache_real.addMessage( msg, function( arr_1 ){
-            if( is_retain_all === true || arr_1.length == 0) return;
+            if( _is_retain_all === true || arr_1.length == 0) return;
 
             _cache_minute.addArray( arr_1, function( arr_2){
                 if( arr_2.length === 0) return;

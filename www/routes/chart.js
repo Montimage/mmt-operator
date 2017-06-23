@@ -60,16 +60,16 @@ var all_pages = {
           "availability": {
             title: "Availability"
           },
-          "rtt":{
-            title: "Response Time"
+          "incident":{
+            title: "Incident Detection"
           },
-          "location": {
-            title: "Location"
+          "vuln_scan_freq": {
+            title: "Vulnerability Scan Frequency"
           }
 
         }
     },
-    'cpu_mem':{
+    'stat':{
      title: "Stat"
     },
     'setting':{
@@ -82,7 +82,8 @@ var pages_to_show = {};
 const listOfPageIdToShow = [
     'link', 'network', 'application', 'dpi', 'security'
     //, 'evasion',
-    //'behavior', 'ndn', 'video','sla','cpu_mem'
+    //'behavior', 'ndn', 'video','sla'
+    ,'stat'
 ];
 
 if( config.isMusaProject )

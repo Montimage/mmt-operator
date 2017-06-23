@@ -1,7 +1,7 @@
  var arr = [
     {
         id: "cpu_mem",
-        title: "CPU and Memory usage (in MMT-Probe)",
+        title: "CPU and Memory Usage",
         x: 0,
         y: 4,
         width: 12,
@@ -13,7 +13,7 @@
     },
     {
         id: "p_drop",
-        title: "Drop percentage",
+        title: "Drop packets",
         x: 0,
         y: 0,
         width: 12,

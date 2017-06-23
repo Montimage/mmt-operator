@@ -228,7 +228,7 @@ var ReportFactory = {
                       if( host != undefined && host != "" && host !=  msg[COL.IP_DEST.id] ){
                               obj[COL.IP_DEST.id]  = host;
                       }else
-                          obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id]; // ip
+                          obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id] +":" + msg[ COL.PORT_DEST.id ]; // ip
 
                       for( var j in colSum ){
                               var val = msg[ colSum[j].id ];
