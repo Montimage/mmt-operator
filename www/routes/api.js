@@ -18,6 +18,8 @@ function proc_request(req, res, next) {
 		dbconnector.getLastTime(function(err, time) {
 			if (err)
 				return next(err);
+			//get time nearest to 5 seconds but lower
+			time = Math.ceil( time / 5000 ) * 5000;
 
 			var inteval = action;
 

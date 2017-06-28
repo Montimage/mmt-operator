@@ -1100,6 +1100,7 @@ var ReportFactory = {
 
                             if (exist)
                                 obj[time][id] += msg[id] / period;
+                            //first time
                             else
                                 obj[time][id] = msg[id] / period;
                         }

@@ -269,7 +269,7 @@ function Cache ( option ) {
             var val = msg[ key ];
             if( Number.isNaN( val ) )
                val = 0;
-            if (oo[ key ] === undefined)
+            if (oo[ key ] == undefined)
                 oo[ key ]  = val;
             else
                 oo[ key ] += val;
@@ -281,7 +281,7 @@ function Cache ( option ) {
             var val = msg[ key ];
             if( Number.isNaN( val ) )
                val = 0;
-            if (oo[ key ] === undefined)
+            if (oo[ key ] == undefined)
                 oo[ key ]  = val;
             else
                 oo[ key ] += val;
@@ -356,13 +356,13 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
     else{
 
         option.period = "minute";
-        var _cache_minute = new Cache( option );
+        _cache.minute = new Cache( option );
 
         option.period = "hour";
-        var _cache_hour   = new Cache( option );
+        _cache.hour   = new Cache( option );
 
         option.period = "day";
-        var _cache_day    = new Cache( option );
+        _cache.day    = new Cache( option );
 
     }
 
@@ -370,14 +370,14 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
 
     this.addMessage = function( msg ){
         self.havingMessage = true;
-        _cache_real.addMessage( msg, function( arr_1 ){
+        _cache.real.addMessage( msg, function( arr_1 ){
             if( _is_retain_all === true || arr_1.length == 0) return;
 
-            _cache_minute.addArray( arr_1, function( arr_2){
+            _cache.minute.addArray( arr_1, function( arr_2){
                 if( arr_2.length === 0) return;
-                _cache_hour.addArray( arr_2, function( arr_3 ){
+                _cache.hour.addArray( arr_2, function( arr_3 ){
                     if( arr_2.length === 0) return;
-                    _cache_day.addArray( arr_3 );
+                    _cache.day.addArray( arr_3 );
                 })
             } )
         } );
@@ -385,12 +385,12 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
 
     this.addArray = function( arr ){
         self.havingMessage = true;
-        _cache_real.addArray( arr, function( arr_1 ){
-            if( is_retain_all === true ) return;
+        _cache.real.addArray( arr, function( arr_1 ){
+            if( _is_retain_all === true ) return;
 
-            _cache_minute.addArray( arr_1, function( arr_2){
-                _cache_hour.addArray( arr_2, function( arr_3 ){
-                    _cache_day.addArray( arr_3 );
+            _cache.minute.addArray( arr_1, function( arr_2){
+                _cache.hour.addArray( arr_2, function( arr_3 ){
+                    _cache.day.addArray( arr_3 );
                 })
             } )
         } );
@@ -399,25 +399,25 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
     this.flushDataToDatabase = function( cb ){
         cb = cb || function(){};
 
-        if( !self.havingMessage || is_retain_all === true ) {
+        if( !self.havingMessage || _is_retain_all === true ) {
             cb();
             return;
         }
 
         self.havingMessage = false;
 
-        _cache_real.flushDataToDatabase( function(err, arr){
+        _cache.real.flushDataToDatabase( function(err, arr){
           if( err ) return cb( err );
-          _cache_minute.addArray( arr );
+          _cache.minute.addArray( arr );
 
-          _cache_minute.flushDataToDatabase( function(err1, arr1){
+          _cache.minute.flushDataToDatabase( function(err1, arr1){
             if( err1 ) return cb( err1 );
-            _cache_hour.addArray( arr1 );
+            _cache.hour.addArray( arr1 );
 
-            _cache_hour.flushDataToDatabase( function(err2, arr2){
+            _cache.hour.flushDataToDatabase( function(err2, arr2){
               if( err2 ) return cb( err2 );
-              _cache_day.addArray( arr2 );
-              _cache_day.flushDataToDatabase( cb );
+              _cache.day.addArray( arr2 );
+              _cache.day.flushDataToDatabase( cb );
             });
           });
         });
@@ -427,27 +427,27 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
         cb = cb || function(){};
 
         //flush immediately
-        if( is_retain_all === true )
-            return _cache_real.flushDataToDatabase( cb );
+        if( _is_retain_all === true )
+            return _cache.real.flushDataToDatabase( cb );
 
 
         if( level == "real" || level == "minute" || level == "hour" || level == "day"){
-          _cache_real.flushDataToDatabase( function(err, arr){
+          _cache.real.flushDataToDatabase( function(err, arr){
             if( err ) return cb( err );
-            _cache_minute.addArray( arr );
+            _cache.minute.addArray( arr );
 
             if( level == "minute" || level == "hour" || level == "day"){
-                _cache_minute.flushDataToDatabase( function( err1, arr1){
+                _cache.minute.flushDataToDatabase( function( err1, arr1){
                   if( err1 ) return cb( err1 );
-                  _cache_hour.addArray( arr1 );
+                  _cache.hour.addArray( arr1 );
 
                   if( level == "hour" || level == "day"){
-                      _cache_hour.flushDataToDatabase( function( err2, arr2 ){
+                      _cache.hour.flushDataToDatabase( function( err2, arr2 ){
                           if( err2 ) return cb( err2 );
 
-                          _cache_day.addArray( arr2 );
+                          _cache.day.addArray( arr2 );
                           if( level == "day")
-                              _cache_day.flushDataToDatabase( cb );
+                              _cache.day.flushDataToDatabase( cb );
                           else
                             cb( err2, arr2 );
                       } );
@@ -463,13 +463,13 @@ var DataCache = function( mongodb, collection_name_prefix, message_format, retai
     }
 
     this.clear = function(){
-        _cache_real.clear();
-        if( _cache_minute )
-            _cache_minute.clear();
-        if( _cache_hour )
-            _cache_hour.clear();
-        if( _cache_day )
-            _cache_day.clear();
+        _cache.real.clear();
+        if( _cache.minute )
+            _cache.minute.clear();
+        if( _cache.hour )
+            _cache.hour.clear();
+        if( _cache.day )
+            _cache.day.clear();
     }
 }
 

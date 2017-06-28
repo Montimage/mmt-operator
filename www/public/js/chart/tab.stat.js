@@ -1,357 +1,437 @@
- var arr = [
+var arr = [
     {
-        id: "cpu_mem",
-        title: "CPU and Memory Usage",
-        x: 0,
-        y: 4,
-        width: 12,
-        height: 5,
-        type: "success",
-        userData: {
-            fn: "createCPUMemReport"
-        },
-    },
-    {
-        id: "p_drop",
-        title: "Drop packets",
-        x: 0,
-        y: 0,
-        width: 12,
-        height: 5,
-        type: "info",
-        userData: {
-            fn: "createDropPercentageReport"
+        id : "cpu_mem",
+        title : "CPU and Memory Usage",
+        x : 0,
+        y : 4,
+        width : 12,
+        height : 5,
+        type : "success",
+        userData : {
+            fn : "createCPUMemReport"
         },
     }
-];
+    ];
 
 var availableReports = {
-    "createCPUMemReport": "CPU_Memory ",
-    "createDropPercentageReport" : "Drop_Percentage"
+        "createCPUMemReport" : "CPU_Memory ",
+        "createDropPercentageReport" : "Drop_Percentage"
 }
 
+const STAT = MMTDrop.constants.StatColumn;
 var ReportFactory = {
 
-	    formatTime : function( date ){
-	          return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
-	    },
-		createCPUMemReport: function(){
-			var _this = this;
-	        var fMetric = MMTDrop.filterFactory.createProbeFilter();
-	        var $match = {};
-	        //var $match = {isGen: false};
-	        $match.isGen = false;
-	        $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+        formatTime : function( date ){
+            return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
+        },
+        createCPUMemReport : function(){
+            var _this = this;
+            var fMetric = MMTDrop.filterFactory.createProbeFilter();
+            var $match = {};
 
-	        var group = { _id : {} };
-	        [ COL.TIMESTAMP.id ].forEach( function( el, index){
-	          group["_id"][ el ] = "$" + el;
-	        } );
-	        [ COL.CPU_USAGE.id, COL.MEM_USAGE.id ].forEach( function( el, index){
-	          group[ el ] = {"$avg" : "$" + el};
-	        });
-	        [ COL.TIMESTAMP.id ].forEach( function( el, index){
-	          group[ el ] = {"$last" : "$"+ el};
-	        });
-	        
-	        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate", query: [{"$match":$match},{"$group" : group}]});
-	        
-	        var cLine = MMTDrop.chartFactory.createTimeline({
-	            getData: {
-	                getDataFn: function (db) {
-	                    var ylabel = "CPU/MEM Usage (%)";
-	                	
-	                    var cols = [COL.CPU_USAGE, COL.MEM_USAGE];
+            var group = {
+                    _id : {}
+            };
+            //id
+            [
+                STAT.TIMESTAMP.id, STAT.PROBE_ID.id
+                ].forEach( function( el, index ){
+                    group["_id"][el] = "$" + el;
+                } );
 
-	                    
-	                    var period = fPeriod.getDistanceBetweenToSamples();
+            [
+                STAT.CPU_USER, STAT.CPU_SYS, STAT.CPU_IDLE, 
+                STAT.MEM_AVAIL, STAT.MEM_TOTAL, STAT.COUNT
+                ].forEach( function( el ){
+                    group[el.id] = {
+                            "$sum" : "$" + el.id
+                    };
+                } );
+            [
+                COL.TIMESTAMP.id, STAT.PROBE_ID.id
+                ].forEach( function( el, index ){
+                    group[el] = {
+                            "$last" : "$" + el
+                    };
+                } );
 
-	                    var obj  = {};
-	                    var data = db.data();
-	                    console.log("data[0][COL.CPU_USAGE.id]:"+data[0][COL.CPU_USAGE.id] + "data[0][COL.MEM_USAGE.id]"+data[0][COL.MEM_USAGE.id]);//TODEL
+            var database = new MMTDrop.Database( {
+                collection : "data_stat",
+                action : "aggregate",
+                query : [
+                    {
+                        "$match" : $match
+                    }, {
+                        "$group" : group
+                    }
+                    ]
+            } );
 
-	                    for (var i in data) {
-	                        var msg   = data[i];
-	                        
-	                        var time  = msg[COL.TIMESTAMP.id];
-	                        var exist = true;
+            var cLine = MMTDrop.chartFactory
+            .createTimeline( {
+                getData : {
+                    getDataFn : function( db ){
+                        var ylabel = "CPU( %)";
 
-	                        //data for this timestamp does not exist before
-	                        if (obj[time] == undefined) {
-	                            exist = false;
-	                            obj[time] = {};
-	                            obj[time][COL.TIMESTAMP.id] = time;
-	                        }
+                        var cols = [
+                            {id: "ts" },
+                            {id: "cpu", label: "CPU"},
+                            {id: "mem", label: "Memory"}
+                            ];
 
-	                        for (var j in cols) {
-	                            var id = cols[j].id;
-	                            if( msg[id] == undefined )
-	                                msg[id] = 0;
-	                        	if( msg[id] > 100 ) //incorrect report
-	                        		obj[time][id] = 100;
-	                        	else obj[time][id] = msg[id];
-	                          }
+                        var period = fPeriod.getDistanceBetweenToSamples();
 
-	                    }
+                        var obj = {};
+                        var data = db.data();
+                        for( var i in data ){
+                            let msg = data[i];
+                            let ts  = msg[ STAT.TIMESTAMP.id ];
+                            let count = msg[ STAT.COUNT.id ];
+                            let cpu = (msg[ STAT.CPU_USER.id ] + msg[ STAT.CPU_SYS.id ]) / count;
+                            let mem = (msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ]) / count;
+                            obj[ ts ] = { ts: ts, cpu: cpu, mem: mem };
+                        }
 
-	                    cols.unshift(COL.TIMESTAMP);
 
-	                    var $widget = $("#" + cLine.elemID).getWidgetParent();
-	                    var height  = $widget.find(".grid-stack-item-content").innerHeight();
-	                    height     -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                        var $widget = $( "#" + cLine.elemID )
+                        .getWidgetParent();
+                        var height = $widget.find(
+                        ".grid-stack-item-content" ).innerHeight();
+                        height -= $widget.find( ".filter-bar" )
+                        .outerHeight( true ) + 15;
 
-	                    return {
-	                        data    : obj,
-	                        columns : cols,
-	                        ylabel  : ylabel,
-	                        height  : height,
-	                        addZeroPoints:{
-	                            time_id       : 3,
-	                            time          : status_db.time,
-	                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-	                            probeStatus   : status_db.probeStatus
-	                        },
-	                    };
-	                }
-	            },
+                        console.log( obj );
 
-	            chart: {
-	                data:{
-	                    type: "line"//step
-	                },
-	                color: {
-	                    pattern: ['orange', 'green', 'gray']
-	                },
-	                grid: {
-	                    x: {
-	                        show: false
-	                    },
-	                    y: {
-	                        show: true
-	                    }
-	                },
-	                axis: {
-	                    x: {
-	                        tick: {
-	                            format: _this.formatTime,
-	                        }
-	                    },
-	                },
-	                zoom: {
-	                    enabled: false,
-	                    rescale: false
-	                },
-	                tooltip:{
-	                    format: {
-	                        title:  _this.formatTime
-	                    }
-	                },
-	            },
+                        return {
+                            data : obj,
+                            columns : cols,
+                            ylabel : ylabel,
+                            height : height,
 
-	            afterRender: function (chart) {
-	                //register resize handle
-	                var $widget = $("#" + chart.elemID).getWidgetParent();
-	                $widget.on("widget-resized", function (event, $widget) {
-	                    var height = $widget.find(".grid-stack-item-content").innerHeight();
-	                    height -= $widget.find(".filter-bar").outerHeight(true) + 15;
-	                    chart.chart.resize({
-	                        height: height
-	                    });
-	                });
-	            }
-	        });
+                            addZeroPoints : {
+                                time_id : 3,
+                                time : status_db.time,
+                                sample_period : 1000 * fPeriod
+                                .getDistanceBetweenToSamples(),
+                                probeStatus : status_db.probeStatus
+                            },
+                        };
+                    }
+                },
 
-	        var dataFlow = [{
-	                object: fMetric,
-	                effect: [{
-	                    object: cLine
-									}]
-	        }];
+                chart : {
+                    data : {
+                        type : "step",// step
+                        axes:{
+                            "Memory": "y2"
+                        },
+                    },
+                    color : {
+                        pattern : [
+                            'orange', 'green'
+                            ]
+                    },
+                    grid : {
+                        x : {
+                            show : false
+                        },
+                        y : {
+                            show : true
+                        }
+                    },
+                    axis : {
+                        x : {
+                            tick : {
+                                format : _this.formatTime,
+                            }
+                        },
+                        y2: {
+                            show : true,
+                            label: {
+                                text: "Memory (B)",
+                                position: "outer"
+                            },
+                            tick: {
+                                count: 5,
+                                format: function( v ){
+                                    if( v < 0 ) return 0;
+                                    return MMTDrop.tools.formatDataVolume( v*1000 );
+                                }
+                            },
+                            min: 0,
+                            padding: {
+                              top: 10,
+                              bottom: 2
+                            },
+                        }
+                    },
+                    zoom : {
+                        enabled : false,
+                        rescale : false
+                    },
+                    tooltip : {
+                        format : {
+                            title : _this.formatTime
+                        }
+                    },
+                    padding: {
+                        top: 20,
+                    },
+                },
 
-	        var report = new MMTDrop.Report(
-	            // title
-	            null,
+                afterRender : function( chart ){
+                    // register resize handle
+                    var $widget = $("#" + chart.elemID).getWidgetParent();
+                    $widget.on("widget-resized", function (event, $widget) {
+                        var height = $widget.find(".grid-stack-item-content").innerHeight();
+                        height -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                        chart.chart.resize({
+                            height: height
+                        });
+                    });
+                }
+            } );
 
-	            // database
-	            database,
+            var report = new MMTDrop.Report(
+                    // title
+                    null,
 
-	            // filers
-						[fMetric],
-//	            		[],
-	            // charts
-						[
-	                {
-	                    charts: [cLine],
-	                    width: 12
-	                },
-						 ],
+                    // database
+                    database,
 
-	            //order of data flux
-	            dataFlow
-//						 []
-	        );
-	        return report;
-	    },
-	    
-	    createDropPercentageReport: function(){
-			var _this = this;
-	        var fMetric = MMTDrop.filterFactory.createProbeFilter();
-	        //var $match = {};
-	        var $match = {isGen: false};
-	        //$match.isGen = false;
-	        //$match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+                    // filers
+                    [
+                        fMetric
+                        ],
+                        // [],
+                        // charts
+                        [
+                            {
+                                charts : [
+                                    cLine
+                                    ],
+                                    width : 12
+                            },
+                            ],
 
-	        var group = { _id : {} };
-	        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
-	          group["_id"][ el ] = "$" + el;
-	        } );
-	        [ COL.P_DROP.id, COL.P_DROP_NIC.id, COL.P_DROP_KERNEL.id ].forEach( function( el, index){
-	          group[ el ] = {"$avg" : "$" + el};
-	        });
-	        [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
-	          group[ el ] = {"$last" : "$"+ el};
-	        });
-	        
-	        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate",
-	            query: [{"$match":$match},{"$group" : group}]});
-	        
-	        var cLine = MMTDrop.chartFactory.createTimeline({
-	            getData: {
-	                getDataFn: function (db) {
-	                    var col = fMetric.selectedOption();
-	                	var ylabel = "Drop (%)";
-	                	
-	                    var cols = [COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL];
+                            // order of data flux
+                            [
+                                {
+                                    object : fMetric,
+                                    effect : [
+                                        {
+                                            object : cLine
+                                        }
+                                        ]
+                                }
+                                ]
+            );
+            return report;
+        },
 
-	                    
-	                    var period = fPeriod.getDistanceBetweenToSamples();
+        createDropPercentageReport : function(){
+            var _this = this;
+            var fMetric = MMTDrop.filterFactory.createProbeFilter();
+            // var $match = {};
+            var $match = {
+                    isGen : false
+            };
+            // $match.isGen = false;
+            // $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
 
-	                    var obj  = {};
-	                    var data = db.data();
-	                    console.log("data[0]:"+data[0]);//TODEL
+            var group = {
+                    _id : {}
+            };
+            [
+                COL.TIMESTAMP.id, COL.FORMAT_ID.id
+                ].forEach( function( el, index ){
+                    group["_id"][el] = "$" + el;
+                } );
+            [
+                COL.P_DROP.id, COL.P_DROP_NIC.id, COL.P_DROP_KERNEL.id
+                ].forEach( function( el, index ){
+                    group[el] = {
+                            "$avg" : "$" + el
+                    };
+                } );
+            [
+                COL.TIMESTAMP.id, COL.FORMAT_ID.id
+                ].forEach( function( el, index ){
+                    group[el] = {
+                            "$last" : "$" + el
+                    };
+                } );
 
-	                    for (var i in data) {
-	                        var msg   = data[i];
-	                        //var proto = msg[COL.APP_ID.id];
+            var database = new MMTDrop.Database( {
+                collection : "data_session",
+                action : "aggregate",
+                query : [
+                    {
+                        "$match" : $match
+                    }, {
+                        "$group" : group
+                    }
+                    ]
+            } );
 
-	                        var time  = msg[COL.TIMESTAMP.id];
-	                        var exist = true;
+            var cLine = MMTDrop.chartFactory
+            .createTimeline( {
+                getData : {
+                    getDataFn : function( db ){
+                        var col = fMetric.selectedOption();
+                        var ylabel = "Drop (%)";
 
-	                        //data for this timestamp does not exist before
-	                        if (obj[time] == undefined) {
-	                            exist = false;
-	                            obj[time] = {};
-	                            obj[time][COL.TIMESTAMP.id] = time;
-	                        }
-                        
+                        var cols = [
+                            COL.P_DROP, COL.P_DROP_NIC,
+                            COL.P_DROP_KERNEL
+                            ];
 
-	                        for (var j in cols) {
-	                            var id = cols[j].id;
-	                        	if( msg[id] == undefined )
-	                                msg[id] = 0;
-	                        	if( msg[id] > 100 ) //incorrect report
-	                        		obj[time][id] = 100;
-	                        	else obj[time][id] = msg[id];
-	                        	//console.log("msg:"+msg[COL.P_DROP.id]);//TODEL
-	                          }
-	                    }
+                        var period = fPeriod.getDistanceBetweenToSamples();
 
-	                    cols.unshift(COL.TIMESTAMP);
+                        var obj = {};
+                        var data = db.data();
+                        console.log( "data[0]:" + data[0] );// TODEL
 
-	                    var $widget = $("#" + cLine.elemID).getWidgetParent();
-	                    var height  = $widget.find(".grid-stack-item-content").innerHeight();
-	                    height     -= $widget.find(".filter-bar").outerHeight(true) + 15;
+                        for( var i in data ){
+                            var msg = data[i];
+                            // var proto = msg[COL.APP_ID.id];
 
-	                    return {
-	                        data    : obj,
-	                        columns : cols,
-	                        ylabel  : ylabel,
-	                        height  : height,
-	                        addZeroPoints:{
-	                            time_id       : 3,
-	                            time          : status_db.time,
-	                            sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-	                            probeStatus   : status_db.probeStatus
-	                        },
-	                    };
-	                }
-	            },
+                            var time = msg[COL.TIMESTAMP.id];
+                            var exist = true;
 
-	            chart: {
-	                data:{
-	                    type: "line"//step
-	                },
-	                color: {
-	                    pattern: ['orange', 'green', 'gray']
-	                },
-	                grid: {
-	                    x: {
-	                        show: false
-	                    },
-	                    y: {
-	                        show: true
-	                    }
-	                },
-	                axis: {
-	                    x: {
-	                        tick: {
-	                            format: _this.formatTime,
-	                        }
-	                    },
-	                },
-	                zoom: {
-	                    enabled: false,
-	                    rescale: false
-	                },
-	                tooltip:{
-	                    format: {
-	                        title:  _this.formatTime
-	                    }
-	                },
-	            },
+                            // data for this timestamp does not exist before
+                            if( obj[time] == undefined ){
+                                exist = false;
+                                obj[time] = {};
+                                obj[time][COL.TIMESTAMP.id] = time;
+                            }
 
-	            afterRender: function (chart) {
-	                //register resize handle
-	                var $widget = $("#" + chart.elemID).getWidgetParent();
-	                $widget.on("widget-resized", function (event, $widget) {
-	                    var height = $widget.find(".grid-stack-item-content").innerHeight();
-	                    height -= $widget.find(".filter-bar").outerHeight(true) + 15;
-	                    chart.chart.resize({
-	                        height: height
-	                    });
-	                });
-	            }
-	        });
+                            for( var j in cols ){
+                                var id = cols[j].id;
+                                if( msg[id] == undefined )
+                                    msg[id] = 0;
+                                if( msg[id] > 100 ) // incorrect report
+                                    obj[time][id] = 100;
+                                else
+                                    obj[time][id] = msg[id];
+                                // console.log("msg:"+msg[COL.P_DROP.id]);//TODEL
+                            }
+                        }
 
-	        var dataFlow = [{
-	                object: fMetric,
-	                effect: [{
-	                    object: cLine
-									}]
-	        }];
+                        cols.unshift( COL.TIMESTAMP );
 
-	        var report = new MMTDrop.Report(
-	            // title
-	            null,
+                        var $widget = $( "#" + cLine.elemID )
+                        .getWidgetParent();
+                        var height = $widget.find(
+                        ".grid-stack-item-content" ).innerHeight();
+                        height -= $widget.find( ".filter-bar" )
+                        .outerHeight( true ) + 15;
 
-	            // database
-	            database,
+                        return {
+                            data : obj,
+                            columns : cols,
+                            ylabel : ylabel,
+                            height : height,
+                            addZeroPoints : {
+                                time_id : 3,
+                                time : status_db.time,
+                                sample_period : 1000 * fPeriod
+                                .getDistanceBetweenToSamples(),
+                                probeStatus : status_db.probeStatus
+                            },
+                        };
+                    }
+                },
 
-	            // filers
-						[fMetric],
-//	            		[],
-	            // charts
-						[
-	                {
-	                    charts: [cLine],
-	                    width: 12
-	                },
-						 ],
+                chart : {
+                    data : {
+                        type : "line"//step
+                    },
+                    color : {
+                        pattern : [
+                            'orange', 'green', 'gray'
+                            ]
+                    },
+                    grid : {
+                        x : {
+                            show : false
+                        },
+                        y : {
+                            show : true
+                        }
+                    },
+                    axis : {
+                        x : {
+                            tick : {
+                                format : _this.formatTime,
+                            }
+                        },
+                    },
+                    zoom : {
+                        enabled : false,
+                        rescale : false
+                    },
+                    tooltip : {
+                        format : {
+                            title : _this.formatTime
+                        }
+                    },
+                },
 
-	            //order of data flux
-	            dataFlow
-//						 []
-	        );
-	        return report;
-	    },
+                afterRender : function( chart ){
+                    //register resize handle
+                    var $widget = $( "#" + chart.elemID ).getWidgetParent();
+                    $widget.on( "widget-resized",
+                            function( event, $widget ){
+                        var height = $widget.find(
+                        ".grid-stack-item-content" )
+                        .innerHeight();
+                        height -= $widget.find( ".filter-bar" )
+                        .outerHeight( true ) + 15;
+                        chart.chart.resize( {
+                            height : height
+                        } );
+                    } );
+                }
+            } );
+
+            var dataFlow = [
+                {
+                    object : fMetric,
+                    effect : [
+                        {
+                            object : cLine
+                        }
+                        ]
+                }
+                ];
+
+            var report = new MMTDrop.Report(
+                    // title
+                    null,
+
+                    // database
+                    database,
+
+                    // filers
+                    [
+                        fMetric
+                        ],
+                        //	            		[],
+                        // charts
+                        [
+                            {
+                                charts : [
+                                    cLine
+                                    ],
+                                    width : 12
+                            },
+                            ],
+
+                            //order of data flux
+                            dataFlow
+                            //						 []
+            );
+            return report;
+        },
 }

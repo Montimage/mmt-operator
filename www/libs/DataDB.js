@@ -114,11 +114,11 @@ var MongoConnector = function () {
 								COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
 						}
 				),
-
+				//system statistics
 				sysStat: new DataCache(db, "data_stat",
 						{
 							key: [STAT.FORMAT_ID, STAT.PROBE_ID],
-							avg: [STAT.CPU_USER, STAT.CPU_SYS, STAT.CPU_IDLE, STAT.MEM_AVAIL, STAT.MEM_TOTAL],
+							inc: [STAT.CPU_USER, STAT.CPU_SYS, STAT.CPU_IDLE, STAT.MEM_AVAIL, STAT.MEM_TOTAL, STAT.COUNT],
 						},
 						//retain
 						config.retain_detail_report_period * 1000 //change second ==> milisecond
@@ -408,7 +408,7 @@ var MongoConnector = function () {
 			self.probeStatus.set( msg );
 			return;
 		}
-		if( format === 201 ){
+		if( format === dataAdaptor.CsvFormat.SYS_STAT_FORMAT ){
 			self.dataCache.sysStat.addMessage( msg );
 			return;
 		}
@@ -1163,7 +1163,7 @@ var MongoConnector = function () {
 			return;
 		}
 
-		self.getLastTimestampOfCollection( "data_total_real", function( time ){
+		self.getLastTimestampOfCollection( "data_session_real", function( time ){
 			self.lastPacketTimestamp = time;
 			if( time > 0 )
 				return cb(null, time );
