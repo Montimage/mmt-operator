@@ -71,7 +71,7 @@ var ReportFactory = {
             .createTimeline( {
                 getData : {
                     getDataFn : function( db ){
-                        var ylabel = "CPU( %)";
+                        var ylabel = "Percentage (%)";
 
                         var cols = [
                             {id: "ts" },
@@ -88,7 +88,9 @@ var ReportFactory = {
                             let ts  = msg[ STAT.TIMESTAMP.id ];
                             let count = msg[ STAT.COUNT.id ];
                             let cpu = (msg[ STAT.CPU_USER.id ] + msg[ STAT.CPU_SYS.id ]) / count;
-                            let mem = (msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ]) / count;
+                            //let mem = (msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ]) / count;
+                            let mem = (( msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ] ) * 100 /msg[ STAT.MEM_TOTAL.id ]);
+                            
                             obj[ ts ] = { ts: ts, cpu: cpu, mem: mem };
                         }
 
@@ -100,7 +102,7 @@ var ReportFactory = {
                         height -= $widget.find( ".filter-bar" )
                         .outerHeight( true ) + 15;
 
-                        console.log( obj );
+                        //console.log( obj );
 
                         return {
                             data : obj,
@@ -122,9 +124,11 @@ var ReportFactory = {
                 chart : {
                     data : {
                         type : "step",// step
+                        /*
                         axes:{
                             "Memory": "y2"
                         },
+                        */
                     },
                     color : {
                         pattern : [
@@ -145,6 +149,7 @@ var ReportFactory = {
                                 format : _this.formatTime,
                             }
                         },
+                        /*
                         y2: {
                             show : true,
                             label: {
@@ -164,6 +169,7 @@ var ReportFactory = {
                               bottom: 2
                             },
                         }
+                        */
                     },
                     zoom : {
                         enabled : false,
