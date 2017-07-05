@@ -5,6 +5,7 @@
     "start": "node ./bin/www",
     "build": "node ./bin/build build",
     "build-deb"  : "node ./bin/build deb",
+    "build-rpm"  : "node ./bin/build rpm",
     "install": "node ./bin/build install",
     "clean": "node ./bin/build dist-clean",
     "test": "echo '=> testing' && mocha test-cases/"

@@ -84,12 +84,12 @@ var ReportFactory = {
                         var obj = {};
                         var data = db.data();
                         for( var i in data ){
-                            let msg = data[i];
-                            let ts  = msg[ STAT.TIMESTAMP.id ];
-                            let count = msg[ STAT.COUNT.id ];
-                            let cpu = (msg[ STAT.CPU_USER.id ] + msg[ STAT.CPU_SYS.id ]) / count;
+                            var msg = data[i];
+                            var ts  = msg[ STAT.TIMESTAMP.id ];
+                            var count = msg[ STAT.COUNT.id ];
+                            var cpu = (msg[ STAT.CPU_USER.id ] + msg[ STAT.CPU_SYS.id ]) / count;
                             //let mem = (msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ]) / count;
-                            let mem = (( msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ] ) * 100 /msg[ STAT.MEM_TOTAL.id ]);
+                            var mem = (( msg[ STAT.MEM_TOTAL.id ] - msg[ STAT.MEM_AVAIL.id ] ) * 100 /msg[ STAT.MEM_TOTAL.id ]);
                             
                             obj[ ts ] = { ts: ts, cpu: cpu, mem: mem };
                         }

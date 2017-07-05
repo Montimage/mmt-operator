@@ -186,7 +186,7 @@ function build(built_type) {
                 
                 console.log(command_str);
                 cp.execSync(command_str, { cwd: BASE_PATH });
-            }else{
+            }else if( built_type == "deb" ){
                 const  DEB_PATH = path.join( BASE_PATH, NAME ),
                         OP_PATH = path.join( DEB_PATH, "opt", "mmt");
                 cp.execSync( "mkdir -p " + OP_PATH );
@@ -220,7 +220,57 @@ function build(built_type) {
                 //delete source folder
                 log("delete source folder")
                 cp.execSync("rm -rf " + NAME );
-            }
+            }else if( built_type == "rpm" ){
+                const  DEB_PATH = path.join( BASE_PATH, NAME ),
+                OP_PATH = path.join( DEB_PATH, "opt", "mmt");
+                cp.execSync( "mkdir -p " + OP_PATH );
+        
+                //copy source
+                cp.execSync("mv " + DIST_PATH + " " + OP_PATH );
+                
+                cp.execSync( "chmod +x " + path.join( OP_PATH, "operator", "bin", "www" ) );
+                //create symbol link mmt-operator to /opt/mmt/operator/bin/www
+                cp.execSync( "mkdir -p " + path.join( DEB_PATH, "usr", "bin" ) );
+                cp.execSync( "ln -s /opt/mmt/operator/bin/www " + path.join( DEB_PATH, "usr", "bin", "mmt-operator" ) );
+                
+                log("create " + NAME + ".rpm")
+                
+                fs.writeFileSync( "mmt.spec",
+                      "Summary:  MMT-Operator" +
+                      "\nName: mmt-operator" +
+                      "\nVersion: " + VERSION.VERSION_NUMBER +
+                      "\nRelease: " + VERSION.VERSION_HASH +
+                      "\nLicense: proprietary" +
+                      "\nGroup: Development/Tools" +
+                      "\nURL: http://montimage.com/" +
+                      "\n" +
+                      "\nBuildRoot: %{_topdir}/BUILD/%{name}-%{version}-%{release}" +
+                      "\n" +
+                      "\n%description" +
+                      "\nMMT-Operator is a tool for visualisation results of MMT-Probe." +
+                      "\nBuild date: " + moment().format("YYYY-MM-DD HH:mm:SS") +
+                      "\n" +
+                      "\n%prep" +
+                      "\nrm -rf %{buildroot}" +
+                      "\nmkdir -p %{buildroot}/" +
+                      "\nmv "+ DEB_PATH +"/*  %{buildroot}/" +
+                      "\n" +
+                      "\n%clean" +
+                      "\nrm -rf %{buildroot}" +
+                      "\n" +
+                      "\n%files" +
+                      "\n%defattr(-,root,root,-)" +
+                      "\n/opt/mmt/operator/*" +
+                      "\n/usr/bin/mmt-operator" +
+                      "\n%post" +
+                      "\nldconfig"
+                  );
+                  const rpmDir = path.join( BASE_PATH, "rpmbuild" );
+                  cp.execSync( "mkdir -p "+ rpmDir +"/{RPMS,BUILD}" );
+                  cp.execSync('rpmbuild --quiet --rmspec --define "_topdir '+ rpmDir +'" --define "_rpmfilename ../../'+ NAME +'.rpm" -bb ./mmt.spec');
+                  cp.execSync( "rm -rf " + rpmDir + " " + DEB_PATH );
+            }else
+                console.log("Unknow build type: " + built_type );
 
 
 
@@ -276,7 +326,9 @@ else if (action == "install") {
     install();
 } else if (action == "dist-clean")
     dist_clean();
-else if (action == "deb") {
+else if (action == "deb") 
     build("deb");
-} else
+else if (action == "rpm")
+    build("rpm");
+else
     console.error("Usage: " + process.argv[0] + " " + process.argv[1] + " build|dist-clean|install\n");
