@@ -81,7 +81,8 @@ var pages_to_show = {};
 [
     'link', 'network', 'application', 'dpi', 'security'
     //, 'evasion',
-    //'behavior', 'ndn', 'video','sla','cpu_mem'
+    , 'behavior'
+	 //, 'ndn', 'video','sla','cpu_mem'
 ].forEach(
   function(key){
     pages_to_show[ key ] = all_pages[ key ];

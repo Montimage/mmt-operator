@@ -130,6 +130,9 @@ var get_match_query = function( p ){
 	    obj[ COL.IP_DEST.id ] = param.ip;
 	    $match["$or"].push( obj );
 	} 
+  }else{
+	$match[ COL.IP_SRC.id ] =  {$nin:["null", MICRO_FLOW]};
+	$match[ COL.IP_DEST.id ] = {$nin:["null", MICRO_FLOW]};
   }
   if( param.link ){
     var link = param.link.split(",");
