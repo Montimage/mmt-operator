@@ -11,8 +11,17 @@ var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Cou
 
 ipToCountry._get = function( ip ){
   var loc = ipToCountry.get( ip );
-  if (loc){
-    return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
+  if( loc == undefined )
+	return "_unknown";
+  if ( loc.country )
+	loc = loc.country;
+  else if (loc.contient)
+	loc = loc.continent;
+  else if (loc.registered_country)
+	loc = loc.registered_country;
+
+  if (loc && loc.names ){
+    return  loc['names']['en'];
   }else if( MMTDrop.isLocalIP( ip )
     //multicast
     || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0){
