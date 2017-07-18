@@ -245,7 +245,7 @@ var ReportFactory = {
       var form_config = {
         type  : "<div>",
         attr  : {
-          class  : "col-md-10 col-md-offset-1",
+          class  : "col-md-12",
           style  : "margin-top: 20px"
         },
         children : [{

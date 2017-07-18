@@ -163,7 +163,7 @@ app.use("/export", require("./routes/html2img.js"));
 //TODO to remove in final product
 if( config.isMusaProject ){
   //module to check preodically if components of apps are available
-  require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
+  //require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
  
   //module to verify preodically if the current data are violdated
   require("./routes/musa/violation_check_engine.js").start( pub_sub, dbconnector );

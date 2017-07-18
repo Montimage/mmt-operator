@@ -63,6 +63,29 @@
   
   "sla" : {
       "active_check_period"   : 5,
-      "violation_check_period": 5
+      "violation_check_period": 5,
+      "reactions" : {
+         "down_5min": {
+            "description" : "Put down all NIC using to cut communication, then bring them up after 5 minutes",
+            "channel_name": "react_down_5min",
+            "candidate_metrics" : { 
+               "incident": {"alert": true, "violate": true} 
+            }
+         },
+         "filtre_port": {
+            "description" : "Kill all processes listening on ports other than 80 and 443",
+            "channel_name": "react_filtre_port",
+            "candidate_metrics" : {
+               "vuln_scan_freq": {"alert": true, "violate": true}
+            }
+         },
+         "restart_apache": {
+            "description" : "Restart the Apache when the website is not accessible",
+            "channel_name": "restart_apache",
+            "candidate_metrics" : {
+               "availability" : {"alert": true}
+            }
+         }
+      }
   }
 }

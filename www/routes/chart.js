@@ -56,6 +56,9 @@ var all_pages = {
           "../sla": {
             title: "Metrics"
           },
+          "reaction": {
+        	  	title: "Reaction Manager"
+          },
           "separator":true,
           "availability": {
             title: "Availability"
@@ -144,6 +147,7 @@ router.get('/*', function(req, res, next) {
     var title = "...";
     if (page) title = page.title;
 
+    const other_config = router.config.json;
     res.render("chart", {
         title              : title,
         page_id            : id,
@@ -153,6 +157,7 @@ router.get('/*', function(req, res, next) {
         probe_stats_period : router.config.probe_stats_period,
         probe_analysis_mode: router.config.probe_analysis_mode,
         is_in_debug_mode   : (router.config.is_in_debug_mode === true),
+        other_config       : other_config,
         licence_remain_days: 10
     });
 

@@ -1197,6 +1197,32 @@ MMTDrop.tools = function () {
     return !isNaN(parseFloat(n)) && isFinite(n);
   };
 
+  /**
+   * Get value of an attribute of an object
+   * Example: obj = {
+   * 	a : {
+   * 		b : 1
+   * 	}
+   * }
+   * => getValue( obj, "a" ) => {b:1}
+   * => getValue( obj, "b" ) => null
+   * => getValue( obj, ["a","b"] ) => 1
+   * => getValue( obj, ["c","b"] ) => null
+   */
+  _this.getValue = function( obj, attr ){
+	  if( Array.isArray( attr )){
+		  for( var i=0; i<attr.length; i++ ){
+			  obj = obj[ attr[i] ];
+			  
+			  if( obj == undefined )
+				  return undefined;
+		  }
+		  return obj;
+	  }
+	  
+	  return obj[ attr ];
+  }
+  
   _this.getModalWindow = function( id ){
      id = id || "modalWindow";
 
@@ -1319,12 +1345,12 @@ MMTDrop.tools = function () {
         "class" : "form-group"
       })
         .append( $("<label>", {
-          "class": (isVertical == undefined )? "col-sm-3  control-label": "control-label",
+          "class": (isVertical )? "col-sm-3  control-label": "control-label",
           "for"  : config.attr.id,
           "text" : config.label
         }))
         .append(
-          ( isVertical == undefined )?
+          ( isVertical )?
             $("<div>", {class: "col-sm-9"}).append(
               $obj
             )
@@ -1542,16 +1568,27 @@ MMTDrop.tools = function () {
       add_obj = _this.parseURLParameters( add_query_str );
     }
 
+    var paramObj;
+    
     //get all parameters
-    if( param == undefined || param.length == 0 ){
-      param = [];
-      for( var k in obj )
-        param.push( k );
+    if( !Array.isArray( param ) ){
+      paramObj = obj;
+    }else{
+    		paramObj = {};
+    		
+    		//by default, we maintain the following parameters: 
+    		["app_id", "probe_id", "period", "period_id"].forEach( function(el){
+    			paramObj[ el ] = true;
+    		} );
+    		param.forEach( function( el){
+    			paramObj[ el ] = true;
+    		} );
     }
-    for( var i=0; i<param.length; i++ ){
-      var val = obj[ param[i] ];
-      if( val != undefined && add_obj[ param[i] ] == undefined )
-        arr.push( param[i] + "=" +  val);
+    
+    for( var i in paramObj ){
+      var val = obj[ i ];
+      if( val != undefined && add_obj[ i ] == undefined )
+        arr.push( i + "=" +  val);
     }
 
     for(  var i in add_obj ){

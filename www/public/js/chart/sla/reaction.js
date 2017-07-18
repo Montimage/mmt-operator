@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "metric",
-        title: "Select Metrics",
+        title: "Reaction Manager",
         x: 0,
         y: 0,
         width: 12,
@@ -34,6 +34,14 @@ var ReportFactory = {
 
       var init_components = obj.components,
           init_metrics    = obj.metrics;
+      
+      //get URL of reaction editor 
+      var _getReactionURL = function( comp_id, act_id ){
+    	  		var additionalParam = "comp_id=" + comp_id;
+    	  		if( act_id != undefined )
+    	  			additionalParam += "&act_id=" + act_id;
+    	  		return "reaction/edit" + MMTDrop.tools.getQueryString( ["app_id","probe_id"], additionalParam );
+      };
 
       var table_rows = [{
         type    : "<thead>",
@@ -44,17 +52,13 @@ var ReportFactory = {
           },{
             type : "<th>",
             attr : {
-              text : "Metrics"
+            	  style : "text-align:right",
+              text  : "Conditions"
             }
           },{
             type : "<th>",
             attr : {
-              text : "Alerts"
-            }
-          },{
-            type : "<th>",
-            attr : {
-              text : "Violations"
+              text : "Reactions"
             }
           },{
             type : "<th>",
@@ -69,7 +73,7 @@ var ReportFactory = {
           },{
             type : "<th>",
             attr : {
-              text : "Supported"
+              text : "Action"
             }
           }]
         }]
@@ -82,16 +86,32 @@ var ReportFactory = {
         if( comp.metrics == undefined || comp.metrics.length == 0 )
           continue;
 
-
         var $row = {
           type    : "<tr>",
+          attr    : {
+        	  	valign  : "middle",
+          },
           children: [{
             type :  "<td>",
             attr : {
-              colspan : 7,
+              colspan : 5,
               style   : "font-weight: bold",
               text    : comp.title + " ("+ comp.url +")"
             }
+          },{
+        	  	type : "<td>",
+        	  	attr : {
+        	  		align : "center"
+        	  	},
+        	  	children: [{
+        	  		type : "<a>",
+        	  		attr : {
+        	  			class : "btn btn-success",
+        	  			title : "Add new reaction for this component",
+        	  			html  : "<span class='glyphicon glyphicon-plus'></span>",
+        	  			href  : _getReactionURL( comp.id )
+        	  		}
+        	  	}]
           }]
         };
 
@@ -105,11 +125,27 @@ var ReportFactory = {
         if( comp.metrics )
           metrics = metrics.concat( comp.metrics.slice( 0 ) );
 
+        //keep only metrics being enabled/supported
+        var avail_metrics = [];
+        for( var j=0; j<metrics.length; j++ ){
+            var me = metrics[ j ];
+            
+            //show only metrics being enabled
+            if( me.enable === true )
+          	  	avail_metrics.push( me );
+        }
+        
+        metrics = avail_metrics;
+        
         //each row for a metric
         for( var j=0; j<metrics.length; j++ ){
           var me = metrics[ j ];
+          
           row = {
             type    : "<tr>",
+            attr    : {
+            		valign: "middle"
+            },
             children: []
           };
           //first column
@@ -121,43 +157,22 @@ var ReportFactory = {
               }
             })
 
-          //title
+          //condition
           row.children.push({
             type  : "<td>",
             attr  : {
-              text : me.title
+            		align: "right",
+            		style: "border-right: none",
+            		html : '<span class="badge">Availability Alerts</span> <span class="glyphicon glyphicon-arrow-right"></span>'
             }
           });
 
-          //alert
+          //reaction
           row.children.push({
-            type     : "<td>",
-            children : [{
-              type : "<input>",
-              attr : {
-                id      : "alert-" + comp.id + "-" + me.id,
-                class   : "form-control",
-                type    : "text",
-                //required: true,
-                value   : me.alert,
-                disabled: me.support === false
-              }
-            }]
-          });
-          //violation
-          row.children.push({
-            type     : "<td>",
-            children : [{
-              type : "<input>",
-              attr : {
-                id      : "violation-" + comp.id + "-" + me.id,
-                class   : "form-control",
-                type    : "text",
-                required: true,
-                value   : me.violation,
-                disabled: me.support === false
-              }
-            }]
+            type : "<td>",
+            attr : {
+            		html : '<span class="badge">Stop NIC</span>'
+            }
           });
           //priority
           row.children.push({
@@ -239,9 +254,12 @@ var ReportFactory = {
               align: "center"
             },
             children: [{
-              type : "<i>",
+              type : "<a>",
               attr : {
-                class : "fa " + (me.support? "fa-check text-success" : "fa-times text-danger")
+                class : "btn btn-default",
+                title : "Edit this reaction",
+                html  : "<span class='glyphicon glyphicon-edit'></span>",
+                href  : _getReactionURL( comp.id, 1 )
               }
             }]
           });
@@ -252,7 +270,7 @@ var ReportFactory = {
       var form_config = {
         type  : "<div>",
         attr  : {
-          class  : "col-md-12",
+          class  : "col-md-12 col-md-offset-0",
           style  : "margin-top: 20px; padding-bottom: 20px"
         },
         children : [{
@@ -276,32 +294,17 @@ var ReportFactory = {
               {
                 type: "<button>",
                 attr: {
-                  class   : "btn btn-danger",
-                  type    : "submit",
-                  text    : "Submit",
-                }
-              },{
-                type: "<button>",
-                attr: {
-                  class   : "btn btn-success",
+                  class   : "btn btn-danger pull-right",
                   style   : "margin-left: 30px",
-                  type    : "reset",
-                  text    : "Reset"
+                  type    : "submit",
+                  text    : "Save",
                 }
               },{
                 type: "<a>",
                 attr: {
                   class   : "btn btn-warning pull-right",
                   style   : "margin-left: 30px",
-                  text    : "Upload new SLA",
-                  href    : '/chart/sla/upload' + MMTDrop.tools.getQueryString(["app_id"])
-                }
-              },{
-                type: "<a>",
-                attr: {
-                  class   : "btn btn-primary pull-right",
-                  style   : "margin-left: 30px",
-                  text    : "Reset to Initial Value",
+                  text    : "Reset",
                   onclick : "return window._loadSelectedMetrics()"
                 }
               },{

@@ -10,7 +10,7 @@ const
 ;
 
 //is MMT-Operator running for a specific project?
-config.project = constant.project.NONE; //MUSA
+config.project = constant.project.MUSA
 
 config.isMusaProject = ( config.project === constant.project.MUSA );
 

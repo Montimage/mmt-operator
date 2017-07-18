@@ -46,6 +46,7 @@ block header
     script( type='text/javascript', src='/js/over/jquery-override.js')
     script( type='text/javascript', src='/js/over/jquery-datepicker.js')
     script( type='text/javascript', src= '/js/waiting.js')
+    script( type='text/javascript', src= '/js/breadcrumbs.js')
     script( type='text/javascript', src= '/js/grid.js')
     script( type='text/javascript', src= '/js/event.js')
     script( type='text/javascript', src= '/js/metric_utils.js')
@@ -155,7 +156,7 @@ block content
 
     #content
         script(type='text/javascript').
-            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period }, probe_analysis_mode : "#{ probe_analysis_mode }" });
+            MMTDrop.setOptions({probe_stats_period : #{ probe_stats_period }, probe_analysis_mode : "#{ probe_analysis_mode }", others : !{ other_config } });
         .grid-stack
         //the grid will be rendered here by javasript grid.js!
 
