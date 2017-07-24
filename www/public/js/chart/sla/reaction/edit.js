@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 8,
+        height: 9,
         type: "success",
         userData: {
             fn: "createMetricReport"
@@ -23,7 +23,7 @@ var ReportFactory = {
     fAutoReload.hide();
     fProbe.hide();
     
-    var _this    = this;
+    const _this    = this;
     const app_id   = URL_PARAM.app_id;
     const comp_id  = URL_PARAM.comp_id;
     const react_id = URL_PARAM.react_id;
@@ -45,7 +45,12 @@ var ReportFactory = {
       
       var init_components = obj.components,
           init_metrics    = obj.metrics;
-
+      if( react_id )
+  		reactionObj  = obj.selectedReaction[ react_id ];
+      //by default, value of one reaction:
+      if( reactionObj == undefined )
+  		reactionObj = {conditions: {}, actions: [], priority: "MEDIUM", enable: true, note : ""};
+      
       var table_rows = [{
         type    : "<thead>",
         children: [{
@@ -82,11 +87,6 @@ var ReportFactory = {
           continue;
         
         componentObj = comp;
-        if( react_id )
-        		reactionObj  = comp.selectedReaction[ react_id ];
-        //by default, value of one reaction:
-        if( reactionObj == undefined )
-        		reactionObj = {conditions: {}, actions: {}, priority: "MEDIUM", enable: true, note : ""};
         
         //common metrics
         var metrics = init_metrics.slice( 0 );
@@ -124,6 +124,11 @@ var ReportFactory = {
           });
           
           //alerts
+          var checked = false;
+          var x = reactionObj.conditions[me.name];
+          if( Array.isArray( x ))
+        	  	checked = (x.indexOf( "violate" ) != -1);
+          
           row.children.push({
             type     : "<td>",
             children : [{
@@ -135,11 +140,13 @@ var ReportFactory = {
               children : [{
                 type    : "<input>",
                 attr    : {
-                  id      : "alert-" + me.name,
-                  class   : "onoffswitch-checkbox react-conditions",
-                  type    : "checkbox",
+                  id            : "alert-" + me.name,
+                  class         : "onoffswitch-checkbox react-conditions",
+                  type          : "checkbox",
+                  "data-metric" : me.name,
+                  "data-type"   : "alert",
                   //this checkbox is checked if it is in the list of "conditions"
-                  checked :  (MMTDrop.tools.getValue( reactionObj.conditions, [me.id, "alert"] ) != undefined)
+                  checked       :  checked
                 }
               },{
                 type    : "<label>",
@@ -163,6 +170,11 @@ var ReportFactory = {
           });
 
         //violate
+          var checked = false;
+          var x = reactionObj.conditions[me.name];
+          if( Array.isArray( x ))
+        	  	checked = (x.indexOf( "violate" ) != -1);
+          
           row.children.push({
             type     : "<td>",
             children : [{
@@ -174,10 +186,12 @@ var ReportFactory = {
               children : [{
                 type    : "<input>",
                 attr    : {
-                  id      : "violate-" + me.name,
-                  class   : "onoffswitch-checkbox react-conditions",
-                  type    : "checkbox",
-                  checked :  (MMTDrop.tools.getValue( reactionObj.conditions, [me.id, "violate"] ) != undefined)
+                  id            : "violate-" + me.name,
+                  class         : "onoffswitch-checkbox react-conditions",
+                  type          : "checkbox",
+                  "data-metric" : me.name,
+                  "data-type"   : "violate",
+                  checked       :  checked
                 }
               },{
                 type    : "<label>",
@@ -221,7 +235,7 @@ var ReportFactory = {
     	  			html    : text,
     	  			title   : text,
     	  			//select this option if it is in the list of "actions"
-    	  			selected: (reactionObj.actions[ name ] != undefined)
+    	  			selected: (reactionObj.actions.indexOf( name ) != -1 )
     	  		}
     	  	})
       }
@@ -229,7 +243,7 @@ var ReportFactory = {
       var form_config = {
           type     : "<form>",
           attr     :{
-        	  	onsubmit : "return window._checkSubmit();",
+        	  	onsubmit : "return _checkSubmit();",
         	  	//class : "",
           },
           children : [{
@@ -356,9 +370,9 @@ var ReportFactory = {
        * metric in #candidate_metrics then it will recommend that reaction.
        */
       _this.recommendIndex = 0;
-      _this.totalReactions = 0;
+      _this.reactionsName = [];
       for( var rec in REACTORS )
-    	  	_this.totalReactions ++;
+    	  	_this.reactionsName.push( rec );
       
       $("#recommendBtn").click( function(){
     	  	//clear the form
@@ -368,43 +382,48 @@ var ReportFactory = {
     	  	$("#noteArea").val("");
     	  	
     	  	var index = 0;
-    	  	for( var rec in REACTORS ){
-    	  		index ++;
-    	  		if( index < _this.recommendIndex )
-    	  			continue;
-    	  		
-    	  		//loop on each reaction
-    	  		_this.recommendIndex ++;
-    	  		if( _this.recommendIndex >= _this.totalReactions )
-    	  			_this.recommendIndex = 0;
-    	  		
-    	  		const react = REACTORS[ rec ];
-    	  		for( var cond in react.candidate_metrics ){
-    	  			const val = react.candidate_metrics[ cond ];
-    	  			var count = 0;	//number of conditions that can be satisfied
-    	  			var text  = [];
-    	  			//having alert attribute
-    	  			if( val.alert ){
-    	  				//check whether the current form contains one of the conditions
-    	  				count += $("#alert-" + cond).prop("checked", true ).length;
-    	  				text.push( cond + ".alert" );
-    	  			}
-    	  			if( val.violate ){
-    	  				//check whether the current form contains one of the conditions
-    	  				count += $("#violate-" + cond).prop("checked", true ).length;
-    	  				text.push( cond + ".violate" );
-    	  			}
-    	  			
-    	  			//ok, there exist => select the actions correspondent
-    	  			if( count > 0 ){
-    	  				$("#actionSelectBox").val( rec );
-    	  				$("#noteArea").val( "Recommend: when having " + text.join(" and ") + " then perform " + cond );
-    	  				break;
-    	  			}
-    	  		}
-    	  		
-    	  		break;
-    	  	}
+    	  	//ensure that we visite maximally all element of reactionsName
+    	  	//the visite is broken when we found one recommendation
+    	  	while( index ++ < _this.reactionsName.length ){
+	    	  	const rec = _this.reactionsName[ _this.recommendIndex ];
+			const react = REACTORS[ rec ];
+			const conditionText = [];
+			
+			for( var cond in react.candidate_metrics ){
+				const val = react.candidate_metrics[ cond ];
+				var count = 0;	//number of conditions that can be satisfied
+				var text  = [];
+				//having alert attribute
+				if( val.alert ){
+					//check whether the current form contains one of the conditions
+					count = $("#alert-" + cond).prop("checked", true ).length;
+					if( count > 0 )
+						text.push( "alert" );
+				}
+				if( val.violate ){
+					//check whether the current form contains one of the conditions
+					count = $("#violate-" + cond).prop("checked", true ).length;
+					if( count > 0 )
+						text.push( 'violate' );
+				}
+				
+				if( text.length > 0 )
+				     conditionText.push( cond + " (" + text.join( " or " ) + ")" );
+			}
+			
+	
+			//increase index for the nex recommendation
+			_this.recommendIndex ++;
+			if( _this.recommendIndex >= _this.reactionsName.length )
+				_this.recommendIndex = 0;
+			
+			//ok, there exist => select the actions correspondent
+			if( conditionText.length > 0 ){
+				$("#actionSelectBox").val( rec );
+				$("#noteArea").val( "Recommendation: when having " + conditionText.join(" and ") + " then perform \"" + rec +"\" action" );
+				break;
+			}
+    	  	}//end of while
       });
     }//end rederTable function
 
@@ -413,40 +432,63 @@ var ReportFactory = {
     //SUBMIT FORM
     window._checkSubmit = function(){
     	  //get actions
-      var actionsObj = {};
-      const list = $("#actionSelectBox").val();
-      list.forEach( function( val ){
-    	  	actionsObj[ val ] = REACTORS[ val ];
-      });
+      const actionList = $("#actionSelectBox").val();
+
       
-      //get conditions
-      var conditionsObj = {};
+      //get conditions: array of checkboxes being checked
+      const conditionsList = $(".react-conditions:checked");
+      
+      if( conditionsList.length == 0 ){
+    	  	MMTDrop.alert.error("Need to select at least one condition", 5000 );
+    	  	return false;
+      }
+      
+      const condObj = {};
+      for( var i=0; i<conditionsList.length; i++ ){
+    	  	var chk    = conditionsList[i];
+    	  	var metric = chk.getAttribute("data-metric");
+    	  	var type   = chk.getAttribute("data-type");
+    	  	
+    	  	if( condObj[ metric ]  == undefined )
+    	  		condObj[ metric ] = [];
+    	  	condObj[ metric ].push( type );
+      }
       
       var obj =  {
-        conditions : conditionsObj,
-        actions    : actionsObj,
+    		comp_id    : comp_id,
+        conditions : condObj,
+        actions    : actionList,
         priority   : $("#prioritySelectBox").val(),
         note       : $("#noteArea").val(),
         enable     : true
       };
+
+      var dataObj = {};
+    //insert new
+      if( react_id == undefined )
+    	  	dataObj[  "selectedReaction." + MMTDrop.tools.guid() ] = obj;
+      else //update the old
+    	  	dataObj[  "selectedReaction." + react_id ] = obj;
       
       //save to db
       MMTDrop.tools.ajax("/api/metrics/update", {
         "$match"   : {"_id" : app_id},
         "$data"    : {
-          "$set" : {selectedReaction : obj}	
+          "$set" : dataObj
         }
       },
       "POST",
       //callback
       {
-        error   : function(){
-          console.error( "AJAX Error" )
+        error   : function( err ){
+          MMTDrop.alert.error( "Cannot update database: " + err )
         },
         success : function( ){
-          MMTDrop.tools.gotoURL("/chart/sla/reaction", {param : ["app_id", "probe_id"]} )
+        		MMTDrop.alert.success("Successfully save to database", 1500 );
+        		setTimeout( MMTDrop.tools.gotoURL, 2000,
+        				"/chart/sla/reaction", {param : ["app_id", "probe_id"]} );
         }
-      })
+      });
 
       return false;
     }//END SUBMIT FORM

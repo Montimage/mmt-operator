@@ -81,23 +81,28 @@ var errStdout = process.stderr;
 console.logStdout = console.log;
 console.errStdout = console.error;
 
-console.log = function () {
-	var logLineDetails = ((new Error().stack).split("at ")[2]).trim();
+//get prefix to print message: date time, file name and line number of caller
+const getPrefix = function(){
+	var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
 	logLineDetails     = logLineDetails.split("www/")[1];
     var prefix = new Date().toLocaleString() + ", " + logLineDetails + "\n  ";
     
+    return prefix;
+}
+console.log = function () {
     if( config.is_in_debug_mode === true  )
-        logStdout.write  ( prefix + util.format.apply(null, arguments) + '\n');
+        logStdout.write  ( getPrefix() + util.format.apply(null, arguments) + '\n');
 
-    logFile.write( prefix + util.format.apply(null, arguments) + '\n');
+    logFile.write( getPrefix() + util.format.apply(null, arguments) + '\n');
 }
 
 console.warn = console.log;
 
 console.error = function( msg, err ){
-	console.log( msg );
-	if( err && err.stack )
-		console.log( err.stack );
+    if( config.is_in_debug_mode === true  )
+    		errStdout.write  ( getPrefix() + util.format.apply(null, arguments) + '\n');
+
+    logFile.write( getPrefix() + util.format.apply(null, arguments) + '\n');
 }
 
 console.debug = function( msg ){
@@ -121,7 +126,8 @@ if( config.is_in_debug_mode == true )
 //MUSA
 config.sla = tools.merge( {
     "active_check_period"   : 5,
-    "violation_check_period": 5
+    "violation_check_period": 5,
+    "reaction_check_period" : 5
 }, config.sla);
   
 module.exports = config;

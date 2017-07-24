@@ -680,7 +680,7 @@ var MongoConnector = function () {
 		var _callback = function( err, data ){
 			console.log( action, " on [", collection, "]\n query : ", JSON.stringify(query), 
 					"\n got " + ( err? "error" : data.length) + " records", 
-					"\n using " + ((new Date()).getTime() - startTime)  );
+					"\n using " + ((new Date()).getTime() - startTime) + "ms"  );
 			callback( err, data );
 		}
 

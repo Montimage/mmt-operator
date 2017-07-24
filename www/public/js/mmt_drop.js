@@ -1084,6 +1084,16 @@ MMTDrop.tools = function () {
     return (++ _uniqueNumber);
   };
 
+  /**
+   * Generate a global unique ID
+   * https://www.ietf.org/rfc/rfc4122.txt
+   */
+  _this.guid = function(){
+	  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+		    return v.toString(16);
+		  });
+  }
 
   /**
    * Capitalize the first letter of a string
@@ -1577,7 +1587,7 @@ MMTDrop.tools = function () {
     		paramObj = {};
     		
     		//by default, we maintain the following parameters: 
-    		["app_id", "probe_id", "period", "period_id"].forEach( function(el){
+    		["app_id", "probe_id", "period" ].forEach( function(el){
     			paramObj[ el ] = true;
     		} );
     		param.forEach( function( el){
@@ -1626,7 +1636,7 @@ MMTDrop.tools = function () {
     throw new Error("abort to goto " + url);
   },
   _this.reloadPage = function( add_param_string ){
-    _this.gotoURL( _this.getCurrentURL([], add_param_string) );
+    _this.gotoURL( _this.getCurrentURL( null, add_param_string) );
   }
 
   _this.ajax =  function( url, data, method, callback, options ){
@@ -3032,7 +3042,7 @@ MMTDrop.filterFactory = {
                 options.push( { id: periods.WEEK       , label: "Last 7 days"    });
                 options.push( { id: periods.MONTH      , label: "Last 30 days"   });
             }
-      var period_id_preselected_from_url = MMTDrop.tools.getURLParameters().period_id;
+      var period_id_preselected_from_url = MMTDrop.tools.getURLParameters().period;
       if( period_id_preselected_from_url )
         for( var i=0; i<options.length; i++ ){
           //delete default selected

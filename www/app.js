@@ -168,6 +168,8 @@ if( config.isMusaProject ){
   //module to verify preodically if the current data are violdated
   require("./routes/musa/violation_check_engine.js").start( pub_sub, dbconnector );
   
+  require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
+  
   var sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);

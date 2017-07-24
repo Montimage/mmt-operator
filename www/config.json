@@ -64,6 +64,7 @@
   "sla" : {
       "active_check_period"   : 5,
       "violation_check_period": 5,
+      "reaction_check_period" : 5,
       "reactions" : {
          "down_5min": {
             "description" : "Put down all NIC using to cut communication, then bring them up after 5 minutes",
@@ -76,7 +77,8 @@
             "description" : "Kill all processes listening on ports other than 80 and 443",
             "channel_name": "react_filtre_port",
             "candidate_metrics" : {
-               "vuln_scan_freq": {"alert": true, "violate": true}
+               "vuln_scan_freq": {"alert": true, "violate": true},
+               "incident": {"alert": true }
             }
          },
          "restart_apache": {

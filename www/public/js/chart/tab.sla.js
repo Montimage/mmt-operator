@@ -268,7 +268,15 @@ var ReportFactory = {
                 text    : "Modify Metrics",
                 href    : '/chart/sla/metric' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
               }
-            }
+            },{
+                type: "<a>",
+                attr: {
+                  class   : "btn btn-warning pull-right",
+                  style   : "margin-left: 30px",
+                  text    : "Manage Reactions",
+                  href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
+                }
+              }
           ]
         }]
       };
@@ -322,7 +330,7 @@ var ReportFactory = {
       .replace("=",  '"$eq" :');
 
       MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
-        MMTDrop.tools.getQueryString( ["app_id"], "probe_id=" + probe_id + "&period_id=" + fPeriod.selectedOption().id + "&alert=" + alert_thr + "&violation=" + violation_thr ) );
+        MMTDrop.tools.getQueryString( ["app_id"], "&alert=" + alert_thr + "&violation=" + violation_thr ) );
     }
 	}
 }

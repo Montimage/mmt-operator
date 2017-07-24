@@ -32,14 +32,14 @@ var ReportFactory = {
       //this is used when use submit the form
       window._mmt = obj;
 
-      var init_components = obj.components,
-          init_metrics    = obj.metrics;
+      const init_components = obj.components,
+            reactions       = obj.selectedReaction;
       
       //get URL of reaction editor 
-      var _getReactionURL = function( comp_id, act_id ){
+      const _getReactionURL = function( comp_id, act_id ){
     	  		var additionalParam = "comp_id=" + comp_id;
     	  		if( act_id != undefined )
-    	  			additionalParam += "&act_id=" + act_id;
+    	  			additionalParam += "&react_id=" + act_id;
     	  		return "reaction/edit" + MMTDrop.tools.getQueryString( ["app_id","probe_id"], additionalParam );
       };
 
@@ -71,6 +71,16 @@ var ReportFactory = {
               text : "Enable"
             }
           },{
+              type : "<th>",
+              attr : {
+                text : "Note"
+              }
+          },{
+              type : "<th>",
+              attr : {
+                text : "#Triggers"
+              }
+          },{
             type : "<th>",
             attr : {
               text : "Action"
@@ -83,8 +93,6 @@ var ReportFactory = {
         //show only probe that is indicated in URL by probe_id
         if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
           continue;
-        if( comp.metrics == undefined || comp.metrics.length == 0 )
-          continue;
 
         var $row = {
           type    : "<tr>",
@@ -94,10 +102,17 @@ var ReportFactory = {
           children: [{
             type :  "<td>",
             attr : {
-              colspan : 5,
+              colspan : 6,
               style   : "font-weight: bold",
               text    : comp.title + " ("+ comp.url +")"
             }
+          },{
+        	  	type : "<td>",
+        	  	attr : {
+        	  		align: "right",
+        	  		style: "font-weight: bold",
+        	  		text: 0
+        	  	}
           },{
         	  	type : "<td>",
         	  	attr : {
@@ -106,7 +121,7 @@ var ReportFactory = {
         	  	children: [{
         	  		type : "<a>",
         	  		attr : {
-        	  			class : "btn btn-success",
+        	  			class : "btn btn-primary",
         	  			title : "Add new reaction for this component",
         	  			html  : "<span class='glyphicon glyphicon-plus'></span>",
         	  			href  : _getReactionURL( comp.id )
@@ -118,28 +133,12 @@ var ReportFactory = {
         //first row for component's title
         table_rows.push( $row );
 
-
-        //common metrics
-        var metrics = init_metrics.slice( 0 );
-        //private metrics of each component
-        if( comp.metrics )
-          metrics = metrics.concat( comp.metrics.slice( 0 ) );
-
-        //keep only metrics being enabled/supported
-        var avail_metrics = [];
-        for( var j=0; j<metrics.length; j++ ){
-            var me = metrics[ j ];
-            
-            //show only metrics being enabled
-            if( me.enable === true )
-          	  	avail_metrics.push( me );
-        }
-        
-        metrics = avail_metrics;
-        
         //each row for a metric
-        for( var j=0; j<metrics.length; j++ ){
-          var me = metrics[ j ];
+        for( var react_id in reactions ){
+          var reaction = reactions[ react_id ];
+          //show only reactions of this component
+          if( reaction.comp_id != comp.id )
+        	  	continue;
           
           row = {
             type    : "<tr>",
@@ -148,30 +147,32 @@ var ReportFactory = {
             },
             children: []
           };
-          //first column
-          if( j == 0 )
-            row.children.push({
-              type : "<td>",
-              attr : {
-                rowspan : metrics.length
-              }
-            })
 
+          var conditionList = [];
+          for( var cond in reaction.conditions )
+        	  	conditionList.push( '<span class="badge">'+ cond +' ('+ reaction.conditions[cond].join(' or ') +')</span>' )
+          
           //condition
           row.children.push({
             type  : "<td>",
             attr  : {
+            		colspan: 2,
             		align: "right",
             		style: "border-right: none",
-            		html : '<span class="badge">Availability Alerts</span> <span class="glyphicon glyphicon-arrow-right"></span>'
+            		html : conditionList.join(" and ") + ' <span class="glyphicon glyphicon-arrow-right"></span>'
             }
           });
 
+          var actionList = [];
+          reaction.actions.forEach( function( val ){
+        	  	actionList.push('<span class="badge">'+ val +'</span>');
+          });
+          
           //reaction
           row.children.push({
             type : "<td>",
             attr : {
-            		html : '<span class="badge">Stop NIC</span>'
+            		html : actionList.join(", ")
             }
           });
           //priority
@@ -180,31 +181,31 @@ var ReportFactory = {
             children : [{
               type : "<select>",
               attr : {
-                id      : "priority-" + comp.id + "-" + me.id,
-                class   : "form-control",
+                id      : "priority-" + react_id,
+                class   : "form-control prioritySelectbox",
                 required: true,
-                disabled: me.support === false
+                "data-reaction-id": react_id,
               },
               children : [{
                 type : "<option>",
                 attr : {
                   value   : "HIGH",
                   text    : "HIGH",
-                  selected: (me.priority == "HIGH")
+                  selected: (reaction.priority == "HIGH")
                 }
               },{
                 type : "<option>",
                 attr : {
                   value   : "MEDIUM",
                   text    : "MEDIUM",
-                  selected: (me.priority == "MEDIUM")
+                  selected: (reaction.priority == "MEDIUM")
                 }
               },{
                 type : "<option>",
                 attr : {
                   value   : "LOW",
                   text    : "LOW",
-                  selected: (me.priority == "LOW")
+                  selected: (reaction.priority == "LOW")
                 }
               }]
             }]
@@ -221,17 +222,17 @@ var ReportFactory = {
               children : [{
                 type    : "<input>",
                 attr    : {
-                  id      : "enable-" + comp.id + "-" + me.id,
-                  class   : "onoffswitch-checkbox",
+                  id      : "enable-" + react_id,
+                  class   : "onoffswitch-checkbox enableCheckbox",
                   type    : "checkbox",
-                  checked : me.enable, //(me.name == "" ? false: me.enable)//TODO to enable
-                  disabled: me.support === false
+                  checked : reaction.enable,
+                  "data-reaction-id": react_id,
                 }
               },{
                 type    : "<label>",
                 attr    : {
                   class   : "onoffswitch-label",
-                  for     : "enable-" + comp.id + "-" + me.id,
+                  for     : "enable-" + react_id,
                 },
                 children  : [{
                   type  : "<span>",
@@ -247,7 +248,26 @@ var ReportFactory = {
               }]
             }]
           });
-
+          
+          //note
+          row.children.push({
+              type : "<td>",
+              attr : {
+                style  : "max-width: 400px !important; min-width: 100px !important; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;",
+                	title  : reaction.note,
+                	text   : reaction.note
+              }
+            });
+          
+          //number of times this reaction was trigged
+          row.children.push({
+        	  	type: "<td>",
+        	  	attr: {
+        	  		align: "right",
+        	  		text : 0
+        	  	}
+          });
+          
           row.children.push({
             type : "<td>",
             attr : {
@@ -259,10 +279,11 @@ var ReportFactory = {
                 class : "btn btn-default",
                 title : "Edit this reaction",
                 html  : "<span class='glyphicon glyphicon-edit'></span>",
-                href  : _getReactionURL( comp.id, 1 )
+                href  : _getReactionURL( comp.id, react_id )
               }
             }]
           });
+          
           table_rows.push( row );
         }
       }
@@ -282,7 +303,8 @@ var ReportFactory = {
             type     : "<table>",
             attr     : {
               class : "table table-striped table-bordered table-condensed dataTable no-footer",
-              id    : "tblData"
+              id    : "tblData",
+              style : "width: 100%"
             },
             children : table_rows
           },{
@@ -300,12 +322,12 @@ var ReportFactory = {
                   text    : "Save",
                 }
               },{
-                type: "<a>",
+                type: "<button>",
                 attr: {
                   class   : "btn btn-warning pull-right",
                   style   : "margin-left: 30px",
                   text    : "Reset",
-                  onclick : "return window._loadSelectedMetrics()"
+                  type    : "reset"
                 }
               },{
                 type: "<a>",
@@ -322,89 +344,40 @@ var ReportFactory = {
       };
 
       $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
-      window._loadSelectedMetrics();
     }//end rederTable function
-
-
-    //load the previously selected values to the form
-    window._loadSelectedMetrics = function(){
-      var obj = window._mmt;
-      if( obj.selectedMetric == undefined )
-        return;
-
-      for( var i=0; i<obj.components.length; i++){
-        var comp = obj.components[ i ];
-        //common metrics
-        var metrics = obj.metrics.slice( 0 );
-        //private metrics of each component
-        if( comp.metrics )
-          metrics = metrics.concat( comp.metrics.slice( 0 ) )
-
-
-        for( var j=0; j<metrics.length; j++ ){
-          var me  = metrics[ j ];
-          var sel = obj.selectedMetric[ comp.id ];
-          if( sel != undefined )
-            sel = sel[ me.id ];
-          if( sel == undefined )
-            continue;
-
-          var id = comp.id + "-" + me.id;
-
-          $("#alert-"     + id).val( sel.alert     ),
-          $("#violation-" + id).val( sel.violation ),
-          $("#priority-"  + id).val( sel.priority  ),
-          $("#enable-"    + id).prop( "checked", sel.enable )
-        }
-      }
-    }//end load the previously selected values to the form
-
 
 
     //SUBMIT FORM
     window._checkSubmit = function(){
-      var obj = window._mmt;
+      var dataObj = {};
+      //enable or disable reactions
+      $(".enableCheckbox").each( function( i, val ){
+    	  	var id = val.getAttribute('data-reaction-id');
+    	  	var isChecked = $(val).prop("checked");
+    	  	dataObj[ "selectedReaction." + id + ".enable" ] = isChecked;
+      });
+      //update priority
+      $(".prioritySelectbox").each( function( i, val ){
+  	  	var id  = val.getAttribute('data-reaction-id');
+  	  	var v = $(val).val();
+  	  	dataObj[ "selectedReaction." + id + ".priority" ] = v;
+      });
       
-      var selectedMetric = {};
-      
-      for( var i=0; i<obj.components.length; i++){
-        var comp = obj.components[ i ];
-        //selected metrics of the compoment comp
-        selectedMetric[ comp.id ] = {};
-
-        //common metrics
-        var metrics = obj.metrics.slice( 0 );
-        //private metrics of each component
-        if( comp.metrics )
-          metrics = metrics.concat( comp.metrics.slice( 0 ) )
-
-        for( var j=0; j<metrics.length; j++ ){
-          var me = metrics[ j ];
-          var id = comp.id + "-" + me.id;
-
-          selectedMetric[ comp.id ][ me.id ] = {
-            alert     : $("#alert-" + id).val(),
-            violation : $("#violation-" + id).val(),
-            priority  : $("#priority-" + id).val(),
-            enable    : $("#enable-" + id).is(":checked")
-          };
-        }
-      }
       //save to db
       MMTDrop.tools.ajax("/api/metrics/update", {
         "$match"   : {"_id" : app_id},
         "$data"    : {
-          "$set" : {selectedMetric : selectedMetric}
+          "$set" : dataObj
         }
       },
       "POST",
       //callback
       {
         error   : function(){
-          console.error( "AJAX Error" )
+        	MMTDrop.alert.error("Cannot update to Database", 5000);
         },
         success : function( ){
-          MMTDrop.tools.gotoURL("/chart/sla", {param : ["app_id"]} )
+          MMTDrop.alert.success("Successfully update to Database", 5000);
         }
       })
 
