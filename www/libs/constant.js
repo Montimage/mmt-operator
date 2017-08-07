@@ -11,7 +11,15 @@ const constant = {
 	project: {
 		NONE: 0,
 		MUSA: 1,
-	}
+	},
+	
+	period : {
+			REAL   : "real",
+			MINUTE : "minute",
+			HOUR   : "hour",
+			DAY    : "day",
+			SPECIAL: "special"
+	},
 };
 
 module.exports = constant;

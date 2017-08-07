@@ -252,6 +252,10 @@ router.startListeningAtFolder = function (db, folder_path) {
         for (var i=0; i<files.length; i++) {
             var file_name = files[i];
 
+            var thread_index = file_name.split("_")[1];
+            if( thread_index % config.total_processes != config.file_index  )
+            		continue
+            
             //file was read (check in database when the read files are not deleted)
             if( config.delete_data !== true )
                 if( read_files.indexOf( dir + file_name ) > -1 )

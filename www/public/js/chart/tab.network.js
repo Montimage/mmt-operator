@@ -395,7 +395,8 @@ var ReportFactory = {
 
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$match:{isGen: false}},{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", 
+        		query: [{$match:{isGen: false}},{$group: group}]} );
 
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
@@ -774,7 +775,7 @@ var ReportFactory = {
         var self = this;
         //mongoDB aggregate
         var group = { _id : {} };
-        [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+        [ "link" ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
@@ -784,7 +785,12 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
+        const sort = {};
+        sort[ COL.DATA_VOLUME.id ] = -1;
+        
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", 
+        		query: [{$group: group}, {$sort: sort}, {$limit: 500} ], raw: true} );
+        
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
@@ -828,12 +834,20 @@ var ReportFactory = {
                         cPie.dataLegend.data[name].val += val;
                         cPie.dataLegend.dataTotal      += val;
                     }
-                    for( var name in cPie.dataLegend.data )
+                    for( var name in cPie.dataLegend.data ){
+                    		var arr = cPie.dataLegend.data[ name ].ips;
+                    		arr[0] = MMTDrop.tools.ipV4Number2String( arr[0] );
+                    		arr[1] = MMTDrop.tools.ipV4Number2String( arr[1] );
+                    		
+                    		var key = arr.join( sperator );
+                    		cPie.dataLegend.data[ key ] = cPie.dataLegend.data[ name ];
+                    		name = key;
+                    		
                         data.push({
                             "key": name,
                             "val": cPie.dataLegend.data[ name ].val
                         });
-
+                    }
 
                     data.sort(function (a, b) {
                         return b.val - a.val;
@@ -1139,12 +1153,15 @@ var ReportFactory = {
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
+        const sort = {};
+        sort[ COL.DATA_VOLUME.id ] = -1;
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_ip", action: "aggregate", 
+        		query: [{$group: group}, {$sort: sort}, {$limit: 500}], raw: true} );
         //this is call each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [$match, {$group: group}];
+            param.query = [$match, {$group: group}, {$sort: sort}, {$limit: 500}];
           }
         }
 
@@ -1178,11 +1195,17 @@ var ReportFactory = {
                         cPie.dataLegend.data[name].val += val;
                         cPie.dataLegend.dataTotal      += val;
                     }
-                    for( var name in cPie.dataLegend.data )
+                    
+                    for( var name in cPie.dataLegend.data ){
+                    		var ip = MMTDrop.tools.ipV4Number2String( name );
+                    		cPie.dataLegend.data[ ip ] = cPie.dataLegend.data[ name ];
+                    		
+                    		delete( cPie.dataLegend.data[ name ]);
                         data.push({
-                            "key": name,
-                            "val": cPie.dataLegend.data[ name ].val
+                            "key": ip,
+                            "val": cPie.dataLegend.data[ ip ].val
                         });
+                    }
 
 
                     data.sort(function (a, b) {
@@ -1496,10 +1519,10 @@ var ReportFactory = {
         } );
 
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_location", action: "aggregate", query: [{$group: group}], raw: true} );
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
-          var $match       = get_match_query();
+          var $match = get_match_query();
           if( $match != undefined ){
             param.query = [$match, {$group: group}];
           }
@@ -2347,7 +2370,7 @@ $(str).appendTo("head");
           group[ el ] = {"$first" : "$"+ el};
         } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_session", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", query: [{$group: group}]} );
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){

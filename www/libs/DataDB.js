@@ -4,19 +4,17 @@ var Window         = require("./Window.js");
 var AppList        = require("./AppList.js");
 var ipLib          = require("ip");
 var config         = require("./config.js");
-var CircularBuffer = require("./CircularBuffer.js");
-
 //var ip2loc      = require("");
 
 var DataCache   = require("./Cache.js");
 var MongoClient = require('mongodb').MongoClient,
-format      = require('util').format;
+format          = require('util').format;
 
 var MongoConnector = function () {
 	const self = this;
 
 	self.mdb = null;
-	self.db_name = "mmt-data";
+	self.db_name = config.databaseName;
 
 	self.onReadyCallback = [];
 	self.onReady = function( cb ){
@@ -26,51 +24,9 @@ var MongoConnector = function () {
 	const host = config.database_server.host;
 	const port = config.database_server.port;
 
-
 	const connectString = 'mongodb://' + host + ":" + port + "/" + self.db_name;
 
 	var no_1_packet_reports = 0;
-
-	const COL      = dataAdaptor.StatsColumnId;
-	const HTTP     = dataAdaptor.HttpStatsColumnId;
-	const NDN      = dataAdaptor.NdnColumnId;
-	const TLS      = dataAdaptor.TlsStatsColumnId;
-	const RTP      = dataAdaptor.RtpStatsColumnId;
-	const FTP      = dataAdaptor.FtpStatsColumnId;
-	const LICENSE  = dataAdaptor.LicenseColumnId;
-	const OTT      = dataAdaptor.OTTQoSColumnId;
-	const STAT     = dataAdaptor.StatColumnId;
-	const FORMAT_ID   = COL.FORMAT_ID,
-	PROBE_ID      = COL.PROBE_ID,
-	SOURCE_ID     = COL.SOURCE_ID,
-	TIMESTAMP     = COL.TIMESTAMP,
-	REPORT_NUMBER = COL.REPORT_NUMBER;
-
-	var FLOW_SESSION_INIT_DATA = {};//init data of each session
-
-	//all columns of HTTP, SSL,RTP et FTP
-	//attributes will be stored in data_session collection
-	var init_session_set = [];
-	for( var i = COL.FORMAT_TYPE ; i <= FTP.RESPONSE_TIME; i++){
-		if( dataAdaptor.objectHasAttributeWithValue( COL, i)      == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( HTTP, i)    == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( NDN, i)     == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( TLS, i)     == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( RTP, i)     == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( FTP, i)     == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( LICENSE, i) == undefined
-				&&  dataAdaptor.objectHasAttributeWithValue( OTT, i)     == undefined
-		) continue;
-
-		//exclude set
-		if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.REQUEST_INDICATOR,
-			FTP.RESPONSE_TIME ].indexOf( i ) >= 0 )
-			continue;
-
-		init_session_set.push( i );
-	}
-	init_session_set.push( COL.START_TIME );
-
 
 	MongoClient.connect( connectString, function (err, db) {
 		if (err){
@@ -78,91 +34,12 @@ var MongoConnector = function () {
 			console.logStdout("Cannot connect to Database");
 			process.exit( 1 );
 		}
-
+		
 		self.mdb       = db;
 		self.appList   = new AppList( db );
 		self.startTime = (new Date()).getTime();
 
 		self.operatorStatus.set("start");
-
-		self.dataCache = {
-				mac: new DataCache(db, "data_mac",
-						{
-							key: [COL.FORMAT_ID, COL.PROBE_ID, COL.MAC_SRC],
-							inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
-								COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-								COL.DATA_VOLUME, COL.PACKET_COUNT
-								],
-							set: ["isGen"],
-							init: [COL.START_TIME]
-						},
-						5*60*1000//retain data in 5 minutes
-				),
-				session: new DataCache(db, "data_session",
-						{
-							key: [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH,
-								COL.IP_SRC, COL.IP_DEST, COL.MAC_SRC, COL.MAC_DEST],
-							inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-								COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-								COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-								COL.RTT, COL.RETRANSMISSION_COUNT,
-								HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-								COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
-								],
-							set: [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-								COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
-								COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
-						}
-				),
-				//system statistics
-				sysStat: new DataCache(db, "data_stat",
-						{
-							key: [STAT.FORMAT_ID, STAT.PROBE_ID],
-							inc: [STAT.CPU_USER, STAT.CPU_SYS, STAT.CPU_IDLE, STAT.MEM_AVAIL, STAT.MEM_TOTAL, STAT.COUNT],
-						},
-						//retain
-						config.retain_detail_report_period * 1000 //change second ==> milisecond
-				),
-				detail: new DataCache(db, "data_detail",
-						{
-							key: [COL.FORMAT_ID, COL.PROBE_ID, COL.SESSION_ID],
-							inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-									COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-									COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-									COL.RTT,
-								//COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-								//COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
-								//COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
-								COL.RETRANSMISSION_COUNT,
-								HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-								],
-							set: [COL.APP_ID, COL.APP_PATH, COL.MAC_SRC, COL.MAC_DEST, COL.PORT_SRC, COL.PORT_DEST, 
-								COL.IP_SRC, COL.IP_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-								COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR],
-							init: init_session_set
-						},
-						//retain
-						config.retain_detail_report_period * 1000 //change second ==> milisecond
-				),
-				//for DOCTOR project
-				//TODO to remove
-				ndn: new DataCache(db, "data_ndn",
-						{
-							key: [COL.FORMAT_ID, COL.PROBE_ID, NDN.PACKET_ID],
-							inc: [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD],
-							set: [NDN.MAC_SRC, NDN.NAME, NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
-							NDN.QUERY, NDN.PACKET_TYPE, NDN.IFA]
-						}
-				),
-				//MUSA project
-				//TODO to remove
-				avail: new DataCache(db, "availability",
-						{
-							key: [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
-							inc: [4, 5, 6 ]
-						}
-				),
-		};
 
 		for( var i in self.onReadyCallback ){
 			self.onReadyCallback[i]( self );
@@ -389,222 +266,10 @@ var MongoConnector = function () {
 	 * Stock a report in database
 	 * @param {[[Type]]} message [[Description]]
 	 */
+//	self.dbCache = [];
 	self.addProtocolStats = function (message) {
 		if (self.mdb === null) return;
-		var msg = dataAdaptor.formatReportItem( message );
-		var msg2;
-		var ts       = msg[ TIMESTAMP ];
-		var format   = msg[ FORMAT_ID ];
-		var probe_id = msg[ PROBE_ID ];
-		var is_micro_flow = false;
-
-		//receive this msg when probe is starting
-		if ( format === dataAdaptor.CsvFormat.LICENSE) {
-			//new running period
-			self.probeStatus.reset( probe_id );
-			//this is 30-report: 5-th element is not REPORT_NUMBER
-			//we set REPORT_NUMBER to 0
-			msg[ REPORT_NUMBER ] = 0;
-			self.probeStatus.set( msg );
-			return;
-		}
-		if( format === dataAdaptor.CsvFormat.SYS_STAT_FORMAT ){
-			self.dataCache.sysStat.addMessage( msg );
-			return;
-		}
-
-		if ( format === 100 || format === 99 ){
-
-			//a dummy report when session expired
-			if( msg[ COL.PACKET_COUNT ] === 0 ){
-				return;
-			}
-			else if( msg[ COL.PACKET_COUNT ] === 1 ){
-				no_1_packet_reports ++;
-			}
-			//micro flow
-			//only based-on TCP
-			is_micro_flow = (format === 100 && ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte ));
-
-			msg.isGen = false;//this is original message comming from mmt-probe
-
-			//one msg is a report of a session
-			//==> total of them are number of active flows at the sample interval
-			msg[ COL.ACTIVE_FLOWS ] = 1;
-
-			//update timestamp of msg based on its report_number
-			update_packet_timestamp( msg );
-
-			self.lastPacketTimestamp = ts = msg[ TIMESTAMP ];
-
-			if( is_micro_flow ){
-				//this allows to distinguish 2 micro flow of 2 differents sample periods
-				//there is at most 1 micro flow during one sample period
-				msg[ COL.SESSION_ID ] = "m-" + ts ;
-				//msg[ COL.APP_PATH   ] = "99";  //ethernet
-				//msg[ COL.APP_ID     ] = 99;  //ethernet
-				msg[ COL.IP_SRC     ] = "micro-flow";
-				msg[ COL.IP_DEST    ] = "micro-flow";
-				msg[ COL.MAC_SRC    ] = "micro-flow";
-				msg[ COL.MAC_DEST   ] = "m-" + ts; //this uses to create 2 different rows in data_session_real/min/hour/day
-			}else
-				//as 2 threads may produce a same session_ID for 2 different sessions
-				//this ensures that session_id is uniqueelse
-				msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
-
-
-			//session
-			if( format === 100 ){
-				//console.log( msg[ COL.DATA_TRANSFER_TIME ] )
-
-				//this should not happen
-				if( msg[ COL.DATA_TRANSFER_TIME ] > config.probe_stats_period_in_ms*1000*2 )
-					msg[ COL.DATA_TRANSFER_TIME ] = 0;
-
-				//HTTP
-				if( msg[ COL.FORMAT_TYPE ] === 1 ){
-					//each HTTP report is a unique session (1 request - 1 resp if it has)
-					if( !is_micro_flow )
-						msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
-					//mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
-
-					//same as ACTIVE_FLOWS
-					//mmt-operator: sum = number of req/res per 5 seconds
-					msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
-
-					//HTTP data is not yet completely transfered
-					//if( msg[ HTTP.REQUEST_INDICATOR ] === 0 ){
-					//this msg reports a part of HTTP transaction
-					//==> we reset its RESPONSE_TIME to zero as it was reported
-					//msg[ HTTP.RESPONSE_TIME ] = 0;
-					//}
-				}
-
-				//save init data of one session
-				/*
-                var session_id = msg[ COL.SESSION_ID ];
-                //if init session or timeout
-                if( FLOW_SESSION_INIT_DATA[ session_id ] === undefined ||  ts - FLOW_SESSION_INIT_DATA[ session_id ][ TIMESTAMP ] > 1000*60*60 )
-                    FLOW_SESSION_INIT_DATA[ session_id ] = msg;
-                else{
-                    //update timestamp
-                    FLOW_SESSION_INIT_DATA[ session_id ][ TIMESTAMP ] = ts;
-                    for( var i in init_session_set ){
-                        var key = init_session_set[ i ];
-                        var val = FLOW_SESSION_INIT_DATA[ session_id ][ key ];
-                        if( val != undefined )
-                            msg[ key ] = val;
-                    }
-                }
-				 */
-				update_proto_name( msg );
-
-				//do not add report 99 to data_mac collection as it has no MAC
-				self.dataCache.mac.addMessage( msg );
-			}
-
-			msg.app_paths = flat_app_path( msg[ COL.APP_PATH ] );
-
-			//each session
-			self.dataCache.session.addMessage( msg );
-			self.dataCache.detail.addMessage(  msg );
-
-
-			if( !is_micro_flow ){
-				//add traffic for the other side (src <--> dest )
-				msg.isGen = true;
-				msg = dataAdaptor.inverseStatDirection( msg );
-				//change session_id of this clone message
-				msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
-
-				//do not add report 99 to data_mac collection as it has no MAC
-				if( format === 100 )
-					self.dataCache.mac.addMessage( msg );
-
-				//only if its partner is local
-				if( dataAdaptor.isLocalIP( msg[ COL.IP_SRC ] )){
-					self.dataCache.session.addMessage( msg );
-					self.dataCache.detail.addMessage(  msg );
-				}
-			}
-			return;
-		}else if (format === 0 || format == 1 || format == 2){
-			self.lastPacketTimestamp = ts;
-
-			//delete data when a session is expired
-			var session_id = msg[ 4 ];
-			if( FLOW_SESSION_INIT_DATA[ session_id ] !== undefined ){
-				delete FLOW_SESSION_INIT_DATA[ session_id ];
-				//console.log( "deleted session " + session_id );
-			}
-			else{
-				console.log( "unknown session " + session_id );
-			}
-			return;
-		}
-
-		self.probeStatus.set( msg );
-
-		if ( format === dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT || format === dataAdaptor.CsvFormat.BA_PROFILE_FORMAT) {
-			self.lastPacketTimestamp = ts;
-
-			self.mdb.collection("behaviour").insert(msg, function (err, records) {
-				if (err) console.error(err.stack);
-			});
-			return;
-		}
-
-		if ( format === dataAdaptor.CsvFormat.SECURITY_FORMAT) {
-			self.lastPacketTimestamp = ts;
-
-			self.mdb.collection("security").insert(msg, function (err, records) {
-				if (err) console.error(err.stack);
-			});
-			return;
-		}
-
-		if ( format === dataAdaptor.CsvFormat.OTT_QOS) {
-			update_packet_timestamp( ts );
-			self.mdb.collection("ott_qos").insert(msg, function (err, records) {
-				if (err) console.error(err.stack);
-			});
-			return;
-		}
-
-		//this report is sent at each end of x seconds (after seding all other reports)
-		if( format === dataAdaptor.CsvFormat.DUMMY_FORMAT ){
-			if( no_1_packet_reports > 0 ){
-				console.log("Number of reports containing only 1 packet: " + no_1_packet_reports );
-				no_1_packet_reports  = 0;
-			}
-			return;
-		}
-
-
-		//NDN protocol
-		if( format === 625){
-			update_packet_timestamp( ts );
-			self.dataCache.ndn.addMessage( msg );
-			//IFA: store all alerts
-
-			var new_msg = {};
-			//copy some attrs of msg to new_msg;
-			[ COL.PROBE_ID, COL.TIMESTAMP, NDN.MAC_SRC, NDN.IFA ].forEach( function(el, index){
-				new_msg[ el ] = msg[ el ];
-			} )
-
-			self.mdb.collection( "ndn_alerts" ).insert( new_msg, function (err, records) {
-				if (err) console.error(err.stack);
-			});
-
-			return;
-		}
-
-		//MUSA project
-		if( format === 50 ){
-			self.dataCache.avail.addMessage( msg );
-			return;
-		}
+		
 	};
 
 

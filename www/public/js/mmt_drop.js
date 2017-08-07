@@ -867,6 +867,20 @@ MMTDrop.tools = function () {
         return arr;
     };
 
+    //this convert a number in 32bit to an IP string
+    _this.ipV4Number2String = function( ipNumber ){
+    		var arr = [0,0,0,0];
+    		//get 32 bits
+    		ipNumber &= 0xFFFFFFFF;
+    		
+    		arr[0] = (ipNumber >>> 24 );
+    		arr[1] = (ipNumber >>> 16 ) & 0xFF;
+    		arr[2] = (ipNumber >>> 8  ) & 0xFF;;
+    		arr[3] = (ipNumber >>> 0  ) & 0xFF;
+    		
+    		return arr.join(".");
+    };
+    
     _this.random = function( n ){
         return Math.round(Math.random()* n);
     }
@@ -6314,8 +6328,8 @@ MMTDrop.chartFactory = {
               arr.push( id );
             });
 
-            if( arr.length > 10 ){
-                arr.length = 10;
+            if( arr.length > 5 ){
+                arr.length = 5;
                 $(this).parent().removeClass("selected");
                 return;
             }

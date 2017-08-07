@@ -10,7 +10,8 @@ const
 ;
 
 //is MMT-Operator running for a specific project?
-config.project = constant.project.MUSA
+//config.project = constant.project.MUSA
+//config.project = constant.project.MUSA
 
 config.isMusaProject = ( config.project === constant.project.MUSA );
 
@@ -21,6 +22,7 @@ if( config.input_mode != constant.REDIS_STR
 		&& config.input_mode != constant.KAFKA_STR)
     config.input_mode = constant.FILE_STR;
 
+//== HTTP server port number
 if( Number.isNaN( config.port_number ) || config.port_number < 0 )
     config.port_number = 80;
 
@@ -28,6 +30,10 @@ function set_default_value( variable, prop, value ){
   if( variable[prop] == undefined )
     variable[prop] = value;
 }
+
+//== Database name
+config.databaseName      = "mmt-data";  //database 
+config.adminDatabaseName = "mmt-admin"; //database for administrator
 
 set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 

@@ -29,7 +29,7 @@
     "macaddress": "^0.2.8",
     "maxmind": "^1.1.0",
     "moment": "2.3.1",
-    "mongodb": "2.0.48",
+    "mongodb": "^2.2.30",
     "morgan": "~1.6.1",
     "multer": "^1.2.0",
     "optimist": "*",

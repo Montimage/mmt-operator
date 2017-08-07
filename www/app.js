@@ -12,6 +12,7 @@ const compress        = require('compression');
 const util            = require('util');
 const moment          = require('moment');
 const fs              = require('fs');
+const child_process   = require("child_process");
 
 //3rd lib
 const MongoStore      = require('connect-mongo')(session);
@@ -91,9 +92,14 @@ case constant.KAFKA_STR:
 	probeRoute.startListening( dbconnector, pub_sub );
     break;
 default:
-    probeRoute.startListeningAtFolder( dbconnector, config.data_folder);
+	const total_processes = config.nb_readers;
+	for( var i=0; i<total_processes; i++ ){
+		child_process.fork('./probe/csvReader.js', [i, total_processes] );
+	}
+	
+	//this process removes older records from Database
+	child_process.fork("./probe/maintainDB.js");
 }
-
 
 
 // view engine setup

@@ -699,7 +699,8 @@ MMTDrop.formatReportItem = function(entry) {
 
     var obj = {};
     for( var i=0; i<entry.length; i++ ){
-        obj[ i ] = entry[ i ];
+    		if( entry[i] != null )
+    			obj[ i ] = entry[ i ];
     }
     return obj;
 };
@@ -796,7 +797,7 @@ function format_session_report( msg ){
 
   for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<_start; i++){
     new_msg[ i ] = msg[ i ];
-    msg[ i ]     = null;
+    delete( msg[ i ] );
   }
 
   for( var i=_start; i<=_end; i++ ){

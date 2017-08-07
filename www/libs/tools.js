@@ -39,6 +39,40 @@ var _tools = {
     }
 
     return obj1;
+  },
+  /**
+   * Get current system time in milli seconds from 1970
+   */
+  getTimestamp : function(){
+	  return (new Date()).getTime();
+  },
+  
+  startMesureTime : function( key ){
+	  this["___" + key ] =  (new Date()).getTime();
+  },
+  
+  stopMesureTime : function( key ){
+	  const val = this["___" + key ];
+	  
+	  delete( this["___" + key ] );
+	  
+	  const now = (new Date()).getTime();
+
+	  if( val == undefined )
+		  return 0;
+	  
+	  
+	  return (now - val);
+  },
+  
+  symetricEncodeIPs: function( a, b ){
+	  var v1 = a, v2 = b;
+	  if( b > a ){
+		  v1 = b;
+		  v2 = a;
+	  }
+	  
+	  return v1 * 16777216 + v2;
   }
 }
 

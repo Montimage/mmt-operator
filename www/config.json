@@ -13,9 +13,9 @@
     "port": 2181,
     "ssl.ca.location": "data/kafka-ca.cert"
   },
-  "data_folder": "/tmp/",
+  "data_folder": "/opt/mmt/probe/result/report/online/",
   "delete_data": true,
-  "input_mode": "kafka",
+  "input_mode": "file",
   "probe_analysis_mode": "online",
   "local_network": [
     {
@@ -50,12 +50,13 @@
   "probe_stats_period": 5,
   "buffer": {
     "max_length_size": 50000,
-    "max_interval": 30
+    "max_interval": 10
   },
   "micro_flow":{
     "packet" : 1,
     "byte"   : 64
   },
+  "nb_readers": 16,
   "retain_detail_report_period": 604800,
   "port_number": 8080,
   "log_folder": "/tmp/",

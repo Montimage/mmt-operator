@@ -26,6 +26,7 @@ MMTDrop.setOptions({
 
 //create reports
 
+const LIMIT_SELECT_APP = 5;
 var ReportFactory = {
     formatTime : function( date ){
           return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
@@ -35,7 +36,7 @@ var ReportFactory = {
 
         //this database will be reloaded when user clicks on one row of the left-tree
         //it will be given the parameter corresponding to the selected protocols
-        var detail_db = new MMTDrop.Database({collection : "data_session", action : "aggregate"});
+        var detail_db = new MMTDrop.Database({collection : "data_app", action : "aggregate"});
 
 
 
@@ -57,7 +58,7 @@ var ReportFactory = {
         $group[COL.APP_PATH.id] = {"$first" : "$app_paths.path"};
         $group[COL.APP_ID.id] = {"$first" : "$app_paths.app"};
 
-        var database = new MMTDrop.Database({collection : "data_session", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]} );
+        var database = new MMTDrop.Database({collection : "data_app", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]} );
 
         var cTree = MMTDrop.chartFactory.createTree({
             getData: {
@@ -177,8 +178,11 @@ var ReportFactory = {
                     return;
                 }
 
-                if( app_path_arr.length > 10 ){
-                    app_path_arr.length = 10;
+                //show spinner
+                waiting.show();
+                
+                if( app_path_arr.length > LIMIT_SELECT_APP ){
+                    app_path_arr.length = LIMIT_SELECT_APP;
                 }
 
                 //load data corresponding to the selected apps
@@ -329,6 +333,9 @@ var ReportFactory = {
 
 
                 $(".col-md-4").css("width", "200px !important;");
+                
+                //hide spinner
+                waiting.hide();
             }
         });
 
