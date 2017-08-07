@@ -6,7 +6,6 @@ var ipLib          = require("ip");
 var config         = require("./config.js");
 //var ip2loc      = require("");
 
-var DataCache   = require("./Cache.js");
 var MongoClient = require('mongodb').MongoClient,
 format          = require('util').format;
 
