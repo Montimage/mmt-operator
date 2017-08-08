@@ -6,7 +6,7 @@ const CONST           = require("../libs/constant.js");
 const TIMESTAMP       = dataAdaptor.StatsColumnId.TIMESTAMP; //index of timestamp
 const REPORT_NUMBER   = dataAdaptor.StatsColumnId.REPORT_NUMBER;
 const PROBE_ID        = dataAdaptor.StatsColumnId.PROBE_ID;
-const DUMMY           = undefined;
+const FORMAT_ID       = dataAdaptor.StatsColumnId.FORMAT_ID;
 
 /**
  * @param   {Object} option
@@ -26,20 +26,26 @@ const DUMMY           = undefined;
  */
 function Cache ( option ) {
 	"use strict";
-	//check
-	if( !Array.isArray( option.message_format.key ) || option.message_format.key.length == 0){
-		return console.error( "Key must not empty" );
-	}
 
 	const _this                   = this;
 	const _PERIOD_TO_UPDATE_NAME  = option.period;
 	const _PERIOD_TO_UPDATE       = option.periodNumber;
 	const _inserter               = option.database;
-
+	
+	const _IS_REAL_PERIOD  = (_PERIOD_TO_UPDATE_NAME === CONST.period.REAL);
+	const _IS_RETAIN_ALL   = (_PERIOD_TO_UPDATE_NAME === CONST.period.SPECIAL);
+	
 	const _collection_name        = option.collection_name + "_" + option.period;
 
 	var _dataObj = {}; //key => data
 	var _dataSize = 0;
+
+	
+	//check
+	if( !_IS_RETAIN_ALL && ( !Array.isArray( option.message_format.key ) || option.message_format.key.length == 0)){
+		return console.error( "Key must not empty" );
+	}
+
 	
 	/**
 	 * Flush data to DB
@@ -58,7 +64,7 @@ function Cache ( option ) {
 		}
 
 		_inserter.add( _collection_name, data, function( err, result){
-			console.info( "=> flushed " + data.length + " records to [" + _collection_name + "]" );
+			console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
 
 			if( cb ) 
 				cb( err, data );
@@ -74,10 +80,16 @@ function Cache ( option ) {
 		if( _lastUpdateTime == 0 )
 			_lastUpdateTime = ts;
 		
-		const isDummy = (msg[ PROBE_ID ] == DUMMY);
+		const isDummy = (msg[ FORMAT_ID ]  === dataAdaptor.CsvFormat.DUMMY_FORMAT);
 		
-		if( !isDummy )
-			_addMessage( msg );
+		if( !isDummy ){
+			//retain original message
+			if( _IS_RETAIN_ALL )
+				//clone msg
+				_dataObj[ _dataSize ++ ] = JSON.parse(JSON.stringify( msg ));
+			else
+				_addMessage( msg );
+		}
 
 		//only for ndn offline
 		if( _IS_NDN_COLLECTION ){
@@ -134,7 +146,6 @@ function Cache ( option ) {
 		_dataSize = 0;
 	};
 
-	const _IS_REAL_OR_SPECIAL  = (_PERIOD_TO_UPDATE_NAME === CONST.period.REAL || _PERIOD_TO_UPDATE_NAME === CONST.period.SPECIAL);
 	const key_id_arr           = option.message_format.key;
 	const key_inc_arr          = option.message_format.inc  || [];
 	const key_set_arr          = option.message_format.set  || [] ;
@@ -153,7 +164,7 @@ function Cache ( option ) {
 			key_string               += msg[ key_id_arr[i] ] + ";";
 		}
 
-		if( _IS_REAL_OR_SPECIAL ){
+		if( _IS_REAL_PERIOD ){
 			//key_obj[ REPORT_NUMBER ] = msg[ REPORT_NUMBER ];
 			key_obj[ TIMESTAMP ] = msg[ TIMESTAMP ];
 		}else{ //each minute, hour, day, month
@@ -170,12 +181,8 @@ function Cache ( option ) {
 		else
 			oo = _dataObj[ key_string ];
 
-		//ts is the max ts of the reports in its period
-		if( _IS_REAL_OR_SPECIAL ){
-			if(  oo[ TIMESTAMP ] < msg[ TIMESTAMP ] || oo[ TIMESTAMP ] == undefined )
-				oo[ TIMESTAMP ] = msg[ TIMESTAMP ];
-		}
-
+		oo[ TIMESTAMP ] = oo[ TIMESTAMP ];
+ 		
 		//increase
 		for (var j=0; j<key_inc_arr.length; j++){
 			var key = key_inc_arr[ j ];
@@ -205,7 +212,7 @@ function Cache ( option ) {
 			var key = key_set_arr[ j ];
 			var val = msg[ key ];
 
-			if( val !== undefined )
+			if( val != undefined )
 				oo[ key ] = val;
 		}
 
@@ -270,8 +277,13 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 		_cache.minute        = new Cache( option );
 		//no break: minute need real
 	case CONST.period.REAL:
-	default:
+	//default:
 		option.period        = CONST.period.REAL;
+		option.periodNumber  = config.buffer.max_interval * 1000;         //each 5 seconds, for example
+		_cache.real          = new Cache( option );
+		break;
+	case CONST.period.SPECIAL:
+		option.period        = CONST.period.SPECIAL;
 		option.periodNumber  = config.buffer.max_interval * 1000;         //each 5 seconds, for example
 		_cache.real          = new Cache( option );
 	}
@@ -394,7 +406,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 		//after 2 waiting, no csv files are read ==> insert dummy report to flush caches
 		
 		var msg = {};
-		msg[ PROBE_ID ]  = DUMMY;
+		msg[ FORMAT_ID ]  = dataAdaptor.StatsColumnId.DUMMY_FORMAT;
 		msg[ TIMESTAMP ] = _lastMessageTimestamp + config.probe_stats_period*1000;
 		self.addMessage( msg );
 		

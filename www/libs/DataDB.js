@@ -9,21 +9,25 @@ var config         = require("./config.js");
 var MongoClient = require('mongodb').MongoClient,
 format          = require('util').format;
 
+const COL      = dataAdaptor.StatsColumnId;
+
+const FORMAT_ID = COL.FORMAT_ID,
+PROBE_ID      = COL.PROBE_ID,
+SOURCE_ID     = COL.SOURCE_ID,
+TIMESTAMP     = COL.TIMESTAMP,
+REPORT_NUMBER = COL.REPORT_NUMBER;
+
 var MongoConnector = function () {
 	const self = this;
 
 	self.mdb = null;
-	self.db_name = config.databaseName;
 
 	self.onReadyCallback = [];
 	self.onReady = function( cb ){
 		self.onReadyCallback.push( cb );
 	}
 
-	const host = config.database_server.host;
-	const port = config.database_server.port;
-
-	const connectString = 'mongodb://' + host + ":" + port + "/" + self.db_name;
+	const connectString = 'mongodb://' + config.database_server.host + ":" + config.database_server.port + "/" + config.databaseName;
 
 	var no_1_packet_reports = 0;
 
@@ -45,69 +49,32 @@ var MongoConnector = function () {
 		}
 	});
 
-
+	
+	//get status of mmt-probe
 	self.probeStatus = {
-			data: {
-				//this contains a list of status of probes:
-				//id           : probe id
-				//start        : starting moment of probe
-				//last_update  : last updated of probe
-				//report_number: report_number of the firt message (at the starting moment)
-			},
-			reset: function( probe_id ){
-				self.probeStatus.data[ probe_id ] = undefined;
-			},
-			resetAll: function(){
-				self.probeStatus.data = {};
-				self.probeStatus.time = {start: 0, last_update: 0};
-			},
-			//this contains timestamp of all probes
-			time:{
-				start      : 0,
-				last_update: 0
-			},
-			set: function( msg ){
-				var id          = msg[ PROBE_ID ],
-				report_number = msg[ REPORT_NUMBER],
-				last_update   = msg[ TIMESTAMP ];
-
-				if( self.probeStatus.data[ id ] === undefined ){
-					console.log( "First message comming from probe " + id + " at " + (new Date(last_update)).toLocaleString() );
-					//there are no report_number in report 200
-					if( isNaN( report_number ))
-						report_number = 0;
-					self.probeStatus.data[id] = {
-							_id            : id + "-" + last_update,//_id using by mongoDB
-							id             : id, //probe Id
-							start          : last_update,
-							report_number  : report_number,
-							last_update    : 0
-					};
-				}
-
-				if( self.probeStatus.time.start === 0 )
-					self.probeStatus.time.start = last_update;
-				if( self.probeStatus.time.last_update < last_update )
-					self.probeStatus.time.last_update = last_update;
-
-				var probe = self.probeStatus.data[ id ];
-				//no need to update the past
-				if( probe.last_update >= last_update ) return;
-
-
-				probe.last_update = last_update;
-
-				//update to mongoDB
-				self.mdb.collection("probe_status").update( {_id: probe._id}, probe, {upsert: true});
-			},
 			get: function( period, callback ){
-				self.mdb.collection("probe_status").find({
-					$or : [
-						{start: {$lte : period.begin}, last_update: { $gte: period.begin}},
-						{start: {$gte : period.begin}, last_update: { $lte: period.end}},
-						{start: {$lte : period.end}  , last_update: { $gte: period.end}},
-						]
-				}).toArray( callback );
+				const match = {};
+				match[ TIMESTAMP ] = {$gte : period.begin, $lte: period.end };
+				const group = { _id : {}};
+				group._id[ TIMESTAMP ] = '$' + TIMESTAMP;
+				group._id[ PROBE_ID  ] = '$' + PROBE_ID;
+				group._ts              = { '$first' : "$" + TIMESTAMP };
+
+				self.mdb.collection("probe_status").aggregate( [{$match: match}, {$group: group}, {$sort: {_ts: 1}}] ).toArray( function( err, arr){
+					if( err )
+						return callback( err );
+					//timestamp of the samples of one probe is saved into an array
+					var obj = {};
+					for( var i=0; i<arr.length; i++ ){
+						var probe_id = arr[i]._id[ PROBE_ID ];
+						var ts       = arr[i]._id[ TIMESTAMP ];
+						
+						if( obj[ probe_id ] == undefined )
+							obj[ probe_id ] = [];
+						obj[ probe_id ].push( ts );
+					}
+					callback( null, obj );
+				} );
 			}
 	};
 
@@ -136,49 +103,6 @@ var MongoConnector = function () {
 			domain_name = domain_name.substr(index + 1);
 
 		return domain_name;
-	};
-
-	//this const is used in the function just after to avoid re-calculation
-	const _2TIMES_PROBE_STATS_PERIOD_IN_MS = 2*config.probe_stats_period_in_ms;
-	//this function ajusts timestamp of a message based on its sequence number
-	var update_packet_timestamp = function( msg ){
-		var ts       = msg[ TIMESTAMP ];
-		var probe_id = msg[ PROBE_ID ];
-		var probe    = self.probeStatus.data[ probe_id ];
-
-		//I received reports from a probe before its starting
-		//or starting message is sent after reports
-		if( probe === undefined ){
-			self.probeStatus.set( msg );
-			return;
-		}
-
-		if( config.is_probe_analysis_mode_offline )
-			return;
-
-		var new_ts = probe.start + (msg[ REPORT_NUMBER ] - probe.report_number) * config.probe_stats_period_in_ms;
-
-		//console.log( new_ts + "-" + ts + "=" + (new_ts - ts) );
-		//probe is restarted
-		if( ts > new_ts + _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-			console.warn("mmt-probe is frozen " + (new Date(ts)).toLocaleString() );//first message
-			//new running period
-			self.probeStatus.reset( probe_id );
-			self.probeStatus.set( msg );
-			return;
-		}else if( ts < new_ts - _2TIMES_PROBE_STATS_PERIOD_IN_MS ){
-			console.warn("mmt-probe is restarted " + (new Date(ts)).toLocaleString() );//first message
-			//new running period
-			self.probeStatus.reset( probe_id );
-			self.probeStatus.set( msg );
-			return;
-		}
-
-		msg[ TIMESTAMP ]         = new_ts;
-		msg[ COL.ORG_TIMESTAMP ] = ts;
-
-		//update status of probe ==> it is alive
-		self.probeStatus.set( msg );
 	};
 
 	const DEFAULT_PORT = {
@@ -245,22 +169,6 @@ var MongoConnector = function () {
 	}
 
 
-	function flat_app_path( str ){
-		if( str == undefined )
-			return [];
-
-		var arr = [ {path: str, app: dataAdaptor.getAppIdFromPath( str )} ];
-		do{
-			str = dataAdaptor.getParentPath( str );
-			if( str === "." )
-				//we reach root
-				return arr;
-			arr.push( {path: str, app: dataAdaptor.getAppIdFromPath( str )} );
-		} while( true );
-		return arr;
-	}
-	self.lastPacketTimestamp = 0;
-
 	/**
 	 * Stock a report in database
 	 * @param {[[Type]]} message [[Description]]
@@ -273,10 +181,6 @@ var MongoConnector = function () {
 
 
 	self.flushCache = function (cb) {
-		if( self.mdb )
-			for( var key in self.dataCache ){
-				self.dataCache[ key ].flushDataToDatabase();
-			}
 
 		if (cb) cb();
 
@@ -821,24 +725,16 @@ var MongoConnector = function () {
 			return;
 		}
 
-
-		if (self.lastPacketTimestamp > 0) {
-			cb(null, self.lastPacketTimestamp);
-			return;
-		}
-
-		self.getLastTimestampOfCollection( "data_session_real", function( time ){
-			self.lastPacketTimestamp = time;
+		self.getLastTimestampOfCollection( "data_total_real", function( time ){
 			if( time > 0 )
 				return cb(null, time );
 
 			//for NDN
 			self.getLastTimestampOfCollection( "data_ndn_real", function( time ){
-				self.lastPacketTimestamp = time;
 				if( time > 0 )
 					return cb(null, time );
-				self.lastPacketTimestamp = (new Date()).getTime();
-				cb( null, self.lastPacketTimestamp);
+				time = (new Date()).getTime();
+				cb( null, time);
 			})
 		})
 	};
@@ -867,8 +763,6 @@ var MongoConnector = function () {
 			self.dataCache[i].clear();
 
 		self.mdb.dropDatabase(function (err, doc) {
-			self.lastPacketTimestamp = 0;
-
 			console.log("drop database!");
 			cb( err );
 		});

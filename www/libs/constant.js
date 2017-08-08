@@ -18,7 +18,7 @@ const constant = {
 			MINUTE : "minute",
 			HOUR   : "hour",
 			DAY    : "day",
-			SPECIAL: "special"
+			SPECIAL: "all"
 	},
 };
 

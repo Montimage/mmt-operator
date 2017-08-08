@@ -30,26 +30,15 @@ function proc_request(req, res, next) {
 			};
 
 			//probe status: stat_time, stop_time
-			dbconnector.probeStatus.get(time, function(err, arr) {
+			dbconnector.probeStatus.get( time, function(err, obj) {
 				var obj = {
 					time : time,
 					//attach list of applications detected by oprator (name of website)
 					protocols   : dbconnector.appList.get(),
 					data        : [],
-					probeStatus : {},
+					probeStatus : obj
 				};
-				if (!err)
-					for ( var i in arr){
-						var msg = arr[i];
-						//for each probe
-						if( obj.probeStatus[ msg.id ] == undefined )
-							obj.probeStatus[ msg.id ] = [];
-
-						obj.probeStatus[ msg.id ].push({
-							start       : msg.start,
-							last_update : msg.last_update
-						});
-					}
+				
 				res.setHeader("Content-Type", "application/json");
 				res.send(obj);
 			});

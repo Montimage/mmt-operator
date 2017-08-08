@@ -17,7 +17,7 @@ function send_to_client( channel, msg ){
 		caches[ channel ] = [];
 	//add msg to caches
 	//caches will be verified each seconds and sent to client
-	caches[ channel ].push( msg );
+	//caches[ channel ].push( msg );
 }
 
 setInterval( function(){
@@ -36,9 +36,9 @@ setInterval( function(){
 				if( i != 9 || i != 10 )
 					cache[0][i] /= cache.length;
 
-			router.socketio.emit( "qos", cache[0] );
+			//router.socketio.emit( "qos", cache[0] );
 		}else {
-			router.socketio.emit( channel, cache );
+			//router.socketio.emit( channel, cache );
 		}
 
 		//reset this cache to zero
@@ -134,12 +134,6 @@ function processMessage( message, database ) {
 		//Security alerts
 	case mmtAdaptor.CsvFormat.SECURITY_FORMAT:
 		send_to_client( "security", msg );
-	}
-
-
-	//replace pcap filename ../test_files/exemple_pcap_60.pcap
-	if( _IS_OFFLINE ){
-		msg[ 2 ] = path.basename( msg[2] );
 	}
 
 	//TODO: to be remove, this chages probe ID, only for Thales demo

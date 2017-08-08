@@ -99,9 +99,11 @@ var ReportFactory = {
         group1["_id"]                = "$" + COL.APP_PATH.id; //groupby protocol path
         group1[ COL.DATA_VOLUME.id ] = {"$sum"   : "$" + COL.DATA_VOLUME.id}; //total data volume
         group1[ COL.APP_PATH.id ]    = {"$first" : "$" + COL.APP_PATH.id};    //retain proto path
+        const sort = {};
+        sort[ COL.DATA_VOLUME.id ] = -1;
         
         var database = new MMTDrop.Database({collection: "data_protocol", action: "aggregate",
-            query: [{"$match": match1},{"$group": group1}], raw: true});
+            query: [{"$match": match1},{"$group": group1}, {$sort: sort}, {$limit: 10}], raw: true});
         //////////////////////////////////////////////////
         
         ///get only protocol inside top

@@ -42,7 +42,7 @@ function process_file (file_name, cb) {
 		input: fs.createReadStream( file_name )
 	});
 	var totalLines = 0;
-
+	var hasError   = false;
 	var start_ts = tools.getTimestamp();
 
 	lr.on ('line', function (line) {
@@ -52,24 +52,29 @@ function process_file (file_name, cb) {
 		}catch( e ){
 			console.error( "Error when processing line " + totalLines + " of file " + file_name );
 			console.error( e );
+			hasError = true;
 		}
 		totalLines ++;
 	});
 
 	lr.on('close', function () {
 		// All lines are read, file is closed now.
-		console.log( READER_INDEX + " processed file "+ path.basename(file_name) +" ("+ totalLines +" lines, "+ (tools.getTimestamp() - start_ts) +" ms)");
-
+		console.info( READER_INDEX + " processed file "+ path.basename(file_name) +" ("+ totalLines +" lines, "+ (tools.getTimestamp() - start_ts) +" ms)");
+		
 		//delete data file
 		if( DELETE_FILE_AFTER_READING ){
 			//remove semaphore file
 			fs.unlink( file_name + ".sem", function(err){
 				if( err ) console.error( err );
-				//remove csv file
-				fs.unlink( file_name, function( e ){
-					if( err ) console.error( err );
+				
+				//remove csv file only when there are no errors
+				if( !hasError )
+					fs.unlink( file_name, function( e ){
+						if( err ) console.error( err );
+						cb( totalLines );
+					});
+				else
 					cb( totalLines );
-				});
 			});
 		}
 		else{

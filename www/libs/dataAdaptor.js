@@ -10,17 +10,26 @@ var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Cou
 });
 
 ipToCountry._get = function( ip ){
-  var loc = ipToCountry.get( ip );
-  if (loc){
-    return (loc['country'])? loc['country']['names']['en'] : loc['continent']['names']['en'];
-  }else if( MMTDrop.isLocalIP( ip )
-    //multicast
-    || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0){
-      return "_local"
-  }else{
-    return "_unknown";
-  }
-}
+	  var loc = ipToCountry.get( ip );
+	  if( loc == undefined )
+		return "_unknown";
+	  if ( loc.country )
+		loc = loc.country;
+	  else if (loc.contient)
+		loc = loc.continent;
+	  else if (loc.registered_country)
+		loc = loc.registered_country;
+
+	  if (loc && loc.names ){
+	    return  loc['names']['en'];
+	  }else if( MMTDrop.isLocalIP( ip )
+	    //multicast
+	    || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0){
+	      return "_local"
+	  }else{
+	    return "_unknown";
+	  }
+	}
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -382,7 +391,8 @@ var MMTDrop = {
         if (arr.indexOf( appId ) > -1)
           return this._cacheCategoryIdFromAppId[ appId ] = parseInt( i );
       }
-      console.log( "Not found category for this app: " + appId  );
+     // console.log( "Not found category for this app: " + appId  );
+      return 1;	
       return -1;
     },
     /**
@@ -807,8 +817,10 @@ function format_session_report( msg ){
   return msg;
 }
 
+const STAT_PERIOD = config.probe_stats_period;
 var formatTime = function( ts ){
-   var time = Math.ceil( ts ) * 1000 ; //ceil: returns the smallest integer greater than or equal to a given number
+   var time = Math.ceil( ts / STAT_PERIOD ) * STAT_PERIOD * 1000 ; //ceil: returns the smallest integer greater than or equal to a given number
+   
    return time;
 }
 /**

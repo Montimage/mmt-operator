@@ -180,24 +180,11 @@ module.exports = function(){
 				set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DEST]
 					}
 			),
-			/*
-			session: new DataCache( inserter, "data_session",
-					{
-				key: [COL.FORMAT_ID, COL.PROBE_ID,],
-				inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
-					COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
-					COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-					//COL.RTT, COL.RETRANSMISSION_COUNT,
-					//HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-					//COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
-					],
-				set: [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, 
-					COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-					COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
-					COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
-					}
+			reports: new DataCache( inserter, "reports",
+					{}, 
+					CONST.period.SPECIAL //keep original reports
 			),
-			*/
+			
 			//system statistics
 			sysStat: new DataCache( inserter, "data_stat",
 					{
@@ -225,7 +212,7 @@ module.exports = function(){
 					}
 			),
 	};
-
+	
 	/**
 	 * Add a new message to DB
 	 */
@@ -240,17 +227,6 @@ module.exports = function(){
 		var is_micro_flow = false;
 
 		switch( format ){
-		//receive this msg when probe is starting
-		case dataAdaptor.CsvFormat.LICENSE:
-			//new running period
-			//self.probeStatus.reset( probe_id );
-			//this is 30-report: 5-th element is not REPORT_NUMBER
-			//we set REPORT_NUMBER to 0
-			msg[ REPORT_NUMBER ] = 0;
-			self.probeStatus.set( msg );
-			
-			self.dataCache.total.addMessage( [] );
-			return;
 
 			//System statistic: CPU, memory
 		case dataAdaptor.CsvFormat.SYS_STAT_FORMAT:
@@ -291,12 +267,27 @@ module.exports = function(){
 			return;
 			//statistic reports
 
+			//receive this msg when probe is starting
+		case dataAdaptor.CsvFormat.LICENSE:
+			//new running period
 			//this report is sent at each end of x seconds (after seding all other reports)
 		case dataAdaptor.CsvFormat.DUMMY_FORMAT:
 			if( no_1_packet_reports > 0 ){
 				console.log("Number of reports containing only 1 packet: " + no_1_packet_reports );
 				no_1_packet_reports  = 0;
 			}
+			
+			inserter.add("probe_status", [msg] );
+			
+			//add dummy message to the cache to push them to DB
+			self.dataCache.total.addMessage( msg );
+			self.dataCache.mac.addMessage( msg );
+			self.dataCache.protocol.addMessage( msg );
+			self.dataCache.ip.addMessage( msg );
+			self.dataCache.app.addMessage( msg );
+			self.dataCache.location.addMessage( msg );
+			self.dataCache.link.addMessage( msg );
+			self.dataCache.reports.addMessage( msg );
 			return;
 
 		case 99:
@@ -310,15 +301,15 @@ module.exports = function(){
 				no_1_packet_reports ++;
 			}
 
+			//original message
+			self.dataCache.reports.addMessage( msg );
+			
 			//this is original message comming from mmt-probe
 			msg.isGen = false;
 			
 			//as 2 threads may produce a same session_ID for 2 different sessions
 			//this ensures that session_id is uniqueelse
 			msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
-			
-			//original message
-			//inserter.add( "report", [msg] );
 			
 			//one msg is a report of a session
 			//==> total of them are number of active flows at the sample interval

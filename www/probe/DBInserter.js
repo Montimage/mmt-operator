@@ -6,6 +6,15 @@
 
 const BULK_INSERT_THRESHOLD = 20000;
 
+
+//mongodb option when deleting records
+const WRITE_CONCERN = {
+	w: 0, //Requests no acknowledgement of the write operation
+	j: false, //requests no acknowledgement from MongoDB that the write operation has been written to the journal.
+};
+
+
+
 const config    = require("../libs/config"),
 dataAdaptor = require('../libs/dataAdaptor'),
 tools       = require("../libs/tools"),
@@ -59,21 +68,23 @@ module.exports = function( databaseName ){
 			return;
 		}
 		
-		//insert directly messages to db
-		self._insert( collection, msgArray, callback );
-		
 		//insert cache if any
 		if( self.cache.length > 0 )
 			self.cache.length.forEach( function( el ){
 				self._insert( el.collection, el.msgArray, el.callback );
 			})
+			
+		//insert directly messages to db
+		self._insert( collection, msgArray, callback );
 	};
 	
 	/**
 	 * Insert directly to DB
 	 */
 	self._insert = function( collectionName, msgArray, callback ){
-		self.db.collection( collectionName ).insertMany( msgArray, callback );
-		//if( callback ) callback();
+		self.db.collection( collectionName ).insertMany( msgArray, 
+				//insertion options
+				//WRITE_CONCERN,
+				callback );
 	}
 };
