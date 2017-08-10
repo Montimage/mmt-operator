@@ -3,9 +3,9 @@
  */
 
 const config         = require('../libs/config');
+const constant       = require('../libs/constant.js');
 const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
-
 
 const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
@@ -15,10 +15,10 @@ var pub_sub = null;
 
 switch( config.input_mode ){
 case constant.REDIS_STR:
-	pub_sub = require("./libs/redis");
+	pub_sub = require("../libs/redis");
     break;
 case constant.KAFKA_STR:
-	pub_sub = require("./libs/kafka");
+	pub_sub = require("../libs/kafka");
     break;
 default:
 	console.error( "Does not support input mode = " + config.input_mode );

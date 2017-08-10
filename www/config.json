@@ -19,7 +19,7 @@
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "file",
+	"input_mode": "kafka",
 	"probe_analysis_mode": "online",
 	"local_network": [
 		{

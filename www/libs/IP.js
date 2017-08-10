@@ -40,4 +40,4 @@ function IP(){
 
 module.exports = IP;
 
-console.log( (new IP()).string2NumberV4("192.168.0.1") );
+//console.log( (new IP()).string2NumberV4("192.168.0.1") );

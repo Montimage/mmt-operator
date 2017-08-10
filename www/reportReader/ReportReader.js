@@ -15,14 +15,14 @@ function Reader(){
 		switch( config.input_mode ){
 		case constant.REDIS_STR:
 		case constant.KAFKA_STR:
-			var ret = child_process.fork( "./csvReader.js" );
+			var ret = child_process.fork( __dirname + "/busReader.js" );
 			_readers.push( ret );
 			break;
 		default:
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-				var ret = child_process.fork('./probe/csvReader.js', [i, total_processes] );
+				var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes] );
 				_readers.push( ret );
 			}
 		}
