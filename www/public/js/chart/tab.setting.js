@@ -129,7 +129,7 @@ var ReportFactory = {
       }]
     };
 
-    $("#system-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+    $("#system-content" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
     var load_data = function(){
       MMTDrop.tools.ajax("/info/os", null, "GET", {
         error  : function(){
@@ -367,7 +367,7 @@ var ReportFactory = {
       }]
     };
 
-    $("#database-content" ).append( MMTDrop.tools.createForm( form_config ) ) ;
+    $("#database-content" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
 
     //style+readonly was add to avoid browser load default username+password
     setTimeout( function(){
@@ -854,7 +854,7 @@ var ReportFactory = {
       }]
     }
     //generate form
-    $("#config-content" ).append( MMTDrop.tools.createForm( form_config, true ) ) ;
+    $("#config-content" ).append( MMTDrop.tools.createForm( form_config, false ) ) ;
 
     //log files
     var $datepicker = null;
