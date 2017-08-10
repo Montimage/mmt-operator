@@ -28,7 +28,7 @@ const DBC             = require('./libs/DataDB');
 const AdminDB         = require('./libs/AdminDB');
 const Probe           = require('./libs/Probe');
 const constant        = require('./libs/constant.js');
-const ReportReader    = require('./probe/ReportReader.js');
+const ReportReader    = require('./reportReader/ReportReader.js');
 
 
 console.log( "Start MMT-Operator" );

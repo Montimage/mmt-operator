@@ -16,9 +16,9 @@ const WRITE_CONCERN = {
 
 
 const config    = require("../libs/config"),
-dataAdaptor = require('../libs/dataAdaptor'),
-tools       = require("../libs/tools"),
-MongoClient = require('mongodb').MongoClient;
+dataAdaptor     = require('../libs/dataAdaptor'),
+tools           = require("../libs/tools"),
+MongoClient     = require('mongodb').MongoClient;
 
 
 module.exports = function( databaseName ){
