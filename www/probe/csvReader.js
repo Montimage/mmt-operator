@@ -1,5 +1,5 @@
 /**
- * Read csv files and  
+ * Read reports from csv files and save to DB  
  */
 
 
@@ -14,20 +14,21 @@ const lineReader   = require('readline');
 const config         = require("../libs/config");
 const tools          = require("../libs/tools");
 const DBInserter     = require('./DBInserter');
-const processMessage = require("./processMessage");
+const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
 
 //total number of reader processes
 const TOTAL_READERS = process.argv[3];
 //index of the current process
 const READER_INDEX  = process.argv[2];
-const DATA_FOLDER   = config.data_folder;
-const DELETE_FILE_AFTER_READING = config.delete_data;
+const DATA_FOLDER               = config.file_input.data_folder;
+const DELETE_FILE_AFTER_READING = config.file_input.delete_data;
 
 console.log( "start csv reader " + READER_INDEX );
 
 const database = new DataBase();
 const dbadmin  = new DBInserter( config.adminDatabaseName );
+const processMessage = new ProcessMessage( database );
 
 // ensure data directory exists
 if( !fs.existsSync( DATA_FOLDER ) ){
@@ -48,7 +49,7 @@ function process_file (file_name, cb) {
 	lr.on ('line', function (line) {
 		// 'line' contains the current line without the trailing newline character.
 		try{
-			processMessage( line, database );
+			processMessage.process( line );
 		}catch( e ){
 			console.error( "Error when processing line " + totalLines + " of file " + file_name );
 			console.error( e );
@@ -111,7 +112,7 @@ function get_csv_file(dir) {
 			continue
 
 			//file was read (check in database when the read files are not deleted)
-			if( config.delete_data !== true )
+			if( DELETE_FILE_AFTER_READING !== true )
 				if( read_files.indexOf( dir + file_name ) > -1 )
 					continue;
 

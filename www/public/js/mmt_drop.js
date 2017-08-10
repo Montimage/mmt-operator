@@ -5738,7 +5738,7 @@ MMTDrop.chartFactory = {
         for( var j=1; j<n; j++){
             obj[j] = [ columns[j].label];
         }
-        /*
+        
         if( option.addZeroPoints ){
             var time        = option.addZeroPoints.time;
             var period      = option.addZeroPoints.sample_period;
@@ -5763,7 +5763,7 @@ MMTDrop.chartFactory = {
               for( var p_id in probeStatus )
                 //for each running period of a probe
                 for( var i in probeStatus[ p_id ])
-                  if( probeStatus[p_id][i].start <= ts && ts <= probeStatus[p_id][i].last_update )
+                  if( probeStatus[p_id].indexOf( ts ) != -1 )
                     return true;
               return false;
             }
@@ -5816,8 +5816,8 @@ MMTDrop.chartFactory = {
                     obj[j].push( val );  //y
                 }
             }
-        }*/
-        if( option.addZeroPoints  ){
+        }
+        else if( option._addZeroPoints  ){
             const time        = option.addZeroPoints.time;
             const period      = option.addZeroPoints.sample_period;
             const probeStatus = option.addZeroPoints.probeStatus;
@@ -5838,14 +5838,14 @@ MMTDrop.chartFactory = {
             		probeTS = [];
             else
             		probeTS.sort(); //increase of timestamp;
-            
+            /*
             //insert the first end to timeline if need
             if( probeTS.length == 0 || probeTS[0] > time.begin )
 	            	probeTS.unshift( time.begin );
             //add the s end to timeline if need
-            if( probeTS.length == 0 || probeTS[0] < time.end ) {
+            if( probeTS.length == 0 || probeTS[0] < time.end )
 	            	probeTS.push( time.end );
-            
+            */
             
             //add data to timeline
             for( var i=0; i<probeTS.length; i++ ){
@@ -5872,9 +5872,8 @@ MMTDrop.chartFactory = {
             }
             
 
-	            	for( var j=1; j<n; j++ )
-	            		obj[j].push( null );  //y: //must be null, not undefined
-            }
+	            //	for( var j=1; j<n; j++ )
+	            //		obj[j].push( null );  //y: //must be null, not undefined
             
         }
         else

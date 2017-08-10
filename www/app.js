@@ -28,6 +28,7 @@ const DBC             = require('./libs/DataDB');
 const AdminDB         = require('./libs/AdminDB');
 const Probe           = require('./libs/Probe');
 const constant        = require('./libs/constant.js');
+const ReportReader    = require('./probe/ReportReader.js');
 
 
 console.log( "Start MMT-Operator" );
@@ -81,26 +82,20 @@ api.config             = config;
 api.dbconnector        = dbconnector;
 
 var pub_sub = null;
-
 switch( config.input_mode ){
 case constant.REDIS_STR:
 	pub_sub = require("./libs/redis");
-	probeRoute.startListening( dbconnector, pub_sub );
     break;
 case constant.KAFKA_STR:
 	pub_sub = require("./libs/kafka");
-	probeRoute.startListening( dbconnector, pub_sub );
     break;
 default:
-	const total_processes = config.nb_readers;
-	for( var i=0; i<total_processes; i++ ){
-		child_process.fork('./probe/csvReader.js', [i, total_processes] );
-	}
 	
-	//this process removes older records from Database
-	child_process.fork("./probe/maintainDB.js");
 }
 
+//start report reader
+const reportReader = new ReportReader();
+reportReader.start();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

@@ -5,13 +5,13 @@ const fs     = require("fs");
 const config = require("./config");
 const kafka = require('kafka-node');
 
-const kafkaConnectionString = config.kafka_server.host + ":" + config.kafka_server.port;
+const kafkaConnectionString = config.kafka_input.host + ":" + config.kafka_input.port;
 const zkOptions = undefined;// {};
 const noAckBatchOptions =  undefined;// {};
 const sslOptions = {};
 
-if( config.kafka_server["ssl.ca.location"] ){
-	sslOptions.ca = fs.readFileSync( config.kafka_server["ssl.ca.location"] );
+if( config.kafka_input["ssl.ca.location"] ){
+	sslOptions.ca = fs.readFileSync( config.kafka_input["ssl.ca.location"] );
 	//donot verify hostname
 	sslOptions.rejectUnauthorized = false;
 }

@@ -47,8 +47,8 @@ set_default_value( config, "database_server", {} );
 set_default_value( config.database_server, "host", "127.0.0.1" );
 set_default_value( config.database_server, "port", 27017 );
 
-set_default_value( config.redis_server, "host", "127.0.0.1" );
-set_default_value( config.redis_server, "port", 6379 );
+set_default_value( config.redis_input, "host", "127.0.0.1" );
+set_default_value( config.redis_input, "port", 6379 );
 
 set_default_value( config.micro_flow, "packet", 7 );
 set_default_value( config.micro_flow, "byte"  , 448 );

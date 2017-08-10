@@ -39,7 +39,7 @@ for (var i = 0; i < 10; i++)
 
 function writeToFile() {
     var ts = Math.round( (new Date()).getTime() / 1000);
-    var file_name = config.data_folder + ts + "-behaviour.csv";
+    var file_name = config.file_input.data_folder + ts + "-behaviour.csv";
     console.log( "writing to file " + file_name );
     for (var i = 0; i < 10; i++) {
         var ip = ips[ i ];
