@@ -11,9 +11,9 @@ const
 
 //is MMT-Operator running for a specific project?
 //config.project = constant.project.MUSA
-//config.project = constant.project.MUSA
+//config.project = "MUSA"
 
-config.isMusaProject = ( config.project === constant.project.MUSA );
+config.isMusaProject = ( config.project === "MUSA" );
 
 config.version = VERSION; 
 	
@@ -21,6 +21,7 @@ if( config.input_mode != constant.REDIS_STR
 		&& config.input_mode != constant.FILE_STR 
 		&& config.input_mode != constant.KAFKA_STR)
     config.input_mode = constant.FILE_STR;
+
 
 //== HTTP server port number
 if( Number.isNaN( config.port_number ) || config.port_number < 0 )
@@ -88,27 +89,27 @@ console.logStdout = console.log;
 console.errStdout = console.error;
 
 //get prefix to print message: date time, file name and line number of caller
-const getPrefix = function(){
+const getPrefix = function( txt ){
 	var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
 	logLineDetails     = logLineDetails.split("www/")[1];
-    var prefix = new Date().toLocaleString() + ", " + logLineDetails + "\n  ";
+    var prefix = new Date().toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
     
     return prefix;
 }
 console.log = function () {
     if( config.is_in_debug_mode === true  )
-        logStdout.write  ( getPrefix() + util.format.apply(null, arguments) + '\n');
+        logStdout.write  ( getPrefix( "LOG" ) + util.format.apply(null, arguments) + '\n');
 
-    logFile.write( getPrefix() + util.format.apply(null, arguments) + '\n');
+    logFile.write( getPrefix("LOG") + util.format.apply(null, arguments) + '\n');
 }
 
 console.warn = console.log;
 
 console.error = function( msg, err ){
     if( config.is_in_debug_mode === true  )
-    		errStdout.write  ( getPrefix() + util.format.apply(null, arguments) + '\n');
+    		errStdout.write  ( getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n');
 
-    logFile.write( getPrefix() + util.format.apply(null, arguments) + '\n');
+    logFile.write( getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n');
 }
 
 console.debug = function( msg ){
@@ -135,5 +136,12 @@ config.sla = tools.merge( {
     "violation_check_period": 5,
     "reaction_check_period" : 5
 }, config.sla);
-  
+
+
+//check Musa
+if( config.isMusaProject && config.input_mode == constant.FILE_STR ){
+	console.error('input_mode must be either "kafka" or "redis" for MUSA project.');
+	process.exit( 1 );
+}
+
 module.exports = config;

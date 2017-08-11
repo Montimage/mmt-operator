@@ -7,12 +7,6 @@ const constant = {
 	VIOLATION_STR: "violation",
 	ALERT_STR    : "alert",
 	
-	//is MMT-Operator running for a specific project?
-	project: {
-		NONE: 0,
-		MUSA: 1,
-	},
-	
 	period : {
 			REAL   : "real",
 			MINUTE : "minute",

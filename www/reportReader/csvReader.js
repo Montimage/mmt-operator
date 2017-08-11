@@ -24,8 +24,6 @@ const READER_INDEX  = process.argv[2];
 const DATA_FOLDER               = config.file_input.data_folder;
 const DELETE_FILE_AFTER_READING = config.file_input.delete_data;
 
-console.log( "start csv reader " + READER_INDEX );
-
 const database = new DataBase();
 const dbadmin  = new DBInserter( config.adminDatabaseName );
 const processMessage = new ProcessMessage( database );
@@ -33,8 +31,10 @@ const processMessage = new ProcessMessage( database );
 // ensure data directory exists
 if( !fs.existsSync( DATA_FOLDER ) ){
 	console.error("Error: Data folder [" + DATA_FOLDER + "] does not exists.");
-	process.exit();
+	process.exit( 1 );
 }
+
+console.log( "start csv reader " + READER_INDEX );
 
 //load list of read csv file from db
 var read_files = [];

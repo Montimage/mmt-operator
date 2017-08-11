@@ -75,6 +75,9 @@ var MongoConnector = function () {
 					}
 					callback( null, obj );
 				} );
+			},
+			resetAll: function(){
+				
 			}
 	};
 
