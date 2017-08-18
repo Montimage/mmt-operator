@@ -95,7 +95,9 @@ var ReportFactory = {
                   //$(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
                   const val = _getData( this, data );
                   $(el).attr( "data-count", val );
-                  $(el).html( '<span class="badge">' + val + '</span>' );
+                  $(el)
+                     .delay( index * 200 )
+                     .html( '<span class="badge">' + val + '</span>' );
                } );
 
                //update reaction table
@@ -372,318 +374,7 @@ var ReportFactory = {
          }
       },
 
-      _createReactionForm: function( fPeriod ){
-         const COL = MMTDrop.constants.StatsColumn;
-
-         //UPDATE VALUE OF METRIX AFTER REDERING
-         var isFirstUpdate = true;
-         var updateValue = function (){
-            if( isFirstUpdate ){
-               //update value of metrics when changing period => reload status_db
-               status_db.afterReload( updateValue );
-               isFirstUpdate = false;
-            }
-
-            /*
-      $("#header").html(" (from "
-                        +  moment(new Date( status_db.time.begin )).format("YYYY-MM-DD HH:mm:ss")
-                        + " to "
-                        + moment(new Date( status_db.time.end )).format("YYYY-MM-DD HH:mm:ss")
-                        + ")"
-                    );
-             */
-            $(".alerts").each( function( index, el ){
-               //$(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
-               //getData( this );
-            } );
-
-         };//end of updateValue
-
-         var total_db = new MMTDrop.Database({collection: "metrics_alerts", action: "aggregate", raw: true});
-
-         function getData( el ){
-            var obj = {};
-            if (el.dataset)
-               obj  = el.dataset;
-            else
-               obj  = el;
-
-            const comp_id  = parseInt( obj.compid ),
-            metric_id  = obj.metricid,
-            type       = obj.type; //either "alert" or "violation"
-
-            //get number of alerts from database
-            const match = { "0" : {"$gte": status_db.time.begin, "$lt" : status_db.time.end }, "2" : comp_id, "3": metric_id, "4": type },
-            group = { "_id": "$4", "total" : {"$sum": 1} };
-
-            total_db.reload( {query : [{$match: match},{$group : group}]}, function( data ){
-               var val = 0;
-               if( data.length > 0 )
-                  val = data[0].total;
-
-               $(el).html( '<span class="badge">' + val + '</span>' );
-            });
-         }
-         //END UPDATING values
-
-
-         //REDNER TABLE OF METRIX
-         //reder table of components and their metrics
-         var loadForm = function( obj ){
-            var table_rows = [];
-
-            //get number
-            var getNumberOfSelectedMetrics = function( sele ){
-               var count = 0;
-               for( var me in sele )
-                  if( sele[ me ].enable )
-                     count ++;
-               return count;
-            }
-            //get either "metric" or "compoent" having the given id
-            var getObject = function( label, id ){
-               for( var i=0; i<obj[ label ].length; i++ )
-                  if( obj[label][i].id == id )
-                     return obj[label][i];
-               return null;
-            };
-
-            //creat each row for each metric of a component
-            for( var comp_id in obj.selectedMetric ){
-               //show only probe that is indicated in URL by probe_id
-               if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp_id )
-                  continue;
-               var selMetrics = obj.selectedMetric[ comp_id ];
-               var comp       = getObject("components", comp_id)
-               if( comp.metrics == undefined || comp.metrics.length == 0 ) 
-                  continue;
-
-               var $row = {
-                     type    : "<tr>",
-                     children: [{
-                        type :  "<td>",
-                        attr : {
-                           colspan : 5,
-                           style   : "font-weight: bold",
-                           text    : comp.title + " ("+ comp.url +")"
-                        }
-                     }]
-               };
-
-               //first row for component's title
-               table_rows.push( $row );
-
-               //each row for metric
-               var j = 0;
-               for( var me_id in selMetrics ){
-                  var me  = getObject("metrics", me_id );
-                  if( me == undefined ){
-                     if( comp.metrics )
-                        for( var k=0; k<comp.metrics.length; k++ )
-                           if( comp.metrics[k].id == me_id ){
-                              me = comp.metrics[k];
-                              break;
-                           }
-                  }
-                  var sel = selMetrics[ me_id ];
-
-                  if( sel == null || sel.enable == false )
-                     continue;
-
-                  j++;
-
-                  row = {
-                        type    : "<tr>",
-                        children: []
-                  };
-                  //first column
-                  if( j == 1 ){
-                     row.children.push({
-                        type : "<td>",
-                        attr : {
-                           rowspan : getNumberOfSelectedMetrics( selMetrics )
-                        }
-                     })
-                  }
-                  //metric name
-                  row.children.push({
-                     type : "<td>",
-                     attr : {
-                        text : me.title,
-                        width: "30%",
-                     }
-                  })
-
-                  //alert
-                  row.children.push({
-                     type     : "<td>",
-                     attr     : {
-                        align : "center",
-                        width : "20%",
-                     },
-                     children : [{
-                        type : "<a>",
-                        attr : {
-                           id      : "alert-" + comp.id + "-" + me.id,
-                           class   : "text-danger",
-                           text    : "alerts "
-                        },
-                        children : [{
-                           type     : "<span>",
-                           attr     : {
-                              "class"           : "alerts",
-                              "data-type"       : "alert",
-                              "data-compid"     : comp.id,
-                              "data-metricid"   : me.id,
-                              "data-metricname" : me.name,
-                              "data-value"      : sel.alert,
-                              "html"            : '<i class = "fa fa-refresh fa-spin fa-fw"/>'
-                           }
-                        }]
-                     }]
-                  });
-                  //violation
-                  row.children.push({
-                     type     : "<td>",
-                     attr     : {
-                        align : "center",
-                        width : "20%",
-                     },
-                     children : [{
-                        type : "<a>",
-                        attr : {
-                           id      : "violation-" + comp.id + "-" + me.id,
-                           class   : "text-danger",
-                           text    : "violations "
-                        },
-                        children : [{
-                           type     : "<span>",
-                           attr     : {
-                              "class"           : "alerts",
-                              "data-type"       : "violation",
-                              "data-compid"     : comp.id,
-                              "data-metricid"   : me.id,
-                              "data-metricname" : me.name,
-                              "data-value"      : sel.violation,
-                              "html"            : '<i class = "fa fa-refresh fa-spin fa-fw"/>'
-                           }
-                        }]
-                     }]
-                  });
-
-                  //detail
-                  row.children.push({
-                     type     : "<td>",
-                     attr     : {
-                        align : "center",
-                        width : "20%",
-                     },
-                     children : [{
-                        type : "<a>",
-                        attr : {
-                           class   : "btn btn-info",
-                           type    : "button",
-                           text    : "Report",
-                           onclick : "window._gotoURL( '" + me.name + "',"+ comp.id + ",'"+ sel.alert + "','" + sel.violation + "' )"
-                        }
-                     }]
-                  });
-                  table_rows.push( row );
-               }
-            }
-
-            var form_config = {
-                  type  : "<div>",
-                  attr  : {
-                     style  : "position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px"
-                  },
-                  children : [{
-                     type     : "<div>",
-                     attr     : {
-                        style: "position: absolute; top: 35px; left: 0px; right: 0px; bottom: 0px; overflow: auto;",
-                     },
-                     children : [{
-                        type     : "<form>",
-                        children : [{
-                           type     : "<table>",
-                           attr     : {
-                              class : "table table-striped table-bordered table-condensed dataTable no-footer"
-                           },
-                           children : table_rows
-                        }]
-                     }]
-                  },{
-                     type: "<div>",
-                     attr: {
-                        style: "position: absolute; top: 0px; right: 0px",
-                     },
-                     children : [
-                        {
-                           type: "<a>",
-                           attr: {
-                              class   : "btn btn-primary pull-right",
-                              style   : "margin-left: 30px",
-                              text    : "Manage Reactions",
-                              href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
-                           }
-                        }
-                        ]
-                  }]
-            };
-
-            $("#sla-reaction-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
-            //after redering the table, update their values (#alert, #violation)
-            setTimeout( updateValue, 1000);
-
-            //on click
-            $(".alerts").each( function( index, el ){
-
-               $(el).parent().onclick = function(){
-                  var $this = $(this);
-                  if( $this.text() == 0 )
-                     return;
-                  alert("click")
-               }
-            } );
-         }
-         //END RENDERING
-
-         //LOAD METRIX FROM DATABASE
-         MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : getAppID()}}], "POST", {
-            error  : function(){},
-            success: function( data ){
-               var obj = data.data[0];
-               //does not exist ?
-               if( obj == undefined )
-                  MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
-               //there exists an application but user has not yet selected which metrics
-               else if( obj.selectedMetric == undefined )
-                  MMTDrop.tools.gotoURL("/chart/sla/metric", {param:["app_id"]});
-               else{
-                  loadForm( obj );
-               }
-            }
-         } );
-
-
-         window._gotoURL = function( name, probe_id, alert_thr, violation_thr){
-
-            alert_thr = alert_thr
-            .replace(">=", '"$gte":').replace(">", '"$gt" :')
-            .replace("<=", '"$lte":').replace("<", '"$lt" :')
-            .replace("!=", '"$ne":')
-            .replace("=",  '"$eq" :');
-            violation_thr = violation_thr
-            .replace(">=", '"$gte":').replace(">", '"$gt" :')
-            .replace("<=", '"$lte":').replace("<", '"$lt" :')
-            .replace("!=", '"$ne":')
-            .replace("=",  '"$eq" :');
-
-            MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
-                  MMTDrop.tools.getQueryString( ["app_id"], "&alert=" + alert_thr + "&violation=" + violation_thr ) );
-         }
-      },
-
+      
       createReactionForm: function( fPeriod ){
 
          //RENDER TABLE
@@ -707,17 +398,12 @@ var ReportFactory = {
                   },{
                      type : "<th>",
                      attr : {
-                        text : "Reactions"
+                        text : "Actions"
                      }
                   },{
                      type : "<th>",
                      attr : {
                         text : "Priority"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Enable"
                      }
                   },{
                      type : "<th>",
@@ -748,7 +434,7 @@ var ReportFactory = {
                   var reaction = reactions[ react_id ];
                   
                   //show only reactions of this component
-                  if( reaction.comp_id != comp.id )
+                  if( reaction.comp_id != comp.id || reaction.enable !== true )
                      continue;
 
                   //a row for description
@@ -767,6 +453,7 @@ var ReportFactory = {
                   var row = {
                         type    : "<tr>",
                         attr    : {
+                           style: "height: 45px; width: 200px",
                            valign: "middle"
                         },
                         children: []
@@ -805,13 +492,6 @@ var ReportFactory = {
                         html : reaction.priority
                      }
                   });
-                  //enable/disable
-                  row.children.push({
-                     type : "<td>",
-                     attr : {
-                        html : reaction.enable,
-                     }
-                  });
 
                   //number of times this reaction was trigged
                   row.children.push({
@@ -822,31 +502,31 @@ var ReportFactory = {
                      }
                   });
 
-                  row.children.push({
-                     type : "<td>",
-                     attr : {
-                        align: "center"
-                     },
-                     children: [{
-                        type : "<a>",
+                  //add  dummy buttons when the reaction is performing/ignored
+                  if( reaction.action == "ignore" )
+                     row.children.push({
+                        type : "<td>",
                         attr : {
-                           id    : "perform-btn-" + react_id,
-                           class : "btn btn-danger",
-                           title : "Edit this reaction",
-                           html  : "Perform",
-                           onclick: "_performReaction('" + react_id + "')"
+                           html: "ignored"
                         }
-                     },{
-                        type : "<a>",
+                     });
+                  else if( reaction.action == "perform" )
+                     row.children.push({
+                        type : "<td>",
                         attr : {
-                           id    : "ignore-btn-" + react_id,
-                           style : "margin-left: 20px",
-                           class : "btn btn-default",
-                           html  : "Ignore",
-                           onclick: "_ignoreReaction('"+ react_id +"')",
+                           html : 'performing <i class="fa fa-spinner fa-pulse fa-fw"></i>'
                         }
-                     }]
-                  });
+                     });
+                  else
+                     row.children.push({
+                        type : "<td>",
+                        attr : {
+                           align: "center",
+                           class: "reactions",
+                           "data-reaction"    : JSON.stringify( reaction ),
+                           "data-reaction-id" : react_id
+                        },
+                     });
 
                   table_rows.push( row );
                }
@@ -890,14 +570,28 @@ var ReportFactory = {
             $("#sla-reaction-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
             
             
+            function _btnClick( type, react_id, cb ){
+               MMTDrop.tools.ajax("/musa/sla/reaction/"+ type +"/" + react_id, {}, "POST", {
+                  error  : function(){
+                     
+                  },
+                  success: cb
+               });
+            }
+            
             //ignore a reaction
             window._ignoreReaction = function( react_id ){
-               console.log( react_id );
+               _btnClick( "ignore", react_id, function(){
+                  $(".btn-reaction-" + react_id).disable( true );
+               });
             };
             
           //perform a reaction
             window._performReaction = function( react_id ){
-               console.log( react_id );
+               _btnClick( "perform", react_id, function(){
+                  $(".btn-reaction-" + react_id).disable( true );
+                  $("#btn-reaction-perform-" + react_id ).before('<i class="fa fa-spinner fa-pulse fa-fw"></i>')
+               });
             }
          }//end rederTable function
 
@@ -915,4 +609,56 @@ var ReportFactory = {
          } );
          //end LOADING METRIX
       }
+}
+
+function _createButtons( react_id ){
+   return {
+      type : "<div>",
+      children: [{
+         type : "<input>",
+         attr : {
+            type  : "button",
+            id    : "btn-reaction-perform-" + react_id,
+            class : "btn btn-danger btn-reaction-perform btn-reaction-" + react_id,
+            title : "Perform the actions",
+            value : "Perform",
+            onclick: "_performReaction('" + react_id + "')",
+         }
+      },{
+         type : "<input>",
+         attr : {
+            type  : "button",
+            id    : "btn-reaction-ignore-" + react_id,
+            style : "margin-left: 20px",
+            class : "btn btn-default btn-reaction-ignore btn-reaction-" + react_id,
+            value : "Ignore",
+            onclick: "_ignoreReaction('"+ react_id +"')",
+         }
+      }]
+   }
+}
+
+//
+function _verifyCondition( conditions, data ){
+   return true;
+}
+
+//verify the metric_alerts data againts the reactions
+function _updateReactions( data ){
+   //for each reaction
+   $(".reactions").each( function( index, el ){
+      const reactID  = $(el).attr("data-reaction-id");
+      const reaction = JSON.parse( $(el).attr("data-reaction") );
+      const isValid  = _verifyCondition( reaction.conditions, data );
+      
+      console.log( index );
+      if( isValid ){
+         //show "Perform" and "Ignore" buttons
+         //$(el).html( MMTDrop.tools.createDOM( _createButtons( reactID ) ) );
+         //ani
+         $(el)
+            .delay( 1000 * index )
+            .html( MMTDrop.tools.createDOM( _createButtons( reactID ) ));
+      }
+   });
 }
