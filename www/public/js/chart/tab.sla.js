@@ -58,7 +58,7 @@ var ReportFactory = {
             match   = { "0" : {"$gte": status_db.time.begin, "$lt" : status_db.time.end }, "1" : getAppID()},
             group   = { "_id": {"1": "$1", "2": "$2", "3": "$3"}, //group by app_id, comp_id and metric_id
                   "alert"     : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "alert" ] }    , then: 1, else: 0 }}}, 
-                  "violation" : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} },
+                  "violate"   : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} },
                   "app_id"    : { "$first" : "$1"},
                   "comp_id"   : { "$first" : "$2"},
                   "me_id"     : { "$first" : "$3"},};
@@ -91,27 +91,31 @@ var ReportFactory = {
 
                //for each element of either alert or violation of a metric
                //update value to DOM element
-               $(".alerts").each( function( index, el ){
+               $(".alerts").each( function( i, el ){
                   //$(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
                   const val = _getData( this, data );
+                  
                   $(el).attr( "data-count", val );
+                  /*
                   $(el)
-                     .delay( index * 200 )
-                     .html( '<span class="badge">' + val + '</span>' );
+                     .delay( 0+i*5000 )
+                     .html( '<span class="badge">' + val + i + '</span>' );
+                     */
+                  setTimeout( function( e ){
+                     $(e).html( '<span class="badge">' + val + '</span>' );
+                     //ensure this element is showing
+                     $("#div-alerts").parent().animate({
+                        scrollTop: $(e).offset().top
+                     }, 100);
+                     
+                  }, i*100, el );
                } );
 
                //update reaction table
                if( window._updateReactions )
-                  window._updateReactions( data );
+                  //perform this function only after showing all alerts
+                  setTimeout( window._updateReactions, 100 * $(".alerts").size() + 500 , data );
             });
-            /*
-      $("#header").html(" (from "
-                        +  moment(new Date( status_db.time.begin )).format("YYYY-MM-DD HH:mm:ss")
-                        + " to "
-                        + moment(new Date( status_db.time.end )).format("YYYY-MM-DD HH:mm:ss")
-                        + ")"
-                    );
-             */
          };//end of updateValue
          //END UPDATING values
 
@@ -284,6 +288,7 @@ var ReportFactory = {
             var form_config = {
                   type  : "<div>",
                   attr  : {
+                     id     : "div-alerts",
                      style  : "position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px"
                   },
                   children : [{
@@ -378,7 +383,9 @@ var ReportFactory = {
       createReactionForm: function( fPeriod ){
 
          //RENDER TABLE
-         var renderTable = function ( obj ){
+         var renderTable = function ( obj, serverTime ){
+            const INTERVAL_BETWEEN_2_IGNORES  = 1*60*1000; //1 minute(s)
+            const INTERVAL_BETWEEN_2_PERFORMS = 0*60*1000; //1 minute(s)
             //this is used when use submit the form
             window._mmt = obj;
 
@@ -413,7 +420,8 @@ var ReportFactory = {
                   },{
                      type : "<th>",
                      attr : {
-                        text : "Recommendation"
+                        text : "Recommendation",
+                        style: "width: 200px"
                      }
                   }]
                }]
@@ -453,8 +461,7 @@ var ReportFactory = {
                   var row = {
                         type    : "<tr>",
                         attr    : {
-                           style: "height: 45px; width: 200px",
-                           valign: "middle"
+                           style: "height: 45px; width: 200px;",
                         },
                         children: []
                   };
@@ -503,28 +510,38 @@ var ReportFactory = {
                   });
 
                   //add  dummy buttons when the reaction is performing/ignored
-                  if( reaction.action == "ignore" )
+                  if( reaction.action == "ignore" 
+                     //ignored since last minute
+                     && serverTime - reaction.action_time < INTERVAL_BETWEEN_2_IGNORES )
                      row.children.push({
                         type : "<td>",
                         attr : {
-                           html: "ignored"
+                           align: "right",
+                           html : '<span class="text-danger" >Ignored</span>'
                         }
                      });
-                  else if( reaction.action == "perform" )
+                  //reaction is performing
+                  else if( reaction.action == "perform" 
+                     && serverTime - reaction.action_time < INTERVAL_BETWEEN_2_PERFORMS ){
                      row.children.push({
                         type : "<td>",
                         attr : {
-                           html : 'performing <i class="fa fa-spinner fa-pulse fa-fw"></i>'
+                           html :
+                              (reaction.action_status == "start"?
+                              '<span class="text-success">Performing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>'
+                              :'<span class="text-success">Performed</span>')
                         }
                      });
-                  else
+                  }else
                      row.children.push({
                         type : "<td>",
                         attr : {
                            align: "center",
                            class: "reactions",
+                           id   : "reaction-" + react_id,
                            "data-reaction"    : JSON.stringify( reaction ),
-                           "data-reaction-id" : react_id
+                           "data-reaction-id" : react_id,
+                           html : "checking ..."
                         },
                      });
 
@@ -582,15 +599,18 @@ var ReportFactory = {
             //ignore a reaction
             window._ignoreReaction = function( react_id ){
                _btnClick( "ignore", react_id, function(){
-                  $(".btn-reaction-" + react_id).disable( true );
+                  $("#reaction-" + react_id)
+                     .html( '<span class="text-danger">Ignored</span>' )
+                     .attr( "align", "right" );
                });
             };
             
           //perform a reaction
             window._performReaction = function( react_id ){
                _btnClick( "perform", react_id, function(){
-                  $(".btn-reaction-" + react_id).disable( true );
-                  $("#btn-reaction-perform-" + react_id ).before('<i class="fa fa-spinner fa-pulse fa-fw"></i>')
+                  $("#reaction-" + react_id )
+                     .html('<span class="text-success">Performing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>')
+                     .attr("align", "left");
                });
             }
          }//end rederTable function
@@ -603,8 +623,11 @@ var ReportFactory = {
                //does not exist ?
                if( obj == undefined )
                   MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
-               else
-                  renderTable( obj );
+               else{
+                  //IMPORTANT: this global variable is used by #_getMetricIDFromName
+                  window.__sla = obj;
+                  renderTable( obj, data.now );
+               }
             }
          } );
          //end LOADING METRIX
@@ -638,8 +661,79 @@ function _createButtons( react_id ){
    }
 }
 
-//
-function _verifyCondition( conditions, data ){
+/**
+ * Get metric id from its name.
+ * This function uses a global variable defined in createReactionForm when using ajax to get data from server
+ * @param name
+ * @returns
+ */
+function _getMetricIDFromName( name, comp_id ){
+   if( window.__sla == undefined ){
+      console.error( "This must not happen" );
+      return 0;
+   }
+   
+   //find in general metric
+   for( var i=0; i<window.__sla.metrics.length; i++ ){
+      var m = window.__sla.metrics[ i ];
+      if( m.name == name )
+         return m.id;
+   }
+   //find in metric list of component
+   for( var i=0; i<window.__sla.components.length; i++ ){
+      var comp = window.__sla.components[ i ];
+      if( comp.id == comp_id ){
+         var metrics = comp.metrics;
+         //for each metric in the list of matrics of this component
+         for( var j=0; j<metrics.length; j++ )
+            if( metrics[j].name == name )
+               return metrics[j].id;
+      }
+   }
+   console.error( "This must not happen" );
+   return 0;
+}
+
+//reaction: {"comp_id": "30",
+//              "conditions": { "availability": [  "violate" ], "incident": [  "alert" ]},
+//              "actions": [ "filtre_port", "restart_apache"],"priority": "MEDIUM","note": "note","enable": true}
+//data    : [{"alert":0,"violate":63,"app_id":"_undefined","comp_id":1,"me_id":"1"},
+//             {"alert":0,"violate":63,"app_id":"_undefined","comp_id":30,"me_id":"1"}
+//            ]
+function _verifyCondition( reaction, data ){
+   const conditions = reaction.conditions;
+   const comp_id    = reaction.comp_id;
+   
+   for( var metric_name in conditions ){
+      const metric_id = _getMetricIDFromName( metric_name, comp_id );
+      var valid  = false;
+      var cond = conditions[ metric_name ]; //cond is an array
+      
+      if( cond.length == 0 )
+         continue;
+      
+      for( var i=0; i<data.length; i++ ){
+         var o = data[i];
+         if( o.comp_id == comp_id       //same component
+               && o.me_id == metric_id  //same metric
+               && (
+                     //one cond
+                     ( cond.length == 1 && o[ cond[0] ] > 0 )
+                     ||
+                     //having either "alert" or "violate"
+                     ( cond.length == 2 && ( o[ cond[0] ] > 0 || o[ cond[1] ] > 0) )
+                  )
+         ){
+            //found one msg that satisfies the condition
+            valid = true;
+            break;
+         }
+      }
+         
+      //donot find any element in data that satisfies this condition
+      if( !valid )
+         return false;
+   }
    return true;
 }
 
@@ -649,16 +743,19 @@ function _updateReactions( data ){
    $(".reactions").each( function( index, el ){
       const reactID  = $(el).attr("data-reaction-id");
       const reaction = JSON.parse( $(el).attr("data-reaction") );
-      const isValid  = _verifyCondition( reaction.conditions, data );
+      const isValid  = _verifyCondition( reaction, data );
       
-      console.log( index );
-      if( isValid ){
-         //show "Perform" and "Ignore" buttons
-         //$(el).html( MMTDrop.tools.createDOM( _createButtons( reactID ) ) );
-         //ani
+      //show "Perform" and "Ignore" buttons
+      //$(el).html( MMTDrop.tools.createDOM( _createButtons( reactID ) ) );
+      //ani
+      /*
          $(el)
             .delay( 1000 * index )
             .html( MMTDrop.tools.createDOM( _createButtons( reactID ) ));
-      }
+       */
+      setTimeout( function( e, text ){
+         $(e).html( text );
+      }, 1000*index, el, 
+         isValid ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
    });
 }

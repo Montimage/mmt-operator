@@ -19,6 +19,7 @@ function getUrlResponseTime( publisher, url, component_id, metric ){
 }
 
 function checkAvailability( publisher, dbconnector ){
+   //console.log("active checking ...");
 	//get a list of applications defined in metrics collections
 	dbconnector._queryDB("metrics", "find", [], function( err, apps){
 		if( err )
@@ -75,8 +76,11 @@ function checkAvailability( publisher, dbconnector ){
 
 function start( pub_sub, dbconnector ){
 	//donot check if redis/kafka is not using
-	if( pub_sub == undefined )
+	if( pub_sub == undefined ){
+	   console.error("This works only for kafka/redis bus");
+	   process.exit( 1 );
 		return;
+	}
 	
 	dbconnector.onReady( function(){
 		var publisher;

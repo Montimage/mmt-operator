@@ -164,18 +164,23 @@ app.use("/export", require("./routes/html2img.js"));
 //TODO to remove in final product
 if( config.isMusaProject ){
   //module to check preodically if components of apps are available
-  //require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
+  require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
  
   //module to verify preodically if the current data are violdated
   require("./routes/musa/violation_check_engine.js").start( pub_sub, dbconnector );
   
-  require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
+  //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
   
-  var sla = require("./routes/musa/sla.js");
+  const reaction = require("./routes/musa/reaction.js");
+  reaction.pub_sub     = pub_sub;
+  reaction.dbconnector = dbconnector;
+  app.use("/musa/sla", reaction);
+  
+  const sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);
 
-  var connector = require("./routes/musa/connector.js");
+  const connector = require("./routes/musa/connector.js");
   connector.dbconnector = dbconnector;
   app.use("/musa/connector", connector);
 }

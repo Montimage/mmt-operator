@@ -253,6 +253,9 @@ table>tbody>tr:hover {
     text-decoration: underline;
 }
 
+table td {
+  vertical-align: middle !important;
+}
 
 tr.selected a {
     color: #fff;

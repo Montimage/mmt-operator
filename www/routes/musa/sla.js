@@ -3,7 +3,6 @@ const router  = express.Router();
 const multer  = require('multer');
 const xml2js  = require('xml2js');
 const fs      = require("fs");
-
 const HttpException = require("../../libs/HttpException");
 
 const parser = new xml2js.Parser();
@@ -255,45 +254,5 @@ router.get("/upload/:id", function( req, res, next ){
   res.send( status );
 });
 
-
-/**
- * When use click on "Perform" or "Ignore" buttons of "Reactions" tab
- * @param req
- * @param res
- * @param next
- * @returns
- */
-router.post("/reaction/:type/:react_id", function(req, res, next) {
-   //type is either "ignore" or "perform"
-   const type = req.params.type,
-   react_id   = req.params.react_id;
-   const match = {};
-   match["selectedReaction." + react_id]  = { "$ne" : null };
-   
-   const update = {};
-   update["selectedReaction." + react_id + ".action"]  = type;
-   
-   router.dbconnector.mdb.collection("metrics").update( match, {$set: update}, function( err, data ){
-            
-            res.setHeader("Content-Type", "application/json");
-            
-            if( err )
-               return res.send( {
-                  type : type,
-                  id   : react_id,
-                  status: "error"
-               } );
-            
-            res.send( {
-               type : type,
-               id   : react_id,
-               status: "success"
-            } );
-         });
-   
-
-   
-   
-});
 
 module.exports = router;

@@ -55,7 +55,8 @@ function proc_request(req, res, next) {
 		}
 		res.setHeader("Content-Type", "application/json");
 		res.send({
-			data : data
+			data : data,
+			now  : (new Date()).getTime()
 		});
 	};
 

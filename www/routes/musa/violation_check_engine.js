@@ -30,14 +30,17 @@ function _checkAvailability( metric, m, app, com ){
       return;
 
    const now = (new Date()).getTime();
-   dbconnector._queryDB( "availability_real", "aggregate", [
+   
+   dbconnector._queryDB( "data_availability_real", "aggregate", [
       {"$match"  : {"1": com.id,"3":{"$gte": (now - CHECH_AVG_INTERVAL),"$lt":now }}},
       {"$group"  : {"_id": "$1", "avail_count": {"$sum": "$5"}, "check_count": {"$sum" : "$6"}}}
       ], function( err, result){
+      
       if( err )
          return console.error( err );
       if( result.length  == 0 ) 
          return;
+      
       //result = [ { _id: 30, avail_count: 4, check_count: 7 } ]
       result = result[0];
 
@@ -47,7 +50,7 @@ function _checkAvailability( metric, m, app, com ){
          return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.id, m.violation, val, m.priority );
       else if ( eval( val + m.alert ) )
          return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.id, m.violation, val, m.priority );
-      //console.log( result );
+      console.log( result );
    }, false);
    //console.log( "check availability" );
 }
@@ -155,8 +158,11 @@ function perform_check(){
 
 function start( pub_sub, _dbconnector ){
    //donot check if redis/kafka is not using
-   if( pub_sub == undefined )
+   if( pub_sub == undefined ){
+      console.error("This work only for kafka/redis bus");
+      process.exit( 1 );
       return;
+   }
 
    //when db is ready
    _dbconnector.onReady( function(){

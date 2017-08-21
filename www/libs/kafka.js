@@ -91,7 +91,7 @@ function createClient(){
 		if( ret.consumer._ready ) {
 			ret.consumer.addTopics([channel], function( err, added ){
 				if( err )
-					throw err;
+					console.error( err );
 			});
 		}
 		else{
@@ -117,7 +117,8 @@ function createClient(){
 		cb = cb || function( err, data ){ 
 			if( err )
 				return console.error( err );
-			console.log( data ); 
+			
+			//console.log( data );
 		};
 		var data = [{topic: topic, messages: message}];
 		

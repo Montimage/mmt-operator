@@ -18,7 +18,7 @@ const COL = {
 //global variable for this module
 var dbconnector = {};
 var publisher   = {};
-const REACTORS  = require("../../libs/config.js").sla.reactions;
+const REACTORS  = require("../../libs/config.js").sla.actions;
 
 
 //raise message on a special channel of pub-sub
