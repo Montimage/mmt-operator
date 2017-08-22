@@ -102,21 +102,26 @@ if( param.profile && param.app && param.link )
   },]
 
 
-const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local";
+const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 //MongoDB match expression
 var get_match_query = function( p ){
   var param = MMTDrop.tools.getURLParameters();
   var $match = {};
+  //location
   if( param.loc ){
     $match[ COL.DST_LOCATION.id ] = decodeURI( param.loc );
   }
+  
   if( param.profile )
     $match[ COL.PROFILE_ID.id ] = MMTDrop.constants.getCategoryIdFromName( param.profile );
+  
   if( param.app )
     $match[ COL.APP_ID.id ] = MMTDrop.constants.getProtocolIDFromName( param.app );
+  
+  //when a specific IP is selected
   if( param.ip ){
 	if( param.ip == NO_IP ){
-		$match[ COL.IP_SRC.id ] = "null";
+		$match[ COL.IP_SRC.id ] = NULL;
 	}else if( param.ip == LOCAL ) {
 		$match[ COL.SRC_LOCATION.id ] = LOCAL;
 	}else if( param.ip == REMOTE ) {
@@ -130,7 +135,11 @@ var get_match_query = function( p ){
 	    obj[ COL.IP_DEST.id ] = param.ip;
 	    $match["$or"].push( obj );
 	} 
+  }else{
+     $match[ COL.IP_SRC.id ] =  {$nin:[NULL, MICRO_FLOW]};
+     $match[ COL.IP_DEST.id ] = {$nin:[NULL, MICRO_FLOW]};
   }
+
   if( param.link ){
     var link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
@@ -2005,7 +2014,10 @@ $(str).appendTo("head");
                 if( val > max_val ) max_val = val;
                 msg.source = name;
                 if( obj[ name ] == undefined )
-                  obj[ name ] = { name: name, id: name.replace(/:/g, "_"), data: msg, val: 0, is_local: msg.is_src_local, link_count: 0 };
+                  obj[ name ] = { name: name, id: name.replace(/:/g, "_"), 
+                                  data: msg, val: 0, 
+                                  is_local: msg.is_src_local, 
+                                  link_count: 0 };
                 obj[ name ].val     +=  val;
                 
                 //destination

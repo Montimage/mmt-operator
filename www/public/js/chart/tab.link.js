@@ -70,6 +70,7 @@ var ReportFactory = {
             label = "Out";
             tmp = "UL_" + tmp;
         }
+        
         return {
             id: COL[tmp].id,
             label: label,
@@ -751,10 +752,14 @@ var ReportFactory = {
 
                     //Format data
                     for (var i in obj) {
-                        var fun = "createPopupReport('mac'," //collection
-                            + COL.MAC_SRC.id +",'"
-                            + i +"','MAC: "
-                            + i +"')";
+                        var fun = "createPopupReport('mac_real'," //collection
+                            + COL.MAC_SRC.id  //key 
+                            +",'" + i //id
+                            +"','MAC: " + i //title 
+                            +"', undefined " //probe_id
+                            + ", true" //no_group
+                            + ", true" //no_override_when_reload
+                            + " )";
 
                         //convert to time string
                         obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
@@ -866,7 +871,13 @@ var ReportFactory = {
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
-        [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.UL_PACKET_COUNT.id, COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id ].forEach( function( el, index){
+        [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, 
+           COL.ACTIVE_FLOWS.id, 
+           COL.UL_PACKET_COUNT.id, COL.DL_PACKET_COUNT.id, 
+           COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id,
+           //the total is used for No-IP
+           COL.DATA_VOLUME.id,  COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id]
+        .forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
         [ COL.TIMESTAMP.id , COL.FORMAT_ID.id ].forEach( function( el, index){
@@ -1073,9 +1084,9 @@ var ReportFactory = {
     },
 
     createTrafficReport: function ( database) {
-        var _this = this;
-        var fMetric = MMTDrop.filterFactory.createMetricFilter();
-
+        const _this = this;
+        const fMetric = MMTDrop.filterFactory.createMetricFilter();
+        
         var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
                 getDataFn: function (db) {
@@ -1098,20 +1109,18 @@ var ReportFactory = {
                     }
 
                     if (col.id !== COL.ACTIVE_FLOWS.id) {
-                        //dir = 1: incoming, -1 outgoing, 0: All
                         cols.push(_this.getCol(col, true)); //in
                         cols.push(_this.getCol(col, false)); //out
-                        /*cols.push({
-                            id: col.id,
-                            label: "All"
-                                //type : "line"
-                        });*/
-                    } else
-                        cols.push(col);
-
-                    if( col.id !== MMTDrop.constants.StatsColumn.ACTIVE_FLOWS.id )
+                        
                         //total is no-ip for report-id = 99
-                        cols.push( {label: "No-IP", id: col.id} );
+                        cols.push({
+                            id    : col.id,
+                            label : "No-IP",
+                            isNoIP: true
+                                //type : "line"
+                        });
+                    } else
+                        cols.push( col );
 
                     var obj  = {};
                     var data = db.data();
@@ -1132,26 +1141,27 @@ var ReportFactory = {
 
 
                         for (var j in cols) {
-                            var id = cols[j].id;
+                            var id  = cols[j].id;
+                            var val = ( msg[id] != undefined )? msg[id] : 0;
 
-                            if( msg[id] == undefined )
-                                msg[id] = 0;
-
-                            if( cols[j].label == "No-IP" && msg[0] == 100 ){
+                            //we use total (e.g., PAYLOAD, DATA_VOLUME, PACKET_COUNT) only for 99-report
+                            //==> for 100-reports:
+                            //     + put zero if probe is running
+                            if( cols[j].isNoIP === true && msg[0] == 100 ){
                                 if( ! exist ) 
                                 		obj[time][id] = 0;
                                 continue;
                             }
 
                             if (exist)
-                                obj[time][id] += msg[id] / period;
+                                obj[time][id] += val / period;
                             //first time
                             else
-                                obj[time][id] = msg[id] / period;
+                                obj[time][id] = val / period;
                         }
                     }
 
-                    cols.unshift(COL.TIMESTAMP);
+                    cols.unshift( COL.TIMESTAMP );
 
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
                     var height  = $widget.find(".grid-stack-item-content").innerHeight();
