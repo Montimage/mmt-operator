@@ -58,6 +58,10 @@ block header
     
     script( type='text/javascript', src= '/js/chart/popup-chart.js')
     
+    script( type='text/javascript', src= '/js/tooltip.js')
+    
+    script( type='text/javascript', src= '/_js/IP.js')
+    
     if( pathname == null )
         script( type='text/javascript', src= '/js/chart/tab.#{ page_id }.js')
     else
@@ -66,7 +70,7 @@ block header
     //script render the reports based on the configuration above
     script( type='text/javascript', src= '/js/chart/common.js')
 
-    script( type='text/javascript', src= '/js/tooltip.js')
+
 
     
 mixin ahref( index, query_string, val )

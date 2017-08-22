@@ -103,6 +103,9 @@ if( param.profile && param.app && param.link )
 
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
+
+const _IP = new IP();
+
 //MongoDB match expression
 var get_match_query = function( p ){
   var param = MMTDrop.tools.getURLParameters();
@@ -784,7 +787,7 @@ var ReportFactory = {
         var self = this;
         //mongoDB aggregate
         var group = { _id : {} };
-        [ "link" ].forEach( function( el, index){
+        [ COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
         } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
@@ -843,14 +846,19 @@ var ReportFactory = {
                         cPie.dataLegend.data[name].val += val;
                         cPie.dataLegend.dataTotal      += val;
                     }
+                    
                     for( var name in cPie.dataLegend.data ){
                     		var arr = cPie.dataLegend.data[ name ].ips;
-                    		arr[0] = MMTDrop.tools.ipV4Number2String( arr[0] );
-                    		arr[1] = MMTDrop.tools.ipV4Number2String( arr[1] );
+                    		arr[0] = _IP.number2StringV4( arr[0] );
+                    		arr[1] = _IP.number2StringV4( arr[1] );
                     		
                     		var key = arr.join( sperator );
                     		cPie.dataLegend.data[ key ] = cPie.dataLegend.data[ name ];
+                    		//delete old data
+                    		delete( cPie.dataLegend.data[ name ] );
+                    		//use the new name
                     		name = key;
+                    		
                     		
                         data.push({
                             "key": name,
@@ -998,15 +1006,20 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
+                    ips[0] = _IP.string2NumberV4( ips[0] );
+                    ips[1] = _IP.string2NumberV4( ips[1] );
+                    
                     var $match = {};
                     $match[ COL.IP_SRC.id ]  = {$in: ips};
                     $match[ COL.IP_DEST.id ] = {$in: ips};
                     $match = JSON.stringify( $match );
 
-                    var fun = "createPopupReport('link'," //collection
-                        + "'match',"
-                        + "this.getAttribute('match')"
-                        + ",'Link: " + key +"')";
+                    var fun = "createPopupReport('link'" //collection
+                        + ",'match'" //key
+                        + ", this.getAttribute('match')" //id
+                        + ",'Link: " + key +"'" //title
+                        + ")";
+                    
                     $("<td>",{
                       "align" : "center",
                       "html"  : '<a title="Click to show graph" onclick="'+ fun +'" match=\''+ $match +'\'><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
@@ -1206,7 +1219,7 @@ var ReportFactory = {
                     }
                     
                     for( var name in cPie.dataLegend.data ){
-                    		var ip = MMTDrop.tools.ipV4Number2String( name );
+                    		var ip = _IP.number2StringV4( name );
                     		cPie.dataLegend.data[ ip ] = cPie.dataLegend.data[ name ];
                     		
                     		delete( cPie.dataLegend.data[ name ]);

@@ -11,7 +11,7 @@ CONST           = require("../libs/constant"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
 FORMAT          = require('util').format;
-const IP        = new (require("../libs/IP.js"));
+const IP        = new (require("../libs/shared/IP.js"));
 
 const COL      = dataAdaptor.StatsColumnId;
 const HTTP     = dataAdaptor.HttpStatsColumnId;
@@ -170,7 +170,7 @@ module.exports = function(){
 			//a link between 2 IPs
 			link: new DataCache( inserter, "data_link", 
 					{
-				key: [COL.PROBE_ID, "link"],
+				key: [COL.PROBE_ID, COL.IP_SRC, COL.IP_DEST ],
 				inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
 					COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
 					COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
@@ -327,8 +327,8 @@ module.exports = function(){
 				msg[ COL.IP_DEST ] = IP.string2NumberV4( msg[COL.IP_DEST] );
 				
 				//this should not happen
-				if( msg[ COL.DATA_TRANSFER_TIME ] > DOUBLE_STAT_PERIOD_IN_MS )
-					msg[ COL.DATA_TRANSFER_TIME ] = 0;
+				//if( msg[ COL.DATA_TRANSFER_TIME ] > DOUBLE_STAT_PERIOD_IN_MS )
+				//	msg[ COL.DATA_TRANSFER_TIME ] = 0;
 
 				//HTTP
 				if( msg[ COL.FORMAT_TYPE ] === 1 ){
@@ -352,12 +352,18 @@ module.exports = function(){
 				//traffic of local IP
 				//do not add report 99 to data_ip collection as it has no IP
 				self.dataCache.ip.addMessage( msg );
-				
-				//link between 2 IPs
-				
-				//msg["link"] = tools.symetricEncodeIPs( msg[ COL.IP_SRC ], msg[ COL.IP_DEST ] );
-				//self.dataCache.link.addMessage( msg );
-				//delete( msg["link"] );
+
+	         /////////////////////////////////////////////////////////////
+				//symetric link between 2 IPs
+				if(  msg[ COL.IP_SRC ] <  msg[ COL.IP_DEST ] )
+				   self.dataCache.link.addMessage( msg );
+				else{
+				   msg = dataAdaptor.inverseStatDirection( msg );
+				   self.dataCache.link.addMessage( msg );
+				   //revert
+				   msg = dataAdaptor.inverseStatDirection( msg );
+				}
+		      /////////////////////////////////////////////////////////////
 				
 				//destination location
 				self.dataCache.location.addMessage( msg );
@@ -365,6 +371,7 @@ module.exports = function(){
 			
 			self.dataCache.mac.addMessage( msg );
 
+			///////////////////////////////////////////////////////////////
 			//expand application path: 
 			var app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 			
@@ -392,6 +399,7 @@ module.exports = function(){
 			msg.app_paths = app_arr;
 			
 			self.dataCache.app.addMessage( msg );
+         ///////////////////////////////////////////////////////////////
 			
 			//each session
 			//self.dataCache.session.addMessage( msg );

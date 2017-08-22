@@ -392,7 +392,7 @@ var MMTDrop = {
           return this._cacheCategoryIdFromAppId[ appId ] = parseInt( i );
       }
      // console.log( "Not found category for this app: " + appId  );
-      return 1;	
+      return 10;	 //Network
       return -1;
     },
     /**

@@ -1,3 +1,9 @@
+/**
+ * Convert an IPv4 to a 32bit number and vice versa
+ * @created:
+ * @author: Huu Nghia Nguyen 
+ * 
+ */
 
 function IP(){
 	const self = this;
@@ -20,24 +26,22 @@ function IP(){
 			ret |= val;
 		}
 		return ret >>> 0;
-		
-		//return arr[0] * 16777216 + arr[1] * 65536  + arr[2] * 256 + arr[3];
 	}
 	
 	this.number2StringV4 = function( ipNumber ){
-		var arr = [0,0,0,0];
-		//get 32 bits
-		ipNumber &= 0xFFFFFFFF;
-		
-		arr[0] = (ipNumber >>> 24 );
-		arr[1] = (ipNumber >>> 16 ) && 0xFF;
-		arr[2] = (ipNumber >>> 8  ) && 0xFF;;
-		arr[3] = (ipNumber >>> 0  ) && 0xFF;
-		
-		return arr.join(".");
+      var arr = [0,0,0,0];
+      //get 32 bits
+      ipNumber &= 0xFFFFFFFF;
+      
+      arr[0] = (ipNumber >>> 24 );
+      arr[1] = (ipNumber >>> 16 ) & 0xFF;
+      arr[2] = (ipNumber >>> 8  ) & 0xFF;;
+      arr[3] = (ipNumber >>> 0  ) & 0xFF;
+      
+      return arr.join(".");
 	}
 }
 
-module.exports = IP;
 
+module.exports = IP;
 //console.log( (new IP()).string2NumberV4("192.168.0.1") );

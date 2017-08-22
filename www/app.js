@@ -108,6 +108,9 @@ app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 1*24*60*60*1000,    //1 day
     lastModified: true
 }));
+//share js libraries 
+app.use('/_js', require("./routes/server2client.js"))
+
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',

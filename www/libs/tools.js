@@ -64,16 +64,6 @@ var _tools = {
 	  
 	  return (now - val);
   },
-  
-  symetricEncodeIPs: function( a, b ){
-	  var v1 = a, v2 = b;
-	  if( b > a ){
-		  v1 = b;
-		  v2 = a;
-	  }
-	  
-	  return v1 * 16777216 + v2;
-  }
 }
 
 module.exports = _tools;

@@ -97,19 +97,22 @@ const getPrefix = function( txt ){
     return prefix;
 }
 console.log = function () {
-    if( config.is_in_debug_mode === true  )
-        logStdout.write  ( getPrefix( "LOG" ) + util.format.apply(null, arguments) + '\n');
+   const content = getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n';
+   if( config.is_in_debug_mode === true  )
+      logStdout.write  ( content );
 
-    logFile.write( getPrefix("LOG") + util.format.apply(null, arguments) + '\n');
+   logFile.write( content );
 }
 
 console.warn = console.log;
 
 console.error = function( msg, err ){
-    if( config.is_in_debug_mode === true  )
-    		errStdout.write  ( getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n');
+   const content = getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n';
 
-    logFile.write( getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n');
+   if( config.is_in_debug_mode === true  )
+      errStdout.write  ( content );
+
+   logFile.write( content );
 }
 
 console.debug = function( msg ){
