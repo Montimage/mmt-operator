@@ -73,3 +73,4 @@ Each entry of this collection is a reaction when one or several metrics being al
 3. number, component ID
 4. string, reaction ID
 5. string, action ID 
+6. string, reaction description

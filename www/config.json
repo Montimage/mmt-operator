@@ -8,8 +8,8 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host": "37.48.247.124",
-		"_host": "192.168.0.7",
+		"_host": "37.48.247.124",
+		"host": "192.168.0.195",
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
@@ -19,7 +19,7 @@
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "file",
+	"input_mode": "kafka",
 	"probe_analysis_mode": "online",
 	"local_network": [
 		{
@@ -54,7 +54,7 @@
 	"probe_stats_period": 5,
 	"buffer": {
 		"max_length_size": 50000,
-		"max_interval": 7
+		"max_interval": 31
 	},
 	"micro_flow": {
 		"packet": 1,
@@ -65,12 +65,12 @@
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
 	
-	"_project": "MUSA",
+	"project": "MUSA",
 	"sla": {
 		"active_check_period": 5,
 		"violation_check_period": 5,
 		"reaction_check_period": 5,
-		"reactions": {
+		"actions": {
 			"down_5min": {
 				"description": "Put down all NIC using to cut communication, then bring them up after 5 minutes",
 				"channel_name": "react_down_5min",

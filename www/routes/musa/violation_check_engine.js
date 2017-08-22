@@ -167,7 +167,7 @@ function start( pub_sub, _dbconnector ){
    //when db is ready
    _dbconnector.onReady( function(){
       dbconnector = _dbconnector;
-      publisher   = pub_sub.createClient();
+      publisher   = pub_sub.createClient("producer", "musa-violation-checker");
 
       setInterval( perform_check, 
             _mmt.config.sla.violation_check_period*1000 //each 5 seconds

@@ -75,10 +75,8 @@ function createClient( type, clientName  ){
                keyEncoding: 'utf8'
             }
       ),
-      //init kafka client's variables
-      ret.consumer._topics = [];
 
-      console.log("KafkaConsumer ["+ ret.clientName +"] is ready !!!!", ret.consumer._topics );
+      console.log("KafkaConsumer ["+ ret.clientName +"] is created !!!!" );
 
 
       /**

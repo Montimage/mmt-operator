@@ -25,7 +25,7 @@ default:
 	process.exit( 1 );
 }
 
-const report_client = pub_sub.createClient();
+const report_client = pub_sub.createClient( "consumer", "busReader" );
 
 //*
 report_client.subscribe("license.stat");
@@ -44,7 +44,7 @@ report_client.subscribe("behaviour.report");
 
 report_client.subscribe("ndn.report");
 report_client.subscribe("OTT.flow.report");
-
+report_client.subscribe("cpu.report");
 //for MUSA
 report_client.subscribe("metrics.availability");
 //*/

@@ -85,7 +85,7 @@ function start( pub_sub, dbconnector ){
 	dbconnector.onReady( function(){
 		var publisher;
 		if( pub_sub )
-			publisher = pub_sub.createClient();
+			publisher = pub_sub.createClient("producer", "musa-active-checker" );
 		else
 			publisher = {
 				publish : function( channel, msg ){

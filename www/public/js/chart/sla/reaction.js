@@ -281,7 +281,16 @@ var ReportFactory = {
                 html  : "<span class='glyphicon glyphicon-edit'></span>",
                 href  : _getReactionURL( comp.id, react_id )
               }
-            }]
+            },{
+               type : "<a>",
+               attr : {
+                 class : "btn btn-danger",
+                 style : "margin-left: 10px",
+                 title : "Delete this reaction",
+                 html  : "<span class='glyphicon glyphicon-trash'></span>",
+                 onclick: '_delReaction( "' + comp.id +'", "' + react_id +'")'
+               }
+             }]
           });
           
           table_rows.push( row );
@@ -385,6 +394,35 @@ var ReportFactory = {
     }//END SUBMIT FORM
 
 
+    //delete a reaction
+    window._delReaction = function( comp_id, react_id ){
+       
+       if( ! window.confirm( "Do you want to delete this reaction?" ))
+          return;
+       
+       const dataObj = {};
+       dataObj[ "selectedReaction." + react_id ] = "";
+       
+       MMTDrop.tools.ajax("/api/metrics/update", {
+          "$match"   : {"_id" : app_id},
+          "$data"    : {
+            "$unset" : dataObj
+          }
+        },
+        "POST",
+        //callback
+        {
+          error   : function(){
+           MMTDrop.alert.error("Cannot update to Database", 5000);
+          },
+          success : function( ){
+            MMTDrop.alert.success("Successfully delete the reaction", 2000);
+            setTimeout( MMTDrop.tools.reloadPage, 2500 );
+          }
+        })
+    }
+    //end _delReaction
+    
     //LOAD METRIX FROM DATABASE
     MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
       error  : function(){},

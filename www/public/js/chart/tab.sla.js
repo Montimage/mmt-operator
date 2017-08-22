@@ -253,7 +253,7 @@ var ReportFactory = {
                            type     : "<span>",
                            attr     : {
                               "class"           : "alerts",
-                              "data-type"       : "violation",
+                              "data-type"       : "violate",
                               "data-compid"     : comp.id,
                               "data-metricid"   : me.id,
                               "data-metricname" : me.name,
@@ -385,7 +385,7 @@ var ReportFactory = {
          //RENDER TABLE
          var renderTable = function ( obj, serverTime ){
             const INTERVAL_BETWEEN_2_IGNORES  = 1*60*1000; //1 minute(s)
-            const INTERVAL_BETWEEN_2_PERFORMS = 0*60*1000; //1 minute(s)
+            const INTERVAL_BETWEEN_2_PERFORMS = 2*60*1000; //1 minute(s)
             //this is used when use submit the form
             window._mmt = obj;
 

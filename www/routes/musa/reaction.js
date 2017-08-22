@@ -16,19 +16,32 @@ function _publishMessage( channel, msgString ){
          process.exit( 1 );
       }
       //create a client to publish a message
-      router.publisher = router.pub_sub.createClient();
+      router.publisher = router.pub_sub.createClient( "producer", "reactor" );
    }
-   
+
    router.publisher.publish( channel, msgString);
 }
 
-function _performAction( channel_name, action_name ){
+function _performAction( action_name, action, react_id, reaction ){
    const arr = [];
+   const channel_name = action.channel_name;
+   
+   //current time
+   arr.push( tools.getTimestamp() / 1000 )
+   //component ID
+   arr.push( reaction.comp_id )
+   //reaction ID
+   arr.push('"' + react_id + '"')
+   //action ID
+   arr.push('"' + action_name + '"' );
+   //description
+   arr.push('"' + reaction.note + '"');
+   
    _publishMessage( channel_name, arr.join(",") );
 }
 
-function _performReaction( reaction, id ){
-   console.log( "Perform reaction " + id );
+function _performReaction( reaction, react_id ){
+   console.log( "Perform reaction " + react_id );
    
    const actions = reaction.actions;
    for( var i=0; i<actions.length; i++ ){
@@ -37,7 +50,8 @@ function _performReaction( reaction, id ){
       if( action.channel_name == undefined )
          continue;
       
-      _performAction( action.channel_name, act_name );
+      console.log( (i+1) + ": perform [" + act_name + "] on channel [" + action.channel_name + "]" );
+      _performAction( act_name, action, react_id, reaction );
    }
 }
 

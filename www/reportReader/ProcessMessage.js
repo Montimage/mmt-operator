@@ -128,8 +128,8 @@ function ProcessMessage( database ){
 
 			//license information
 		case mmtAdaptor.CsvFormat.LICENSE:
-			if( databaseadmin )
-				databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
+			//if( typeof databaseadmin )
+			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
 			break;
 
 			//Video QoS

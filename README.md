@@ -12,7 +12,7 @@ This chain of tools depends on the following packages:
 
 Follow the instruction on nodejs.org
 
- #require >= nodejs v4.4 
+ #require >= nodejs v6.0
  
  https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
 
@@ -20,7 +20,7 @@ Follow the instruction on nodejs.org
 
 Follow the procedure described on the following link to install the latest version of Mongodb
 
- #require >= mongo 3.2
+ #require >= mongo 3.4
  
  http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
