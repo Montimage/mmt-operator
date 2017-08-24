@@ -165,7 +165,7 @@ app.use("/export", require("./routes/html2img.js"));
 
 //active checking for MUSA
 //TODO to remove in final product
-if( config.isMusaProject ){
+if( config.isSLA ){
   //module to check preodically if components of apps are available
   require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
  

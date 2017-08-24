@@ -92,7 +92,7 @@ function createClient( type, clientName  ){
          console.log( "subscribe", channel );
          ret.consumer.addTopics([channel], function( err, added ){
             if( err )
-               console.error( err.message );
+               console.warn( err.message );
          });
       };
 

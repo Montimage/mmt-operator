@@ -26,6 +26,8 @@ function checkAvailability( publisher, dbconnector ){
 			return console.error( err );
 		var checked = {};
 		
+		console.debug("active checking ...");
+		
 		//for each application
 		for( var i in apps ){
 			var app = apps[i];

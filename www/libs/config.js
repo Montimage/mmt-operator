@@ -1,35 +1,29 @@
 const
-    config  = require("../config.json"),
-    fs      = require("fs"),
-    util    = require("util"),
-    moment  = require('moment'),
-    path    = require('path'),
-    tools   = require('./tools.js'),
-    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH,
-    constant= require('./constant.js')
+config  = require("../config.json"),
+fs      = require("fs"),
+util    = require("util"),
+moment  = require('moment'),
+path    = require('path'),
+tools   = require('./tools.js'),
+VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH,
+constant= require('./constant.js')
 ;
 
-//is MMT-Operator running for a specific project?
-//config.project = constant.project.MUSA
-//config.project = "MUSA"
-
-config.isMusaProject = ( config.project === "MUSA" );
-
 config.version = VERSION; 
-	
+
 if( config.input_mode != constant.REDIS_STR 
-		&& config.input_mode != constant.FILE_STR 
-		&& config.input_mode != constant.KAFKA_STR)
-    config.input_mode = constant.FILE_STR;
+      && config.input_mode != constant.FILE_STR 
+      && config.input_mode != constant.KAFKA_STR)
+   config.input_mode = constant.FILE_STR;
 
 
 //== HTTP server port number
 if( Number.isNaN( config.port_number ) || config.port_number < 0 )
-    config.port_number = 80;
+   config.port_number = 80;
 
 function set_default_value( variable, prop, value ){
-  if( variable[prop] == undefined )
-    variable[prop] = value;
+   if( variable[prop] == undefined )
+      variable[prop] = value;
 }
 
 //== Database name
@@ -39,7 +33,7 @@ config.adminDatabaseName = "mmt-admin"; //database for administrator
 set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
 if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
-  config.probe_analysis_mode = "offline";
+   config.probe_analysis_mode = "offline";
 
 config.is_probe_analysis_mode_offline = (config.probe_analysis_mode === "offline");
 
@@ -70,69 +64,118 @@ set_default_value( config.buffer, "max_interval", 30 );
 
 config.json = JSON.stringify( config );
 
-// ensure log directory exists
+//ensure log directory exists
 if( !fs.existsSync( config.log_folder ) ){
-  console.error("Error: Log folder [" + config.log_folder + "] does not exists.");
-  console.info( "\nConfiguration: " );
-  console.info( config.json );
-  console.info( "node version: %s, platform: %s", process.version, process.platform );
-  process.exit();
+   console.error("Error: Log folder [" + config.log_folder + "] does not exists.");
+   console.info( "\nConfiguration: " );
+   console.info( config.json );
+   console.info( "node version: %s, platform: %s", process.version, process.platform );
+   process.exit();
 }
+
+//log
+if( !Array.isArray( config.log ) )
+   config.log = ["error"];
 
 
 //overwrite console.log
-var logFile   = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
-var logStdout = process.stdout;
-var errStdout = process.stderr;
-
 console.logStdout = console.log;
 console.errStdout = console.error;
 
+const logFile = {
+      date   : (new Date()).getDate(),
+      stream : fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' })
+}
+const _writeLog = function( msg, date ){
+   //ensure each one log file for each day
+   if( logFile.date !== date ){
+      logFile.date   = date;
+      logFile.stream = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
+   }
+
+   logFile.stream.write( msg );
+}
+
+var logStdout = process.stdout;
+var errStdout = process.stderr;
+
 //get prefix to print message: date time, file name and line number of caller
 const getPrefix = function( txt ){
-	var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
-	logLineDetails     = logLineDetails.split("www/")[1];
-    var prefix = new Date().toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
-    
-    return prefix;
-}
-console.log = function () {
-   const content = getPrefix( "LOG" ) + util.format.apply(null, arguments) + '\n';
-   if( config.is_in_debug_mode === true  )
-      logStdout.write  ( content );
+   const date = new Date();
+   var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
+   logLineDetails     = logLineDetails.split("www/")[1];
+   var prefix = date.toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
 
-   logFile.write( content );
+   return {msg: prefix, date: date.getDate()};
 }
 
-console.warn = console.log;
+if( config.log.indexOf( "log" ) !== -1 ){
+   console.log = function () {
+      const prefix  = getPrefix( "LOG" );
+      const content = prefix.msg + util.format.apply(null, arguments) + '\n';
+      if( config.is_in_debug_mode === true  )
+         logStdout.write  ( content );
 
-console.error = function(){
-   const content = getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n';
-
-   if( config.is_in_debug_mode === true  )
-      errStdout.write  ( content );
-
-   logFile.write( content );
+      _writeLog( content, prefix.date );
+   }
+}
+else{
+   console.log = function(){};
 }
 
-console.debug = function( msg ){
-    try{
-        throw new Error( msg );
-    }catch( err ){
-        console.logStdout( err.stack );
-    }
+if( config.log.indexOf( "warn" ) !== -1 ){
+   console.warn = function(){
+      const prefix  = getPrefix( "WARN" );
+      const content = prefix.msg + util.format.apply(null, arguments) + '\n';
+      if( config.is_in_debug_mode === true  )
+         errStdout.write  ( content );
+
+      _writeLog( content, prefix.date );
+   }
 }
+else{
+   console.warn = function(){};
+}
+
+if( config.log.indexOf( "error" ) !== -1 ){
+   console.error = function(){
+      const prefix  = getPrefix( "ERROR" );
+      const content = prefix.msg + util.format.apply(null, arguments) + '\n';
+      if( config.is_in_debug_mode === true  )
+         errStdout.write  ( content );
+
+      _writeLog( content, prefix.date );
+   }
+}
+else{
+   console.error = function(){};
+}
+
+if( config.log.indexOf( "debug" ) !== -1 ){
+   console.debug = function( msg ){
+      const prefix  = getPrefix( "DEBUG" );
+      const content = prefix.msg + util.format.apply(null, arguments) + '\n';
+      if( config.is_in_debug_mode === true  )
+         errStdout.write  ( content );
+
+      _writeLog( content, prefix.date );
+   }
+}
+else{
+   console.debug = function(){};
+}
+
 
 console.info = console.log;
 
-config.logStdout = logStdout;
-config.logFile   = logFile;
-config.outStream = logStdout;
+config.logStdout     = logStdout;
+config.logFileStream = logFile.stream;
+config.outStream     = logStdout;
 
 if( config.is_in_debug_mode == true )
-  config.outStream = logFile
-  
-//list of pages to show on Web (see "all_page" on routes/chart.js)
+   config.outStream = logFile.stream
+
+// list of pages to show on Web (see "all_page" on routes/chart.js)
 if( ! Array.isArray( config.modules ))
    config.modules = [];
 
@@ -141,19 +184,26 @@ const fixPages = ["link","network","application", "dpi"];
 for( var i=fixPages.length-1; i>=0; i--)
    if( config.modules.indexOf( fixPages[i] ) == -1 )
       config.modules.unshift( fixPages[i] );
-  
+
+
+//is MMT-Operator running for a specific project?
+//config.project = constant.project.MUSA
+//config.project = "MUSA"
+
+config.isSLA = ( config.modules.indexOf("sla") !== -1 );
+
 //MUSA
 config.sla = tools.merge( {
-    "active_check_period"   : 5,
-    "violation_check_period": 5,
-    "reaction_check_period" : 5
+   "active_check_period"   : 5,
+   "violation_check_period": 5,
+   "reaction_check_period" : 5
 }, config.sla);
 
 
 //check Musa
-if( config.isMusaProject && config.input_mode == constant.FILE_STR ){
-	console.error('input_mode must be either "kafka" or "redis" for MUSA project.');
-	process.exit( 1 );
+if( config.isSLA && config.input_mode == constant.FILE_STR ){
+   console.error('input_mode must be either "kafka" or "redis" for MUSA project.');
+   process.exit( 1 );
 }
 
 module.exports = config;
