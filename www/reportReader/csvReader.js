@@ -34,7 +34,10 @@ if( !fs.existsSync( DATA_FOLDER ) ){
 	process.exit( 1 );
 }
 
-console.log( "start csv reader " + READER_INDEX );
+if( READER_INDEX == 0 )
+   process.stdout.write("\n"+ TOTAL_READERS +" csv readers is waiting for data in the folder [" + DATA_FOLDER + "] ...\n");
+
+console.info( "start csv reader " + READER_INDEX );
 
 //load list of read csv file from db
 var read_files = [];
@@ -55,6 +58,7 @@ function process_file (file_name, cb) {
 			console.error( e );
 			hasError = true;
 		}
+		line = null;
 		totalLines ++;
 	});
 
@@ -152,7 +156,6 @@ var process_folder = function () {
 	}
 };
 
-process.stdout.write("\nWaiting for data in the folder [" + DATA_FOLDER + "] ...\n");
 //need to delete .csv and .sem files after reading
 if( DELETE_FILE_AFTER_READING ){
 	//start after 2 seconds

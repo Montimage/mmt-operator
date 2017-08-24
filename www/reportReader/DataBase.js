@@ -274,7 +274,7 @@ module.exports = function(){
 			//this report is sent at each end of x seconds (after seding all other reports)
 		case dataAdaptor.CsvFormat.DUMMY_FORMAT:
 			if( no_1_packet_reports > 0 ){
-				console.log("Number of reports containing only 1 packet: " + no_1_packet_reports );
+				console.info("Number of reports containing only 1 packet: " + no_1_packet_reports );
 				no_1_packet_reports  = 0;
 			}
 			
@@ -322,7 +322,6 @@ module.exports = function(){
 			//session
 			if( format === 100 ){
 				//console.log( msg[ COL.DATA_TRANSFER_TIME ] )
-				msg._ip_dest = msg[ COL.IP_DEST ];
 				
 				//this should not happen
 				//if( msg[ COL.DATA_TRANSFER_TIME ] > DOUBLE_STAT_PERIOD_IN_MS )
@@ -378,12 +377,17 @@ module.exports = function(){
 			var app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 			
 			const original_app_id = msg[ COL.APP_ID ],
-				  original_path   = msg[ COL.APP_PATH ]; 
+				   original_path   = msg[ COL.APP_PATH ]; 
 			//add to protocols collections
 			for( var i=0; i<app_arr.length; i++ ){
 				var o = app_arr[i];
+				//store only maximally 4 level: ETH.IP.TCP.HTTP
+				if( o.depth > 3 ) //starting from zero
+				   continue;
+				
 				//this is a protocol
-				if( PURE_PROTOCOLS.indexOf( o.app ) != -1){
+				//if( PURE_PROTOCOLS.indexOf( o.app ) != -1)
+				{
 					//save msg with the new app_id and its path
 					msg[ COL.APP_ID ]   = o.app;
 					msg[ COL.APP_PATH ] = o.path;
@@ -396,7 +400,7 @@ module.exports = function(){
 			//restore original app_id and its path
 			msg[ COL.APP_ID ]   = original_app_id;
 			msg[ COL.APP_PATH]  = original_path;
-			
+			/////
 			
 			msg.app_paths = app_arr;
 			
@@ -433,12 +437,11 @@ module.exports = function(){
 		}
 	};
 	self.flush = function( cb ){
-	   
 	   var cacheCount = 0;
 	   for( var c in self.dataCache )
 	      cacheCount ++;
 	   
-	   console.log("Flush " + cacheCount + " caches to DB ....");
+	   console.info("Flush " + cacheCount + " caches to DB ....");
 
 	   //this function ensures that the "cb" is called only when all caches are flushed
 	   const callback = function(){

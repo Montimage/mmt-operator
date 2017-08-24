@@ -151,9 +151,9 @@ else{
    console.error = function(){};
 }
 
-if( config.log.indexOf( "debug" ) !== -1 ){
-   console.debug = function( msg ){
-      const prefix  = getPrefix( "DEBUG" );
+if( config.log.indexOf( "info" ) !== -1 ){
+   console.info = function( msg ){
+      const prefix  = getPrefix( "INFO" );
       const content = prefix.msg + util.format.apply(null, arguments) + '\n';
       if( config.is_in_debug_mode === true  )
          errStdout.write  ( content );
@@ -162,11 +162,11 @@ if( config.log.indexOf( "debug" ) !== -1 ){
    }
 }
 else{
-   console.debug = function(){};
+   console.info = function(){};
 }
 
 
-console.info = console.log;
+console.debug = console.info;
 
 config.logStdout     = logStdout;
 config.logFileStream = logFile.stream;
