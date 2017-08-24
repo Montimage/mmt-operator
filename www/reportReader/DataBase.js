@@ -147,14 +147,14 @@ module.exports = function(){
 			),
 			ip: new DataCache( inserter, "data_ip", 
 					{
-				key: [COL.PROBE_ID, COL.IP_SRC],
+				key: [COL.PROBE_ID, "ip" ],
 				inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
 					COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
 					COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
 					COL.DATA_VOLUME, COL.PACKET_COUNT,
 					COL.ACTIVE_FLOWS
 					],
-				set: ["isGen", COL.MAC_SRC]
+				set: ["isGen", COL.MAC_SRC, COL.IP_SRC ]
 					}
 			),
 			location: new DataCache( inserter, "data_location", 
@@ -171,7 +171,7 @@ module.exports = function(){
 			//a link between 2 IPs
 			link: new DataCache( inserter, "data_link", 
 					{
-				key: [COL.PROBE_ID, COL.IP_SRC, COL.IP_DEST ],
+				key: [COL.PROBE_ID, "link" ],
 				inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
 					COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
 					COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
@@ -324,9 +324,6 @@ module.exports = function(){
 				//console.log( msg[ COL.DATA_TRANSFER_TIME ] )
 				msg._ip_dest = msg[ COL.IP_DEST ];
 				
-				msg[ COL.IP_SRC ]  = IP.string2NumberV4( msg[COL.IP_SRC]  );
-				msg[ COL.IP_DEST ] = IP.string2NumberV4( msg[COL.IP_DEST] );
-				
 				//this should not happen
 				//if( msg[ COL.DATA_TRANSFER_TIME ] > DOUBLE_STAT_PERIOD_IN_MS )
 				//	msg[ COL.DATA_TRANSFER_TIME ] = 0;
@@ -352,13 +349,17 @@ module.exports = function(){
 				
 				//traffic of local IP
 				//do not add report 99 to data_ip collection as it has no IP
+				msg.ip  = IP.string2NumberV4( msg[COL.IP_SRC]  );
+				msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DEST]  );
 				self.dataCache.ip.addMessage( msg );
 
 	         /////////////////////////////////////////////////////////////
 				//symetric link between 2 IPs
-				if(  msg[ COL.IP_SRC ] <  msg[ COL.IP_DEST ] )
+				if(  msg.ip <  msg.ip_dest ){
+				   msg.link = msg.ip + "," + msg.ip_dest;
 				   self.dataCache.link.addMessage( msg );
-				else{
+				}else{
+				   msg.link = msg.ip_dest + "," + msg.ip;
 				   msg = dataAdaptor.inverseStatDirection( msg );
 				   self.dataCache.link.addMessage( msg );
 				   //revert
@@ -418,10 +419,12 @@ module.exports = function(){
 				self.dataCache.mac.addMessage( msg );
 				
 				//only if its partner is local
-				if( ip2loc.isLocal( msg._ip_dest )){
+				if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
 					//do not add report 99 to data_ip collection as it has no IP
-					if( format === 100 )
+					if( format === 100 ){
+					   msg.ip  = msg.ip_dest;
 						self.dataCache.ip.addMessage( msg );
+					}
 					//self.dataCache.session.addMessage( msg );
 					//self.dataCache.detail.addMessage(  msg );
 				}

@@ -27,6 +27,7 @@ function IP(){
       	   });
       	   return(ipNumber >>> 0); //convert to 32bit
 	   }
+   	   //IPv6?
    	   return ipString
 	}
 	

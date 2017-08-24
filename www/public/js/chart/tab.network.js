@@ -104,25 +104,32 @@ if( param.profile && param.app && param.link )
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
-const _IP = new IP();
-
 //MongoDB match expression
 var get_match_query = function( p ){
   var param = MMTDrop.tools.getURLParameters();
   var $match = {};
+  var collection = undefined;
+  const REPORT_COLLECTION = "reports_all";
   //location
   if( param.loc ){
     $match[ COL.DST_LOCATION.id ] = decodeURI( param.loc );
+    collection = REPORT_COLLECTION;
   }
   
-  if( param.profile )
+  if( param.profile ){
     $match[ COL.PROFILE_ID.id ] = MMTDrop.constants.getCategoryIdFromName( param.profile );
+    collection = REPORT_COLLECTION;
+  }
   
-  if( param.app )
+  if( param.app ){
     $match[ COL.APP_ID.id ] = MMTDrop.constants.getProtocolIDFromName( param.app );
+    collection = REPORT_COLLECTION;
+  }
   
   //when a specific IP is selected
   if( param.ip ){
+   collection = REPORT_COLLECTION;
+   
 	if( param.ip == NO_IP ){
 		$match[ COL.IP_SRC.id ] = NULL;
 	}else if( param.ip == LOCAL ) {
@@ -147,11 +154,19 @@ var get_match_query = function( p ){
     var link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
     $match[ COL.IP_DEST.id ] = {$in: link};
+    
+    collection = REPORT_COLLECTION;
   }
 
   if( _.isEmpty( $match ))
     return null;
-  return {$match: $match};
+  
+  
+  obj = {match: $match};
+  
+  if( collection )
+     obj.collection = collection;
+  return obj;
 }
 
 //limit number of rows of a table/number of pies per chart
@@ -167,13 +182,13 @@ var ReportFactory = {
         var self    = this;
         var FORMAT  = MMTDrop.constants.CsvFormat;
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_detail", action: "find", no_group : true });
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "reports_all", action: "find", no_group : true });
         //this is called each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           //query by app_id
           if( $match != undefined ){
-            param.query = [$match];
+            param.query = [{$match : $match.match}];
           }
         }
 
@@ -415,7 +430,7 @@ var ReportFactory = {
           var $match = get_match_query();
           //query by app_id
           if( $match != undefined ){
-            param.query = [$match, {$group: group}];
+            param.query = [{$match : $match.match}, {$group: group}];
 
             group._id = {};
             [ COL.APP_ID.id ].forEach( function( el, index){
@@ -425,7 +440,13 @@ var ReportFactory = {
             [ COL.APP_ID.id].forEach( function( el, index){
               group[ el ] = {"$first" : "$"+ el};
             } );
+            
+            if( $match.collection != undefined ){
+               param.collection = $match.collection;
+               param.no_group = true;
+            }
           }
+          
           return param;
         }
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -806,8 +827,14 @@ var ReportFactory = {
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [$match, {$group: group}];
+            param.query = [{$match : $match.match}, {$group: group}];
+            
+            if( $match.collection != undefined ){
+               param.collection = $match.collection;
+               param.no_group = true;
+            }
           }
+          
         }
 
         var fMetric  = MMTDrop.filterFactory.createMetricFilter();
@@ -848,17 +875,18 @@ var ReportFactory = {
                     }
                     
                     for( var name in cPie.dataLegend.data ){
+                       /*
                     		var arr = cPie.dataLegend.data[ name ].ips;
                     		arr[0] = _IP.number2StringV4( arr[0] );
                     		arr[1] = _IP.number2StringV4( arr[1] );
-                    		
                     		var key = arr.join( sperator );
+                    	 
                     		cPie.dataLegend.data[ key ] = cPie.dataLegend.data[ name ];
                     		//delete old data
                     		delete( cPie.dataLegend.data[ name ] );
                     		//use the new name
                     		name = key;
-                    		
+                    	*/	
                     		
                         data.push({
                             "key": name,
@@ -1006,8 +1034,8 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
-                    ips[0] = _IP.string2NumberV4( ips[0] );
-                    ips[1] = _IP.string2NumberV4( ips[1] );
+                    //ips[0] = _IP.string2NumberV4( ips[0] );
+                    //ips[1] = _IP.string2NumberV4( ips[1] );
                     
                     var $match = {};
                     $match[ COL.IP_SRC.id ]  = {$in: ips};
@@ -1183,7 +1211,12 @@ var ReportFactory = {
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [$match, {$group: group}, {$sort: sort}, {$limit: 500}];
+            param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 500}];
+            
+            if( $match.collection != undefined ){
+               param.collection = $match.collection;
+               param.no_group = true;
+            }
           }
         }
 
@@ -1219,10 +1252,15 @@ var ReportFactory = {
                     }
                     
                     for( var name in cPie.dataLegend.data ){
+                       /*
                     		var ip = _IP.number2StringV4( name );
                     		cPie.dataLegend.data[ ip ] = cPie.dataLegend.data[ name ];
                     		
                     		delete( cPie.dataLegend.data[ name ]);
+                    		*/
+                       
+                       var ip = name;
+                       
                         data.push({
                             "key": ip,
                             "val": cPie.dataLegend.data[ ip ].val
@@ -1376,7 +1414,7 @@ var ReportFactory = {
                     var fun = "createPopupReport(" +
                     		"'ip'"                 //collection
                         + "," + COL.IP_SRC.id  //key
-                        +"," + _IP.string2NumberV4( key )             //id
+                        +"," + key //_IP.string2NumberV4( key )             //id
                         + ",'IP: " + key +"'"  //title 
                         + ")";
 
@@ -1548,7 +1586,12 @@ var ReportFactory = {
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [$match, {$group: group}];
+            param.query = [{$match : $match.match}, {$group: group}];
+            
+            if( $match.collection != undefined ){
+               param.collection = $match.collection;
+               param.no_group = true;
+            }
           }
         }
 
@@ -1953,8 +1996,8 @@ $(str).appendTo("head");
                 var msg = data[i];
                 
                 //convert IP from a 32bit number to a string
-                msg[ COL.IP_SRC.id ]  = _IP.number2StringV4( msg[ COL.IP_SRC.id ] );
-                msg[ COL.IP_DEST.id ] = _IP.number2StringV4( msg[ COL.IP_DEST.id ] );
+                //msg[ COL.IP_SRC.id ]  = _IP.number2StringV4( msg[ COL.IP_SRC.id ] );
+                //msg[ COL.IP_DEST.id ] = _IP.number2StringV4( msg[ COL.IP_DEST.id ] );
                 
                 var name = msg[ COL.IP_SRC.id ];
                 //SRC is local
@@ -2413,7 +2456,12 @@ $(str).appendTo("head");
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [$match, {$group: group}];
+            param.query = [{$match : $match.match}, {$group: group}];
+            
+            if( $match.collection != undefined ){
+               param.collection = $match.collection;
+               param.no_group = true;
+            }
           }
         }
         
