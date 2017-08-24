@@ -13,7 +13,7 @@ router._sla  = {};
 //upload SLA files
 router.post("/upload/:id", function(req, res, next) {
   //status of processing SLA files
-  var app_id = req.params.id;
+  const app_id = req.params.id;
   if( app_id == undefined ) app_id = "_undefined";
   if( router._sla[ app_id ]  === undefined )
     router._sla[ app_id ] = {};
@@ -82,6 +82,7 @@ router.post("/upload/:id", function(req, res, next) {
           status.message  = "Parsed SLA";
           status.progress = 40;
 
+          //extract content of sla file (that is in JSON format)
           setTimeout( function(){
             extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
               if( err_3 ){
@@ -134,10 +135,14 @@ function get_violation( expr, type ){
   return OPERATOR[opr] + " " + val;
 }
 
+
 function extract_metrics( app_config, index, cb ){
 	try{
 		var total = 0;
 
+		if( index >= app_config.init_components.length )
+		   return cb( new Error("Support maximally " + app_config.init_components.length + " components" ) );
+		
 		var comp = app_config.init_components[ index ];
 		var sla  = app_config.sla[ index ];
 		var sla_str = JSON.stringify( sla );
@@ -146,19 +151,26 @@ function extract_metrics( app_config, index, cb ){
 		var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
 
 		console.log("     title = " + title );
+		
 		//not based on index but by title
 		for( var i=0; i<app_config.init_components.length; i++)
 			if( app_config.init_components[i].title == title ){
 				comp = app_config.init_components[i];
 				console.log( "found " + title );
+				
+				//this component is uploaded
+				if( comp.sla != undefined )
+				   return cb( new Error("Component ["+ title +"] was uploaded"));
+				
 				break;
 			}
 
 		comp.sla = sla_str;
 
 
-		if( title != undefined )
+		if( title != undefined ){
 			comp.title = title;
+		}
 		comp.id = parseInt( comp.id );
 
 		var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
@@ -214,7 +226,7 @@ function extract_metrics( app_config, index, cb ){
 		}
 		cb( null, total, title );
 	}catch( err ){
-		err.message = "SLA format is incorrect!!!";
+		err.message = "SLA format is incorrect: " + err.message;
 		cb( err, 0, null );
 	}
 }

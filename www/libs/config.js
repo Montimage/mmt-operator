@@ -132,6 +132,15 @@ config.outStream = logStdout;
 if( config.is_in_debug_mode == true )
   config.outStream = logFile
   
+//list of pages to show on Web (see "all_page" on routes/chart.js)
+if( ! Array.isArray( config.modules ))
+   config.modules = [];
+
+const fixPages = ["link","network","application", "dpi"];
+
+for( var i=fixPages.length-1; i>=0; i--)
+   if( config.modules.indexOf( fixPages[i] ) == -1 )
+      config.modules.unshift( fixPages[i] );
   
 //MUSA
 config.sla = tools.merge( {

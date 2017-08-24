@@ -28,22 +28,6 @@ var availableReports = {
 }
 
 
-//initial value of components and metrix, that are supposed to receive from SLA file
-var init_components = [
-  {id: "30", url: "37.48.247.117", metrics : [], title: "TSM engine"},
-  {id: "1", url: "192.168.1.10", metrics : [], title: "Consumption Estimation Calculator (CEC)"},
-//  {id: "2", url: "52.208.72.84", metrics : [], title: "ITS Factory"},
-  //{id: "13", url: "52.208.72.84", metrics : [], title: "Multimodal Journey Planner"},
-  //{id: "14", url: "192.168.1.8" , metrics : [], title: "Database"}, //fix based on the component name in SLA file
-];
-
-var init_metrics = [
-  {id: "1", name: "availability", alert: "<= 0.98", violation: "<= 0.95", title: "Availability", enable: true, support: true },
-//  {id: "2", name: "incident", alert: "", violation: "< 0", title: "Incident", enable: true, support: true },
-//  {id: "3", name: "vul_scan_freq", alert: "", violation: "< 0", title: "Vulnerability Scan Frequency", enable: true, support: true },
-];
-
-
 //create reports
 var ReportFactory = {
 	createGetForm: function( fPeriod ){

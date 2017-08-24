@@ -82,15 +82,16 @@ var all_pages = {
 
 //list of tabs to be shown on the tab bar
 var pages_to_show = {};
-const listOfPageIdToShow = [
+const listOfPageIdToShow = config.modules 
+   
+/*
+   [
     'link', 'network', 'application', 'dpi', 'security'
     //, 'evasion',
     //'behavior', 'ndn', 'video','sla'
     ,'stat'
 ];
-
-if( config.isMusaProject )
-	listOfPageIdToShow.push( 'sla' );
+*/
 
 listOfPageIdToShow.forEach(
   function(key){

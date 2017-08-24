@@ -64,12 +64,74 @@
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
-	
-	"project": "MUSA",
+
+	"_modules": ["security","behavior","ndn","video","sla","stat"],
+	"modules": ["security","behavior","sla","stat"],
 	"sla": {
 		"active_check_period": 5,
 		"violation_check_period": 5,
 		"reaction_check_period": 5,
+		"init_components": [
+			{
+				"id": "30",
+				"url": "37.48.247.117",
+				"metrics": [],
+				"title": "TSM engine"
+			},
+			{
+				"id": "1",
+				"url": "192.168.1.10",
+				"metrics": [],
+				"title": "Consumption Estimation Calculator (CEC)"
+			},
+			{
+				"id": "2",
+				"url": "52.208.72.84",
+				"metrics": [],
+				"title": "ITS Factory"
+			},
+			{
+				"id": "13",
+				"url": "52.208.72.84",
+				"metrics": [],
+				"title": "Multimodal Journey Planner"
+			},
+			{
+				"id": "14",
+				"url": "192.168.1.8",
+				"metrics": [],
+				"title": "Database"
+			}
+		],
+		"init_metrics": [
+			{
+				"id": "1",
+				"name": "availability",
+				"alert": "<= 0.98",
+				"violation": "<= 0.95",
+				"title": "Availability",
+				"enable": true,
+				"support": true
+			},
+			{
+				"id": "2",
+				"name": "incident",
+				"alert": "",
+				"violation": "< 0",
+				"title": "Incident",
+				"enable": true,
+				"support": true
+			},
+			{
+				"id": "3",
+				"name": "vul_scan_freq",
+				"alert": "",
+				"violation": "< 0",
+				"title": "Vulnerability Scan Frequency",
+				"enable": true,
+				"support": true
+			}
+		],
 		"actions": {
 			"down_5min": {
 				"description": "Put down all NIC using to cut communication, then bring them up after 5 minutes",
