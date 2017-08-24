@@ -60,15 +60,43 @@ ip2loc.isLocal = function( ip ){
    return false;
 }
 
+ip2loc.isMulticast = function( ipString ){
+   const arr = ipString.split('.');
+   //IPv4
+   if( arr.length == 4 ){
+/* https://en.wikipedia.org/wiki/Multicast_address
+      IP multicast address range      Description             Routable
+      224.0.0.0   to 224.0.0.255      Local subnetwork           No
+      224.0.1.0   to 224.0.1.255      Internetwork control       Yes
+      224.0.2.0   to 224.0.255.255    AD-HOC block 1             Yes
+      224.3.0.0   to 224.4.255.255    AD-HOC block 2             Yes
+      232.0.0.0   to 232.255.255.255  Source-specific multicast  Yes
+      233.0.0.0   to 233.255.255.255  GLOP addressing            Yes
+      233.252.0.0 to 233.255.255.255  AD-HOC block 3             Yes
+      234.0.0.0   to 234.255.255.255  Unicast-prefix-based       Yes
+      239.0.0.0   to 239.255.255.255  Administratively scoped    Yes
+*/
+      if( arr[0] == "224" ){
+         if( arr[1] == "0" && (arr[2] == "0" || arr[2] == "1" || arr[2] == "2"))
+            return true;
+         if( arr[1] == "3" )
+            return true;
+      }else if( arr[0] == "232" || arr[0] == "233" || arr[0] == "234" || arr[0] == "239")
+         return true;
+   }
+   return false;
+}
+
 /**
  * Get location of an IP string
  */
 ip2loc.country = function( ip ){
-   if( ip2loc.isLocal( ip )
-         //multicast
-         || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0)
+   if( ip2loc.isLocal( ip ) )
       return LOCAL
       
+   if( ip2loc.isMulticast( ip ) )
+      return "_multicast";
+   
    var loc = ipToCountry.get( ip );
    if( loc == undefined )
       return UNKNOWN;

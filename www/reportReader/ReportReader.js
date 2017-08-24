@@ -17,11 +17,19 @@ function Reader(){
 	const self     = this;
 
 	self.start = function(){
+	   
+	   if( process._children == undefined ){
+	      process._children = [];
+	      process._childrenCount = 0;
+	   }
+	   
 		switch( config.input_mode ){
 		case constant.REDIS_STR:
 		case constant.KAFKA_STR:
 			var ret = child_process.fork( __dirname + "/busReader.js" );
 			_readers.push( ret );
+			process._children.push( ret );
+			process._childrenCount ++;
 			break;
 		default:
 
@@ -36,11 +44,16 @@ function Reader(){
 			for( var i=0; i<total_processes; i++ ){
 				var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes] );
 				_readers.push( ret );
+				process._children.push( ret );
+				process._childrenCount ++;
 			}
 		}
 
 		//this process removes older records from Database
-		child_process.fork( __dirname + "/maintainDB.js");
+		var ret = child_process.fork( __dirname + "/maintainDB.js");
+		process._children.push( ret );
+		process._childrenCount ++;
+		
 	}
 }
 

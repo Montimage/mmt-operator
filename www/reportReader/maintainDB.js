@@ -68,7 +68,7 @@ function start( db ) {
 
 MongoClient.connect( connectString, function (err, db) {
 	if (err){
-		console.error("Cannot connect to Database " + connectString );
+		console.warn("Cannot connect to Database " + connectString );
 		console.logStdout("Cannot connect to Database");
 		process.exit( 1 );
 	}
@@ -76,3 +76,13 @@ MongoClient.connect( connectString, function (err, db) {
 	//connect OK
 	start( db );
 });
+
+
+/*
+process.stdin.resume();//so the program will not close instantly
+//Ctrl+C
+process.on('SIGINT',function(){
+   console.log("byeeeeeeeeeeeeeee");
+   process.exit(0);
+});
+*/

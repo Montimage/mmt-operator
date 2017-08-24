@@ -318,7 +318,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 	/**
 	 * Flush all caches to DB
 	 */
-	this.flushDataToDatabase = function( cb ){
+	this.flush = function( cb ){
 		cb = cb || function(){};
 
 		if( !self.havingMessage ) {
@@ -341,7 +341,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 			_cache.real.flushDataToDatabase( function(err, arr){
 				if( err ) return cb( err );
 				
-				if( !_cache.minute ) return;
+				if( !_cache.minute ) return cb();
 					
 				_cache.minute.addArray( arr );
 
@@ -349,7 +349,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 					_cache.minute.flushDataToDatabase( function( err1, arr1){
 						if( err1 ) return cb( err1 );
 						
-						if( !_cache.hour ) return;
+						if( !_cache.hour ) return cb();
 						
 						_cache.hour.addArray( arr1 );
 
@@ -357,7 +357,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 							_cache.hour.flushDataToDatabase( function( err2, arr2 ){
 								if( err2 ) return cb( err2 );
 
-								if( !_cache.day ) return;
+								if( !_cache.day ) return cb();
 								
 								_cache.day.addArray( arr2 );
 								if( level == "day")

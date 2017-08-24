@@ -2024,21 +2024,21 @@ $(str).appendTo("head");
             const local_hosts = total_hosts - remote_hosts;
             var combine = false;
             //combine the remote hosts into one
-            if( remote_hosts > 100 || (remote_hosts > 30 && local_hosts > 5) ){
-            	combine = true;
-            	for( var i=0; i<data.length; i++ ){
-                    var msg = data[i];
-                    if( ! msg.is_src_local && ! msg.is_dst_local )
-                    	continue;
-                    
-                    if( ! msg.is_src_local )
-                    	msg[ COL.IP_SRC.id ] = REMOTE;
-                    if( ! msg.is_dst_local )
-                    	msg[ COL.IP_DEST.id ] = REMOTE;
-            	}
+            if( remote_hosts > 50 || (remote_hosts > 30 && local_hosts > 5) ){
+               	combine = true;
+               	for( var i=0; i<data.length; i++ ){
+                       var msg = data[i];
+                       if( ! msg.is_src_local && ! msg.is_dst_local )
+                       	continue;
+                       
+                       if( ! msg.is_src_local )
+                       	msg[ COL.IP_SRC.id ] = REMOTE;
+                       if( ! msg.is_dst_local )
+                       	msg[ COL.IP_DEST.id ] = REMOTE;
+               	}
             }
         	//combine local
-        	if( local_hosts > 100 ){
+        	if( local_hosts > 50 ){
         		combine = true;
         		for( var i=0; i<data.length; i++ ){
                     var msg = data[i];

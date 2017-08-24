@@ -177,3 +177,9 @@ if( DELETE_FILE_AFTER_READING ){
 
 	setTimeout( start_process, 2000);
 }
+
+process.stdin.resume();//so the program will not close instantly
+//Ctrl+C
+process.on('SIGINT',function(){
+   database.flush( process.exit );
+});

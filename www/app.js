@@ -273,8 +273,18 @@ process.on('uncaughtException', function (err) {
 });
 
 function exit(){
-  console.logStdout("Bye!\n");
-  process.exit(1);
+   //wait for child processes
+   //this list is created in "reportReader/ReportReader.js"
+   /*
+   if( process._childrenCount ){
+      process._children.forEach( function( proc, index ){
+         
+      });
+   }
+   */
+   
+   console.logStdout("Bye!\n");
+   process.exit(1);
 }
 
 //clean up
@@ -301,15 +311,16 @@ function cleanup ( cb ){
     });
 };
 
-var is_existing = false;
+var isExitImmediately = false;
 process.on('SIGINT',function(){
     try{
       //ctrl+c again
-      if( is_existing ){
-        console.log( "MMT-Operator is being existed!");
+      if( isExitImmediately ){
+        console.log( "MMT-Operator is being existed now!");
         process.exit();
       }
-      is_existing = true;
+      
+      isExitImmediately = true;
       cleanup();
     }catch( err ){
         console.error( "Error while quiting");

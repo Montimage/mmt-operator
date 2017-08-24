@@ -52,3 +52,10 @@ report_client.on('message', function (channel, message) {
 	//console.log( "[" + channel + "] " + message );
 	processMessage.process( message );
 });
+
+
+process.stdin.resume();//so the program will not close instantly
+//Ctrl+C
+process.on('SIGINT',function(){
+ database.flush( process.exit );
+});

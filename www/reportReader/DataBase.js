@@ -431,6 +431,26 @@ module.exports = function(){
 			}
 			return;
 		}
+	};
+	self.flush = function( cb ){
+	   
+	   var cacheCount = 0;
+	   for( var c in self.dataCache )
+	      cacheCount ++;
+	   
+	   console.log("Flush " + cacheCount + " caches to DB ....");
+
+	   //this function ensures that the "cb" is called only when all caches are flushed
+	   const callback = function(){
+	      cacheCount --;
+	      if( cacheCount <= 0 )
+	         return cb();
+	   }
+	   
+	   //flush all caches in dataCache
+	   for( var c in self.dataCache )
+	      self.dataCache[ c ].flush( callback );
+	   
 	}
 
 };
