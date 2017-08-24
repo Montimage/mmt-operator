@@ -74,6 +74,8 @@ function getHMTL( tag ){
     return html;
 }
 
+const LIMIT = 1000;
+
 //change title of each report
 var param = MMTDrop.tools.getURLParameters();
 //top profile => detail of 1 profile (list app) => one app
@@ -430,9 +432,8 @@ var ReportFactory = {
           var $match = get_match_query();
           //query by app_id
           if( $match != undefined ){
-            param.query = [{$match : $match.match}, {$group: group}];
 
-            group._id = {};
+             group._id = {};
             [ COL.APP_ID.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             });
@@ -445,6 +446,8 @@ var ReportFactory = {
                param.collection = $match.collection;
                param.no_group = true;
             }
+            
+            param.query = [{$match : $match.match}, {$group: group}];
           }
           
           return param;
@@ -806,33 +809,39 @@ var ReportFactory = {
     },
     createTopLinkReport: function (filter) {
         var self = this;
-        //mongoDB aggregate
-        var group = { _id : {} };
-        [ COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
-        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
-          group[ el ] = {"$sum" : "$" + el};
-        });
-        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
-          group[ el ] = {"$first" : "$"+ el};
-        } );
-
-        const sort = {};
-        sort[ COL.DATA_VOLUME.id ] = -1;
+        
         
         var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", 
-        		query: [{$group: group}, {$sort: sort}, {$limit: 500} ], raw: true} );
+        		query: [], raw: true} );
         
         database.updateParameter = function( param ){
-          var $match = get_match_query();
+         //mongoDB aggregate
+           var group = { _id : {} };
+           [ COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
+              group["_id"][ el ] = "$" + el;
+            } );
+           [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+             group[ el ] = {"$sum" : "$" + el};
+           });
+           [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
+             group[ el ] = {"$first" : "$"+ el};
+           } );
+
+           const sort = {};
+           sort[ COL.DATA_VOLUME.id ] = -1;
+           
+           var $match = get_match_query();
+           
           if( $match != undefined ){
-            param.query = [{$match : $match.match}, {$group: group}];
             
             if( $match.collection != undefined ){
                param.collection = $match.collection;
                param.no_group = true;
             }
+            else
+               group._id = "$link";
+            
+            param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: LIMIT} ];
           }
           
         }
@@ -2038,7 +2047,7 @@ $(str).appendTo("head");
                	}
             }
         	//combine local
-        	if( local_hosts > 50 ){
+        	if( local_hosts > 100 ){
         		combine = true;
         		for( var i=0; i<data.length; i++ ){
                     var msg = data[i];
@@ -2440,29 +2449,35 @@ $(str).appendTo("head");
       });//end topoChart
 
         //get data
-      //mongoDB aggregate
-        var group = { _id : {} };
-        [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
-        [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
-          group[ el ] = {"$sum" : "$" + el};
-        });
-        [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
-          group[ el ] = {"$first" : "$"+ el};
-        } );
 
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", query: [{$group: group}]} );
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", 
+           query: []} );
         database.updateParameter = function( param ){
+           
+         //mongoDB aggregate
+           var group = { _id : {} };
+           [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+             group["_id"][ el ] = "$" + el;
+           } );
+           [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+             group[ el ] = {"$sum" : "$" + el};
+           });
+           [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+             group[ el ] = {"$first" : "$"+ el};
+           } );
+           
           var $match = get_match_query();
-          if( $match != undefined ){
-            param.query = [{$match : $match.match}, {$group: group}];
-            
-            if( $match.collection != undefined ){
-               param.collection = $match.collection;
-               param.no_group = true;
-            }
+          if( $match.collection != undefined ){
+             param.collection = $match.collection;
+             param.no_group = true;
           }
+          else
+             group._id = "$link";
+
+          const sort = {};
+          sort[ COL.DATA_VOLUME.id ] = -1;
+          
+          param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: LIMIT}];
         }
         
         

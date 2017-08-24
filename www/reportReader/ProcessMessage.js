@@ -80,7 +80,7 @@ function ProcessMessage( database ){
 	self.process = function( message ) {
 		//console.log( message );
 		//message = message.replace(/\(null\)/g, 'null');
-		const msg = mmtAdaptor.formatMessage( '[' + message + ']' );
+		var msg = mmtAdaptor.formatMessage( '[' + message + ']' );
 
 		if( msg === null )
 			return;
@@ -164,6 +164,7 @@ function ProcessMessage( database ){
 		//msg[1] = Math.random() > 0.5 ? 1 : 0;
 
 		_database.add(msg, function (err, err_msg) {});
+		msg = null;
 	};
 }
 

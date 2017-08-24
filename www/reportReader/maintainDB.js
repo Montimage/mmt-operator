@@ -33,6 +33,9 @@ function _removeOldRecords( db, collectionName, timestamp, probeID ){
 	//console.log( query );
 
 	db.collection( collectionName ).deleteMany( query, WRITE_CONCERN, function( err, ret){
+	   if( err )
+	      return console.error( err );
+	   
 		if( ret.deletedCount > 0 )
 			console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
 	} );
@@ -61,6 +64,8 @@ function start( db ) {
 				_removeOldRecords( database, "data_link_real"    , m.time - 61*60*1000, m._id );
 			}
 		});
+		//manually garbage
+		global.gc();
 	}, 
 	30*1000, //periodically 
 	db);

@@ -282,7 +282,11 @@ var MongoConnector = function () {
 		var start_ts = (new Date()).getTime();
 		var cursor   = {};
 		if( action == "aggregate" )
-			cursor = self.mdb.collection(collection).aggregate(query);
+			cursor = self.mdb.collection(collection).aggregate(query, {
+		        allowDiskUse: true,
+		        cursor: {batchSize: 1000}
+			});
+		
 		//query of "find" uses the format of "aggreate": $match, $project, $limit, $sort
 		else if ( action == "find" ){
 

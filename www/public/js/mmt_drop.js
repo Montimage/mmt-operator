@@ -2077,6 +2077,13 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
 
     if( param.period != undefined || param.probe != undefined ){
       var $match = {};
+      
+      //if the first stage is $match, then add this condition
+      if( query[0]["$match"] != undefined )
+         $match = query[0]["$match"];
+      else
+         query.unshift( {"$match" : $match} );
+      
       //timestamp
       if( param.period != undefined )
         $match[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] =  {"$gte": param.period.begin, "$lte" : param.period.end };
@@ -2086,8 +2093,6 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         else
           $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = {$in:  param.probe};
       }
-
-      query.unshift( {"$match" : $match} );
     }
     //need for "POST"
     query = JSON.stringify( query );
