@@ -1,7 +1,6 @@
 /**
  * Read reports from message bus (redis or kafka) then save them to DB
  */
-
 const config         = require('../libs/config');
 const constant       = require('../libs/constant.js');
 const ProcessMessage = require("./ProcessMessage");

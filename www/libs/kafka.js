@@ -12,7 +12,11 @@ const noAckBatchOptions =  undefined;// {};
 const sslOptions = {};
 
 if( config.kafka_input["ssl.ca.location"] ){
-   sslOptions.ca = fs.readFileSync( config.kafka_input["ssl.ca.location"] );
+   try{
+      sslOptions.ca = fs.readFileSync( config.kafka_input["ssl.ca.location"] );
+   }catch( err ){
+      console.error( "Error while reading ssl.ca.location", err.message );
+   }
    //donot verify hostname
    sslOptions.rejectUnauthorized = false;
 }
@@ -45,7 +49,7 @@ function createClient( type, clientName  ){
    
    
    function onError( err ){
-      console.error("Kafka Error", err );
+      console.error("Kafka Error", err.message );
    }
 
 
@@ -88,7 +92,7 @@ function createClient( type, clientName  ){
          console.log( "subscribe", channel );
          ret.consumer.addTopics([channel], function( err, added ){
             if( err )
-               console.error( err );
+               console.error( err.message );
          });
       };
 
@@ -121,7 +125,7 @@ function createClient( type, clientName  ){
          if( ret.topics.length > 0 ){
             ret.producer.createTopics( ret.topics, function( err, data){
                if( err )
-                  console.error( err );
+                  console.error( err.message );
             });
          }
 

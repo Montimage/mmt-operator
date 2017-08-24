@@ -97,7 +97,7 @@ const getPrefix = function( txt ){
     return prefix;
 }
 console.log = function () {
-   const content = getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n';
+   const content = getPrefix( "LOG" ) + util.format.apply(null, arguments) + '\n';
    if( config.is_in_debug_mode === true  )
       logStdout.write  ( content );
 
@@ -106,7 +106,7 @@ console.log = function () {
 
 console.warn = console.log;
 
-console.error = function( msg, err ){
+console.error = function(){
    const content = getPrefix( "ERROR" ) + util.format.apply(null, arguments) + '\n';
 
    if( config.is_in_debug_mode === true  )

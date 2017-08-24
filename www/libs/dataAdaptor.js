@@ -1,35 +1,6 @@
-var ipLib   = require("ip");
-var config  = require("../config.json");
-var maxmind = require('maxmind');
-var path    = require("path");
-var ipToCountry = maxmind.open( path.join(__dirname, "..", "data", 'GeoLite2-Country.mmdb'), {
-    cache: {
-        max: 50000, // max items in cache
-        maxAge: 1000 * 60 * 60 // life time in milliseconds
-    }
-});
+const config  = require("../config.json");
+const ip2loc  = require("./ip2loc");
 
-ipToCountry._get = function( ip ){
-	  var loc = ipToCountry.get( ip );
-	  if( loc == undefined )
-		return "_unknown";
-	  if ( loc.country )
-		loc = loc.country;
-	  else if (loc.contient)
-		loc = loc.continent;
-	  else if (loc.registered_country)
-		loc = loc.registered_country;
-
-	  if (loc && loc.names ){
-	    return  loc['names']['en'];
-	  }else if( MMTDrop.isLocalIP( ip )
-	    //multicast
-	    || ip == "239.255.255.250" || ip.indexOf("224.0.0") == 0){
-	      return "_local"
-	  }else{
-	    return "_unknown";
-	  }
-	}
 /** Class: MMTDrop
  *  An object container for all MMTDrop library functions.
  *
@@ -531,63 +502,6 @@ var MMTDrop = {
                 return prop;
     },
 
-    setDirectionStatFlowByIP: function( msg ){
-        if( config.local_network == null )
-            return msg;
-
-        var COL       = this.StatsColumnId;
-
-        msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
-        if ( this.isLocalIP( msg[COL.IP_SRC] ) )
-          return msg;
-
-        if ( this.isLocalIP( msg[COL.IP_DEST] ) ){
-          msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
-          return this.inverseStatDirection( msg )
-        }
-
-        return msg;
-    },
-
-    /**
-     * check whether an IP is in the list of local ips networks
-     * @param  {[type]} ip [description]
-     * @return {[boolean]}
-     */
-    isLocalIP : function( ip ){
-        if( ip == undefined || ip === "undefined" || ip === "null")
-            return false;
-        if( this._localCacheIPs === undefined )
-          this._localCacheIPs = {};
-
-        //check in the cache
-        else if( this._localCacheIPs[ ip ] !== undefined )
-          return this._localCacheIPs[ ip ];
-
-        if( this._localIPs === undefined ){
-            var rootsIP = [];
-            for( var i in config.local_network ){
-                var lo   = config.local_network[i];
-                var root = ipLib.mask(lo.ip, lo.mask);
-
-                rootsIP.push(  {root: root, mask: lo.mask } );
-            }
-            this._localIPs = rootsIP;
-        }
-
-        for( var i in this._localIPs ){
-            var lo = this._localIPs[ i ];
-            if( ipLib.mask( ip, lo.mask ) == lo.root ){
-              this._localCacheIPs[ ip ] = true;
-              return true;
-            }
-        }
-
-
-        this._localCacheIPs[ ip ] = false;
-        return false;
-    },
-
     inverseStatDirection: function( msg ){
         var swap = function( id_1, id_2){
             var tmp   = msg[id_1];
@@ -841,8 +755,8 @@ MMTDrop.formatMessage = function( message ){
             msg = format_session_report( msg ); 
         	
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = formatTime( msg[ MMTDrop.StatsColumnId.START_TIME ] );
-            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
-            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ipToCountry._get( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
+            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             //continue in NO_SESSION_STATS_FORMAT
         case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );

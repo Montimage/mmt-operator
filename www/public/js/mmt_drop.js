@@ -920,20 +920,6 @@ MMTDrop.tools = function () {
         }
         return arr;
     };
-
-    //this convert a number in 32bit to an IP string
-    _this.ipV4Number2String = function( ipNumber ){
-    		var arr = [0,0,0,0];
-    		//get 32 bits
-    		ipNumber &= 0xFFFFFFFF;
-    		
-    		arr[0] = (ipNumber >>> 24 );
-    		arr[1] = (ipNumber >>> 16 ) & 0xFF;
-    		arr[2] = (ipNumber >>> 8  ) & 0xFF;;
-    		arr[3] = (ipNumber >>> 0  ) & 0xFF;
-    		
-    		return arr.join(".");
-    };
     
     _this.random = function( n ){
         return Math.round(Math.random()* n);
@@ -5804,10 +5790,12 @@ MMTDrop.chartFactory = {
                         val = 0;
                       else{
                         //at this point, probe is not running
+                         
                         //this point is null but its precedent is not ==> put down to zero
                         if( i>0 && arrData[i-1][j] != null )
                           val = 0;
-                        else if( i<arrData.length -1 && arrData[i+1][j] != null ) //this point is null but its following is not ==> put down to zero
+                        //this point is null but its following is not ==> put down to zero
+                        else if( i<arrData.length -1 && arrData[i+1][j] != null ) 
                           val = 0;
                         else
                           val = null;//should be null, not undefined

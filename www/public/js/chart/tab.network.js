@@ -1373,10 +1373,12 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
-                    var fun = "createPopupReport('ip'," //collection
-                        + COL.IP_SRC.id +",'"
-                        + key
-                        + "','IP: " + key +"')";
+                    var fun = "createPopupReport(" +
+                    		"'ip'"                 //collection
+                        + "," + COL.IP_SRC.id  //key
+                        +"," + _IP.string2NumberV4( key )             //id
+                        + ",'IP: " + key +"'"  //title 
+                        + ")";
 
                     $("<td>",{
                       "align" : "center",
@@ -1668,6 +1670,10 @@ var ReportFactory = {
                         continue;
                     i++;
                     var val = legend.data[key].val;
+                    /*
+                    if( val == 0 )
+                       continue;
+                       */
                     // var mac = legend.data[key].mac;
 
                     var $tr = $("<tr>");
@@ -1945,7 +1951,13 @@ $(str).appendTo("head");
             //count remote and total hosts
             for( var i=0; i<data.length; i++ ){
                 var msg = data[i];
+                
+                //convert IP from a 32bit number to a string
+                msg[ COL.IP_SRC.id ]  = _IP.number2StringV4( msg[ COL.IP_SRC.id ] );
+                msg[ COL.IP_DEST.id ] = _IP.number2StringV4( msg[ COL.IP_DEST.id ] );
+                
                 var name = msg[ COL.IP_SRC.id ];
+                //SRC is local
                 msg.is_src_local = (msg[ COL.SRC_LOCATION.id ] == LOCAL);
 
                 if( obj[ name ] == undefined ){
@@ -1956,6 +1968,7 @@ $(str).appendTo("head");
                 
                 //destination
                 name = msg[ COL.IP_DEST.id ];
+                //DEST is local
                 msg.is_dst_local = (msg[ COL.DST_LOCATION.id ] == LOCAL);
                 
                 if( obj[ name ] == undefined ){
@@ -2037,6 +2050,7 @@ $(str).appendTo("head");
                 name = msg[ COL.IP_DEST.id ];
                 if( name == "null" ) 
                     name = NO_IP;
+                
                 msg.target = name;
                 if( obj[ name ] == undefined )
                   obj[ name ] = { name: name, id: name.replace(/:/g, "_"), data: msg, val: 0, is_local: msg.is_dst_local, link_count: 0 };

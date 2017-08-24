@@ -5,6 +5,10 @@
  * 
  */
 
+var ipv4Regex = /^(\d{1,3}\.){3,3}\d{1,3}$/;
+var ipv6Regex =
+    /^(::)?(((\d{1,3}\.){3}(\d{1,3}){1})?([0-9a-f]){0,4}:{0,2}){1,8}(::)?$/i;
+
 function IP(){
 	const self = this;
 	/**
@@ -13,33 +17,41 @@ function IP(){
 	 * - return:  
 	 */
 	this.string2NumberV4 = function( ipString ){
-		const arr = ipString.split(".");
-		var length = arr.length;
-		if( length !== 4 ){
-			return 0;
-		}
-		var ret = 0;
-		for( var i=0; i<length; i++ ){
-			var val = Number.parseInt( arr[i] );
-			val =  (val << ((length - i - 1)*8) );
-			val = val >>> 0; //convert to unsigned 32 bit
-			ret |= val;
-		}
-		return ret >>> 0;
+	   var ipNumber = 0;
+	   const arr = ipString.split('.');
+	   //IPv4
+   	   if( arr.length == 4 ){
+      	   arr.forEach(function(octet) {
+      	      ipNumber <<= 8;
+      	      ipNumber += parseInt(octet);
+      	   });
+      	   return(ipNumber >>> 0); //convert to 32bit
+	   }
+   	   return ipString
 	}
 	
+	/**
+	 * convert a 32bit IP number to a string
+	 */
 	this.number2StringV4 = function( ipNumber ){
-      var arr = [0,0,0,0];
-      //get 32 bits
-      ipNumber &= 0xFFFFFFFF;
-      
-      arr[0] = (ipNumber >>> 24 );
-      arr[1] = (ipNumber >>> 16 ) & 0xFF;
-      arr[2] = (ipNumber >>> 8  ) & 0xFF;;
-      arr[3] = (ipNumber >>> 0  ) & 0xFF;
-      
-      return arr.join(".");
+	   if( Number.isNaN( ipNumber ) )
+	      return ipNumber;
+	   else
+	      return ((ipNumber >>> 24)      + '.' +
+	           (ipNumber >> 16 & 255) + '.' +
+	           (ipNumber >> 8 & 255)  + '.' +
+	           (ipNumber & 255) );
+	   
 	}
+	
+	
+	this.isV4Format = function(ip) {
+	   return ipv4Regex.test(ip);
+	 };
+
+	 this.isV6Format = function(ip) {
+	   return ipv6Regex.test(ip);
+	 };
 }
 
 

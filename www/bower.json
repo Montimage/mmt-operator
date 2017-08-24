@@ -1,11 +1,9 @@
 {
   "name": "MMT-Operator",
-  "version": "1.0",
   "authors": [
     "Huu Nghia NGUYEN <huunghia.nguyen@montimage.com>"
   ],
   "license": "@Montimage",
-  "homepage": "http://mmt-cloud.montimage.com",
   "private": true,
   "ignore": [
     "**/.*",

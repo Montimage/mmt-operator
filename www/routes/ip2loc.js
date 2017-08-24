@@ -14,7 +14,7 @@ router.get('/:ip', function(req, res, next) {
 	var ip = req.params["ip"];
 	res.setHeader("Content-Type", "application/json");
 	if (ip) {
-		res.send(ipToCountry.get(ip));
+		res.send( ipToCountry.get(ip) );
 	}else{
 		res.send(undefined);
 	}

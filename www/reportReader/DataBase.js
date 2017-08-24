@@ -7,6 +7,7 @@
 const config    = require("../libs/config"),
 dataAdaptor     = require('../libs/dataAdaptor'),
 tools           = require("../libs/tools"),
+ip2loc          = require("../libs/ip2loc"),
 CONST           = require("../libs/constant"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
@@ -417,7 +418,7 @@ module.exports = function(){
 				self.dataCache.mac.addMessage( msg );
 				
 				//only if its partner is local
-				if( dataAdaptor.isLocalIP( msg._ip_dest )){
+				if( ip2loc.isLocal( msg._ip_dest )){
 					//do not add report 99 to data_ip collection as it has no IP
 					if( format === 100 )
 						self.dataCache.ip.addMessage( msg );

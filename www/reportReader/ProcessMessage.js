@@ -5,11 +5,27 @@
 "use strict";
 const mmtAdaptor = require('../libs/dataAdaptor');
 const config     = require('../libs/config');
+const ip2loc     = require('../libs/ip2loc');
 const DataBase   = require("./DataBase.js");
 const router = {};
 const COL = mmtAdaptor.StatsColumnId;
 const _IS_OFFLINE = (config.probe_analysis_mode === "offline");
 
+
+function setDirectionStatFlowByIP( msg ){
+
+   msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
+   
+   if ( ip2loc.isLocal( msg[COL.IP_SRC] ) )
+     return msg;
+
+   if ( ip2loc.isLocal( msg[COL.IP_DEST] ) ){
+     msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
+     return mmtAdaptor.inverseStatDirection( msg )
+   }
+
+   return msg;
+};
 
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
@@ -91,9 +107,9 @@ function ProcessMessage( database ){
                 return;
             }
 			 */
-			if( mmtAdaptor.setDirectionStatFlowByIP(msg) === null) {
-				console.log("[DONT KNOW DIRECTION] " + message);
-				return;
+			if( setDirectionStatFlowByIP(msg) === null) {
+				//console.log("[DONT KNOW DIRECTION] " + message);
+				//return;
 			}
 			break;
 
