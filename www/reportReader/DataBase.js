@@ -192,19 +192,15 @@ module.exports = function(){
          
          session: new DataCache(inserter, "data_session",
                {
-            key : [COL.FORMAT_ID, COL.PROBE_ID, COL.APP_PATH,
-               COL.IP_SRC, COL.IP_DEST, COL.MAC_SRC, COL.MAC_DEST],
+            key : ["link", COL.APP_PATH, COL.FORMAT_ID, COL.PROBE_ID],
             inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                COL.RTT,
                COL.RETRANSMISSION_COUNT,
                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
-               COL.CPU_USAGE, COL.MEM_USAGE, COL.P_DROP, COL.P_DROP_NIC, COL.P_DROP_KERNEL,
                ],
-            set : [COL.APP_ID, COL.SESSION_ID, COL.START_TIME, COL.PORT_SRC, COL.PORT_DEST, COL.SRC_LOCATION, COL.DST_LOCATION,
-               COL.IP_SRC_INIT_CONNECTION, COL.PROFILE_ID, COL.ORG_APP_ID,
-               COL.PROFILE_ID, "isGen", "app_paths", HTTP.REQUEST_INDICATOR]
+            set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DEST ]
                }
          ),
 

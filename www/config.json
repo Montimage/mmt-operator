@@ -19,7 +19,7 @@
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "kafka",
+	"input_mode": "file",
 	"probe_analysis_mode": "online",
 	"local_network": [
 		{
@@ -64,11 +64,11 @@
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
-   "_log" : ["error", "warn", "log", "debug"],
-   "log" : ["error", "warn", "log"],
+   "_log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn", "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["security","behavior","sla","stat"],
+	"modules": ["security","behavior","stat"],
 	"sla": {
 		"active_check_period": 5,
 		"violation_check_period": 5,

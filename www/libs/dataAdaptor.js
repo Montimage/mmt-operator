@@ -363,8 +363,8 @@ var MMTDrop = {
           return this._cacheCategoryIdFromAppId[ appId ] = parseInt( i );
       }
      // console.log( "Not found category for this app: " + appId  );
-      return 10;	 //Network
-      return -1;
+      return this._cacheCategoryIdFromAppId[ appId ] = 10;
+      //return 10;	 //Network
     },
     /**
      * Return the parent of the given protocol path. <br>
@@ -410,11 +410,15 @@ var MMTDrop = {
     },
 
     getAppLevelFromPath : function( path ){
+       //number of occurences of dot character
+       return (path.match(/\./g)||[]).length;
+       /*
         var count = 0;
         for( var j=0; j<path.length; j++){
             if( path[ j ] === '.') count ++;
         }
         return count;
+        */
     },
 
     /**
@@ -682,14 +686,6 @@ function format_session_report( msg ){
   //remove one path: UP_PATH, retain DOWN_PATH
   msg.splice( PATH_INDEX, 1 );
   
-//in any case, take the last 5 cols for cpu_mem usage report 
-	var msg_len = Object.keys(msg).length;
-	msg[ MMTDrop.StatsColumnId.CPU_USAGE ] 		= msg[msg_len-5];
-	msg[ MMTDrop.StatsColumnId.MEM_USAGE ] 		= msg[msg_len-4];
-	msg[ MMTDrop.StatsColumnId.P_DROP ] 		   = msg[msg_len-3];
-	msg[ MMTDrop.StatsColumnId.P_DROP_NIC ] 	= msg[msg_len-2];
-	msg[ MMTDrop.StatsColumnId.P_DROP_KERNEL ]	= msg[msg_len-1];
-
   //retain the path having more information
   //not really relevance
   if( MMTDrop.getAppLevelFromPath( UP_PATH ) > MMTDrop.getAppLevelFromPath( DOWN_PATH ))

@@ -38,11 +38,12 @@ function Cache ( option ) {
 	const _collection_name        = option.collection_name + "_" + option.period;
 
 	var _dataObj = {}; //key => data
-	var _dataSize = 0;
+	var _dataArr = []; //array of "data"
 
 	
 	//check
-	if( !_IS_RETAIN_ALL && ( !Array.isArray( option.message_format.key ) || option.message_format.key.length == 0)){
+	if( !_IS_RETAIN_ALL && ( !Array.isArray( option.message_format.key ) 
+	      || option.message_format.key.length == 0)){
 		return console.error( "Key must not empty" );
 	}
 
@@ -51,18 +52,17 @@ function Cache ( option ) {
 	 * Flush data to DB
 	 */
 	_this.flushDataToDatabase = function( cb ){
-		//convert object to array
-		var data = [];
-		for( var i in _dataObj )
-			data.push( _dataObj[ i ] );
-
+		const data = _dataArr;
+		
 		_this.clear();
 
-		if( data.length === 0 ){
-			if( cb ) cb( null, data );
-			return data;
+		if( data.length == 0 ){
+		   if( cb )
+		      cb( null, [] );
+		   return [];
 		}
-
+		   
+		
 		_inserter.add( _collection_name, data, function( err, result){
 			console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
 
@@ -84,10 +84,10 @@ function Cache ( option ) {
 		
 		if( !isDummy ){
 			//retain original message
-			if( _IS_RETAIN_ALL )
+			if( _IS_RETAIN_ALL ){
 				//clone msg
-				_dataObj[ _dataSize ++ ] = JSON.parse(JSON.stringify( msg ));
-			else
+				_dataArr.push( JSON.parse(JSON.stringify( msg )) );
+			}else
 				_addMessage( msg );
 		}
 
@@ -114,7 +114,7 @@ function Cache ( option ) {
 
 		//flush data in _dataObj to database
 		//need messages arrive in time order???
-		if( _dataSize >= config.buffer.max_length_size
+		if( _dataArr.length >= config.buffer.max_length_size
 				|| ts - _lastUpdateTime >= _PERIOD_TO_UPDATE ){
 			
 			_lastUpdateTime = ts;
@@ -135,15 +135,15 @@ function Cache ( option ) {
 			return;
 
 		for( var i=0; i<arr.length; i++ )
-			this.addMessage( arr[i], cb );
+			_this.addMessage( arr[i], cb );
 	}
 
 	/**
 	 * Clear data in the cache
 	 */
 	_this.clear = function () {
-		_dataObj = {};
-		_dataSize = 0;
+		_dataObj  = {};
+		_dataArr  = [];
 	};
 
 	const key_id_arr           = option.message_format.key;
@@ -176,7 +176,7 @@ function Cache ( option ) {
 		//first msg in the group identified by key_obj
 		if (_dataObj[key_string] == undefined){
 			_dataObj[key_string] = key_obj;
-			_dataSize ++;
+			_dataArr.push( key_obj );
 		}
 		else
 			oo = _dataObj[ key_string ];
@@ -187,24 +187,24 @@ function Cache ( option ) {
 		for (var j=0; j<key_inc_arr.length; j++){
 			var key = key_inc_arr[ j ];
 			var val = msg[ key ];
-			if( Number.isNaN( val ) )
-				val = 0;
-			if (oo[ key ] == undefined)
-				oo[ key ]  = val;
+			//if( Number.isNaN( val ) )
+			//	val = 0;
+			if (oo[ key ] !== undefined)
+				oo[ key ]  += val;
 			else
-				oo[ key ] += val;
+				oo[ key ] = val;
 		}
 
 		//avg: calculate average value
 		for (var j=0; j<key_avg_arr.length; j++){
 			var key = key_avg_arr[ j ];
 			var val = msg[ key ];
-			if( Number.isNaN( val ) )
-				val = 0;
-			if (oo[ key ] == undefined)
-				oo[ key ]  = val;
+			//if( Number.isNaN( val ) )
+			//	val = 0;
+			if (oo[ key ] !== undefined)
+				oo[ key ]  += val;
 			else
-				oo[ key ] += val;
+				oo[ key ] = val;
 		}
 
 		//set: override value by the last one

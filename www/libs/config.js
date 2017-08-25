@@ -202,7 +202,7 @@ config.sla = tools.merge( {
 
 //check Musa
 if( config.isSLA && config.input_mode == constant.FILE_STR ){
-   console.error('input_mode must be either "kafka" or "redis" for MUSA project.');
+   console.error('input_mode must be either "kafka" or "redis" when enabling "sla" module.');
    process.exit( 1 );
 }
 

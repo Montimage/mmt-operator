@@ -93,10 +93,14 @@ function process_file (file_name, cb) {
 };
 
 
+var isStop = false;
 //list of csv files to be read
 var _cache_files = [];
 //get the oldest file containing data and not beeing locked
 function get_csv_file(dir) {
+   if( isStop )
+      return null;
+   
 	if( _cache_files.length > 0){
 		//delete the first element from _cache_files and return the element
 		return _cache_files.splice(0, 1)[0];
@@ -112,6 +116,7 @@ function get_csv_file(dir) {
 		//filename format: timestamp_threadid_name.csv
 		//  1500992643_10_dataoutput.csv
 		var thread_index = file_name.split("_")[1];
+		
 		//process only some csv files
 		if( thread_index % TOTAL_READERS != READER_INDEX  )
 			continue
@@ -185,5 +190,6 @@ if( DELETE_FILE_AFTER_READING ){
 process.stdin.resume();//so the program will not close instantly
 //Ctrl+C
 process.on('SIGINT',function(){
+   isStop = true;
    database.flush( process.exit );
 });
