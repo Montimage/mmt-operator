@@ -7,13 +7,11 @@ const HashTable   = require("./HashTable");
 
 const ipToCountry = maxmind.open(path.join( __dirname, "..", "data", "GeoLite2-Country.mmdb"), {
    cache: {
-      max: 10000, // max items in cache
+      max: 1000, // max items in cache
       maxAge: 1000 * 60 * 60 // life time in milliseconds
    }
 });
 
-
-const LOCAL  = "_local", UNKNOWN = "_unknown";
 
 //global variable
 const _caches = _global("ip2loc", {
@@ -38,8 +36,8 @@ const ip2loc = {};
  *          false, otherwise
  */
 ip2loc.isLocal = function( ip ){
-   if( ip == undefined || ip === "undefined" || ip === "null")
-      return false;
+   if( ip === "undefined" || ip === "null")
+      return true;
 
    const isLocal = _caches.localIPs.get( ip );
    //this IP was verified
@@ -50,13 +48,13 @@ ip2loc.isLocal = function( ip ){
    for( var i in _caches.localRanges ){
       var lo = _caches.localRanges[ i ];
       if( ipLib.mask( ip, lo.mask ) == lo.root ){
-         _caches.localIPs[ ip ] = true;
+         _caches.localIPs.add( ip,  true );
          return true;
       }
    }
 
    //=> not found in local range
-   _caches.localIPs[ ip ] = false;
+   _caches.localIPs.add( ip,  true );
    return false;
 }
 
@@ -76,12 +74,12 @@ ip2loc.isMulticast = function( ipString ){
       234.0.0.0   to 234.255.255.255  Unicast-prefix-based       Yes
       239.0.0.0   to 239.255.255.255  Administratively scoped    Yes
 */
-      if( arr[0] == "224" ){
-         if( arr[1] == "0" && (arr[2] == "0" || arr[2] == "1" || arr[2] == "2"))
+      if( arr[0] == 224 ){
+         if( arr[1] == 0 && (arr[2] == 0 || arr[2] == 1 || arr[2] == 2))
             return true;
-         if( arr[1] == "3" )
+         if( arr[1] == 3 )
             return true;
-      }else if( arr[0] == "232" || arr[0] == "233" || arr[0] == "234" || arr[0] == "239")
+      }else if( arr[0] == 232 || arr[0] == 233 || arr[0] == 234 || arr[0] == 239)
          return true;
    }
    return false;
@@ -92,14 +90,14 @@ ip2loc.isMulticast = function( ipString ){
  */
 ip2loc.country = function( ip ){
    if( ip2loc.isLocal( ip ) )
-      return LOCAL
+      return "_local"
       
    if( ip2loc.isMulticast( ip ) )
       return "_multicast";
    
    var loc = ipToCountry.get( ip );
    if( loc == undefined )
-      return UNKNOWN;
+      return "_unknown";
 
    if ( loc.country )
       loc = loc.country;
@@ -108,11 +106,10 @@ ip2loc.country = function( ip ){
    else if (loc.registered_country)
       loc = loc.registered_country;
 
-   if (loc && loc.names ){
+   if (loc && loc.names )
       return  loc['names']['en'];
-   }else{
-      return UNKNOWN;
-   }
+   
+   return "_unknown";
 }
 
 

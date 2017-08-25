@@ -163,6 +163,7 @@ function ProcessMessage( database ){
 		//to test mult-probe
 		//msg[1] = Math.random() > 0.5 ? 1 : 0;
 
+		//_TODO: re-enable this
 		_database.add(msg, function (err, err_msg) {});
 		msg = null;
 	};

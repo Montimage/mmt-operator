@@ -19,6 +19,9 @@ module.exports = function( size ){
         return false;
      _data[ key ] = data;
      _count ++;
+     
+     //if( _count > 100000 )
+     //   console.log("Too big");
   }
   
   this.empty = function(){

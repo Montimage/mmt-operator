@@ -620,13 +620,16 @@ MMTDrop.formatReportItem = function(entry) {
         case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO
         case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
     }
-
+    
+    /*
     var obj = {};
     for( var i=0; i<entry.length; i++ ){
     		if( entry[i] != null )
     			obj[ i ] = entry[ i ];
     }
     return obj;
+    */
+    return Object.assign({}, entry );
 };
 
 //object => array
@@ -683,7 +686,7 @@ function format_session_report( msg ){
 	var msg_len = Object.keys(msg).length;
 	msg[ MMTDrop.StatsColumnId.CPU_USAGE ] 		= msg[msg_len-5];
 	msg[ MMTDrop.StatsColumnId.MEM_USAGE ] 		= msg[msg_len-4];
-	msg[ MMTDrop.StatsColumnId.P_DROP ] 		= msg[msg_len-3];
+	msg[ MMTDrop.StatsColumnId.P_DROP ] 		   = msg[msg_len-3];
 	msg[ MMTDrop.StatsColumnId.P_DROP_NIC ] 	= msg[msg_len-2];
 	msg[ MMTDrop.StatsColumnId.P_DROP_KERNEL ]	= msg[msg_len-1];
 
@@ -743,9 +746,9 @@ var formatTime = function( ts ){
  */
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
-
     //timestamp
     msg[ 3 ] = formatTime( msg[3] );
+    
     //format
 	switch( msg[0] ) {
         case MMTDrop.CsvFormat.NDN_FORMAT :

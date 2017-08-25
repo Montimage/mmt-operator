@@ -217,7 +217,7 @@ module.exports = function(){
 	/**
 	 * Add a new message to DB
 	 */
-	self.add = function( message, callback ){
+	self.add = function( message ){
 		var msg = dataAdaptor.formatReportItem( message );
 
 		const ts       = msg[ TIMESTAMP ];
@@ -423,14 +423,11 @@ module.exports = function(){
 				self.dataCache.mac.addMessage( msg );
 				
 				//only if its partner is local
-				if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
+				//if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
+				if( format === 100 && msg[ COL.SRC_LOCATION ]  === "_local" ){
 					//do not add report 99 to data_ip collection as it has no IP
-					if( format === 100 ){
-					   msg.ip  = msg.ip_dest;
-						self.dataCache.ip.addMessage( msg );
-					}
-					//self.dataCache.session.addMessage( msg );
-					//self.dataCache.detail.addMessage(  msg );
+				   msg.ip  = msg.ip_dest;
+					self.dataCache.ip.addMessage( msg );
 				}
 			}
 			return;

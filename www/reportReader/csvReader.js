@@ -52,10 +52,10 @@ function process_file (file_name, cb) {
 	lr.on ('line', function (line) {
 		// 'line' contains the current line without the trailing newline character.
 		try{
+		   //_TODO: re-enable this
 			processMessage.process( line );
 		}catch( e ){
-			console.error( "Error when processing line " + totalLines + " of file " + file_name );
-			console.error( e );
+			console.error( "Error when processing line " + totalLines + " of file " + file_name, e );
 			hasError = true;
 		}
 		line = null;
@@ -78,8 +78,9 @@ function process_file (file_name, cb) {
 						if( err ) console.error( err );
 						cb( totalLines );
 					});
-				else
+				else{
 					cb( totalLines );
+				}
 			});
 		}
 		else{

@@ -8,9 +8,16 @@ const BULK_INSERT_THRESHOLD = 20000;
 
 
 //mongodb option when deleting records
+//http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#insertMany
 const WRITE_CONCERN = {
 	w: 0, //Requests no acknowledgement of the write operation
 	j: false, //requests no acknowledgement from MongoDB that the write operation has been written to the journal.
+	
+	//Allow driver to bypass schema validation in MongoDB 3.2 or higher.
+	bypassDocumentValidation: true,
+	//If true, when an insert fails, don't execute the remaining writes. 
+	//If false, continue with remaining inserts when one fails.
+	ordered: false
 };
 
 
@@ -82,9 +89,16 @@ module.exports = function( databaseName ){
 	 * Insert directly to DB
 	 */
 	self._insert = function( collectionName, msgArray, callback ){
+	   //_TODO: remove the 3 following lines
+	   /*
+	   if( callback ) 
+	      callback(null, {});
+	   return;
+	   */
+	   
 		self.db.collection( collectionName ).insertMany( msgArray, 
 				//insertion options
-				//WRITE_CONCERN,
+				WRITE_CONCERN,
 				callback );
 	}
 };
