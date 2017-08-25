@@ -43,3 +43,32 @@ jQuery.fn.isEnabled = function(){
 jQuery.validator.addMethod( "ipv4", function( value, element ) {
 	return this.optional( element ) || value == "localhost" || /^(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)\.(25[0-5]|2[0-4]\d|[01]?\d\d?)$/i.test( value );
 }, "Please enter a valid IP v4 address." );
+
+
+jQuery.fn.scrollToChild = function( child, timeout, more ){
+   var parent = this;
+   var element = $(child);
+   
+   if( typeof timeout != "number" )
+      timeout = 200;
+   
+   if( typeof more != "number" )
+      more = 0;
+   more += 20;
+
+   const visible_area_start  = parent.scrollTop();
+   const visible_area_height = parent.innerHeight();
+   const visible_area_end    = visible_area_start + visible_area_height ;
+   
+   const offset = element.position().top + visible_area_start;
+
+   const height = element.innerHeight();
+   
+
+   if (offset < visible_area_start) {
+      parent.animate({ scrollTop: offset - more }, timeout );
+   } else if (offset + height > visible_area_end) {
+      parent.animate({scrollTop: offset + height - visible_area_height + more }, timeout );
+   }
+   return this;
+}

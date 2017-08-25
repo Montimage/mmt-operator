@@ -2093,10 +2093,11 @@ $(str).appendTo("head");
                 msg.source = name;
                 if( obj[ name ] == undefined )
                   obj[ name ] = { name: name, id: name.replace(/:/g, "_"), 
-                                  data: msg, val: 0, 
+                                  data: msg, 
+                                  val: 0, 
                                   is_local: msg.is_src_local, 
                                   link_count: 0 };
-                obj[ name ].val     +=  val;
+                obj[ name ].val +=  val;
                 
                 //destination
                 name = msg[ COL.IP_DEST.id ];

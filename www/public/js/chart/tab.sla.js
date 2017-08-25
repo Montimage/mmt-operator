@@ -104,10 +104,7 @@ var ReportFactory = {
                   setTimeout( function( e ){
                      $(e).html( '<span class="badge">' + val + '</span>' );
                      //ensure this element is showing
-                     $("#div-alerts").parent().animate({
-                        scrollTop: $(e).offset().top
-                     }, 100);
-                     
+                     $("#div-alerts").scrollToChild( e, 100, 40 );
                   }, i*100, el );
                } );
 
@@ -288,12 +285,12 @@ var ReportFactory = {
             var form_config = {
                   type  : "<div>",
                   attr  : {
-                     id     : "div-alerts",
                      style  : "position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px"
                   },
                   children : [{
                      type     : "<div>",
                      attr     : {
+                        id     : "div-alerts",
                         style: "position: absolute; top: 35px; left: 0px; right: 0px; bottom: 0px; overflow: auto;",
                      },
                      children : [{
@@ -557,7 +554,8 @@ var ReportFactory = {
                   children : [{
                      type     : "<div>",
                      attr     :{
-                        style : "position: absolute; top: 35px; left: 0px; right: 0px; bottom: 0px; overflow: auto"
+                        style : "position: absolute; top: 35px; left: 0px; right: 0px; bottom: 0px; overflow: auto",
+                        id    : "div-reactions"
                      },
                      children : [{
                         type     : "<table>",
@@ -755,6 +753,7 @@ function _updateReactions( data ){
        */
       setTimeout( function( e, text ){
          $(e).html( text );
+         $("#div-reactions").scrollToChild( e, 0, 40 );
       }, 1000*index, el, 
          isValid ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
    });

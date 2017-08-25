@@ -149,22 +149,6 @@ var ReportFactory = {
                 }
               },
                 {
-                  type : "<input>",
-                  attr : {
-                    type : "hidden",
-                    value: JSON.stringify( init_metrics ),
-                    name : "init_metrics"
-                  }
-                },
-                {
-                  type : "<input>",
-                  attr : {
-                    type : "hidden",
-                    value: JSON.stringify( init_components ),
-                    name : "init_components"
-                  }
-                },
-                {
                   type: "<div>",
                   children : [
                     {

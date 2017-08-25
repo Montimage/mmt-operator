@@ -4,7 +4,7 @@ const multer  = require('multer');
 const xml2js  = require('xml2js');
 const fs      = require("fs");
 const HttpException = require("../../libs/HttpException");
-
+const config = require("../../libs/config");
 const parser = new xml2js.Parser();
 
 //status of current upload sla
@@ -34,9 +34,9 @@ router.post("/upload/:id", function(req, res, next) {
     if( app_config.id == undefined )
       app_config.id = app_id;
     if( app_config.init_metrics == undefined )
-      app_config.init_metrics    = JSON.parse( req.body.init_metrics );
+      app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
     if( app_config.init_components === undefined )
-      app_config.init_components = JSON.parse( req.body.init_components );
+      app_config.init_components = config.sla.init_components; //JSON.parse( req.body.init_components );
     if( app_config.sla == undefined )
       app_config.sla = {};
 
