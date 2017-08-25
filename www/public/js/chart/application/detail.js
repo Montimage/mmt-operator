@@ -51,7 +51,7 @@ var ReportFactory = {
 
       var self    = this;
 
-      var database = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+      var database = MMTDrop.databaseFactory.createStatDB({ collection: "reports_all", action : "aggregate",
                       no_group : true, no_override_when_reload: true, raw:true });
       database.updateParameter = function( _old_param ){
 
@@ -83,7 +83,7 @@ var ReportFactory = {
         return {query: [{$match: $match}, {$limit: 100}, {$group: $group}]};
       }
 
-      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "data_detail", action : "aggregate",
+      var trans_db = MMTDrop.databaseFactory.createStatDB({ collection: "reports_all", action : "aggregate",
                       no_group : true });
 
       database.afterReload(
