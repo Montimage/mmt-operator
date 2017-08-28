@@ -54,7 +54,7 @@ ip2loc.isLocal = function( ip ){
    }
 
    //=> not found in local range
-   _caches.localIPs.add( ip,  true );
+   _caches.localIPs.add( ip,  false );
    return false;
 }
 

@@ -37,6 +37,10 @@ router.post("/upload/:id", function(req, res, next) {
       app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
     if( app_config.init_components === undefined )
       app_config.init_components = config.sla.init_components; //JSON.parse( req.body.init_components );
+    
+    if( app_config.components == undefined )
+       app_config.components = [];
+    
     if( app_config.sla == undefined )
       app_config.sla = {};
 
@@ -167,12 +171,21 @@ function extract_metrics( app_config, index, cb ){
 
 		comp.sla = sla_str;
 
-
 		if( title != undefined ){
 			comp.title = title;
 		}
 		comp.id = parseInt( comp.id );
 
+	    //check if existing in app_config.components
+		var existed = false;
+		for( var i=0; i<app_config.components.length; i++ )
+		   if( app_config.components[i].id == comp.id ){
+		      existed = true;
+		      break;
+		   }
+		if( !existed )
+		   app_config.components.push( comp );
+		
 		var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
 		comp.metrics = [];
 
@@ -240,7 +253,8 @@ function insert_to_db( app_id, cb ) {
   router.dbconnector.mdb.collection("metrics").update( {app_id: app_config.id}, {
     _id       : app_config.id,
     app_id    : app_config.id,
-    components: app_config.init_components,
+    init_components: app_config.init_components,
+    components: app_config.components,
     metrics   : app_config.init_metrics,
   }, {upsert : true}, cb);
 }

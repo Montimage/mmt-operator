@@ -31,7 +31,7 @@ function _checkAvailability( metric, m, app, com ){
 
    const now = (new Date()).getTime();
    
-   dbconnector._queryDB( "data_availability_real", "aggregate", [
+   dbconnector._queryDB( "availability_real", "aggregate", [
       {"$match"  : {"1": com.id,"3":{"$gte": (now - CHECH_AVG_INTERVAL),"$lt":now }}},
       {"$group"  : {"_id": "$1", "avail_count": {"$sum": "$5"}, "check_count": {"$sum" : "$6"}}}
       ], function( err, result){

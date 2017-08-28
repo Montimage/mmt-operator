@@ -240,6 +240,7 @@ module.exports = function(){
 
       const ts       = msg[ TIMESTAMP ];
       const format   = msg[ FORMAT_ID ];
+      const input_src= msg[ SOURCE_ID ];
       const probe_id = msg[ PROBE_ID ];
 
       var msg2;
@@ -250,19 +251,19 @@ module.exports = function(){
          //System statistic: CPU, memory
          case dataAdaptor.CsvFormat.SYS_STAT_FORMAT:
             self.dataCache.sysStat.addMessage( msg );
-            self.dataCache.total.addMessage( [format, probe_id, ts] );
+            
             return;
 
          case dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT:
          case dataAdaptor.CsvFormat.BA_PROFILE_FORMAT:
             //insert directly to DB
             inserter.add("behaviour", [msg] );
-            self.dataCache.total.addMessage( [format, probe_id, ts] );
+            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
-            self.dataCache.total.addMessage( [format, probe_id, ts] );
+            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.OTT_QOS:
@@ -286,7 +287,7 @@ module.exports = function(){
             //MUSA project
          case 50:
             self.dataCache.avail.addMessage( msg );
-            self.dataCache.total.addMessage( [format, probe_id, ts] );
+            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
             return;
             //statistic reports
 
@@ -300,7 +301,7 @@ module.exports = function(){
                no_1_packet_reports  = 0;
             }
             //mark avaibility of this probe
-            self.dataCache.total.addMessage( [format, probe_id, ts] );
+            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
             return;
 
          case 99:

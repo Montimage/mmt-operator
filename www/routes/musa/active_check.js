@@ -7,13 +7,16 @@ function getUrlResponseTime( publisher, url, component_id, metric ){
 	//console.log( "check availability of ", component_id, metric );
 	const options = {timeout: 2000}; //in milliseconds
 
+	if( url.indexOf("http://") != 0 )
+	   url = "http://" + url;
+	
 	request(url, options, function (error, response, body) {
 		const start_time = new Date();
 		const avail = (!error && response.statusCode == 200) ? 1: 0;
 		//TODO: disable this
 		//avail = Math.round(Math.random());
 		const msg = "50,"+component_id+",\"eth0\","+(new Date()).getTime() / 1000+"," + (count ++) + "," +avail +", 1";
-		console.info( msg );
+		//console.info( msg );
 		// last element from array is for active check count
 		publisher.publish("metrics.availability", msg);
 	});
@@ -34,6 +37,8 @@ function checkAvailability( publisher, dbconnector ){
 			var app = apps[i];
 			if( app == null )
 				continue;
+			
+			
 			
 			//get availability metric of the app
 			var activeMetric = undefined;
@@ -64,10 +69,12 @@ function checkAvailability( publisher, dbconnector ){
 				if( selectedMetric == undefined )
 					continue;
 				
+				//console.log( com.id , selectedMetric[ activeMetric.id ] );
 				//compoent has not availability metric or the metric is disabled
 				if( selectedMetric[ activeMetric.id ] == undefined 
 						|| selectedMetric[ activeMetric.id ].enable === false )
 					continue;
+				
 				
 				
 				getUrlResponseTime( publisher, com.url, com.id, selectedMetric[ activeMetric.id ] );

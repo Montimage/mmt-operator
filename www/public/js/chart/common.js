@@ -99,23 +99,41 @@ $(function () {
       //this is applied when sla
       var initialComponents = {};
       if( MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
-         var comps = MMTDrop.config.others.sla.init_components;
-         comps.forEach( function( el ){
-            initialComponents[ el.id ] = el.title;
-         });
-      }
-      const getLabel = function( id ){
-         if( initialComponents[ id ]  != undefined )
-            return initialComponents[ id ] ;
-         return "Probe "+ id;
+         //load metric from DB
+         const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
+         MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
+            error  : function(){},
+            success: function( data ){
+               var obj = data.data[0];
+               //does not exist ?
+               if( obj == undefined )
+                  return;
+               //components
+               const components = obj.components;
+               const pOption    = fProbe.option();
+               //for each probe ID
+               for( var i=0; i<pOption.length; i++ ){
+                  //find a component having the same id with probe ID
+                  for( var j=0; j<components.length; j++ )
+                     if( components[j].id == pOption[i].id ){
+                        //set label of probe by the comonent's title
+                        pOption[i].label = "C" + pOption[i].id + ": " + components[j].title;
+                        break;
+                     }
+               }
+               //update component list
+               fProbe.option( pOption );
+               fProbe.redraw();
+            }
+         } );
       }
       //end sla
       
       for( var i in probes_status ){
         if( i == select_id )
-          arr.push({ id: i, label: getLabel( i ), selected: true });
-        else
-          arr.push({ id: i, label: getLabel( i )});
+          arr.push({ id: i, label: "Probe " + i, selected: true });
+        else if( i != "null" )
+          arr.push({ id: i, label: "Probe " + i});
       }
 
       if( arr.length > 1 ){

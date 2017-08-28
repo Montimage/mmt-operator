@@ -274,7 +274,7 @@ var ReportFactory = {
                            class   : "btn btn-info",
                            type    : "button",
                            text    : "Report",
-                           onclick : "window._gotoURL( '" + me.name + "',"+ comp.id + ",'"+ sel.alert + "','" + sel.violation + "' )"
+                           onclick : "window._gotoURL( '" + me.name + "',"+ comp.id + ",'"+ sel.alert + "','" + sel.violation + "','&metric_id=" + me.id +  "' )"
                         }
                      }]
                   });
@@ -358,7 +358,7 @@ var ReportFactory = {
          } );
 
 
-         window._gotoURL = function( name, probe_id, alert_thr, violation_thr){
+         window._gotoURL = function( name, probe_id, alert_thr, violation_thr, extra_url ){
 
             alert_thr = alert_thr
             .replace(">=", '"$gte":').replace(">", '"$gt" :')
@@ -371,8 +371,20 @@ var ReportFactory = {
             .replace("!=", '"$ne":')
             .replace("=",  '"$eq" :');
 
+            switch( name ){
+               case "availability":
+                  break;
+               case "vul_scan_freq":
+               case "vuln_scan_freq":
+                  name = "vuln_scan_freq";
+                  break;
+               default:
+                  name = "alerts";
+                  break;
+            }
+            
             MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
-                  MMTDrop.tools.getQueryString( ["app_id"], "&alert=" + alert_thr + "&violation=" + violation_thr ) );
+                  MMTDrop.tools.getQueryString( ["app_id"], "&probe_id=" + probe_id + "&alert=" + alert_thr + "&violation=" + violation_thr + extra_url ) );
          }
       },
 

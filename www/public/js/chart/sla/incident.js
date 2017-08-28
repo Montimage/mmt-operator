@@ -26,16 +26,40 @@ MMTDrop.callback = {
 
 var ReportFactory = {};
 
+const _COL = {
+      TIMESTAMP: {id: 0},
+      PROBE_ID : {id: 2},
+      PROPERTY : {id: 3},
+      TYPE     : {id: 4},
+      VERDICT  : {id: 4},
+      DESCRIPTION : {},
+      VERDICT_COUNT: {}
+      
+}
+
 ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
+   /*
     var database = new MMTDrop.Database({
         format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT,
         userData: {
             type: "security"
         }
     }, null, false);
-
-    var COL = MMTDrop.constants.SecurityColumn;
-
+*/
+   
+    const database = new MMTDrop.Database({collection: "metrics_alerts", 
+       query:[], action: "aggregate", raw: true, no_group: true, no_override_when_reload: true });
+    
+    database.updateParameter = function(){
+       const $match = {};
+       $match[ "0" ] = {"$gte": status_db.time.begin, "$lt" : status_db.time.end };
+       //$match[ 1 ] = URL_PARAM.app_id(); //app id
+       $match[ "2" ] = URL_PARAM.probe_id;
+       $match[ "3" ] = URL_PARAM.metric_id;
+       
+       return {query: [{$match: $match}] } 
+    }
+    
     var DATA    = [];
     var VERDICT = {};
 
@@ -54,13 +78,13 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     fPeriod.onChange( reset );
 
     var appendData = function( msg ){
-        var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ];
-        var vdict = msg[ COL.VERDICT.id ];
-        var ts    = msg[ COL.TIMESTAMP.id ];
+        var key   = msg[ _COL.PROBE_ID.id ] + "-" + msg[ _COL.PROPERTY.id ];
+        var vdict = msg[ _COL.VERDICT.id ];
+        var ts    = msg[ _COL.TIMESTAMP.id ];
         var num_verdict = 1;
 
-        if( msg[ COL.VERDICT_COUNT.id ] > 0 )
-            num_verdict = msg[ COL.VERDICT_COUNT.id ];
+        if( msg[ _COL.VERDICT_COUNT.id ] > 0 )
+            num_verdict = msg[ _COL.VERDICT_COUNT.id ];
 
         VERDICT[ vdict ] += num_verdict;
 
@@ -72,7 +96,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                 obj.detail.push( msg ) ;
 
                 //update time
-                obj.data[ COL.TIMESTAMP.id ] = msg[ COL.TIMESTAMP.id ];
+                obj.data[ _COL.TIMESTAMP.id ] = msg[ _COL.TIMESTAMP.id ];
 
                 return i;
             }
@@ -99,27 +123,27 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
     var columnsToShow = [
         {
-            id: COL.TIMESTAMP.id,
+            id: _COL.TIMESTAMP.id,
             label: "Last updated"
         },
         {
-            id: COL.PROBE_ID.id,
-            label: "Probe ID"
+            id: _COL.PROBE_ID.id,
+            label: "Comp. ID"
         },
         {
-            id: COL.PROPERTY.id,
-            label: "Property"
+            id: _COL.PROPERTY.id,
+            label: "Metric ID"
         },
         {
-            id: COL.TYPE.id,
+            id: _COL.TYPE.id,
             label: "Type"
         },
         {
-            id: COL.VERDICT.id,
+            id: _COL.VERDICT.id,
             label: "Verdict"
         },
         {
-            id: COL.DESCRIPTION.id,
+            id: _COL.DESCRIPTION.id,
             label: "Description" //(will be hidden)"
         }
         ];
@@ -148,7 +172,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         getData: {
             getDataFn: function (db) {
 
-                var cols = [{id: "index", label:""}, COL.TIMESTAMP, COL.VERDICT, {id: "concern", label: "IP or MAC addresses of  Concerned Machines"}];
+                var cols = [{id: "index", label:""}, _COL.TIMESTAMP, _COL.VERDICT, {id: "concern", label: "IP or MAC addresses of  Concerned Machines"}];
 
                 var data = db.data();
                 var arr = [];
@@ -159,15 +183,15 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                     o[ "index" ] = index+1;
                     var time = msg.time;
                     if( time === undefined ){
-                        time = MMTDrop.tools.formatDateTime( new Date( msg[COL.TIMESTAMP.id] ));
+                        time = MMTDrop.tools.formatDateTime( new Date( msg[_COL.TIMESTAMP.id] ));
                         msg.time = time;
                     }
 
-                    o[ COL.TIMESTAMP.id ] = time;
-                    o[ COL.VERDICT.id   ] = msg[ COL.VERDICT.id ];
-                    var history = msg[ COL.HISTORY.id ];
+                    o[ _COL.TIMESTAMP.id ] = time;
+                    o[ _COL.VERDICT.id   ] = msg[ _COL.VERDICT.id ];
+                    var history = msg[ _COL.HISTORY.id ];
 
-                    var concernt = msg[ COL.VERDICT_COUNT.id ];
+                    var concernt = msg[ _COL.VERDICT_COUNT.id ];
 
                     concernt = msg.concernt ;
                     if( concernt == null ){
@@ -224,7 +248,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                     // Open this row
                     var index = row.data()[0] - 1;
                     var history = detailOfPopupProperty[ index ];
-                    if( history ) history = history[ COL.HISTORY.id ];
+                    if( history ) history = history[ _COL.HISTORY.id ];
 
                     var str = "";
                     for( var ev in history ){
@@ -271,9 +295,9 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         for( var i in columnsToShow ){
             var col = columnsToShow[ i ].id;
             var val = msg[ col ];
-            if( col == COL.VERDICT.id )
+            if( col == _COL.VERDICT.id )
                 val = getVerdictHTML( obj.verdict ) ;
-            else if( col == COL.TIMESTAMP.id )
+            else if( col == _COL.TIMESTAMP.id )
                 val = MMTDrop.tools.formatDateTime( new Date( val ) ) ;
 
             if( arr.length == 0 )
@@ -498,8 +522,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     //update report received from server
     io().on('security',  function( arr ){
       for( var i=0; i<arr.length; i++)
-        if( typeof(arr[ i][ COL.HISTORY.id ]) === "string")
-          arr[ i][ COL.HISTORY.id ] = JSON.parse( arr[ i][ COL.HISTORY.id ] );
+        if( typeof(arr[ i][ _COL.HISTORY.id ]) === "string")
+          arr[ i][ _COL.HISTORY.id ] = JSON.parse( arr[ i][ _COL.HISTORY.id ] );
       addAlerts( arr );
     });
 

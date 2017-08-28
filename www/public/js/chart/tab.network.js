@@ -2452,7 +2452,7 @@ $(str).appendTo("head");
         //get data
 
         var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", action: "aggregate", 
-           query: []} );
+           query: [], raw: true} );
         database.updateParameter = function( param ){
            
          //mongoDB aggregate
