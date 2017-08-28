@@ -4,6 +4,7 @@ var Window         = require("./Window.js");
 var AppList        = require("./AppList.js");
 var ipLib          = require("ip");
 var config         = require("./config.js");
+const CONST        = require("./constant.js");
 //var ip2loc      = require("");
 
 var MongoClient = require('mongodb').MongoClient,
@@ -60,7 +61,20 @@ var MongoConnector = function () {
 				group._id[ PROBE_ID  ] = '$' + PROBE_ID;
 				group._ts              = { '$first' : "$" + TIMESTAMP };
 
-				self.mdb.collection("probe_status").aggregate( [{$match: match}, {$group: group}, {$sort: {_ts: 1}}] ).toArray( function( err, arr){
+				var label = CONST.period.REAL;
+				var interval = ( period.end - period.begin );
+				//last hour
+				if( interval <= 60*60*1000 )
+				   label = CONST.period.REAL;
+				//last 24 hours
+				else if( interval <= 24*60*60*1000 )
+				   label = CONST.period.MINUTE;
+				else if( interval <= 7*24*60*60*1000 )
+               label = CONST.period.HOUR;
+				else
+				   label = CONST.period.DAY;
+				
+				self.mdb.collection("data_total_" + label).aggregate( [{$match: match}, {$group: group}, {$sort: {_ts: 1}}] ).toArray( function( err, arr){
 					if( err )
 						return callback( err );
 					//timestamp of the samples of one probe is saved into an array

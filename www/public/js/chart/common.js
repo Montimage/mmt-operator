@@ -94,11 +94,28 @@ $(function () {
       var probes_status = status_db.probeStatus;
       var arr = [];
       const select_id = URL_PARAM.probe_id;
+      
+
+      //this is applied when sla
+      var initialComponents = {};
+      if( MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
+         var comps = MMTDrop.config.others.sla.init_components;
+         comps.forEach( function( el ){
+            initialComponents[ el.id ] = el.title;
+         });
+      }
+      const getLabel = function( id ){
+         if( initialComponents[ id ]  != undefined )
+            return initialComponents[ id ] ;
+         return "Probe "+ id;
+      }
+      //end sla
+      
       for( var i in probes_status ){
         if( i == select_id )
-          arr.push({ id: i, label: "Probe " + i, selected: true });
+          arr.push({ id: i, label: getLabel( i ), selected: true });
         else
-          arr.push({ id: i, label: "Probe " + i});
+          arr.push({ id: i, label: getLabel( i )});
       }
 
       if( arr.length > 1 ){

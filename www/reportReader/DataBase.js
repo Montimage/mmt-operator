@@ -224,7 +224,7 @@ module.exports = function(){
 
          //MUSA project
          //TODO to remove
-         avail: new DataCache( inserter, "data_availability",
+         avail: new DataCache( inserter, "availability",
                {
             key: [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
             inc: [4, 5, 6 ]
@@ -250,16 +250,19 @@ module.exports = function(){
          //System statistic: CPU, memory
          case dataAdaptor.CsvFormat.SYS_STAT_FORMAT:
             self.dataCache.sysStat.addMessage( msg );
+            self.dataCache.total.addMessage( [format, probe_id, ts] );
             return;
 
          case dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT:
          case dataAdaptor.CsvFormat.BA_PROFILE_FORMAT:
             //insert directly to DB
             inserter.add("behaviour", [msg] );
+            self.dataCache.total.addMessage( [format, probe_id, ts] );
             return;
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
+            self.dataCache.total.addMessage( [format, probe_id, ts] );
             return;
 
          case dataAdaptor.CsvFormat.OTT_QOS:
@@ -283,6 +286,7 @@ module.exports = function(){
             //MUSA project
          case 50:
             self.dataCache.avail.addMessage( msg );
+            self.dataCache.total.addMessage( [format, probe_id, ts] );
             return;
             //statistic reports
 
@@ -295,23 +299,16 @@ module.exports = function(){
                console.info("Number of reports containing only 1 packet: " + no_1_packet_reports );
                no_1_packet_reports  = 0;
             }
-
-            inserter.add("probe_status", [msg] );
-
-            //add dummy message to the cache to push them to DB
-            self.dataCache.total.addMessage( msg );
-            self.dataCache.mac.addMessage( msg );
-            self.dataCache.protocol.addMessage( msg );
-            self.dataCache.ip.addMessage( msg );
-            self.dataCache.app.addMessage( msg );
-            self.dataCache.location.addMessage( msg );
-            self.dataCache.link.addMessage( msg );
-            self.dataCache.reports.addMessage( msg );
+            //mark avaibility of this probe
+            self.dataCache.total.addMessage( [format, probe_id, ts] );
             return;
 
          case 99:
          case 100:
-
+            
+            //mark avaibility of this probe
+            self.dataCache.total.addMessage( msg );
+            
             //a dummy report when session expired
             if( msg[ COL.PACKET_COUNT ] === 0 ){
                return;
@@ -333,9 +330,6 @@ module.exports = function(){
             //one msg is a report of a session
             //==> total of them are number of active flows at the sample interval
             msg[ COL.ACTIVE_FLOWS ] = 1;
-
-            //total traffic
-            self.dataCache.total.addMessage( msg );
 
             //session
             if( format === 100 ){

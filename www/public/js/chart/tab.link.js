@@ -154,6 +154,9 @@ var ReportFactory = {
 	        				{$group: group2},
 	        			]};
 	        	
+	        	if( URL_PARAM.probe_id != undefined )
+	        	   db_options.probe = URL_PARAM.probe_id;
+	        	
 	        	//reload detail database
 	        	detail_database.reload( db_options, function(){
 	        		//draw the chart
@@ -663,6 +666,8 @@ var ReportFactory = {
           var $match = {};
           $match[ COL.TIMESTAMP.id ] = {$gte: lastMinute, $lte: status_db.time.end };
 
+          $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
+          
           var group = { _id : {} };
           //[ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.PROBE_ID.id ]
           [ COL.MAC_SRC.id, COL.PROBE_ID.id ]

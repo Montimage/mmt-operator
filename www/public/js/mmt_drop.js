@@ -2099,6 +2099,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       //timestamp
       if( param.period != undefined )
         $match[ MMTDrop.constants.StatsColumn.TIMESTAMP.id ] =  {"$gte": param.period.begin, "$lte" : param.period.end };
+      
       if( param.probe != undefined ){
         if( ! Array.isArray( param.probe ) )
           $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = param.probe;
@@ -3304,7 +3305,7 @@ MMTDrop.filterFactory = {
 
         //all
         data[0] = db.data();
-
+        
         //create list of options
         var opts = [];
         for (var i in keys){
