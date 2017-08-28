@@ -2128,13 +2128,7 @@ $(str).appendTo("head");
               for( var name in obj ){
             	  //convert to a readable value
                   var o = obj[ name ];
-                  if (o.val >= 1000000000)
-                    o.text = (o.val / 1000000000).toFixed(0) + "G";
-                  else if (o.val >= 1000000)
-                    o.text = (o.val / 1000000).toFixed(0) + "M";
-                  else if (o.val >= 1000)
-                    o.text = (o.val / 1000).toFixed(0) + "k";
-                  else o.text = o.val;
+                  o.text = MMTDrop.tools.formatDataVolume( o.val );
                   
                   o.show_detail = true;
                   o.radius  = o.val/max_val*50;
@@ -2178,7 +2172,7 @@ $(str).appendTo("head");
                       msg.weight = 1;
                 }
                 //label
-                msg.label =  MMTDrop.tools.formatDataVolume( msg[ col.id ], true ) + " ";
+                msg.label =  MMTDrop.tools.formatDataVolume( msg[ col.id ], true ) + "  >>"; // + " ->";
               }
 
               //Set up the force layout
