@@ -12,272 +12,301 @@ router._data = {};
 router._sla  = {};
 //upload SLA files
 router.post("/upload/:id", function(req, res, next) {
-  //status of processing SLA files
-  const app_id = req.params.id;
-  if( app_id == undefined ) app_id = "_undefined";
-  if( router._sla[ app_id ]  === undefined )
-    router._sla[ app_id ] = {};
+   //status of processing SLA files
+   const app_id = req.params.id;
+   if( app_id == undefined ) app_id = "_undefined";
+   if( router._sla[ app_id ]  === undefined )
+      router._sla[ app_id ] = {};
 
-  var status = router._data[ app_id ] = {progress: 0, message:"", error: false};
+   var status = router._data[ app_id ] = {progress: 0, message:"", error: false};
 
-  const app_config = router._sla[ app_id ];
+   const app_config = router._sla[ app_id ];
 
-  //handle SLA files uploading
-  multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){
-    if( err ){
-      status.progress = 100;
-      status.error = true;
-      return status.message  = "Error: " + JSON.stringify(err);
-    }
+   //handle SLA files uploading
+   multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){
+      if( err ){
+         status.progress = 100;
+         status.error = true;
+         return status.message  = "Error: " + JSON.stringify(err);
+      }
 
-    const file  = req.file;
-    if( app_config.id == undefined )
-      app_config.id = app_id;
-    if( app_config.init_metrics == undefined )
-      app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
-    if( app_config.init_components === undefined )
-      app_config.init_components = config.sla.init_components; //JSON.parse( req.body.init_components );
-    
-    if( app_config.components == undefined )
-       app_config.components = [];
-    
-    if( app_config.sla == undefined )
-      app_config.sla = {};
+      const file  = req.file;
+      if( app_config.id == undefined )
+         app_config.id = app_id;
+      if( app_config.init_metrics == undefined )
+         app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
+      if( app_config.init_components === undefined )
+         app_config.init_components = config.sla.init_components; //JSON.parse( req.body.init_components );
 
-    const comp_index = parseInt(req.body.component_id);
+      if( app_config.components == undefined )
+         app_config.components = [];
 
-    status.error = false;
-    status.progress = 30;
-    status.message  = "Uploaded SLA";
+      if( app_config.sla == undefined )
+         app_config.sla = {};
 
-    function raise_error( msg ){
-      status.progress = 100;
-      status.error    = true;
-      status.message  = msg;
+      const comp_index = parseInt(req.body.component_id);
 
-      console.error( status );
-    }
-    //waiting for 1 second before parsing SLA file
-    //this gives times to show a message above on web browser
-    setTimeout( function(){
-      if( comp_index >= 5)
-        return raise_error( "unsupported");
-      //read file's content
-      fs.readFile( file.path, {
-        encoding: 'utf8'
-      }, function (err_1, data) {
-        //got content of SLA file
-        //==> delete it
-        fs.unlink( file.path );
+      status.error = false;
+      status.progress = 30;
+      status.message  = "Uploaded SLA";
 
-        if( err_1 )
-          return raise_error( JSON.stringify( err_1) );
+      function raise_error( msg ){
+         status.progress = 100;
+         status.error    = true;
+         status.message  = msg;
 
-        //parse file content as json
-        parser.parseString(data, function (err_2, result) {
-          if( err_2 ){
-            console.error( err_2 );
-            return raise_error( err_2.message );
-          }
+         console.error( status );
+      }
+      //waiting for 1 second before parsing SLA file
+      //this gives times to show a message above on web browser
+      setTimeout( function(){
+         if( comp_index >= 5)
+            return raise_error( "unsupported");
+         //read file's content
+         fs.readFile( file.path, {
+            encoding: 'utf8'
+         }, function (err_1, data) {
+            //got content of SLA file
+            //==> delete it
+            fs.unlink( file.path );
 
-          app_config.sla[ comp_index ] = result;
+            if( err_1 )
+               return raise_error( JSON.stringify( err_1) );
 
-          status.error    = false;
-          status.message  = "Parsed SLA";
-          status.progress = 40;
+            //parse file content as json
+            parser.parseString(data, function (err_2, result) {
+               if( err_2 ){
+                  console.error( err_2 );
+                  return raise_error( err_2.message );
+               }
 
-          //extract content of sla file (that is in JSON format)
-          setTimeout( function(){
-            extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
-              if( err_3 ){
-                console.error( err_3 );
-                return raise_error( err_3.message );
-              }
+               app_config.sla[ comp_index ] = result;
 
-              status.error    = false;
-              status.progress = 100;
-              status.message  = "Extracted "+ count +" metrics ";
+               status.error    = false;
+               status.message  = "Parsed SLA";
+               status.progress = 40;
 
-            });
+               //extract content of sla file (that is in JSON format)
+               setTimeout( function(){
+                  extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
+                     if( err_3 ){
+                        console.error( err_3 );
+                        return raise_error( err_3.message );
+                     }
 
-        },2000)
-        });//parser.parseString
-      });//fs.readFile
-    }, 1000);
+                     status.error    = false;
+                     status.progress = 100;
+                     status.message  = "Extracted "+ count +" metrics ";
 
-    res.status(204).end()
-  })
+                  });
+
+               },2000)
+            });//parser.parseString
+         });//fs.readFile
+      }, 1000);
+
+      res.status(204).end()
+   })
 });
 
 function get_value( obj, arr_atts ){
-  if( obj == undefined )
-    return obj;
+   if( obj == undefined )
+      return obj;
 
-  for( var i=0; i<arr_atts.length; i++ )
-    if( obj[ arr_atts[i] ] == undefined )
-      return undefined;
-    else
-      obj = obj[ arr_atts[i] ];
-  return obj;
+   for( var i=0; i<arr_atts.length; i++ )
+      if( obj[ arr_atts[i] ] == undefined )
+         return undefined;
+      else
+         obj = obj[ arr_atts[i] ];
+   return obj;
 }
 
 //inverse of
 const OPERATOR = {
-  "eq (=)"  : "!=",
-  "ge (>=)" : "<",
-  "le (<=)" : ">",
+      "eq (=)"  : "!=",
+      "ge (>=)" : "<",
+      "le (<=)" : ">",
 }
 
 function get_violation( expr, type ){
-  expr = get_value( expr, [0, "specs:oneOpExpression", 0, "$"] );
+   expr = get_value( expr, [0, "specs:oneOpExpression", 0, "$"] );
 
-  var opr = get_value( expr, ["operator"]);
-  var val = get_value( expr, ["operand"]);
+   var opr = get_value( expr, ["operator"]);
+   var val = get_value( expr, ["operand"]);
 
-  if( type == "string")
-    return OPERATOR[opr] + " \"" + val + "\"";
-  return OPERATOR[opr] + " " + val;
+   if( type == "string")
+      return OPERATOR[opr] + " \"" + val + "\"";
+   return OPERATOR[opr] + " " + val;
 }
 
 
 function extract_metrics( app_config, index, cb ){
-	try{
-		var total = 0;
+   try{
+      var total = 0;
 
-		if( index >= app_config.init_components.length )
-		   return cb( new Error("Support maximally " + app_config.init_components.length + " components" ) );
-		
-		var comp = app_config.init_components[ index ];
-		var sla  = app_config.sla[ index ];
-		var sla_str = JSON.stringify( sla );
+      if( index >= app_config.init_components.length )
+         return cb( new Error("Support maximally " + app_config.init_components.length + " components" ) );
 
-		sla  = get_value(sla, ["wsag:AgreementOffer", "wsag:Terms", 0, "wsag:All", 0] );
-		var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
+      var comp = app_config.init_components[ index ];
+      var sla  = app_config.sla[ index ];
+      var sla_str = JSON.stringify( sla );
 
-		console.log("     title = " + title );
-		
-		//not based on index but by title
-		for( var i=0; i<app_config.init_components.length; i++)
-			if( app_config.init_components[i].title == title ){
-				comp = app_config.init_components[i];
-				console.log( "found " + title );
-				
-				//this component is uploaded
-				if( comp.sla != undefined )
-				   return cb( new Error("Component ["+ title +"] was uploaded"));
-				
-				break;
-			}
+      sla  = get_value(sla, ["wsag:AgreementOffer", "wsag:Terms", 0, "wsag:All", 0] );
+      var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
 
-		comp.sla = sla_str;
+      console.log("     title = " + title );
 
-		if( title != undefined ){
-			comp.title = title;
-		}
-		comp.id = parseInt( comp.id );
+      //not based on index but by title
+      for( var i=0; i<app_config.init_components.length; i++)
+         if( app_config.init_components[i].title == title ){
+            comp = app_config.init_components[i];
+            console.log( "found " + title );
 
-	    //check if existing in app_config.components
-		var existed = false;
-		for( var i=0; i<app_config.components.length; i++ )
-		   if( app_config.components[i].id == comp.id ){
-		      existed = true;
-		      break;
-		   }
-		if( !existed )
-		   app_config.components.push( comp );
-		
-		var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
-		comp.metrics = [];
+            //this component is uploaded
+            if( comp.sla != undefined )
+               return cb( new Error("Component ["+ title +"] was uploaded"));
 
-		//get data type of each metrics
-		const specs = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "specs:serviceDescription", 0, "specs:security_metrics", 0, "specs:Metric"]);
-		const TYPES = {};
-		for( var j=0; j<specs.length; j++ ){
-			var spec = specs[ j ];
-			var type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:enumUnit", 0, "specs:enumItemsType", 0]);
-			if( type == undefined )
-				type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:intervalUnit", 0, "specs:intervalItemsType", 0]);
-			TYPES[ get_value( spec, ["$", "name"] ) ] = type;
-		}
+            break;
+         }
 
-		comp.metric_types = TYPES;
+      comp.sla = sla_str;
 
-		for( var j=0; j<slos.length; j++ ){
-			var slo = slos[ j ],
-			title = get_value( slo, ["specs:MetricREF", 0] );
-			type  = TYPES[ title ],
-			name  = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-			enable= false,
-			support= false
-			;
+      if( title != undefined ){
+         comp.title = title;
+      }
+      comp.id = parseInt( comp.id );
 
-			if( title.toLowerCase().indexOf("scan") >= 0  ){
-				name = "vuln_scan_freq";
-				enable = true;
-				support = true;
-			}else if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 || title.toLowerCase().indexOf("incident") >= 0 ){
-				name = "incident";
-				enable = true;
-				support = true;
+      //check if existing in app_config.components
+      var existed = false;
+      for( var i=0; i<app_config.components.length; i++ )
+         if( app_config.components[i].id == comp.id ){
+            existed = true;
+            break;
+         }
+      if( !existed )
+         app_config.components.push( comp );
 
-			}else if(["Vulnerability Measure","Resiliance to attacks","Database activity monitoring","SQL injection","Data encryption","M6-HTTP to HTTPS Redirects","Number of Data Subject Access Requests"].indexOf( title ) >= 0 ) {
-				support = true;
-			}
+      var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
+      comp.metrics = [];
 
-			comp.metrics.push({
-				id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-				title    : title,
-				name     : name, 
-				priority : get_value( slo, ["specs:importance_weight", 0]),
-				violation: get_violation( get_value( slo, ["specs:SLOexpression"] ), type ),
-				data_type: type,
-				enable   : enable,
-				support  : support,
-			});
+      //get data type of each metrics
+      const specs = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "specs:serviceDescription", 0, "specs:security_metrics", 0, "specs:Metric"]);
+      const TYPES = {};
+      for( var j=0; j<specs.length; j++ ){
+         var spec = specs[ j ];
+         var type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:enumUnit", 0, "specs:enumItemsType", 0]);
+         if( type == undefined )
+            type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:intervalUnit", 0, "specs:intervalItemsType", 0]);
+         TYPES[ get_value( spec, ["$", "name"] ) ] = type;
+      }
 
-			total ++;
-		}
-		cb( null, total, title );
-	}catch( err ){
-		err.message = "SLA format is incorrect: " + err.message;
-		cb( err, 0, null );
-	}
+      comp.metric_types = TYPES;
+
+      for( var j=0; j<slos.length; j++ ){
+         var slo = slos[ j ],
+         title = get_value( slo, ["specs:MetricREF", 0] );
+         type  = TYPES[ title ],
+         name  = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
+         enable= false,
+         support= false
+         ;
+
+         if( title.toLowerCase().indexOf("scan") >= 0  ){
+            name = "vuln_scan_freq";
+            enable = true;
+            support = true;
+         }else if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 || title.toLowerCase().indexOf("incident") >= 0 ){
+            name = "incident";
+            enable = true;
+            support = true;
+
+         }else if(["Vulnerability Measure","Resiliance to attacks","Database activity monitoring","SQL injection","Data encryption","M6-HTTP to HTTPS Redirects","Number of Data Subject Access Requests"].indexOf( title ) >= 0 ) {
+            support = true;
+         }
+
+         comp.metrics.push({
+            id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
+            title    : title,
+            name     : name, 
+            priority : get_value( slo, ["specs:importance_weight", 0]),
+            violation: get_violation( get_value( slo, ["specs:SLOexpression"] ), type ),
+            data_type: type,
+            enable   : enable,
+            support  : support,
+         });
+
+         total ++;
+      }
+      cb( null, total, title );
+   }catch( err ){
+      err.message = "SLA format is incorrect: " + err.message;
+      cb( err, 0, null );
+   }
 }
 
 function insert_to_db( app_id, cb ) {
-  const app_config = router._sla[ app_id ];
-  if( app_config === undefined || app_config.id === undefined )
-    return cb( "nothing to update" );
+   const app_config = router._sla[ app_id ];
+   if( app_config === undefined || app_config.id === undefined )
+      return cb( "nothing to update" );
 
-  //upsert to database
-  router.dbconnector.mdb.collection("metrics").update( {app_id: app_config.id}, {
-    _id       : app_config.id,
-    app_id    : app_config.id,
-    init_components: app_config.init_components,
-    components: app_config.components,
-    metrics   : app_config.init_metrics,
-  }, {upsert : true}, cb);
+   //upsert to database
+   router.dbconnector.mdb.collection("metrics").update( {app_id: app_config.id}, {
+      _id       : app_config.id,
+      app_id    : app_config.id,
+      init_components: app_config.init_components,
+      components: app_config.components,
+      metrics   : app_config.init_metrics,
+   }, {upsert : true}, cb);
 }
 
+function _redirectToMetric( req, res ){
+   router._data = {};
+   router._sla  = {};
+   
+ //maintain query string between pages
+   var query_string = [];
+   var arr = ["period", "probe_id", "app_id", "period_id"];  
+
+   for (var i in arr) {
+       var el = arr[i];
+       if (req.query[el] != undefined)
+           query_string.push(el + "=" + req.query[el]);
+   }
+
+   if (query_string.length > 0)
+       query_string = "?" + query_string.join("&");
+   else
+       query_string = "";
+   
+   res.redirect("/chart/sla/metric" + query_string );
+}
+
+/**
+ * 
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
 router.get("/upload/:id", function( req, res, next ){
-  const id     = req.params.id || "_undefined";
-  const status = router._data[ id ];
-  const act = req.query.act;
+   const id     = req.params.id || "_undefined";
+   const status = router._data[ id ];
+   const act = req.query.act;
 
-  if( act === "finish" ) {
-    return insert_to_db(id, function(){
-      res.redirect("/chart/sla/metric");
-    });
-  }
-  else if( act === "cancel" ){
-    return res.redirect("/chart/sla/metric");
-  }
+   if( act === "finish" ) {
+      return insert_to_db(id, function(){
+         return _redirectToMetric( req, res );
+      });
+   }
+   else if( act === "cancel" ){
+      return _redirectToMetric( req, res );
+   }
 
-  if( status === undefined )
-    return res.status(400).send("Not found!!!");
+   if( status === undefined )
+      return res.status(400).send("Not found!!!");
 
-  res.setHeader("Content-Type", "application/json");
-  res.send( status );
+   res.setHeader("Content-Type", "application/json");
+   res.send( status );
 });
 
 

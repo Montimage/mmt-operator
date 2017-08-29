@@ -15,23 +15,24 @@ var arr = [
 
 var availableReports = {
 }
-el = {}
+
+var el = {}
 if (URL_PARAM.length > 0){
   console.log("URL PARAM EXISTE")
   console.log(URL_PARAM)
   el = {
-    compid: URL_PARAM.probe_id,
-    metricid: "1",
+    compid    : URL_PARAM.probe_id,
+    metricid  : URL_PARAM.metric_id, //1
     metricname: "availability",
-    value: URL_PARAM.violation
+    value     : URL_PARAM.violation
   }
 }else{
   console.log("URL PARAM NOOOOOOOOO EXISTE")
   el = {
-    compid: URL_PARAM.probe_id,
-    metricid: "1",
+    compid    : URL_PARAM.probe_id,
+    metricid  : "1",
     metricname: "availability",
-    value: "<= 0.95"
+    value     : "<= 0.95"
   }
 }
 
@@ -47,10 +48,24 @@ var ReportFactory = {
     },
     createNodeReport: function ( fPeriod ) {
 
-        var _this    = this;
-        var COL      = MMTDrop.constants.StatsColumn;
-
-        var database = new MMTDrop.Database({collection: "availability", action: "aggregate", raw: true,  no_override_when_reload: true}, 
+        const _this    = this;
+        const $match = {};
+        $match[ COL.PROBE_ID.id ] = el.compid;
+        
+        const $group = {};
+        $group._id   = "$" + COL.TIMESTAMP.id;
+        $group.avail = {$sum : "$5" };
+        $group.count = {$sum : "$6" };
+        
+        const $project  = {};
+        $project._id    = "$_id";
+        $project.result = {$divide : ["$avail", "$count"]};
+        $project.count  = "$count";
+        $project.avail  = "$avail";
+        
+        const database = new MMTDrop.Database({collection: "availability", action: "aggregate",
+           query: [{$match: $match}, {$group : $group}, {$project : $project}],
+           raw: true,  no_override_when_reload: false}, 
           function( data) {
 
             return data;
@@ -117,12 +132,6 @@ var ReportFactory = {
           return arr;
         });
         
-        database.updateParameter = function( _old_param ){
-          var query = getQuery("availability", 4, el, status_db)
-	  query.query.splice( query.query.length - 1, 1);
-          return query;
-        }
-
         var cLine = MMTDrop.chartFactory.createTimeline({
             //columns: [MMTDrop.constants.StatsColumn.APP_PATH]
             getData: {
@@ -138,6 +147,12 @@ var ReportFactory = {
                         data   : data,
                         columns: columns,
                         ylabel : "Availability",
+                        addZeroPoints:{
+                           time_id       : 3,
+                           time          : status_db.time,
+                           sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                           probeStatus   : status_db.probeStatus
+                       },
                     };
 
                     return ret;

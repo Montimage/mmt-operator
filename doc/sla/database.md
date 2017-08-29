@@ -48,7 +48,16 @@ Structure of `metrics` collection in Database
   The actions are triggered by broadcast a message on the corresponding channels. 
   The reactors must listen on their channels to perform their actions. 
   Currently the reaction manager does not care about the processing of the actions. It finishes the work by broadcasting the message.
-  
+
+## availability
+
+1. number, report ID: 50
+2. number, component/probe ID
+3. number, timestamp
+4. number, report counter
+5. number, 1 = avail, 0 = not_avail
+6. number, 1
+
 ## metrics_alerts
 
 This collection is used by MUSA project.
