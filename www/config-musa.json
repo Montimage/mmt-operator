@@ -1,0 +1,178 @@
+{
+	"database_server": {
+		"host": "localhost",
+		"port": 27017
+	},
+	"redis_input": {
+		"host": "localhost",
+		"port": 6379
+	},
+	"kafka_input": {
+	   "host": "localhost",
+		"__host": "37.48.247.124",
+		"_host": "192.168.0.195",
+		"port": 2181,
+		"ssl.ca.location": "data/kafka-ca.cert"
+	},
+	"file_input": {
+		"data_folder": "/tmp/ramdisk/",
+		"_data_folder": "/opt/mmt/probe/result/report/online/",
+		"delete_data": true,
+		"nb_readers": 16
+	},
+	"input_mode": "kafka",
+	"probe_analysis_mode": "online",
+	"local_network": [
+		{
+			"ip": "192.168.0.0",
+			"mask": "255.255.0.0"
+		},
+		{
+			"ip": "172.16.0.0",
+			"mask": "255.240.0.0"
+		},
+		{
+			"ip": "10.0.0.0",
+			"mask": "255.0.0.0"
+		},
+		{
+			"ip": "fe80::",
+			"mask": "8"
+		},
+		{
+			"ip": "0.0.0.0",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "255.255.255.255",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "127.0.0.1",
+			"mask": "255.255.255.255"
+		}
+	],
+	"probe_stats_period": 5,
+	"buffer": {
+		"max_length_size": 50000,
+		"max_interval": 31
+	},
+	"micro_flow": {
+		"packet": 1,
+		"byte": 64
+	},
+	"retain_detail_report_period": 300,
+	"port_number": 443,
+	"log_folder": "/tmp/",
+	"is_in_debug_mode": true,
+   "_log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn", "log", "info"],
+   
+	"_modules": ["security","behavior","ndn","video","sla","stat"],
+	"modules": ["security", "stat", "sla"],
+	"sla": {
+		"active_check_period": 5,
+		"violation_check_period": 60,
+		"reaction_check_period": 5,
+		"init_components": [
+			{
+				"id": "30",
+				"ip": "37.48.247.117",
+				"url": "http://37.48.247.117",
+				"metrics": [],
+				"title": "TSM engine"
+			},
+			{
+				"id": "1",
+				"ip": "192.168.1.10",
+				"url": "http://192.168.1.10",
+				"metrics": [],
+				"title": "Consumption Estimation Calculator (CEC)"
+			},
+			{
+				"id": "2",
+				"ip": "52.208.72.84",
+				"url": "http://52.208.72.84",
+				"metrics": [],
+				"title": "ITS Factory"
+			},
+			{
+				"id": "13",
+				"ip": "52.208.72.84",
+				"url": "http://52.208.72.84",
+				"metrics": [],
+				"title": "Multimodal Journey Planner"
+			},
+			{
+				"id": "14",
+				"ip": "192.168.1.8",
+				"url": "http://192.168.1.8",
+				"metrics": [],
+				"title": "Database"
+			}
+		],
+		"init_metrics": [
+			{
+				"id": "1",
+				"name": "availability",
+				"alert": "<= 0.98",
+				"violation": "<= 0.95",
+				"title": "Availability",
+				"enable": true,
+				"support": true
+			},
+			{
+				"id": "2",
+				"name": "incident",
+				"alert": "",
+				"violation": "< 0",
+				"title": "Incident",
+				"enable": true,
+				"support": true
+			},
+			{
+				"id": "3",
+				"name": "vul_scan_freq",
+				"alert": "",
+				"violation": "< 0",
+				"title": "Vulnerability Scan Frequency",
+				"enable": true,
+				"support": true
+			}
+		],
+		"actions": {
+			"down_5min": {
+				"description": "Put down all NIC using to cut communication, then bring them up after 5 minutes",
+				"channel_name": "react_down_5min",
+				"candidate_metrics": {
+					"incident": {
+						"alert": true,
+						"violate": true
+					}
+				}
+			},
+			"filtre_port": {
+				"description": "Kill all processes listening on ports other than 80 and 443",
+				"channel_name": "react_filtre_port",
+				"candidate_metrics": {
+					"vuln_scan_freq": {
+						"alert": true,
+						"violate": true
+					},
+					"incident": {
+						"alert": true
+					}
+				}
+			},
+			"restart_apache": {
+				"description": "Restart the Apache when the website is not accessible",
+				"channel_name": "restart_apache",
+				"candidate_metrics": {
+					"availability": {
+						"alert": true
+					}
+				}
+			}
+		}
+	}
+}

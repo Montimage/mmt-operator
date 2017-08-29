@@ -18,7 +18,7 @@ function getUrlResponseTime( publisher, url, component_id, metric ){
 		const msg = "50,"+component_id+",\"eth0\","+ ((new Date()).getTime() / 1000 ) +"," + (count ++) + "," +avail +", 1";
 		//console.info( msg );
 		// last element from array is for active check count
-		publisher.publish("metrics.availability", msg);
+		publisher.publish("metrics.avail", msg);
 	});
 }
 
@@ -30,7 +30,7 @@ function checkAvailability( publisher, dbconnector ){
 			return console.error( err );
 		var checked = {};
 		
-		console.debug("active checking ...");
+		//console.info("active checking ...");
 		
 		//for each application
 		for( var i in apps ){

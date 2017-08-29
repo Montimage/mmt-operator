@@ -262,9 +262,10 @@ app.use(function(err, req, res, next) {
 
 process.stdin.resume();//so the program will not close instantly
 process.on('uncaughtException', function (err) {
-    console.error( err );
+   console.debug( err );
+   console.error( err );
 
-    if( err.response ){
+    if( err && err.response ){
         if(config.is_in_debug_mode !== true)
             err.stack = {};
 

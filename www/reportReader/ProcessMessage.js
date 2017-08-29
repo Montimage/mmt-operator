@@ -155,6 +155,10 @@ function ProcessMessage( database ){
 			//Security alerts
 		case mmtAdaptor.CsvFormat.SECURITY_FORMAT:
 			send_to_client( "security", msg );
+			break;
+			//availability
+		//case 50:
+		//   console.info( msg );
 		}
 
 		//TODO: to be remove, this chages probe ID, only for Thales demo

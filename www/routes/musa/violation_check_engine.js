@@ -99,6 +99,9 @@ function perform_check(){
          if( app == null )
             continue;
 
+         if( app.selectedMetric == undefined )
+            continue;
+         
          //for each component in the app
          for( var j in app.components ){
             var com = app.components[j];
@@ -109,7 +112,7 @@ function perform_check(){
 
             //mark its as checked
             checked[ com.id ] = true;
-
+            
             var selectedMetrics = app.selectedMetric[ com.id ];
 
             //no metric

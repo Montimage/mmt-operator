@@ -99,10 +99,12 @@ const _writeLog = function( msg, date ){
 var logStdout = process.stdout;
 var errStdout = process.stderr;
 
+
 //get prefix to print message: date time, file name and line number of caller
 const getPrefix = function( txt ){
    const date = new Date();
    var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
+   //TODO: root is not always www
    logLineDetails     = logLineDetails.split("www/")[1];
    var prefix = date.toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
 
@@ -166,7 +168,9 @@ else{
 }
 
 
-console.debug = console.info;
+console.debug = function(){
+   logStdout.write( util.format.apply(null, arguments, (new Error())))
+};
 
 config.logStdout     = logStdout;
 config.logFileStream = logFile.stream;

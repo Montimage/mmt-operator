@@ -45,7 +45,7 @@ report_client.subscribe("ndn.report");
 report_client.subscribe("OTT.flow.report");
 report_client.subscribe("cpu.report");
 //for MUSA
-report_client.subscribe("metrics.availability");
+report_client.subscribe("metrics.avail");
 //*/
 
 report_client.on('message', function (channel, message) {
