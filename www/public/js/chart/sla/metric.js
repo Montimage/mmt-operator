@@ -90,7 +90,7 @@ var ReportFactory = {
                         attr : {
                            colspan : 7,
                            style   : "font-weight: bold",
-                           text    : comp.title + " ("+ comp.url +")"
+                           text    : comp.title + " ("+ comp.ip +")"
                         }
                      }]
                };

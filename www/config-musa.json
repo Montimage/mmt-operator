@@ -66,7 +66,7 @@
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn" ],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
 	"modules": ["security", "stat", "sla"],

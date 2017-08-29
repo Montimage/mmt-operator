@@ -155,7 +155,7 @@ var ReportFactory = {
                         attr : {
                            colspan : 5,
                            style   : "font-weight: bold",
-                           html    : "<u>C" + comp_id + "</u>: "+ comp.title + " ("+ comp.url +")"
+                           html    : "<u>C" + comp_id + "</u>: "+ comp.title + " ("+ comp.ip +")"
                         }
                      }]
                };
