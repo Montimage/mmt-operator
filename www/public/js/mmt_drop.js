@@ -2747,6 +2747,10 @@ MMTDrop.Filter = function (param, filterFn, prepareDataFn){
     this.show = function(){
         $("#" + param.id + "_container").show();
     }
+    
+    this.isVisible = function(){
+       return $("#" + param.id + "_container").is(":visible");
+    }
     this.getDatabase = function(){
         return _database;
     }

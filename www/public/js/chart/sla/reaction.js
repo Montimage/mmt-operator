@@ -37,7 +37,7 @@ var ReportFactory = {
       
       //get URL of reaction editor 
       const _getReactionURL = function( comp_id, act_id ){
-    	  		var additionalParam = "comp_id=" + comp_id;
+    	  		var additionalParam = "probe_id=" + comp_id;
     	  		if( act_id != undefined )
     	  			additionalParam += "&react_id=" + act_id;
     	  		return "reaction/edit" + MMTDrop.tools.getQueryString( ["app_id","probe_id"], additionalParam );

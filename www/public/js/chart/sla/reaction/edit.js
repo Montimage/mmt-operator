@@ -25,7 +25,7 @@ var ReportFactory = {
 
          const _this    = this;
          const app_id   = URL_PARAM.app_id;
-         const comp_id  = URL_PARAM.comp_id;
+         const comp_id  = URL_PARAM.comp_id != undefined ? URL_PARAM.comp_id : URL_PARAM.probe_id ;
          const react_id = URL_PARAM.react_id;
 
          if( comp_id == undefined ){
@@ -513,7 +513,7 @@ var ReportFactory = {
                var obj = data.data[0];
                //does not exist ?
                if( obj == undefined )
-                  MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
+                  ;//MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id","probe_id","period"]});
                else
                   renderTable( obj );
             }

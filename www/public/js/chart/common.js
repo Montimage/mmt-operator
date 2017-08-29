@@ -98,7 +98,7 @@ $(function () {
 
       //this is applied when sla
       var initialComponents = {};
-      if( MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
+      if( fProbe.isVisible() && MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
          //load metric from DB
          const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
          MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
