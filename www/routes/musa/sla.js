@@ -265,7 +265,8 @@ function _redirectToMetric( req, res ){
    
  //maintain query string between pages
    var query_string = [];
-   var arr = ["period", "probe_id", "app_id", "period_id"];  
+   //no need probe_id as we want 
+   var arr = ["period", "app_id", "period_id"];  
 
    for (var i in arr) {
        var el = arr[i];

@@ -294,7 +294,7 @@ var ReportFactory = {
                               class   : "btn btn-warning pull-right",
                               style   : "margin-left: 30px",
                               text    : "Upload new SLA",
-                              href    : '/chart/sla/upload' + MMTDrop.tools.getQueryString(["app_id"])
+                              href    : '/chart/sla/upload' + MMTDrop.tools.getQueryString(["app_id"], "probe_id=null")
                            }
                         },{
                            type: "<a>",

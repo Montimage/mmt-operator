@@ -632,7 +632,7 @@ var ReportFactory = {
                var obj = data.data[0];
                //does not exist ?
                if( obj == undefined )
-                  MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"]});
+                  MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id"], add:"probe_id=null"});
                else{
                   //IMPORTANT: this global variable is used by #_getMetricIDFromName
                   window.__sla = obj;

@@ -121,6 +121,19 @@ $(function () {
                         break;
                      }
                }
+               //add components that does not exist
+               for( var j=0; j<components.length; j++ ){
+                  var found = false;
+                  for( var i=0; i<pOption.length; i++ )
+                     if( components[j].id == pOption[i].id ){
+                        found = true;
+                        break;
+                     }
+                  
+                  if( !found )
+                     pOption.push({id: components[j].id, label: "C" + components[j].id + ": " +  components[j].title });
+               }
+               
                //update component list
                fProbe.option( pOption );
                fProbe.redraw();

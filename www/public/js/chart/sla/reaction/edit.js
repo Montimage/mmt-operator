@@ -349,7 +349,7 @@ var ReportFactory = {
                                  class   : "btn btn-success pull-right",
                                  style   : "margin-left: 30px",
                                  text    : "Cancel",
-                                 href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
+                                 href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id"], "probe_id=null") //no need "probe_id" as we want to show all of them
                               }
                            },
                            ]}]
@@ -498,7 +498,9 @@ var ReportFactory = {
                success : function( ){
                   MMTDrop.alert.success("Successfully save to database", 1500 );
                   setTimeout( MMTDrop.tools.gotoURL, 2000,
-                        "/chart/sla/reaction", {param : ["app_id", "probe_id"]} );
+                      //no need "probe_id" as we want to show all of them
+                        "/chart/sla/reaction", {param : ["app_id"], add: "probe_id=null"} );
+                        
                }
             });
 
@@ -513,7 +515,7 @@ var ReportFactory = {
                var obj = data.data[0];
                //does not exist ?
                if( obj == undefined )
-                  ;//MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id","probe_id","period"]});
+                  MMTDrop.tools.gotoURL("/chart/sla/upload", {param:["app_id","period"], add: "probe_id=null"});
                else
                   renderTable( obj );
             }

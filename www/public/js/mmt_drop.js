@@ -1694,9 +1694,7 @@ MMTDrop.tools = function () {
   _this.gotoURL = function( url, options ){
     var param = "";
     if( options && options.param )
-    param = _this.getQueryString( options.param );
-    if( options && options.add )
-    param += (param == "" ? "?": "&") + options.add;
+    param = _this.getQueryString( options.param, options.add );
 
     document.location.href = url + param;
     throw new Error("abort to goto " + url);

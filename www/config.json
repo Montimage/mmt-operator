@@ -97,8 +97,8 @@
 			},
 			{
 				"id": "13",
-				"ip": "52.208.72.84",
-				"url": "http://52.208.72.84",
+				"ip": "192.168.1.9",
+				"url": "http://192.168.1.9",
 				"metrics": [],
 				"title": "Multimodal Journey Planner"
 			},

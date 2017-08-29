@@ -106,7 +106,9 @@ app.set('view engine', 'jade');
 //app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 1*24*60*60*1000,    //1 day
-    lastModified: true
+    lastModified: true,
+    //Set the max-age property of the Cache-Control header in milliseconds: 1hour
+    maxAge: 60*60*1000
 }));
 //share js libraries 
 app.use('/_js', require("./routes/server2client.js"))
@@ -131,7 +133,7 @@ app.use(session({
         url       : dbadmin.connectString,
         touchAfter: 60, //lazy session update, time period in seconds
         collection: "_expressjs_session",
-        ttl       : 14 * 24 * 60 * 60 // = 14 days. Default
+        ttl       : 1 * 24 * 60 * 60 // = 1 days. Default
     })
 }))
 
