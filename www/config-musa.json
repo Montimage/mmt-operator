@@ -112,67 +112,154 @@
 			}
 		],
 		"init_metrics": [
-			{
-				"id": "1",
-				"name": "availability",
-				"alert": "<= 0.98",
-				"violation": "<= 0.95",
-				"title": "Availability",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "2",
-				"name": "incident",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Incident",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "3",
-				"name": "vul_scan_freq",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Vulnerability Scan Frequency",
-				"enable": true,
-				"support": true
-			}
-		],
-		"actions": {
-			"down_5min": {
-				"description": "Put down all NIC using to cut communication, then bring them up after 5 minutes",
-				"channel_name": "react_down_5min",
-				"candidate_metrics": {
-					"incident": {
-						"alert": true,
-						"violate": true
-					}
-				}
-			},
-			"filtre_port": {
-				"description": "Kill all processes listening on ports other than 80 and 443",
-				"channel_name": "react_filtre_port",
-				"candidate_metrics": {
-					"vuln_scan_freq": {
-						"alert": true,
-						"violate": true
-					},
-					"incident": {
-						"alert": true
-					}
-				}
-			},
-			"restart_apache": {
-				"description": "Restart the Apache when the website is not accessible",
-				"channel_name": "restart_apache",
-				"candidate_metrics": {
-					"availability": {
-						"alert": true
-					}
-				}
-			}
-		}
+         {
+            "id": "1",
+            "name": "availability",
+            "alert": "<= 0.98",
+            "violation": "<= 0.95",
+            "title": "Availability",
+            "enable": true,
+            "support": true
+         },
+         {
+            "id": "2",
+            "name": "incident",
+            "alert": "",
+            "violation": "< 0",
+            "title": "Incident",
+            "enable": true,
+            "support": true
+         },
+         {
+            "id": "3",
+            "name": "vul_scan_freq",
+            "alert": "",
+            "violation": "< 0",
+            "title": "Vulnerability Scan Frequency",
+            "enable": true,
+            "support": true
+         },
+         {
+            "id": "4",
+            "name": "access_control",
+            "alert": "",
+            "violation": "< 0",
+            "title": "Access Control",
+            "enable": true,
+            "support": true
+         },
+         {
+            "id": "5",
+            "name": "data_privacy",
+            "alert": "",
+            "violation": "< 0",
+            "title": "Data Privacy",
+            "enable": true,
+            "support": true
+         },
+         {
+            "id": "6",
+            "name": "access_logging",
+            "alert": "",
+            "violation": "< 0",
+            "title": "Accesses Logging",
+            "enable": true,
+            "support": true
+         }
+      ],
+      "actions": {
+         "ask_more_space": {
+            "description": "User need to ask for more hard disk space",
+            "channel_name": "ask_more_space",
+            "candidate_metrics": {
+               "access_logging": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "move_log": {
+            "description": "User need to move the log to a remote server",
+            "channel_name": "move_log",
+            "candidate_metrics": {
+               "access_logging": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "rotate_log": {
+            "description": "Active logrotate program",
+            "channel_name": "rotate_log",
+            "candidate_metrics": {
+               "access_logging": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "update_attacks_signature": {
+            "description": "User need to update attacks signature",
+            "channel_name": "update_attacks_signature",
+            "candidate_metrics": {
+               "incident": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "add_new_rules": {
+            "description": "User need to add a new rule in the IDS",
+            "channel_name": "add_new_rules",
+            "candidate_metrics": {
+               "incident": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "use_HA_framework": {
+            "description": "User need to use HA Framework",
+            "channel_name": "use_HA_framework",
+            "candidate_metrics": {
+               "availability": {
+                  "alert": true,
+                  "violate": true
+               }
+            }
+         },
+         "stop_everything": {
+            "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
+            "url" : "http://192.168.0.7",
+            "channel_name": "stop_everything",
+            "candidate_metrics": {
+               "access_control": {
+                  "alert": true,
+                  "violate": true
+               },
+               "incident": {
+                  "alert": true
+               }
+            }
+         },
+         "obfuscate_data": {
+            "description": "User need to obfuscate data",
+            "channel_name": "obfuscate_data",
+            "candidate_metrics": {
+               "data_privacy": {
+                  "alert": true
+               }
+            }
+         },
+         "encrypt_data": {
+            "description": "User need to anonymize or encrypt data",
+            "channel_name": "encrypt_data",
+            "candidate_metrics": {
+               "data_privacy": {
+                  "alert": true
+               }
+            }
+         }
+      }
 	}
 }

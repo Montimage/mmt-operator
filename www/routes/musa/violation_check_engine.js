@@ -1,8 +1,15 @@
+const express = require('express');
+const router  = express.Router();
+
+const config   = require("../../libs/config");
 const constant = require("../../libs/constant.js");
+
 const CHECH_AVG_INTERVAL = 60*1000; //1minute
 
+
+
 //global variable for this module
-var dbconnector = {};
+var dbconnector = null;
 var publisher   = {};
 
 //type: violation | alert
@@ -22,6 +29,83 @@ function _raiseMessage( timestamp, type, app_id, com_id, metric_id, threshold, v
       //console.log( data );
    });
 }
+
+//dummy violation
+router.get("/:type/:app_id/:com_id/:metric_id/:threshold/:value/:priority", function( req, res, next ){
+   res.writeHead(200, { "Content-Type": "text/event-stream",
+      "Cache-control": "no-cache" });
+   
+   const timestamp = (new Date()).getTime();
+   
+   if( dbconnector == null ){
+      return res.status(504).end( timestamp + ": Database is not ready");
+   }
+   
+   if( req.params.app_id == undefined )
+      req.params.app_id = "_undefined";
+   
+   _raiseMessage( timestamp, req.params.type, req.params.app_id, req.params.com_id, req.params.metric_id, req.params.threshold, req.params.value, req.params.priority )
+   
+   res.end( timestamp + ": Done" );
+});
+
+//insert dummy alert
+router.get("/:type/:metric_name", function( req, res, next ){
+   const type        = req.params.type;
+   const metric_name = req.params.metric_name;
+   
+   const timestamp = (new Date()).getTime();
+   
+   res.writeHead(200, { "Content-Type": "text/event-stream",
+      "Cache-control": "no-cache" });
+   
+   if( type != constant.ALERT_STR && type != constant.VIOLATION_STR )
+      return res.status(504).end(timestamp + " ERROR: type must be either " + constant.ALERT_STR +" or "+ constant.VIOLATION_STR );
+   
+   //check if metric is existing
+   var metric = undefined;
+   for( var i=0; i<config.sla.init_metrics.length; i++ ){
+      if( config.sla.init_metrics[i].name == metric_name ){
+         metric = config.sla.init_metrics[i];
+         break;
+      }
+   }
+   
+   if( metric == undefined )
+      return res.status(504).end(timestamp + " ERROR: do not exist metric " + metric_name );
+   
+   
+   if( dbconnector == null )
+      return res.status(504).end( timestamp + " ERROR: Database is not ready");
+   
+   //get a list of applications defined in metrics collections
+   dbconnector._queryDB("metrics", "find", [], function( err, apps){
+      if( err )
+         return console.error( err );
+      
+      var counter = 0;
+      //for each application
+      for( var i in apps ){
+         var app = apps[i];
+         if( app == null )
+            continue;
+         
+         if( app.selectedMetric == undefined )
+            continue;
+         
+         //for each component in the app
+         for( var j in app.components ){
+            var com = app.components[j];
+            
+            counter ++;
+            _raiseMessage( timestamp, type, app.app_id, com.id, metric.id, "!= 0", 1, "MEDIUM" );
+         }
+         res.end( timestamp +": generated totally " + counter + " " + type );
+      }
+
+   }, false );
+   
+});
 
 function _checkAvailability( metric, m, app, com ){
    //metric = { "id": "1", "title": "M3-TLS Cryptographic Strength", "name": "100015", "priority": "MEDIUM", "violation": "!= 6", "data_type": "integer", "enable": false, "support": false }
@@ -184,7 +268,8 @@ function reset(){
 
 var obj = {
       start: start,
-      reset: reset
+      reset: reset,
+      router: router,
 };
 
 module.exports = obj;
