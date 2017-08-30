@@ -29,6 +29,9 @@ if( URL_PARAM.probe_id )
   URL_PARAM.probe_id = parseInt( URL_PARAM.probe_id );
 if( URL_PARAM.app_id )
   URL_PARAM.app_id = "" + URL_PARAM.app_id; //string
+else
+   URL_PARAM.app_id = "_undefined";
+
 if( URL_PARAM.ts )
   URL_PARAM.ts = parseInt( URL_PARAM.ts );
 const loading = new Loading();

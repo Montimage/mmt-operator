@@ -1299,6 +1299,27 @@ MMTDrop.tools = function () {
 	  return obj[ attr ];
   }
   
+  _this.openURLInNewTab = function( url, title, frameName) {
+     if( frameName == undefined )
+        frameName = "_blank";
+     const win = window.open(url, frameName);
+     if( win == undefined ){
+        MMTDrop.alert.error("Cannot popup a new window");
+     }else
+        win.focus();
+     return win;
+  }
+  _this.openURLInNewFrame = function( url, title, frameName) {
+     if( frameName == undefined )
+        frameName = "urlFrame";
+     
+     const $modal = _this.getModalWindow( frameName );
+     $modal.$title.html( title );
+     $modal.$content.html( '<iframe src="'+ url +'" style="width: 100%; height: auto"/>' );
+     $modal.modal();
+     return $modal;
+   }
+  
   _this.getModalWindow = function( id ){
      id = id || "modalWindow";
 

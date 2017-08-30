@@ -104,7 +104,7 @@ var ReportFactory = {
             attr : {
               colspan : 6,
               style   : "font-weight: bold",
-              text    : comp.title + " ("+ comp.url +")"
+              text    : comp.title + " ("+ comp.ip +")"
             }
           },{
         	  	type : "<td>",

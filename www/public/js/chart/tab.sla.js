@@ -394,7 +394,7 @@ var ReportFactory = {
          //RENDER TABLE
          var renderTable = function ( obj, serverTime ){
             const INTERVAL_BETWEEN_2_IGNORES  = 1*60*1000; //1 minute(s)
-            const INTERVAL_BETWEEN_2_PERFORMS = 2*60*1000; //1 minute(s)
+            const INTERVAL_BETWEEN_2_PERFORMS = 0*60*1000; //1 minute(s)
             //this is used when use submit the form
             window._mmt = obj;
 
@@ -437,7 +437,17 @@ var ReportFactory = {
             }];
             
             const _span = function( txt ){
+               const react = this;
+               if( react.comp_id != undefined )
+                  return '<span class="badge" id="'+ txt + "-"+ react.comp_id + '>' + txt + '</span>';
                return '<span class="badge">' + txt + '</span>';
+            }
+            
+            const _getActionDescription = function( name ){
+               var val = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", name, "description"] );
+               if ( val == undefined )
+                  return "";
+               return '<span title="'+ val +'">' + val + '</span>';
             }
             
             for( var i=0; i<init_components.length; i++){
@@ -477,28 +487,28 @@ var ReportFactory = {
 
                   var conditionList = [];
                   for( var cond in reaction.conditions )
-                     conditionList.push( _span( "C" + reaction.comp_id ) + _span( cond ) +' ('+ reaction.conditions[cond].map( _span ).join(' or ') +')' )
+                     conditionList.push( _span( "C" + reaction.comp_id ) + _span( cond ) +' ('+ reaction.conditions[cond].map( _span, reaction ).join(' or ') +')' )
 
                      //condition
                      row.children.push({
                         type  : "<td>",
                         attr  : {
                            align: "right",
-                           style: "border-right: none",
-                           html : conditionList.join(" and ") + ' <span class="glyphicon glyphicon-arrow-right"></span>'
+                           //style: "border-right: none",
+                           html : conditionList.join(" and ") //+ ' <span class="glyphicon glyphicon-arrow-right"></span>'
                         }
                      });
 
                   var actionList = [];
                   reaction.actions.forEach( function( val ){
-                     actionList.push('<span class="badge">'+ val +'</span>');
+                     actionList.push('<span style="font-weight:bold; text-transform: uppercase">'+ val +'</span>: ' + _getActionDescription( val ));
                   });
 
                   //reaction
                   row.children.push({
                      type : "<td>",
                      attr : {
-                        html : actionList.join(", ")
+                        html : actionList.join(", <b>and</b>,<br/>")
                      }
                   });
                   //priority
@@ -514,7 +524,7 @@ var ReportFactory = {
                      type: "<td>",
                      attr: {
                         align: "right",
-                        text : 0
+                        text : reaction.triggerCount
                      }
                   });
 
@@ -617,7 +627,23 @@ var ReportFactory = {
             
           //perform a reaction
             window._performReaction = function( react_id ){
+               var hasError = false
+               const actions = _getActions( react_id );
+               actions.forEach( function( act_name ){
+                  const action = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", act_name ] );
+                  if( action.url ){
+                     //MMTDrop.tools.openURLInNewFrame( action.url, action.description );
+                     var ret = MMTDrop.tools.openURLInNewTab( action.url, action.description );
+                     if( ret == undefined )
+                        hasError = true;
+                  }
+               });
+               
+               if( hasError )
+                  return;
+               
                _btnClick( "perform", react_id, function(){
+                  
                   $("#reaction-" + react_id )
                      .html('<span class="text-success">Performing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>')
                      .attr("align", "left");
@@ -702,6 +728,18 @@ function _getMetricIDFromName( name, comp_id ){
    }
    console.error( "This must not happen" );
    return 0;
+}
+
+//get an array of actions of a reaction
+function _getActions( reaction_id ){
+   if( window.__sla == undefined ){
+      console.error( "This must not happen" );
+      return [];
+   }
+   const actions = window.__sla.selectedReaction[ reaction_id ].actions;
+   if( !Array.isArray( actions ) )
+      return [];
+   return actions;
 }
 
 //reaction: {"comp_id": "30",

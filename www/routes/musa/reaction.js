@@ -73,8 +73,10 @@ router.all("/reaction/:type/:react_id", function(req, res, next) {
    update["selectedReaction." + react_id + ".action"]        = type;
    update["selectedReaction." + react_id + ".action_time"]   = tools.getTimestamp();
    update["selectedReaction." + react_id + ".action_status"] = "start";
+   const increase = {};
+   increase["selectedReaction." + react_id + ".triggerCount"]  = 1;
    
-   router.dbconnector.mdb.collection("metrics").update( match, {$set: update}, function( err, data ){
+   router.dbconnector.mdb.collection("metrics").update( match, {$set: update, $inc: increase}, function( err, data ){
             res.setHeader("Content-Type", "application/json");
             
             if( err )

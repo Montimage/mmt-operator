@@ -111,6 +111,9 @@ var ReportFactory = {
 
                   row = {
                         type    : "<tr>",
+                        attr    : {
+                           id : "tr-" + me.name
+                        },
                         children: []
                   };
 
@@ -249,7 +252,8 @@ var ReportFactory = {
                   children : [{
                      type: "<div>",
                      attr: {
-                        style : "position: absolute; top: 30px; left: 0px; bottom: 340px; right: 0px; overflow: auto",
+                        style : "position: absolute; top: 30px; left: 0px; bottom: 420px; right: 0px; overflow: auto",
+                        id    : "conditions-div"
                      },
                      children: [{
                         type     : "<table>",
@@ -366,7 +370,7 @@ var ReportFactory = {
                         type : "<div>",
                         attr : {
                            style: "position: absolute; top: 0px; left: 0px; right: 0px; text-align: right; font-size: 16px; font-weight: bold; border-bottom: thin solid #ccc",
-                           text : componentObj.title  + " (" + componentObj.url + ")"
+                           text : componentObj.title  + " (" + componentObj.ip + ")"
                         }
                      },
                      form_config
@@ -374,7 +378,7 @@ var ReportFactory = {
             }
 
             $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createForm( form_config, false ) ) ;
-            $("#actionSelectBox").prop("size", 3);
+            $("#actionSelectBox").prop("size", $("#actionSelectBox").attr("_size") );
 
             /**
              * The recommendation is done based on the reactions list in config.json.
@@ -409,14 +413,20 @@ var ReportFactory = {
                      if( val.alert ){
                         //check whether the current form contains one of the conditions
                         count = $("#alert-" + cond).prop("checked", true ).length;
-                        if( count > 0 )
+                        if( count > 0 ){
                            text.push( "alert" );
+                           
+                           $("#conditions-div").scrollToChild( "#alert-" + cond );
+                        }
                      }
                      if( val.violate ){
                         //check whether the current form contains one of the conditions
                         count = $("#violate-" + cond).prop("checked", true ).length;
-                        if( count > 0 )
+                        if( count > 0 ){
                            text.push( 'violate' );
+                           
+                           $("#conditions-div").scrollToChild( "#tr-" + cond );
+                        }
                      }
 
                      if( text.length > 0 )
