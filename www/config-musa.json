@@ -65,8 +65,7 @@
 	"port_number": 443,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
-   "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn" ],
+   "log" : ["error", "warn", "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
 	"modules": ["security", "stat", "sla"],
@@ -77,10 +76,10 @@
 		"init_components": [
 			{
 				"id": "30",
-				"ip": "37.48.247.117",
-				"url": "http://37.48.247.117",
+				"ip": "52.208.72.84",
+				"url": "http://52.208.72.84/",
 				"metrics": [],
-				"title": "TSM engine"
+				"title": "TSM Journey Planner"
 			},
 			{
 				"id": "1",
@@ -91,8 +90,8 @@
 			},
 			{
 				"id": "2",
-				"ip": "52.208.72.84",
-				"url": "http://52.208.72.84",
+				"ip": "37.48.247.117",
+				"url": "http://37.48.247.117",
 				"metrics": [],
 				"title": "ITS Factory"
 			},
@@ -218,6 +217,15 @@
                }
             }
          },
+         "restart_apache": {
+            "description": "Restart Apache server to bring the website up",
+            "channel_name": "mmt-agent-restart-apache",
+            "candidate_metrics": {
+               "availability": {
+                  "violate": true
+               }
+            }
+         },
          "use_HA_framework": {
             "description": "User need to use HA Framework",
             "channel_name": "use_HA_framework",
@@ -230,7 +238,7 @@
          },
          "stop_everything": {
             "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
-            "url" : "http://192.168.0.7",
+            "url" : "http://example.com/",
             "channel_name": "stop_everything",
             "candidate_metrics": {
                "access_control": {
