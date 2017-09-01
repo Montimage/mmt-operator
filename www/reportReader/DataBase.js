@@ -12,6 +12,7 @@ CONST           = require("../libs/constant"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
 FORMAT          = require('util').format;
+
 const IP        = new (require("../libs/shared/IP.js"));
 
 const COL      = dataAdaptor.StatsColumnId;
@@ -54,14 +55,14 @@ const FLOW_SESSION_INIT_DATA = {};//init data of each session
 //attributes will be stored in data_session collection
 const initSessionSet = [];
 for( var i = COL.FORMAT_TYPE ; i <= FTP.RESPONSE_TIME; i++){
-   if( dataAdaptor.objectHasAttributeWithValue( COL, i)      == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( HTTP, i)    == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( NDN, i)     == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( TLS, i)     == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( RTP, i)     == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( FTP, i)     == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( LICENSE, i) == undefined
-         &&  dataAdaptor.objectHasAttributeWithValue( OTT, i)     == undefined
+   if( tools.objectHasAttributeWithValue( COL, i)     == undefined
+   &&  tools.objectHasAttributeWithValue( HTTP, i)    == undefined
+   &&  tools.objectHasAttributeWithValue( NDN, i)     == undefined
+   &&  tools.objectHasAttributeWithValue( TLS, i)     == undefined
+   &&  tools.objectHasAttributeWithValue( RTP, i)     == undefined
+   &&  tools.objectHasAttributeWithValue( FTP, i)     == undefined
+   &&  tools.objectHasAttributeWithValue( LICENSE, i) == undefined
+   &&  tools.objectHasAttributeWithValue( OTT, i)     == undefined
    ) continue;
 
    //exclude set
@@ -79,18 +80,13 @@ initSessionSet.push( COL.START_TIME );
  * @returns an array contains all children paths, e.g., [ETH, ETH.IP, ETH.IP.TCP, ETH.IP.TCP.HTTP] 
  */
 function flatAppPath( str ){
-   if( str == undefined )
-      return [];
-
-   var arr = [ {path: str, app: dataAdaptor.getAppIdFromPath( str ), depth: (str.match(/\./g)||[]).length} ];
-   do{
-      str = dataAdaptor.getParentPath( str );
-      if( str === "." )
-         //we reach root
-         return arr;
-      arr.push( {path: str, app: dataAdaptor.getAppIdFromPath( str ), depth: (str.match(/\./g)||[]).length} );
-   } while( true );
-
+   const pathArr = str.split(".");
+   
+   const arr = [];
+   while(  pathArr.length > 0 ){
+      arr.push( {path: pathArr.join("."), app: pathArr[ pathArr.length - 1 ], depth: pathArr.length} );
+      pathArr.length --;
+   };
    return arr;
 }
 
@@ -185,6 +181,7 @@ module.exports = function(){
             set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DEST]
                }
          ),
+         
          reports: new DataCache( inserter, "reports",
                {}, 
                CONST.period.SPECIAL //keep original reports
@@ -361,7 +358,7 @@ module.exports = function(){
 
                //traffic of local IP
                //do not add report 99 to data_ip collection as it has no IP
-               msg.ip  = IP.string2NumberV4( msg[COL.IP_SRC]  );
+               msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
                msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DEST]  );
                self.dataCache.ip.addMessage( msg );
 
@@ -395,7 +392,7 @@ module.exports = function(){
             for( var i=0; i<app_arr.length; i++ ){
                var o = app_arr[i];
                //store only maximally 4 level: ETH.IP.TCP.HTTP
-               if( o.depth > 3 ) //starting from zero
+               if( o.depth > 3 || o.depth == 2 ) //starting from zero
                   continue;
 
                //this is a protocol

@@ -65,7 +65,9 @@ function start( db ) {
 			}
 		});
 		//manually garbage
-		global.gc();
+		//if( global && global.gc )
+		//   global.gc();
+		
 	}, 
 	30*1000, //periodically 
 	db);

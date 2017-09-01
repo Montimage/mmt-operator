@@ -21,11 +21,19 @@ function IP(){
 	   const arr = ipString.split('.');
 	   //IPv4
    	   if( arr.length == 4 ){
-      	   arr.forEach(function(octet) {
-      	      ipNumber <<= 8;
-      	      ipNumber += parseInt(octet);
-      	   });
-      	   return(ipNumber >>> 0); //convert to 32bit
+      	   ipNumber <<= 8;
+      	   ipNumber += parseInt( arr[0] );
+      	   
+      	   ipNumber <<= 8;
+      	   ipNumber += parseInt( arr[1] );
+
+      	   ipNumber <<= 8;
+      	   ipNumber += parseInt( arr[2] );
+
+      	   ipNumber <<= 8;
+      	   ipNumber += parseInt( arr[3] );
+
+      	   return (ipNumber >>> 0); //convert to 32bit
 	   }
    	   //IPv6?
    	   return ipString
@@ -38,7 +46,7 @@ function IP(){
 	   if( Number.isNaN( ipNumber ) )
 	      return ipNumber;
 	   else
-	      return ((ipNumber >>> 24)      + '.' +
+	      return ((ipNumber >>> 24)   + '.' +
 	           (ipNumber >> 16 & 255) + '.' +
 	           (ipNumber >> 8 & 255)  + '.' +
 	           (ipNumber & 255) );

@@ -94,7 +94,7 @@ module.exports = function( databaseName ){
 	   if( callback ) 
 	      callback(null, {});
 	   return;
-	   */
+	   //*/
 	   
 		self.db.collection( collectionName ).insertMany( msgArray, 
 				//insertion options

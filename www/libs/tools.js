@@ -64,6 +64,31 @@ var _tools = {
 	  
 	  return (now - val);
   },
+  
+//check whenther object obj having an attribute's value that equals to val
+  objectHasAttributeWithValue: function( obj, val ){
+    for( var i in obj)
+       if( obj[i] == val ) return i;
+    return;
+  },
+
+  
+  cloneData : function( obj ){
+    if( Array.isArray( obj ))
+      return obj.slice( 0 );
+    else if ( typeof(obj) === 'object' )
+      return  JSON.parse(JSON.stringify(obj));
+    return obj;
+  },
+  
+  /**
+   * Returns the first element that was inserted in the given Object
+   */
+  get1stElem : function(data) {
+      for (var prop in data)
+          if (data.propertyIsEnumerable(prop))
+              return prop;
+  },
 }
 
 module.exports = _tools;

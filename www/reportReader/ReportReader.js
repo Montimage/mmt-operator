@@ -32,7 +32,6 @@ function Reader(){
 			process._childrenCount ++;
 			break;
 		default:
-
 			// ensure data directory exists
 			if( !fs.existsSync( DATA_FOLDER ) ){
 				console.error("Error: Data folder [" + DATA_FOLDER + "] does not exists.");
@@ -42,7 +41,12 @@ function Reader(){
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-				var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes] );
+				var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes]
+				      , {execArgv: [
+				         //'--debug='+ (5859 + i), //debug
+				         "--expose_gc"
+				         ]} 
+				);
 				_readers.push( ret );
 				process._children.push( ret );
 				process._childrenCount ++;
@@ -50,7 +54,9 @@ function Reader(){
 		}
 
 		//this process removes older records from Database
-		var ret = child_process.fork( __dirname + "/maintainDB.js");
+		var ret = child_process.fork( __dirname + "/maintainDB.js", []
+		//      , {execArgv: ['--debug=5857']} 
+		);
 		process._children.push( ret );
 		process._childrenCount ++;
 		

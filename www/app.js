@@ -200,7 +200,7 @@ function license_alert(){
     dbadmin.getLicense( function( err, msg){
         if( err || msg == null ){
             //TODO
-            return console.error("Not found Licence information");
+            return console.warn("Not found Licence information");
         }
 
         var ts  = msg[mmtAdaptor.LicenseColumnId.EXPIRY_DATE];

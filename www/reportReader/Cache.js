@@ -75,7 +75,7 @@ function Cache ( option ) {
 
 	const _IS_NDN_COLLECTION = (_collection_name === "data_ndn_real");
 	var _lastUpdateTime = 0;
-	this.addMessage = function ( msg, cb ) {
+	this.addMessage = function ( msg ) {
 		const ts = msg[ TIMESTAMP ];
 		if( _lastUpdateTime == 0 )
 			_lastUpdateTime = ts;
@@ -86,7 +86,11 @@ function Cache ( option ) {
 			//retain original message
 			if( _IS_RETAIN_ALL ){
 				//clone msg
-				_dataArr.push( JSON.parse(JSON.stringify( msg )) );
+			   var new_msg = {};
+			   for( var i in msg )
+			      new_msg[i] = msg[i];
+			   //JSON.parse( JSON.stringify( msg ))
+				_dataArr.push( new_msg );
 			}else
 				_addMessage( msg );
 		}
@@ -94,13 +98,7 @@ function Cache ( option ) {
 		//only for ndn offline
 		if( _IS_NDN_COLLECTION ){
 			var data = _this.flushDataToDatabase();
-
-			if( cb != null ){
-				if( isDummy )
-					data.push( msg );
-				cb( data );
-			}
-			return;
+			return data;
 		}
 		//end NDN
 
@@ -114,28 +112,27 @@ function Cache ( option ) {
 
 		//flush data in _dataObj to database
 		//need messages arrive in time order???
-		if( _dataArr.length >= config.buffer.max_length_size
-				|| ts - _lastUpdateTime >= _PERIOD_TO_UPDATE ){
+		if( _dataArr.length > config.buffer.max_length_size
+				|| ts - _lastUpdateTime > _PERIOD_TO_UPDATE ){
 			
 			_lastUpdateTime = ts;
 			var data        = _this.flushDataToDatabase();
 
-			if( cb !== undefined ){
-				if( isDummy )
-					data.push( msg );
-				
-				cb( data );
-			}
-			return;
+			if( isDummy )
+			   data.push( msg );
+			
+			return data;
 		}
+		return [];
 	};
 
-	_this.addArray = function (arr, cb ) {
-		if( arr == null || !(arr.length > 0) )
-			return;
+	_this.addArray = function (arr ) {
+		if( arr == null || !( arr.length > 0) )
+			return [];
 
 		for( var i=0; i<arr.length; i++ )
-			_this.addMessage( arr[i], cb );
+			_this.addMessage( arr[i] );
+		return [];
 	}
 
 	/**
@@ -170,41 +167,35 @@ function Cache ( option ) {
 		}else{ //each minute, hour, day, month
 			key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _PERIOD_TO_UPDATE_NAME ).valueOf();
 		}
-		key_string = key_obj[ TIMESTAMP ] + ";" + key_string 
+		key_string += key_obj[ TIMESTAMP ]; 
 
-		var oo = key_obj;
+		var oo = _dataObj[ key_string ];
+		
 		//first msg in the group identified by key_obj
-		if (_dataObj[key_string] == undefined){
+		if (oo == undefined){
 			_dataObj[key_string] = key_obj;
 			_dataArr.push( key_obj );
+			oo = key_obj;
+			
+			//init zero for value number
+			for (var j=0; j<key_inc_arr.length; j++)
+			   oo[ key_inc_arr[j] ] = 0;
 		}
-		else
-			oo = _dataObj[ key_string ];
 
-		oo[ TIMESTAMP ] = oo[ TIMESTAMP ];
- 		
 		//increase
 		for (var j=0; j<key_inc_arr.length; j++){
-			var key = key_inc_arr[ j ];
-			var val = msg[ key ];
-			//if( Number.isNaN( val ) )
-			//	val = 0;
-			if (oo[ key ] !== undefined)
-				oo[ key ]  += val;
-			else
-				oo[ key ] = val;
+			oo[ key_inc_arr[ j ] ]  += msg[ key ];
 		}
 
 		//avg: calculate average value
 		for (var j=0; j<key_avg_arr.length; j++){
 			var key = key_avg_arr[ j ];
-			var val = msg[ key ];
 			//if( Number.isNaN( val ) )
 			//	val = 0;
 			if (oo[ key ] !== undefined)
-				oo[ key ]  += val;
+				oo[ key ]  += msg[ key ];
 			else
-				oo[ key ] = val;
+				oo[ key ]  = msg[ key ];
 		}
 
 		//set: override value by the last one
@@ -288,8 +279,6 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 		_cache.real          = new Cache( option );
 	}
 	
-	//mark: whether containing any messages
-	this.havingMessage = false;
 	//timestamp of the last message
 	var _lastMessageTimestamp = 0.
 	/**
@@ -298,21 +287,18 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 	this.addMessage = function( msg ){
 		_lastMessageTimestamp = msg[ TIMESTAMP];
 		
-		self.havingMessage = true;
 		//update to the real cache
-		_cache.real.addMessage( msg, function( arr_1 ){
+		var ret = _cache.real.addMessage( msg);
 			//update to the minute cache if any
-			if( arr_1.length == 0 || _cache.minute == undefined ) return;
+		if( ret.length == 0 || _cache.minute == undefined ) return;
 			
-			_cache.minute.addArray( arr_1, function( arr_2 ){
-				if( arr_2.length === 0 || _cache.hour == undefined ) return;
+		ret = _cache.minute.addArray( ret );
+		if( ret.length === 0 || _cache.hour == undefined ) return;
 				
-				_cache.hour.addArray( arr_2, function( arr_3 ){
-					if( arr_2.length === 0 || _cache.day == undefined ) return;
-					_cache.day.addArray( arr_3 );
-				})
-			} )
-		} );
+		ret = _cache.hour.addArray( ret );
+		
+		if( arr_2.length === 0 || _cache.day == undefined ) return;
+		_cache.day.addArray( ret );
 	};
 
 	/**
@@ -321,13 +307,6 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 	this.flush = function( cb ){
 		cb = cb || function(){};
 
-		if( !self.havingMessage ) {
-			cb();
-			return;
-		}
-
-		self.havingMessage = false;
-		
 		self.flushCaches( "day", cb );
 	};
 

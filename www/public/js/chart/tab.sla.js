@@ -394,7 +394,7 @@ var ReportFactory = {
          //RENDER TABLE
          var renderTable = function ( obj, serverTime ){
             const INTERVAL_BETWEEN_2_IGNORES  = 1*60*1000; //1 minute(s)
-            const INTERVAL_BETWEEN_2_PERFORMS = 0*60*1000; //1 minute(s)
+            const INTERVAL_BETWEEN_2_PERFORMS = 1*60*1000; //1 minute(s)
             //this is used when use submit the form
             window._mmt = obj;
 
@@ -424,7 +424,7 @@ var ReportFactory = {
                   },{
                      type : "<th>",
                      attr : {
-                        text : "#Triggers"
+                        text : "#Executions"
                      }
                   },{
                      type : "<th>",
@@ -547,8 +547,8 @@ var ReportFactory = {
                         attr : {
                            html :
                               (reaction.action_status == "start"?
-                              '<span class="text-success">Performing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>'
-                              :'<span class="text-success">Performed</span>')
+                              '<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>'
+                              :'<span class="text-success">Executed</span>')
                         }
                      });
                   }else
@@ -645,7 +645,7 @@ var ReportFactory = {
                _btnClick( "perform", react_id, function(){
                   
                   $("#reaction-" + react_id )
-                     .html('<span class="text-success">Performing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>')
+                     .html('<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>')
                      .attr("align", "left");
                });
             }
@@ -680,7 +680,7 @@ function _createButtons( react_id ){
             id    : "btn-reaction-perform-" + react_id,
             class : "btn btn-danger btn-reaction-perform btn-reaction-" + react_id,
             title : "Perform the actions",
-            value : "Perform",
+            value : "Execute",
             onclick: "_performReaction('" + react_id + "')",
          }
       },{
@@ -751,6 +751,7 @@ function _getActions( reaction_id ){
 function _verifyCondition( reaction, data ){
    const conditions = reaction.conditions;
    const comp_id    = reaction.comp_id;
+   const arr = [];
    
    for( var metric_name in conditions ){
       const metric_id = _getMetricIDFromName( metric_name, comp_id );
@@ -772,6 +773,11 @@ function _verifyCondition( reaction, data ){
                      ( cond.length == 2 && ( o[ cond[0] ] > 0 || o[ cond[1] ] > 0) )
                   )
          ){
+            if( cond.length == 1  ){
+               arr.push( {"one" : o[ cond[0] ] } );
+            }else
+               arr.push( o );
+               
             //found one msg that satisfies the condition
             valid = true;
             break;
@@ -782,6 +788,17 @@ function _verifyCondition( reaction, data ){
       if( !valid )
          return false;
    }
+   
+   const str = JSON.stringify( arr );
+   //old value:
+   const oldStr = MMTDrop.tools.localStorage.get( reaction.id, false );
+   //no new alerts/violations being noticed
+   if( oldStr == str )
+      return false;
+   
+   MMTDrop.tools.localStorage.set( reaction.id, str, false );
+   
+   
    return true;
 }
 
@@ -791,6 +808,7 @@ function _updateReactions( data ){
    $(".reactions").each( function( index, el ){
       const reactID  = $(el).attr("data-reaction-id");
       const reaction = JSON.parse( $(el).attr("data-reaction") );
+      reaction.id = reactID;
       const isValid  = _verifyCondition( reaction, data );
       
       //show "Perform" and "Ignore" buttons

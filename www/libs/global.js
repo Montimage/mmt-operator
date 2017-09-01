@@ -5,12 +5,20 @@
 if( global._obj == undefined )
    global._obj = {};
 
-module.exports = function( varName, defaultValue ){
-   if( typeof defaultValue != "object" )
-      throw new Error( "Default value must be an object" );
-   
-   if( global._obj[ varName ] == undefined )
-      return global._obj[ varName ] = defaultValue;
-   else
-      return global._obj[ varName ];
+module.exports = {
+      get : function( name, defaultVal ){
+         var val = global._obj[ name ];
+         if( defaultVal != undefined && val == undefined )
+            return global._obj[ name ] = defaultVal;
+         return val;
+      },
+      set: function( name, val ){
+         return global._obj[ name ] = val;
+      },
+      del: function( name ){
+        delete( global._obj[ name ] ); 
+      },
+      has: function( name ){
+         return 
+      }
 }

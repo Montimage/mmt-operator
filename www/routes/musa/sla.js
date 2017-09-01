@@ -246,6 +246,10 @@ function extract_metrics( app_config, index, cb ){
 
 function insert_to_db( app_id, cb ) {
    const app_config = router._sla[ app_id ];
+   
+   //reset
+   router._sla[ app_id ] = null;
+   
    if( app_config === undefined || app_config.id === undefined )
       return cb( "nothing to update" );
 
@@ -260,6 +264,7 @@ function insert_to_db( app_id, cb ) {
 }
 
 function _redirectToMetric( req, res ){
+   //reset
    router._data = {};
    router._sla  = {};
    

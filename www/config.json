@@ -54,7 +54,7 @@
 	"probe_stats_period": 5,
 	"buffer": {
 		"max_length_size": 50000,
-		"max_interval": 31
+		"max_interval": 5
 	},
 	"micro_flow": {
 		"packet": 1,

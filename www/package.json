@@ -2,7 +2,7 @@
   "name": "MMT-Operator",
   "private": true,
   "scripts": {
-    "start": "node --expose_gc ./bin/www",
+    "start": "node ./bin/www",
     "build": "node ./bin/build build",
     "build-deb": "node ./bin/build deb",
     "build-rpm": "node ./bin/build rpm",

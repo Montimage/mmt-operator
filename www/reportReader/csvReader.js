@@ -41,6 +41,9 @@ console.info( "start csv reader " + READER_INDEX );
 
 //load list of read csv file from db
 var read_files = [];
+//=READER_INDEX to ensure that all processes do not clean garbage in the same time
+var fileCounter = READER_INDEX;
+
 function process_file (file_name, cb) {
 	const lr = lineReader.createInterface({
 		input: fs.createReadStream( file_name )
@@ -65,6 +68,15 @@ function process_file (file_name, cb) {
 	lr.on('close', function () {
 		// All lines are read, file is closed now.
 		console.info( READER_INDEX + " processed file "+ path.basename(file_name) +" ("+ totalLines +" lines, "+ (tools.getTimestamp() - start_ts) +" ms)");
+		
+		//periodically clean garbage 
+		fileCounter ++;
+		if( fileCounter === 50 ){
+		   fileCounter = 0;
+		   if( global && global.gc )
+		      global.gc();
+		}
+		
 		
 		//delete data file
 		if( DELETE_FILE_AFTER_READING ){
@@ -149,6 +161,7 @@ function get_csv_file(dir) {
 var process_folder = function () {
 	var file_name = get_csv_file( DATA_FOLDER );
 	if (file_name == null) {
+	   //if threre is no report => wait for 0.5 second
 		setTimeout(process_folder, 500);
 		return;
 	}
@@ -190,6 +203,10 @@ if( DELETE_FILE_AFTER_READING ){
 process.stdin.resume();//so the program will not close instantly
 //Ctrl+C
 process.on('SIGINT',function(){
+   //press Ctrl+C again
+   if( isStop )
+      process.exit( 1 );
+   
    isStop = true;
    database.flush( process.exit );
 });

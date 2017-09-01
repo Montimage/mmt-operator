@@ -65,7 +65,8 @@
 	"port_number": 443,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
-   "log" : ["error", "warn", "log", "info"],
+   "_log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn" , "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
 	"modules": ["security", "stat", "sla"],
@@ -76,10 +77,10 @@
 		"init_components": [
 			{
 				"id": "30",
-				"ip": "52.208.72.84",
-				"url": "http://52.208.72.84/",
+				"ip": "37.48.247.117",
+				"url": "http://37.48.247.117",
 				"metrics": [],
-				"title": "TSM Journey Planner"
+				"title": "TSM engine"
 			},
 			{
 				"id": "1",
@@ -90,15 +91,15 @@
 			},
 			{
 				"id": "2",
-				"ip": "37.48.247.117",
-				"url": "http://37.48.247.117",
+				"ip": "192.168.1.9",
+				"url": "http://192.168.1.9",
 				"metrics": [],
 				"title": "ITS Factory"
 			},
 			{
             "id": "13",
-            "ip": "192.168.1.9",
-            "url": "http://192.168.1.9",
+            "ip": "52.208.72.84",
+            "url": "http://52.208.72.84",
             "metrics": [],
             "title": "Multimodal Journey Planner"
          },
@@ -238,7 +239,7 @@
          },
          "stop_everything": {
             "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
-            "url" : "http://example.com/",
+            "url" : "http://example.com",
             "channel_name": "stop_everything",
             "candidate_metrics": {
                "access_control": {

@@ -1,3 +1,12 @@
+const _global = require("./global");
+
+const val = _global.get("config");
+if( val != undefined ){
+   module.exports = val;
+   return;
+}
+
+
 const
 config  = require("../config.json"),
 fs      = require("fs"),
@@ -211,3 +220,5 @@ if( config.isSLA && config.input_mode == constant.FILE_STR ){
 }
 
 module.exports = config;
+
+_global.set( "config", config );

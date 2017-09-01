@@ -5,18 +5,14 @@ const maxmind     = require('maxmind');
 const config      = require('./config');
 const HashTable   = require("./HashTable");
 
-const ipToCountry = maxmind.open(path.join( __dirname, "..", "data", "GeoLite2-Country.mmdb"), {
-   cache: {
-      max: 1000, // max items in cache
-      maxAge: 1000 * 60 * 60 // life time in milliseconds
-   }
-});
+const ipToCountry = maxmind.open(path.join( __dirname, "..", "data", "GeoLite2-Country.mmdb"));
 
 
 //global variable
-const _caches = _global("ip2loc", {
-         localIPs    : new HashTable(),//cache of IP being verified
+const _caches = _global.get("ip2loc", {
+         localIPs    : new HashTable( 500000 ),//cache of IP being verified
          localRanges : [],       //Ranges of local IPs given by config.json
+         countryByIP : new HashTable( 500000 )
    });
 
 for( var i in config.local_network ){
@@ -89,6 +85,16 @@ ip2loc.isMulticast = function( ipString ){
  * Get location of an IP string
  */
 ip2loc.country = function( ip ){
+   var country = _caches.countryByIP.get( ip );
+   //not found in cache
+   if( country == undefined ){
+      country = ip2loc._country( ip );
+      _caches.countryByIP.add( ip, country );
+   }
+   return country;
+}
+
+ip2loc._country = function( ip ){
    if( ip2loc.isLocal( ip ) )
       return "_local"
       
