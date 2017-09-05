@@ -696,8 +696,6 @@ MMTDrop.constants = {
      * @returns {string} Protocol name
      */
     getProtocolNameFromID : function( app_id ) {
-      
-      
       var protocolName = protocolName =  MMTDrop.constants.ProtocolsIDName[ app_id ];;
       if( protocolName != undefined ){
           return protocolName;
@@ -714,6 +712,9 @@ MMTDrop.constants = {
           }
 
       }
+      if( protocolName == undefined )
+         return "proto_" + app_id;
+      
       return protocolName;
     },
     getProtocolIDFromName : function( proto_name ){

@@ -116,8 +116,8 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-               set: ["isGen"],
-               init: [COL.START_TIME]
+            set: ["isGen"],
+            init: [COL.START_TIME]
                },
                CONST.period.REAL
          ),
@@ -130,7 +130,7 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-               set: [COL.APP_ID, "proto_depth"]
+            set: [COL.APP_ID, "proto_depth"]
                }
          ),
          app: new DataCache( inserter, "data_app",
@@ -142,7 +142,7 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-               set: ["isGen", "app_paths", COL.APP_ID, COL.PROFILE_ID]
+            set: ["isGen", "app_paths", COL.APP_ID, COL.PROFILE_ID]
                }
          ),
          ip: new DataCache( inserter, "data_ip", 
@@ -154,7 +154,7 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-               set: ["isGen", COL.MAC_SRC, COL.IP_SRC ]
+            set: ["isGen", COL.MAC_SRC, COL.IP_SRC ]
                }
          ),
          location: new DataCache( inserter, "data_location", 
@@ -392,7 +392,7 @@ module.exports = function(){
             for( var i=0; i<app_arr.length; i++ ){
                var o = app_arr[i];
                //store only maximally 4 level: ETH.IP.TCP.HTTP
-               if( o.depth > 3 || o.depth == 2 ) //starting from zero
+               if( o.depth != 4 && o.depth !== 1 ) //starting from zero
                   continue;
 
                //this is a protocol

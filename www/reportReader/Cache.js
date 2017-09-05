@@ -7,6 +7,7 @@ const TIMESTAMP       = dataAdaptor.StatsColumnId.TIMESTAMP; //index of timestam
 const REPORT_NUMBER   = dataAdaptor.StatsColumnId.REPORT_NUMBER;
 const PROBE_ID        = dataAdaptor.StatsColumnId.PROBE_ID;
 const FORMAT_ID       = dataAdaptor.StatsColumnId.FORMAT_ID;
+const LongNumber      = require('mongodb').Long;
 
 /**
  * @param   {Object} option
@@ -172,32 +173,32 @@ function Cache ( option ) {
 		var oo = _dataObj[ key_string ];
 		
 		//first msg in the group identified by key_obj
-		if (oo == undefined){
+		if( oo == undefined ){
 			_dataObj[key_string] = key_obj;
 			_dataArr.push( key_obj );
 			oo = key_obj;
 			
-			//init zero for value number
+			//init for value number
 			for (var j=0; j<key_inc_arr.length; j++)
-			   oo[ key_inc_arr[j] ] = 0;
+			   oo[ key_inc_arr[j] ] = msg[ key_inc_arr[j] ];
+			
+			//avg: calculate average value
+         for (var j=0; j<key_avg_arr.length; j++){
+            oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
+         }
 		}
-
-		//increase
-		for (var j=0; j<key_inc_arr.length; j++){
-			oo[ key_inc_arr[ j ] ]  += msg[ key ];
+		else{
+      		//increase
+      		for (var j=0; j<key_inc_arr.length; j++){
+      			oo[ key_inc_arr[ j ] ]  += msg[ key_inc_arr[ j ] ];
+      		}
+      
+      		//avg: calculate average value
+      		for (var j=0; j<key_avg_arr.length; j++){
+      		   oo[ key_avg_arr[ j ] ]  += msg[ key_avg_arr[ j ] ];
+      		}
 		}
-
-		//avg: calculate average value
-		for (var j=0; j<key_avg_arr.length; j++){
-			var key = key_avg_arr[ j ];
-			//if( Number.isNaN( val ) )
-			//	val = 0;
-			if (oo[ key ] !== undefined)
-				oo[ key ]  += msg[ key ];
-			else
-				oo[ key ]  = msg[ key ];
-		}
-
+		
 		//set: override value by the last one
 		for (var j=0; j<key_set_arr.length; j++){
 			var key = key_set_arr[ j ];
@@ -370,6 +371,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 	
 	const interval = config.buffer.max_interval * 1000;
 	//start timers to update
+	/*
 	var _now = 0;
 	var _timer = setInterval( function(){
 		if( _now == 0 ){
@@ -390,6 +392,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 		self.addMessage( msg );
 		
 	}, interval );
+	*/
 }
 
 module.exports = DataCache;

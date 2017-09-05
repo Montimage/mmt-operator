@@ -12,7 +12,11 @@ const BULK_INSERT_THRESHOLD = 20000;
 const WRITE_CONCERN = {
 	w: 0, //Requests no acknowledgement of the write operation
 	j: false, //requests no acknowledgement from MongoDB that the write operation has been written to the journal.
-	
+
+	//Serialize functions on any object
+	serializeFunctions : false,
+	//Force server to assign _id values instead of driver.
+	forceServerObjectId: true,
 	//Allow driver to bypass schema validation in MongoDB 3.2 or higher.
 	bypassDocumentValidation: true,
 	//If true, when an insert fails, don't execute the remaining writes. 

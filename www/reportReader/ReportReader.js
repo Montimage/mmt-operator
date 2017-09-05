@@ -55,11 +55,12 @@ function Reader(){
 
 		//this process removes older records from Database
 		var ret = child_process.fork( __dirname + "/maintainDB.js", []
-		//      , {execArgv: ['--debug=5857']} 
+		      , {execArgv: [
+		         //'--debug=5857'
+		         ]} 
 		);
 		process._children.push( ret );
 		process._childrenCount ++;
-		
 	}
 }
 
