@@ -27,7 +27,7 @@ const LongNumber      = require('mongodb').Long;
  */
 function Cache ( option ) {
 	"use strict";
-
+	
 	const _this                   = this;
 	const _PERIOD_TO_UPDATE_NAME  = option.period;
 	const _PERIOD_TO_UPDATE       = option.periodNumber;
@@ -37,17 +37,59 @@ function Cache ( option ) {
 	const _IS_RETAIN_ALL   = (_PERIOD_TO_UPDATE_NAME === CONST.period.SPECIAL);
 	
 	const _collection_name        = option.collection_name + "_" + option.period;
+	
+	 //check input
+   if( !_IS_RETAIN_ALL && ( !Array.isArray( option.message_format.key ) 
+         || option.message_format.key.length == 0)){
+      return console.error( "Key must not empty" );
+   }
 
+	const key_id_arr   = option.message_format.key  || [];
+   const key_inc_arr  = option.message_format.inc  || [];
+   const key_set_arr  = option.message_format.set  || [] ;
+   const key_init_arr = option.message_format.init || [];
+   const key_avg_arr  = option.message_format.avg  || [];
+   
+   
+   //IMPORTANCE: this array "key_arr" must contain all keys of the messages that will be inserted to DB  
+   const key_arr      = [];
+   
+   const add_val = function( o ){
+      for( var i in o ){
+         var val = "" + o[i];
+         if( key_arr.indexOf( val ) == -1)
+            key_arr.push( val );
+      }
+   }
+   
+   //when we want to retain all elements of one report 
+   if( _IS_RETAIN_ALL ){
+      //add all available keys
+      add_val( dataAdaptor.StatsColumnId    );
+      add_val( dataAdaptor.SecurityColumnId );
+      add_val( dataAdaptor.BehaviourBandwidthColumnId );
+      add_val( dataAdaptor.BehaviourProfileColumnId );
+      add_val( dataAdaptor.HttpStatsColumnId );
+      add_val( dataAdaptor.TlsStatsColumnId );
+      add_val( dataAdaptor.RtpStatsColumnId );
+      add_val( dataAdaptor.FtpStatsColumnId );
+      add_val( dataAdaptor.LicenseColumnId );
+      add_val( dataAdaptor.NdnColumnId );
+      add_val( dataAdaptor.OTTQoSColumnId );
+      add_val( dataAdaptor.StatColumnId );
+   }else{
+      //add only the keys are defined
+      add_val( key_id_arr );
+      add_val( key_inc_arr );
+      add_val( key_set_arr );
+      add_val( key_init_arr );
+      add_val( key_avg_arr );
+      add_val( [TIMESTAMP] );
+   }
+   
 	var _dataObj = {}; //key => data
 	var _dataArr = []; //array of "data"
-
 	
-	//check
-	if( !_IS_RETAIN_ALL && ( !Array.isArray( option.message_format.key ) 
-	      || option.message_format.key.length == 0)){
-		return console.error( "Key must not empty" );
-	}
-
 	
 	/**
 	 * Flush data to DB
@@ -63,9 +105,13 @@ function Cache ( option ) {
 		   return [];
 		}
 		   
+		//_normalize( data );
 		
 		_inserter.add( _collection_name, data, function( err, result){
-			console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
+		   if( err )
+		      console.error( err );
+		   else
+		      console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
 
 			if( cb ) 
 				cb( err, data );
@@ -75,25 +121,21 @@ function Cache ( option ) {
 	}
 
 	const _IS_NDN_COLLECTION = (_collection_name === "data_ndn_real");
-	var _lastUpdateTime = 0;
+	var _nextUpdateTime = 0;
 	this.addMessage = function ( msg ) {
-		const ts = msg[ TIMESTAMP ];
-		if( _lastUpdateTime == 0 )
-			_lastUpdateTime = ts;
-		
+		const ts      = msg[ TIMESTAMP ];
 		const isDummy = (msg[ FORMAT_ID ]  === dataAdaptor.CsvFormat.DUMMY_FORMAT);
 		
 		if( !isDummy ){
 			//retain original message
 			if( _IS_RETAIN_ALL ){
-				//clone msg
-			   var new_msg = {};
-			   for( var i in msg )
-			      new_msg[i] = msg[i];
-			   //JSON.parse( JSON.stringify( msg ))
-				_dataArr.push( new_msg );
-			}else
+	         //this helps mongodb to iterate quickly the keys of msg
+			   //this must be used together with the hack was done in node_module/bson
+			   msg.__mi_keys = key_arr;
+				_dataArr.push( msg );
+			}else{
 				_addMessage( msg );
+			}
 		}
 
 		//only for ndn offline
@@ -111,12 +153,15 @@ function Cache ( option ) {
 		//return;
 		//}
 
-		//flush data in _dataObj to database
-		//need messages arrive in time order???
-		if( _dataArr.length > config.buffer.max_length_size
-				|| ts - _lastUpdateTime > _PERIOD_TO_UPDATE ){
+		//the first time
+		if( _nextUpdateTime == 0 )
+		   _nextUpdateTime = ts + _PERIOD_TO_UPDATE;
+	   //flush data in _dataObj to database
+      //need messages arrive in time order???
+		else if( _dataArr.length > config.buffer.max_length_size
+				|| ts > _nextUpdateTime  ){
 			
-			_lastUpdateTime = ts;
+		   _nextUpdateTime = ts + _PERIOD_TO_UPDATE;
 			var data        = _this.flushDataToDatabase();
 
 			if( isDummy )
@@ -144,11 +189,7 @@ function Cache ( option ) {
 		_dataArr  = [];
 	};
 
-	const key_id_arr           = option.message_format.key;
-	const key_inc_arr          = option.message_format.inc  || [];
-	const key_set_arr          = option.message_format.set  || [] ;
-	const key_init_arr         = option.message_format.init || [];
-	const key_avg_arr          = option.message_format.avg  || [];
+	
 	/**
 	 * calculate data to be $inc, $set and $init then store them to _dataObj
 	 * @param {Object/Array} msg message tobe added
@@ -177,6 +218,10 @@ function Cache ( option ) {
 			_dataObj[key_string] = key_obj;
 			_dataArr.push( key_obj );
 			oo = key_obj;
+			
+			//this helps mongodb to iterate quickly the keys of msg
+         //this must be used together with the hack was done in node_module/bson
+			oo.__mi_keys = key_arr;
 			
 			//init for value number
 			for (var j=0; j<key_inc_arr.length; j++)
@@ -369,7 +414,7 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 			_cache.day.clear();
 	}
 	
-	const interval = config.buffer.max_interval * 1000;
+//	const interval = config.buffer.max_interval * 1000;
 	//start timers to update
 	/*
 	var _now = 0;

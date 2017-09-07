@@ -8,7 +8,6 @@ module.exports = function( size ){
    this.size   = size;
    var _data   = {}; //this is hashtable: key=>value
    var _arrKey = []; //this is array of key
-   var _isFull = false;
    /**
     * Add an element (key, data) to the hashtable
     */
@@ -25,13 +24,7 @@ module.exports = function( size ){
          delete( _data[ _arrKey[0] ] );
          //remove the first element (having index = 0)
          _arrKey.shift();
-         if( _isFull ){
-            console.log("FULLLL");
-            process.exit( 0 );
-         }
-         _isFull = true;
       }
-      
    }
 
    /**

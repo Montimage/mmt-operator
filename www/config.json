@@ -14,12 +14,12 @@
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
 	"file_input": {
-		"data_folder": "/tmp/ramdisk/",
-		"_data_folder": "/opt/mmt/probe/result/report/online/",
+		"_data_folder": "/tmp/",
+		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "kafka",
+	"input_mode": "file",
 	"probe_analysis_mode": "online",
 	"local_network": [
 		{
@@ -53,7 +53,7 @@
 	],
 	"probe_stats_period": 5,
 	"buffer": {
-		"max_length_size": 50000,
+		"max_length_size": 30000,
 		"max_interval": 5
 	},
 	"micro_flow": {
@@ -65,200 +65,8 @@
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn", "log"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["security","behavior","stat", "sla"],
-	"sla": {
-		"active_check_period": 5,
-		"violation_check_period": 60,
-		"reaction_check_period": 5,
-		"init_components": [
-			{
-				"id": "30",
-				"ip": "37.48.247.117",
-				"url": "http://37.48.247.117",
-				"metrics": [],
-				"title": "TSM engine"
-			},
-			{
-				"id": "1",
-				"ip": "192.168.1.10",
-				"url": "http://192.168.1.10",
-				"metrics": [],
-				"title": "Consumption Estimation Calculator (CEC)"
-			},
-			{
-				"id": "2",
-				"ip": "52.208.72.84",
-				"url": "http://52.208.72.84",
-				"metrics": [],
-				"title": "ITS Factory"
-			},
-			{
-				"id": "13",
-				"ip": "192.168.1.9",
-				"url": "http://192.168.1.9",
-				"metrics": [],
-				"title": "Multimodal Journey Planner"
-			},
-			{
-				"id": "14",
-				"ip": "192.168.1.8",
-				"url": "http://192.168.1.8",
-				"metrics": [],
-				"title": "Database"
-			}
-		],
-		"init_metrics": [
-			{
-				"id": "1",
-				"name": "availability",
-				"alert": "<= 0.98",
-				"violation": "<= 0.95",
-				"title": "Availability",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "2",
-				"name": "incident",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Incident",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "3",
-				"name": "vul_scan_freq",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Vulnerability Scan Frequency",
-				"enable": true,
-				"support": true
-			},
-         {
-            "id": "4",
-            "name": "access_control",
-            "alert": "",
-            "violation": "< 0",
-            "title": "Access Control",
-            "enable": true,
-            "support": true
-         },
-         {
-            "id": "5",
-            "name": "data_privacy",
-            "alert": "",
-            "violation": "< 0",
-            "title": "Data Privacy",
-            "enable": true,
-            "support": true
-         },
-         {
-            "id": "6",
-            "name": "access_logging",
-            "alert": "",
-            "violation": "< 0",
-            "title": "Accesses Logging",
-            "enable": true,
-            "support": true
-         }
-		],
-		"actions": {
-         "ask_more_space": {
-            "description": "User need to ask for more hard disk space",
-            "channel_name": "ask_more_space",
-            "candidate_metrics": {
-               "access_logging": {
-                  "alert": true,
-                  "violate": true
-               }
-            }
-         },
-         "move_log": {
-            "description": "User need to move the log to a remote server",
-            "channel_name": "move_log",
-            "candidate_metrics": {
-               "access_logging": {
-                  "alert": true,
-                  "violate": true
-               }
-            }
-         },
-         "rotate_log": {
-            "description": "Active logrotate program",
-            "channel_name": "rotate_log",
-            "candidate_metrics": {
-               "access_logging": {
-                  "alert": true,
-                  "violate": true
-               }
-            }
-         },
-			"update_attacks_signature": {
-				"description": "User need to update attacks signature",
-				"channel_name": "update_attacks_signature",
-				"candidate_metrics": {
-					"incident": {
-						"alert": true,
-						"violate": true
-					}
-				}
-			},
-			"add_new_rules": {
-            "description": "User need to add a new rule in the IDS",
-            "channel_name": "add_new_rules",
-            "candidate_metrics": {
-               "incident": {
-                  "alert": true,
-                  "violate": true
-               }
-            }
-         },
-         "use_HA_framework": {
-            "description": "User need to use HA Framework",
-            "channel_name": "use_HA_framework",
-            "candidate_metrics": {
-               "availability": {
-                  "alert": true,
-                  "violate": true
-               }
-            }
-         },
-			"stop_everything": {
-				"description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
-				"url" : "http://192.168.0.7",
-				"channel_name": "stop_everything",
-				"candidate_metrics": {
-					"access_control": {
-						"alert": true,
-						"violate": true
-					},
-					"incident": {
-						"alert": true
-					}
-				}
-			},
-			"obfuscate_data": {
-				"description": "User need to obfuscate data",
-				"channel_name": "obfuscate_data",
-				"candidate_metrics": {
-					"data_privacy": {
-						"alert": true
-					}
-				}
-			},
-         "encrypt_data": {
-            "description": "User need to anonymize or encrypt data",
-            "channel_name": "encrypt_data",
-            "candidate_metrics": {
-               "data_privacy": {
-                  "alert": true
-               }
-            }
-         }
-		}
-	}
+	"modules": ["security","behavior"]
 }

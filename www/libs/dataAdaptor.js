@@ -216,12 +216,13 @@ MMTDrop.formatReportItem = function(entry) {
 //        case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
 //    }
 
-    //*
+   //*
     var obj = {};
     for( var i=0; i<entry.length; i++ ){
     		if( entry[i] != null )
     			obj[ i ] = entry[ i ];
     }
+    
     return obj;
     //*/
     //return Object.assign({}, entry );
@@ -252,7 +253,7 @@ MMTDrop.reverseFormatReportItem = function(entry) {
 
     var arr = [];
     //faster
-    const MAX = 100;
+    const MAX = dataIndex.MAX_COL_INDEX;
     for( var i=0; i<MAX; i++ )
       if( entry[ i ] != undefined )
         arr[ i ] = entry[ i ];

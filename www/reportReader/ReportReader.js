@@ -41,7 +41,7 @@ function Reader(){
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-				var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes]
+            var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes]
 				      , {execArgv: [
 				         //'--debug='+ (5859 + i), //debug
 				         "--expose_gc"

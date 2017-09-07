@@ -13,7 +13,7 @@ const WRITE_CONCERN = {
 	w: 0, //Requests no acknowledgement of the write operation
 	j: false, //requests no acknowledgement from MongoDB that the write operation has been written to the journal.
 
-	//Serialize functions on any object
+	//Do not serialize functions that are defined on any object
 	serializeFunctions : false,
 	//Force server to assign _id values instead of driver.
 	forceServerObjectId: true,

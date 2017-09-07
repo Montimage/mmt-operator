@@ -42,7 +42,7 @@ console.info( "start csv reader " + READER_INDEX );
 //load list of read csv file from db
 var read_files = [];
 //=READER_INDEX to ensure that all processes do not clean garbage in the same time
-var fileCounter = READER_INDEX;
+//var fileCounter = READER_INDEX;
 
 function process_file (file_name, cb) {
 	const lr = lineReader.createInterface({
@@ -69,13 +69,14 @@ function process_file (file_name, cb) {
 		// All lines are read, file is closed now.
 		console.info( READER_INDEX + " processed file "+ path.basename(file_name) +" ("+ totalLines +" lines, "+ (tools.getTimestamp() - start_ts) +" ms)");
 		
-		//periodically clean garbage 
-		fileCounter ++;
-		if( fileCounter === 50 ){
-		   fileCounter = 0;
-		   if( global && global.gc )
-		      global.gc();
-		}
+		//periodically clean garbage
+		//=> NO NEED
+		//fileCounter ++;
+		//if( fileCounter === 50 ){
+		//   fileCounter = 0;
+		//   if( global && global.gc )
+		//      global.gc();
+		//}
 		
 		
 		//delete data file

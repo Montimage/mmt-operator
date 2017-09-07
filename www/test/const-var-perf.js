@@ -33,7 +33,7 @@ var variable9 = 10;
 var variable10 = 10;
 
 function varAccess(N) {
-    var i, sum;
+    var i, sum = 0;
     for (i = 0; i < N; ++i) {
         sum += variable1;
         sum += variable2;
@@ -61,7 +61,7 @@ const constant9 = 10;
 const constant10 = 10;
 
 function constAccess(N) {
-    var i, sum;
+    var i, sum = 0;
     for (i = 0; i < N; ++i) {
         sum += constant1;
         sum += constant2;
@@ -79,7 +79,7 @@ function constAccess(N) {
 
 
 function control(N) {
-    var i, sum;
+    var i, sum = 0;
     for (i = 0; i < N; ++i) {
         sum += 10;
         sum += 10;

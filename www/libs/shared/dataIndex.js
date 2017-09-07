@@ -24,7 +24,12 @@ module.exports = {
           SYS_STAT_FORMAT         : 201,
           OTT_QOS                 : 70
       },
-
+      /* IMPORTANCE: This is maximum number where any column index must not be greater than
+       * For example, currently, the maximum number is 98 holding by FtpStatsColumnId.RESPONSE_TIME
+       * When adding a new index, if this one is greater than the MAX_COL_INDEX, we must set value of
+       * MAX_COL_INDEX to this one.
+       */
+      MAX_COL_INDEX: 98,
       /**
        * Constants: MMTDrop defined csv format types
        */

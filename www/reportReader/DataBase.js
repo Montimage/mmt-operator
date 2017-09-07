@@ -29,7 +29,8 @@ const FORMAT_ID = COL.FORMAT_ID,
 PROBE_ID      = COL.PROBE_ID,
 SOURCE_ID     = COL.SOURCE_ID,
 TIMESTAMP     = COL.TIMESTAMP,
-REPORT_NUMBER = COL.REPORT_NUMBER;
+REPORT_NUMBER = COL.REPORT_NUMBER,
+MICRO_FLOW_STR = "micro";
 
 //list of protocols (not application)
 //this list is used to filter out applications.
@@ -49,42 +50,25 @@ const PURE_PROTOCOLS = {};
 
 const DOUBLE_STAT_PERIOD_IN_MS = config.probe_stats_period_in_ms*1000*2;
 
-const FLOW_SESSION_INIT_DATA = {};//init data of each session
-
-//all columns of HTTP, SSL,RTP et FTP
-//attributes will be stored in data_session collection
-const initSessionSet = [];
-for( var i = COL.FORMAT_TYPE ; i <= FTP.RESPONSE_TIME; i++){
-   if( tools.objectHasAttributeWithValue( COL, i)     == undefined
-   &&  tools.objectHasAttributeWithValue( HTTP, i)    == undefined
-   &&  tools.objectHasAttributeWithValue( NDN, i)     == undefined
-   &&  tools.objectHasAttributeWithValue( TLS, i)     == undefined
-   &&  tools.objectHasAttributeWithValue( RTP, i)     == undefined
-   &&  tools.objectHasAttributeWithValue( FTP, i)     == undefined
-   &&  tools.objectHasAttributeWithValue( LICENSE, i) == undefined
-   &&  tools.objectHasAttributeWithValue( OTT, i)     == undefined
-   ) continue;
-
-   //exclude set
-   if( [ HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, HTTP.REQUEST_INDICATOR,
-      FTP.RESPONSE_TIME ].indexOf( i ) >= 0 )
-      continue;
-
-   initSessionSet.push( i );
-}
-initSessionSet.push( COL.START_TIME );
-
 /**
  * Flat an application path
  * @param str : application path, e.g., ETH.IP.TCP.HTTP
  * @returns an array contains all children paths, e.g., [ETH, ETH.IP, ETH.IP.TCP, ETH.IP.TCP.HTTP] 
  */
+
+//array of keys
+const flat_key_array = [ "path", "app", "depth" ]; 
 function flatAppPath( str ){
    const pathArr = str.split(".");
    
    const arr = [];
    while(  pathArr.length > 0 ){
-      arr.push( {path: pathArr.join("."), app: pathArr[ pathArr.length - 1 ], depth: pathArr.length} );
+      var msg = {path: pathArr.join("."), app: pathArr[ pathArr.length - 1 ], depth: pathArr.length};
+      //__mi_keys is used by mongodb to accelate bson functions
+      //this must be used together with the hack was done in node_module/bson
+      msg.__mi_keys = flat_key_array;
+      
+      arr.push( msg );
       pathArr.length --;
    };
    return arr;
@@ -293,10 +277,6 @@ module.exports = function(){
             //new running period
             //this report is sent at each end of x seconds (after seding all other reports)
          case dataAdaptor.CsvFormat.DUMMY_FORMAT:
-            if( no_1_packet_reports > 0 ){
-               console.info("Number of reports containing only 1 packet: " + no_1_packet_reports );
-               no_1_packet_reports  = 0;
-            }
             //mark avaibility of this probe
             self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
             return;
@@ -311,24 +291,33 @@ module.exports = function(){
             if( msg[ COL.PACKET_COUNT ] === 0 ){
                return;
             }
-            else if( msg[ COL.PACKET_COUNT ] === 1 ){
-               no_1_packet_reports ++;
-            }
 
-            //original message
-            self.dataCache.reports.addMessage( msg );
+            //original message => clone a new one
+            self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
 
             //this is original message comming from mmt-probe
             msg.isGen = false;
 
-            //as 2 threads may produce a same session_ID for 2 different sessions
-            //this ensures that session_id is uniqueelse
-            msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            is_micro_flow = (format === 100 && ( msg[ COL.PACKET_COUNT ] < config.micro_flow.packet || msg[ COL.DATA_VOLUME ] < config.micro_flow.byte ));
+            if( is_micro_flow ){
+               //this allows to distinguish 2 micro flow of 2 differents periods
+               //there is at most 1 micro flow during one sample period
+                 msg[ COL.SESSION_ID ] = "m-" + ts ;
+                 //msg[ COL.APP_PATH   ] = "99";  //ethernet
+                 //msg[ COL.APP_ID     ] = 99;  //ethernet
+                 msg[ COL.IP_SRC     ] = MICRO_FLOW_STR ;
+                 msg[ COL.IP_DEST    ] = MICRO_FLOW_STR ;
+                 msg[ COL.MAC_SRC    ] = MICRO_FLOW_STR ;
+                 msg[ COL.MAC_DEST   ] = MICRO_FLOW_STR ;
+            }else
+               //as 2 threads may produce a same session_ID for 2 different sessions
+               //this ensures that session_id is uniqueelse
+               msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
 
             //one msg is a report of a session
             //==> total of them are number of active flows at the sample interval
             msg[ COL.ACTIVE_FLOWS ] = 1;
-
+            
             //session
             if( format === 100 ){
                //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
@@ -340,8 +329,8 @@ module.exports = function(){
                //HTTP
                if( msg[ COL.FORMAT_TYPE ] === 1 ){
                   //each HTTP report is a unique session (1 request - 1 resp if it has)
-                  if( !is_micro_flow )
-                     msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
+
+                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
                   //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
 
                   //same as ACTIVE_FLOWS
@@ -355,6 +344,7 @@ module.exports = function(){
                   //msg[ HTTP.RESPONSE_TIME ] = 0;
                   //}
                }
+                       
 
                //traffic of local IP
                //do not add report 99 to data_ip collection as it has no IP
@@ -384,7 +374,7 @@ module.exports = function(){
 
             ///////////////////////////////////////////////////////////////
             //expand application path: 
-            var app_arr = flatAppPath( msg[ COL.APP_PATH ] );
+            const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
             const original_app_id = msg[ COL.APP_ID ],
             original_path   = msg[ COL.APP_PATH ]; 
