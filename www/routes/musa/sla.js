@@ -163,8 +163,8 @@ function extract_metrics( app_config, index, cb ){
             console.log( "found " + title );
 
             //this component is uploaded
-            if( comp.sla != undefined )
-               return cb( new Error("Component ["+ title +"] was uploaded"));
+            //if( comp.sla != undefined )
+            //   return cb( new Error("Component ["+ title +"] was uploaded"));
 
             break;
          }

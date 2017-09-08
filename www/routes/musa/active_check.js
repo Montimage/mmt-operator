@@ -57,6 +57,10 @@ function checkAvailability( publisher, dbconnector ){
 			for( var j in app.components ){
 				var com = app.components[j];
 				
+				//component has no URL
+				if( com.url == undefined )
+				   continue;
+				
 				//this url has been checked
 				if( checked[ com.url ] )
 					continue;
