@@ -10,16 +10,34 @@ function now(){
 var last_update = now();
 router.post("/", function(req, res, next) {
 
+   //avoid 2 consecutive requests
+//   const ts = now();
+//   if( ts == last_update )
+//     return res.status( 429 ).send("Too much!");
+//   last_update = now;
+   
   var b = new Buffer(req.body.Event, 'base64')
-  var obj = JSON.parse( b.toString() );
+  message = b.toString();
+  
+  var obj;
+  try{
+     obj = JSON.parse( message );
+  }catch ( e ){
+     obj = JSON.parse( "[" + message + "]" );
+  }
+  
 
-  //avoid 2 consecutive requests
-  const ts = now();
-  if( ts == last_update )
-    return res.status( 429 ).send("Too much!");
-  last_update = now;
-
-  router.dbconnector.mdb.collection( "mmt-connector" ).insert( obj, function( err, result ){
+  var collection = "mmt-connector";
+  switch( obj[ 3 ] ){
+     case 50:
+        collection = "availability_real";
+        break;
+     case 10:
+        collection = "misc";
+        break;
+  }
+  
+  router.dbconnector.mdb.collection( collection ).insert( obj, function( err, result ){
     if( err )
       return res.status( 415 ).send( err );
     return res.status( 200 ).send( result );

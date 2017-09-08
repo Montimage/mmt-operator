@@ -111,6 +111,7 @@ $(function () {
                //components
                const components = obj.components;
                const pOption    = fProbe.option();
+               const newProbeOption = []; //this array contains only probes defined by sla application
                //for each probe ID
                for( var i=0; i<pOption.length; i++ ){
                   //find a component having the same id with probe ID
@@ -118,9 +119,12 @@ $(function () {
                      if( components[j].id == pOption[i].id ){
                         //set label of probe by the comonent's title
                         pOption[i].label = "C" + pOption[i].id + ": " + components[j].title;
+                        //add to new probe list
+                        newProbeOption.push( pOption[i] );
                         break;
                      }
                }
+               
                //add components that does not exist
                for( var j=0; j<components.length; j++ ){
                   var found = false;
@@ -131,11 +135,11 @@ $(function () {
                      }
                   
                   if( !found )
-                     pOption.push({id: components[j].id, label: "C" + components[j].id + ": " +  components[j].title });
+                     newProbeOption.push({id: components[j].id, label: "C" + components[j].id + ": " +  components[j].title });
                }
                
                //update component list
-               fProbe.option( pOption );
+               fProbe.option( newProbeOption );
                fProbe.redraw();
             }
          } );
