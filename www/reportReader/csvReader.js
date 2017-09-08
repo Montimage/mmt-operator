@@ -209,5 +209,8 @@ process.on('SIGINT',function(){
       process.exit( 1 );
    
    isStop = true;
-   database.flush( process.exit );
+   database.flush( function(){
+      console.error("Ended csv reader " + READER_INDEX );
+      process.exit();
+   } );
 });

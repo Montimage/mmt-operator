@@ -124,18 +124,15 @@ function Cache ( option ) {
 	var _nextUpdateTime = 0;
 	this.addMessage = function ( msg ) {
 		const ts      = msg[ TIMESTAMP ];
-		const isDummy = (msg[ FORMAT_ID ]  === dataAdaptor.CsvFormat.DUMMY_FORMAT);
 		
-		if( !isDummy ){
-			//retain original message
-			if( _IS_RETAIN_ALL ){
-	         //this helps mongodb to iterate quickly the keys of msg
-			   //this must be used together with the hack was done in node_module/bson
-			   msg.__mi_keys = key_arr;
-				_dataArr.push( msg );
-			}else{
-				_addMessage( msg );
-			}
+		//retain original message
+		if( _IS_RETAIN_ALL ){
+		   //this helps mongodb to iterate quickly the keys of msg
+		   //this must be used together with the hack was done in node_module/bson
+		   msg.__mi_keys = key_arr;
+		   _dataArr.push( msg );
+		}else{
+		   _addMessage( msg );
 		}
 
 		//only for ndn offline
@@ -162,12 +159,7 @@ function Cache ( option ) {
 				|| ts > _nextUpdateTime  ){
 			
 		   _nextUpdateTime = ts + _PERIOD_TO_UPDATE;
-			var data        = _this.flushDataToDatabase();
-
-			if( isDummy )
-			   data.push( msg );
-			
-			return data;
+			return _this.flushDataToDatabase();
 		}
 		return [];
 	};
@@ -195,7 +187,7 @@ function Cache ( option ) {
 	 * @param {Object/Array} msg message tobe added
 	 */
 	var _addMessage = function ( msg ) {
-
+	   const isDummy  = (msg[ FORMAT_ID ]  === dataAdaptor.CsvFormat.DUMMY_FORMAT);
 		var key_obj    = {};
 		var key_string = "";
 		for( var i=0; i<key_id_arr.length; i++ ){
@@ -224,25 +216,36 @@ function Cache ( option ) {
 			oo.__mi_keys = key_arr;
 			
 			//init for value number
-			for (var j=0; j<key_inc_arr.length; j++)
-			   oo[ key_inc_arr[j] ] = msg[ key_inc_arr[j] ];
+			if( isDummy )
+			   for (var j=0; j<key_inc_arr.length; j++)
+               oo[ key_inc_arr[j] ] = 0;
+			else
+      			for (var j=0; j<key_inc_arr.length; j++)
+      			   oo[ key_inc_arr[j] ] = msg[ key_inc_arr[j] ];
 			
 			//avg: calculate average value
-         for (var j=0; j<key_avg_arr.length; j++){
-            oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
-         }
+			if( isDummy )
+	         for (var j=0; j<key_avg_arr.length; j++)
+	            oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
+			else
+            for (var j=0; j<key_avg_arr.length; j++)
+               oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
 		}
 		else{
-      		//increase
-      		for (var j=0; j<key_inc_arr.length; j++){
-      			oo[ key_inc_arr[ j ] ]  += msg[ key_inc_arr[ j ] ];
-      		}
-      
-      		//avg: calculate average value
-      		for (var j=0; j<key_avg_arr.length; j++){
-      		   oo[ key_avg_arr[ j ] ]  += msg[ key_avg_arr[ j ] ];
+      		//add number only if the message is not a dummy message
+		   if( !isDummy ){
+		      //increase
+         		for (var j=0; j<key_inc_arr.length; j++)
+         			oo[ key_inc_arr[ j ] ]  += msg[ key_inc_arr[ j ] ];
+         
+         		//avg: calculate average value
+         		for (var j=0; j<key_avg_arr.length; j++)
+         		   oo[ key_avg_arr[ j ] ]  += msg[ key_avg_arr[ j ] ];
       		}
 		}
+		
+		if( isDummy )
+		   return;
 		
 		//set: override value by the last one
 		for (var j=0; j<key_set_arr.length; j++){

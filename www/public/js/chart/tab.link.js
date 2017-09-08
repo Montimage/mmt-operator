@@ -1143,29 +1143,35 @@ var ReportFactory = {
                             obj[time] = {};
                             obj[time][COL.TIMESTAMP.id] = time;
                         }
-
-
+                        
                         for (var j in cols) {
-                            var id  = cols[j].id;
-                            var val = ( msg[id] != undefined )? msg[id] : 0;
+                           var id  = cols[j].id;
+                           var val = ( msg[id] != undefined )? msg[id] : 0;
 
-                            //we use total (e.g., PAYLOAD, DATA_VOLUME, PACKET_COUNT) only for 99-report
-                            //==> for 100-reports:
-                            //     + put zero if probe is running
-                            if( cols[j].isNoIP === true && msg[0] == 100 ){
-                                if( ! exist ) 
-                                		obj[time][id] = 0;
-                                continue;
-                            }
+                           //we use total (e.g., PAYLOAD, DATA_VOLUME, PACKET_COUNT) only for 99-report
+                           //==> for 100-reports:
+                           //     + put zero if probe is running
+                           if( cols[j].isNoIP === true && msg[0] == 100 ){
+                               if( ! exist ) 
+                                   obj[time][id] = 0;
+                               continue;
+                           }
 
-                            if (exist)
-                                obj[time][id] += val / period;
-                            //first time
-                            else
-                                obj[time][id] = val / period;
-                        }
+                           if (exist)
+                               obj[time][id] += val;
+                           //first time
+                           else
+                               obj[time][id] = val;
+                       }
                     }
 
+                    //divide to get bit/second
+                    if( period != 1 )
+                       for( var time in obj ){
+                          for( var j in cols )
+                             obj[time][ cols[j].id  ]  /= period;
+                       }
+                    
                     cols.unshift( COL.TIMESTAMP );
 
                     var $widget = $("#" + cLine.elemID).getWidgetParent();

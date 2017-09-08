@@ -26,11 +26,11 @@ const OTT      = dataAdaptor.OTTQoSColumnId;
 const STAT     = dataAdaptor.StatColumnId;
 
 const FORMAT_ID = COL.FORMAT_ID,
-PROBE_ID      = COL.PROBE_ID,
-SOURCE_ID     = COL.SOURCE_ID,
-TIMESTAMP     = COL.TIMESTAMP,
-REPORT_NUMBER = COL.REPORT_NUMBER,
-MICRO_FLOW_STR = "micro";
+PROBE_ID        = COL.PROBE_ID,
+SOURCE_ID       = COL.SOURCE_ID,
+TIMESTAMP       = COL.TIMESTAMP,
+REPORT_NUMBER   = COL.REPORT_NUMBER,
+MICRO_FLOW_STR  = "micro";
 
 //list of protocols (not application)
 //this list is used to filter out applications.
@@ -213,6 +213,17 @@ module.exports = function(){
          ),
    };
 
+   //message contain only zero
+   const zero_msg = [];
+   
+   function update_zero_msg( format, probe_id, intput_src, ts ){
+      zero_msg[ 0 ] = format;
+      zero_msg[ 1 ] = probe_id;
+      zero_msg[ 2 ] = input_src;
+      zero_msg[ 3 ] = ts;
+      return zero_msg;
+   }
+   
    /**
     * Add a new message to DB
     */
@@ -223,7 +234,7 @@ module.exports = function(){
       const format   = msg[ FORMAT_ID ];
       const input_src= msg[ SOURCE_ID ];
       const probe_id = msg[ PROBE_ID ];
-
+      //const is_main_probe = (msg[ COL.THREAD_NUMBER ] == 0);
       var msg2;
       var is_micro_flow = false;
 
@@ -239,12 +250,12 @@ module.exports = function(){
          case dataAdaptor.CsvFormat.BA_PROFILE_FORMAT:
             //insert directly to DB
             inserter.add("behaviour", [msg] );
-            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
+            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
-            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
+            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.OTT_QOS:
@@ -268,7 +279,7 @@ module.exports = function(){
             //MUSA project
          case 50:
             self.dataCache.avail.addMessage( msg );
-            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
+            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
             //statistic reports
 
@@ -278,11 +289,15 @@ module.exports = function(){
             //this report is sent at each end of x seconds (after seding all other reports)
          case dataAdaptor.CsvFormat.DUMMY_FORMAT:
             //mark avaibility of this probe
-            self.dataCache.total.addMessage( [format, probe_id, input_src, ts] );
+            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
          case 99:
          case 100:
+            
+            //one msg is a report of a session
+            //==> total of them are number of active flows at the sample interval
+            msg[ COL.ACTIVE_FLOWS ] = 1;
             
             //mark avaibility of this probe
             self.dataCache.total.addMessage( msg );
@@ -313,10 +328,6 @@ module.exports = function(){
                //as 2 threads may produce a same session_ID for 2 different sessions
                //this ensures that session_id is uniqueelse
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
-
-            //one msg is a report of a session
-            //==> total of them are number of active flows at the sample interval
-            msg[ COL.ACTIVE_FLOWS ] = 1;
             
             //session
             if( format === 100 ){
@@ -396,7 +407,8 @@ module.exports = function(){
                }
             }
 
-            delete( msg.proto_depth );
+            //no need
+            //delete( msg.proto_depth );
             //restore original app_id and its path
             msg[ COL.APP_ID ]   = original_app_id;
             msg[ COL.APP_PATH]  = original_path;

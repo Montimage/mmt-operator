@@ -325,7 +325,7 @@ var MongoConnector = function () {
 					}
 			}
 
-			if( query.$limit == undefined || query.$limit > 5000 )
+			if( query.$limit == undefined )
 				query.$limit = 5000;
 
 			if( query.$project )
