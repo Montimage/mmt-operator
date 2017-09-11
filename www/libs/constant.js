@@ -14,6 +14,11 @@ const constant = {
 			DAY    : "day",
 			SPECIAL: "all"
 	},
+	
+	http: {
+	   ACCESS_DEINED_CODE  : 401,
+	   INTERNAL_ERROR_CODE : 500
+	}
 };
 
 module.exports = constant;

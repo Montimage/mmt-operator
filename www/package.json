@@ -13,7 +13,7 @@
   "engines": {
     "node": ">=6.0"
   },
-  "engineStrict" : true,
+  "engineStrict": true,
   "dependencies": {
     "body-parser": "~1.13.2",
     "compression": "^1.6.0",
@@ -25,6 +25,7 @@
     "ftp": "^0.3.10",
     "ip": "1.1.5",
     "jade": "~1.11.0",
+    "jsonwebtoken": "^8.0.0",
     "kafka-node": "^2.2.1",
     "lodash": "^4.13.1",
     "macaddress": "^0.2.8",
