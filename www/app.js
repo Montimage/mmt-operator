@@ -137,6 +137,39 @@ app.use(session({
     })
 }))
 
+//active checking for MUSA
+//TODO to remove in final product
+if( config.isSLA ){
+  //module to check preodically if components of apps are available
+  require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
+ 
+  //module to verify preodically if the current data are violdated
+  const engine = require("./routes/musa/violation_check_engine.js");
+  engine.start( pub_sub, dbconnector );
+  app.use("/musa/dummy", engine.router );
+  
+  //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
+  
+  const reaction = require("./routes/musa/reaction.js");
+  reaction.pub_sub     = pub_sub;
+  reaction.dbconnector = dbconnector;
+  app.use("/musa/sla", reaction);
+  
+  const sla = require("./routes/musa/sla.js");
+  sla.dbconnector = dbconnector;
+  app.use("/musa/sla", sla);
+
+  const connector = require("./routes/musa/connector.js");
+  connector.dbconnector = dbconnector;
+  app.use("/musa/connector", connector);
+  
+  
+  const musaStatus = require("./routes/musa/status.js");
+  musaStatus.pub_sub     = pub_sub;
+  musaStatus.dbconnector = dbconnector;
+  app.use("/", musaStatus);
+}
+
 routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';
 routes.dbconnector        = dbconnector;
 app.use('/', routes);
@@ -164,33 +197,6 @@ route_db._objRef = _objRef;
 app.use("/info/db", route_db);
 
 app.use("/export", require("./routes/html2img.js"));
-
-//active checking for MUSA
-//TODO to remove in final product
-if( config.isSLA ){
-  //module to check preodically if components of apps are available
-  require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
- 
-  //module to verify preodically if the current data are violdated
-  const engine = require("./routes/musa/violation_check_engine.js");
-  engine.start( pub_sub, dbconnector );
-  app.use("/musa/dummy", engine.router );
-  
-  //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
-  
-  const reaction = require("./routes/musa/reaction.js");
-  reaction.pub_sub     = pub_sub;
-  reaction.dbconnector = dbconnector;
-  app.use("/musa/sla", reaction);
-  
-  const sla = require("./routes/musa/sla.js");
-  sla.dbconnector = dbconnector;
-  app.use("/musa/sla", sla);
-
-  const connector = require("./routes/musa/connector.js");
-  connector.dbconnector = dbconnector;
-  app.use("/musa/connector", connector);
-}
 
 const dummy = require("./routes/dummy_report.js");
 dummy.pub_sub = pub_sub;

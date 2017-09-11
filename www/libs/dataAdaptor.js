@@ -327,8 +327,20 @@ function format_session_report( msg ){
  * Convert a message in string format to an array
  * @param {[[Type]]} message [[Description]]
  */
+
+//const _total = {};
 MMTDrop.formatMessage = function( message ){
     var msg = JSON.parse( message );
+    
+//    var t = Math.floor( msg[3] );
+//    if( msg[0] == 100 ){
+//       if( _total[ t ] == undefined ){
+//          console.error( _total );
+//          _total[ t ] = 0;
+//       }
+//       _total[ t ] ++;
+//    }
+    
     //timestamp
     //msg[ 3 ] = formatTime( msg[3] );
     msg[ 3 ] = Math.ceil( msg[3] / config.probe_stats_period ) * config.probe_stats_period * 1000
