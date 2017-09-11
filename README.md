@@ -33,7 +33,10 @@ Follow the procedure described on the following link to install the latest versi
      
  #start
  npm start
+ # use another configuration file
+ node app.js --config=test.json
 ```
+
 
 Once MMT-Operator is up and running, open your favorite browser and goto
 

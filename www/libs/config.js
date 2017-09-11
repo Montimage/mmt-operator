@@ -6,9 +6,19 @@ if( val != undefined ){
    return;
 }
 
+//allow to change config.json
+var configPath = "../config.json";
+process.argv.forEach(function (val, index, array) {
+   //console.log(index + ': ' + val);
+   var arr = val.split("=");
+   if( arr[0] == "--config"){
+      configPath = "../" + arr[1];
+      console.warn("[INFO] used configuration in " + arr[1] );
+   }
+ });
 
 const
-config  = require("../config.json"),
+config  = require( configPath ),
 fs      = require("fs"),
 util    = require("util"),
 moment  = require('moment'),
@@ -214,10 +224,31 @@ config.sla = tools.merge( {
 
 
 //check Musa
-if( config.isSLA && config.input_mode == constant.FILE_STR ){
-   console.error('input_mode must be either "kafka" or "redis" when enabling "sla" module.');
-   process.exit( 1 );
+if( config.isSLA ){
+   if( config.input_mode == constant.FILE_STR ){   
+      console.error('Error in config.json: input_mode must be either "kafka" or "redis" when enabling "sla" module.');
+      process.exit( 1 );
+   }
+   
+   if( config.sla == undefined ){
+      console.error('Error in config.json: sla must be defined.');
+      process.exit( 1 );
+   }
+   
+   if( !Array.isArray( config.sla.init_components ) ){
+      console.error('Error in config.json: sla.init_components must be an array.');
+      process.exit( 1 );
+   }
+   if( !Array.isArray( config.sla.init_metrics ) ){
+      console.error('Error in config.json: sla.init_metrics must be an array.');
+      process.exit( 1 );
+   }
+   if( config.sla.actions == undefined ){
+      console.error('Error in config.json: sla.actions must be defined.');
+      process.exit( 1 );
+   }
 }
+
 
 module.exports = config;
 
