@@ -188,7 +188,7 @@ function Cache ( option ) {
 	 */
 	var _addMessage = function ( msg ) {
 	   const isDummy  = (msg[ FORMAT_ID ]  === dataAdaptor.CsvFormat.DUMMY_FORMAT);
-		var key_obj    = {};
+		const key_obj  = {};
 		var key_string = "";
 		for( var i=0; i<key_id_arr.length; i++ ){
 			key_obj [ key_id_arr[i] ] = msg[ key_id_arr[i] ];

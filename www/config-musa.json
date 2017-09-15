@@ -21,7 +21,7 @@
 		"nb_readers": 16
 	},
 	"input_mode": "kafka",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -62,7 +62,7 @@
 		"byte": 64
 	},
 	"retain_detail_report_period": 300,
-	"port_number": 443,
+	"port_number": 8082,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
@@ -109,7 +109,14 @@
 				"_url": "http://192.168.1.8",
 				"metrics": [],
 				"title": "TUT Component"
-			}
+			},
+         {
+            "id": "102",
+            "ip": "192.168.1.9",
+            "_url": "http://192.168.1.8",
+            "metrics": [],
+            "title": "TUT Component 2"
+         }
 		],
 		"init_metrics": [
          {

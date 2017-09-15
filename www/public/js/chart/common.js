@@ -112,30 +112,17 @@ $(function () {
                const components = obj.components;
                const pOption    = fProbe.option();
                const newProbeOption = []; //this array contains only probes defined by sla application
-               //for each probe ID
-               for( var i=0; i<pOption.length; i++ ){
-                  //find a component having the same id with probe ID
-                  for( var j=0; j<components.length; j++ )
-                     if( components[j].id == pOption[i].id ){
-                        //set label of probe by the comonent's title
-                        pOption[i].label = "C" + pOption[i].id + ": " + components[j].title;
-                        //add to new probe list
-                        newProbeOption.push( pOption[i] );
-                        break;
-                     }
-               }
+               const selectedProbe = URL_PARAM.probe_id;
                
-               //add components that does not exist
+               if (components.length > 0 )
+                  newProbeOption.push( {label: "All", id: "undefined", selected: URL_PARAM.probe_id == undefined } );
+               
+               //for each probe ID
                for( var j=0; j<components.length; j++ ){
-                  var found = false;
-                  for( var i=0; i<pOption.length; i++ )
-                     if( components[j].id == pOption[i].id ){
-                        found = true;
-                        break;
-                     }
-                  
-                  if( !found )
-                     newProbeOption.push({id: components[j].id, label: "C" + components[j].id + ": " +  components[j].title });
+                  if( components[j].id == selectedProbe )
+                     newProbeOption.push( {label: "C" +components[j].id + ": " + components[j].title, id: components[j].id, selected: true } );
+                  else
+                     newProbeOption.push( {label: "C" + components[j].id + ": " + components[j].title, id: components[j].id  } );
                }
                
                //update component list

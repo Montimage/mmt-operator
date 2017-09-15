@@ -164,10 +164,10 @@ if( config.isSLA ){
   app.use("/musa/connector", connector);
   
   
-  const musaStatus = require("./routes/musa/status.js");
-  musaStatus.pub_sub     = pub_sub;
-  musaStatus.dbconnector = dbconnector;
-  app.use("/", musaStatus);
+  //const musaStatus = require("./routes/musa/status.js");
+  //musaStatus.pub_sub     = pub_sub;
+  //musaStatus.dbconnector = dbconnector;
+  //app.use("/", musaStatus);
 }
 
 routes.dbConnectionString = 'mongodb://'+ config.database_server +':27017/mmt-admin';

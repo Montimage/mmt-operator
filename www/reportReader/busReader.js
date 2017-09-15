@@ -24,7 +24,7 @@ default:
 	process.exit( 1 );
 }
 
-const report_client = pub_sub.createClient( "consumer", "busReader" );
+const report_client = pub_sub.createClient( "consumer", "busReader" + (new Date()).getTime() );
 
 //*
 report_client.subscribe("license.stat");

@@ -20,7 +20,7 @@
 		"nb_readers": 16
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
