@@ -246,7 +246,7 @@
          },
          "stop_everything": {
             "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
-            "url" : "http://example.com",
+            "url" : "http://assurance-platform.musa-project.eu/admin/login/?next=/admin/",
             "channel_name": "stop_everything",
             "candidate_metrics": {
                "access_control": {

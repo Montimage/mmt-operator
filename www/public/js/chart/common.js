@@ -92,7 +92,6 @@ $(function () {
     //update options of this combobox based on value in status_db
     fProbe.reloadOptions = function(){
       var probes_status = status_db.probeStatus;
-      var arr = [];
       const select_id = URL_PARAM.probe_id;
       
 
@@ -133,22 +132,25 @@ $(function () {
       }
       //end sla
       
+      const newProbeOption = [];
       for( var i in probes_status ){
         if( i == select_id )
-          arr.push({ id: i, label: "Probe " + i, selected: true });
+           newProbeOption.push({ id: i, label: "Probe " + i, selected: true });
         else if( i != "null" )
-          arr.push({ id: i, label: "Probe " + i});
+           newProbeOption.push({ id: i, label: "Probe " + i});
       }
 
-      if( arr.length > 1 ){
+      if( newProbeOption.length > 1 ){
         if( select_id == undefined || select_id == "all" )
-          arr.unshift({id: "undefined", label: "All", selected: true});
+           newProbeOption.unshift({id: "undefined", label: "All", selected: true});
         else
-          arr.unshift({id: "undefined", label: "All"})
-
-        fProbe.option( arr );
-        fProbe.redraw();
+           newProbeOption.unshift({id: "undefined", label: "All"})
       }else {
+      }
+      
+      if( newProbeOption.length > 0 ){
+         fProbe.option( newProbeOption );
+         fProbe.redraw();
       }
     }
     //end fProbe
