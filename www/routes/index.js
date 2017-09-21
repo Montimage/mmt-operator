@@ -42,6 +42,13 @@ router.all("/info/*", function( req, res, next ){
   next();
 });
 
+
+router.get('/login', function (req, res, next) {
+   res.render('login', {
+       title: 'Login'
+   });
+});
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
     var session = req.session;
@@ -56,7 +63,6 @@ router.get('/', function (req, res, next) {
     res.render('login', {
         title: 'Login'
     });
-
 });
 
 router.post("/", function (req, res, next) {

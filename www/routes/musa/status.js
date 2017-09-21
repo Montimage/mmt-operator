@@ -12,6 +12,9 @@ const express = require('express');
 const router  = express.Router();
 
 function _decodeUserInformation( req, res, next ){
+   //always pass
+   return true;
+   
    //already logged
    if( req.session.loggedin )
       return {};
@@ -35,23 +38,6 @@ function _decodeUserInformation( req, res, next ){
    }
 }
 
-router.get("/", function(req, res, next){
-   if( _decodeUserInformation( req, res, next ) == undefined )
-      return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
-   
-   const appID = req.query["appId"];
-   const comID = req.query["componentId"];
-   
-   //both appId, and componentId are provided 
-   if( appID != null && comID != null ){
-      return res.redirect("/chart/sla?app_id=" + appID + "&probe_id="+ comID );
-   }
-   else if( appID != null ){
-      return res.redirect("/chart/sla?app_id=" + appID );
-   }
-   else next();
-});
-
 /**
  * Get status of a component
  * @param req
@@ -60,14 +46,16 @@ router.get("/", function(req, res, next){
  * @returns
  */
 router.get("/status", function(req, res, next){
+   //console.log("OK");
    if( _decodeUserInformation( req, res, next ) == undefined )
       return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
    
    const appID = req.query["appId"];
-   const comID = Number.parseInt( req.query["componentId"] );
+   var   comID = req.query["componentId"];
    
    //both appId, and componentId are provided 
    if( appID != null && comID != null ){
+      comID = parseInt( comID );
       //get alert
       if( router.dbconnector == undefined )
          return res.status( CONST.http.INTERNAL_ERROR_CODE ).end( "Internal Server Error" );
@@ -82,11 +70,12 @@ router.get("/status", function(req, res, next){
             "violate"   : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} }
             };
       
-      router.dbconnector._queryDB("metrics_alert", "aggregate", [{$match: $match}, {$group: $group}], function( err, apps){
+      router.dbconnector._queryDB("metrics_alerts", "aggregate", [{$match: $match}, {$group: $group}], function( err, apps){
          if( err )
             return res.status( CONST.http.INTERNAL_ERROR_CODE ).end("Internal Server Error" );
          
          res.setHeader("Content-Type", "application/json");
+         res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
          if( apps == undefined )
             return res.send( {
                status     : "error",
@@ -97,14 +86,37 @@ router.get("/status", function(req, res, next){
          
          //take the app
          return res.send({
-               status     : "error",
+               status     : "ok",
                appId      : appID,
                componentId: comID,
                alert      : ( apps.length == 0 ) ? 0 : apps[0].alert,
                violate    : ( apps.length == 0 ) ? 0 : apps[0].violate
-         })
-      });
+         });
+      }, false);
+      return;
    }
-   else next();
+   
+   next();
 });
+
+router.get("/", function(req, res, next){
+   if( _decodeUserInformation( req, res, next ) == undefined )
+      return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
+   
+   const appID = req.query["appId"];
+   const comID = req.query["componentId"];
+   
+   //both appId, and componentId are provided 
+   if( appID != null && comID != null ){
+      return res.redirect("/chart/sla?app_id=" + appID + "&probe_id="+ comID );
+   }
+   
+   if( appID != null ){
+      return res.redirect("/chart/sla?app_id=" + appID );
+   }
+   
+   next();
+});
+
+
 module.exports = router;
