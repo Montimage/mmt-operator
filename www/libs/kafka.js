@@ -62,10 +62,10 @@ function createClient( type, clientName  ){
             [],
             {
                //consumer group id, default `kafka-node-group`
-               groupId: 'kafka-node-group', 
+               groupId: 'group-' + clientName, 
                // Auto commit config 
                autoCommit: true,
-               autoCommitIntervalMs: 5000,
+               autoCommitIntervalMs: 500,
                // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms 
                fetchMaxWaitMs: 100,
                // This is the minimum number of bytes of messages that must be available to give a response, default 1 byte 

@@ -24,7 +24,19 @@ default:
 	process.exit( 1 );
 }
 
-const report_client = pub_sub.createClient( "consumer", "busReader" + (new Date()).getTime() );
+function receiveMessage (channel, message) {
+   //console.log( "[" + channel + "] " + message );
+   try{
+      processMessage.process( message );
+   }catch( err ){
+      console.error("Error when processing message on channel: " + channel );
+      console.error( message );
+      console.error( err );
+   }
+}
+
+
+const report_client = pub_sub.createClient( "consumer", "busReader" );
 
 //*
 report_client.subscribe("license.stat");
@@ -44,14 +56,18 @@ report_client.subscribe("behaviour.report");
 report_client.subscribe("ndn.report");
 report_client.subscribe("OTT.flow.report");
 report_client.subscribe("cpu.report");
+
+report_client.on('message', receiveMessage);
+
+const report_client2 = pub_sub.createClient( "consumer", "busReader2" );
 //for MUSA
-report_client.subscribe("metrics.avail");
+report_client2.subscribe("metrics.avail");
+
+report_client2.on('message', receiveMessage);
 //*/
 
-report_client.on('message', function (channel, message) {
-	//console.log( "[" + channel + "] " + message );
-	processMessage.process( message );
-});
+
+
 
 
 process.stdin.resume();//so the program will not close instantly
