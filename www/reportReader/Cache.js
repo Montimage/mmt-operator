@@ -192,7 +192,7 @@ function Cache ( option ) {
 		var key_string = "";
 		for( var i=0; i<key_id_arr.length; i++ ){
 			key_obj [ key_id_arr[i] ] = msg[ key_id_arr[i] ];
-			key_string               += msg[ key_id_arr[i] ] + ";";
+			key_string.concat(          msg[ key_id_arr[i] ] );
 		}
 
 		if( _IS_REAL_PERIOD ){
@@ -201,7 +201,7 @@ function Cache ( option ) {
 		}else{ //each minute, hour, day, month
 			key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _PERIOD_TO_UPDATE_NAME ).valueOf();
 		}
-		key_string += key_obj[ TIMESTAMP ]; 
+		key_string.concat( key_obj[ TIMESTAMP ] ); 
 
 		var oo = _dataObj[ key_string ];
 		
