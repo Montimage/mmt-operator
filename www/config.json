@@ -1,5 +1,6 @@
 {
 	"database_server": {
+	   "_host": "37.48.247.124",
 		"host": "localhost",
 		"port": 27017
 	},
@@ -61,11 +62,12 @@
 		"byte": 64
 	},
 	"retain_detail_report_period": 300,
+	"limit_database_size" :  524288000,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log"],
+   "log" : ["error", "warn", "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
 	"modules": ["security","behavior"]
