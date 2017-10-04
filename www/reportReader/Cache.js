@@ -8,6 +8,7 @@ const REPORT_NUMBER   = dataAdaptor.StatsColumnId.REPORT_NUMBER;
 const PROBE_ID        = dataAdaptor.StatsColumnId.PROBE_ID;
 const FORMAT_ID       = dataAdaptor.StatsColumnId.FORMAT_ID;
 const LongNumber      = require('mongodb').Long;
+const StringBuilder   = require("../libs/StringBuilder");
 
 /**
  * @param   {Object} option
@@ -19,7 +20,6 @@ const LongNumber      = require('mongodb').Long;
          inc : array of string
          set : array of string
          init: array of string
-         avg :
      },
      period: "real", "minute", "hour", "day"
  }
@@ -48,11 +48,10 @@ function Cache ( option ) {
    const key_inc_arr  = option.message_format.inc  || [];
    const key_set_arr  = option.message_format.set  || [] ;
    const key_init_arr = option.message_format.init || [];
-   const key_avg_arr  = option.message_format.avg  || [];
-   
    
    //IMPORTANCE: this array "key_arr" must contain all keys of the messages that will be inserted to DB  
    const key_arr      = [];
+   const stringBuilder = new StringBuilder( 2000 );
    
    const add_val = function( o ){
       for( var i in o ){
@@ -83,7 +82,6 @@ function Cache ( option ) {
       add_val( key_inc_arr );
       add_val( key_set_arr );
       add_val( key_init_arr );
-      add_val( key_avg_arr );
       add_val( [TIMESTAMP] );
    }
    
@@ -192,7 +190,8 @@ function Cache ( option ) {
 		var key_string = "";
 		for( var i=0; i<key_id_arr.length; i++ ){
 			key_obj [ key_id_arr[i] ] = msg[ key_id_arr[i] ];
-			key_string.concat(          msg[ key_id_arr[i] ] );
+			//key_string.concat(          msg[ key_id_arr[i] ] );
+			key_string               += msg[ key_id_arr[i] ];
 		}
 
 		if( _IS_REAL_PERIOD ){
@@ -201,7 +200,8 @@ function Cache ( option ) {
 		}else{ //each minute, hour, day, month
 			key_obj[ TIMESTAMP ] = moment( msg[ TIMESTAMP ] ).startOf( _PERIOD_TO_UPDATE_NAME ).valueOf();
 		}
-		key_string.concat( key_obj[ TIMESTAMP ] ); 
+		//key_string.concat( key_obj[ TIMESTAMP ] );
+		key_string += key_obj[ TIMESTAMP ];
 
 		var oo = _dataObj[ key_string ];
 		
@@ -222,14 +222,6 @@ function Cache ( option ) {
 			else
       			for (var j=0; j<key_inc_arr.length; j++)
       			   oo[ key_inc_arr[j] ] = msg[ key_inc_arr[j] ];
-			
-			//avg: calculate average value
-			if( isDummy )
-	         for (var j=0; j<key_avg_arr.length; j++)
-	            oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
-			else
-            for (var j=0; j<key_avg_arr.length; j++)
-               oo[ key_avg_arr[ j ] ]  = msg[ key_avg_arr[ j ] ];
 		}
 		else{
       		//add number only if the message is not a dummy message
@@ -237,10 +229,6 @@ function Cache ( option ) {
 		      //increase
          		for (var j=0; j<key_inc_arr.length; j++)
          			oo[ key_inc_arr[ j ] ]  += msg[ key_inc_arr[ j ] ];
-         
-         		//avg: calculate average value
-         		for (var j=0; j<key_avg_arr.length; j++)
-         		   oo[ key_avg_arr[ j ] ]  += msg[ key_avg_arr[ j ] ];
       		}
 		}
 		
@@ -274,8 +262,7 @@ function Cache ( option ) {
  *  key : array
  * 	init: array
  * 	inc : array
- *  set : array
- *  avg : array
+ * set : array
  * }
  */
 

@@ -317,7 +317,7 @@ module.exports = function(){
             if( is_micro_flow ){
                //this allows to distinguish 2 micro flow of 2 differents periods
                //there is at most 1 micro flow during one sample period
-                 msg[ COL.SESSION_ID ] = "m-" + ts ;
+                 msg[ COL.SESSION_ID ] = ts ;
                  //msg[ COL.APP_PATH   ] = "99";  //ethernet
                  //msg[ COL.APP_ID     ] = 99;  //ethernet
                  msg[ COL.IP_SRC     ] = MICRO_FLOW_STR ;
