@@ -52,26 +52,23 @@ function _decodeUserInformation( req, res, next ){
                token  : token,
                payload: decoded
          }
-         console.error( decoded );
+         console.log( decoded );
+         return true;
       }
-      return true;
+      
    }catch( e ){
       console.error( e );
-      return false;
    }
+   return false;
 }
 
 //invoked for any requests passed to this router
 router.use( function(req, res, next){
-   //console.log("OK");
-   if( _decodeUserInformation( req, res, next ) == false ){
-      //cannot verify the authorization or it does not exist
-      //end by AccessDenied when being requested by ajax
-      const isAjaxRequest = req.xhr;
-      if( isAjaxRequest )
-         return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
-   }
+   console.log("Check permission");
    
+   _decodeUserInformation( req, res, next );
+   
+   //save login token if user logged in
    if( req.session.loggedin ){
       var token = "";
       if( req.session.loggedin.token )
@@ -92,6 +89,17 @@ router.use( function(req, res, next){
  * @returns
  */
 router.get("/status", function(req, res, next){
+   
+   if( req.session.loggedin == undefined ){
+      //cannot verify the authorization or it does not exist
+      //end by AccessDenied when being requested by ajax
+      const isAjaxRequest = req.xhr;
+      if( isAjaxRequest )
+         return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
+      //redirect user to login page
+      return res.redirect("/login");
+   }
+   
    const appID = req.query["appId"];
    var   comID = req.query["componentId"];
    
@@ -115,7 +123,8 @@ router.get("/status", function(req, res, next){
       router.dbconnector._queryDB("metrics_alerts", "aggregate", [{$match: $match}, {$group: $group}], function( err, apps){
          if( err )
             return res.status( CONST.http.INTERNAL_ERROR_CODE ).end("Internal Server Error" );
-         
+         //allow a request commes from a different domain
+         res.setHeader("Access-Control-Allow-Origin", "*");
          res.setHeader("Content-Type", "application/json");
          res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
          if( apps == undefined )
