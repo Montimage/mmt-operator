@@ -44,7 +44,7 @@ function Reader(){
             var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes]
 				      , {execArgv: [
 				         //"--inspect",
-				         //'--debug-brk='+ (5860 + i), //debug
+				         //'--debug-brk' , //debug
 				         "--expose_gc"
 				         ]} 
 				);

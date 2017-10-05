@@ -154,7 +154,10 @@ function Cache ( option ) {
 	   //flush data in _dataObj to database
       //need messages arrive in time order???
 		else if( _dataArr.length > config.buffer.max_length_size
-				|| ts > _nextUpdateTime  ){
+				|| ts > _nextUpdateTime
+				//goto the past
+				|| ts < _nextUpdateTime - _PERIOD_TO_UPDATE 
+				){
 			
 		   _nextUpdateTime = ts + _PERIOD_TO_UPDATE;
 			return _this.flushDataToDatabase();
