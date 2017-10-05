@@ -59,7 +59,14 @@ var all_pages = {
           "reaction": {
         	  	title: "Reaction Manager"
           },
-          "separator":true,
+          "separator_1" : "separator",
+          "test" : {
+             title: "Renforcement Agent",
+             _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
+             url   : "http://37.48.247.124/enforcement/admin/",
+             target: "_blank"
+          },
+          "separator_2" : "separator",
           "availability": {
             title: "Availability"
           },
@@ -92,6 +99,8 @@ const listOfPageIdToShow = config.modules
     ,'stat'
 ];
 */
+//for testing
+//listOfPageIdToShow.push( "sla" );
 
 listOfPageIdToShow.forEach(
   function(key){
@@ -101,12 +110,7 @@ listOfPageIdToShow.forEach(
 
 router.get('/*', function(req, res, next) {
 
-   //TODO: this is only for MUSA project
-   if( config.isSLA && req.query.key == 5745846892177){
-      req.session.loggedin = true;
-   }
-   
-    if (req.session.loggedin == undefined) {
+   if (req.session.loggedin == undefined) {
         res.redirect("/");
         return;
     }

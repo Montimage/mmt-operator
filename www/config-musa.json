@@ -21,7 +21,7 @@
 		"nb_readers": 16
 	},
 	"input_mode": "kafka",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -78,21 +78,21 @@
 			{
 				"id": "30",
 				"ip": "37.48.247.117",
-				"url": "http://37.48.247.117",
+				"_url": "http://37.48.247.117",
 				"metrics": [],
 				"title": "TSM engine"
 			},
 			{
 				"id": "1",
 				"ip": "192.168.1.10",
-				"url": "http://192.168.1.10",
+				"_url": "http://192.168.1.10",
 				"metrics": [],
 				"title": "Consumption Estimation Calculator (CEC)"
 			},
 			{
 				"id": "2",
 				"ip": "192.168.1.9",
-				"url": "http://192.168.1.9",
+				"_url": "http://192.168.1.9",
 				"metrics": [],
 				"title": "ITS Factory"
 			},
@@ -246,7 +246,7 @@
          },
          "stop_everything": {
             "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
-            "url" : "http://assurance-platform.musa-project.eu/admin/login/?next=/admin/",
+            "url" : "http://37.48.247.124/enforcement/admin/",
             "channel_name": "stop_everything",
             "candidate_metrics": {
                "access_control": {

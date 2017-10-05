@@ -2,41 +2,87 @@
  * This route is used to communicate with MUSA Dashboard
  */
 
-//key to verify user token
-const CLIENT_SECRET   = "hM9LSBYsw-U68xNsuDdAfOjDyFSI-cslT3a2-z_oajBOEGqh6_bdVlGmbueP29W0";
-const HEADER_FIELD_ID = "X-Token";
-
 const CONST   = require("../../libs/constant.js");
 const jwt     = require("jsonwebtoken");
 const express = require('express');
 const router  = express.Router();
 
+
+//key to verify user token
+const JWT_SIGNATURE_SECRET   = "hM9LSBYsw-U68xNsuDdAfOjDyFSI-cslT3a2-z_oajBOEGqh6_bdVlGmbueP29W0";
+const HEADER_FIELD_ID        = "authorization"; //when authorization is passed via HTTP request header
+const QUERY_ID               = "sso";           //when authorization is passed via query string
+const COOKIE_ID              = "authorization"; //save authorization on cookie
+
+
 function _decodeUserInformation( req, res, next ){
    //always pass
-   return true;
+   //return true;
    
-   //already logged
-   if( req.session.loggedin )
-      return {};
+   //login from php web portal
+   if( req.query.key == 5745846892177){
+      req.session.loggedin = {
+            username: "portal"
+      };
+   }
+   
+   //already logged in
+   if( req.session.loggedin != undefined ){
+      //create a new token when user login using user/pass form
+      if( req.session.loggedin.token == undefined )
+         req.session.loggedin.token = jwt.sign({
+            source  : "loginFromSecAP",
+            username: req.session.loggedin.username
+         }, JWT_SIGNATURE_SECRET);
       
-   const token   = req.headers[ HEADER_FIELD_ID ];
-   if( token == undefined )
-      return;
+      return true;
+   }
+      
+   var token   = req.headers[ HEADER_FIELD_ID ];
+   if( token == undefined ){
+      //give one more chane
+      var token = req.query[ QUERY_ID ];
+      if( token == undefined )
+         return false;
+   }
    try{
-      const decoded = jwt.verify( token, CLIENT_SECRET );
+      const decoded = jwt.verify( token, JWT_SIGNATURE_SECRET );
       if( decoded ){
          req.session.loggedin = {
-               token: token,
+               token  : token,
                payload: decoded
          }
          console.error( decoded );
       }
-      return decoded;
+      return true;
    }catch( e ){
       console.error( e );
-      return;
+      return false;
    }
 }
+
+//invoked for any requests passed to this router
+router.use( function(req, res, next){
+   //console.log("OK");
+   if( _decodeUserInformation( req, res, next ) == false ){
+      //cannot verify the authorization or it does not exist
+      //end by AccessDenied when being requested by ajax
+      const isAjaxRequest = req.xhr;
+      if( isAjaxRequest )
+         return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
+   }
+   
+   if( req.session.loggedin ){
+      var token = "";
+      if( req.session.loggedin.token )
+         token = req.session.loggedin.token;
+      
+      res.cookie( COOKIE_ID, token  )
+   }
+   
+   //call other routers
+   next();
+});
 
 /**
  * Get status of a component
@@ -46,10 +92,6 @@ function _decodeUserInformation( req, res, next ){
  * @returns
  */
 router.get("/status", function(req, res, next){
-   //console.log("OK");
-   if( _decodeUserInformation( req, res, next ) == undefined )
-      return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
-   
    const appID = req.query["appId"];
    var   comID = req.query["componentId"];
    
@@ -99,10 +141,8 @@ router.get("/status", function(req, res, next){
    next();
 });
 
+
 router.get("/", function(req, res, next){
-   if( _decodeUserInformation( req, res, next ) == undefined )
-      return res.status( CONST.http.ACCESS_DEINED_CODE ).end("Access Denied");
-   
    const appID = req.query["appId"];
    const comID = req.query["componentId"];
    

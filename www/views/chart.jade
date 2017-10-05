@@ -81,11 +81,14 @@ mixin dropdown( index, query_string, val )
     span.caret
   ul.dropdown-menu
     each vv, ii in val.children
-      if( ii == "separator")
+      if( ii == "separator" || vv == "separator" )
         li.divider( role="separator" )
       else
         li
-          a( href="/chart/#{ index }/#{ ii }#{ query_string }" )= vv.title
+          if( vv.url )
+            a( href="#{ vv.url }" target="#{ vv.target }" )= vv.title
+          else
+            a( href="/chart/#{ index }/#{ ii }#{ query_string }" )= vv.title
       
 block content
     #header.navbar.navbar-inverse.navbar-fixed-top( role="navigation")
