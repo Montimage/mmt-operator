@@ -28,6 +28,8 @@ VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.
 constant= require('./constant.js')
 ;
 
+config.location = configPath;
+
 config.version = VERSION; 
 
 if( config.input_mode != constant.REDIS_STR 
