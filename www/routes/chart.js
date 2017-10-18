@@ -63,7 +63,7 @@ var all_pages = {
           "test" : {
              title: "Renforcement Agent",
              _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
-             url   : "http://37.48.247.124/enforcement/admin/",
+             url   : "/enforcement/admin/",
              target: "_blank"
           },
           "separator_2" : "separator",

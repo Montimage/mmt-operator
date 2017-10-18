@@ -9,7 +9,7 @@ const router  = express.Router();
 
 
 //key to verify user token
-const JWT_SIGNATURE_SECRET   = "hM9LSBYsw-U68xNsuDdAfOjDyFSI-cslT3a2-z_oajBOEGqh6_bdVlGmbueP29W0";
+const JWT_SIGNATURE_SECRET   = "g78UyD-CAHSLGI50YyPo4zGiYZYo-bbGUO_DE2T6YTGqgh_WMb9WQeRc5v0jkgAz";
 const HEADER_FIELD_ID        = "authorization"; //when authorization is passed via HTTP request header
 const QUERY_ID               = "sso";           //when authorization is passed via query string
 const COOKIE_ID              = "authorization"; //save authorization on cookie
@@ -46,7 +46,8 @@ function _decodeUserInformation( req, res, next ){
          return false;
    }
    try{
-      const decoded = jwt.verify( token, JWT_SIGNATURE_SECRET );
+      //const decoded = jwt.verify( token, JWT_SIGNATURE_SECRET );
+      var decoded = jwt.decode(token, {complete: true});
       if( decoded ){
          req.session.loggedin = {
                token  : token,

@@ -540,15 +540,13 @@ var ReportFactory = {
                         }
                      });
                   //reaction is performing
-                  else if( reaction.action == "perform" 
-                     && serverTime - reaction.action_time < INTERVAL_BETWEEN_2_PERFORMS ){
+                  else if( reaction.action == "perform" ){
                      row.children.push({
                         type : "<td>",
                         attr : {
                            html :
-                              (reaction.action_status == "start"?
-                              '<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>'
-                              :'<span class="text-success">Executed</span>')
+                              'Executing <i class="fa fa-spinner fa-pulse fa-fw"></i>'+
+                              '<a class="btn btn-success pull-right" onclick="_finishReaction(\''+ react_id +'\', this)">Done</a>'
                         }
                      });
                   }else
@@ -560,7 +558,7 @@ var ReportFactory = {
                            id   : "reaction-" + react_id,
                            "data-reaction"    : JSON.stringify( reaction ),
                            "data-reaction-id" : react_id,
-                           html : "checking ..."
+                           html: (reaction.action == "finish"? "executed ..." : "checking ...")
                         },
                      });
 
@@ -607,7 +605,8 @@ var ReportFactory = {
             $("#sla-reaction-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
             
             
-            function _btnClick( type, react_id, cb ){
+            window._btnClick = function ( type, react_id, cb ){
+               cb = cb || function(){};
                MMTDrop.tools.ajax("/musa/sla/reaction/"+ type +"/" + react_id, {}, "POST", {
                   error  : function(){
                      
@@ -645,7 +644,7 @@ var ReportFactory = {
                _btnClick( "perform", react_id, function(){
                   
                   $("#reaction-" + react_id )
-                     .html('<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i>')
+                     .html('<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i><a class="btn btn-success pull-right" onclick="_finishReaction(\''+ react_id +'\', this)">Done</a>')
                      .attr("align", "left");
                });
             }
@@ -824,5 +823,11 @@ function _updateReactions( data ){
          $("#div-reactions").scrollToChild( e, 0, 40 );
       }, 1000*index, el, 
          isValid ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
+   });
+}
+
+function _finishReaction( react_id, el ){
+   _btnClick( "finish", react_id, function(){
+      el.parentNode.innerHTML = 'Executed';
    });
 }
