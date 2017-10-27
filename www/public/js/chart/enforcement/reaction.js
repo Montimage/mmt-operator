@@ -5,14 +5,12 @@ var arr = [
       x: 0,
       y: 0,
       width: 12,
-      height: 8,
+      height: 6,
       type: "success",
       userData: {
          fn: "createUploadForm"
       },
-   }
-   /*
-   ,{
+   },{
       id: "sla-reaction",
       title: "Reactions",
       x: 0,
@@ -23,7 +21,7 @@ var arr = [
       userData: {
          fn: "createReactionForm"
       },
-   }*/
+   }
    ];
 
 function getAppID (){
@@ -98,16 +96,14 @@ var ReportFactory = {
                   const val = _getData( this, data );
                   
                   $(el).attr( "data-count", val );
-                  /*
                   $(el)
-                     .delay( 0+i*5000 )
                      .html( '<span class="badge">' + val + i + '</span>' );
-                     */
-                  setTimeout( function( e ){
-                     $(e).html( '<span class="badge">' + val + '</span>' );
-                     //ensure this element is showing
-                     $("#div-alerts").scrollToChild( e, 100, 40 );
-                  }, i*100, el );
+                  
+//                  setTimeout( function( e ){
+//                     $(e).html( '<span class="badge">' + val + '</span>' );
+//                     //ensure this element is showing
+//                     $("#div-alerts").scrollToChild( e, 100, 40 );
+//                  }, i*100, el );
                } );
 
                //update reaction table

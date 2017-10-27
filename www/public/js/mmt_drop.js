@@ -1725,7 +1725,10 @@ MMTDrop.tools = function () {
     _this.gotoURL( _this.getCurrentURL( null, add_param_string) );
   }
 
-  _this.ajax =  function( url, data, method, callback, options ){
+  _this.proxy = function( url, data, method, callback, options ){
+    _this.ajax( "/proxy?url="+ url, data, method, callback, options  ); 
+  },
+  _this.ajax  =  function( url, data, method, callback, options ){
     options = options || {};
 
     //convert to string for POST request
@@ -1738,6 +1741,7 @@ MMTDrop.tools = function () {
         $.ajax({
           url        : url,
           type       : method,
+          headers    : options.headers,
           dataType   : options.dataType ? options.dataType :"json",
           contentType: options.contentType ? options.contentType : "application/json",
           data       : data,
@@ -1750,7 +1754,7 @@ MMTDrop.tools = function () {
           statusCode: {
               //acces denied
               403 : function (){
-                document.location.href = "/";
+                 if( callback.error ) return; MMTDrop.alert.error( "Forbidden", 5);
               },
 
               404 : function (){ if( callback.error ) return; MMTDrop.alert.error( "Page not found", 10); },

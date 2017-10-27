@@ -12,7 +12,7 @@ var arr = [
         },
     },{
         id: "remote",
-        title: "Get SLAs from Repository",
+        title: "Get SLAs from Dashboard", //a MUSA Dashboard 
         x: 6,
         y: 0,
         width: 6,
@@ -25,6 +25,13 @@ var arr = [
 ];
 
 var availableReports = {
+}
+
+
+function getAppID (){
+   if (MMTDrop.tools.getURLParameters().app_id == undefined )
+      return "";
+   return MMTDrop.tools.getURLParameters().app_id;
 }
 
 
@@ -49,7 +56,8 @@ var ReportFactory = {
               attr: {
                 "class"   : "form-horizontal",
                 "method"  : "POST",
-                "action"  : "/musa/sla/get/", //+ app_id,
+                "action"  : "/",
+                "onsubmit": '_downloadSLA(); return false;',
               },
               children: [
                 {
@@ -57,10 +65,11 @@ var ReportFactory = {
                   label: "App ID:",
                   attr : {
                     type : "text",
-                    name : "id"
+                    name : "appId",
+                    id   : "appId",
+                    value: getAppID()
                   }
-                },
-                {
+                },{
                   type: "<div>",
                   children : [
                     {
@@ -69,7 +78,7 @@ var ReportFactory = {
                         class   : "btn btn-danger",
                         type    : "submit",
                         text    : "Get SLAs",
-                        onclick : 'alert("SLA repository is not available."); return false;'
+                        required: true
                       }
                     },{
                       type: "<button>",
@@ -83,15 +92,89 @@ var ReportFactory = {
                       }
                     }
                   ]
-                }
+                },{
+                   type : "<div>",
+                   attr : {
+                      style: "color: grey; margin-top: 20px; height: 80px; overflow: hidden; font-size: 12px",
+                      class: "form-group",
+                      id   : "status"
+                   }
+                 }
               ]
             }
           ]
         }
       ]
     };
-		var $container = $("#" + arr[1].id + "-content" );
-	  $container.append( MMTDrop.tools.createForm( form_config ) ) ;
+    var $container = $("#" + arr[1].id + "-content" );
+	 $container.append( MMTDrop.tools.createForm( form_config ) ) ;
+	 
+	 //this function parses information getting from Dashboard to obtain SLA URL then download them 
+	 window._downloadSLA = function(){
+	    const __status = function( msg ){
+	       $("#status").html( (new Date()).toLocaleTimeString() + ": " + msg + "<br/>" + $("#status").html() );
+       }
+	    
+	    const appId   = $("#appId").val();
+	    if( appId == "" )
+	       return __status("App ID must not empty");
+	    
+	    
+	    
+	    //get session element from Dashboard of this application
+	    __status("Getting session element of appId <u>"+ appId +"</u> from Dashboard ...");
+	    MMTDrop.tools.proxy("http://framework.musa-project.eu/session/" + appId, {
+	       //data
+	    }, "GET", {
+	       error: function(request, status, error){
+	          if( request.status == 403 )
+	             __status( "Do not have permission");
+	          else
+	             __status( "Error " + request.status + ": " + request.responseText );
+	       },
+	       success: function( obj ){
+	          __status("==> got app <u>"+ obj.applicationName +"</u>. Parsing deployment ...");
+	          var DEPLOY;
+	          for( var i=0; i<obj.columns.length; i++ ){
+	             switch( obj.columns[i].name ){
+	                case "Deploy":
+                      if( obj.columns[i].items.length == 0 )
+                         return __status("==> not found any deployment");
+                      DEPLOY = obj.columns[i].items;
+                      break;
+	             };
+	          }
+	          //parse components
+	          const COMPONENTS = {};
+	          var comps_count = 0;
+	          for( i=0; i<DEPLOY.length; i++ ){
+	             var dep = DEPLOY[i];
+	             var slaUrl = dep.getSlaUrl;
+	             if( slaUrl == undefined || slaUrl == "")
+	                slaUrl = dep.getSlaTeamplateUrl;
+	             
+	             if( slaUrl == undefined || slaUrl == "" ){
+	                __status("==> ignore component <u>" + dep.text + "</u> as no SLA");
+	                continue;
+	             }
+	                
+	             
+                COMPONENTS[ dep.text ] = { name: dep.text, slaUrl: slaUrl };
+                comps_count ++;
+             }
+	          
+	          __status("==> found " + comps_count +" component(s)" );
+	          //
+	          //__status(" downloading SLAs ... ");
+	       }
+	    }, {
+	       //options
+	       dataType: "json",
+	       headers :  {
+	          "Authorization": MMTDrop.tools.cookie.get("authorization"),
+	       }
+	    });
+	 };
 
 	},
 	createUploadForm: function( fPeriod ){

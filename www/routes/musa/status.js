@@ -65,7 +65,7 @@ function _decodeUserInformation( req, res, next ){
 
 //invoked for any requests passed to this router
 router.use( function(req, res, next){
-   console.log("Check permission");
+   //console.log("Check permission");
    
    _decodeUserInformation( req, res, next );
    
@@ -142,7 +142,8 @@ router.get("/status", function(req, res, next){
                appId      : appID,
                componentId: comID,
                alert      : ( apps.length == 0 ) ? 0 : apps[0].alert,
-               violate    : ( apps.length == 0 ) ? 0 : apps[0].violate
+               violate    : ( apps.length == 0 ) ? 0 : apps[0].violate,
+               underRemediation: ( apps.length == 0 ) ? 0 : apps[0].violate - 5,
          });
       }, false);
       return;

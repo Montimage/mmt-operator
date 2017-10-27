@@ -69,7 +69,7 @@
    "log" : ["error", "warn" , "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["security", "stat", "sla"],
+	"modules": ["stat", "security", "sla", "enforcement"],
 	"sla": {
 		"active_check_period": 5,
 		"violation_check_period": 60,

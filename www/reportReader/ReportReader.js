@@ -35,7 +35,8 @@ function Reader(){
 		switch( config.input_mode ){
 		case constant.REDIS_STR:
 		case constant.KAFKA_STR:
-			var ret = child_process.fork( __dirname + "/busReader.js" );
+			var ret = child_process.fork( __dirname + "/busReader.js", [],
+			      {execArgv: execArgv}  );
 			_readers.push( ret );
 			process._children.push( ret );
 			process._childrenCount ++;
@@ -50,8 +51,8 @@ function Reader(){
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-            var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes]
-				      , {execArgv: execArgv} 
+            var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes], 
+				      {execArgv: execArgv} 
 				);
 				_readers.push( ret );
 				process._children.push( ret );

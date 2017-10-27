@@ -113,6 +113,9 @@ app.use(express.static(path.join(__dirname, 'public'),{
 //share js libraries 
 app.use('/_js', require("./routes/server2client.js"))
 
+//a proxy to access outside API to avoid CORS
+app.use('/proxy', require("./routes/proxy.js"))
+
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} )
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',

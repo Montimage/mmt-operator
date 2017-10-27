@@ -2,6 +2,8 @@
 
 pwd
 
+PORT=22
+
 TARGET=/home/server10g/huunghia/mmt-operator
 USER=server10g
 PORT=22

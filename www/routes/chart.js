@@ -56,17 +56,7 @@ var all_pages = {
           "../sla": {
             title: "Metrics"
           },
-          "reaction": {
-        	  	title: "Reaction Manager"
-          },
-          "separator_1" : "separator",
-          "test" : {
-             title: "Renforcement Agent",
-             _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
-             url   : "/enforcement/admin/",
-             target: "_blank"
-          },
-          "separator_2" : "separator",
+          "separator" : "separator",
           "availability": {
             title: "Availability"
           },
@@ -79,8 +69,27 @@ var all_pages = {
 
         }
     },
+    "enforcement": {
+       title: "Enforcement",
+       children:{
+          "reaction": {
+             title: "Reactions"
+           },
+           "separator_1" : "separator",
+          "manager": {
+             title: "Reaction Manager"
+           },
+           "separator_2" : "separator",
+           "test" : {
+              title: "Renforcement Agent",
+              _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
+              url   : "/enforcement/admin/",
+              target: "_blank"
+           },
+         }
+     },
     'stat':{
-     title: "Stat"
+     title: "System"
     },
     'setting':{
       title: "Settings"
