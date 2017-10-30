@@ -113,7 +113,10 @@ const listOfPageIdToShow = config.modules
 
 listOfPageIdToShow.forEach(
   function(key){
-    pages_to_show[ key ] = all_pages[ key ];
+     if( all_pages[ key ] == undefined )
+        console.error("Not found module " + key );
+     else
+        pages_to_show[ key ] = all_pages[ key ];
   });
 
 

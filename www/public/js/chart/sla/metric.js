@@ -154,7 +154,7 @@ var ReportFactory = {
                            class   : "form-control",
                            type    : "text",
                            required: true,
-                           value   : me.violation,
+                           value   : me.violation == undefined? "" : me.violation,
                            disabled: me.support === false
                         }
                      }]

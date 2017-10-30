@@ -95,7 +95,7 @@ var ReportFactory = {
                 },{
                    type : "<div>",
                    attr : {
-                      style: "color: grey; margin-top: 20px; height: 80px; overflow: hidden; font-size: 12px",
+                      style: "color: grey; margin-top: 20px; height: 80px; overflow: auto; font-size: 12px",
                       class: "form-group",
                       id   : "status"
                    }
@@ -111,6 +111,9 @@ var ReportFactory = {
 	 
 	 //this function parses information getting from Dashboard to obtain SLA URL then download them 
 	 window._downloadSLA = function(){
+	    //clear old status messages
+	    $("#status").html();
+	    
 	    const __status = function( msg ){
 	       $("#status").html( (new Date()).toLocaleTimeString() + ": " + msg + "<br/>" + $("#status").html() );
        }
@@ -120,52 +123,126 @@ var ReportFactory = {
 	       return __status("App ID must not empty");
 	    
 	    
+	    function __proxyError(request, status, error){
+          if( request.status == 403 )
+             __status( "Do not have permission");
+          else
+             __status( "Error " + request.status + ": " + request.responseText );
+       };
 	    
 	    //get session element from Dashboard of this application
 	    __status("Getting session element of appId <u>"+ appId +"</u> from Dashboard ...");
 	    MMTDrop.tools.proxy("http://framework.musa-project.eu/session/" + appId, {
 	       //data
 	    }, "GET", {
-	       error: function(request, status, error){
-	          if( request.status == 403 )
-	             __status( "Do not have permission");
-	          else
-	             __status( "Error " + request.status + ": " + request.responseText );
-	       },
+	       error: __proxyError,
 	       success: function( obj ){
 	          __status("==> got app <u>"+ obj.applicationName +"</u>. Parsing deployment ...");
 	          var DEPLOY;
+	          const SLA = {};
 	          for( var i=0; i<obj.columns.length; i++ ){
-	             switch( obj.columns[i].name ){
-	                case "Deploy":
+	             if( obj.columns[i].name == "Deploy"){
                       if( obj.columns[i].items.length == 0 )
-                         return __status("==> not found any deployment");
+                         return __status("==> not found any components in deployment");
                       DEPLOY = obj.columns[i].items;
-                      break;
-	             };
+	             }
+	             
+	             //get slaUrl
+	             for( var j=0; j<obj.columns[i].items.length; j++ ){
+	                var comp = obj.columns[i].items[j];
+	                //got slaUrl for this component
+	                if( SLA[ comp.text ] != undefined )
+	                   continue;
+
+	                if( comp.getSlaURL != undefined && comp.getSlaURL != "" ){
+	                   SLA[ comp.text ] = comp.getSlaURL;
+	                   continue;
+	                }
+	                
+	                if( comp.getSlaTemplateUrl != undefined && comp.getSlaTemplateUrl != "" ){
+                      SLA[ comp.text ] = comp.getSlaTemplateUrl;
+                      continue;
+                   }
+	             }
 	          }
+	          
+	          //console.log( SLA );
+	          
 	          //parse components
-	          const COMPONENTS = {};
-	          var comps_count = 0;
+	          const COMPONENTS = [];
 	          for( i=0; i<DEPLOY.length; i++ ){
 	             var dep = DEPLOY[i];
-	             var slaUrl = dep.getSlaUrl;
-	             if( slaUrl == undefined || slaUrl == "")
-	                slaUrl = dep.getSlaTeamplateUrl;
+	             var slaUrl = SLA[ dep.text ];
 	             
 	             if( slaUrl == undefined || slaUrl == "" ){
 	                __status("==> ignore component <u>" + dep.text + "</u> as no SLA");
 	                continue;
 	             }
-	                
-	             
-                COMPONENTS[ dep.text ] = { name: dep.text, slaUrl: slaUrl };
-                comps_count ++;
+
+	             //information of one component
+                COMPONENTS.push( {
+                      appName: obj.applicationName,
+                      appId  : appId,
+                      id     : dep.cid,
+                      title  : dep.text,
+                      metrics: [],  //init metrics for this component
+                      //ip     : ??? //from deployment plan?
+                      
+                      slaUrl : slaUrl, 
+
+                      });
              }
 	          
-	          __status("==> found " + comps_count +" component(s)" );
-	          //
-	          //__status(" downloading SLAs ... ");
+	          __status("==> found " + COMPONENTS.length +" component(s) having SLAs" );
+	          if( COMPONENTS.length == 0 )
+	             return;
+	          
+	          //download SLA from repository for each valid component
+	          var compIndex = 0;
+	          function __downloadSLA(){
+	             if( compIndex >= COMPONENTS.length ){
+	                //finish upload sla
+	                __status("Finish.")
+	                alert("Successfully get all SLA(s).");
+	                MMTDrop.tools.gotoURL( "/musa/sla/upload/"+ appId, {param: ["app_id", "probe_id"], add:"act=finish" } );
+	                return;
+	             }
+	             
+      	          var comp  = COMPONENTS[ compIndex ];
+      	          __status("Downloading SLAs of component <u>" + comp.title +"</u> ...");
+      	          
+      	          //download sla from MUSA reposistory
+      	          MMTDrop.tools.proxy( comp.slaUrl, {}, "GET", {
+      	             error: __proxyError,
+      	             success: function( slaXml ){
+      	                //console.log( slaXml );
+      	                //upload slaXml to our operator backend
+      	                MMTDrop.tools.ajax("/musa/sla/uploadRaw/" + appId, {
+      	                   component_index: compIndex,
+      	                   component_id   : comp.id,
+      	                   slaXml         : slaXml,
+      	                   init_components: COMPONENTS
+      	                   //data
+      	                },"POST", {
+      	                   error: __proxyError,
+      	                   success: function( obj ){
+      	                      __status("==> " + obj.message );
+      	                      
+      	                      
+      	                      //download SLA of the next component
+      	                      compIndex ++;
+      	                      __downloadSLA();
+      	                   }
+      	                });
+      	             }//end success function
+      	          },{
+      	           //options
+      	             dataType: "text",
+      	          }); 
+	          };
+	          
+	          //start to download 
+	          __downloadSLA();
 	       }
 	    }, {
 	       //options

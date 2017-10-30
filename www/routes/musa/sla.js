@@ -10,18 +10,103 @@ const parser = new xml2js.Parser();
 //status of current upload sla
 router._data = {};
 router._sla  = {};
+
+router.post("/uploadRaw/:id", function(req, res, next) {
+   const app_id = req.params.id;
+
+if( app_id == undefined ) app_id = "_undefined";
+   
+   const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
+
+   //first component of the app
+   if( router._sla[ app_id ]  === undefined )
+      router._sla[ app_id ] = {};
+   
+   const app_config = router._sla[ app_id ];
+
+   if( app_config.id == undefined )
+      app_config.id = app_id;
+   if( app_config.init_metrics == undefined )
+      app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
+   if( app_config.init_components === undefined )
+      if  (req.body.init_components != undefined )
+         app_config.init_components = req.body.init_components;
+      else
+         //app_config.init_components = [];
+         return res.status(417).end( "Expected init_components" );
+
+   if( app_config.components == undefined )
+      app_config.components = [];
+
+   if( app_config.sla == undefined )
+      app_config.sla = {};
+
+   //id of component
+   //const comp_index = parseInt(req.body.component_id);
+   const comp_index = parseInt(req.body.component_index);
+   const slaXml     = req.body.slaXml; 
+            //got content of SLA file
+
+   //parse file content as json
+   parser.parseString( slaXml, function (err_2, result) {
+      if( err_2 ){
+         console.error( err_2 );
+         //417 Expectation Failed
+         // The server cannot meet the requirements of the Expect request-header field
+         return res.status(417).end( err_2.message );;
+      }
+
+      app_config.sla[ comp_index ] = result;
+
+      //extract content of sla file (that is in JSON format)
+      extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
+         if( err_3 ){
+            console.error( err_3 );
+            res.status(417).end( err_3.message );
+            return;
+         }
+
+         //202: the request has been accepted for processing, but the processing has not been completed. 
+         //     The request might or might not be eventually acted upon, and may be disallowed when processing occurs
+         res.status(202).setHeader("Content-Type", "application/json");
+         
+         res.send({message: "Got "+ count +" metrics", appId: app_id });
+         
+      });
+
+   });//parser.parseString
+});
+
 //upload SLA files
 router.post("/upload/:id", function(req, res, next) {
    //status of processing SLA files
    const app_id = req.params.id;
    if( app_id == undefined ) app_id = "_undefined";
+   
+   const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
+
+   //first component of the app
    if( router._sla[ app_id ]  === undefined )
       router._sla[ app_id ] = {};
-
-   var status = router._data[ app_id ] = {progress: 0, message:"", error: false};
-
+   
    const app_config = router._sla[ app_id ];
 
+   if( app_config.id == undefined )
+      app_config.id = app_id;
+   if( app_config.init_metrics == undefined )
+      app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
+   if( app_config.init_components === undefined )
+      app_config.init_components = config.sla.init_components;
+
+   if( app_config.components == undefined )
+      app_config.components = [];
+
+   if( app_config.sla == undefined )
+      app_config.sla = {};
+
+   //id of component
+   const comp_index = parseInt(req.body.component_id);
+   
    //handle SLA files uploading
    multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){
       if( err ){
@@ -30,21 +115,8 @@ router.post("/upload/:id", function(req, res, next) {
          return status.message  = "Error: " + JSON.stringify(err);
       }
 
+      //file being uploaded
       const file  = req.file;
-      if( app_config.id == undefined )
-         app_config.id = app_id;
-      if( app_config.init_metrics == undefined )
-         app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
-      if( app_config.init_components === undefined )
-         app_config.init_components = config.sla.init_components; //JSON.parse( req.body.init_components );
-
-      if( app_config.components == undefined )
-         app_config.components = [];
-
-      if( app_config.sla == undefined )
-         app_config.sla = {};
-
-      const comp_index = parseInt(req.body.component_id);
 
       status.error = false;
       status.progress = 30;
@@ -57,6 +129,7 @@ router.post("/upload/:id", function(req, res, next) {
 
          console.error( status );
       }
+      
       //waiting for 1 second before parsing SLA file
       //this gives times to show a message above on web browser
       setTimeout( function(){
@@ -105,6 +178,7 @@ router.post("/upload/:id", function(req, res, next) {
          });//fs.readFile
       }, 1000);
 
+      //204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
       res.status(204).end()
    })
 });
@@ -129,11 +203,14 @@ const OPERATOR = {
 }
 
 function get_violation( expr, type ){
-   expr = get_value( expr, [0, "specs:oneOpExpression", 0, "$"] );
+   expr = get_value( expr, [0, "oneOpExpression", 0, "$"] );
 
    var opr = get_value( expr, ["operator"]);
    var val = get_value( expr, ["operand"]);
 
+   if( val == undefined )
+      return "";
+   
    if( type == "string")
       return OPERATOR[opr] + " \"" + val + "\"";
    return OPERATOR[opr] + " " + val;
@@ -150,9 +227,13 @@ function extract_metrics( app_config, index, cb ){
       var comp = app_config.init_components[ index ];
       var sla  = app_config.sla[ index ];
       var sla_str = JSON.stringify( sla );
+      
+      //remove namespace
+      sla_str = sla_str.replace(/[a-zA-Z0-9]+:/g, "");
+      sla = JSON.parse( sla_str );
 
-      sla  = get_value(sla, ["wsag:AgreementOffer", "wsag:Terms", 0, "wsag:All", 0] );
-      var title = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "$", "wsag:Name"] );
+      sla  = get_value(sla, [ "AgreementOffer",  "Terms", 0,  "All", 0] );
+      var title = get_value( sla, [ "ServiceDescriptionTerm", 0, "$",  "Name"] );
 
       console.log("     title = " + title );
 
@@ -186,17 +267,17 @@ function extract_metrics( app_config, index, cb ){
       if( !existed )
          app_config.components.push( comp );
 
-      var slos = get_value( sla, ["wsag:GuaranteeTerm", 0, "wsag:ServiceLevelObjective", 0, "wsag:CustomServiceLevel", 0, "specs:objectiveList", 0, "specs:SLO"] );
+      var slos = get_value( sla, [ "GuaranteeTerm", 0,  "ServiceLevelObjective", 0,  "CustomServiceLevel", 0, "objectiveList", 0, "SLO"] );
       comp.metrics = [];
 
       //get data type of each metrics
-      const specs = get_value( sla, ["wsag:ServiceDescriptionTerm", 0, "specs:serviceDescription", 0, "specs:security_metrics", 0, "specs:Metric"]);
+      const specs = get_value( sla, [ "ServiceDescriptionTerm", 0, "serviceDescription", 0, "security_metrics", 0, "Metric"]);
       const TYPES = {};
       for( var j=0; j<specs.length; j++ ){
          var spec = specs[ j ];
-         var type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:enumUnit", 0, "specs:enumItemsType", 0]);
+         var type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "enumUnit", 0, "enumItemsType", 0]);
          if( type == undefined )
-            type = get_value( spec, ["specs:MetricDefinition", 0, "specs:unit", 0, "specs:intervalUnit", 0, "specs:intervalItemsType", 0]);
+            type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "intervalUnit", 0, "intervalItemsType", 0]);
          TYPES[ get_value( spec, ["$", "name"] ) ] = type;
       }
 
@@ -204,7 +285,7 @@ function extract_metrics( app_config, index, cb ){
 
       for( var j=0; j<slos.length; j++ ){
          var slo = slos[ j ],
-         title = get_value( slo, ["specs:MetricREF", 0] );
+         title = get_value( slo, ["MetricREF", 0] );
          type  = TYPES[ title ],
          name  = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
          enable= false,
@@ -228,8 +309,8 @@ function extract_metrics( app_config, index, cb ){
             id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
             title    : title,
             name     : name, 
-            priority : get_value( slo, ["specs:importance_weight", 0]),
-            violation: get_violation( get_value( slo, ["specs:SLOexpression"] ), type ),
+            priority : get_value( slo, ["importance_weight", 0]),
+            violation: get_violation( get_value( slo, ["SLOexpression"] ), type ),
             data_type: type,
             enable   : enable,
             support  : support,
