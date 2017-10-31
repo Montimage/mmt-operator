@@ -69,7 +69,7 @@
    "log" : ["error", "warn" , "log", "info"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["stat", "security", "sla", "reaction" ],
+	"modules": ["stat", "security", "sla", "enforcement" ],
 	"sla": {
 		"active_check_period": 5,
 		"violation_check_period": 60,
@@ -130,10 +130,10 @@
          },
          {
             "id": "2",
-            "name": "incident",
+            "name": "security_incident",
             "alert": "",
             "violation": "< 0",
-            "title": "Incident",
+            "title": "Security Incident",
             "enable": true,
             "support": true
          },
@@ -172,12 +172,20 @@
             "title": "Accesses Logging",
             "enable": true,
             "support": true
+         },{
+            "id": "7",
+            "name": "authentication",
+            "alert": "",
+            "violation": "<= 0",
+            "title": "Authentication",
+            "enable": true,
+            "support": true
          }
       ],
       "actions": {
-         "ask_more_space": {
-            "description": "User need to ask for more hard disk space",
-            "channel_name": "ask_more_space",
+         "add_more_disk_space": {
+            "description": "More hard disk space is needed",
+            "channel_name": "more_disk_space_needed",
             "candidate_metrics": {
                "access_logging": {
                   "alert": true,
@@ -186,7 +194,7 @@
             }
          },
          "move_log": {
-            "description": "User need to move the log to a remote server",
+            "description": "User needs to move the log to a remote server",
             "channel_name": "move_log",
             "candidate_metrics": {
                "access_logging": {
@@ -196,7 +204,7 @@
             }
          },
          "rotate_log": {
-            "description": "Active logrotate program",
+            "description": "Active logrotate program to delete old log entries",
             "channel_name": "rotate_log",
             "candidate_metrics": {
                "access_logging": {
@@ -205,28 +213,28 @@
                }
             }
          },
-         "update_attacks_signature": {
-            "description": "User need to update attacks signature",
-            "channel_name": "update_attacks_signature",
+         "update_attacks_signatures": {
+            "description": "User needs to update attacks signatures",
+            "channel_name": "update_attacks_signatures",
             "candidate_metrics": {
-               "incident": {
+               "security_incident": {
                   "alert": true,
                   "violate": true
                }
             }
          },
          "add_new_rules": {
-            "description": "User need to add a new rule in the IDS",
+            "description": "User needs to add one or several new rules in the IDS",
             "channel_name": "add_new_rules",
             "candidate_metrics": {
-               "incident": {
+               "security_incident": {
                   "alert": true,
                   "violate": true
                }
             }
          },
-         "restart_apache": {
-            "description": "Restart Apache server to bring the website up",
+         "restart_web_server": {
+            "description": "Restart Web server to bring the website up",
             "channel_name": "mmt-agent-restart-apache",
             "candidate_metrics": {
                "availability": {
@@ -235,7 +243,7 @@
             }
          },
          "use_HA_framework": {
-            "description": "User need to use HA Framework",
+            "description": "User needs to deploy VM or container in a HA Framework",
             "channel_name": "use_HA_framework",
             "candidate_metrics": {
                "availability": {
@@ -244,10 +252,10 @@
                }
             }
          },
-         "stop_everything": {
-            "description": "Open MUSA AccessControl in a new window, then user need to disables all accesses",
+         "update_access_control": {
+            "description": "Update access control to block malicious behaviours",
             "url" : "/enforcement/admin/",
-            "channel_name": "stop_everything",
+            "channel_name": "update_access_control",
             "candidate_metrics": {
                "access_control": {
                   "alert": true,
@@ -258,9 +266,9 @@
                }
             }
          },
-         "obfuscate_data": {
-            "description": "User need to obfuscate data",
-            "channel_name": "obfuscate_data",
+         "anonymize_data": {
+            "description": "User needs to anonymize data",
+            "channel_name": "anonymize_data",
             "candidate_metrics": {
                "data_privacy": {
                   "alert": true
@@ -268,11 +276,35 @@
             }
          },
          "encrypt_data": {
-            "description": "User need to anonymize or encrypt data",
+            "description": "User needs to encrypt data",
             "channel_name": "encrypt_data",
             "candidate_metrics": {
                "data_privacy": {
                   "alert": true
+               },
+               "authentication": {
+                  "alert": true,
+                  "violation": true
+                  }
+            },
+            "configure_scanner_frequency": {
+            "description": "Scanner frequency needs to be updated to meet SLA requirement",
+            "channel_name": "configure_scanner_frequency",
+            "candidate_metrics": {
+               "vul_scan_freq": {
+                  "alert": true,
+                  "violation": true
+                  }
+               }
+            },
+            "apply_two_factors_authentication": {
+            "description": "Two factors authentication needs to be activated",
+            "channel_name": "apply_two_factors_authentication",
+            "candidate_metrics": {
+               "authentication": {
+                  "alert": true,
+                  "violation": true
+                  }
                }
             }
          }

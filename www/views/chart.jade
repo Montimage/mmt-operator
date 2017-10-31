@@ -84,7 +84,7 @@ mixin dropdown( index, query_string, val )
       if( ii == "separator" || vv == "separator" )
         li.divider( role="separator" )
       else
-        li
+        li(class="sub_menu_#{ii}")
           if( vv.url )
             a( href="#{ vv.url }" target="#{ vv.target }" )= vv.title
           else
@@ -105,17 +105,17 @@ block content
                     each val, index in pages
                       if( val.children == undefined )
                         if( index === page_id )
-                            li.active
+                            li(class="menu_#{index}").active
                               +ahref( index, query_string, val )
                         else
-                            li
+                            li(class="menu_#{index}")
                               +ahref( index, query_string, val )
                       else
                         if( index === page_id )
-                          li.active.dropdown
+                          li(class="menu_#{index}").active.dropdown
                             +dropdown( index, query_string, val )
                         else
-                          li.dropdown
+                          li(class="menu_#{index}").dropdown
                             +dropdown( index, query_string, val )
                               
                     li.dropdown

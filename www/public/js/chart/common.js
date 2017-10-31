@@ -89,15 +89,73 @@ $(function () {
     fProbe.onFilter( function( opt ){
       MMTDrop.tools.reloadPage("probe_id=" + opt.id );
     });
-    //update options of this combobox based on value in status_db
+    
+    //SLA
+    if( MMTDrop.config.others && MMTDrop.config.others.modules 
+          && MMTDrop.config.others.sla != undefined 
+          && MMTDrop.config.others.modules.indexOf("sla") != -1 //active SLA
+          ){
+
+       const SLAs = MMTDrop.config.others.sla;
+       if( SLAs != undefined ){
+          //list of reaction agents
+          const $reactionsAgents = $($(".menu_enforcement")[0].children[1]);
+          for( var act in SLAs.actions ){
+             var name = act.replace(/_/g, " ");
+             $reactionsAgents.append( '<li class="sub_menu_'+ act  +' disabled"><a href="#" style="text-transform: capitalize;">'+ name +' Agent</a></li>' );
+          }
+          //list of fixed metrics
+          const $metrics_list = $($(".menu_sla")[0].children[1]);
+          const queryString = "&probe_id=" + URL_PARAM.probe_id;
+          for( var i=0; i<SLAs.init_metrics.length; i++ ){
+             var m = SLAs.init_metrics[i];
+             $metrics_list.append( '<li class="sub_menu_'+ m.name +'"><a href="/chart/sla/alerts?metric_id='+ m.id + queryString + '">'+ m.title +'</a></li>' );
+          }
+          //add  separator
+          $metrics_list.append('<li role="separator" class="divider"></li>');
+       }
+       //update list of metrics getting from SLA
+       const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
+       MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
+          error  : function(){},
+          success: function( data ){
+             var obj = data.data[0];
+             //does not exist ?
+             if( obj == undefined )
+                return;
+             
+             //set of unique metrics
+             const metrics = {};
+             
+             //components
+             const components = obj.components;
+             
+             //for each probe ID
+             for( var j=0; j<components.length; j++ ){
+                //get set of unique metrics
+                var me = components[j].metrics;
+                for( var k=0; k<me.length; k++ )
+                   metrics[ me[k].name ] = me[k];
+             }
+             
+             const $metrics_list = $($(".menu_sla")[0].children[1]);
+             const queryString = "&probe_id=" + URL_PARAM.probe_id;
+             for( var m in metrics )
+                $metrics_list.append( '<li class="sub_menu_'+ m +'"><a href="/chart/sla/alerts?metric_id='+ metrics[m].id + queryString + '">'+ metrics[m].title +'</a></li>' );
+          }
+       } );
+    }
+    //endSLA
+    
+    //update options of this combobox based on value in status_db: replace probe id by component name
     fProbe.reloadOptions = function(){
       var probes_status = status_db.probeStatus;
       const select_id = URL_PARAM.probe_id;
       
-
       //this is applied when sla
       var initialComponents = {};
       if( fProbe.isVisible() && MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
+         
          //load metric from DB
          const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
          MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
@@ -107,6 +165,7 @@ $(function () {
                //does not exist ?
                if( obj == undefined )
                   return;
+               
                //components
                const components = obj.components;
                const pOption    = fProbe.option();

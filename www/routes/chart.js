@@ -56,17 +56,7 @@ var all_pages = {
           "../sla": {
             title: "Metrics"
           },
-          "separator" : "separator",
-          "availability": {
-            title: "Availability"
-          },
-          "incident":{
-            title: "Incident Detection"
-          },
-          "vuln_scan_freq": {
-            title: "Vulnerability Scan Frequency"
-          }
-
+          "separator" : "separator"
         }
     },
     "enforcement": {
@@ -76,16 +66,14 @@ var all_pages = {
              title: "Reactions"
            },
            "separator_1" : "separator",
-          "manager": {
-             title: "Reaction Manager"
-           },
-           "separator_2" : "separator",
-           "test" : {
+
+           "enforcement" : {
               title: "Renforcement Agent",
               _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
               url   : "/enforcement/admin/",
               target: "_blank"
            },
+           "separator_2" : "separator"
          }
      },
     'stat':{

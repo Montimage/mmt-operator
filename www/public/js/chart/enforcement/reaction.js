@@ -3,7 +3,7 @@ var arr = [
       id: "sla-metric",
       title: "Metrics",
       x: 0,
-      y: 0,
+      y: 8,
       width: 12,
       height: 6,
       type: "success",
@@ -14,7 +14,7 @@ var arr = [
       id: "sla-reaction",
       title: "Reactions",
       x: 0,
-      y: 8,
+      y: 0,
       width: 12,
       height: 5,
       type: "warning",
@@ -97,7 +97,7 @@ var ReportFactory = {
                   
                   $(el).attr( "data-count", val );
                   $(el)
-                     .html( '<span class="badge">' + val + i + '</span>' );
+                     .html( '<span class="badge">' + val + '</span>' );
                   
 //                  setTimeout( function( e ){
 //                     $(e).html( '<span class="badge">' + val + '</span>' );
@@ -321,6 +321,7 @@ var ReportFactory = {
             };
 
             $("#sla-metric-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
+            $("#sla-metric-content" ).parent().hide();
 
             //after redering the table, update their values (#alert, #violation)
             setTimeout( updateValue, 1000);
@@ -594,7 +595,7 @@ var ReportFactory = {
                            attr: {
                               class   : "btn btn-primary pull-right",
                               text    : "Manage Reactions",
-                              href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
+                              href    : '/chart/enforcement/manager' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
                            }
                         }]
                   }]
