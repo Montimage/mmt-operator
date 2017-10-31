@@ -135,13 +135,13 @@ $(function () {
                 //get set of unique metrics
                 var me = components[j].metrics;
                 for( var k=0; k<me.length; k++ )
-                   metrics[ me[k].name ] = me[k];
+                   metrics[ me[k].title ] = me[k];
              }
              
              const $metrics_list = $($(".menu_sla")[0].children[1]);
              const queryString = "&probe_id=" + URL_PARAM.probe_id;
              for( var m in metrics )
-                $metrics_list.append( '<li class="sub_menu_'+ m +'"><a href="/chart/sla/alerts?metric_id='+ metrics[m].id + queryString + '">'+ metrics[m].title +'</a></li>' );
+                $metrics_list.append( '<li class="sub_menu_'+ metrics[m].id +' disabled"><a href="/chart/sla/alerts?metric_id='+ metrics[m].id + queryString + '">'+ metrics[m].title +'</a></li>' );
           }
        } );
     }
