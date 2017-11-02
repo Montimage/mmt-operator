@@ -543,6 +543,10 @@ var ReportFactory = {
                      row.children.push({
                         type : "<td>",
                         attr : {
+                           class: "reactions",
+                           id   : "reaction-" + react_id,
+                           "data-reaction"    : JSON.stringify( reaction ),
+                           "data-reaction-id" : react_id,
                            html :
                               'Executing <i class="fa fa-spinner fa-pulse fa-fw"></i>'+
                               '<a class="btn btn-success pull-right" onclick="_finishReaction(\''+ react_id +'\', this)">Done</a>'
@@ -626,6 +630,7 @@ var ReportFactory = {
           //perform a reaction
             window._performReaction = function( react_id ){
                var hasError = false
+               MMTDrop.tools.localStorage.set( react_id + "-time", (new Date()).getTime(), false );
                const actions = _getActions( react_id );
                actions.forEach( function( act_name ){
                   const action = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", act_name ] );
@@ -794,7 +799,11 @@ function _verifyCondition( reaction, data ){
    if( oldStr == str )
       return false;
    
-   MMTDrop.tools.localStorage.set( reaction.id, str, false );
+   //save to temps
+   if( reaction.action == "perform")
+      MMTDrop.tools.localStorage.set( reaction.id, str, false );
+   else
+      MMTDrop.tools.localStorage.set( "tmp_"+ reaction.id, str, false );
    
    
    return true;
@@ -817,15 +826,31 @@ function _updateReactions( data ){
             .delay( 1000 * index )
             .html( MMTDrop.tools.createDOM( _createButtons( reactID ) ));
        */
-      setTimeout( function( e, text ){
-         $(e).html( text );
-         $("#div-reactions").scrollToChild( e, 0, 40 );
-      }, 1000*index, el, 
-         isValid ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
+      if( reaction.action != "perform" )
+         setTimeout( function( e, text ){
+            $(e).html( text );
+            $("#div-reactions").scrollToChild( e, 0, 40 );
+         }, 1000*index, el, 
+            (isValid) ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
+      else{
+         const now_ts  = (new Date()).getTime();
+         const exec_ts = parseInt( MMTDrop.tools.localStorage.get( reactID + "-time", false ));
+         //not found any more violation since 60 seconds
+         // is performing => done
+         if( !isValid && now_ts - exec_ts >= 60*1000  ){
+            _btnClick( "finish", reactID, function(){
+               el.innerHTML = 'Executed';
+            });
+         }
+      }
    });
 }
 
 function _finishReaction( react_id, el ){
+   //move temps to a real
+   const oldStr = MMTDrop.tools.localStorage.get( "tmp_" + react_id, false );
+   MMTDrop.tools.localStorage.set( react_id, oldStr, false );
+   
    _btnClick( "finish", react_id, function(){
       el.parentNode.innerHTML = 'Executed';
    });

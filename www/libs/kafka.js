@@ -73,7 +73,8 @@ function createClient( type, clientName  ){
                // The maximum bytes to include in the message set for this partition. This helps bound the size of the response. 
                fetchMaxBytes: 1024 * 1024,
                // If set true, consumer will fetch message from the given offset in the payloads 
-               fromOffset: false,
+               //fromOffset: false,
+               fromOffset: -1, // "latest",
                // If set to 'buffer', values will be returned as raw buffer objects. 
                encoding: 'utf8',
                keyEncoding: 'utf8'

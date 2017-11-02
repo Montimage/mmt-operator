@@ -7,18 +7,18 @@ if( val != undefined ){
 }
 
 //allow to change config.json
-var configPath = "../config.json";
+var configPath = "config.json";
 process.argv.forEach(function (val, index, array) {
    //console.log(index + ': ' + val);
    var arr = val.split("=");
    if( arr[0] == "--config"){
-      configPath = "../" + arr[1];
+      configPath = arr[1];
       console.warn("[INFO] used configuration in " + arr[1] );
    }
  });
 
 const
-config  = require( configPath ),
+config  = require( "../" + configPath ),
 fs      = require("fs"),
 util    = require("util"),
 moment  = require('moment'),
