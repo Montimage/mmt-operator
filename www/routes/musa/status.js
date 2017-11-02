@@ -158,7 +158,7 @@ router.get("/", function(req, res, next){
    const comID = req.query["componentId"];
    
    //both appId, and componentId are provided 
-   if( appID != null && comID != null ){
+   if( appID != null && comID != null && comID != "" ){
       return res.redirect("/chart/sla?app_id=" + appID + "&probe_id="+ comID );
    }
    

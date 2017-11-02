@@ -5,7 +5,7 @@ var arr = [
       x: 0,
       y: 8,
       width: 12,
-      height: 6,
+      height: 1,
       type: "success",
       userData: {
          fn: "createUploadForm"

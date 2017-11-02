@@ -353,7 +353,7 @@ var ReportFactory = {
                                  class   : "btn btn-success pull-right",
                                  style   : "margin-left: 30px",
                                  text    : "Cancel",
-                                 href    : '/chart/sla/reaction' + MMTDrop.tools.getQueryString(["app_id"], "probe_id=null") //no need "probe_id" as we want to show all of them
+                                 href    : '/chart/enforcement/reaction' + MMTDrop.tools.getQueryString(["app_id"], "probe_id=null") //no need "probe_id" as we want to show all of them
                               }
                            },
                            ]}]

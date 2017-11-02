@@ -344,7 +344,7 @@ var ReportFactory = {
                   class   : "btn btn-success pull-right",
                   style   : "margin-left: 30px",
                   text    : "Cancel",
-                  href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
+                  href    : '/chart/enforcement/reaction' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
                 }
               },
             ]
