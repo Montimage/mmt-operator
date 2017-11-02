@@ -17,9 +17,10 @@ router.post("/uploadRaw/:id", function(req, res, next) {
 if( app_id == undefined ) app_id = "_undefined";
    
    const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
-
+   const comp_index = parseInt(req.body.component_index);
+   
    //first component of the app
-   if( router._sla[ app_id ]  === undefined )
+   if( router._sla[ app_id ]  === undefined  || comp_index == 0)
       router._sla[ app_id ] = {};
    
    const app_config = router._sla[ app_id ];
@@ -43,7 +44,7 @@ if( app_id == undefined ) app_id = "_undefined";
 
    //id of component
    //const comp_index = parseInt(req.body.component_id);
-   const comp_index = parseInt(req.body.component_index);
+   
    const slaXml     = req.body.slaXml; 
             //got content of SLA file
 
@@ -84,9 +85,11 @@ router.post("/upload/:id", function(req, res, next) {
    if( app_id == undefined ) app_id = "_undefined";
    
    const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
-
+   //id of component
+   const comp_index = parseInt(req.body.component_id);
+   
    //first component of the app
-   if( router._sla[ app_id ]  === undefined )
+   if( router._sla[ app_id ]  === undefined || comp_index == 0)
       router._sla[ app_id ] = {};
    
    const app_config = router._sla[ app_id ];
@@ -104,8 +107,7 @@ router.post("/upload/:id", function(req, res, next) {
    if( app_config.sla == undefined )
       app_config.sla = {};
 
-   //id of component
-   const comp_index = parseInt(req.body.component_id);
+
    
    //handle SLA files uploading
    multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){

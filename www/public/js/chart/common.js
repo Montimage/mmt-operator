@@ -106,7 +106,7 @@ $(function () {
           }
           //list of fixed metrics
           const $metrics_list = $($(".menu_sla")[0].children[1]);
-          const queryString = "&probe_id=" + URL_PARAM.probe_id;
+          const queryString = "&app_id=" + URL_PARAM.app_id + ( URL_PARAM.probe_id == undefined ? "" : ( "&probe_id=" + URL_PARAM.probe_id));
           for( var i=0; i<SLAs.init_metrics.length; i++ ){
              var m = SLAs.init_metrics[i];
              $metrics_list.append( '<li class="sub_menu_'+ m.name +'"><a href="/chart/sla/alerts?metric_id='+ m.id + queryString + '">'+ m.title +'</a></li>' );
@@ -139,7 +139,7 @@ $(function () {
              }
              
              const $metrics_list = $($(".menu_sla")[0].children[1]);
-             const queryString = "&probe_id=" + URL_PARAM.probe_id;
+             const queryString = "&app_id=" + URL_PARAM.app_id + ( URL_PARAM.probe_id == undefined ? "" : ( "&probe_id=" + URL_PARAM.probe_id));
              for( var m in metrics )
                 $metrics_list.append( '<li class="sub_menu_'+ metrics[m].id +' disabled"><a href="/chart/sla/alerts?metric_id='+ metrics[m].id + queryString + '">'+ metrics[m].title +'</a></li>' );
           }

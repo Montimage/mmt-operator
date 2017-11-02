@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "security",
-        title: "SLA/Incident Alerts",
+        title: "SLA/Metric Alerts or Violations",
         x: 0,
         y: 7,
         width: 12,

@@ -105,10 +105,9 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
-    maxAge: 1*24*60*60*1000,    //1 day
     lastModified: true,
-    //Set the max-age property of the Cache-Control header in milliseconds: 1hour
-    maxAge: 60*60*1000
+    //Set the max-age property of the Cache-Control header in milliseconds: 5minutes
+    maxAge: 5*60*1000
 }));
 //share js libraries 
 app.use('/_js', require("./routes/server2client.js"))

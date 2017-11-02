@@ -1,4 +1,10 @@
-var socket = io();
+var socket = {};
+if( typeof io != "undefined" )
+   socket = io();
+else{
+   console.warn("Cannot find socketio");
+   socket.on = console.log;
+}
 
 socket.on('log', function(msg){
     if( msg.type == undefined )
