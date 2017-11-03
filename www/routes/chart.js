@@ -68,7 +68,7 @@ var all_pages = {
            "separator_1" : "separator",
 
            "enforcement" : {
-              title: "Renforcement Agent",
+              title: "Enforcement Dashboard",
               _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
               url   : "/enforcement/admin/",
               target: "_blank"

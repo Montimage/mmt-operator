@@ -1347,6 +1347,15 @@ MMTDrop.tools = function () {
     $modal.$content  = $("#"+ id +" .modal-body-content");
     return $modal;
   };
+  
+  _this.modal = function(domID, title, subTitle, content ){
+     var $modal = _this.getModalWindow( domID );
+     $modal.$title.html( title );
+     $modal.$subTitle.html( subTitle );
+     $modal.$content.html( content );
+     $modal.modal();
+     return $modal;
+  }
 
   /**
    * create DOM object and its children using jQuery

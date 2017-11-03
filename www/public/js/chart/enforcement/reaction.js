@@ -38,6 +38,7 @@ function getCompID (){
 
 var ReportFactory = {
       createUploadForm: function( fPeriod ){
+         $("#sla-metric-content" ).parent().hide();
          const COL = MMTDrop.constants.StatsColumn;
          const total_db = new MMTDrop.Database({collection: "metrics_alerts", action: "aggregate", raw: true});
 
@@ -321,7 +322,6 @@ var ReportFactory = {
             };
 
             $("#sla-metric-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
-            $("#sla-metric-content" ).parent().hide();
 
             //after redering the table, update their values (#alert, #violation)
             setTimeout( updateValue, 1000);
