@@ -738,7 +738,7 @@ var MongoConnector = function () {
 			return;
 		}
 
-		if(config.probe_analysis_mode == "online"){
+		if( ! config.is_probe_analysis_mode_offline ){
 			//if online analysis ==> lastime is the current time of operator machine
 			var time = (new Date()).getTime();
 			time -= config.probe_stats_period * 1000;
@@ -747,6 +747,7 @@ var MongoConnector = function () {
 		}
 
 		self.getLastTimestampOfCollection( "data_total_real", function( time ){
+		   console.info( "Last time: %s", new Date( time ) );
 			if( time > 0 )
 				return cb(null, time );
 

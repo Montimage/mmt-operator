@@ -203,8 +203,8 @@ var ReportFactory = {
 	             if( compIndex >= COMPONENTS.length ){
 	                //finish upload sla
 	                __status("Finish.")
-	                alert("Successfully get all SLA(s).");
-	                MMTDrop.tools.gotoURL( "/musa/sla/upload/"+ appId, {param: ["app_id", "probe_id"], add:"act=finish" } );
+	                //alert("Successfully get all SLA(s).");
+	                //MMTDrop.tools.gotoURL( "/musa/sla/upload/"+ appId, {param: ["app_id", "probe_id"], add:"act=finish" } );
 	                return;
 	             }
 	             
@@ -221,7 +221,7 @@ var ReportFactory = {
       	                   component_index: compIndex,
       	                   component_id   : comp.id,
       	                   slaXml         : slaXml,
-      	                   init_components: COMPONENTS
+      	                   init_components: (compIndex == 0 ? COMPONENTS : undefined)
       	                   //data
       	                },"POST", {
       	                   error: __proxyError,

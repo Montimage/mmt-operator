@@ -103,7 +103,7 @@ $(function () {
           for( var act in SLAs.actions ){
              var action = SLAs.actions[ act ];
              var name   = act.replace(/_/g, " ");
-             $reactionsAgents.append( '<li class="sub_menu_'+ act  +'" title="'+ action.agent_description +'"><a href="#" style="text-transform: capitalize;" onclick=\'MMTDrop.tools.modal("agent-des","'+ name + ' Agent","","'+ action.agent_description +'").$title.css("text-transform","capitalize")\'>'+ name +' Agent</a></li>' );
+             $reactionsAgents.append( '<li class="sub_menu_'+ act  +'" title="'+ action.agent_description +'"><a style="text-transform: capitalize;" onclick=\'MMTDrop.tools.modal("agent-des","'+ name + ' Agent","","'+ action.agent_description +'").$title.css("text-transform","capitalize")\'>'+ name +' Agent</a></li>' );
           }
           //list of fixed metrics
           const $metrics_list = $($(".menu_sla")[0].children[1]);
@@ -173,8 +173,10 @@ $(function () {
                const newProbeOption = []; //this array contains only probes defined by sla application
                const selectedProbe = URL_PARAM.probe_id;
                
-               if (components.length > 0 )
-                  newProbeOption.push( {label: "All", id: "undefined", selected: URL_PARAM.probe_id == undefined } );
+               //hide All: this option will lead to get data of all available probes in DB
+               //containing even probes inexisting in the current application 
+               //if (components.length > 0 )
+               //   newProbeOption.push( {label: "All", id: "undefined", selected: URL_PARAM.probe_id == undefined } );
                
                //for each probe ID
                for( var j=0; j<components.length; j++ ){

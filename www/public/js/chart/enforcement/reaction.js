@@ -1,12 +1,12 @@
 var arr = [
    {
       id: "sla-metric",
-      title: "Metrics",
+      title: "",
       x: 0,
       y: 8,
-      width: 12,
-      height: 1,
-      type: "success",
+      width: 1,
+      height: 0,
+      type: "",
       userData: {
          fn: "createUploadForm"
       },

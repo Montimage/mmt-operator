@@ -2,10 +2,10 @@ var arr = [
     {
         id: "system",
         title: "Add a Probe",
-        x: 2,
+        x: 0,
         y: 0,
-        width: 8,
-        height: 6,
+        width: 12,
+        height: 7,
         type: "info",
         userData: {
             fn: "createFormReport"
@@ -21,11 +21,12 @@ var availableReports = {
 var ReportFactory = {
 	createFormReport: function( fPeriod ){
     fPeriod.hide();
+    fProbe.hide();
     fAutoReload.hide();
     var form_config = {
         type  : "<form>",
         attr  : {
-          class : "col-md-12 form-horizontal",
+          class : "col-md-10 col-md-offset-1 form-horizontal",
           style : "margin-top: 20px",
           id    : "ssh-form"
         },
@@ -68,7 +69,7 @@ var ReportFactory = {
             name        : "ssh-key",
             class       : "form-control",
             placeholder : "ssh key",
-            rows        : 8,
+            rows        : 7,
             required    : true,
           }
         },
@@ -84,7 +85,17 @@ var ReportFactory = {
                 value   : "Save",
                 id      : "saveBtn",
               }
-            }
+            },
+            {
+               type: "<a>",
+               attr: {
+                 href    : "/chart/setting",
+                 class   : "btn btn-warning pull-right",
+                 style   : "width: 100px; margin-right: 50px",
+                 text    : "Cancel",
+                 id      : "cancelBtn",
+               }
+             }
           ]
         }]
       };

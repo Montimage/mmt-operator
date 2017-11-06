@@ -160,7 +160,7 @@ var ReportFactory = {
         //when user click on Delete button
         $(".btn-restore").on("click", function(){
           var file = this.dataset["file"];
-          if( confirm("Restore this backup ["+ file +"]\nDo you want to cancel?") )
+          if( !confirm("Restore this backup ["+ file +"]\nDo you want to continue?") )
             return;
           $(this).disable();
 

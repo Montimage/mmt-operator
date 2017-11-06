@@ -29,12 +29,8 @@ if( app_id == undefined ) app_id = "_undefined";
       app_config.id = app_id;
    if( app_config.init_metrics == undefined )
       app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
-   if( app_config.init_components === undefined )
-      if  (req.body.init_components != undefined )
+   if( req.body.init_components !== undefined )
          app_config.init_components = req.body.init_components;
-      else
-         //app_config.init_components = [];
-         return res.status(417).end( "Expected init_components" );
 
    if( app_config.components == undefined )
       app_config.components = [];
