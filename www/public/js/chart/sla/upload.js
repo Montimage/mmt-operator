@@ -125,9 +125,9 @@ var ReportFactory = {
 	    
 	    function __proxyError(request, status, error){
           if( request.status == 403 )
-             __status( "Do not have permission");
+             __status( "==> Do not have permission");
           else
-             __status( "Error " + request.status + ": " + request.responseText );
+             __status( "==> Error " + request.status + ": " + request.responseText );
        };
 	    
 	    //get session element from Dashboard of this application
@@ -136,20 +136,21 @@ var ReportFactory = {
 	       //data
 	    }, "GET", {
 	       error: __proxyError,
-	       success: function( obj ){
-	          __status("==> got app <u>"+ obj.applicationName +"</u>. Parsing deployment ...");
+	       success: function( session ){
+	          __status("==> got app <u>"+ session.applicationName +"</u>. Parsing deployment ...");
 	          var DEPLOY;
 	          const SLA = {};
-	          for( var i=0; i<obj.columns.length; i++ ){
-	             if( obj.columns[i].name == "Deploy"){
-                      if( obj.columns[i].items.length == 0 )
-                         return __status("==> not found any components in deployment");
-                      DEPLOY = obj.columns[i].items;
+	          for( var i=0; i<session.columns.length; i++ ){
+	             if( session.columns[i].name == "Deploy"){
+	                   //TODO: uncomment 2 lines below
+                      //if( session.columns[i].items.length == 0 )
+                      //   return __status("==> not found any components in deployment");
+                      DEPLOY = session.columns[i].items;
 	             }
 	             
 	             //get slaUrl
-	             for( var j=0; j<obj.columns[i].items.length; j++ ){
-	                var comp = obj.columns[i].items[j];
+	             for( var j=0; j<session.columns[i].items.length; j++ ){
+	                var comp = session.columns[i].items[j];
 	                //got slaUrl for this component
 	                if( SLA[ comp.text ] != undefined )
 	                   continue;
@@ -169,7 +170,8 @@ var ReportFactory = {
 	          //console.log( SLA );
 	          
 	          //parse components
-	          const COMPONENTS = [];
+	          const COMPONENTS_ARR = [];
+	          const COMPONENTS_OBJ = {};
 	          for( i=0; i<DEPLOY.length; i++ ){
 	             var dep = DEPLOY[i];
 	             var slaUrl = SLA[ dep.text ];
@@ -180,8 +182,8 @@ var ReportFactory = {
 	             }
 
 	             //information of one component
-                COMPONENTS.push( {
-                      appName: obj.applicationName,
+                var o = {
+                      appName: session.applicationName,
                       appId  : appId,
                       id     : dep.cid,
                       title  : dep.text,
@@ -190,25 +192,29 @@ var ReportFactory = {
                       
                       slaUrl : slaUrl, 
 
-                      });
+                      };
+                COMPONENTS_ARR.push( o );
+                COMPONENTS_OBJ[ dep.text ] = o;
              }
 	          
-	          __status("==> found " + COMPONENTS.length +" component(s) having SLAs" );
-	          if( COMPONENTS.length == 0 )
+	          __status("==> found " + COMPONENTS_ARR.length +" component(s) having SLAs" );
+	          //TODO: uncomment 2 lines below
+	          if( COMPONENTS_ARR.length == 0 )
 	             return;
 	          
-	          //download SLA from repository for each valid component
-	          var compIndex = 0;
-	          function __downloadSLA(){
-	             if( compIndex >= COMPONENTS.length ){
-	                //finish upload sla
-	                __status("Finish.")
-	                //alert("Successfully get all SLA(s).");
-	                //MMTDrop.tools.gotoURL( "/musa/sla/upload/"+ appId, {param: ["app_id", "probe_id"], add:"act=finish" } );
-	                return;
-	             }
-	             
-      	          var comp  = COMPONENTS[ compIndex ];
+   	          //download SLA from repository for each valid component
+   	          var compIndex = 0;
+   	          function __downloadSLA(){
+   	             if( compIndex >= COMPONENTS_ARR.length ){
+   	                //finish upload sla
+   	                __status("Finish.")
+   	                
+   	                alert("Successfully get all SLA(s).");
+   	                MMTDrop.tools.gotoURL( "/musa/sla/upload/"+ appId, {param: ["app_id", "probe_id"], add:"act=finish" } );
+   	                return;
+   	             }
+   	             
+      	          var comp  = COMPONENTS_ARR[ compIndex ];
       	          __status("Downloading SLAs of component <u>" + comp.title +"</u> ...");
       	          
       	          //download sla from MUSA reposistory
@@ -221,14 +227,12 @@ var ReportFactory = {
       	                   component_index: compIndex,
       	                   component_id   : comp.id,
       	                   slaXml         : slaXml,
-      	                   init_components: (compIndex == 0 ? COMPONENTS : undefined)
+      	                   init_components: (compIndex == 0 ? COMPONENTS_ARR : undefined)
       	                   //data
       	                },"POST", {
       	                   error: __proxyError,
-      	                   success: function( obj ){
-      	                      __status("==> " + obj.message );
-      	                      
-      	                      
+      	                   success: function( o ){
+      	                      __status("==> " + o.message );
       	                      //download SLA of the next component
       	                      compIndex ++;
       	                      __downloadSLA();
@@ -239,10 +243,89 @@ var ReportFactory = {
       	           //options
       	             dataType: "text",
       	          }); 
-	          };
-	          
-	          //start to download 
-	          __downloadSLA();
+   	          }//end of function __downloadSLA
+   	          
+   	          __status("Parse deployedPlan to get URLs of components")
+	           //get implementation plan
+             MMTDrop.tools.proxy( session.getDeployedPlanUrl, {}, "GET", {
+                error: __proxyError,
+                success: function( deployPlan ){
+                   if( deployPlan.csps == undefined )
+                      return __status("==> not found csps in deployedPlan");
+                   
+                   var publicIp = undefined;
+                   //root.csps
+                   //parser deployment plan
+                   for( var i=0; i<deployPlan.csps.length; i++ ){
+                      var csps = deployPlan.csps[i];
+                      
+                      if( csps.pools == undefined )
+                         return __status("==> not found pools in deployedPlan.csps");
+                   
+                      //root.csps.pools
+                      for( var j=0; j<csps.pools.length; j++ ){
+                         var pool = csps.pools[j];
+                         
+                         if( pool.vms == undefined )
+                            return __status("==> not found vms in deployedPlan.csps.pools");
+                         
+                         //root.csps.pools.vms
+                         for( var k=0; k<pool.vms.length; k++ ){
+                            var vm = pool.vms[k];
+                            if( vm.public_ip == undefined || vm.public_ip == "" || vm.components == undefined ){
+                               console.warn("No detailed infor in vm", vm );
+                               continue;
+                            }
+                            
+                            //public IP of this VM
+                            publicIp = vm.public_ip;
+                            //root.csps.pools.vms.components
+                            for( var l=0; l<vm.components.length; l++ ){
+                               var com = vm.components[l];
+                               
+                               if( COMPONENTS_OBJ[ com.component_id ] == undefined  ){
+                                  console.log( "component %s is not in the list of deployedPlan", com.component_id );
+                                  
+                                  continue;
+                                  COMPONENTS_OBJ[ com.component_id ] = {};
+                               }
+                               __status("==> found public IP: " + publicIp );
+                               COMPONENTS_OBJ[ com.component_id ].ip  = publicIp;
+                               
+                               var protos = MMTDrop.tools.getValue( com, ["firewall", "incoming", "proto"]);
+                               if( protos == undefined )
+                                  continue;
+                               
+                               //root.csps.pools.vms.components.firewall.incoming.proto
+                               for( var m=0; m<protos.length; m++ ){
+                                  var proto = protos[ m ];
+                                  if( proto.type != "TCP" )
+                                     continue;
+                                  //root.csps.pools.vms.components.firewall.incoming.proto.port_list
+                                  for( var n=0; n<proto.port_list.length; n++ ){
+                                     var port = proto.port_list[n];
+                                     //if we found a port other than special one (SSH, FTP) => 
+                                     if( [22,23].indexOf( port ) == -1 ){
+                                        COMPONENTS_OBJ[ com.component_id ].url = "http://" + publicIp + ":" + port;
+                                        break;
+                                     }
+                                  }
+                               }
+                               
+                            }
+                         }
+                      }
+                   }
+                   
+                   console.log( COMPONENTS_OBJ );
+                   
+                   if( publicIp == undefined )
+                      __status("==> not found any public IP");
+                   
+                   //start to download 
+                   __downloadSLA();
+                }
+             }); //end getting implementation plan
 	       }
 	    }, {
 	       //options

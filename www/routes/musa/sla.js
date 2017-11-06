@@ -250,7 +250,7 @@ function extract_metrics( app_config, index, cb ){
 
       comp.sla = sla_str;
 
-      if( title != undefined ){
+      if( title != undefined && comp.title == undefined ){
          comp.title = title;
       }
       comp.id = parseInt( comp.id );
@@ -266,10 +266,18 @@ function extract_metrics( app_config, index, cb ){
          app_config.components.push( comp );
 
       var slos = get_value( sla, [ "GuaranteeTerm", 0,  "ServiceLevelObjective", 0,  "CustomServiceLevel", 0, "objectiveList", 0, "SLO"] );
+      if( slos == undefined )
+         //return cb( {message: "Not found SLO"}, 0, null );
+         return cb( null, total, title );
+      
       comp.metrics = [];
 
       //get data type of each metrics
       const specs = get_value( sla, [ "ServiceDescriptionTerm", 0, "serviceDescription", 0, "security_metrics", 0, "Metric"]);
+      if( specs == undefined )
+         //return cb( {message: "Not found security metric"}, 0, null );
+         return cb( null, total, title );
+      
       const TYPES = {};
       for( var j=0; j<specs.length; j++ ){
          var spec = specs[ j ];
