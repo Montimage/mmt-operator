@@ -27,16 +27,16 @@ var exec  = require('child_process').exec
   , FTP   = require('ftp');
 
 /**
- * log
+ * console.log
  *
  * Logs a message to the console with a tag.
  *
- * @param message  the message to log
+ * @param message  the message to console.log
  */
-function log(message) {
-  if( message != undefined )
-    console.log( "==> " + message )
-}
+//function console.log(message) {
+//  if( message != undefined )
+//    console.console.log( "==> " + message )
+//}
 
 /**
  * getArchiveName
@@ -75,7 +75,7 @@ function removeRF(target, callback) {
     if (!exists) {
       return callback(null);
     }
-    log("Removing " + target);
+    console.log("Removing " + target);
     exec( 'rm -rf ' + target, callback);
   });
 }
@@ -89,7 +89,7 @@ function mkdir(target, callback) {
     if (exists) {
       return callback(null);
     }
-    log("Create folder " + target);
+    console.log("Create folder " + target);
     exec( 'mkdir -p ' + target, callback);
   });
 }
@@ -111,8 +111,9 @@ function mongoDump(options, archiveFile, callback) {
   callback = callback || function() { };
 
   mongoOptions= [
-    '-h', options.host + ':' + options.port,
-    '-d', options.db,
+    '--host', options.host,
+    '--port', options.port,
+    '--db', options.db,
     '--gzip',
     '--archive=' + archiveFile
   ];
@@ -126,20 +127,21 @@ function mongoDump(options, archiveFile, callback) {
     mongoOptions.push(options.password);
   }
 
-  log('Starting mongodump of ' + options.db );
+  console.log('Starting mongodump of ' + options.db );
   mongodump = spawn('mongodump', mongoOptions);
   mongodump.stdout.on('data', function(data){
-    log( data.toString() );
+    console.log( data.toString() );
   });
   mongodump.stderr.on('data', function(data){
     errMsg += "\n" + data.toString();
-    console.error( data.toString() );
+    console.log( data.toString() );
   });
   mongodump.on('exit', function (code) {
     if(code === 0) {
-      log('mongodump executed successfully');
+      console.log('mongodump executed successfully');
       callback(null);
     } else {
+      console.error( errMsg );
       callback( {code:  code, message: errMsg } );
     }
   });
@@ -179,10 +181,10 @@ function mongoRestore(options, archiveFile, callback) {
     mongoOptions.push(options.password);
   }
 
-  log('Starting mongorestore of ' + options.db + " from " + archiveFile);
+  console.log('Starting mongorestore of ' + options.db + " from " + archiveFile);
   mongorestore = spawn('mongorestore', mongoOptions);
   mongorestore.stdout.on('data', function(data){
-    log( data.toString() );
+    console.log( data.toString() );
   });
   mongorestore.stderr.on('data', function(data){
     if( errMsg.length < 1000)
@@ -191,7 +193,7 @@ function mongoRestore(options, archiveFile, callback) {
   });
   mongorestore.on('exit', function (code) {
     if(code === 0) {
-      log('mongorestore executed successfully', 'info');
+      console.log('mongorestore executed successfully', 'info');
       callback(null);
     } else {
       //if( code == 2)
@@ -291,7 +293,7 @@ function ftpErrorCode( err ){
 function sendToFtpServer(options, source_file, target_file, callback) {
   callback = callback || function() { };
   var client = new FTP();
-  log( "send to FTP Server" + source_file );
+  console.log( "send to FTP Server" + source_file );
   client.on( 'ready', function(){
     client.put( source_file, target_file, function( err){
       client.end();
@@ -318,7 +320,7 @@ function sendToFtpServer(options, source_file, target_file, callback) {
 function getFromFtpServer(options, source_file, target_file, callback) {
   callback = callback || function() { };
   var client = new FTP();
-  log( "get from FTP Server: " + source_file + " ==> " + target_file );
+  console.log( "get from FTP Server: " + source_file + " ==> " + target_file );
   client.on( 'ready', function(){
     //see https://github.com/mscdex/node-ftp
     client.get( source_file, function( err, stream ){
@@ -359,7 +361,7 @@ function backup(mongodbConfig, FtpConfig, callback) {
 
   callback = callback || function() {};
 
-  log("Backup database");
+  console.log("Backup database");
   mkdir(tmpDir, function(err){
     if( err ) return console.error( err );
     //delete old archive file (if exists)
@@ -395,7 +397,7 @@ function restore(archiveFile, mongodbConfig, FtpConfig, callback) {
   var tmpFile = path.join( require("os").tmpdir(), getArchiveName( mongodbConfig.db ) );
 
   callback = callback || function() {};
-  log("Restore database");
+  console.log("Restore database");
 
   if( FtpConfig.host != undefined )
     //download file from FTP server to a temp file

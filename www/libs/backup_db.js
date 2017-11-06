@@ -5,10 +5,10 @@ var config    = require("../libs/config")
   , fs        = require("fs");
 
 
-var dbadmin = new AdminDB();
-var db_name = (new DataDB()).db_name;
+const dbadmin = new AdminDB();
+const db_name = config.databaseName;
 
-var db_config = {
+const db_config = {
   db  : db_name,
   host: config.database_server.host,
   port: config.database_server.port,

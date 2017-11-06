@@ -161,12 +161,15 @@ else{
 }
 
 if( config.log.indexOf( "error" ) !== -1 ){
-   console.error = function(){
+   console.error = function( err ){
       const prefix  = getPrefix( "ERROR" );
       const content = prefix.msg + util.format.apply(null, arguments) + '\n';
       if( config.is_in_debug_mode === true  )
          errStdout.write  ( content );
 
+      for (var prop in err)  
+         errStdout.write( "  "+ prop+ " value: ["+ err[prop]+ "]\n" );
+      
       _writeLog( content, prefix.date );
    }
 }
