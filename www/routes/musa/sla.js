@@ -81,32 +81,32 @@ router.post("/upload/:id", function(req, res, next) {
    if( app_id == undefined ) app_id = "_undefined";
    
    const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
-   //id of component
-   const comp_index = parseInt(req.body.component_id);
-   
-   //first component of the app
-   if( router._sla[ app_id ]  === undefined || comp_index == 0)
-      router._sla[ app_id ] = {};
-   
-   const app_config = router._sla[ app_id ];
-
-   if( app_config.id == undefined )
-      app_config.id = app_id;
-   if( app_config.init_metrics == undefined )
-      app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
-   if( app_config.init_components === undefined )
-      app_config.init_components = config.sla.init_components;
-
-   if( app_config.components == undefined )
-      app_config.components = [];
-
-   if( app_config.sla == undefined )
-      app_config.sla = {};
-
-
    
    //handle SLA files uploading
    multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){
+      
+    //id of component
+      const comp_index = parseInt(req.body.component_id);
+      
+      //first component of the app
+      if( router._sla[ app_id ]  === undefined || comp_index == 0)
+         router._sla[ app_id ] = {};
+      
+      const app_config = router._sla[ app_id ];
+
+      if( app_config.id == undefined )
+         app_config.id = app_id;
+      if( app_config.init_metrics == undefined )
+         app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
+      if( app_config.init_components === undefined )
+         app_config.init_components = config.sla.init_components;
+
+      if( app_config.components == undefined )
+         app_config.components = [];
+
+      if( app_config.sla == undefined )
+         app_config.sla = {};
+      
       if( err ){
          status.progress = 100;
          status.error = true;
@@ -139,7 +139,7 @@ router.post("/upload/:id", function(req, res, next) {
          }, function (err_1, data) {
             //got content of SLA file
             //==> delete it
-            fs.unlink( file.path );
+            fs.unlink( file.path, function(){} );
 
             if( err_1 )
                return raise_error( JSON.stringify( err_1) );

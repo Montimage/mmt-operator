@@ -6228,6 +6228,11 @@ MMTDrop.chartFactory = {
           name = MMTDrop.constants.getProtocolNameFromID(name);
           msg[0] = {path: path, parent: parent, name: name};
         }
+        
+        //sort by protocol name
+        data.sort( function( a, b ){
+           return a[0].name.localeCompare( b[0].name );
+        });
 
                 for( var i in data ){
                     var obj = data[i][0];
