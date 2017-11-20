@@ -8,9 +8,7 @@
 		"port": 6379
 	},
 	"kafka_input": {
-	   "host": "localhost",
-		"__host": "37.48.247.124",
-		"_host": "192.168.0.195",
+		"host": "10.0.0.71",
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
@@ -63,7 +61,7 @@
 		"byte": 64
 	},
 	"retain_detail_report_period": 300,
-	"port_number": 8082,
+	"port_number": 80,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],

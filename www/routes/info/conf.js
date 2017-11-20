@@ -11,7 +11,7 @@ var exec    = require('child_process').exec;
 var path    = require('path');
 var config  = require('../../libs/config.js');
 
-const OPERATOR_CONFIG_FILE = path.join(__dirname, "..", "..", "config.json");
+const OPERATOR_CONFIG_FILE = path.join(__dirname, "..", "..", config.location);
 var  INTERFACES_FILE       = "/etc/network/interfaces";
 var PLATFORM               = _os.platform();
 if( PLATFORM != "linux" )
