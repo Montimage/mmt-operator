@@ -89,8 +89,16 @@ router.use( function(req, res, next){
  * @param next
  * @returns
  */
-router.get("/status", function(req, res, next){
-   
+router.all("/status", function(req, res, next){
+   //allow a request commes from a different domain
+
+   res.setHeader("Allow", "*");
+   res.setHeader("Access-Control-Allow-Origin", "*");
+   res.setHeader("Access-Control-Allow-Methods", "GET");
+   res.setHeader("Access-Control-Allow-Headers", 'authorization,userid');
+   res.setHeader("Content-Type", "application/json");
+   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
    if( req.session.loggedin == undefined ){
       //cannot verify the authorization or it does not exist
       //end by AccessDenied when being requested by ajax
@@ -105,15 +113,17 @@ router.get("/status", function(req, res, next){
    var   comID = req.query["componentId"];
    
    //both appId, and componentId are provided 
-   if( appID != null && comID != null ){
-      comID = parseInt( comID );
+   if( appID != null ){
       //get alert
       if( router.dbconnector == undefined )
          return res.status( CONST.http.INTERNAL_ERROR_CODE ).end( "Internal Server Error" );
       
       const $match = {};
       $match["1"] = appID;
-      $match["2"] = comID;
+      if( comID != "undefined" && comID != "null" && comID != undefined )
+         $match["2"] = parseInt( comID );
+      else
+         comID = "all";
       
       const TYPE="$4";
       const $group =  { "_id": {"1": "$1", "2": "$2"}, //group by app_id, comp_id and metric_id
@@ -124,10 +134,6 @@ router.get("/status", function(req, res, next){
       router.dbconnector._queryDB("metrics_alerts", "aggregate", [{$match: $match}, {$group: $group}], function( err, apps){
          if( err )
             return res.status( CONST.http.INTERNAL_ERROR_CODE ).end("Internal Server Error" );
-         //allow a request commes from a different domain
-         res.setHeader("Access-Control-Allow-Origin", "*");
-         res.setHeader("Content-Type", "application/json");
-         res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
          if( apps == undefined )
             return res.send( {
                status     : "error",
@@ -143,7 +149,7 @@ router.get("/status", function(req, res, next){
                componentId: comID,
                alert      : ( apps.length == 0 ) ? 0 : apps[0].alert,
                violate    : ( apps.length == 0 ) ? 0 : apps[0].violate,
-               underRemediation: ( apps.length == 0 ) ? 0 : apps[0].violate - 5,
+               underRemediation: ( apps.length == 0 || apps[0].violate <= 5) ? 0 : apps[0].violate - 5,
          });
       }, false);
       return;
