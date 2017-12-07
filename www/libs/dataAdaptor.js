@@ -264,7 +264,7 @@ else{
       return arr;
    };
 
-   function format_session_report( msg ){
+   MMTDrop.formatSessionReport = function ( msg ){
       var PATH_INDEX = MMTDrop.StatsColumnId.APP_PATH;
       var UP_PATH = msg[ PATH_INDEX ], DOWN_PATH = msg[ PATH_INDEX + 1 ];
 
@@ -348,7 +348,7 @@ else{
       switch( msg[0] ) {
          //main report
          case MMTDrop.CsvFormat.STATS_FORMAT :
-            msg = format_session_report( msg ); 
+            msg = MMTDrop.formatSessionReport( msg ); 
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = msg[ MMTDrop.StatsColumnId.START_TIME ] * 1000; //to milisecond
             msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
