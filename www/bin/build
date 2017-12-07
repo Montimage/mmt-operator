@@ -89,7 +89,7 @@ function process_file(file_path_arr, file_name, proc_fun) {
             content = proc_fun(content, file_name);
             //write to dist folder
             if (content != undefined)
-                fs.writeFile(dst_file, content);
+                fs.writeFileSync(dst_file, content);
         })
     });
 }
@@ -320,7 +320,7 @@ if (process.argv.length > 2)
     action = process.argv[2];
 
 
-if (action == "build")
+if (action == "tar")
     build("tar");
 else if (action == "install") {
     install();
@@ -331,4 +331,4 @@ else if (action == "deb")
 else if (action == "rpm")
     build("rpm");
 else
-    console.error("Usage: " + process.argv[0] + " " + process.argv[1] + " build|dist-clean|install\n");
+    console.error("Usage: " + process.argv[0] + " " + process.argv[1] + " tar|deb|rpm|dist-clean|install\n");
