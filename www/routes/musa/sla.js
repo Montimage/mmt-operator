@@ -198,20 +198,39 @@ const OPERATOR = {
       "eq (=)"  : "!=",
       "ge (>=)" : "<",
       "le (<=)" : ">",
+      "eq"  : "!=",
+      "ge" : "<",
+      "geq": "<=",
+      "le" : ">",
+      "leq": ">="
 }
 
 function get_violation( expr, type ){
-   expr = get_value( expr, [0, "oneOpExpression", 0, "$"] );
+   var test = get_value( expr, [0, "oneOpExpression", 0, "$"] );
+   if( test != undefined )
+      expr = test;
+   else{
+      console.log( JSON.stringify( expr ));
+      expr = get_value( expr, [0, "oneOpExpression", 0] );
+   }
+   
 
    var opr = get_value( expr, ["operator"]);
+   if( opr == undefined )
+      op = get_value( expr, ["operator", 0]);
    var val = get_value( expr, ["operand"]);
+   if( val == undefined )
+      val = get_value( expr, ["operand", 0]);
 
    if( val == undefined )
       return "";
    
+   if( OPERATOR[opr] != undefined )
+      opr = OPERATOR[opr];
+   
    if( type == "string")
-      return OPERATOR[opr] + " \"" + val + "\"";
-   return OPERATOR[opr] + " " + val;
+      return opr + " \"" + val + "\"";
+   return opr + " " + val;
 }
 
 
@@ -297,12 +316,16 @@ function extract_metrics( app_config, index, cb ){
          enable= false,
          support= false
          ;
-
+         /*
          if( title.toLowerCase().indexOf("scan") >= 0  ){
             name = "vuln_scan_freq";
             enable = true;
             support = true;
-         }else if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 || title.toLowerCase().indexOf("incident") >= 0 ){
+         }else 
+            */
+            if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 
+                  //|| title.toLowerCase().indexOf("incident") >= 0 
+                  ){
             name = "incident";
             enable = true;
             support = true;
