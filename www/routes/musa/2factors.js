@@ -18,8 +18,9 @@ function start( pub_sub ){
       [],
       {
          //consumer group id, default `kafka-node-group`
-         groupId: 'SecAP-kafka-client---', 
+         groupId: 'SecAP-kafka-client', 
          // Auto commit config 
+         //TODO: reset to true
          autoCommit: false, //true,
          autoCommitIntervalMs: 500,
          // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms 
@@ -66,3 +67,5 @@ module.exports = {
       start: start,
       reset: reset
 }
+
+start(1);

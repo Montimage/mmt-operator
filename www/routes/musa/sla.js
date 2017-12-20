@@ -210,10 +210,10 @@ function get_violation( expr, type ){
    if( test != undefined )
       expr = test;
    else{
-      console.log( JSON.stringify( expr ));
       expr = get_value( expr, [0, "oneOpExpression", 0] );
    }
    
+   //console.log( JSON.stringify( expr ));
 
    var opr = get_value( expr, ["operator"]);
    if( opr == undefined )
@@ -298,24 +298,37 @@ function extract_metrics( app_config, index, cb ){
          return cb( null, total, title );
       
       const TYPES = {};
+      const TITLES = {};
       for( var j=0; j<specs.length; j++ ){
+         //console.log( JSON.stringify( spec ));
          var spec = specs[ j ];
          var type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "enumUnit", 0, "enumItemsType", 0]);
          if( type == undefined )
             type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "intervalUnit", 0, "intervalItemsType", 0]);
          TYPES[ get_value( spec, ["$", "name"] ) ] = type;
+         
+         TITLES[ get_value( spec, ["$", "referenceId"] ) ] = get_value( spec, ["$", "name"] ) ;
       }
+      
+      
+     
 
       comp.metric_types = TYPES;
-
+      const DUPLICATE = {};
       for( var j=0; j<slos.length; j++ ){
          var slo = slos[ j ],
-         title = get_value( slo, ["MetricREF", 0] );
-         type  = TYPES[ title ],
-         name  = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-         enable= false,
-         support= false
+         type    = get_value( slo, ["MetricREF", 0] ); //data type
+         //title   = TYPES[ type ],
+         title   = TITLES[ type ],
+         name    = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
+         enable  = false,
+         support = false
          ;
+         
+         if( DUPLICATE[ title ] != undefined )
+            continue;
+         DUPLICATE[ title ] = title;
+         
          /*
          if( title.toLowerCase().indexOf("scan") >= 0  ){
             name = "vuln_scan_freq";

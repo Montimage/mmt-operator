@@ -74,6 +74,11 @@ var ReportFactory = {
                   }]
                }]
             }];
+            
+            init_components.sort( function( a, b ){
+               return a.id - b.id;
+            });
+            
             for( var i=0; i<init_components.length; i++){
                var comp = init_components[ i ];
                //show only probe that is indicated in URL by probe_id
@@ -90,7 +95,7 @@ var ReportFactory = {
                         attr : {
                            colspan : 7,
                            style   : "font-weight: bold",
-                           text    : comp.title + " ("+ comp.ip +")"
+                           text    : comp.title + (comp.ip == undefined?"": " ("+ comp.ip +")")
                         }
                      }]
                };

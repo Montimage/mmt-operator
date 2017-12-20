@@ -178,6 +178,10 @@ $(function () {
                //if (components.length > 0 )
                //   newProbeOption.push( {label: "All", id: "undefined", selected: URL_PARAM.probe_id == undefined } );
                
+               components.sort( function( a, b){
+                  return a.id - b.id;
+               });
+               
                //for each probe ID
                for( var j=0; j<components.length; j++ ){
                   if( components[j].id == selectedProbe )

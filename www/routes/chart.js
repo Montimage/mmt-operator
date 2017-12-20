@@ -79,6 +79,9 @@ var all_pages = {
     'stat':{
      title: "System"
     },
+    'unknown_traffic':{
+       title: "Unknown Traffic"
+    },
     'setting':{
       title: "Settings"
     }
