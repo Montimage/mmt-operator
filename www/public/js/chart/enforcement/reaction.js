@@ -632,6 +632,8 @@ var ReportFactory = {
                var hasError = false
                MMTDrop.tools.localStorage.set( react_id + "-time", (new Date()).getTime(), false );
                const actions = _getActions( react_id );
+               var needToShowExecutingButton = true;
+               
                actions.forEach( function( act_name ){
                   const action = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", act_name ] );
                   if( action.url ){
@@ -644,9 +646,9 @@ var ReportFactory = {
                   //for 2factors authentification
                   if( act_name === "apply_two_factors_authentication" ){
                      //login
-                     MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/login", {
+                     var data = {"name":"johnd", "password":"12345", "tenant":"LH"};
+                     MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/login&data=" + JSON.stringify(data), {
                         //data
-                        "name":"johnd", "password":"12345", "tenant":"LH"
                      }, "POST", {
                         error: function( err ){
                            MMTDrop.alert.error( "<b>" + err.statusText + "</b>:<br/>" + err.responseText );
@@ -654,33 +656,41 @@ var ReportFactory = {
                         },
                         success: function( session ){
                            //switch to 2factors
-                           MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/switchTwoFactor", {
+                           //on
+                           //var data = {"enabled": true};
+                           //off
+                           var data = {"enabled": false};
+                           MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/switchTwoFactor&data=" + JSON.stringify(data), {
                               //data
-                              "enabled": true
-                           }, "POST", {
+                           }, "PUT", {
                               error: function( err ){
                                  MMTDrop.alert.error( "<b>" + err.statusText + "</b>:<br/>" + err.responseText );
                                  //{"readyState":4,"responseText":"connect ECONNREFUSED 37.48.247.117:80","status":500,"statusText":"Internal Server Error"}
                               },
                               success: function( session ){
                                  MMTDrop.alert.success("Switched successfully to 2factors authentication");
+                                 //save to DB
+                                 _finishReaction( react_id );
                               }
+                           }, {
+                             "Content-Type": "application/json"
                            });
                         }
                      });
+                     
+                     needToShowExecutingButton = false;
                   }//end 2factors
-                  
                });
                
                if( hasError )
                   return;
                
-               _btnClick( "perform", react_id, function(){
-                  
-                  $("#reaction-" + react_id )
-                     .html('<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i><a class="btn btn-success pull-right" onclick="_finishReaction(\''+ react_id +'\', this)">Done</a>')
-                     .attr("align", "left");
-               });
+               if( needToShowExecutingButton )
+                  _btnClick( "perform", react_id, function(){
+                     $("#reaction-" + react_id )
+                        .html('<span class="text-success">Executing</span> <i class="fa fa-spinner fa-pulse fa-fw"></i><a class="btn btn-success pull-right" onclick="_finishReaction(\''+ react_id +'\', this)">Done</a>')
+                        .attr("align", "left");
+                  });
             }
          }//end rederTable function
 

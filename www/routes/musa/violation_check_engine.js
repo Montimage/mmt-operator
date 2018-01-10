@@ -56,7 +56,8 @@ router.get("/:type/:metric_name", function( req, res, next ){
    
    const timestamp = (new Date()).getTime();
    
-   res.writeHead(200, { "Content-Type": "text/event-stream",
+   res.writeHead(200, { 
+      "Content-Type" : "text/event-stream",
       "Cache-control": "no-cache" });
    
    if( type != constant.ALERT_STR && type != constant.VIOLATION_STR )

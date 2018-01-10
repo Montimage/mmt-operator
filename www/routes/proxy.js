@@ -10,17 +10,26 @@ const router  = express.Router();
 
 "use strict"
 
-router.all("/", function( req, res, next ){
+function _proxy( req, res, next ){
    const url     = req.query["url"];
    const headers = req.headers;
+   
+   var requestData  = req.body;
+   if( requestData == undefined )
+      requestData = req.query.data;
+   
+   if( requestData == undefined )
+      requestData = "";
 
+   console.log( "requestData: \""+ requestData +'"' );
+   
    if( url == undefined )
       return res.status( CONST.http.INTERNAL_ERROR_CODE ).end( "Internal Server Error: Need " + url );
 
    const urlObj = URL.parse( url );
    
    delete( headers.host );
-   delete( headers.cookie );
+   //delete( headers.cookie );
    
    const options = {
          // host to forward to
@@ -32,6 +41,9 @@ router.all("/", function( req, res, next ){
          method : req.method,
          headers: headers
    };
+   
+   options.headers['Content-Length'] = Buffer.byteLength(requestData);
+
    
    switch( options.protocol ){
       case "http:":
@@ -48,14 +60,14 @@ router.all("/", function( req, res, next ){
    
    //console.log( options );
    
-   var creq = client.request(options, function(cres) {
+   var creq = client.request( options, function(cres) {
       //add a marked header
       cres.headers["X-Source-Via"] = "mmt-http-proxy";
       
       res.writeHead( cres.statusCode, cres.headers );
-      // set encoding
+      // set encoding: does not work when download sla from framework
       //cres.setEncoding('utf8');
-
+      
       // wait for data
       cres.on('data', function(chunk){
          res.write(chunk, "binary");
@@ -79,8 +91,13 @@ router.all("/", function( req, res, next ){
       res.status( CONST.http.INTERNAL_ERROR_CODE ).end( e.message );
    });
 
+   if( requestData.length )
+      creq.write( requestData );
+   
    creq.end();
 
-});
+}
+
+router.all("/",  _proxy);
 
 module.exports = router;
