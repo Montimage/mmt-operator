@@ -38,6 +38,12 @@ function _performAction( action_name, action, react_id, reaction ){
    arr.push('"' + reaction.note + '"');
    
    _publishMessage( channel_name, arr.join(",") );
+   
+   
+   //LHS case study: activate 2factors
+   if( action_name === "apply_two_factors_authentication" ){
+      console.log( "Apply 2 factors authentication");
+   }
 }
 
 function _performReaction( reaction, react_id ){

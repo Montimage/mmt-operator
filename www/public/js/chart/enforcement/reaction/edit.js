@@ -252,7 +252,7 @@ var ReportFactory = {
                   children : [{
                      type: "<div>",
                      attr: {
-                        style : "position: absolute; top: 30px; left: 0px; bottom: 420px; right: 0px; overflow: auto",
+                        style : "position: absolute; top: 30px; left: 0px; bottom: 460px; right: 0px; overflow: auto; margin-bottom: 30px",
                         id    : "conditions-div"
                      },
                      children: [{
@@ -509,7 +509,7 @@ var ReportFactory = {
                   MMTDrop.alert.success("Successfully save to database", 1500 );
                   setTimeout( MMTDrop.tools.gotoURL, 2000,
                       //no need "probe_id" as we want to show all of them
-                        "/chart/sla/reaction", {param : ["app_id"], add: "probe_id=null"} );
+                        "/chart/enforcement/reaction", {param : ["app_id"], add: "probe_id=null"} );
                         
                }
             });

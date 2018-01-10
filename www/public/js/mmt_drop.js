@@ -584,7 +584,7 @@ MMTDrop.constants = {
      */
     ProtocolsIDName: {
        "-1": "_other",
-       0: '_unknown', 
+       0: '_unknown',
        2: '163', 3: '360', 4: 'ZONE_TELECHARGEMENT', 5: '360BUY', 6: '56', 7: 'VLAN', 8: '888', 9: 'ABOUT', 10: 'ADCASH', 
        11: 'ADDTHIS', 12: 'ADF', 13: 'ADOBE', 14: 'AFP', 15: 'AH', 16: 'AIM', 17: 'AIMINI', 18: 'ALIBABA', 19: 'ALIPAY',  20: 'ALLEGRO', 
        21: 'AMAZON', 22: 'AMEBLO', 23: 'ANCESTRY', 24: 'ANGRYBIRDS', 25: 'ANSWERS', 26: 'AOL', 27: 'APPLE', 28: 'APPLEJUICE', 29: 'ARMAGETRON', 30: 'ARP', 
@@ -749,17 +749,24 @@ MMTDrop.constants = {
       * Return the path friendly name.
       * @param {string} path application protocol path (given by application IDs)
       */
-     getPathFriendlyName : function(path) {
+    getPathFriendlyName : function(path, separator) {
        var id = path.split(".");
        var arr = [];
        for( var i=0; i<id.length; i++){
-         var name = MMTDrop.constants.getProtocolNameFromID( id[i] );
-         if( name.indexOf(":") != -1 )
-            name = ":" + name.split(":")[1]; //HTTP:80 => get only :80
-         arr.push( name );
+          if( id[i] == 0 )
+             arr.push( "_unk" );
+          else{
+             var name = MMTDrop.constants.getProtocolNameFromID( id[i] );
+             if( name.indexOf(":") != -1 )
+                name = ":" + name.split(":")[1]; //HTTP:80 => get only :80
+             arr.push( name );
+          }
        }
+       
+       if( separator == undefined )
+          separator = "/";
 
-       return arr.join("/");
+       return arr.join(".");
      },
 
      /**
@@ -968,7 +975,7 @@ MMTDrop.tools = function () {
         return v.toLocaleString();
     }
 
-    _this.formatInterval = function( no_seconds ){
+    _this.formatInterval = function( no_seconds, doNotShowMiliSecond ){
       if( no_seconds == undefined ) return "undefined";
       var d = Math.floor( no_seconds / 3600 / 24 );
       no_seconds -= d*3600*24;
@@ -978,7 +985,16 @@ MMTDrop.tools = function () {
       no_seconds -= m*60;
 
       no_seconds = Math.round( no_seconds * 1000 )/1000;
-      return (d>0? (d + "d ") : "") + (h>0? (h + "h"): "") + (m>0? (m + "m"): "") + (no_seconds>0? (no_seconds.toFixed(3) + "s"): "");
+      
+      var ret = (d>0? (d + "d ") : "") + (h>0? (h + "h"): "") + (m>0? (m + "m"): "");
+      if( no_seconds > 0 || ret === "" ){
+         if( doNotShowMiliSecond === true )
+            ret += no_seconds.toFixed(0) + "s";
+         else
+            ret += no_seconds.toFixed(3) + "s";
+      }
+      
+      return ret;
     }
 
     /**
@@ -989,9 +1005,14 @@ MMTDrop.tools = function () {
     _this.formatDateTime = function (v, withMillisecond) {
         //return v.toLocaleString();
         //accept timestamp
-        if( typeof v == "number")
+        if( typeof v === "number")
           v = new Date( v );
-
+        
+        if ( isNaN( v.getTime() ) ) {
+           // date is not valid
+           return "n/a";
+         }
+        
         var milli = "";
         if( withMillisecond === true )
             milli = "." + ("00" + v.getMilliseconds()).slice(-3);

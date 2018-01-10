@@ -198,7 +198,7 @@
 				"id": "7",
 				"name": "authentication",
 				"alert": "",
-				"violation": "<= 0",
+				"violation": "!= 0",
 				"title": "Authentication",
 				"enable": true,
 				"support": true

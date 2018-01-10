@@ -1,7 +1,62 @@
+const request = require('request');
 const nativeKafka  = require('kafka-node');
 
+const oldData = {};
+
 function receiveMessage (message) {
-   console.log( message );
+   //console.log( message );
+   if( message == undefined )
+      return;
+   message = message.value;
+   //not found user johnd
+   if( message.indexOf( "johnd" ) == -1 )
+      return;
+   
+   var match = message.match(/EVENT_TIMESTAMP = \.+\n/);
+   //not found date
+   if( match.length == 0 )
+      return;
+   const date = new Date( match[0] );
+   
+   match = message.match(/ip-address\\u001a(\d|.)+/);
+   //not found client IP
+   if( match.length == 0 )
+      return;
+   const clientIP = match[0];
+   
+   match = message.match(/user-agent\.+/);
+   //not found user-agent
+   if( match.length == 0 )
+      return;
+   const userAgent = match[0];
+
+   //the first time?
+   if( oldData.date == undefined ){
+      oldData.date      = date;
+      oldData.clientIP  = clientIP;
+      oldData.userAgent = userAgent;
+      return;
+   }
+   
+   //detect different IP
+   //login from 2 different IPs
+   if( oldData.clientIP == clientIP )
+      return;
+   
+   //login from 2 different IPs in a small interval
+   var timeDiff   = Math.abs(oldData.clientIP.getTime() - clientIP.getTime());
+   var minuteDiff = timeDiff / 1000 / 60;
+   
+   //raise alert
+   if( minuteDiff < 5 ){
+      const requestOptions = {};
+      //call this dummy url to generate alerts/violations
+      request("/musa/dummy/violation/authentication", requestOptions, function (error, response, body) {
+         if( error )
+            console.error( error );
+         console.log( body );
+      })
+   }
 }
 
 function start( pub_sub ){
@@ -39,15 +94,15 @@ function start( pub_sub ){
    );
    
    const topicsArr = [
-     "musa-demo-securityCommandResponses",
-     "musa-demo-basedataModelUpdates",
-     "musa-demo-fleetCommandResponses",
-     "musa-demo-fleetModelUpdates",
-     "musa-demo-securityModelUpdates",
-     "musa-demo-airlineModelUpdates",
-     "musa-demo-basedataCommandResponses",
-     "musa-demo-events",
-     "musa-demo-airlineCommandResponses"
+     //"musa-demo-securityCommandResponses",
+     //"musa-demo-basedataModelUpdates",
+     //"musa-demo-fleetCommandResponses",
+     //"musa-demo-fleetModelUpdates",
+     //"musa-demo-securityModelUpdates",
+     //"musa-demo-airlineModelUpdates",
+     //"musa-demo-basedataCommandResponses",
+     "musa-demo-events", //focus only on this 
+     //"musa-demo-airlineCommandResponses"
    ]
    
    consumer.addTopics( topicsArr, function( err, removed){
