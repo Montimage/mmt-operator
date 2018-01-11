@@ -94,6 +94,7 @@ var ReportFactory = {
         
         //Top protocols ordering by data_volum/////////////////////////////
         var match1 = {proto_depth: {$gt: 2, $lt: 5}}; //
+        match1[ COL.APP_ID.id ] = { "$ne" : "0" }; //exclude unknown traffic
         
         //mongoDB aggregate
         var group1 = { _id : {} };

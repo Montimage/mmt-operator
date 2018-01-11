@@ -4,6 +4,8 @@ const nativeKafka  = require('kafka-node');
 //TODO: to update when upload to musa server
 const HOST_NAME  = "http://assurance-platform.musa-project.eu/operator";
 const KAFKA_HOST = "37.48.247.117:2181"
+//const KAFKA_HOST = "localhost:2181"
+const USER_TO_MONITOR = "dummy1";
 
 const oldData = {};
 
@@ -24,7 +26,7 @@ function receiveMessage (message) {
    message = message.value;
    
    //not found user johnd
-   if( message.indexOf( "johnd" ) == -1 )
+   if( message.indexOf( USER_TO_MONITOR ) == -1 )
       return;
    
    var date = message.regex(/EVENT_TIMESTAMP = (.+)\n/);
@@ -33,9 +35,11 @@ function receiveMessage (message) {
       return;
    date = new Date( date );
 
-   //console.log( message );
+   //console.log( JSON.stringify(message ));
    
-   var clientIP = message.regex(/ip-address(\u001a|\u0014)((\d|\.)+)/, 2);
+   //var clientIP = message.regex(/ip-address(\u001a|\u0014)((\d|\.)+)/, 2);
+   var clientIP = message.regex(/user-agent(.+)\u0000/, 1)
+   
    //not found client IP
    if( clientIP == undefined )
       return;
@@ -53,7 +57,7 @@ function receiveMessage (message) {
    //login from 2 different IPs
    if( oldData.clientIP == clientIP ){
       oldData.date = date;
-      console.log( "client IP: " + clientIP + ", date: " + date.toString() );
+      console.log( "- client IP: " + clientIP + "\n- date: " + date.toString() );
       return;
    }
    
@@ -91,10 +95,10 @@ function start( pub_sub ){
       [],
       {
          //consumer group id, default `kafka-node-group`
-         groupId: 'SecAP-kafka-client', 
+         groupId: 'SecAP-kafka-client-', 
          // Auto commit config 
          //TODO: reset to true
-         autoCommit: true,
+         autoCommit: false,
          autoCommitIntervalMs: 500,
          // The max wait time is the maximum amount of time in milliseconds to block waiting if insufficient data is available at the time the request is issued, default 100ms 
          fetchMaxWaitMs: 100,
@@ -124,12 +128,13 @@ function start( pub_sub ){
    ]
    
    consumer.addTopics( topicsArr, function( err, removed){
+      console.log( "subscribe ", topicsArr.join(", "));
       if( err )
          console.error( err );
    } );
    
+   console.log("Start 2factors authentication detector");
    consumer.on( "message", receiveMessage );
-   
 }
 
 function reset(){
@@ -141,4 +146,4 @@ module.exports = {
       reset: reset
 }
 
-//start(1);
+start(1);

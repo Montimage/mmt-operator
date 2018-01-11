@@ -646,7 +646,7 @@ var ReportFactory = {
                   //for 2factors authentification
                   if( act_name === "apply_two_factors_authentication" ){
                      //login
-                     var data = {"name":"johnd", "password":"12345", "tenant":"LH"};
+                     var data = {"name":"admin", "password":"12345", "tenant":"SYS"};
                      MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/login&data=" + JSON.stringify(data), {
                         //data
                      }, "POST", {
@@ -656,11 +656,7 @@ var ReportFactory = {
                         },
                         success: function( session ){
                            //switch to 2factors
-                           //on
-                           //var data = {"enabled": true};
-                           //off
-                           var data = {"enabled": false};
-                           MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/authentication/switchTwoFactor&data=" + JSON.stringify(data), {
+                           MMTDrop.tools.proxy("http://demo.37.48.247.117.xip.io/api/security/v1/userManagement/identity/LH/dummy1/switchTwoFactor?enabled=true", {
                               //data
                            }, "PUT", {
                               error: function( err ){
@@ -668,9 +664,13 @@ var ReportFactory = {
                                  //{"readyState":4,"responseText":"connect ECONNREFUSED 37.48.247.117:80","status":500,"statusText":"Internal Server Error"}
                               },
                               success: function( session ){
-                                 MMTDrop.alert.success("Switched successfully to 2factors authentication");
+                                 MMTDrop.alert.success("Switched successfully to 2factors authentication", 5000 );
                                  //save to DB
-                                 _finishReaction( react_id );
+                                 _btnClick( "perform", react_id, function(){
+                                    _finishReaction( react_id  );
+                                 });
+                                 
+                                 setTimeout( MMTDrop.tools.reloadPage, 6000 );
                               }
                            }, {
                              "Content-Type": "application/json"
@@ -892,6 +892,7 @@ function _finishReaction( react_id, el ){
    MMTDrop.tools.localStorage.set( react_id, oldStr, false );
    
    _btnClick( "finish", react_id, function(){
-      el.parentNode.innerHTML = 'Executed';
+      if( el )
+         el.parentNode.innerHTML = 'Executed';
    });
 }
