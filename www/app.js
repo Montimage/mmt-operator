@@ -123,6 +123,8 @@ app.use(morgan(':time :method :url :status :response-time ms - :res[content-leng
                }
               )
        );
+
+//limit size of file to upload
 app.use(bodyParser.json({limit: '200mb'}));
 app.use(bodyParser.urlencoded({limit: '200mb', extended: false }));
 app.use(cookieParser());
@@ -188,6 +190,8 @@ app.use('/api', api);
 app.use("/a_api", require("./routes/a_api.js"));
 
 app.use("/info/os", require("./routes/info/os"));
+
+app.use("/info/file", require("./routes/info/file.js"));
 
 var route_probe = require("./routes/info/probe");
 route_probe._objRef = _objRef;

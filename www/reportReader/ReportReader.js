@@ -62,14 +62,16 @@ function Reader(){
 			}
 		}
 
-		//this process removes older records from Database
-		var ret = child_process.fork( __dirname + "/maintainDB.js", [configLocation]
-		      , {execArgv: [
-		         //'--debug=5857'
-		         ]} 
-		);
-		process._children.push( ret );
-		process._childrenCount ++;
+		if( ! config.is_probe_analysis_mode_offline ){
+      		//this process removes older records from Database
+      		var ret = child_process.fork( __dirname + "/maintainDB.js", [configLocation]
+      		      , {execArgv: [
+      		         //'--debug=5857'
+      		         ]} 
+      		);
+      		process._children.push( ret );
+      		process._childrenCount ++;
+		}
 	}
 }
 

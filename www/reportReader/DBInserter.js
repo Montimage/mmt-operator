@@ -11,7 +11,9 @@ const BULK_INSERT_THRESHOLD = 20000;
 //http://mongodb.github.io/node-mongodb-native/2.2/api/Collection.html#insertMany
 const WRITE_CONCERN = {
 	w: 0, //Requests no acknowledgement of the write operation
-	j: false, //requests no acknowledgement from MongoDB that the write operation has been written to the journal.
+	
+	//requests no acknowledgement from MongoDB that the write operation has been written to the journal.
+	j: true, //false: to ignore
 
 	//Do not serialize functions that are defined on any object
 	serializeFunctions : false,
@@ -23,7 +25,6 @@ const WRITE_CONCERN = {
 	//If false, continue with remaining inserts when one fails.
 	ordered: false
 };
-
 
 
 const config    = require("../libs/config"),

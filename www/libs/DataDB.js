@@ -763,16 +763,23 @@ var MongoConnector = function () {
 
 
 	self.getLastTimestampOfCollection = function( collection_name, callback ){
-		self.mdb.collection( collection_name ).find({}).sort({
-			"3": -1 //timestamp
-		}).limit(1).toArray(function (err, doc) {
-			if (!err && Array.isArray(doc) && doc.length > 0){
-				return callback( doc[0][ TIMESTAMP ] );
-			}
-			//as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
-			//=> get the reports imediately whe they are availables
-			callback( 0 ) ;
-		});
+	   const $match = {};
+	   $match[ COL.DATA_VOLUME ] = {"$gt": 0};
+	   
+	   const $sort = {};
+	   $sort[ TIMESTAMP ] = -1
+		self.mdb.collection( collection_name )
+      		.find( $match )
+      		.sort( $sort)
+      		. limit(1)
+      		.toArray(function (err, doc) {
+      			if (!err && Array.isArray(doc) && doc.length > 0){
+      				return callback( doc[0][ TIMESTAMP ] );
+      			}
+      			//as this is in offline mode => do not need to (- self.config.probe_stats_period * 1000)
+      			//=> get the reports imediately whe they are availables
+      			callback( 0 ) ;
+      		});
 	}
 
 	self.emptyDatabase = function (cb) {

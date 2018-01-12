@@ -184,6 +184,21 @@ module.exports = function(){
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DEST ]
                }
          ),
+         
+         unknownFlows : new DataCache( inserter, "data_unknown_flows",{
+            key : [COL.SESSION_ID],
+            inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
+               COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
+               COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+               ],
+            set  : [COL.IP_SRC, COL.IP_DEST, COL.PORT_SRC, COL.PORT_DEST,
+               COL.APP_PATH, COL.FORMAT_ID, COL.PROBE_ID,
+               COL.APP_ID, COL.MAC_SRC, COL.MAC_DEST,
+               COL.THREAD_NUMBER],
+            init: [COL.START_TIME]
+            },
+            CONST.period.REAL
+         ),
 
          //system statistics
          sysStat: new DataCache( inserter, "data_stat",
@@ -306,7 +321,7 @@ module.exports = function(){
             if( msg[ COL.PACKET_COUNT ] === 0 ){
                return;
             }
-
+            
             //original message => clone a new one
             self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
 
@@ -328,6 +343,11 @@ module.exports = function(){
                //as 2 threads may produce a same session_ID for 2 different sessions
                //this ensures that session_id is uniqueelse
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
+            
+            //unknow flows
+            if( msg[ COL.APP_ID ] == 0 )
+               self.dataCache.unknownFlows.addMessage( msg );
+            
             
             //session
             if( format === 100 ){

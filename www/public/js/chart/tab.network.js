@@ -1423,8 +1423,8 @@ var ReportFactory = {
                     var fun = "createPopupReport(" +
                     		"'ip'"                 //collection
                         + "," + COL.IP_SRC.id  //key
-                        +"," + key //_IP.string2NumberV4( key )             //id
-                        + ",'IP: " + key +"'"  //title 
+                        +",'" + key //_IP.string2NumberV4( key )             //id
+                        + "','IP: " + key +"'"  //title 
                         + ")";
 
                     $("<td>",{

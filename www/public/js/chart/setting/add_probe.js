@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 7,
+        height: 8,
         type: "info",
         userData: {
             fn: "createFormReport"
@@ -53,15 +53,25 @@ var ReportFactory = {
           }
         },{
           type : "<input>",
-          label: "SSH Username",
+          label: "SSH Port",
           attr : {
-            id          : "ssh-username",
-            name        : "ssh-username",
+            id          : "ssh-port",
+            name        : "ssh-port",
             class       : "form-control",
-            placeholder : "ssh username",
+            placeholder : "ssh host port",
             required    : true,
           }
         },{
+           type : "<input>",
+           label: "SSH Username",
+           attr : {
+             id          : "ssh-username",
+             name        : "ssh-username",
+             class       : "form-control",
+             placeholder : "ssh username",
+             required    : true,
+           }
+         },{
           type  : "<textarea>",
           label : "SSH Key",
           attr : {
@@ -108,6 +118,7 @@ var ReportFactory = {
       errorElement: "span",
       rules: {
         "ssh-address" : {ipv4: true},
+        "ssh-port"    : {number: true},
         "ssh-username": {
           required: {
             depends: function( el ){
@@ -128,6 +139,7 @@ var ReportFactory = {
         var data = {
             probe_id : $("#probe-id").val(),
             address  : $("#ssh-address").val(),
+            port     : $("#ssh-port").val(),
             username : $("#ssh-username").val(),
             password : $("#ssh-key").val(),
         };

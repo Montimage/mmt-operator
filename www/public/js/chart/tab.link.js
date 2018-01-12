@@ -25,7 +25,7 @@ var arr = [
     },
     {
         id: "node",
-        title: "Active Nodes",
+        title: "Last Minute Active Nodes",
         x: 0,
         y: 9,
         width: 12,
@@ -448,7 +448,7 @@ var ReportFactory = {
                     "class": "table table-bordered table-striped table-hover table-condensed tbl-node-legend"
                 });
 
-                $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th><th></th></tr>").appendTo($table);
+                $("<thead><tr><th></th><th width='50%'>Protocol</th><th>" + legend.label + "</th><th>Percent</th></tr>").appendTo($table);
                 var i = 0;
                 for (var key in legend.data) {
                     var val = legend.data[key].val;
@@ -491,16 +491,6 @@ var ReportFactory = {
                         "text" : percent
 
                     }).appendTo($tr);
-
-                    var fun = "createPopupReport('app'," //collection
-                        + COL.APP_PATH.id +",'"
-                        + cls
-                        +"','Protocol: " + key +"')";
-
-                    $("<td>",{
-                      "align" : "center",
-                      "html"  : '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>'
-                    }).appendTo($tr);
                 }
                 //footer of table
                 var $tfoot = $("<tfoot>");
@@ -534,7 +524,6 @@ var ReportFactory = {
 
                     }).appendTo($tr);
 
-                    $("<td>") .appendTo($tr);
                     $tfoot.append($tr).appendTo($table);
                 }
 
@@ -562,9 +551,8 @@ var ReportFactory = {
                             "align"  : "right",
                             "text"   : "100%",
                         })
-                    ).append(
-                      $("<td>")
-                    )).appendTo($table);
+                    )
+                    ).appendTo($table);
 
 
                 var legendId = _chart.elemID + "-legend";
@@ -705,15 +693,15 @@ var ReportFactory = {
 
                         if (obj[mac] == undefined) {
                             obj[mac] = {
-                                "Probe ID"          : msg[COL.PROBE_ID.id],
-                                "MAC Address"       : mac,
-                                "In Frames"         : 0,
-                                "Out Frames"        : 0,
-                                "In Bytes"          : 0,
-                                "Out Bytes"         : 0,
-                                "Total Bytes"       : 0,
-                                "StartTime"         : msg[COL.START_TIME.id],
-                                "LastTime"          : time,
+                                "ProbeID"    : msg[COL.PROBE_ID.id],
+                                "MACAddress" : mac,
+                                "InFrames"   : 0,
+                                "OutFrames"  : 0,
+                                "InBytes"    : 0,
+                                "OutBytes"   : 0,
+                                "TotalBytes" : 0,
+                                "StartTime"  : msg[COL.START_TIME.id],
+                                "LastTime"   : time,
                             };
                         }
                         if( obj[mac]["LastTime"] < time )
@@ -721,9 +709,9 @@ var ReportFactory = {
 
                         if( obj[mac]["StartTime"] == undefined )
                             obj[mac]["StartTime"] = time;
-
-                        if( obj[mac]["StartTime"] > time )
-                            obj[mac]["StartTime"] = time;
+                        else
+                           if( obj[mac]["StartTime"] > time )
+                              obj[mac]["StartTime"] = time;
 
                         if( time < lastMinute )
                             continue;
@@ -735,11 +723,11 @@ var ReportFactory = {
                         */
 
                         //calculate only data from the last minute
-                        obj[mac]["In Frames"]       += msg[COL.DL_PACKET_COUNT.id];
-                        obj[mac]["Out Frames"]      += msg[COL.UL_PACKET_COUNT.id];
-                        obj[mac]["In Bytes"]        += msg[COL.DL_DATA_VOLUME.id];
-                        obj[mac]["Out Bytes"]       += msg[COL.UL_DATA_VOLUME.id];
-                        obj[mac]["Total Bytes"]     += msg[COL.DATA_VOLUME.id];
+                        obj[mac]["InFrames"]       += msg[COL.DL_PACKET_COUNT.id];
+                        obj[mac]["OutFrames"]      += msg[COL.UL_PACKET_COUNT.id];
+                        obj[mac]["InBytes"]        += msg[COL.DL_DATA_VOLUME.id];
+                        obj[mac]["OutBytes"]       += msg[COL.UL_DATA_VOLUME.id];
+                        obj[mac]["TotalBytes"]     += msg[COL.DATA_VOLUME.id];
                     }
 
                     var arr = [];
@@ -750,7 +738,7 @@ var ReportFactory = {
                     }
 
                     arr.sort(function (a, b) {
-                        return b["Total Bytes"] - a["Total Bytes"];
+                        return b["TotalBytes"] - a["TotalBytes"];
                     });
 
                     for (var i = 0; i < arr.length; i++)
@@ -770,26 +758,26 @@ var ReportFactory = {
                         //convert to time string
                         obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
                         obj[i]["LastTime"]    = moment(obj[i]["LastTime"]).format( "MM/DD HH:mm:ss" );
-                        obj[i]["In Frames"]   = MMTDrop.tools.formatLocaleNumber(obj[i]["In Frames"]);
-                        obj[i]["Out Frames"]  = MMTDrop.tools.formatLocaleNumber(obj[i]["Out Frames"]);
-                        obj[i]["In Bytes"]    = MMTDrop.tools.formatDataVolume(obj[i]["In Bytes"]);
-                        obj[i]["Out Bytes"]   = MMTDrop.tools.formatDataVolume(obj[i]["Out Bytes"]);
-                        obj[i]["Total Bytes"] = MMTDrop.tools.formatDataVolume(obj[i]["Total Bytes"]);
+                        obj[i]["InFrames"]   = MMTDrop.tools.formatLocaleNumber(obj[i]["InFrames"]);
+                        obj[i]["OutFrames"]  = MMTDrop.tools.formatLocaleNumber(obj[i]["OutFrames"]);
+                        obj[i]["InBytes"]    = MMTDrop.tools.formatDataVolume(obj[i]["InBytes"]);
+                        obj[i]["OutBytes"]   = MMTDrop.tools.formatDataVolume(obj[i]["OutBytes"]);
+                        obj[i]["TotalBytes"] = MMTDrop.tools.formatDataVolume(obj[i]["TotalBytes"]);
 
                         obj[i]["detail"]      = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
                     }
 
-                     var columns = [{id: "#"            , label: ""               , align:"right"},
-                                  {id:"Probe ID"        , label:"Probe ID"        , align:"right"},
-                                  {id:"MAC Address"     , label:"MAC Address"     , align:"right"},
-                                  {id:"In Frames"       , label:"In Packets"      , align:"right"},
-                                  {id:"Out Frames"      , label:"Out Packets"     , align:"right"},
-                                  {id:"In Bytes"        , label:"In Bytes"        , align:"right"},
-                                  {id:"Out Bytes"       , label:"Out Bytes"       , align:"right"},
-                                  {id:"Total Bytes"     , label:"Total Bytes"     , align:"right"},
-                                  {id:"StartTime"       , label:"Start Time"      , align:"right"},
-                                  {id:"LastTime"        , label:"Last Seen"       , align:"right"},
-                                  {id:"detail"          , label:""                , align:"center"}
+                     var columns = [{id: "#"       , label: ""           , align:"right"},
+                                  {id:"ProbeID"    , label:"Probe ID"    , align:"right"},
+                                  {id:"MACAddress" , label:"MAC Address" , align:"right"},
+                                  {id:"InFrames"   , label:"In Packets"  , align:"right"},
+                                  {id:"OutFrames"  , label:"Out Packets" , align:"right"},
+                                  {id:"InBytes"    , label:"In Bytes"    , align:"right"},
+                                  {id:"OutBytes"   , label:"Out Bytes"   , align:"right"},
+                                  {id:"TotalBytes" , label:"Total Bytes" , align:"right"},
+                                  {id:"StartTime"  , label:"Start Time"  , align:"right"},
+                                  {id:"LastTime"   , label:"Last Seen"   , align:"right"},
+                                  {id:"detail"     , label:""            , align:"center"}
                       ];
                     return {
                         data: arr,

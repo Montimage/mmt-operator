@@ -1768,6 +1768,20 @@ MMTDrop.tools = function () {
 
       // asyn
       if (callback) {
+         //callback is a function => that is call when success
+        if( typeof callback == "function" ){
+           callback = {
+                 success: callback
+           };
+        }
+        
+        //if ignore "error" => call alert
+        if( callback.error == undefined )
+           callback.error = function( err ){
+              MMTDrop.alert.error( "<b>" + err.statusText + "</b>:<br/>" + err.responseText )
+           }
+        
+           
         $.ajax({
           url        : url,
           type       : method,
