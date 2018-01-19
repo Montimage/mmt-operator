@@ -244,9 +244,16 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var colToSum = fMetric.selectedOption().id;
-                    var colsToGroup = [MMTDrop.constants.StatsColumn.TIMESTAMP.id,
-						                 MMTDrop.constants.StatsColumn.APP_PATH.id];
+                    var colsToGroup = [COL.TIMESTAMP.id, COL.APP_PATH.id];
 
+                    var ylabel = fMetric.selectedOption().label;
+                    if( colToSum  == COL.DATA_VOLUME.id || colToSum == COL.PAYLOAD_VOLUME.id){
+                       ylabel += " (total bytes)";
+                    }
+                    else
+                       ylabel += " (total)";
+                        
+                    
                     var data = db.data();
 
                     data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
@@ -256,7 +263,7 @@ var ReportFactory = {
 
                     for (var time in data) {
                         var o = {};
-                        o[MMTDrop.constants.StatsColumn.TIMESTAMP.id] = parseInt( time );
+                        o[COL.TIMESTAMP.id] = parseInt( time );
 
                         var msg = data[time];
                         for (var path in msg) {
@@ -270,7 +277,7 @@ var ReportFactory = {
                     var time_id = 3;
                     var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
 
-                    var columns = [MMTDrop.constants.StatsColumn.TIMESTAMP];
+                    var columns = [COL.TIMESTAMP];
                     for (var i = 0; i < header.length; i++) {
                         var path = header[i];
                         columns.push({
@@ -286,7 +293,7 @@ var ReportFactory = {
                     return {
                         data: arr,
                         columns: columns,
-                        ylabel : fMetric.selectedOption().label + " (total)",
+                        ylabel : ylabel,
                         height : height,
                         addZeroPoints:{
                             time_id       : 3,

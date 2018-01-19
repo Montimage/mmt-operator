@@ -12,7 +12,11 @@ else{
       var arr = val.split("=");
       if( arr[0] == "--config"){
          configPath = arr[1];
-         console.warn("[INFO] used configuration in " + arr[1] );
+         
+         //parent process
+         if( process.send == undefined )
+            console.warn("[INFO] used configuration in " + arr[1] );
+         
       }
    });
 

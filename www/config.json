@@ -18,10 +18,14 @@
 		"_data_folder": "/tmp/",
 		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
-		"nb_readers": 1
+		"nb_readers": 16
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
+	"pcap_dump": {
+      "folder": "/opt/mmt/probe/pcap/",
+      "interval": 3600
+   },
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -62,13 +66,13 @@
 		"byte": 64
 	},
 	"retain_detail_report_period": 300,
-	"limit_database_size" :  5242880000,
+	"limit_database_size" :  10000000000,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn", "log"],
    
 	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["security","behavior"]
+	"modules": ["unknown_traffic","behavior"]
 }

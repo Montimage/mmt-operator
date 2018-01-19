@@ -20,6 +20,7 @@ function Reader(){
       //"--inspect",
       //'--debug-brk' , //debug
       //"--expose_gc"
+	   "--max-old-space-size=4076"
       ];
 	//forward location of config file
 	var configLocation = "";
@@ -56,6 +57,7 @@ function Reader(){
             var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
 				      {execArgv: execArgv} 
 				);
+            
 				_readers.push( ret );
 				process._children.push( ret );
 				process._childrenCount ++;

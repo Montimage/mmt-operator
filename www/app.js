@@ -279,7 +279,8 @@ app.use(function(err, req, res, next) {
     res.render('error', {message: err.message, error: err} );
 });
 
-process.stdin.resume();//so the program will not close instantly
+//Begin reading from stdin so the process does not exit instantly.
+process.stdin.resume();
 process.on('uncaughtException', function (err) {
    console.debug( err );
    console.error( err );
@@ -295,14 +296,10 @@ process.on('uncaughtException', function (err) {
 function exit(){
    //wait for child processes
    //this list is created in "reportReader/ReportReader.js"
-   /*
-   if( process._childrenCount ){
-      process._children.forEach( function( proc, index ){
-         
-      });
+   if( process._children ){
+      
    }
-   */
-   
+ //Begin reading from stdin so the process does not exit instantly
    console.logStdout("Bye!\n");
    process.exit(1);
 }

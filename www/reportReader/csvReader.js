@@ -58,7 +58,7 @@ function process_file (file_name, cb) {
 		   //_TODO: re-enable this
 			processMessage.process( line );
 		}catch( e ){
-			console.error( "Error when processing line " + totalLines + " of file " + file_name, e );
+			console.error( "Error when processing line " + (totalLines + 1) + " of file " + file_name, e );
 			hasError = true;
 		}
 		line = null;
@@ -210,7 +210,7 @@ process.on('SIGINT',function(){
    
    isStop = true;
    database.flush( function(){
-      console.error("Ended csv reader " + READER_INDEX );
+      console.warn("Ended csv reader " + READER_INDEX );
       process.exit();
    } );
 });

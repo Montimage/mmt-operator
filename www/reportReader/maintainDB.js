@@ -59,7 +59,7 @@ function _removeOldRecords( db, collectionName, timestamp, probeID ){
       	      return console.error( err );
       	   
       		if(ret && ret.deletedCount > 0 )
-      		   console.log(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
+      		   console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
       	} );
 	}catch( e ){
 	   console.error("Error while deleting old records in collection " + collectionName );

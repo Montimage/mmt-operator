@@ -55,7 +55,8 @@ ReportFactory.createReport = function () {
        action: "aggregate",
        no_group : true, 
        no_override_when_reload: false,
-       query: [{"$match": match},{"$group": group}, {$sort: sort}, {$limit: 1000}], raw: true});
+       query: [{"$match": match},{"$group": group}, {$sort: sort}, {$limit: 1000}], 
+       raw: true});
    
    const columnsToShow = [
       {
@@ -120,7 +121,7 @@ ReportFactory.createReport = function () {
    //detail of each property
    const STAT = {};
    //database to calculate total data/packets
-   const totalDB = new MMTDrop.Database({collection : "reports_all", action : "aggregate", no_group : true, raw: true })
+   const totalDB = new MMTDrop.Database({collection : "data_total_real", action : "aggregate", raw: true })
    
    function _percentage( a, b ){
       if( b )
