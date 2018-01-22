@@ -317,7 +317,15 @@ var ReportFactory = {
                               text    : "Cancel",
                               href    : '/chart/sla' + MMTDrop.tools.getQueryString(["app_id","probe_id"])
                            }
-                        },
+                        },{
+                           type: "<a>",
+                           attr: {
+                              class   : "btn btn-primary pull-right",
+                              style   : "margin-left: 30px",
+                              text    : "Disable",
+                              onclick : '$(".onoffswitch-checkbox").prop("checked", false);'
+                           }
+                        }
                         ]
                   }]
             };
