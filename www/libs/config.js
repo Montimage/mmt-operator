@@ -211,7 +211,9 @@ else{
       if( ! Array.isArray( config.modules ))
          config.modules = [];
 
-   const fixPages = ["link","network","application", "dpi"];
+   //list of pages to be added
+   //const fixPages = ["link","network","application", "dpi"];
+   const fixPages = [];
 
    for( var i=fixPages.length-1; i>=0; i--)
       if( config.modules.indexOf( fixPages[i] ) == -1 )

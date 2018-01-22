@@ -31,16 +31,23 @@ router.get("/list_pcap_dump", function( req, res, next ){
         //need to end with pcap
         if (file_name.match(/\d+_thread_\d+\.pcap$/i) == null)
            continue;
+        
+        //get file statistic
+        var stats = fs.statSync( path.join( dump_folder, file_name ));
+        
         var str   = file_name.split("_");
         var thread= parseInt( str[2] );
         var start = str[0];
         start   = parseInt( start );
         
+
+        
         ret.push( {
            start  : start,
            end    : start + config.pcap_dump.interval,
            thread : thread,
-           file   : file_name
+           file   : file_name,
+           size   : stats.size, //file size in bytes
         });
      }
      res.send( ret );

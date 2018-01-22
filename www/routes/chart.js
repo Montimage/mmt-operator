@@ -82,6 +82,9 @@ var all_pages = {
     'unknown_traffic':{
        title: "Unknown Flows"
     },
+    'unknown_flow':{
+       title: "Unknown Flows"
+    },
     'setting':{
       title: "Settings"
     }

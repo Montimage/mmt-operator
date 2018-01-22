@@ -6,15 +6,20 @@ PORT=22
 
 TARGET=/home/server10g/huunghia/mmt-operator
 USER=server10g
-PORT=22
 IP=192.168.0.7
+
+TARGET=/home/mmt/mmt-operator
+USER=mmt
+PORT=2222
+IP=localhost
 
 #USER=montimage
 #IP=192.168.0.194
 
-#TARGET=/home/server10gb/huunghia/mmt-operator
-#USER=root
-#IP=192.168.0.35
+TARGET=/home/server10gb/huunghia/mmt-operator
+USER=root
+PORT=22
+IP=192.168.0.35
 
 #TARGET=/home/mmt/mmt-operator
 #USER=mmt

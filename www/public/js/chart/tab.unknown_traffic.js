@@ -42,11 +42,12 @@ ReportFactory.createReport = function () {
    [COL.APP_PATH.id, COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DEST.id,
       COL.IP_SRC.id, COL.IP_DEST.id,
       COL.PORT_SRC.id, COL.PORT_DEST.id,
-      COL.THREAD_NUMBER.id
+      COL.THREAD_NUMBER.id,
+      COL.START_TIME.id //start time
    ].forEach( function( el ){
       group[ el ] = {"$first":  "$" + el}; 
    });
-   group[ "end-time" ] = {"$last": "$" + COL.TIMESTAMP.id}; //end time
+   group[ "end-time" ]   = {"$last":  "$" + COL.TIMESTAMP.id}; //end time
    
    const sort = {};
    sort[ COL.DATA_VOLUME.id ] = -1;
@@ -278,23 +279,6 @@ ReportFactory.createReport = function () {
             if (table)
                table.api().draw(false);
          });
-
-
-         var $currentRow;
-         // Add event listener for opening and closing details
-//         table.on('click', 'tr[role=row]', function () {
-//            //clear the last selected row
-//            //if ($currentRow)
-//            //$currentRow.removeClass('active');
-//
-//            //set the current selected row
-//            $currentRow = $(this);
-//            //$currentRow.addClass('active');
-//
-//            //get value of the first column == index
-//            var index = $currentRow.find('td:first').find("span").data("index");
-//            return false;
-//         });
 
          MMTDrop.tools.ajax("/info/file/list_pcap_dump",
             //data

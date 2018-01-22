@@ -1,0 +1,78 @@
+{
+	"database_server": {
+	   "_host": "37.48.247.124",
+		"host": "localhost",
+		"port": 27017
+	},
+	"redis_input": {
+		"host": "localhost",
+		"port": 6379
+	},
+	"kafka_input": {
+		"_host": "37.48.247.124",
+		"host": "192.168.0.195",
+		"port": 2181,
+		"ssl.ca.location": "data/kafka-ca.cert"
+	},
+	"file_input": {
+		"_data_folder": "/tmp/",
+		"data_folder": "/opt/mmt/probe/result/report/online/",
+		"delete_data": true,
+		"nb_readers": 16
+	},
+	"input_mode": "file",
+	"probe_analysis_mode": "online",
+	"pcap_dump": {
+      "folder": "/opt/mmt/probe/pcap/",
+      "interval": 3600
+   },
+	"local_network": [
+		{
+			"ip": "192.168.0.0",
+			"mask": "255.255.0.0"
+		},
+		{
+			"ip": "172.16.0.0",
+			"mask": "255.240.0.0"
+		},
+		{
+			"ip": "10.0.0.0",
+			"mask": "255.0.0.0"
+		},
+		{
+			"ip": "fe80::",
+			"mask": "8"
+		},
+		{
+			"ip": "0.0.0.0",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "255.255.255.255",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "127.0.0.1",
+			"mask": "255.255.255.255"
+		}
+	],
+	"probe_stats_period": 5,
+	"buffer": {
+		"max_length_size": 30000,
+		"max_interval": 5
+	},
+	"micro_flow": {
+		"packet": 1,
+		"byte": 64
+	},
+	"retain_detail_report_period": 300,
+	"limit_database_size" :  10000000000,
+	"port_number": 8080,
+	"log_folder": "/tmp/",
+	"is_in_debug_mode": true,
+   "_log" : ["error", "warn", "log", "info"],
+   "log" : ["error", "warn", "log"],
+   
+	"_modules": ["security","behavior","ndn","video","sla","stat"],
+	"modules": ["unknown_flow","behavior"]
+}
