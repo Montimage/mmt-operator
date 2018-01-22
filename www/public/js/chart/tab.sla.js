@@ -380,6 +380,9 @@ var ReportFactory = {
                case "vuln_scan_freq":
                   name = "vuln_scan_freq";
                   break;
+               case "authentication":
+                  name = "authentication";
+                  break;
                default:
                   name = "alerts";
                   break;

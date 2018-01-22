@@ -164,7 +164,7 @@ if( config.isSLA ){
   app.use("/musa/sla", sla);
   
   //2 factors authentication for Luhstansa case study
-  require("./routes/musa/2factors.js").start( pub_sub );
+  require("./routes/musa/2factors.js").start( pub_sub, dbconnector );
 
   const connector = require("./routes/musa/connector.js");
   connector.dbconnector = dbconnector;

@@ -438,7 +438,7 @@ var ReportFactory = {
             const _span = function( txt ){
                const react = this;
                if( react.comp_id != undefined )
-                  return '<span class="badge" id="'+ txt + "-"+ react.comp_id + '>' + txt + '</span>';
+                  return '<span class="badge" id="'+ txt + "-"+ react.comp_id + '">' + txt + '</span>';
                return '<span class="badge">' + txt + '</span>';
             }
             
