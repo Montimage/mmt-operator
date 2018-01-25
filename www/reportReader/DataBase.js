@@ -227,7 +227,38 @@ module.exports = function(){
                }
          ),
    };
-
+   
+   //TODO: remove this block. This is used only for high bw
+   delete self.dataCache.reports;
+   delete self.dataCache.link;
+   delete self.dataCache.session;
+   
+   
+   function hasModule( module_name ){
+      return config.modules.indexOf( module_name ) != -1
+   }
+   
+   //eliminate some caches if we do not need them
+   if( !hasModule("unknown_traffic") && !hasModule("unknown_flow")  )
+      delete self.dataCache.unknownFlows ;
+   if( !hasModule("link"))
+      delete self.dataCache.protocol;
+   if( !hasModule("link"))
+      delete self.dataCache.mac;
+   if( !hasModule("network") && !hasModule("dpi") && !hasModule("application"))
+      delete self.dataCache.app;
+   if(  !hasModule("network")  && !hasModule("application"))
+      delete self.dataCache.session;
+   if( !hasModule("network") && !hasModule("application"))
+      delete self.dataCache.ip;
+   if( !hasModule("network") && !hasModule("application"))
+      delete self.dataCache.reports;
+   if( !hasModule("network") )
+      delete self.dataCache.location;
+   if( !hasModule("network") )
+      delete self.dataCache.link;
+   
+   
    //message contain only zero
    const zero_msg = [];
    
@@ -270,6 +301,7 @@ module.exports = function(){
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
+            
             self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
@@ -323,7 +355,8 @@ module.exports = function(){
             }
             
             //original message => clone a new one
-            self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
+            if( self.dataCache.reports )
+               self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
 
             //this is original message comming from mmt-probe
             msg.isGen = false;
@@ -345,7 +378,7 @@ module.exports = function(){
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
             
             //unknow flows
-            if( msg[ COL.APP_ID ] == 0 )
+            if( msg[ COL.APP_ID ] == 0 && self.dataCache.unknownFlows)
                self.dataCache.unknownFlows.addMessage( msg );
             
             
@@ -381,66 +414,76 @@ module.exports = function(){
                //do not add report 99 to data_ip collection as it has no IP
                msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
                msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DEST]  );
-               self.dataCache.ip.addMessage( msg );
+               if( self.dataCache.ip )
+                  self.dataCache.ip.addMessage( msg );
 
                /////////////////////////////////////////////////////////////
                //symetric link between 2 IPs
                if(  msg.ip <  msg.ip_dest ){
                   msg.link = msg.ip + "," + msg.ip_dest;
-                  self.dataCache.link.addMessage( msg );
+                  if( self.dataCache.link )
+                     self.dataCache.link.addMessage( msg );
                }else{
                   msg.link = msg.ip_dest + "," + msg.ip;
                   msg = dataAdaptor.inverseStatDirection( msg );
-                  self.dataCache.link.addMessage( msg );
+                  if( self.dataCache.link )
+                     self.dataCache.link.addMessage( msg );
                   //revert
                   msg = dataAdaptor.inverseStatDirection( msg );
                }
                /////////////////////////////////////////////////////////////
 
                //destination location
-               self.dataCache.location.addMessage( msg );
+               if( self.dataCache.location )
+                  self.dataCache.location.addMessage( msg );
             }
 
-            self.dataCache.mac.addMessage( msg );
+            if( self.dataCache.mac )
+               self.dataCache.mac.addMessage( msg );
 
             ///////////////////////////////////////////////////////////////
             //expand application path: 
             const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
-            const original_app_id = msg[ COL.APP_ID ],
-            original_path   = msg[ COL.APP_PATH ]; 
             //add to protocols collections
-            for( var i=0; i<app_arr.length; i++ ){
-               var o = app_arr[i];
-               //store only maximally 4 level: ETH.IP.TCP.HTTP
-               if( o.depth != 4 && o.depth !== 1 ) //starting from zero
-                  continue;
-
-               //this is a protocol
-               if( PURE_PROTOCOLS[ o.app ] )
-               {
-                  //save msg with the new app_id and its path
-                  msg[ COL.APP_ID ]   = o.app;
-                  msg[ COL.APP_PATH ] = o.path;
-                  msg.proto_depth     = o.depth;
-                  self.dataCache.protocol.addMessage( msg );
+            if( self.dataCache.protocol ){
+               const original_app_id = msg[ COL.APP_ID ],
+               original_path   = msg[ COL.APP_PATH ];
+               
+               for( var i=0; i<app_arr.length; i++ ){
+                  var o = app_arr[i];
+                  //store only maximally 4 level: ETH.IP.TCP.HTTP
+                  if( o.depth != 4 && o.depth !== 1 ) //starting from zero
+                     continue;
+   
+                  //this is a protocol
+                  if( PURE_PROTOCOLS[ o.app ] )
+                  {
+                     //save msg with the new app_id and its path
+                     msg[ COL.APP_ID ]   = o.app;
+                     msg[ COL.APP_PATH ] = o.path;
+                     msg.proto_depth     = o.depth;
+                     self.dataCache.protocol.addMessage( msg );
+                  }
                }
-            }
 
-            //no need
-            //delete( msg.proto_depth );
-            //restore original app_id and its path
-            msg[ COL.APP_ID ]   = original_app_id;
-            msg[ COL.APP_PATH]  = original_path;
+               //no need
+               //delete( msg.proto_depth );
+               //restore original app_id and its path
+               msg[ COL.APP_ID ]   = original_app_id;
+               msg[ COL.APP_PATH]  = original_path;
+            }
             /////
 
             msg.app_paths = app_arr;
-
-            self.dataCache.app.addMessage( msg );
+            
+            if( self.dataCache.app )
+               self.dataCache.app.addMessage( msg );
             ///////////////////////////////////////////////////////////////
 
             //each session
-            self.dataCache.session.addMessage( msg );
+            if( self.dataCache.session )
+               self.dataCache.session.addMessage( msg );
             
             //self.dataCache.detail.addMessage(  msg );
 
@@ -453,11 +496,12 @@ module.exports = function(){
                //change session_id of this clone message
                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 
-               self.dataCache.mac.addMessage( msg );
+               if( self.dataCache.mac )
+                  self.dataCache.mac.addMessage( msg );
 
                //only if its partner is local
                //if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
-               if( format === 100 && msg[ COL.SRC_LOCATION ]  === "_local" ){
+               if( format === 100 && self.dataCache.ip && msg[ COL.SRC_LOCATION ]  === "_local" ){
                   //do not add report 99 to data_ip collection as it has no IP
                   msg.ip  = msg.ip_dest;
                   self.dataCache.ip.addMessage( msg );
@@ -466,6 +510,8 @@ module.exports = function(){
             return;
       }
    };
+   
+   
    self.flush = function( cb ){
       var cacheCount = 0;
       for( var c in self.dataCache )

@@ -56,7 +56,7 @@ ReportFactory.createReport = function () {
        action: "aggregate",
        no_group : true, 
        no_override_when_reload: false,
-       query: [{"$match": match},{"$group": group}, {$sort: sort}, {$limit: 1000}], 
+       query: [{"$group": group}, {$sort: sort}, {$limit: 1000}], 
        raw: true});
    
    const columnsToShow = [

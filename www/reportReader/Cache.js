@@ -108,8 +108,8 @@ function Cache ( option ) {
 		_inserter.add( _collection_name, data, function( err, result){
 		   if( err )
 		      console.error( err );
-		   else
-		      console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
+		   //else
+		   //   console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
 
 			if( cb ) 
 				cb( err, data );

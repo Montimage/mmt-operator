@@ -73,6 +73,6 @@
    "_log" : ["error", "warn", "log", "info"],
    "log" : ["error", "warn", "log"],
    
-	"_modules": ["security","behavior","ndn","video","sla","stat"],
+	"_modules": ["link","network","dpi","application","security","behavior","ndn","video","sla","stat"],
 	"modules": ["unknown_traffic","behavior"]
 }

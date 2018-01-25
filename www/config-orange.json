@@ -24,7 +24,7 @@
 	"probe_analysis_mode": "online",
 	"pcap_dump": {
       "folder": "/opt/mmt/probe/pcap/",
-      "interval": 3600
+      "interval": 60
    },
 	"local_network": [
 		{
@@ -71,8 +71,8 @@
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log"],
-   
-	"_modules": ["security","behavior","ndn","video","sla","stat"],
-	"modules": ["unknown_flow","behavior"]
+   "log" : ["error", "warn", "info"],
+
+	"_modules": ["link","network","dpi","application","security","behavior","ndn","video","sla","stat"],
+	"modules": ["link","network","dpi","unknown_flow","security","behavior"]
 }

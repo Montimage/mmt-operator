@@ -741,7 +741,7 @@ var MongoConnector = function () {
 		if( ! config.is_probe_analysis_mode_offline ){
 			//if online analysis ==> lastime is the current time of operator machine
 			var time = (new Date()).getTime();
-			time -= config.probe_stats_period * 1000;
+			time -= config.probe_stats_period * 1000*2; //give 2 intervals to update data
 			cb( null, time );
 			return;
 		}

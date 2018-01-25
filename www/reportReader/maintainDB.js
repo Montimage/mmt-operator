@@ -157,6 +157,10 @@ function _maintainDatabase( database ){
             return _startOver( database );
          }
          
+         //uk flow reports: retain only last 61minutes
+         // reduce each DB_STEP_INCREASE minutes if need
+         _removeOldRecords( database, "data_unknown_flows_" + CONST.period.REAL , m.time - 61*60*1000 + additionalTime*60*1000, m._id )
+         
          //detail reports
          // reduce each DB_STEP_INCREASE minutes if need
          _removeOldRecords( database, "reports_" + CONST.period.SPECIAL , m.time - config.retain_detail_report_period*1000 + additionalTime*60*1000, m._id );
@@ -185,7 +189,6 @@ function _maintainDatabase( database ){
    //manually garbage
    //if( global && global.gc )
    //   global.gc();
-   
 }
 
 function start( db ) {
