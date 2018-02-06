@@ -86,7 +86,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
                }
@@ -111,7 +111,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
             set: [COL.APP_ID, "proto_depth"]
@@ -123,7 +123,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
             set: ["isGen", "app_paths", COL.APP_ID, COL.PROFILE_ID]
@@ -135,7 +135,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
             set: ["isGen", COL.MAC_SRC, COL.IP_SRC ]
@@ -147,7 +147,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
                }
@@ -159,7 +159,7 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
                COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
-               COL.DATA_VOLUME, COL.PACKET_COUNT,
+               COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
             set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DEST]
@@ -232,7 +232,8 @@ module.exports = function(){
    delete self.dataCache.reports;
    delete self.dataCache.link;
    delete self.dataCache.session;
-   
+   delete self.dataCache.unknownFlows ;
+   delete self.dataCache.location ;
    
    function hasModule( module_name ){
       return config.modules.indexOf( module_name ) != -1
@@ -258,6 +259,10 @@ module.exports = function(){
    if( !hasModule("network") )
       delete self.dataCache.link;
    
+   //flush
+   setInterval( function(){
+      self.flush( function(){} );
+   }, config.probe_stats_period_in_ms*2 )
    
    //message contain only zero
    const zero_msg = [];
@@ -517,7 +522,7 @@ module.exports = function(){
       for( var c in self.dataCache )
          cacheCount ++;
 
-      console.info("Flush " + cacheCount + " caches to DB ....");
+      //console.info("Flush " + cacheCount + " caches to DB ....");
 
       //this function ensures that the "cb" is called only when all caches are flushed
       const callback = function(){

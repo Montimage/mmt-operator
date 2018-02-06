@@ -139,8 +139,6 @@ else{
       console.log = function () {
          const prefix  = getPrefix( "LOG" );
          const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-         if( config.is_in_debug_mode === true  )
-            logStdout.write  ( content );
 
          _writeLog( content, prefix.date );
       }
@@ -185,8 +183,6 @@ else{
       console.info = function( msg ){
          const prefix  = getPrefix( "INFO" );
          const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-         if( config.is_in_debug_mode === true  )
-            errStdout.write  ( content );
 
          _writeLog( content, prefix.date );
       }

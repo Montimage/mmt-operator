@@ -342,7 +342,7 @@ else{
 
       //timestamp
       //msg[ 3 ] = formatTime( msg[3] );
-      msg[ 3 ] = Math.ceil( msg[3] / config.probe_stats_period ) * config.probe_stats_period * 1000
+      msg[ 3 ] = Math.round( msg[3] / config.probe_stats_period ) * config.probe_stats_period * 1000;
 
       //format
       switch( msg[0] ) {
@@ -351,8 +351,8 @@ else{
             msg = MMTDrop.formatSessionReport( msg ); 
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = msg[ MMTDrop.StatsColumnId.START_TIME ] * 1000; //to milisecond
-            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
-            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
+            //msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
+            //msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
             //continue in NO_SESSION_STATS_FORMAT
          case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );

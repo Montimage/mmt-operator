@@ -48,7 +48,7 @@ var ReportFactory = {
         } );
         $group["_id"]["app_paths"] = { "path" : "$app_paths.path" };
         
-        [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
+        [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id
         ].forEach( function( el, index){
           $group[ el ] = {"$sum" : "$" + el};
         });
@@ -56,7 +56,7 @@ var ReportFactory = {
           $group[ el ] = {"$last" : "$"+ el};
         } );
         $group[COL.APP_PATH.id] = {"$first" : "$app_paths.path"};
-        $group[COL.APP_ID.id] = {"$first" : "$app_paths.app"};
+        $group[COL.APP_ID.id]   = {"$first" : "$app_paths.app"};
 
         var database = new MMTDrop.Database({collection : "data_app", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]} );
 
@@ -117,8 +117,8 @@ var ReportFactory = {
                                 if (!isNaN(temp) && parseInt(temp) != 0)
                                     isZero = false;
 
-                                if( args[i].id == COL.DATA_VOLUME.id)
-                                    temp = MMTDrop.tools.formatDataVolume( temp );
+                                if( args[i].id == COL.DATA_VOLUME.id || args[i].id == COL.PACKET_COUNT.id)
+                                    temp = MMTDrop.tools.formatLocaleNumber( temp );
 
                                 oo[prob] = temp;
                             }

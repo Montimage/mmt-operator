@@ -19,8 +19,8 @@ function Reader(){
 	const execArgv = [
       //"--inspect",
       //'--debug-brk' , //debug
-      //"--expose_gc"
-	   "--max-old-space-size=4076"
+      //"--expose_gc",
+	   "--max-old-space-size=2048"
       ];
 	//forward location of config file
 	var configLocation = "";
@@ -55,7 +55,7 @@ function Reader(){
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
             var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
-				      {execArgv: execArgv} 
+				      {execArgv: execArgv}
 				);
             
 				_readers.push( ret );

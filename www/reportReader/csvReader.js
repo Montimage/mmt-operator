@@ -9,7 +9,7 @@
 const fs           = require('fs');
 const path         = require('path');
 const lineReader   = require('readline');
-
+const spawn        = require('child_process').spawn;
 //libs
 const config         = require("../libs/config");
 const tools          = require("../libs/tools");
@@ -39,10 +39,39 @@ if( READER_INDEX == 0 )
 
 console.info( "start csv reader " + READER_INDEX );
 
+/**
+ * Restart this process
+ */
+function restart_process(){
+   console.warn("Restart reader " + READER_INDEX );
+   database.flush( function(){
+    //Restart process ...
+      const argv = process.argv.slice(1);
+      
+      var restartCounter = 0;
+      for( var i=0; i<argv.length; i++ ){
+         var arr = argv[i].split("=");
+         if( arr[0] == "--restart" ){
+            restartCounter = parseInt( arr[1] );
+            restartCounter ++;
+            argv[i] = "--restart=" + restartCounter;
+            break;
+         }
+      }
+      if( restartCounter == 0 )
+         argv.push( "--restart=1" );
+      
+      spawn(process.argv[0], argv, {
+         detached: true,
+         stdio: 'ignore'
+      }).unref();
+      
+      process.exit( 0 );
+   });
+}
+
 //load list of read csv file from db
 var read_files = [];
-//=READER_INDEX to ensure that all processes do not clean garbage in the same time
-//var fileCounter = READER_INDEX;
 
 function process_file (file_name, cb) {
 	const lr = lineReader.createInterface({
@@ -68,16 +97,6 @@ function process_file (file_name, cb) {
 	lr.on('close', function () {
 		// All lines are read, file is closed now.
 		console.info( READER_INDEX + " processed file "+ path.basename(file_name) +" ("+ totalLines +" lines, "+ (tools.getTimestamp() - start_ts) +" ms)");
-		
-		//periodically clean garbage
-		//=> NO NEED
-		//fileCounter ++;
-		//if( fileCounter === 50 ){
-		//   fileCounter = 0;
-		//   if( global && global.gc )
-		//      global.gc();
-		//}
-		
 		
 		//delete data file
 		if( DELETE_FILE_AFTER_READING ){
@@ -158,7 +177,8 @@ function get_csv_file(dir) {
 	return _cache_files.splice(0, 1)[0];
 };
 
-
+//=READER_INDEX to ensure that all processes do not clean garbage in the same time
+var fileCounter = 0;
 var process_folder = function () {
 	var file_name = get_csv_file( DATA_FOLDER );
 	if (file_name == null) {
@@ -168,7 +188,13 @@ var process_folder = function () {
 	}
 	try{
 		process_file(file_name, function () {
-			process_folder();
+		   //restart this reader after reading xx csv files
+		   if( fileCounter >= 20 ){
+		      restart_process();
+		   }else{
+		      fileCounter ++;
+		      process_folder();
+		   }
 		});
 	}catch( ex ){
 		console.error( ex );
