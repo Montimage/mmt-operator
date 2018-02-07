@@ -192,7 +192,7 @@ var process_folder = function () {
 	try{
 		process_file(file_name, function () {
 		   //restart this reader after reading xx csv files
-		   if( fileCounter >= 20 ){
+		   if( fileCounter >= 80 ){
 		      restart_process();
 		   }else{
 		      fileCounter ++;
