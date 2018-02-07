@@ -43,7 +43,7 @@ console.info( "start csv reader " + READER_INDEX );
  * Restart this process
  */
 function restart_process(){
-   console.warn("Restart reader " + READER_INDEX );
+   
    database.flush( function(){
     //Restart process ...
       const argv = process.argv.slice(1);
@@ -58,8 +58,11 @@ function restart_process(){
             break;
          }
       }
-      if( restartCounter == 0 )
+      if( restartCounter == 0 ){
          argv.push( "--restart=1" );
+         restartCounter ++;
+      }
+      console.warn("Restart reader " + restartCounter );
       
       spawn(process.argv[0], argv, {
          detached: true,

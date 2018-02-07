@@ -18,7 +18,7 @@
 		"_data_folder": "/tmp/",
 		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
-		"nb_readers": 16
+		"nb_readers": 8
 	},
 	"input_mode": "file",
 	"probe_analysis_mode": "online",
@@ -66,8 +66,8 @@
 		"byte": 64
 	},
 	"retain_detail_report_period": 300,
-	"limit_database_size" :  10000000000,
-	"port_number": 8080,
+	"limit_database_size" :  50000000000,
+	"port_number": 80,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],

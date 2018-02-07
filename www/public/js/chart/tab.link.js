@@ -671,9 +671,9 @@ var ReportFactory = {
           [ COL.TIMESTAMP.id, COL.PROBE_ID.id, COL.MAC_SRC.id ].forEach( function( el, index){
             group[ el ] = {"$last" : "$"+ el};
           } );
-          [ COL.START_TIME.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
-          } );
+//          [ COL.START_TIME.id ].forEach( function( el, index){
+//            group[ el ] = {"$first" : "$"+ el};
+//          } );
           return {query: [{$match: $match}, {$group : group}]};
         }
         var cTable = MMTDrop.chartFactory.createTable({
@@ -700,18 +700,18 @@ var ReportFactory = {
                                 "InBytes"    : 0,
                                 "OutBytes"   : 0,
                                 "TotalBytes" : 0,
-                                "StartTime"  : msg[COL.START_TIME.id],
+//                                "StartTime"  : msg[COL.START_TIME.id],
                                 "LastTime"   : time,
                             };
                         }
                         if( obj[mac]["LastTime"] < time )
                             obj[mac]["LastTime"] = time;
 
-                        if( obj[mac]["StartTime"] == undefined )
-                            obj[mac]["StartTime"] = time;
-                        else
-                           if( obj[mac]["StartTime"] > time )
-                              obj[mac]["StartTime"] = time;
+//                        if( obj[mac]["StartTime"] == undefined )
+//                            obj[mac]["StartTime"] = time;
+//                        else
+//                           if( obj[mac]["StartTime"] > time )
+//                              obj[mac]["StartTime"] = time;
 
                         if( time < lastMinute )
                             continue;
@@ -756,7 +756,7 @@ var ReportFactory = {
                             + " )";
 
                         //convert to time string
-                        obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
+//                        obj[i]["StartTime"]   = moment(obj[i]["StartTime"]).format( "YYYY/MM/DD HH:mm:ss" );
                         obj[i]["LastTime"]    = moment(obj[i]["LastTime"]).format( "MM/DD HH:mm:ss" );
                         obj[i]["InFrames"]   = MMTDrop.tools.formatLocaleNumber(obj[i]["InFrames"]);
                         obj[i]["OutFrames"]  = MMTDrop.tools.formatLocaleNumber(obj[i]["OutFrames"]);
@@ -775,7 +775,7 @@ var ReportFactory = {
                                   {id:"InBytes"    , label:"In Bytes"    , align:"right"},
                                   {id:"OutBytes"   , label:"Out Bytes"   , align:"right"},
                                   {id:"TotalBytes" , label:"Total Bytes" , align:"right"},
-                                  {id:"StartTime"  , label:"Start Time"  , align:"right"},
+//                                  {id:"StartTime"  , label:"Start Time"  , align:"right"},
                                   {id:"LastTime"   , label:"Last Seen"   , align:"right"},
                                   {id:"detail"     , label:""            , align:"center"}
                       ];
