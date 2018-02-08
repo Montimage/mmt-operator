@@ -1,5 +1,6 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router  = express.Router();
+const config  = require("../libs/config.js")
 
 function proc_request(req, res, next) {
 
@@ -21,10 +22,28 @@ function proc_request(req, res, next) {
 			//get time nearest to 5 seconds but lower
 			time = Math.ceil( time / 5000 ) * 5000;
 
-			var inteval = action;
+			const interval = parseInt(action);
+			switch( interval ){
+			   case 5*60*1000: //5minutes
+			   case 60*60*1000: //1hours
+			      //do not take into account the 2 last sample periods
+			      time -= 2*config.probe_stats_period * 1000;
+			      break;
+			   case 6*60*60*1000: //6h
+			   case 24*60*60*1000: //24h
+			      time -= 60*1000; //do not take into account the last minute
+			      break;
+			   case 7*24*60*60*1000:
+			   case 30*24*60*60*1000:
+			      time -= 60*60*1000 //do not take into account the last hour
+			      break;
+		      default:
+		         time -= 24*60*60*1000 //do not take into account the day
+               break;
+			}
 
 			var time = {
-				begin : time - inteval,
+				begin : time - interval,
 				end   : time,
 				now   : (new Date()).getTime()
 			};

@@ -101,6 +101,7 @@ var ReportFactory = {
         group1["_id"]                = "$" + COL.APP_PATH.id; //groupby protocol path
         group1[ COL.DATA_VOLUME.id ] = {"$sum"   : "$" + COL.DATA_VOLUME.id}; //total data volume
         group1[ COL.APP_PATH.id ]    = {"$first" : "$" + COL.APP_PATH.id};    //retain proto path
+        group1[ COL.APP_ID.id ]      = {"$first" : "$" + COL.APP_ID.id};    //retain proto path
         const sort = {};
         sort[ COL.DATA_VOLUME.id ] = -1;
         
@@ -113,29 +114,27 @@ var ReportFactory = {
         
         //after getting the top list of protocols
         database.afterReload( function( data ){
-        		var app_arr = [];
-        		data.sort( function( m1, m2 ){
-        			return m2[COL.APP_PATH.id] - m1[ COL.APP_PATH.id ];
-        		});
+           //add ethernet to get total
+        		const app_path_arr = ["99"];
+        		const app_id_arr   = ["99"];
+        		
         		//get the top protocol paths having the highest data_volume
         		for( var i=0; i<data.length; i++ ){
-        			var path = data[i][ COL.APP_PATH.id ];
-        			app_arr.push( path );
+        			app_path_arr.push( data[i][ COL.APP_PATH.id ] );
+        			app_id_arr.push(   data[i][ COL.APP_ID.id ] );
         			
         			//get top 7
-        			if( app_arr.length >= 7 )
+        			if( app_path_arr.length >= 8 )
         				break;
         		}
         		
-        		//add ethernet to get total
-        		app_arr.push( "99" );
-        		
         		//select only the app in the top
         		var match2 = { proto_depth: {$lt: 5} };
-        		match2[ COL.APP_PATH.id ] = {$in : app_arr };
+        		match2[ COL.APP_ID.id ]   = {$in : app_id_arr };
+        		match2[ COL.APP_PATH.id ] = {$in : app_path_arr };
         		
 	        	var group2 = { _id: {} };
-	        	[ COL.TIMESTAMP.id, COL.APP_PATH.id ].forEach( function( el, index){
+	        	[ COL.TIMESTAMP.id, COL.APP_ID.id ].forEach( function( el, index){
 	                group2["_id"][ el ] = "$" + el;
 	        	} );
 	        	

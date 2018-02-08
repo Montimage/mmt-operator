@@ -48,7 +48,7 @@ const FTP     = MMTDrop.constants.FtpStatsColumn;
 
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports
-var status_db = new MMTDrop.Database({collection: "status"});
+const status_db = new MMTDrop.Database({collection: "status"});
 
 var fAutoReload = {
   hide : function(){

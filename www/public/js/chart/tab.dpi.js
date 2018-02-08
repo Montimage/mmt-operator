@@ -36,13 +36,24 @@ var ReportFactory = {
 
         //this database will be reloaded when user clicks on one row of the left-tree
         //it will be given the parameter corresponding to the selected protocols
-        var detail_db = new MMTDrop.Database({collection : "data_app", action : "aggregate"});
+        const detail_db = new MMTDrop.Database({collection : "data_app", action : "aggregate", raw: true});
 
-
-
-        var $match = {isGen: false};
+        const $match = {isGen: false};
         
-        var $group = {_id : {} };
+        const $group0 = {_id : {} };
+        [ COL.PROBE_ID.id, COL.APP_PATH.id ].forEach( function( el, index){
+          $group0["_id"][ el ] = "$" + el;
+        } );
+        
+        [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id
+        ].forEach( function( el, index){
+          $group0[ el ] = {"$sum" : "$" + el};
+        });
+        [ COL.PROBE_ID.id, COL.APP_ID.id, "app_paths" ].forEach( function( el, index){
+          $group0[ el ] = {"$last" : "$"+ el};
+        } );
+        
+        const $group = {_id : {} };
         [ COL.PROBE_ID.id ].forEach( function( el, index){
           $group["_id"][ el ] = "$" + el;
         } );
@@ -58,7 +69,13 @@ var ReportFactory = {
         $group[COL.APP_PATH.id] = {"$first" : "$app_paths.path"};
         $group[COL.APP_ID.id]   = {"$first" : "$app_paths.app"};
 
-        var database = new MMTDrop.Database({collection : "data_app", action: "aggregate", query: [{$match : $match}, { $unwind : "$app_paths" }, {$group: $group} ]} );
+        var database = new MMTDrop.Database({collection : "data_app", action: "aggregate", raw: true, 
+           query: [
+              {$match : $match},
+              {$group: $group0}, 
+              { $unwind : "$app_paths" }, 
+              {$group: $group} 
+           ]} );
 
         var cTree = MMTDrop.chartFactory.createTree({
             getData: {
@@ -184,16 +201,27 @@ var ReportFactory = {
                 if( app_path_arr.length > LIMIT_SELECT_APP ){
                     app_path_arr.length = LIMIT_SELECT_APP;
                 }
+                
+                const app_id_arr = [];
+                for( var i=0; i<app_path_arr.length; i++ )
+                   app_id_arr.push( MMTDrop.constants.getAppIdFromPath( app_path_arr[i] ) + ""  );
 
+                const $match0 = {isGen: false};
+                //as every "app_paths" has root element is "99" - ETH
+                //=> do not need this match when searching for "99"
+                if( app_id_arr.indexOf("99") == -1 )
+                   $match0[ "app_paths.app" ] = (app_id_arr.length == 1) ? app_id_arr[0] : {$in : app_id_arr };
+                
                 //load data corresponding to the selected apps
-                var $match = {isGen: false};
+                var $match = {};
+                $match[ "app_paths.app" ]  = (app_id_arr.length == 1)   ? app_id_arr[0]   : {$in : app_id_arr };
                 $match[ "app_paths.path" ] = (app_path_arr.length == 1) ? app_path_arr[0] : {$in : app_path_arr };
 
                 var $group = {_id : {} };
                 [ COL.TIMESTAMP.id, COL.PROBE_ID.id ].forEach( function( el, index){
                   $group["_id"][ el ] = "$" + el;
                 } );
-                $group["_id"]["ap"] = "$app_paths.path";
+                $group["_id"]["ap"] = "$app_paths.app";
                 
                 [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
                 ].forEach( function( el, index){
@@ -209,8 +237,16 @@ var ReportFactory = {
                 [ COL.TIMESTAMP.id ].forEach( function( el, index){
                   $sort[ el ] = 1;
                 } );
-                var db_options = {period: status_db.time, period_groupby: fPeriod.selectedOption().id, query : [{ $unwind : "$app_paths" }, {$match: $match},  {$group: $group}, {$sort: $sort}] };
+                var db_options = {period: status_db.time, period_groupby: fPeriod.selectedOption().id, 
+                   query : [
+                      {$match: $match0},
+                      {$unwind: "$app_paths" }, 
+                      {$match: $match},  
+                      {$group: $group}, 
+                      {$sort: $sort}
+                   ] };
 
+                waiting.show(); //show spinner
                 detail_db.reload( db_options, function( new_data ){
                     cLine.attachTo( detail_db );
                     cLine.redraw();
@@ -236,6 +272,9 @@ var ReportFactory = {
                     });
                 });
                 $widget.trigger("widget-resized", [$widget]);
+                
+                //take into account cLine
+                loading.totalChart = 2;
             }
         });
 

@@ -30,7 +30,6 @@ const Probe           = require('./libs/Probe');
 const constant        = require('./libs/constant.js');
 const ReportReader    = require('./reportReader/ReportReader.js');
 
-
 console.log( "Start MMT-Operator" );
 console.info( config.json );
 
