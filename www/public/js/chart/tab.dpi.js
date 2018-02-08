@@ -270,8 +270,19 @@ var ReportFactory = {
                         "max-height": height,
                         "height"    : height
                     });
+                
+                    var width  = $widget.find(".grid-stack-item-content").innerWidth() - 510;
+                    
+                    //$(".col-md-4").css("max-width", "450px !important;");
+                    //$(".col-md-8").css("max-width", width + "px !important;");
+                    $(".col-md-4").width( 450 );
+                    $(".col-md-8").width( width );
+                    _chart.chart.updateSize( 450 );
                 });
                 $widget.trigger("widget-resized", [$widget]);
+                
+                
+                
                 
                 //take into account cLine
                 loading.totalChart = 2;
@@ -376,12 +387,10 @@ var ReportFactory = {
                         height: height
                     });
                 });
-
-
-                $(".col-md-4").css("width", "200px !important;");
                 
                 //hide spinner
                 waiting.hide();
+                cTree.chart.updateSize()
             }
         });
 

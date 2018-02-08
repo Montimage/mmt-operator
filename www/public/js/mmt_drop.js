@@ -6360,36 +6360,46 @@ MMTDrop.chartFactory = {
 
         //convert table to tree
         var chart_opt = {
-                    indent            : 10,
+          indent            : 10,
           expandable        : true,
           initialState      : "expanded",  //expand all nodes
           clickableNodeNames: true
         };
 
-                //console.log( chart_opt );
-                if( option.chart )
-                  chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
+       //console.log( chart_opt );
+       if( option.chart )
+         chart_opt = MMTDrop.tools.mergeObjects( chart_opt, option.chart );
 
 
-                table.treetable( chart_opt );
+       table.treetable( chart_opt );
 
-                table.no_columns = no_columns;
+       table.no_columns = no_columns;
 
-                table.updateSize = function(){
+       table.updateSize = function( width ){
+          if( width == undefined )
+             width = table.width();
+          else
+             table.width( width );
+          
+           width -= table.no_columns * 140;
+           width += "px";
 
-                    var width = table.width();
-                    width -= no_columns * 100;
-                    width += "px";
+           $("#" + elemID + "_treetable tbody tr td").css({ 
+              "max-width" : "140px",
+              "width"     : "140px"});
+           $("#" + elemID + "_treetable thead tr th").css({ 
+              "width" : "140px" });
+           
+           $("#" + elemID + "_treetable tbody tr td:first-child").css( {
+              "max-width": width,
+              "width"    : width,});
+           $("#" + elemID + "_treetable thead tr th:first-child").css( {
+              "max-width": width,
+              "width"    : width });
+       };
+       table.updateSize();
 
-                    $("#" + elemID + "_treetable tbody tr td").css( "width", "100px" );
-                    $("#" + elemID + "_treetable thead tr th").css( "width", "100px" );
-
-                    $("#" + elemID + "_treetable tbody tr td:first-child").css( "width", width );
-                    $("#" + elemID + "_treetable thead tr th:first-child").css( "width", width );
-                };
-                table.updateSize();
-
-                $(window).resize( table.updateSize );
+       $(window).resize( table.updateSize );
 
         //when user click on a row
         $("#" + elemID + "_treetable tbody tr td:not(:first-child)").click({
@@ -6423,21 +6433,21 @@ MMTDrop.chartFactory = {
           }
         });
 
-                var preSelected = MMTDrop.tools.localStorage.get("tree-selected-ids-" + elemID)
-        //click in the first 'tr' of the tree element
-                if( preSelected == undefined || preSelected.length === 0)
-                    $("#" + elemID + "_treetable tbody tr:first td:last").trigger("click");
-                else{
-                    for( var i=0; i<preSelected.length; i++)
-                        $("#" + elemID + "_treetable tbody tr[data-tt-Id='"+ preSelected[i] +"']").toggleClass("selected");
+       var preSelected = MMTDrop.tools.localStorage.get("tree-selected-ids-" + elemID)
+//click in the first 'tr' of the tree element
+       if( preSelected == undefined || preSelected.length === 0)
+           $("#" + elemID + "_treetable tbody tr:first td:last").trigger("click");
+       else{
+           for( var i=0; i<preSelected.length; i++)
+               $("#" + elemID + "_treetable tbody tr[data-tt-Id='"+ preSelected[i] +"']").toggleClass("selected");
 
-                    //if user regist to handle click event ==> give him the control
-          if (option.click)
-            option.click( preSelected );
+              //if user regist to handle click event ==> give him the control
+                if (option.click)
+                  option.click( preSelected );
 
-                }
+       }
 
-        return table;
+       return table;
       });
 
 
