@@ -20,7 +20,7 @@ function proc_request(req, res, next) {
 			if (err)
 				return next(err);
 			//get time nearest to 5 seconds but lower
-			time = Math.ceil( time / 5000 ) * 5000;
+			time = Math.floor( time / 5000 ) * 5000;
 
 			const interval = parseInt(action);
 			switch( interval ){

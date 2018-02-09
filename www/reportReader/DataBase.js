@@ -301,13 +301,13 @@ module.exports = function(){
          case dataAdaptor.CsvFormat.BA_PROFILE_FORMAT:
             //insert directly to DB
             inserter.add("behaviour", [msg] );
-            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
+            //self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
             
-            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
+            //self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
          case dataAdaptor.CsvFormat.OTT_QOS:

@@ -155,8 +155,8 @@ function Cache ( option ) {
       //need messages arrive in time order???
 		else if( _dataArr.length > config.buffer.max_length_size
 				|| ts > _nextUpdateTime
-				//goto the past
-				|| ts < _nextUpdateTime - _PERIOD_TO_UPDATE 
+				//goto the past: when a csvReader read 2 different csv files consecutivelly
+				//|| ts < _nextUpdateTime - _PERIOD_TO_UPDATE
 				){
 			
 		   _nextUpdateTime = ts + _PERIOD_TO_UPDATE;
