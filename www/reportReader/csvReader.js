@@ -195,8 +195,7 @@ var process_folder = function () {
 		   //4 csv readers read result from 16 probe threads
 		   // => each reader reads 4 csv in 5 seconds
 		   // => each reader reads 48 csv in 1 minute
-		   // => restart reader after 2 minutes
-		   if( fileCounter >= 96 ){
+		   if( fileCounter >= 48 ){
 		      restart_process();
 		   }else{
 		      fileCounter ++;
