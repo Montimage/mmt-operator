@@ -1,5 +1,9 @@
 //Indicate the current page's location within a navigational hierarchy.
 const breadcrumbs = {
+  /**
+   * data is array of DOM element
+   * for example: setData(['Home', '<a href="/setting">Settings</a>'])
+   */
   setData : function( data ){
     if( !Array.isArray( data ) || data.length == 0)
       return;

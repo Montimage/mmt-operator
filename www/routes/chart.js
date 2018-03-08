@@ -85,6 +85,17 @@ var all_pages = {
     'unknown_flow':{
        title: "Unknown Flows"
     },
+    "enodeb" : {
+      title: "eNodeB",
+      children : {
+         "topology":{
+            title : "Network Topology"
+         },
+         "traffic": {
+            title: "Traffic Monitoring"
+         }
+      }
+    },
     'setting':{
       title: "Settings"
     }
@@ -94,14 +105,6 @@ var all_pages = {
 var pages_to_show = {};
 const listOfPageIdToShow = config.modules 
    
-/*
-   [
-    'link', 'network', 'application', 'dpi', 'security'
-    //, 'evasion',
-    //'behavior', 'ndn', 'video','sla'
-    ,'stat'
-];
-*/
 //for testing
 //listOfPageIdToShow.push( "sla" );
 

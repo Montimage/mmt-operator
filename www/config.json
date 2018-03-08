@@ -74,5 +74,5 @@
    "log" : ["error", "warn", "log"],
    
 	"_modules": ["link","network","dpi","application","security","behavior","ndn","video","sla","stat"],
-	"modules": ["unknown_traffic","behavior"]
+	"modules": ["unknown_traffic","behavior", "enodeb"]
 }

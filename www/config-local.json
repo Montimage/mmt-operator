@@ -92,6 +92,7 @@
 	"modules": [
 		"security",
 		"behavior",
-		"unknown_traffic"
+		"unknown_traffic",
+		"enodeb"
 	]
 }
