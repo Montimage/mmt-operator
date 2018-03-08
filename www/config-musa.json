@@ -96,6 +96,13 @@
 		"violation_check_period": 60,
 		"reaction_check_period": 5,
 		"init_components": [
+		     {   
+            "id": "1",
+            "ip": "37.48.247.117",
+            "_url": "http://37.48.247.117",
+            "metrics": [], 
+            "title": "ReadModel_assessed"
+         },  
 			{
 				"id": "30",
 				"ip": "37.48.247.117",
@@ -199,7 +206,7 @@
 				"name": "authentication",
 				"alert": "",
 				"violation": "<= 300",
-				"title": "Authentication - UserAgent",
+				"title": "Authentication: User Behavior Change",
 				"enable": true,
 				"support": true
 			}

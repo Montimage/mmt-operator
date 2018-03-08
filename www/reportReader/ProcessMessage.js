@@ -19,12 +19,9 @@ function setDirectionStatFlowByIP( msg ){
    if ( ip2loc.isLocal( msg[COL.IP_SRC] ) )
      return msg;
 
-   if ( ip2loc.isLocal( msg[COL.IP_DEST] ) ){
-     msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
-     return mmtAdaptor.inverseStatDirection( msg )
-   }
+   msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
+   return mmtAdaptor.inverseStatDirection( msg )
 
-   return msg;
 };
 
 //DONOT remove this block
@@ -107,10 +104,7 @@ function ProcessMessage( database ){
                 return;
             }
 			 */
-			if( setDirectionStatFlowByIP(msg) === null) {
-				//console.log("[DONT KNOW DIRECTION] " + message);
-				//return;
-			}
+			setDirectionStatFlowByIP( msg );
 			break;
 
 			//does not use these kind of reports
