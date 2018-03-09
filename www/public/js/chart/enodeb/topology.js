@@ -132,7 +132,7 @@ var ReportFactory = {
                         name = NO_IP;
 
                      if( nodes_obj[ name ] == undefined )
-                        nodes_obj[ name ] = { label: name, type: 0 };
+                        nodes_obj[ name ] = { label: name }; //, type: 0 };
                      
                      // destination
                      name = msg[ COL.IP_DEST.id ];
@@ -140,7 +140,7 @@ var ReportFactory = {
                         name = NO_IP;
 
                      if( nodes_obj[ name ] == undefined )
-                        nodes_obj[ name ] = { label: name, type: 0 };
+                        nodes_obj[ name ] = { label: name };// , type: 0 };
                   }
 
                   // update index of source and target
@@ -148,13 +148,10 @@ var ReportFactory = {
                   for( var i=0; i<data.length; i++ ){
                      var msg = data[i];
                      
-                     // label
-                     //msg.label =  MMTDrop.tools.formatDataVolume( msg[ col.id ], true ) + "  \u2192"; //"->"
-
                      links_arr.push({
                         source : msg[ COL.IP_SRC.id ],
                         target : msg[ COL.IP_DEST.id ],
-                        val : msg[ col.id ]
+                        label  : MMTDrop.tools.formatDataVolume( msg[ col.id ], true ) + "  \u2192" //"->"
                      });
                   }
                   
@@ -170,27 +167,6 @@ var ReportFactory = {
                }
             },
             afterRender: function( _chart ){
-               // style defintion of topology chart
-               var str =
-                  function(){
-                  /*
-                    <style type="text/css"> 
-                    .link textPath { 
-                       pointer-events: none; 
-                       font: 10px sans-serif;
-                       fill: #1f77b4; 
-                     }
-
-                    .node circle { stroke-width: 2px; } 
-                    .node text { 
-                      cursor: pointer; 
-                      font: 12px sans-serif; 
-                    } 
-                    </style>
-                   */
-               }.toString().split('\n').slice(2, -2).join('\n');
-               $(str).appendTo("head");
-
                //create an input form to add new elements
                const createInput = function( label, name, otherAttr ){
                   const obj = {
@@ -277,12 +253,12 @@ var ReportFactory = {
                            createInput( "MMT Group Identifier", "mmegi", {required: true} ),
                            createInput( "cIoT", "ciot"  ),
                            createInput( "MBMS", "mbms"),
-                           createInput( "IP", "ip", {required: true} ),
-                           createInput( "Default Bearer ID", "ueDefaultBearerID" ),
-                           createInput( "Dedicated Bearer ID", "ueDedicatedBearerID" ),
-                           createInput( "eNB Name", "enbName", {maxlength: 15, required: true} ),
-                           createInput( "Attach", "attach", {type: "checkbox"} ),
-                           createInput( "Active", "active", {type: "checkbox"} ),
+                           createInput( "IP", "ue_ip", {required: true} ),
+                           createInput( "Default Bearer ID", "ue_default_bearer_id" ),
+                           createInput( "Dedicated Bearer ID", "ue_dedicated_bearer_id" ),
+                           createInput( "eNB Name", "enb_name", {maxlength: 15, required: true} ),
+                           createInput( "Attach", "attach_detach", {type: "checkbox"} ),
+                           createInput( "Active", "active_idle", {type: "checkbox"} ),
                        ]
                      },{
                         type : "<div>",
@@ -319,10 +295,11 @@ var ReportFactory = {
                     "enodeb-mmec" : "number",
                     "enodeb-mmegi": "number",
                     "enodeb-ip"   : "ipv4",
+                    "enodeb-ue_ip": "ipv4",
                     "enodeb-ciot" : "number",
                     "enodeb-mbms" : "number",
-                    "enodeb-ueDefaultBearerID"   : "number",
-                    "enodeb-ueDedicatedBearerID" : "number"
+                    "enodeb-ue_default_bearer_id"   : "number",
+                    "enodeb-ue_dedicated_bearer_id" : "number"
                  },
                  //when the form was valided
                  submitHandler : function( form ){
@@ -340,16 +317,12 @@ var ReportFactory = {
                        });
                        
                        const $match = {};
-                       const nodeData = { type: type };
                        switch( type ){
                           case "enodeb":
-                             nodeData.name =  $match["name"] = data.name;
-                             nodeData.type = "eNB";
+                             $match["name"] = data.name;
                              break;
                           case "ue":
                              $match["imsi"] = data.imsi;
-                             nodeData.name  = data.ip;
-                             nodeData.type  = "UE";
                              break;
                        }
                        
@@ -370,8 +343,8 @@ var ReportFactory = {
                              
                              
                              //add to svg chart
-                             
-                             setTimeout( svg.addNode, 1000, nodeData );
+                             data.type = type;
+                             setTimeout( svg.addElements, 1000, type, data );
                           }
                        })
                     }catch( ex ){
@@ -380,6 +353,14 @@ var ReportFactory = {
                     return false;
                  }
                });
+               
+               window.showDetailElement = function( data ){
+                  switch( data.type ){
+                     case "eNB":
+                     case "UE":
+                        break;
+                  }
+               }
                
                // add a button to filter bar
                const $bar = $("#topo-content_filters");
@@ -399,9 +380,11 @@ var ReportFactory = {
                      children: [{
                         type : "<button>",
                         attr : {
-                           class : "btn btn-default",
+                           class : "btn btn-primary",
                            type  : "button",
                            title : "Toggle UE",
+                           "data-type": 'UE',
+                           onclick: "toggleChartElements( this)",
                            html  : '<span class="fa fa-mobile"></span>'
                         }
                      },{
@@ -410,6 +393,8 @@ var ReportFactory = {
                            class : "btn btn-primary",
                            type  : "button",
                            title : "Toggle MME",
+                           "data-type": 'MME',
+                           onclick: "toggleChartElements( this)",
                            html  : '<span class="fa fa-server"></span>'
                         }
                      },{
@@ -418,6 +403,8 @@ var ReportFactory = {
                            class : "btn btn-primary",
                            type  : "button",
                            title : "Toggle eNodeB",
+                           "data-type": 'eNB',
+                           onclick: "toggleChartElements(this)",
                            html  : '<span class="icon-wireless"></span>'
                         }
                      },{
@@ -444,6 +431,36 @@ var ReportFactory = {
                      }]
                   }]
                }));
+               //when user click on group buttons to toggle elements(UE, MME, eNB)
+               window.toggleChartElements = function( dom ){
+                  const $dom = $(dom);
+                  const type = $dom.data("type");
+                  var isHidden = false
+                  //is showing?
+                  if( $dom.attr("class").indexOf( "btn-primary" ) >= 0 ){
+                     isHidden = true;
+                     $dom.attr("class", "btn btn-default");
+                  }else
+                     $dom.attr("class", "btn btn-primary");
+                  
+                  svg.hideNodesAndLinks( type, isHidden );
+                  //remember setting
+                  MMTDrop.tools.localStorage.set( "toggle-" + type, isHidden );
+               }
+               
+               //if the status of toggle buttons was saved
+               // ==> hide its elements
+               $bar.find("button[data-type]").each( function( index, el ){
+                  const $dom = $(el);
+                  const type = $dom.data("type");
+                  if( type == undefined )
+                     return;
+                  var isHidden = MMTDrop.tools.localStorage.get( "toggle-" + type );
+                  if( isHidden == undefined )
+                     return;
+                  toggleChartElements( el );
+               })
+               
             }
          },
          function (elemID, option, data) {
@@ -458,9 +475,9 @@ var ReportFactory = {
              *    b : { type: "zz", label: "hehe"} 
              * },
              * links: [
-             *    {source: "a", target: "b", val: 1},
-             *    {source: "a", target: "b", val: 4},
-             *    {source: "b", target: "a", val: 1},
+             *    {source: "a", target: "b", label: 1},
+             *    {source: "a", target: "b", label: 4},
+             *    {source: "b", target: "a", label: 1},
              * ]
              * }  
              */
@@ -469,58 +486,67 @@ var ReportFactory = {
             if( ! Array.isArray( obj.links ))
                throw "Type of links is not correct. It must be an array of links";
             
+            const nodes = [];
+            const nodes_obj = {};
             function normalizeNode( o ){
+               //is existing a node having the same name?
+               if( nodes_obj[ o.name ] != undefined )
+                  return;
+               nodes_obj[ o.name ] = o;
                if( o.type == null )
                   o.type = ["eNB", "GW", "UE", "MME", "DB"][ Math.floor(Math.random() * 5) ];
+               
                switch( o.type ){
                   case "eNB" : 
                      o.radius = 32;
                      break;
                   case "GW":
-                     o.radius = 20;
+                     o.radius = 16;
                      break;
                   case "UE":
                      o.radius = 12;
                      break;
                   case "MME":
-                     o.radius = 18;
+                     o.radius = 16;
                      break;
                   case "DB":
                      o.radius = 18;
                      break;
                   default:
-                     o.radius = 20;   
+                     o.radius = 20;
                }
-            }
-               
-               
-            const nodes = [];
-            for( var i in obj.nodes){
-               var o = obj.nodes[ i ];
-               
-               normalizeNode( o );
-               
-               o.name = i;
                nodes.push( o );
+            }
+            
+            for( var i in obj.nodes){
+               obj.nodes[ i ].name = i;
+               normalizeNode( obj.nodes[ i ] );
             }
             
             //cumulate links having the same source-target to one
             const links = [];
             const links_obj = {};
-            for( var i=0; i<obj.links.length; i++ ){
-               var msg = obj.links[i];
+            
+            function normalizeLink( msg ){
                var name = msg.source + "-" + msg.target;
+               //is existing a link having the same source-dest?
                if( links_obj[ name ] == undefined ){
                   var o = { 
-                        source: obj.nodes[ msg.source ], //refer to its source object
-                        target: obj.nodes[ msg.target ], //refer to its dest object
-                        val: 0 
+                        source: nodes_obj[ msg.source ], //refer to its source object
+                        target: nodes_obj[ msg.target ], //refer to its dest object
+                        label : msg.label
                   };
                   links_obj[ name ] = o;
                   links.push( o );
                }
-               links_obj[name].val += msg.val;
+               else
+                  //is existing a link having the same source-dest?
+                  //if yes, cummulate their labels
+                  links_obj[name].label += " " + msg.label;
             }
+            
+            for( var i=0; i<obj.links.length; i++ )
+               normalizeLink( obj.links[i] );
 
 
             // size of display content
@@ -559,11 +585,12 @@ var ReportFactory = {
             function updateLinks(){
                // Create all the line svgs but without locations yet
                link = link.data( links );
-               link.enter()
+               const linkEnter = link.enter()
                .append("g")
                .attr("class", "link")
                ;
-               link.append("path")
+               
+               linkEnter.append("path")
                .style("stroke-width", function (d) {
                   return 2;
                   //return d.val;
@@ -583,20 +610,19 @@ var ReportFactory = {
                .attr('id',function(d,i) {return 'edgepath'+i})
                ;
 
-               link.append("text")
+               linkEnter.append("text")
                .attr("dx", function(d){
                   return d.source.radius + 10;
                })
-               .attr("dy", function(d){
-                  return -(d.val + 3);
-               })
+               .attr("dy",  - 10 )
                .attr("opacity", 0)
                .append("textPath")
-               .text(function(d) { return d.label })
+               .text(function(d) { return d.label; })
                .attr('xlink:href',function(d,i) {return '#edgepath'+i})
                .style("pointer-events", "none")
                ;
                
+               //for the links that will be removed
                link.exit().remove();
             }
             svg.fixedNodes = MMTDrop.tools.localStorage.get( "fixedNodes" ) || {};
@@ -606,7 +632,7 @@ var ReportFactory = {
                // Do the same with the circles for the nodes - no
                node = node.data( nodes );
                
-               node.enter()
+               const nodeEnter = node.enter()
                .append("g")
                .attr("class", "node")
                .attr("name", function( d ){
@@ -649,6 +675,7 @@ var ReportFactory = {
                   .on("dragstart", function(d, i) {
                      //if d.pos => delete it to be able to move
                      delete( d.pos );
+                     
                      d.draging  = true;
                      is_draging = true;
                      d.fixed    = true; // of course set the node to fixed so
@@ -704,29 +731,37 @@ var ReportFactory = {
                )
                ;
 
-               node.append("circle")
+               nodeEnter.append("circle")
                .attr("r", function(d){
                   return d.radius + 10;
                })
-               .style("stroke-width", "0" )
-               .style("fill", "white")
+               .attr("stroke-width", "0" )
+               .attr("fill", function( d ){
+//                  if( d.type == "GW" )
+//                     return "black";
+//                  else
+//                     return "white"
+                  return "white";
+               })
                ;
 
-               node.append("text")
+               nodeEnter.append("text")
                .attr("dx", function( d ){
-                  return d.radius;
+                  return d.radius + 10;
                })
                .attr("dy", ".35em")
                .text(function(d) { 
                   return d.label  //IP
                })
+               .attr("style", "cursor:pointer")
                .on("click", function(d){
-                  MMTDrop.tools.reloadPage( "ip="+ d.name );
+                  //MMTDrop.tools.reloadPage( "ip="+ d.name );
+                  showDetailElement( d.data );
                })
                .append("title").text("click here to view detail of is IP");
                ;
 
-               node.append("text")
+               nodeEnter.append("text")
                .attr("text-anchor", "middle" )
                .attr("dy", ".4em")
                .attr("dx", function( d ) {
@@ -736,14 +771,16 @@ var ReportFactory = {
                      return 0;
                })
                .attr('style', function( d ) {
+                  const style = "font-size: "+ (d.radius*2) +"px; cursor: default; "
                   if( d.type == "eNB")
-                     return "font: normal normal bold "+ (d.radius*2) +"px/1 FontMfizz !important";
+                     return style + "font-family: fontmfizz"
                   else
-                     return "font: normal normal normal "+ (d.radius*2) +"px/1 FontAwesome !important";
+                     return style + "font-family: fontawesome";
                })
+               .attr("fill", "white")
                .text(function(d) {
                   switch( d.type ){
-                     case "eNB": return "\uf104";  //antenna from font-mfizz
+                     case "eNB": return "\uf104"; //antenna from font-mfizz
                      case "GW" : return "\uf074"; //router from font-awesome
                      case "MME": return "\uf233"; //server from font-awesome
                      case "UE" : return "\uf10b"; //mobile from font-awesome
@@ -768,8 +805,8 @@ var ReportFactory = {
             function updatePosition() {
 //               if (force.alpha() < 0.01)
 //                  return;
-               const link = svg.selectAll(".link");
-               link.selectAll("path")
+               const linkSVG = svg.selectAll(".link");
+               linkSVG.selectAll("path")
                .attr("d", function(d) {
                   //use saved position rather than the one being given by d3.force
                   if( d.source.pos ){
@@ -788,8 +825,8 @@ var ReportFactory = {
                ;
                
                //node
-               const node = svg.selectAll(".node");
-               node.selectAll("circle")
+               const nodeSVG = svg.selectAll(".node");
+               nodeSVG.selectAll("circle")
                .attr("cx", function(d) { 
                   // fix 2 nodes
                   if( d.name == MICRO_FLOW || d.name == NO_IP )
@@ -816,7 +853,7 @@ var ReportFactory = {
                })
                ;
                
-               node.selectAll("text")
+               nodeSVG.selectAll("text")
                .attr("x", function (d) {
                   //use saved position rather than the one being given by d3.force
                   if( d.pos )
@@ -852,11 +889,81 @@ var ReportFactory = {
                force.start();
              }
             
-            svg.addNode = function( n ){
-               normalizeNode( n );
-               obj.nodes[ n.name ] = n;
-               nodes.push( n );
-               restart();
+            /**
+             * Add a set of nodes to chart
+             * elem = {name: "a", type: "xx", label: "hihi"}
+             * 
+             * If there exist a node having the same name, the new node will not be added 
+             */
+            svg.addNodes = function( arr, needToRedraw ){
+               for( var i=0; i<arr.length; i++ )
+                  normalizeNode( arr[i] );
+               if( needToRedraw !== false )
+                  restart();
+            }
+            
+            /**
+             * Add a set of links to chart
+             * elem = {source: "b", target: "a", label: 1},
+             */
+            svg.addLinks = function( arr, needToRedraw ){
+               for( var i=0; i<arr.length; i++ )
+                  normalizeLink( arr[i] );
+               if( needToRedraw !== false)
+                  restart();
+            }
+            
+            svg.hideNodesAndLinks = function( nodeType, isHidden ){
+               const val = (isHidden ? "none" : "block")
+               link.attr("display", function( l ){
+                  if( l.source.type == nodeType || l.target.type == nodeType )
+                     return val;
+                  //other
+                  return $(this).attr("display");
+               });
+               node.attr("display", function( l ){
+                  if( l.type == nodeType )
+                     return val;
+                  //other
+                  return $(this).attr("display");
+               });
+            }
+            
+            svg.removeNodes = function(){
+               
+            }
+            
+            /**
+             * Add an eNodeB element to chart
+             */
+            svg.addElements = function( type, elem ){
+               switch( type ){
+                  case "enodeb":
+                     svg.addNodes( [
+                        { type: "eNB", name: elem.name, label: elem.name + " (" + elem.ip  + ")", data: elem },
+                        { type: "MME", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + " (" + elem.mmegi + ")" } 
+                     ]);
+                     break;
+                  case "ue":
+                     //add its nodes
+                     svg.addNodes([
+                        //eNodeB
+                        { type: "eNB", name: elem.enb_name, label: elem.enb_name },
+                        //MMEC
+                        { type: "MME", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + " (" + elem.mmegi + ")" },
+                        //phone
+                        { type: "UE", name: elem.imsi, label: elem.ue_ip, data: elem }
+                     ], 
+                     false //do not redraw immediatelly
+                     );
+                     svg.addLinks([
+                        //UE --> eNodeB
+                        {source: elem.imsi, target: elem.enb_name, label: ""},
+                        //eNodeB --> MMC
+                        {source: elem.enb_name, target: elem.mmec + "-" + elem.mmegi, label: "" }
+                     ]);
+                     break;
+               }
             }
             
             window.svg = svg;
@@ -895,7 +1002,6 @@ var ReportFactory = {
 
             param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: LIMIT}];
          }
-
 
          var fMetric  = MMTDrop.filterFactory.createMetricFilter();
          var report = new MMTDrop.Report(
