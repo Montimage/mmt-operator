@@ -81,15 +81,11 @@
 		"log",
 		"info"
 	],
-	"_modules": [
-		"security",
-		"behavior",
-		"ndn",
-		"video",
-		"sla",
-		"stat"
-	],
 	"modules": [
+		"link",
+		"network",
+		"dpi",
+		"application",
 		"security",
 		"behavior",
 		"unknown_traffic",
