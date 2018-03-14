@@ -7,7 +7,7 @@ var config         = require("./config.js");
 const CONST        = require("./constant.js");
 //var ip2loc      = require("");
 
-var MongoClient = require('mongodb').MongoClient,
+var MongoClient = require('./mongodb').MongoClient,
 format          = require('util').format;
 
 const COL      = dataAdaptor.StatsColumnId;
@@ -28,11 +28,9 @@ var MongoConnector = function () {
 		self.onReadyCallback.push( cb );
 	}
 
-	const connectString = 'mongodb://' + config.database_server.host + ":" + config.database_server.port + "/" + config.databaseName;
-
 	var no_1_packet_reports = 0;
 
-	MongoClient.connect( connectString, function (err, db) {
+	MongoClient.connect( config.databaseName, function (err, db) {
 		if (err){
 			console.error("Cannot connect to Database " + connectString );
 			console.logStdout("Cannot connect to Database");
@@ -74,7 +72,7 @@ var MongoConnector = function () {
 				else
 				   label = CONST.period.DAY;
 				
-				self.mdb.collection("data_total_" + label).aggregate( [{$match: match}, {$group: group}, {$sort: {_ts: 1}}] ).toArray( function( err, arr){
+				self.mdb.collection("data_total_" + label).aggregate( [{$match: match}, {$group: group}, {$sort: {_ts: 1}}], function( err, arr){
 					if( err )
 						return callback( err );
 					//timestamp of the samples of one probe is saved into an array
@@ -88,7 +86,7 @@ var MongoConnector = function () {
 						obj[ probe_id ].push( ts );
 					}
 					callback( null, obj );
-				} );
+				});
 			},
 			resetAll: function(){
 				

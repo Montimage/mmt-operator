@@ -272,7 +272,6 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
     console.error( err );
 
-    res.status(err.status || 500);
     err.stack = null;
 
     res.render('error', {message: err.message, error: err} );
@@ -281,14 +280,16 @@ app.use(function(err, req, res, next) {
 //Begin reading from stdin so the process does not exit instantly.
 process.stdin.resume();
 process.on('uncaughtException', function (err) {
-   console.debug( err );
    console.error( err );
 
     if( err && err.response ){
+       //hide stack
         if(config.is_in_debug_mode !== true)
             err.stack = {};
+        if( err.status == undefined )
+           err.status = 0;
 
-        err.response.render('error', {message: err.message, error: err} );
+        err.response.render('error', {message: "err.message", error: err} );
     }
 });
 

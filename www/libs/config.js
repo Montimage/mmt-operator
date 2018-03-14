@@ -34,6 +34,8 @@ else{
    config.location = configPath;
 
    config.version = VERSION; 
+   
+   config.rootDirectory = path.join( __dirname, ".." );
 
    if( config.input_mode != constant.REDIS_STR 
          && config.input_mode != constant.FILE_STR 
@@ -95,7 +97,7 @@ else{
    
 // ensure log directory exists
    if( !fs.existsSync( config.log_folder ) ){
-      console.error("[ERR]: Log folder [" + config.log_folder + "] does not exists.");
+      console.error("[ERROR]: Log folder [" + config.log_folder + "] does not exists.");
       console.info( "\nConfiguration: " );
       console.info( config.json );
       console.info( "node version: %s, platform: %s", process.version, process.platform );
@@ -103,12 +105,7 @@ else{
    }
    
    
-// log
-   if( !Array.isArray( config.log ) )
-      config.log = ["error"];
-
-
-// overwrite console.log
+//====== overwrite console.log 
    console.logStdout = console.log;
    console.errStdout = console.error;
 
@@ -116,7 +113,12 @@ else{
          date   : (new Date()).getDate(),
          stream : fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' })
    }
+   
    const _writeLog = function( msg, date ){
+      //output to console
+      if( config.is_in_debug_mode == true )
+         console.logStdout( msg );
+      
       //ensure each one log file for each day
       if( logFile.date !== date ){
          logFile.date   = date;
@@ -134,84 +136,56 @@ else{
    const getPrefix = function( txt ){
       const date = new Date();
       var logLineDetails = ((new Error().stack).split("at ")[3]).trim();
-      //TODO: root is not always www
-      logLineDetails     = logLineDetails.split("www/")[1];
+      //root is not always www
+      logLineDetails     = logLineDetails.split( config.rootDirectory )[1];
       var prefix = date.toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
 
       return {msg: prefix, date: date.getDate()};
    }
-
-   if( config.log.indexOf( "log" ) !== -1 ){
-      console.log = function () {
-         const prefix  = getPrefix( "LOG" );
-         const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-
-         _writeLog( content, prefix.date );
+   
+   //console.log, debug, info, warn, error
+   if( !Array.isArray( config.log ) )
+      config.log = [];
+   
+   //by default disable alls log unless console.error
+   console.error = function(){
+      var prefix  = getPrefix("ERROR");
+      var content = util.format.apply(null, arguments);
+      _writeLog( prefix.msg + content, prefix.date );
+   }
+   console.log = console.warn = console.info = function(){};
+   
+   for( var i in config.log ){
+      var type = config.log[ i ];
+      switch( type ){
+         case "log":
+            console.log = function(){
+               var prefix  = getPrefix("LOG");
+               var content = util.format.apply(null, arguments);
+               _writeLog( prefix.msg + content, prefix.date );
+            }
+         case "warn":
+            console.warn = function(){
+               var prefix  = getPrefix("WARN");
+               var content = util.format.apply(null, arguments);
+               _writeLog( prefix.msg + content, prefix.date );
+            }
+         case "info":
+            console.info = function(){
+               var prefix  = getPrefix("INFO");
+               var content = util.format.apply(null, arguments);
+               _writeLog( prefix.msg + content, prefix.date );
+            }
       }
    }
-   else{
-      console.log = function(){};
-   }
-
-   if( config.log.indexOf( "warn" ) !== -1 ){
-      console.warn = function(){
-         const prefix  = getPrefix( "WARN" );
-         const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-         if( config.is_in_debug_mode === true  )
-            errStdout.write  ( content );
-
-         _writeLog( content, prefix.date );
-      }
-   }
-   else{
-      console.warn = function(){};
-   }
-
-   if( config.log.indexOf( "error" ) !== -1 ){
-      console.error = function( err ){
-         const prefix  = getPrefix( "ERROR" );
-         const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-         if( config.is_in_debug_mode === true  )
-            errStdout.write  ( content );
-
-         if( typeof( err ) === 'object' )
-            for (var prop in err)  
-               errStdout.write( "  "+ prop+ " value: ["+ err[prop]+ "]\n" );
-
-         _writeLog( content, prefix.date );
-      }
-   }
-   else{
-      console.error = function(){};
-   }
-
-   if( config.log.indexOf( "info" ) !== -1 ){
-      console.info = function( msg ){
-         const prefix  = getPrefix( "INFO" );
-         const content = prefix.msg + util.format.apply(null, arguments) + '\n';
-
-         _writeLog( content, prefix.date );
-      }
-   }
-   else{
-      console.info = function(){};
-   }
-
-
-   console.debug = function(){
-      logStdout.write( util.format.apply(null, arguments, (new Error())))
-   };
 
    config.logStdout     = logStdout;
    config.logFileStream = logFile.stream;
    config.outStream     = logStdout;
 
-   if( config.is_in_debug_mode == true )
-      config.outStream = logFile.stream
-
 //    list of pages to show on Web (see "all_page" on routes/chart.js)
-      if( ! Array.isArray( config.modules ))
-         config.modules = [];
+   if( ! Array.isArray( config.modules ))
+      config.modules = [];
 
    //list of pages to be added
    //const fixPages = ["link","network","application", "dpi"];

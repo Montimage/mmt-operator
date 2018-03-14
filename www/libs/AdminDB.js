@@ -1,4 +1,4 @@
-var MongoClient = require('mongodb').MongoClient;
+var MongoClient = require('./mongodb').MongoClient;
 var config      = require('./config');
 
 function AdminDB() {
@@ -18,7 +18,7 @@ function AdminDB() {
             callback(null, self.mdb);
             return;
         }
-        MongoClient.connect(connectString, function (err, db) {
+        MongoClient.connect(self.db_name, function (err, db) {
             if (db)
                 self.mdb = db;
             callback(err, db);

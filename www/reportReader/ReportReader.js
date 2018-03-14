@@ -54,17 +54,14 @@ function Reader(){
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-            var ret = child_process.fork( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
+            child_process.fork( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
 				      {execArgv: execArgv}
 				);
-            
-				_readers.push( ret );
-				process._children.push( ret );
-				process._childrenCount ++;
 			}
 		}
 
-		if( ! config.is_probe_analysis_mode_offline ){
+		//if( ! config.is_probe_analysis_mode_offline )
+		{
       		//this process removes older records from Database
       		var ret = child_process.fork( __dirname + "/maintainDB.js", [configLocation]
       		      , {execArgv: [

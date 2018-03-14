@@ -1778,7 +1778,12 @@ MMTDrop.tools = function () {
         //if ignore "error" => call alert
         if( callback.error == undefined )
            callback.error = function( err ){
-              MMTDrop.alert.error( "<b>" + err.statusText + "</b>:<br/>" + err.responseText )
+              var text = "<b>" + err.statusText + "</b>:<br/>" + err.responseText;
+              if( ! MMTDrop.config.others.is_in_debug_mode ){
+                 console.error( text );
+                 text = "Cannot connect to server";
+              }
+              MMTDrop.alert.error( text )
            }
         
            

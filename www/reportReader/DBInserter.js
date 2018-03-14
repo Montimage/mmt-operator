@@ -30,24 +30,18 @@ const WRITE_CONCERN = {
 const config    = require("../libs/config"),
 dataAdaptor     = require('../libs/dataAdaptor'),
 tools           = require("../libs/tools"),
-MongoClient     = require('mongodb').MongoClient;
+MongoClient     = require('../libs/mongodb').MongoClient;
 
 
 module.exports = function( databaseName ){
 	const self = this;
-	
-	//connection string to connect to database
-	const connectString = 'mongodb://' + config.database_server.host 
-								+ ":" + config.database_server.port 
-								+ "/" + databaseName;
-	
 	/**
 	 * The cache to store messages before being able to connect to DB
 	 */
 	self.cache = [];
 
 	//connect to DB
-	MongoClient.connect( connectString, function (err, db) {
+	MongoClient.connect( databaseName, function (err, db) {
 		if (err){
 			console.error("Cannot connect to Database " + connectString );
 			console.logStdout("Cannot connect to Database");

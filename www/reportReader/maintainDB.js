@@ -12,12 +12,12 @@
  * - *_day      : retains the lattest 365 days
  * 
  * These periods can be reduced if storage size of database is bigger than config.limit_database_size 
- *   which must be greater than or equal to 100 MB (MIN_SIZE)
+ *   which must be greater than or equal to 10 MB (MIN_SIZE)
  * This reduction is decided by additionalTime variable.
  */
 
 const 
-MongoClient = require('mongodb').MongoClient,
+MongoClient = require('../libs/mongodb').MongoClient,
 format      = require('util').format;
 config      = require("../libs/config.js");
 dataAdaptor = require('../libs/dataAdaptor'),
@@ -26,16 +26,11 @@ CONST       = require("../libs/constant"),
 FORMAT      = require('util').format;
 
 //limit DB storage size by number of Bytes
-const MIN_SIZE         = 100*1024*1024; //100MB
-const DB_LIMIT_SIZE    = config.limit_database_size > MIN_SIZE? config.limit_database_size : MIN_SIZE ; //5*1024*1024; 
+const MIN_SIZE         = 10*1000*1000; //10MB
+const DB_LIMIT_SIZE    = config.limit_database_size > MIN_SIZE? config.limit_database_size : MIN_SIZE ; 
 const DB_STEP_INCREASE = 10;
 
 const COL  = dataAdaptor.StatsColumnId;
-//connection string to connect to database
-const connectString = 'mongodb://' + config.database_server.host 
-+ ":" + config.database_server.port 
-+ "/" + config.databaseName;
-
 
 //mongodb option when deleting records
 const WRITE_CONCERN = {
@@ -69,32 +64,26 @@ function _removeOldRecords( db, collectionName, timestamp, probeID ){
 
 //additional interval 
 var additionalTime = 0;
-var indexCounter   = 0;
 
-function _maintainCollection( indexCounter, db, collectionPrefix, timestamp, probeID ){
+function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
    //retain the last 61 minutes
    // reduce each DB_STEP_INCREASE minutes if need (when storage size of DB is bigger than a limit)
    _removeOldRecords( db, collectionPrefix + CONST.period.REAL,   timestamp    - 61*60*1000      + additionalTime*60*1000, probeID );
    
-   //perform when we need to reduce storageSize or each 30 
-   if( additionalTime != 0 || indexCounter % 30 == 0)
+   if( additionalTime != 0 )
     //retain the last 24 hours
     // reduce each a half of DB_STEP_INCREASE hours if need
       _removeOldRecords( db, collectionPrefix + CONST.period.MINUTE, timestamp - 24*60*60*1000   + additionalTime*30*60*1000, probeID );
    
-   //perform when we need to reduce storageSize or each 60
-   if( additionalTime != 0 || indexCounter % 60 == 0)
+   if( additionalTime != 0 )
       //retain the last 7 days
       // reduce each a 1/4 of DB_STEP_INCREASE days if need
       _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000  + additionalTime*6*60*60*1000, probeID );
       
-   //perform when we need to reduce storageSize or each 60
-   if( additionalTime != 0 || indexCounter % 60 == 0){
+   if( additionalTime != 0 ){
       //retain the last 365 days
       // reduce each DB_STEP_INCREASE days if need
       _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000  + additionalTime*24*60*60*1000, probeID );      
-      //reset indexCounter
-      indexCounter = 0;
    }
 }
 
@@ -117,43 +106,43 @@ function _maintainDatabaseSize( database ){
          return _startOver( database );
       }
       
-      //console.info( stat );
-      
+      console.info("DB's storage size " + stat.storageSize + "B, data size " + stat.dataSize + "B" );
       //everything is ok => wait for 10 seconds to check again
+      //==> need use stat.dataSize in case the deleted documents have not been yet updated on disk
       if( stat.storageSize <= DB_LIMIT_SIZE || stat.dataSize <= DB_LIMIT_SIZE )
          return _startOver( database );
       
       //additional documents to remove to remain storage size of DB
       additionalTime += DB_STEP_INCREASE;
       
-      console.info( "%d increase additional interval %d (%d > %d)", indexCounter, additionalTime, stat.storageSize, DB_LIMIT_SIZE );
+      console.info( "increase additional interval %d (%d > %d)", additionalTime, stat.storageSize, DB_LIMIT_SIZE );
       
-      //this avoids delete DB so frequently
-      //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
-      // (as DB_LIMIT_SIZE is too small)
       setTimeout( _maintainDatabase, 1000, database );
    });
 }
 
 function _maintainDatabase( database ){
    
-   indexCounter ++;
    //get last time of each probe
    database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){
       //no data found
-      if( err || data == undefined )
+      if( err || data == undefined ){
+         console.error( err );
          return _startOver( database );
+      }
       
       //if there is no more data in data_total_real
       //=> use the current time of system
       if( data.length == 0 )
          data = [{time: (new Date()).getTime()}];
       
-      //console.log( data );
+//      console.( data[0] );
+      
+      //for each probe
       for( var i=0; i<data.length; i++ ){
          var m = data[i];
          if( m.time == undefined ){
-            console.error( "Does not find timestamp in data_total_real collection" );
+            console.error( "Cannot find timestamp in data_total_real collection" );
             return _startOver( database );
          }
          
@@ -174,17 +163,20 @@ function _maintainDatabase( database ){
          _removeOldRecords( database, "data_mac_real"     , m.time - 5*60*1000 + additionalTime*30*1000, m._id );
          
          //other "*real" collection, we retain 61 minutes
-         _maintainCollection(indexCounter, database, "data_app_"         , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_ip_"          , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_link_"        , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_location_"    , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_protocol_"    , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_session_"     , m.time, m._id );
-         _maintainCollection(indexCounter, database, "data_total_"       , m.time, m._id );
+         _maintainCollection( database, "data_app_"         , m.time, m._id );
+         _maintainCollection( database, "data_ip_"          , m.time, m._id );
+         _maintainCollection( database, "data_link_"        , m.time, m._id );
+         _maintainCollection( database, "data_location_"    , m.time, m._id );
+         _maintainCollection( database, "data_protocol_"    , m.time, m._id );
+         _maintainCollection( database, "data_session_"     , m.time, m._id );
+         _maintainCollection( database, "data_total_"       , m.time, m._id );
       }
       
+      //this avoids delete DB so frequently
+      //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
+      // (as DB_LIMIT_SIZE is too small)
       //maintain by db size
-      _maintainDatabaseSize( database );
+      setTimeout( _maintainDatabaseSize, 2000, database );
    });
    //manually garbage
    //if( global && global.gc )
@@ -195,13 +187,13 @@ function start( db ) {
    _maintainDatabase( db );
 }
 
-MongoClient.connect( connectString, function (err, db) {
+MongoClient.connect( config.databaseName, function (err, db) {
 	if (err){
-		console.warn("Cannot connect to Database " + connectString );
+		console.warn("Cannot connect to Database " + config.databaseName );
 		console.logStdout("Cannot connect to Database");
 		process.exit( 1 );
 	}
-
+	console.info("Start maintainer");
 	//connect OK
 	start( db );
 });
