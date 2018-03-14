@@ -33,9 +33,9 @@ const ReportReader    = require('./reportReader/ReportReader.js');
 console.log( "Start MMT-Operator" );
 console.info( config.json );
 
-console.log( "node version: %s, platform: %s", process.version, process.platform );
+console.log( "[INFO] NodeJS version: %s, platform: %s", process.version, process.platform );
 
-console.logStdout("MMT-Operator version %s is running on port %d ...\n", config.version, config.port_number );
+console.logStdout("[INFO] MMT-Operator version %s is listening on port %d ...\n", config.version, config.port_number );
 
 const dbconnector = new DBC();
 dbconnector.config = config;

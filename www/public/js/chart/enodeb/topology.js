@@ -414,19 +414,19 @@ var ReportFactory = {
 
                switch( o.type ){
                   case "eNodeB" : 
-                     o.radius = 32;
+                     o.radius = 24;
                      break;
                   case "GW":
-                     o.radius = 16;
-                     break;
-                  case "UE":
                      o.radius = 12;
                      break;
+                  case "UE":
+                     o.radius = 10;
+                     break;
                   case "MME":
-                     o.radius = 16;
+                     o.radius = 14;
                      break;
                   case "DB":
-                     o.radius = 18;
+                     o.radius = 14;
                      break;
                   default:
                      o.radius = 20;
@@ -984,8 +984,6 @@ var ReportFactory = {
             })
          }
       },
-
-
 }
 
 

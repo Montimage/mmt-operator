@@ -15,7 +15,7 @@ else{
          
          //parent process
          if( process.send == undefined )
-            console.warn("[INFO] used configuration in " + arr[1] );
+            console.warn("[INFO] MMT-Operator used configuration in " + arr[1] );
          
       }
    });
@@ -88,15 +88,21 @@ else{
 
    config.json = JSON.stringify( config );
 
+//ensure that mmt-operator is running on a good nodejs version
+   if( process.release.lts == undefined || process.release.lts != 'Carbon' ){
+      console.warn("[WARN] MMT-Operator works well on Carbon release of NodeJS. It may not work on this version "+ process.version +".");
+   }
+   
 // ensure log directory exists
    if( !fs.existsSync( config.log_folder ) ){
-      console.error("Error: Log folder [" + config.log_folder + "] does not exists.");
+      console.error("[ERR]: Log folder [" + config.log_folder + "] does not exists.");
       console.info( "\nConfiguration: " );
       console.info( config.json );
       console.info( "node version: %s, platform: %s", process.version, process.platform );
       process.exit();
    }
-
+   
+   
 // log
    if( !Array.isArray( config.log ) )
       config.log = ["error"];
