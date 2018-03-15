@@ -268,29 +268,35 @@ app.use(function(req, res, next) {
   next(err);
 });
 
+function processError( err ){
+   console.error( err );
+
+   //hide stack
+   err.stack = null;
+   err.status = 0;
+   switch( err.message ){
+      case "Not connected":
+         err.message = "Cannot connect to Database";
+         break;
+   }
+   switch( err.name ){
+      case "MongoError":
+      case "MongoNetworkError":
+         err.message = "Cannot connect to Database";
+         break;
+   }
+}
+
 // error handler
 app.use(function(err, req, res, next) {
-    console.error( err );
-
-    err.stack = null;
-
-    res.render('error', {message: err.message, error: err} );
+   processError( err );
+   res.render('error', {message: err.message, error: err} );
 });
 
 //Begin reading from stdin so the process does not exit instantly.
 process.stdin.resume();
 process.on('uncaughtException', function (err) {
-   console.error( err );
-
-    if( err && err.response ){
-       //hide stack
-        if(config.is_in_debug_mode !== true)
-            err.stack = {};
-        if( err.status == undefined )
-           err.status = 0;
-
-        err.response.render('error', {message: "err.message", error: err} );
-    }
+   processError( err );
 });
 
 function exit(){

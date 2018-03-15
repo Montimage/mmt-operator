@@ -111,7 +111,7 @@ const LIMIT_SIZE=500;
 var ReportFactory = {
       createTopoReport: function (filter) {
 
-         //create an input form to add new elements
+         //support to create an input form to add new elements
          const createInput = function( label, name, otherAttr ){
             const obj = {
                   type : "<input>",
@@ -126,8 +126,19 @@ var ReportFactory = {
             if( otherAttr != null )
                obj.attr = MMTDrop.tools.mergeObjects( obj.attr, otherAttr );
             return obj;
-         }
-
+         };
+         //support to create an option in a selectbox
+         const createOption = function( value, text ){
+            return {
+               type: "<option>",
+               attr: {
+                  value : value,
+                  text  : text
+               }
+            }
+         };
+         
+         
          // create configuration form
          const $configForm = MMTDrop.tools.getModalWindow("enodeb-config");
          $configForm.children(".modal-dialog").width("60%"); // change
@@ -150,22 +161,17 @@ var ReportFactory = {
                         class       : "form-control",
                         onchange    : "$('.add-form-content').hide(); $('#form-content-' + this.value).show();"
                      },
-                     children:[{
-                        type: "<option>",
-                        attr: {
-                           value : "enodeb",
-                           text  : "eNodeB"
-                        }
-                     },{
-                        type: "<option>",
-                        attr: {
-                           value : "ue",
-                           text  : "User Equipment"
-                        }
-                     }]
+                     children:[
+                        createOption( "enodeb", "eNodeB" ),
+                        createOption( "ue"    , "User Equipment"),
+                        createOption( "upf"   , "User Plane Function"),
+                        createOption( "amf"   , "Access Management Function")
+                     ]
                   },
                   ]
-            },{
+            },
+            //Form: eNodeB
+            {
                type : "<form>",
                attr : {
                   class : "",
@@ -184,12 +190,13 @@ var ReportFactory = {
                      createInput( "MMT Group Identifier", "mmegi", {required: true} ),
                      createInput( "IP", "ip", {required: true} ),
                      ]
-               },{
+               },
+               //Form: User Equipment
+               {
                   type : "<div>",
                   attr : {
                      id  : "form-content-ue",
-                     class: "add-form-content",
-                     style: "display: none"
+                     class: "add-form-content"
                   },
                   children : [
                      createInput( "IMSI", "imsi", {maxlength: 15, required: true} ),
@@ -204,7 +211,74 @@ var ReportFactory = {
                      createInput( "Attach", "attach_detach", {type: "checkbox"} ),
                      createInput( "Active", "active_idle", {type: "checkbox"} ),
                      ]
-               },{
+               },
+               //Form: User Plane Function
+               {
+                  type : "<div>",
+                  attr : {
+                     id   : "form-content-upf",
+                     class: "add-form-content"
+                  },
+                  children : [
+                     createInput( "UPF s11 Address", "upf_s11_adr", {required: true} ),
+                     createInput( "AMF Address", "amf_adr", {required: true} ),
+                     createInput( "Tunneling Address", "tunneling_adr", {required: true} ),
+                     createInput( "SGW Address", "sgw_adr", {required: true} ),
+                     createInput( "UE Address", "ue_adr", {required: true} ),
+                     createInput( "Number of UE", "num_ue", {required: true} ),
+                     createInput( "DNS 1", "dns1", {required: true} ),
+                     createInput( "DNS 2", "dns2", {required: true} ),
+                     createInput( "APND Address", "anpd" ),
+                     {
+                        type  : "<select>",
+                        label : "AMD State",
+                        attr : {
+                           id          : "enodeb-amd_state",
+                           name        : "enodeb-amd_state",
+                           class       : "form-control",
+                        },
+                        children:[
+                           createOption( "0", "Added" ),
+                           createOption( "1", "Starting" ),
+                           createOption( "2", "Started" ),
+                        ]
+                     },
+                     ]
+               },
+               //Form: Access Management Function
+               {
+                  type : "<div>",
+                  attr : {
+                     id   : "form-content-amf",
+                     class: "add-form-content"
+                  },
+                  children : [
+                     createInput( "Address", "amf_s1_adr", { required: true} ),
+                     createInput( "Name", "amf_name", {maxlength: 15, required: true} ),
+                     createInput( "UPF S11 Address", "upf_s11_adr", {required: true} ),
+                     createInput( "APN Address", "apn_adr", {required: true} ),
+                     createInput( "MMEC", "mmec" ),
+                     createInput( "MMEGI", "mmegi" ),
+                     createInput( "MMC", "mmc" ),
+                     createInput( "MNC", "mnc" ),
+                     {
+                        type  : "<select>",
+                        label : "State",
+                        attr : {
+                           id          : "enodeb-upf_state",
+                           name        : "enodeb-upf_state",
+                           class       : "form-control",
+                        },
+                        children:[
+                           createOption( "0", "Added" ),
+                           createOption( "1", "Starting" ),
+                           createOption( "2", "Started" ),
+                        ]
+                     },
+                     ]
+               },
+               //Buttons
+               {
                   type : "<div>",
                   children: [{
                      type : "<input>",
@@ -230,6 +304,9 @@ var ReportFactory = {
          true // horizontal
          ));
          
+         //first, show only eNodeB form, hide the others
+         $(".add-form-content").hide();
+         $("#form-content-enodeb").show();
 
          //when user submit form
          $("#add-enodeb-element-form").validate({
