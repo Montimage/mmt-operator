@@ -4,11 +4,10 @@
  * - or busReader
  * @returns
  */
-const child_process   = require("child_process");
 const fs              = require('fs');
 const config          = require("../libs/config");
 const constant        = require('../libs/constant.js');
-
+const child_process   = require("../libs/child_process");
 
 const DATA_FOLDER     = config.file_input.data_folder;
 
@@ -31,18 +30,16 @@ function Reader(){
 	   
 	   if( process._children == undefined ){
 	      process._children = [];
-	      process._childrenCount = 0;
 	   }
 	   
 		switch( config.input_mode ){
 		case constant.REDIS_STR:
 		case constant.KAFKA_STR:
-			var ret = child_process.fork( __dirname + "/busReader.js", [configLocation],
-			      {execArgv: execArgv}  );
-			_readers.push( ret );
+			var ret = child_proces( __dirname + "/busReader.js", [configLocation],
+			      {execArgv: execArgv}  ).start();
+
 			//console.log("started kafka client", ret);
 			process._children.push( ret );
-			process._childrenCount ++;
 			break;
 		default:
 			// ensure data directory exists
@@ -54,13 +51,14 @@ function Reader(){
 			//create processes to parallel readering
 			const total_processes = config.file_input.nb_readers;
 			for( var i=0; i<total_processes; i++ ){
-            child_process.fork( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
+            var ret = child_process( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
 				      {execArgv: execArgv}
-				);
+				).start();
+            process._children.push( ret );
 			}
 		}
 
-		//if( ! config.is_probe_analysis_mode_offline )
+		if( ! config.is_probe_analysis_mode_offline )
 		{
       		//this process removes older records from Database
       		var ret = child_process.fork( __dirname + "/maintainDB.js", [configLocation]
@@ -68,8 +66,8 @@ function Reader(){
       		         //'--debug=5857'
       		         ]} 
       		);
+      		
       		process._children.push( ret );
-      		process._childrenCount ++;
 		}
 	}
 }

@@ -303,8 +303,10 @@ function exit(){
    //wait for child processes
    //this list is created in "reportReader/ReportReader.js"
    if( process._children ){
-      
+     for( var i=0; i<process._children.length; i++ )
+        process._children[i].stop();
    }
+   
  //Begin reading from stdin so the process does not exit instantly
    console.logStdout("Bye!\n");
    process.exit(1);

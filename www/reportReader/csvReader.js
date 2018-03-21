@@ -17,6 +17,7 @@ const DBInserter     = require('./DBInserter');
 const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
 
+const NB_CSV_BEFORE_RESTART = 2;
 //total number of reader processes
 const TOTAL_READERS = process.argv[3];
 //index of the current process
@@ -45,30 +46,8 @@ console.info( "start csv reader " + READER_INDEX );
 function restart_process(){
    
    database.flush( function(){
-    //Restart process ...
-      const argv = process.argv.slice(1);
-      
-      var restartCounter = 0;
-      for( var i=0; i<argv.length; i++ ){
-         var arr = argv[i].split("=");
-         if( arr[0] == "--restart" ){
-            restartCounter = parseInt( arr[1] );
-            restartCounter ++;
-            argv[i] = "--restart=" + restartCounter;
-            break;
-         }
-      }
-      if( restartCounter == 0 ){
-         argv.push( "--restart=1" );
-         restartCounter ++;
-      }
-      console.warn("Restart reader " + restartCounter );
-      
-      spawn(process.argv[0], argv, {
-         detached: true,
-         stdio: 'ignore'
-      }).unref();
-      
+      console.warn("Exit reader " + READER_INDEX );
+      //the reader will be restarted by libs/child_process
       process.exit( 0 );
    });
 }
@@ -191,11 +170,12 @@ var process_folder = function () {
 	}
 	try{
 		process_file(file_name, function () {
-		   //restart this reader after reading xx csv files
+		   //restart this reader after reading xx, e.g., 48, csv files
 		   //4 csv readers read result from 16 probe threads
 		   // => each reader reads 4 csv in 5 seconds
 		   // => each reader reads 48 csv in 1 minute
-		   if( fileCounter >= 48 ){
+		   
+		   if( fileCounter >= NB_CSV_BEFORE_RESTART ){
 		      restart_process();
 		   }else{
 		      fileCounter ++;
