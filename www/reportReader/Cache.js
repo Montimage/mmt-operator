@@ -127,7 +127,7 @@ function Cache ( option ) {
 		if( _IS_RETAIN_ALL ){
 		   //this helps mongodb to iterate quickly the keys of msg
 		   //this must be used together with the hack was done in node_module/bson
-		   msg.__mi_keys = key_arr;
+		   //msg.__mi_keys = key_arr;
 		   _dataArr.push( msg );
 		}else{
 		   _addMessage( msg );
@@ -216,7 +216,7 @@ function Cache ( option ) {
 			
 			//this helps mongodb to iterate quickly the keys of msg
          //this must be used together with the hack was done in node_module/bson
-			oo.__mi_keys = key_arr;
+			//oo.__mi_keys = key_arr;
 			
 			//init for value number
 			if( isDummy )

@@ -1,0 +1,218 @@
+
+  <!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<title>ISOGRAD</title>
+<link rel="shortcut icon" href="https://staticacm.isograd.com/1/images/favicon.png" type="image/x-icon" />
+<link href="https://staticacm.isograd.com/1/css/jqueryui/jquery-ui.min.css?version=02250145" rel="stylesheet" type="text/css">
+<link href="https://staticacm.isograd.com/1/css/isograd.css?version=02250145" rel="stylesheet" type="text/css">
+<link href="https://staticacm.isograd.com/1/css/isograd_runtest.css?version=02250145" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:200,300,400,700,800" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Inconsolata:400,700" rel="stylesheet" type="text/css">
+<script src="https://staticacm.isograd.com/1/js/jquery-2.2.4.min.js" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/js/jquery-ui-1.12.1.min.js" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/js/isogradutilities.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/js/jquery.knob.min.js?version=02250145" type="text/javascript"></script>
+<script src="/runtest/js/jquery.countdown.min.js" type="text/javascript"></script>
+<script src="/runtest/js/timer.js?version=02250145" type="text/javascript"></script>
+<script src="/runtest/js/runtest.js?version=02250145" type="text/javascript"></script>
+<script src="/runtest/js/tooltipster.bundle.min.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/js/jquery.sprintf.js?version=02250145" type="text/javascript"></script>
+<link href="https://staticacm.isograd.com/1/css/codeeditors.css?version=02250145" rel="stylesheet" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Fira+Sans" rel="stylesheet" type="text/css">
+<script src="https://staticacm.isograd.com/1/js/createeditor.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/src/ace.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/src/theme-textmate.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/require.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/range.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/src/ext-language_tools.js?version=02250145" type="text/javascript"></script>
+<script src="https://staticacm.isograd.com/1/ace/src/mode-php.js" type="text/javascript"></script>
+<link href="https://staticacm.isograd.com/1/css/runtest_code.css?version=02250145" rel="stylesheet" type="text/css">
+<link href="https://staticacm.isograd.com/1/css/progress_bar.css?version=02250145" rel="stylesheet" type="text/css">
+<script src="https://staticacm.isograd.com/1/js/jquery.sprintf.js?version=02250145" type="text/javascript"></script>
+<script src="/runtest/js/runtest_code.js?version=02250145" type="text/javascript"></script>
+<link href="https://staticacm.isograd.com/1/css/runtest_contest.css?version=02250145" rel="stylesheet" type="text/css">
+<script src="/runtest/js/runtest_contest.js?version=02250145" type="text/javascript"></script>
+
+</head>
+<body  data-lan_id='1' class="nomenu">
+<header class="code_question">
+<img src="https://staticacm.isograd.com/1/images/logos/tosa_code_blanc.png">
+<div class="subject_container">
+<p>Langage :&nbsp;</p>
+<a  href="#" onClick="ChangeSubSubject(106);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/c.png"></a>
+<a  href="#" onClick="ChangeSubSubject(108);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/csharp.png"></a>
+<a  href="#" onClick="ChangeSubSubject(107);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/cplusplus.png"></a>
+<a  href="#" onClick="ChangeSubSubject(104);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/java.png"></a>
+<a  href="#" onClick="ChangeSubSubject(102);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/nodejs.png"></a>
+<a  class="selected" href="#" onClick="ChangeSubSubject(103);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/php.png"></a>
+<a  href="#" onClick="ChangeSubSubject(101);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/python.png"></a>
+<a  href="#" onClick="ChangeSubSubject(110);"><img class="subject_logo" src="https://staticacm.isograd.com/1/images/subjecticons/ruby.png"></a>
+</div>
+<p class="question_number">Question :&nbsp; 1<span>/6</span></p>
+</header>
+<section class=" runtest">
+<div class="content">
+<form action="runtest.php" method="post" name="QuestionForm" id="QuestionForm">
+<article id="article_questiondisplayer">
+<div id="question">
+<div class="top_question contest">
+<p class="global_timer_container">Temps restant avant la fin du concours : <span id="globaltimer"></span></p>
+</div>
+<p class="question_text">
+<img class="centered_image" src="/visualaids/codecontest/fr/CTSTFR0124.png"/><BR>
+<BR>
+<Strong>Sujet</Strong><BR>
+<BR>
+Les entreprises déploient leurs applications (web ou mobile) sur le cloud pour différentes raisons, l&#039;une d&#039;entre elle est la possibilité de faire varier le nombre de serveurs en fonction du moment de la journée. En effet, de nombreuses applications ont besoin de plus de puissance durant la journée que durant la nuit.<BR>
+<BR>
+<Strong>Mission</Strong><BR>
+<BR>
+Vous travaillez chez un fournisseur de Cloud qui, comme beaucoup d&#039;entre eux, dispose de serveurs de différentes générations. Les anciens serveurs sont bien sûrs moins rapides. Par ailleurs, le nombre de serveurs disponibles de chaque génération varie chaque jour car votre société remplace régulièrement les plus anciens par des nouveaux. <BR>
+<BR>
+Chaque matin, vous recevez donc une liste avec le nombre de serveurs disponibles et leurs vitesses de processeur. Votre stratégie d&#039;allocation des serveurs est simple : &quot;les meilleurs serveurs aux premiers clients&quot;, vous commencez donc par allouer les serveurs les plus rapides puis quand vous n&#039;en n&#039;avez plus vous allouez des serveurs un peu moins rapides et ainsi de suite.<BR>
+<BR>
+<Strong>Objectif</Strong><BR>
+<BR>
+Déterminer combien de générations de serveurs ont été utilisées pour satisfaire tous les clients un jour donné.<BR>
+<BR>
+<Strong>Format des données</Strong><BR>
+<BR>
+<u>Entrée</u><BR>
+Ligne <i>1</i> : un entier compris entre <i>1</i> et <i>1.000.000</i> représentant le nombre de serveurs demandés par vos clients.<BR>
+Ligne <i>2</i> : un entier <Strong>N</Strong> compris entre <i>1</i> et <i>20</i> représentant le nombre de générations de serveurs disponibles.<BR>
+Lignes <i>3</i> à <Strong>N</Strong>+<i>2</i> : un entier <Strong>B</Strong> compris entre <i>10.000</i> et <i>500.000</i> et un nombre à virgule <Strong>C</Strong> compris entre <i>1,00</i> et <i>5,00</i> séparés par des espaces. <Strong>B</Strong> représente le nombre de serveurs disponibles et <Strong>C</Strong> la cadence (exprimée Ghz) d&#039;une génération de serveurs. On vous garantit que chaque génération a une cadence différente.<BR>
+<BR>
+<u>Sortie</u><BR>
+Un entier représentant le nombre de génération de serveurs dont vous avez besoin pour servir tous les clients, en allouant des serveurs de moins en moins rapides (c&#039;est à dire en utilisant les serveurs avec la cadence la plus haute en priorité). <BR>
+Si vous n&#039;avez pas assez de serveurs pour servir tous les clients, renvoyez <Strong>KO</Strong>.<br><a  class="view_att link" href="https://questionsacm.isograd.com/codecontest/sample_input_output/sample-sqF0f__kOcxzn2-L5g7TDfKiZZUQyeKpKKAJlUnQfrE.zip" style="font-weight:bold;" target="_blank">Téléchargez des fichiers d'exemple ainsi qu'un modèle de code pour travailler localement.</a>
+</p>
+</div>
+<div class="answers">
+<div class="code_controlbar">
+<button  class="button ok small" id="boutonvalidation" href="#" onClick="SubmitContestQuestion();" type="button"><span><img src="https://staticacm.isograd.com/1/images/runtest/buttons/play_blanc.png"/>Soumettre</span>
+</button><button  class="button light_grey small" href="#" onClick="ResetCode();" type="button"><span><img src="https://staticacm.isograd.com/1/images/runtest/buttons/reset.png"/>Rétablir le code original</span>
+</button><button  class="button ok small light_grey" href="#" onClick="ShowSolution();" type="button"><span><img src="https://staticacm.isograd.com/1/images/runtest/buttons/solution.png"/>Voir la solution</span>
+</button><button  class="button ok small light_grey" href="https://www.isograd.com/FR/solutionconcours.php?contest_id=30" onClick="BackToList();" type="button"><span>Revenir à la liste</span>
+</button><div class="progress hide" id="wait_area" >
+							<div class="progress-bar progress-bar-striped active"  role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width: 1%">
+							  <span class="sr-only"></span>
+							</div></div>
+<button  class="button red small hide" id="stop_processing_button" href="#" onClick="StopProcessing();" type="button"><span>Interrompre l'exécution</span>
+</button></div>
+<div class="code" id="question_code_container"><pre  id="question_code" class="code_input"></pre></div>
+</div>
+<div id="news_container">
+<div id="news"></div>
+</div>
+<div class="server_result">
+<button  class="button selected" id="output" href="#" onClick="ToggleOutput(this,'#server_output');" type="button"><span>Affichage</span>
+</button><button  class="button " id="outputerror_button" href="#" onClick="ToggleOutput(this,'#server_errors');" type="button"><span>Message d'erreur</span>
+</button><button  class="button " href="#" onClick="ToggleOutput(this,'#local_echo_display');" type="button"><span>Résultat de local_echo() et local_print_r()</span>
+</button><div class="phpoutput" style="overflow:hidden;" id="server_output">No output at the moment</div>
+<div class="phpoutput" style="display:none;overflow:hidden;" id="local_echo_display"></div>
+<div class="phpoutput" id="server_errors"></div>
+</div>
+<input type="hidden" name="laptop" id="laptop" value="" />
+<input type="hidden" name="lan_lin_off" id="lan_lin_off" value="4" />
+<input type="hidden" name="ace_mode" id="ace_mode" value="php" />
+<input type="hidden" name="final_code" id="final_code" value="" />
+<input type="hidden" name="que_str_id" id="que_str_id" value="CTSTFR0124" />
+<input type="hidden" name="cts_id" id="cts_id" value="30" />
+<input type="hidden" name="sub_sbj_id" id="sub_sbj_id" value="103" />
+<input type="hidden" name="alternative_timer_string" id="alternative_timer_string" value="<span style='color:#FFF;'>Le concours est terminé, vous pouvez continuer à coder, mais vos réponses ne seront pas prises en compte dans le classement officiel.</span>" />
+</article>
+</form>
+<div id="timeover" title="Temps écoulé" class="mydialog"><div class="content_area">
+<p class="messageadmin" id="timeover_error"></p>
+<p>Votre résultat à la question sera basé sur votre réponse actuelle.</p>
+<input type="hidden" name="postback_message" value="" />
+</div><div class="button_area"><button  class="button ok small" href="#" onClick="$('#close_errordisplay').parent().hide();SubmitContestQuestion();" type="button"><span>OK</span>
+</button></div>
+</div>
+<div id="solution" title="Code de la réponse" class="mydialog"><div class="box-close">
+					<div class="under-box-close">
+							<a type="button" class="close" data-dismiss="modal" onclick="$('#solution').dialog('close');"><span aria-hidden="true">&times;</span></a>
+					</div>
+				</div> <div class="content_area">
+<p class="messageadmin" id="solution_error"></p>
+<div class="noneditable_code_container" id="solution_code_container"><pre  id="editor_1_code" class="noneditable_code"></pre></div>
+<input type="hidden" name="solution_code" id="solution_code" value="
+&lt;?php
+/***************************************************************
+//*
+//*
+//* SOLUTION BY Isograd
+//*
+//*
+//******************************************************************
+/*******/
+do{
+    $f = stream_get_line(STDIN, 10000, PHP_EOL);
+    if($f!==false){
+        $input[] = $f;
+    }
+}while($f!==false);
+
+function Solve($input){
+    $servers = $input[0];
+    unset($input[0]);
+    unset($input[1]);
+    foreach($input as $row){
+        $temp = explode(&quot; &quot;,$row);
+    	$cpus[$temp[1]] = $temp[0];
+    }
+    krsort($cpus);
+    $result =0;
+    foreach($cpus as $value){
+        $result++;
+    	$servers-=$value;
+    	if($servers&lt;=0){
+    	    return $result;
+    	}
+    }
+    return &quot;KO&quot;;
+}
+echo Solve($input);
+?&gt;
+
+" />
+<input type="hidden" name="postback_message" value="" />
+</div><div class="button_area"></div>
+</div>
+<div id="contest_success" title="C'est bon !" class="mydialog"><form action="https://www.isograd.com/FR/solutionconcours.php?contest_id=30" method="post" name="successdialogform" id="successdialogform" class="form-create-update">
+<div class="content_area">
+<p class="messageadmin" id="contest_success_error"></p>
+<p class="question_title" id="ranking">Lors d'un vrai concours vous passeriez maintenant à la question suivante.</p>
+<p class="next_question hide">Vous pouvez passer à la question suivante.</p>
+<input type="hidden" name="postback_message" value="" />
+</div><div class="button_area"><button  class="button ok small" href="#" onClick="BackToList();" type="button"><span>Quitter</span>
+</button></div>
+</form>
+</div>
+<div id="contest_finish" title="Le concours est terminé" class="mydialog"><div class="content_area">
+<p class="messageadmin" id="contest_finish_error"></p>
+<p style="padding-top:20px;padding-bottom:20px;">Vous pouvez continuer à coder et à répondre aux questions. Néanmoins, vos prochaines bonnes réponses ne serons pas comptabilisées dans le classement final.</p>
+<input type="hidden" name="postback_message" value="" />
+</div><div class="button_area"><button  class="button ok small" href="#no" onClick="$('#contest_finish').dialog('close');" type="button"><span>OK</span>
+</button></div>
+</div>
+<div id="connection_lost" title="Votre session a expiré" class="mydialog"><div class="content_area">
+<p class="messageadmin" id="connection_lost_error"></p>
+<p style="padding-top:20px;padding-bottom:20px;">Nous sommes désolés mais votre session a expiré. Veuillez vous reconnecter au concours. Il reprendra automatiquement à cette question. Vous pouvez copier la dernière version de votre code qui figure ci-dessous.</p>
+<div class="form-group vertical ">
+<textarea  name="last_code" style="width:445px;height:176px;font-family:Inconsolata;" class=" form-control" id="last_code" data-required="1">
+</textarea>
+</div>
+<input type="hidden" name="postback_message" value="" />
+</div><div class="button_area"><a  class="small button green" href="https://www.isograd.com" target="_blank">OK</a>
+</div>
+</div>
+</div>
+</section>
+
+</body>
+
+</html>

@@ -1949,10 +1949,9 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         console.log("Reload database: " + JSON.stringify(_param));
     }
     var onSuccess = function( newData ){
-                        console.log("  - got " + newData.data.length + " elements");
-
-        _originalData     = newData.data;
-        _this.time        = newData.time;
+        console.log("  - got " + newData.data.length + " elements");
+        _originalData = newData.data;
+        _this.time    = newData.time;
         if( newData.probeStatus )
             _this.probeStatus = newData.probeStatus;
         if( newData.protocols )
@@ -1974,11 +1973,15 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
         success: onSuccess.bind( this ),
         error  : function( xhr, status, msg){
             if( status == "timeout")
-                msg = "Connection timeout";
-            else
+                msg = "Error: Connection timeout";
+            else if( msg == "" || msg == undefined ){
+                msg = "Error: Cannot connect to server";
+                MMTDrop.alert.error( msg, 55000 );
+                return;
+            }else
                 msg = "Error: " + msg;
 
-            MMTDrop.alert.error( msg );
+            MMTDrop.alert.error( msg, 10000 );
             //throw new Error( msg );
         }
     } );

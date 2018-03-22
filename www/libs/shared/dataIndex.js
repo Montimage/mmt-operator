@@ -11,6 +11,7 @@ module.exports = {
           SSL_APP_FORMAT          : 2/**< SSL flow report format id */,
           RTP_APP_FORMAT          : 3/**< RTP flow report format id */,
           FTP_APP_FORMAT          : 4,
+          GTP_APP_FORMAT          : 5,
           MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
           RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
           NO_SESSION_STATS_FORMAT : 99,
@@ -171,6 +172,13 @@ module.exports = {
           CONTROL_SESSION_ID: 97, // control session session_id of the corresponding data section
           RESPONSE_TIME     : 98, // Response time of the file transfer only
       },
+      
+      GtpStatsColumnId: {
+         IP_SRC: 100,
+         IP_DST: 101,
+         TEID_1: 102,
+         TEID_2: 103
+      },
 
        LicenseColumnId           : {
           FORMAT_ID       : 0, /**< Index of the format id column */
@@ -184,6 +192,7 @@ module.exports = {
           VERSION_PROBE   : 8,
           VERSION_SDK     : 9,
       },
+      
       NdnColumnId                  : {
           /** Index of the format id column */
           FORMAT_ID             : 0 ,

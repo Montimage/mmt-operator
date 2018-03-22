@@ -66,7 +66,7 @@ function flatAppPath( str ){
       var msg = {path: pathArr.join("."), app: pathArr[ pathArr.length - 1 ], depth: pathArr.length};
       //__mi_keys is used by mongodb to accelate bson functions
       //this must be used together with the hack was done in node_module/bson
-      msg.__mi_keys = flat_key_array;
+      //msg.__mi_keys = flat_key_array;
       
       arr.push( msg );
       pathArr.length --;

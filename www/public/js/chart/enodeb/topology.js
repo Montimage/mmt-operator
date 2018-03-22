@@ -141,9 +141,8 @@ var ReportFactory = {
          
          // create configuration form
          const $configForm = MMTDrop.tools.getModalWindow("enodeb-config");
-         $configForm.children(".modal-dialog").width("60%"); // change
-         // width of dialog
-         $configForm.$title.html("Add a new Element");
+         $configForm.children(".modal-dialog").width("60%"); // change width of dialog
+         
          $configForm.$content.html( MMTDrop.tools.createForm({
             type : "<div>",
             attr : {
@@ -449,7 +448,7 @@ var ReportFactory = {
             //being modified when user click on one element in graph to show its detail
             $configForm.$content.find("form").trigger("reset");
             $configForm.$content.find(".btn").enable();
-            
+            $configForm.$title.html("Add a new Element");
             $configForm.modal();
          }
          
@@ -997,6 +996,7 @@ var ReportFactory = {
                   $("#enodeb-" + i).val( data[i] );
                }
                const $modal = MMTDrop.tools.getModalWindow("enodeb-config");
+               $modal.$title.html("Detail of Element");
                $modal.$content.find(".btn").disable();
                $modal.modal();
             };

@@ -25,7 +25,7 @@ mongodb.MongoClient.connect = function( dbName, callback ){
          throw err;
       const db = client.db( dbName );
       db.admin().serverStatus(function(err, info) {
-         console.info("MongoDB version " + info.version );
+          //console.info("MongoDB version " + info.version );
           const arr = info.version.split(".");
           const version = {
                 major : parseInt( arr[0] ),
