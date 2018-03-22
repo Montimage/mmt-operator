@@ -356,6 +356,8 @@ var DataCache = function( db, collection_name_prefix, message_format, level ){
 		cb = cb || function(){};
 
 		if( level == "real" || level == "minute" || level == "hour" || level == "day"){
+		   if( !_cache.real )
+		      return cb();
 			_cache.real.flushDataToDatabase( function(err, arr){
 				if( err ) return cb( err );
 				

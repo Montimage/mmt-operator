@@ -1406,6 +1406,15 @@ MMTDrop.tools = function () {
   _this.createDOM = function( config ){
     if( config == undefined )
       return null;
+    
+    //combine classs
+    if( config.class != undefined ){
+       if( config.attr == undefined )
+          config.attr = {};
+       if( config.attr.class == undefined )
+          config.attr.class = "";
+       config.attr.class = config.class + " " + config.attr.class;
+    }
 
     //create the object
     var $obj = $( config.type, config.attr );
@@ -1936,6 +1945,7 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
       if( user_param != undefined )
         _param = MMTDrop.tools.mergeObjects(_param, user_param);
     }
+    
     if (new_param && _param.no_override_when_reload !== true ){
       _param = MMTDrop.tools.mergeObjects(_param, new_param);
     }

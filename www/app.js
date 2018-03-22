@@ -225,26 +225,30 @@ function license_alert(){
 
         if( ts - now <= 15*24*60*60*1000 ){ //15day
             var alert       = null;
-            switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
-                case 1:
-                    alert = {type: "error", html: "Buy license for this device!"};
-                    break;
-                case 2:
-                    alert = {type: "error", html: "License expired on <br/>" + expire_time};
-                    break;
-                case 3:
-                    alert = {type: "danger", html: "License will expire on <br/>" + expire_time};
-                    break;
-                case 4:
-                    alert = {type: "danger", html: "License file was modified!"};
-                    break;
-                case 5:
-                    alert = {type: "danger", html: "License file does not exist!"};
-                    break;
-                case 6:
-                    alert = {type: "success", html: "License will expire on <br/>" + expire_time};
-                    break;
-            }
+            
+            if( ts < now )
+               alert = {type: "error", html: "License expired on <br/>" + expire_time};
+            else
+               switch( msg[ mmtAdaptor.LicenseColumnId.LICENSE_INFO_ID ] ){
+                   case 1:
+                       alert = {type: "error", html: "Buy license for this device!"};
+                       break;
+                   case 2:
+                       alert = {type: "error", html: "License expired on <br/>" + expire_time};
+                       break;
+                   case 3:
+                       alert = {type: "danger", html: "License will expire on <br/>" + expire_time};
+                       break;
+                   case 4:
+                       alert = {type: "danger", html: "License file was modified!"};
+                       break;
+                   case 5:
+                       alert = {type: "danger", html: "License file does not exist!"};
+                       break;
+                   case 6:
+                       alert = {type: "success", html: "License will expire on <br/>" + expire_time};
+                       break;
+               }
 
             if( ts - now <= 5*24*60*60*1000 )
                 alert.type = "error";

@@ -21,6 +21,7 @@ const NDN      = dataAdaptor.NdnColumnId;
 const TLS      = dataAdaptor.TlsStatsColumnId;
 const RTP      = dataAdaptor.RtpStatsColumnId;
 const FTP      = dataAdaptor.FtpStatsColumnId;
+const GTP      = dataAdaptor.GtpStatsColumnId;
 const LICENSE  = dataAdaptor.LicenseColumnId;
 const OTT      = dataAdaptor.OTTQoSColumnId;
 const STAT     = dataAdaptor.StatColumnId;
@@ -229,8 +230,8 @@ module.exports = function(){
    };
    
    //TODO: remove this block. This is used only for high bw
-   delete self.dataCache.reports;
-   delete self.dataCache.link;
+   //delete self.dataCache.reports;
+   //delete self.dataCache.link;
    delete self.dataCache.session;
    delete self.dataCache.unknownFlows ;
    delete self.dataCache.location ;
@@ -532,8 +533,9 @@ module.exports = function(){
       }
 
       //flush all caches in dataCache
-      for( var c in self.dataCache )
+      for( var c in self.dataCache ){
          self.dataCache[ c ].flush( callback );
+      }
 
    }
 

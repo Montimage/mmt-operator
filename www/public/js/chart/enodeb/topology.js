@@ -34,9 +34,16 @@ if( param.profile ){
    if( param.app )
       arr[1].title += param.app;
    else
-      arr[1].title += "Top Apps/Protos"
+      arr[1].title += "eNodeB/Network Topology"
 }
 
+//topology nodes come from either 
+// - "mongodb": when user uses GUI to add a new element
+// - "mysql": from Jose's DB
+// - "traffic": from network traffic reported by mmt-probe
+const FROM_MONGO   = "mongo";
+const FROM_MYSQL   = "mysql";
+const FROM_TRAFFIC = "traffic";
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
@@ -161,7 +168,7 @@ var ReportFactory = {
                         onchange    : "$('.add-form-content').hide(); $('#form-content-' + this.value).show();"
                      },
                      children:[
-                        createOption( "enodeb", "eNodeB" ),
+                        createOption( "enodeb", "enodeb" ),
                         createOption( "ue"    , "User Equipment"),
                         createOption( "upf"   , "User Plane Function"),
                         createOption( "amf"   , "Access Management Function")
@@ -283,7 +290,7 @@ var ReportFactory = {
                      type : "<input>",
                      attr : {
                         type : "submit",
-                        class: "btn btn-success pull-right",
+                        class: "btn btn-success pull-right btn-new",
                         value: "Save"
                      }
                   },{
@@ -291,7 +298,7 @@ var ReportFactory = {
                      attr : {
                         type : "reset",
                         style: "margin-right: 50px",
-                        class: "btn btn-warning pull-right",
+                        class: "btn btn-warning pull-right btn-new",
                         value: "Reset"
                      }
                   }]
@@ -395,7 +402,7 @@ var ReportFactory = {
                      class : "btn btn-primary",
                      type  : "button",
                      title : "Toggle UE",
-                     "data-type": 'UE',
+                     "data-type": 'ue',
                      onclick: "toggleChartElements( this)",
                      html  : '<span class="fa fa-mobile"></span>'
                   }
@@ -405,7 +412,7 @@ var ReportFactory = {
                      class : "btn btn-primary",
                      type  : "button",
                      title : "Toggle MME",
-                     "data-type": 'MME',
+                     "data-type": 'mme',
                      onclick: "toggleChartElements( this)",
                      html  : '<span class="fa fa-server"></span>'
                   }
@@ -415,18 +422,36 @@ var ReportFactory = {
                      class : "btn btn-primary",
                      type  : "button",
                      title : "Toggle eNodeB",
-                     "data-type": 'eNodeB',
+                     "data-type": 'enodeb',
                      onclick: "toggleChartElements(this)",
-                     html  : '<span class="icon-wireless"></span>'
+                     html  : '<span class="icon-satellite"></span>'
                   }
-               },{
+               },/*{
                   type : "<button>",
                   attr : {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle network traffic",
+                     title : "Toggle Gateway",
                      html  : '<span class="fa fa-random"></span>'
                   }
+               }*/]
+            },{
+               type : "<div>",
+               attr: {
+                  class: "btn-group",
+                  role : "group",
+                  style : "margin-right:30px" 
+               },
+               children:[{
+                  type: "<button>",
+                  attr: {
+                     class : "btn btn-primary",
+                     type  : "button",
+                     title : "Toggle network traffic",
+                     "data-type": FROM_TRAFFIC,
+                     onclick: "toggleChartElements(this)",
+                     html  : '<span class="icon-wireless"></span>'
+                  },
                }]
             },{
                type : "<a>",
@@ -437,9 +462,7 @@ var ReportFactory = {
                },
                children: [{
                   type : "<span>",
-                  attr : {
-                     class: "fa fa-plus"
-                  }
+                  class: "fa fa-plus"
                }]
             }]
          }));
@@ -486,19 +509,19 @@ var ReportFactory = {
                
                
                if( o.type == null )
-                  o.type = ["eNodeB", "GW", "UE", "MME", "DB"][ Math.floor(Math.random() * 5) ];
+                  o.type = ["enodeb", "GW", "ue", "mme", "DB"][ Math.floor(Math.random() * 5) ];
 
                switch( o.type ){
-                  case "eNodeB" : 
+                  case "enodeb" : 
                      o.radius = 24;
                      break;
                   case "GW":
                      o.radius = 12;
                      break;
-                  case "UE":
+                  case "ue":
                      o.radius = 10;
                      break;
-                  case "MME":
+                  case "mme":
                      o.radius = 14;
                      break;
                   case "DB":
@@ -592,7 +615,7 @@ var ReportFactory = {
                })
                .style("stroke", function( d ){
                   //connect to MME
-//                  if( d.source.type == "MME" || d.target.type == "MME")
+//                  if( d.source.type == "mme" || d.target.type == "mme")
 //                     return "red";
 //                  else
                      return "grey";
@@ -725,7 +748,7 @@ var ReportFactory = {
 
                nodeEnter.append("circle")
                .attr("r", function(d){
-                  if( d.type == "eNodeB")
+                  if( d.type == "enodeb")
                      return d.radius;
                   else
                      return d.radius + 10;
@@ -744,14 +767,14 @@ var ReportFactory = {
                .attr("text-anchor", "middle" )
                .attr("dy", ".4em")
                .attr("dx", function( d ) {
-                  if( d.type == "eNodeB" )
+                  if( d.type == "enodeb" )
                      return ".25em";
                   else
                      return 0;
                })
                .attr('style', function( d ) {
                   const style = "font-size: "+ (d.radius*2) +"px; cursor: default; "
-                  if( d.type == "eNodeB")
+                  if( d.type == "enodeb")
                      return style + "font-family: fontmfizz"
                      else
                         return style + "font-family: fontawesome";
@@ -759,11 +782,11 @@ var ReportFactory = {
                .attr("fill", "white")
                .text(function(d) {
                   switch( d.type ){
-                     case "eNodeB": return "\uf104"; //antenna from font-mfizz
-                     case "GW" : return "\uf074"; //router from font-awesome
-                     case "MME": return "\uf233"; //server from font-awesome
-                     case "UE" : return "\uf10b"; //mobile from font-awesome
-                     case "DB" : return "\uf1c0"; //database from font-awesome
+                     case "enodeb": return "\uf104"; //antenna from font-mfizz
+                     case "gw"    : return "\uf074"; //router from font-awesome
+                     case "mme"   : return "\uf233"; //server from font-awesome
+                     case "ue"    : return "\uf10b"; //mobile from font-awesome
+                     case "db"    : return "\uf1c0"; //database from font-awesome
                   }
                   return d.type ;
                })
@@ -780,7 +803,7 @@ var ReportFactory = {
 
                nodeEnter.append("text")
                .attr("dx", function( d ){
-                  if( d.type == "eNodeB" || d.type == "UE")
+                  if( d.type == "enodeb" || d.type == "ue")
                      return d.radius;
                   else
                      return d.radius + 10;
@@ -790,7 +813,7 @@ var ReportFactory = {
                   return d.label  //IP
                })
                .attr("style", function( d ){
-                  if( d.type == "eNodeB" || d.type == "UE")
+                  if( d.type == "enodeb" || d.type == "ue")
                      return "cursor:pointer";
                   else
                      return "cursor: default";
@@ -800,7 +823,7 @@ var ReportFactory = {
                   showDetailElement( d );
                })
                .append("title").text( function( d ) {
-                  if( d.type == "eNodeB" || d.type == "UE")
+                  if( d.type == "enodeb" || d.type == "ue")
                      return "click here to view detail of this element";
                   else
                      return "";
@@ -890,7 +913,7 @@ var ReportFactory = {
             // the attributes of the SVG elements
             force.on("tick", updatePosition);
 
-            function restart() {
+            svg.redraw = function() {
                updateLinks();
                updateNodes();
 
@@ -907,7 +930,7 @@ var ReportFactory = {
                for( var i=0; i<arr.length; i++ )
                   normalizeNode( arr[i] );
                if( needToRedraw !== false )
-                  restart();
+                  svg.redraw();
             }
 
             /**
@@ -918,20 +941,30 @@ var ReportFactory = {
                for( var i=0; i<arr.length; i++ )
                   normalizeLink( arr[i] );
                if( needToRedraw !== false)
-                  restart();
+                  svg.redraw();
             }
 
             svg.hideNodesAndLinks = function( nodeType, isHidden ){
                const val = (isHidden ? "none" : "block")
                link.attr("display", function( l ){
-                  if( l.source.type == nodeType || l.target.type == nodeType )
-                     return val;
+                  if( nodeType == FROM_TRAFFIC ){
+                     if( (l.source.data && l.source.data.from == nodeType) 
+                           ||  (l.target.data && l.target.data.from == nodeType ))
+                        return val;
+                  }else 
+                     if( l.source.type == nodeType || l.target.type == nodeType )
+                        return val;
                   //other
                   return $(this).attr("display");
                });
                node.attr("display", function( l ){
-                  if( l.type == nodeType )
-                     return val;
+                  if( nodeType == FROM_TRAFFIC ){
+                     if( l.data && l.data.from == nodeType )
+                        return val;
+                  }else{
+                     if( l.type == nodeType )
+                        return val;
+                  }
                   //other
                   return $(this).attr("display");
                });
@@ -948,8 +981,8 @@ var ReportFactory = {
                switch( type ){
                   case "enodeb":
                      svg.addNodes( [
-                        { type: "eNodeB", name: elem.name, label: elem.name, data: elem },
-                        { type: "MME", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi } 
+                        { type: "enodeb", name: elem.name, label: elem.name, data: elem },
+                        { type: "mme", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi } 
                         ], false);
                      svg.addLinks([
                         {source: elem.name, target: elem.mmec + "-" + elem.mmegi, label: "" }
@@ -959,11 +992,11 @@ var ReportFactory = {
                      //add its nodes
                      svg.addNodes([
                         //eNodeB
-                        { type: "eNodeB", name: elem.enb_name, label: elem.enb_name },
+                        { type: "enodeb", name: elem.enb_name, label: elem.enb_name },
                         //MMEC
-                        { type: "MME", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi },
+                        { type: "mme", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi },
                         //phone
-                        { type: "UE", name: elem.imsi, label: elem.imsi, data: elem }
+                        { type: "ue", name: elem.imsi, label: elem.imsi, data: elem }
                         ], 
                         false //do not redraw immediatelly
                      );
@@ -986,21 +1019,64 @@ var ReportFactory = {
             //when user click on one node => popup the modal containing detailed information
             window.showDetailElement = function( data ){
                console.log( data );
-               if( data.data == undefined )
-                  return;
+               
                $("#enodeb-type").val( data.type.toLowerCase() );
                $("#enodeb-type").trigger("onchange");
                
-               data = data.data;
+               data = data.data || {};
+               
                for( var i in data ){
                   $("#enodeb-" + i).val( data[i] );
                }
                const $modal = MMTDrop.tools.getModalWindow("enodeb-config");
                $modal.$title.html("Detail of Element");
-               $modal.$content.find(".btn").disable();
+               //show buttons for updating elements if need
+               if( data.from != FROM_MONGO )
+                  $modal.$content.find(".btn").disable();
+               else
+                  $modal.$content.find(".btn").enable();
                $modal.modal();
             };
             
+            svg.findNodeByIP = function( type, ip ){
+               const data = {};
+               for( var name in nodes_obj ){
+                  var node = nodes_obj[name];
+                  if( node.data ){
+                     switch( type ){
+                        case "ue":
+                           if( node.data.ue_ip == ip )
+                              return node;
+                           data.ue_ip = ip;
+                           break;
+                        case "enodeb":
+                           if( node.data.ip == ip )
+                              return node;
+                           data.ip = ip;
+                           break;
+                     }
+                  }
+               }
+               //node does not exist
+               data.from = FROM_TRAFFIC;
+               return { type: type, name: ip, label: ip, data: data};
+            }
+            
+            
+            svg.addGtpLink = function( basedIpSrc, basedIpDst, gtpIpSrc, gtpIpDst, needToUpdate ){
+               //enodeb
+               const enodeb = svg.findNodeByIP( "enodeb", basedIpSrc );
+               //_findNodeByIP( "", basedIpSrc ),
+               //UE
+               const ue_1 = svg.findNodeByIP( "ue", gtpIpSrc );
+               const ue_2 = svg.findNodeByIP( "ue", gtpIpSrc );
+               svg.addNodes( [enodeb, ue_1, ue_2], false );
+               
+               svg.addLinks( [
+                  {source: ue_1.name,   target: enodeb.name, label: ""},
+                  {source: enodeb.name, target: ue_2.name,   label: ""},
+               ], needToUpdate );
+            }
             
             return svg;
          }// end topoChart
@@ -1008,25 +1084,51 @@ var ReportFactory = {
          //empty graph
          const svg = drawGraph( "#topo-content",  {
                nodes: {},
-                links: []
+               links: []
          });
+
+         const database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", 
+            action: "aggregate", query: [], raw: true });
+         //this is called each time database is reloaded
+         database.updateParameter = function( param ){
+            //mongoDB aggregate
+            const group = { _id : {} };
+            [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+              group["_id"][ el ] = "$" + el;
+            } );
+            [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+              group[ el ] = {"$sum" : "$" + el};
+            });
+            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+              group[ el ] = {"$first" : "$"+ el};
+            } );
+            
+           const $match = {}; // get_match_query();
+           if( $match.collection != undefined ){
+              param.collection = $match.collection;
+              param.no_group = true;
+           }
+           else
+              group._id = "$link";
+
+           const sort = {};
+           sort[ COL.DATA_VOLUME.id ] = -1;
+           
+           //param.period = status_db.time, 
+           param.period_groupby = fPeriod.selectedOption().id, 
+     
+           param.query = [{$group: group}, {$sort: sort}, {$limit: 100}];
+           //param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 100}];
+         }
          
-         //load eNodeB
-         MMTDrop.tools.ajax("/api/enodeb/find?raw", {}, "POST", {
-            success: function( data ){
-               if( data.data == undefined )
-                  return;
-               svg.addElements( "enodeb", data.data );
+         //callback is triggered each time database reloaded its data from server
+         database.afterReload( function( data ){
+            for( var i=0; i<data.length; i++ ){
+               const msg = data[i];
+               svg.addGtpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DEST.id ], msg[ COL.IP_SRC.id ], msg[ COL.IP_DEST.id ] );
             }
-          });
-         //load UE
-         MMTDrop.tools.ajax("/api/ue/find?raw", {}, "POST", {
-            success: function( data ){
-               if( data.data == undefined )
-                  return;
-               svg.addElements( "ue", data.data );
-            }
-          });
+            svg.redraw();
+         });
          
          //when user click on group buttons to toggle elements(UE, MME, eNodeB)
          window.toggleChartElements = function( dom ){
@@ -1043,9 +1145,13 @@ var ReportFactory = {
             svg.hideNodesAndLinks( type, isHidden );
             //remember setting
             MMTDrop.tools.localStorage.set( "toggle-" + type, isHidden );
+
+            //reload database to get elemetns from network traffic
+            if( type == FROM_TRAFFIC && ! isHidden )
+               database.reload();
          }
          
-       //hide elements corresponding to the the status of buttons that was saved 
+         //hide elements corresponding to the the status of buttons that was saved 
          window.hideChartElementsDependingOnButtons = function(){
             // ==> hide its elements
             $bar.find("button[data-type]").each( function( index, el ){
@@ -1060,6 +1166,36 @@ var ReportFactory = {
                svg.hideNodesAndLinks( type, true );
             })
          }
+         
+         //load eNodeB
+         MMTDrop.tools.ajax("/api/enodeb/find?raw", {}, "POST", {
+            success: function( data ){
+               if( data.data == undefined )
+                  return;
+               data = data.data;
+               for( var i in data )
+                  data[i].from = FROM_MONGO;
+               svg.addElements( "enodeb", data );
+               
+               
+             //load UE
+               MMTDrop.tools.ajax("/api/ue/find?raw", {}, "POST", {
+                  success: function( data ){
+                     if( data.data == undefined )
+                        return;
+                     data = data.data;
+                     for( var i in data )
+                        data[i].from = FROM_MONGO;
+                     svg.addElements( "ue", data );
+                     
+                     //load network traffic
+                     if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_TRAFFIC ) )
+                        database.reload();
+                  }
+               });
+            }
+          });
+         
       },
 }
 
