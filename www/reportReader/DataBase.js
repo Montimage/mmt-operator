@@ -230,7 +230,7 @@ module.exports = function(){
          ),
          
          //for eNodeB
-         gtp: new DataCache( inserter, "gtp",
+         gtp: new DataCache( inserter, "data_gtp",
                {
             key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,

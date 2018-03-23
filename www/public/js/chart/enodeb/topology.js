@@ -1029,7 +1029,7 @@ var ReportFactory = {
                links: []
          });
 
-         const database = MMTDrop.databaseFactory.createStatDB( {collection: "gtp", 
+         const database = MMTDrop.databaseFactory.createStatDB( {collection: "data_gtp", 
             action: "aggregate", query: [], raw: true });
          //this is called each time database is reloaded
          database.updateParameter = function( param ){
@@ -1038,20 +1038,17 @@ var ReportFactory = {
             [  COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
-            [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
+            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
               group[ el ] = {"$sum" : "$" + el};
             });
             [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
               group[ el ] = {"$first" : "$"+ el};
             });
             
-           const sort = {};
-           sort[ COL.DATA_VOLUME.id ] = -1;
-           
            param.period = status_db.time, 
            param.period_groupby = fPeriod.selectedOption().id, 
      
-           param.query = [{$group: group}, {$sort: sort}, {$limit: 100}];
+           param.query = [{$group: group}];
            //param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 100}];
          }
          

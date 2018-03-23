@@ -1,7 +1,7 @@
 /*
 //
 //These 2 variables are defined in each tab.js (eg: link.js, network.js)
-var arr = [
+const arr = [
     {
         id: "realtime",
         title: "Traffic in Realtime",
@@ -16,7 +16,7 @@ var arr = [
     },
 ];
 
-var availableReports = {
+const availableReports = {
     "createNodeReport":     "Nodes",
 }
 
@@ -27,8 +27,8 @@ MMTDrop.setOptions({
 });
 
 
-if( ReportFactory === undefined )
-    var ReportFactory = {};
+if( typeof(ReportFactory) === "undefined" )
+    ReportFactory = {};
 
 for (var i in ReportFactory)
         MMTDrop.reportFactory[i] = ReportFactory[i];
