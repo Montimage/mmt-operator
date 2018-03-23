@@ -9,6 +9,7 @@ dataAdaptor     = require('../libs/dataAdaptor'),
 tools           = require("../libs/tools"),
 ip2loc          = require("../libs/ip2loc"),
 CONST           = require("../libs/constant"),
+MMTDrop         = require("../libs/shared/dataIndex"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
 FORMAT          = require('util').format;
@@ -163,7 +164,7 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-            set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DEST]
+            set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DST]
                }
          ),
          
@@ -182,7 +183,7 @@ module.exports = function(){
                COL.RETRANSMISSION_COUNT,
                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
                ],
-            set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DEST ]
+            set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
          ),
          
@@ -192,9 +193,9 @@ module.exports = function(){
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                ],
-            set  : [COL.IP_SRC, COL.IP_DEST, COL.PORT_SRC, COL.PORT_DEST,
+            set  : [COL.IP_SRC, COL.IP_DST, COL.PORT_SRC, COL.PORT_DST,
                COL.APP_PATH, COL.FORMAT_ID, COL.PROBE_ID,
-               COL.APP_ID, COL.MAC_SRC, COL.MAC_DEST,
+               COL.APP_ID, COL.MAC_SRC, COL.MAC_DST,
                COL.THREAD_NUMBER],
             init: [COL.START_TIME]
             },
@@ -214,7 +215,7 @@ module.exports = function(){
                {
             key: [COL.FORMAT_ID, COL.PROBE_ID, NDN.PACKET_ID],
             inc: [NDN.CAP_LEN, NDN.NDN_DATA, NDN.INTEREST_NONCE, NDN.INTEREST_LIFETIME, NDN.DATA_FRESHNESS_PERIOD],
-            set: [NDN.MAC_SRC, NDN.NAME, NDN.MAC_DEST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DEST,
+            set: [NDN.MAC_SRC, NDN.NAME, NDN.MAC_DST, NDN.PARENT_PROTO, NDN.IP_SRC, NDN.IP_DST,
                NDN.QUERY, NDN.PACKET_TYPE, NDN.IFA]
                }
          ),
@@ -225,6 +226,18 @@ module.exports = function(){
                {
             key: [COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID],
             inc: [4, 5, 6 ]
+               }
+         ),
+         
+         //for eNodeB
+         gtp: new DataCache( inserter, "gtp",
+               {
+            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST],
+            inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
+               COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
+               COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+               ],
+            set:[COL.MAC_SRC, COL.MAC_DST, GTP.TEID_1, GTP.TEID_2, COL.IP_SRC_INIT_CONNECTION ]
                }
          ),
    };
@@ -375,9 +388,9 @@ module.exports = function(){
                  //msg[ COL.APP_PATH   ] = "99";  //ethernet
                  //msg[ COL.APP_ID     ] = 99;  //ethernet
                  msg[ COL.IP_SRC     ] = MICRO_FLOW_STR ;
-                 msg[ COL.IP_DEST    ] = MICRO_FLOW_STR ;
+                 msg[ COL.IP_DST    ] = MICRO_FLOW_STR ;
                  msg[ COL.MAC_SRC    ] = MICRO_FLOW_STR ;
-                 msg[ COL.MAC_DEST   ] = MICRO_FLOW_STR ;
+                 msg[ COL.MAC_DST   ] = MICRO_FLOW_STR ;
             }else
                //as 2 threads may produce a same session_ID for 2 different sessions
                //this ensures that session_id is uniqueelse
@@ -397,29 +410,34 @@ module.exports = function(){
                //	msg[ COL.DATA_TRANSFER_TIME ] = 0;
 
                //HTTP
-               if( msg[ COL.FORMAT_TYPE ] === 1 ){
-                  //each HTTP report is a unique session (1 request - 1 resp if it has)
+               switch( msg[ COL.FORMAT_TYPE ] ){
+                  case MMTDrop.CsvFormat.GTP_APP_FORMAT:
+                     self.dataCache.gtp.addMessage( msg );
+                     break;
+                     
+                  case MMTDrop.CsvFormat.WEB_APP_FORMAT: 
+                     //each HTTP report is a unique session (1 request - 1 resp if it has)
 
-                  msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
-                  //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
+                     msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
+                     //mmt-probe: HTTP.TRANSACTIONS_COUNT: number of request/response per one TCP session
 
-                  //same as ACTIVE_FLOWS
-                  //mmt-operator: sum = number of req/res per 5 seconds
-                  msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
+                     //same as ACTIVE_FLOWS
+                     //mmt-operator: sum = number of req/res per 5 seconds
+                     msg[ HTTP.TRANSACTIONS_COUNT ] = 1;//one msg is a report of a transaction
 
-                  //HTTP data is not yet completely transfered
-                  //if( msg[ HTTP.REQUEST_INDICATOR ] === 0 ){
-                  //this msg reports a part of HTTP transaction
-                  //==> we reset its RESPONSE_TIME to zero as it was reported
-                  //msg[ HTTP.RESPONSE_TIME ] = 0;
-                  //}
+                     //HTTP data is not yet completely transfered
+                     //if( msg[ HTTP.REQUEST_INDICATOR ] === 0 ){
+                     //this msg reports a part of HTTP transaction
+                     //==> we reset its RESPONSE_TIME to zero as it was reported
+                     //msg[ HTTP.RESPONSE_TIME ] = 0;
+                     break;
                }
                        
 
                //traffic of local IP
                //do not add report 99 to data_ip collection as it has no IP
                msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
-               msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DEST]  );
+               msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DST]  );
                if( self.dataCache.ip )
                   self.dataCache.ip.addMessage( msg );
 

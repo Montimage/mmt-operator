@@ -54,11 +54,11 @@ module.exports = {
           DL_PACKET_COUNT     : 16, /**< Index of the packet count column */
           START_TIME          : 17, /**< Index of the start timestamp of the flow */
           IP_SRC              : 18, /**< Index of the IP address source column */
-          IP_DEST             : 19, /**< Index of the IP address destination column */
+          IP_DST             : 19, /**< Index of the IP address destination column */
           MAC_SRC             : 20, /**< Index of the MAC address source column */
-          MAC_DEST            : 21, /**< Index of the MAC address destination column */
+          MAC_DST            : 21, /**< Index of the MAC address destination column */
           SESSION_ID          : 22, //Identifier of the session or if the protocol does not have session its session id = 0
-          PORT_DEST           : 23, //Server port number (0 if transport protocol is session less like ICMP)
+          PORT_DST           : 23, //Server port number (0 if transport protocol is session less like ICMP)
           PORT_SRC            : 24, //Client port number (0 if transport protocol is session less like ICMP)
           THREAD_NUMBER       : 25,
           RTT                 : 26,
@@ -76,7 +76,7 @@ module.exports = {
 
           SRC_LOCATION            : 40,
           DST_LOCATION            : 41,
-          IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DEST initilizes connection)
+          IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DST initilizes connection)
           PROFILE_ID              : 43, // profile id
           ORG_APP_ID              : 44, //original APP_ID given by probe
           ORG_TIMESTAMP           : 45, //original TIMESTAMP given by probe
@@ -174,10 +174,12 @@ module.exports = {
       },
       
       GtpStatsColumnId: {
-         IP_SRC: 100,
-         IP_DST: 101,
-         TEID_1: 102,
-         TEID_2: 103
+         APP_FAMILY    : 110,
+         CONTENT_CLASS : 111,
+         IP_SRC        : 112,
+         IP_DST        : 113,
+         TEID_1        : 114,
+         TEID_2        : 115
       },
 
        LicenseColumnId           : {
@@ -201,10 +203,10 @@ module.exports = {
           TIMESTAMP             : 3 ,
           PACKET_ID             : 4 ,
           MAC_SRC               : 5 ,
-          MAC_DEST              : 6 ,
+          MAC_DST              : 6 ,
           PARENT_PROTO          : 7 ,
           IP_SRC                : 8 ,
-          IP_DEST               : 9 ,
+          IP_DST               : 9 ,
           QUERY                 : 10,
           NAME                  : 11,
           PACKET_TYPE           : 12,

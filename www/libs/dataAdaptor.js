@@ -171,18 +171,18 @@ else{
             msg[id_2] = tmp;
         };
         var COL       = this.StatsColumnId;
-        swap( COL.IP_SRC  ,  COL.IP_DEST );
-        swap( COL.MAC_SRC ,  COL.MAC_DEST );
-        swap( COL.PORT_SRC,  COL.PORT_DEST );
+        swap( COL.IP_SRC  ,  COL.IP_DST );
+        swap( COL.MAC_SRC ,  COL.MAC_DST );
+        swap( COL.PORT_SRC,  COL.PORT_DST );
         swap( COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
         swap( COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
         swap( COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
         swap( COL.SRC_LOCATION,      COL.DST_LOCATION );
              */
             var COL = this.StatsColumnId, tmp;
-            tmp = msg[ COL.IP_SRC           ];  msg[ COL.IP_SRC           ] = msg[ COL.IP_DEST            ];   msg[ COL.IP_DEST            ] = tmp;
-            tmp = msg[ COL.MAC_SRC          ];  msg[ COL.MAC_SRC          ] = msg[ COL.MAC_DEST           ];   msg[ COL.MAC_DEST           ] = tmp;
-            tmp = msg[ COL.PORT_SRC         ];  msg[ COL.PORT_SRC         ] = msg[ COL.PORT_DEST          ];   msg[ COL.PORT_DEST          ] = tmp;
+            tmp = msg[ COL.IP_SRC           ];  msg[ COL.IP_SRC           ] = msg[ COL.IP_DST            ];   msg[ COL.IP_DST            ] = tmp;
+            tmp = msg[ COL.MAC_SRC          ];  msg[ COL.MAC_SRC          ] = msg[ COL.MAC_DST           ];   msg[ COL.MAC_DST           ] = tmp;
+            tmp = msg[ COL.PORT_SRC         ];  msg[ COL.PORT_SRC         ] = msg[ COL.PORT_DST          ];   msg[ COL.PORT_DST          ] = tmp;
             tmp = msg[ COL.UL_DATA_VOLUME   ];  msg[ COL.UL_DATA_VOLUME   ] = msg[ COL.DL_DATA_VOLUME     ];   msg[ COL.DL_DATA_VOLUME     ] = tmp;
             tmp = msg[ COL.UL_PACKET_COUNT  ];  msg[ COL.UL_PACKET_COUNT  ] = msg[ COL.DL_PACKET_COUNT    ];   msg[ COL.DL_PACKET_COUNT    ] = tmp;
             tmp = msg[ COL.UL_PAYLOAD_VOLUME];  msg[ COL.UL_PAYLOAD_VOLUME] = msg[ COL.DL_PAYLOAD_VOLUME  ];   msg[ COL.DL_PAYLOAD_VOLUME  ] = tmp;
@@ -301,6 +301,10 @@ else{
             _start = MMTDrop.FtpStatsColumnId.APP_FAMILY;
             _end   = MMTDrop.FtpStatsColumnId.RESPONSE_TIME;
             break;
+         case MMTDrop.CsvFormat.GTP_APP_FORMAT:
+            _start = MMTDrop.GtpStatsColumnId.APP_FAMILY;
+            _end   = MMTDrop.GtpStatsColumnId.TEID_2;
+            break;
          default:
             return msg;
       }
@@ -318,10 +322,28 @@ else{
          //starting: i=50 (HTTP), i=70 (TLS), i=80 (RTP), i=90 (FTP)
          msg[ i ] = new_msg[ i - _new ];
       }
+      
+      const isGTP = (format_type == MMTDrop.CsvFormat.GTP_APP_FORMAT );
+      //reserve direction if IP dst is the one of a machine in monitoring network
+      const ipSrc = isGTP? 
+            msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] : msg[ MMTDrop.StatsColumnId.IP_SRC ];
+      
+      if( ip2loc.isLocal( ipSrc ) ){
+         msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = true;
+         return msg;
+      }
+      
+      msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = false;
+      msg = MMTDrop.inverseStatDirection( msg );
+      //switch also IP over GTP
+      if( isGTP ){
+         msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] = msg[ MMTDrop.GtpStatsColumnId.IP_DST  ];
+         msg[ MMTDrop.GtpStatsColumnId.IP_DST ] = ipSrc;
+      }
+      
       return msg;
    }
-
-
+   
    /**
     * Convert a message in string format to an array
     * @param {[[Type]]} message [[Description]]
@@ -352,7 +374,7 @@ else{
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = msg[ MMTDrop.StatsColumnId.START_TIME ] * 1000; //to milisecond
             //msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
-            //msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DEST ] );
+            //msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DST ] );
             //continue in NO_SESSION_STATS_FORMAT
          case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );
@@ -360,10 +382,20 @@ else{
          case MMTDrop.CsvFormat.SECURITY_FORMAT:
             msg[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( msg[ MMTDrop.SecurityColumnId.HISTORY ] );
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
+            if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" 
+               || msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] 
+               || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
+               return null;
+            }
+            break;
          case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
             //ip
-            if( msg[ 6 ] == "undefined ")
+            if( msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
+               //|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
+               || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
                return null;
+               //console.log( mmtAdaptor.formatReportItem( msg ) );
+            }
             break;
          case MMTDrop.CsvFormat.LICENSE:
             msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] = msg[ MMTDrop.LicenseColumnId.EXPIRY_DATE ] * 1000;//to milisecond

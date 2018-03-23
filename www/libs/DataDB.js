@@ -129,11 +129,11 @@ var MongoConnector = function () {
 	var get_port = function( msg ){
 		var val = DEFAULT_PORT[ msg[ COL.APP_ID ] ];
 
-		if( msg[ COL.PORT_SRC ] === val || msg[ COL.PORT_DEST ] === val )
+		if( msg[ COL.PORT_SRC ] === val || msg[ COL.PORT_DST ] === val )
 			return val;
 		if( msg[ COL.IP_SRC_INIT_CONNECTION] )
 			//remote_port
-			return msg[ COL.PORT_DEST ];
+			return msg[ COL.PORT_DST ];
 		else
 			//local port
 			return msg[ COL.PORT_SRC ];
@@ -542,7 +542,7 @@ var MongoConnector = function () {
 					if( options.userData.ip )
 						options.query[ COL.IP_SRC ]  = options.userData.ip;
 					if( options.userData.ip_dest )
-						options.query[ COL.IP_DEST ] = options.userData.ip_dest;
+						options.query[ COL.IP_DST ] = options.userData.ip_dest;
 					if( options.userData.app_id ){
 						options.query[ COL.APP_ID ]  = parseInt( options.userData.app_id );
 					}
@@ -620,12 +620,12 @@ var MongoConnector = function () {
 						options.query[ COL.IP_SRC ] = options.userData.ip;
 				}
 
-				var groupby = { "_id": "$" + COL.IP_DEST };
+				var groupby = { "_id": "$" + COL.IP_DST };
 				[ COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME, COL.ACTIVE_FLOWS ].forEach(
 						function(el, index ){
 							groupby[ el ] = { "$sum" : "$" + el };
 						});
-				[ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.START_TIME, COL.IP_DEST ].forEach(
+				[ COL.FORMAT_ID, COL.PROBE_ID, COL.SOURCE_ID, COL.START_TIME, COL.IP_DST ].forEach(
 						function(el, index ){
 							groupby[ el ] = { "$first" : "$" + el };
 						});

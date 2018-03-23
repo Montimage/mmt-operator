@@ -71,7 +71,7 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     HISTORY = [];
                     var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
-                                   {id: COL.IP_DEST.id   , label: "Server"    , align:"left"},
+                                   {id: COL.IP_DST.id   , label: "Server"    , align:"left"},
                                   COL.APP_PATH];
 
                     var colSum = [
@@ -124,9 +124,9 @@ var ReportFactory = {
                           host = msg[ SSL.SERVER_NAME.id ];
 
                         if( host != undefined && host != ""){
-                                obj[COL.IP_DEST.id]  = host;
+                                obj[COL.IP_DST.id]  = host;
                         }else
-                            obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id]; // ip
+                            obj[COL.IP_DST.id]  = msg[COL.IP_DST.id]; // ip
 
                         for( var j in colSum ){
                                 var val = msg[ colSum[j].id ];
@@ -233,7 +233,7 @@ var ReportFactory = {
 
     /**
      *
-     * @param   {[[Type]]}              group_by either IP_DEST or APP_PATH
+     * @param   {[[Type]]}              group_by either IP_DST or APP_PATH
      * @returns {object|string|boolean} [[Description]]
      */
     createDetailOfApplicationChart: function ( ) {
@@ -253,7 +253,7 @@ var ReportFactory = {
                     HISTORY    = {};
                     openingRow = {};
 
-                    var col_key  = {id: COL.IP_DEST.id,  label: "Server" };
+                    var col_key  = {id: COL.IP_DST.id,  label: "Server" };
                     if( cTable.userData.ip_dest != undefined )
                         col_key  = {id: COL.APP_PATH.id, label: "App/protocol Path"};
 
@@ -286,7 +286,7 @@ var ReportFactory = {
                           host = msg[ SSL.SERVER_NAME.id ];
 
                         if( host != undefined && host != ""){
-                          obj[COL.IP_DEST.id]  = obj[COL.IP_DEST.id] + " (" + host  + ")" ;
+                          obj[COL.IP_DST.id]  = obj[COL.IP_DST.id] + " (" + host  + ")" ;
                           delete( obj.__needUpdateIP2Name );
                         }
                     }
@@ -306,7 +306,7 @@ var ReportFactory = {
                             obj[ col_key.id ] = msg[ col_key.id ];
 
                             //IP
-                            if( col_key.id == COL.IP_DEST.id ){
+                            if( col_key.id == COL.IP_DST.id ){
                                 obj.__needUpdateIP2Name = true;
                                 updateIP2Name( obj, msg );
                             }else
@@ -321,7 +321,7 @@ var ReportFactory = {
                         }
                         else{
                             var obj = HISTORY[ key_val ].data;
-                            if( col_key.id == COL.IP_DEST.id )
+                            if( col_key.id == COL.IP_DST.id )
                                 updateIP2Name( obj, msg );
 
                             if( obj[ COL.START_TIME.id ] > msg[ COL.START_TIME.id ] )
@@ -562,7 +562,7 @@ var ReportFactory = {
 
                     for (var i=0; i<data.length; i++) {
                         var msg  = data[i];
-                        var ip   = msg[ COL.IP_DEST.id ];
+                        var ip   = msg[ COL.IP_DST.id ];
                         var time = msg[ COL.TIMESTAMP.id ];
 
                         ip = '<a onclick=loadDetail("'+ ip +'")>' + ip + '</a>'

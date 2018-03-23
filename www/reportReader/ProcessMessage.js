@@ -12,17 +12,6 @@ const COL = mmtAdaptor.StatsColumnId;
 const _IS_OFFLINE = (config.probe_analysis_mode === "offline");
 
 
-function setDirectionStatFlowByIP( msg ){
-
-   msg[ COL.IP_SRC_INIT_CONNECTION ] = true;
-   
-   if ( ip2loc.isLocal( msg[COL.IP_SRC] ) )
-     return msg;
-
-   msg[ COL.IP_SRC_INIT_CONNECTION ] = false;
-   return mmtAdaptor.inverseStatDirection( msg )
-
-};
 
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
@@ -92,21 +81,6 @@ function ProcessMessage( database ){
             }
             break;
 		 */
-		case mmtAdaptor.CsvFormat.STATS_FORMAT:
-			/*
-            if (msg[4] == 0) {
-                console.log("[META  ] " + message);
-                return;
-            }
-
-            if( msg[ COL.IP_SRC ] === "undefined" ){
-                console.log("[DONT 1] " + message);
-                return;
-            }
-			 */
-			setDirectionStatFlowByIP( msg );
-			break;
-
 			//does not use these kind of reports
 			/*
 		case mmtAdaptor.CsvFormat.DEFAULT_APP_FORMAT:
@@ -116,31 +90,16 @@ function ProcessMessage( database ){
 			 */
 
 			//behaviour: changing bandwidth
-		case mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT:
-			if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" ||
-					msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
-				console.log( message )
-				return;
-				//console.log( mmtAdaptor.formatReportItem( msg ) );
-			}
-			break;
-
-			//behaviour: changing profile
-		case mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT:
-			if(     msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
-				//|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
-				|| msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
-				console.log( message );
-				return;
-				//console.log( mmtAdaptor.formatReportItem( msg ) );
-			}
-			break;
+//		case mmtAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT:
+//			break;
+//		case mmtAdaptor.CsvFormat.BA_PROFILE_FORMAT:
+//			break;
 
 			//license information
-		case mmtAdaptor.CsvFormat.LICENSE:
-			//if( typeof databaseadmin )
-			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
-			break;
+//		case mmtAdaptor.CsvFormat.LICENSE:
+//			//if( typeof databaseadmin )
+//			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
+//			break;
 
 			//Video QoS
 		case mmtAdaptor.CsvFormat.OTT_QOS:

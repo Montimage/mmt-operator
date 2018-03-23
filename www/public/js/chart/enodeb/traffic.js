@@ -132,18 +132,18 @@ var get_match_query = function( p ){
        $match["$or"] = [ obj ];
        
        obj = {};
-       obj[ COL.IP_DEST.id ] = param.ip;
+       obj[ COL.IP_DST.id ] = param.ip;
        $match["$or"].push( obj );
    } 
   }else{
      $match[ COL.IP_SRC.id ] =  {$nin:[NULL, MICRO_FLOW]};
-     $match[ COL.IP_DEST.id ] = {$nin:[NULL, MICRO_FLOW]};
+     $match[ COL.IP_DST.id ] = {$nin:[NULL, MICRO_FLOW]};
   }
 
   if( param.link ){
     var link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
-    $match[ COL.IP_DEST.id ] = {$in: link};
+    $match[ COL.IP_DST.id ] = {$in: link};
     
     collection = REPORT_COLLECTION;
   }
@@ -188,7 +188,7 @@ var ReportFactory = {
                     HISTORY = [];
                     var columns = [{id: COL.START_TIME.id, label: "Start Time"     , align:"left"},
                                    {id: COL.TIMESTAMP.id , label: "Timestamp"      , align:"left"},
-                                   {id: COL.IP_DEST.id   , label: "Remote Address" , align:"left"},
+                                   {id: COL.IP_DST.id   , label: "Remote Address" , align:"left"},
                                   COL.APP_PATH];
 
                     var colSum = [
@@ -242,10 +242,10 @@ var ReportFactory = {
                       else if( type == 2)
                         host = msg[ SSL.SERVER_NAME.id ];
 
-                      if( host != undefined && host != "" && host !=  msg[COL.IP_DEST.id] ){
-                              obj[COL.IP_DEST.id]  = host;
+                      if( host != undefined && host != "" && host !=  msg[COL.IP_DST.id] ){
+                              obj[COL.IP_DST.id]  = host;
                       }else
-                          obj[COL.IP_DEST.id]  = msg[COL.IP_DEST.id] +":" + msg[ COL.PORT_DEST.id ]; // ip
+                          obj[COL.IP_DST.id]  = msg[COL.IP_DST.id] +":" + msg[ COL.PORT_DST.id ]; // ip
 
                       for( var j in colSum ){
                               var val = msg[ colSum[j].id ];
@@ -805,13 +805,13 @@ var ReportFactory = {
         database.updateParameter = function( param ){
          //mongoDB aggregate
            var group = { _id : {} };
-           [ COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
+           [ COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
            [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
              group[ el ] = {"$sum" : "$" + el};
            });
-           [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.IP_DEST.id ].forEach( function( el, index){
+           [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
              group[ el ] = {"$first" : "$"+ el};
            } );
 
@@ -856,7 +856,7 @@ var ReportFactory = {
                     for( var i=0; i< db_data.length; i++){
                         var val     = db_data[i][ col.id ];
                         var ip_src  = db_data[i][ COL.IP_SRC.id ] ;
-                        var ip_dst  = db_data[i][ COL.IP_DEST.id ];
+                        var ip_dst  = db_data[i][ COL.IP_DST.id ];
                         var name    = ip_src + sperator + ip_dst;
                         var in_name = ip_dst + sperator + ip_src;
 
@@ -1036,7 +1036,7 @@ var ReportFactory = {
                     
                     var $match = {};
                     $match[ COL.IP_SRC.id ]  = {$in: ips};
-                    $match[ COL.IP_DEST.id ] = {$in: ips};
+                    $match[ COL.IP_DST.id ] = {$in: ips};
                     $match = JSON.stringify( $match );
 
                     var fun = "createPopupReport('link'" //collection
@@ -1994,7 +1994,7 @@ $(str).appendTo("head");
                 
                 //convert IP from a 32bit number to a string
                 //msg[ COL.IP_SRC.id ]  = _IP.number2StringV4( msg[ COL.IP_SRC.id ] );
-                //msg[ COL.IP_DEST.id ] = _IP.number2StringV4( msg[ COL.IP_DEST.id ] );
+                //msg[ COL.IP_DST.id ] = _IP.number2StringV4( msg[ COL.IP_DST.id ] );
                 
                 var name = msg[ COL.IP_SRC.id ];
                 //SRC is local
@@ -2007,8 +2007,8 @@ $(str).appendTo("head");
                 }
                 
                 //destination
-                name = msg[ COL.IP_DEST.id ];
-                //DEST is local
+                name = msg[ COL.IP_DST.id ];
+                //DST is local
                 msg.is_dst_local = (msg[ COL.DST_LOCATION.id ] == LOCAL);
                 
                 if( obj[ name ] == undefined ){
@@ -2031,7 +2031,7 @@ $(str).appendTo("head");
                        if( ! msg.is_src_local )
                         msg[ COL.IP_SRC.id ] = REMOTE;
                        if( ! msg.is_dst_local )
-                        msg[ COL.IP_DEST.id ] = REMOTE;
+                        msg[ COL.IP_DST.id ] = REMOTE;
                   }
             }
          //combine local
@@ -2043,7 +2043,7 @@ $(str).appendTo("head");
                     if( msg.is_src_local )
                      msg[ COL.IP_SRC.id ] = LOCAL;
                     if( msg.is_dst_local )
-                     msg[ COL.IP_DEST.id ] = LOCAL;
+                     msg[ COL.IP_DST.id ] = LOCAL;
                }
          }
          
@@ -2052,7 +2052,7 @@ $(str).appendTo("head");
                obj = {};
                for( var i=0; i<data.length; i++ ){
                   var msg = data[i];
-                  var key = msg[ COL.IP_SRC.id ] + "-" + msg[COL.IP_DEST.id];
+                  var key = msg[ COL.IP_SRC.id ] + "-" + msg[COL.IP_DST.id];
                   if( obj[key] == undefined )
                      obj[key] = msg;
                   else
@@ -2088,7 +2088,7 @@ $(str).appendTo("head");
                 obj[ name ].val +=  val;
                 
                 //destination
-                name = msg[ COL.IP_DEST.id ];
+                name = msg[ COL.IP_DST.id ];
                 if( name == "null" ) 
                     name = NO_IP;
                 
@@ -2439,13 +2439,13 @@ $(str).appendTo("head");
            
          //mongoDB aggregate
            var group = { _id : {} };
-           [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+           [ COL.IP_SRC.id , COL.IP_DST.id ].forEach( function( el, index){
              group["_id"][ el ] = "$" + el;
            } );
            [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
              group[ el ] = {"$sum" : "$" + el};
            });
-           [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+           [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
              group[ el ] = {"$first" : "$"+ el};
            } );
            

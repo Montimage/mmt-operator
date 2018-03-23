@@ -310,7 +310,7 @@ var ReportFactory = {
           if( URL_PARAM.ip )
               $match[ COL.IP_SRC.id] = URL_PARAM.ip;
           if( URL_PARAM.remote )
-            $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+            $match[ COL.IP_DST.id ] = URL_PARAM.remote;
 
 
           return {query : [{"$match": $match},{"$group" : group}]};
@@ -568,7 +568,7 @@ var ReportFactory = {
       return this.createSlowestUsersReport( fPeriod, MMTDrop.constants.StatsColumn.APP_ID.id );
     },
     createSlowestRemotesReport: function (fPeriod ){
-      return this.createSlowestUsersReport( fPeriod, MMTDrop.constants.StatsColumn.IP_DEST.id );
+      return this.createSlowestUsersReport( fPeriod, MMTDrop.constants.StatsColumn.IP_DST.id );
     },
     createSlowestUsersReport: function (fPeriod, col_id) {
         var _this = this;
@@ -616,7 +616,7 @@ var ReportFactory = {
           if( URL_PARAM.ip )
             $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
           if( URL_PARAM.remote )
-            $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+            $match[ COL.IP_DST.id ] = URL_PARAM.remote;
 
           //load data corresponding to the selected app
           var probe_id   = URL_PARAM.probe_id;
@@ -907,7 +907,7 @@ var ReportFactory = {
                     HISTORY    = {};
                     openingRow = {};
 
-                    var col_key  = {id: COL.IP_DEST.id,  label: "Remote Address" };
+                    var col_key  = {id: COL.IP_DST.id,  label: "Remote Address" };
                     if( URL_PARAM.remote )
                       col_key  = {id: COL.APP_ID.id, label: "App/Proto"};
 
@@ -942,8 +942,8 @@ var ReportFactory = {
                         var host =  msg[ HTTP.HOSTNAME.id ];
                         if( host == undefined || host == "" )
                             host = msg[ SSL.SERVER_NAME.id ];
-                        if( host != undefined && host != "" && host != obj[COL.IP_DEST.id]){
-                            obj[COL.IP_DEST.id]  = obj[COL.IP_DEST.id] + " (" + host  + ")" ;
+                        if( host != undefined && host != "" && host != obj[COL.IP_DST.id]){
+                            obj[COL.IP_DST.id]  = obj[COL.IP_DST.id] + " (" + host  + ")" ;
                             delete( obj.__needUpdateIP2Name );
                         }
                     }
@@ -969,7 +969,7 @@ var ReportFactory = {
                             obj[ col_key.id ] = msg[ col_key.id ];
 
                             //IP
-                            if( col_key.id == COL.IP_DEST.id ){
+                            if( col_key.id == COL.IP_DST.id ){
                                 obj.__needUpdateIP2Name = true;
                                 updateIP2Name( obj, msg );
                             }else
@@ -983,7 +983,7 @@ var ReportFactory = {
                         }
                         else{
                             var obj = HISTORY[ key_val ].data;
-                            if( col_key.id == COL.IP_DEST.id )
+                            if( col_key.id == COL.IP_DST.id )
                                 updateIP2Name( obj, msg );
 
                             if( obj[ COL.START_TIME.id ] >  start_time ) obj[ COL.START_TIME.id ] = start_time;
@@ -1012,7 +1012,7 @@ var ReportFactory = {
 
                         var param = obj[ col_key.id ];
                         var href  = "";
-                        if( col_key.id == COL.IP_DEST.id ){
+                        if( col_key.id == COL.IP_DST.id ){
                           if( param.indexOf("(") > 0 )
                             //152.163.50.2 (extmap.rub.ace.advertising.com)
                             param = "remote=" + param.substr(0, param.indexOf("(") - 1 );
@@ -1125,9 +1125,9 @@ function loadDetail(timestamp) {
     if (URL_PARAM.ip )
       $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
     if (URL_PARAM.remote )
-      $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+      $match[ COL.IP_DST.id ] = URL_PARAM.remote;
 
-    var col_id = COL.IP_DEST.id;
+    var col_id = COL.IP_DST.id;
     if( URL_PARAM.remote )//when an IP is selected ==> group by APP
       col_id = COL.APP_ID.id;
 
@@ -1149,7 +1149,7 @@ function loadDetail(timestamp) {
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );
     });
-    [ COL.START_TIME.id, COL.APP_ID.id, COL.IP_DEST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
+    [ COL.START_TIME.id, COL.APP_ID.id, COL.IP_DST.id, COL.START_TIME.id, HTTP.HOSTNAME.id, TLS.SERVER_NAME.id ].forEach( function( el, index){
       $group[ el ] = {"$first" : "$"+ el};
     } );
     [ COL.TIMESTAMP.id ].forEach( function( el, index){

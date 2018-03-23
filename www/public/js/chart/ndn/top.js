@@ -111,7 +111,7 @@ var ReportFactory = {
           //either source or destination
           $match[ "$or" ] = [{},{}];
           $match["$or"][0][ NDN.MAC_SRC.id ]  = URL_PARAM.mac;
-          $match["$or"][1][ NDN.MAC_DEST.id ] = URL_PARAM.mac;
+          $match["$or"][1][ NDN.MAC_DST.id ] = URL_PARAM.mac;
         }
         if( URL_PARAM.name )
           $match[ NDN.QUERY.id ] = URL_PARAM.name;
@@ -225,7 +225,7 @@ var ReportFactory = {
 
         if( isMAC ){
           //group by pair mac_src - mac_dst
-          [NDN.MAC_SRC.id, NDN.MAC_DEST.id].forEach( function( el, index){
+          [NDN.MAC_SRC.id, NDN.MAC_DST.id].forEach( function( el, index){
             $group["_id"][ el ] = "$" + el;
             $group[ el ]        = {"$first" : "$"+ el};
           } );
@@ -290,7 +290,7 @@ var ReportFactory = {
 
                         //mac_dst
                         if( isMAC ){
-                          name = db_data[i][ NDN.MAC_DEST.id ];
+                          name = db_data[i][ NDN.MAC_DST.id ];
                           if( cPie.dataLegend.data[name] === undefined )
                               cPie.dataLegend.data[name] = {val2: 0, val: 0};
 
@@ -721,7 +721,7 @@ $(str).appendTo("head");
                 }
                 obj[ name ].alert += msg[ NDN.IFA.id ];
 
-                name = msg[ NDN.MAC_DEST.id ];
+                name = msg[ NDN.MAC_DST.id ];
                 msg.target = name;
                 if( obj[ name ] == undefined )
                   obj[ name ] = { name: name, id: name.replace(/:/g, "_"), data: msg, alert: 0 };
@@ -993,7 +993,7 @@ $(str).appendTo("head");
       });//end topoChart
 
       var $group ={_id : {}};
-      [NDN.MAC_SRC.id, NDN.MAC_DEST.id].forEach( function( el, index){
+      [NDN.MAC_SRC.id, NDN.MAC_DST.id].forEach( function( el, index){
           $group["_id"][ el ] = "$" + el;
           $group[ el ]        = {"$first" : "$"+ el};
         } );
@@ -1014,7 +1014,7 @@ $(str).appendTo("head");
         //either source or destination
         $match[ "$or" ] = [{},{}];
         $match["$or"][0][ NDN.MAC_SRC.id ]  = URL_PARAM.mac;
-        $match["$or"][1][ NDN.MAC_DEST.id ] = URL_PARAM.mac;
+        $match["$or"][1][ NDN.MAC_DST.id ] = URL_PARAM.mac;
       }
       if( URL_PARAM.name )
         $match[ NDN.QUERY.id ] = URL_PARAM.name;
@@ -1024,7 +1024,7 @@ $(str).appendTo("head");
       var $project = {}
       $project[ NDN.IFA.id ] = { $cond: { if: { $gt: [ "$" + NDN.IFA.id, 0 ] }, then: 1, else: 0 } };
 
-      [ NDN.MAC_SRC.id, NDN.MAC_DEST.id, NDN.NAME.id, NDN.PACKET_TYPE.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
+      [ NDN.MAC_SRC.id, NDN.MAC_DST.id, NDN.NAME.id, NDN.PACKET_TYPE.id, NDN.NDN_DATA.id, NDN.INTEREST_NONCE.id ].forEach( function( el, index){
           $project[ el ] = 1;
       });
 

@@ -71,9 +71,9 @@ var ReportFactory = {
         if (URL_PARAM.ip )
           $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
         if (URL_PARAM.remote )
-          $match[ COL.IP_DEST.id ] = URL_PARAM.remote;
+          $match[ COL.IP_DST.id ] = URL_PARAM.remote;
 
-        var col_id = COL.IP_DEST.id;
+        var col_id = COL.IP_DST.id;
         if( URL_PARAM.remote )//when an IP is selected ==> group by APP
           col_id = COL.APP_ID.id;
         var $group = {};
@@ -119,8 +119,8 @@ var ReportFactory = {
           ].forEach( function( el, index){
             $group[ el ] = {"$sum" : "$" + el};
           });
-          [ COL.APP_ID.id, COL.APP_PATH.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.START_TIME.id,
-            COL.PORT_SRC.id, COL.PORT_DEST.id,
+          [ COL.APP_ID.id, COL.APP_PATH.id, COL.IP_SRC.id, COL.IP_DST.id, COL.START_TIME.id,
+            COL.PORT_SRC.id, COL.PORT_DST.id,
             COL.SRC_LOCATION.id, COL.DST_LOCATION.id,
 
           ].forEach( function( el, index){
@@ -153,7 +153,7 @@ var ReportFactory = {
                     var columns = [{id: COL.START_TIME.id            , label: "Start Time"     , align:"left"},
                                    {id: COL.TIMESTAMP.id             , label: "Last Updated"   , align:"left"},
                                    {id: COL.IP_SRC.id                , label: "Local"          , align:"left"},
-                                   {id: COL.IP_DEST.id               , label: "Remote"         , align:"left"},
+                                   {id: COL.IP_DST.id               , label: "Remote"         , align:"left"},
                                    {id: COL.APP_PATH.id              , label: "Proto. Path"    , align:"left"},
                                    {id: COL.UL_PACKET_COUNT.id       , label: "#Up. (pkt)"     , align:"right"},
                                    {id: COL.DL_PACKET_COUNT.id       , label: "#Down. (pkt)"   , align:"right"},
@@ -196,7 +196,7 @@ var ReportFactory = {
                         obj[ COL.DL_DATA_VOLUME.id] = MMTDrop.tools.formatDataVolume( msg[ COL.DL_DATA_VOLUME.id] );
 
                         obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id] + ":" + msg[ COL.PORT_SRC.id ]; // ip
-                        obj[ COL.IP_DEST.id ]      = msg[ COL.IP_DEST.id] + ":" + msg[ COL.PORT_DEST.id ];
+                        obj[ COL.IP_DST.id ]      = msg[ COL.IP_DST.id] + ":" + msg[ COL.PORT_DST.id ];
 
 
                         obj[ COL.UL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.UL_PACKET_COUNT.id] );
@@ -416,9 +416,9 @@ function loadDetail( index ) {
               + ", <strong>Last Updated: </strong>" + MMTDrop.tools.formatDateTime( msg[ COL.TIMESTAMP.id ]) + "<br/>"
               + '<strong>Local: </strong>' + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ]
               + ', <strong>Application: </strong>' + MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ])
-              + ', <strong>Remote: </strong>' + msg[ COL.IP_DEST.id ] + ":" + msg[ COL.PORT_DEST.id ] )
+              + ', <strong>Remote: </strong>' + msg[ COL.IP_DST.id ] + ":" + msg[ COL.PORT_DST.id ] )
 
-    var cols = [ COL.MAC_SRC, COL.MAC_DEST, COL.DST_LOCATION, COL.IP_SRC_INIT_CONNECTION ];
+    var cols = [ COL.MAC_SRC, COL.MAC_DST, COL.DST_LOCATION, COL.IP_SRC_INIT_CONNECTION ];
     cols     = MMTDrop.tools.mergeObjects(cols, HTTP);
     cols     = MMTDrop.tools.mergeObjects(cols, TLS);
     cols     = MMTDrop.tools.mergeObjects(cols, FTP);

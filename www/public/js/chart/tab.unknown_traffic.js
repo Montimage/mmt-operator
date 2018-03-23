@@ -39,9 +39,9 @@ ReportFactory.createReport = function () {
    });
    
    //first
-   [COL.APP_PATH.id, COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DEST.id,
-      COL.IP_SRC.id, COL.IP_DEST.id,
-      COL.PORT_SRC.id, COL.PORT_DEST.id,
+   [COL.APP_PATH.id, COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DST.id,
+      COL.IP_SRC.id, COL.IP_DST.id,
+      COL.PORT_SRC.id, COL.PORT_DST.id,
       COL.THREAD_NUMBER.id,
       COL.START_TIME.id //start time
    ].forEach( function( el ){
@@ -76,20 +76,20 @@ ReportFactory.createReport = function () {
          id: COL.MAC_SRC.id,
          label: "MAC src."
       },{
-         id: COL.MAC_DEST.id,
+         id: COL.MAC_DST.id,
          label: "MAC dst."
       },{
          id: COL.IP_SRC.id,
          label: "IP src."
       },{
-         id: COL.IP_DEST.id,
+         id: COL.IP_DST.id,
          label: "IP dst."
       },{
          id: COL.PORT_SRC.id,
          label: "Port src.",
          align: "right"
       },{
-         id: COL.PORT_DEST.id,
+         id: COL.PORT_DST.id,
          label: "Port dst.",
          align: "right"
       },
@@ -221,7 +221,7 @@ ReportFactory.createReport = function () {
                var fun = "createPopupReport('unknown_flows_real'," //collection
                   + COL.SESSION_ID.id  //key 
                   +",'" + msg[ "_id" ] //id
-                  +"', 'flow " + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ] + " &#x21cb; " + msg[ COL.IP_DEST.id ] + ":" + msg[ COL.PORT_DEST.id ] //title 
+                  +"', 'flow " + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ] + " &#x21cb; " + msg[ COL.IP_DST.id ] + ":" + msg[ COL.PORT_DST.id ] //title 
                   //+"', " + fProbe.selectedOption().id //probe_id
                   +"', undefined"
                   + ", true" //no_group

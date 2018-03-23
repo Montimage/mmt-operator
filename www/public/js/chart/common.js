@@ -45,6 +45,7 @@ const SSL     = MMTDrop.constants.TlsStatsColumn;
 const TLS     = MMTDrop.constants.TlsStatsColumn;
 const RTP     = MMTDrop.constants.RtpStatsColumn;
 const FTP     = MMTDrop.constants.FtpStatsColumn;
+const GTP     = MMTDrop.constants.GtpStatsColumn;
 
 //this database is reload firstly when a page is loaded
 //this db contains status of probe, interval to get data of reports

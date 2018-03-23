@@ -183,14 +183,14 @@ MMTDrop.constants = {
       START_TIME        : {id: 17, label: "Start Time"},
 
       IP_SRC           : {id: 18, label: "IP Source"},
-      IP_DEST          : {id: 19, label: "IP Destination"} ,
+      IP_DST          : {id: 19, label: "IP Destination"} ,
 
       /** Index of the MAC address source column */
       MAC_SRC           : {id: 20, label: "MAC Source"},
       /** Index of the MAC address source column */
-      MAC_DEST          : {id: 21 , label: "MAC Destination "},
+      MAC_DST          : {id: 21 , label: "MAC Destination "},
       SESSION_ID        : {id: 22 , label: "Session ID"},
-      PORT_DEST         : {id: 23 , label: "Port Destination"},
+      PORT_DST         : {id: 23 , label: "Port Destination"},
       PORT_SRC          : {id: 24 , label: "Port Source"},
       THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
@@ -316,7 +316,15 @@ MMTDrop.constants = {
       CONTROL_SESSION_ID: {id: 97, label: "Session ID"}, // control session session_id of the corresponding data section
       RESPONSE_TIME     : {id: 98, label: "Response Time"}, // Response time of the file transfer only
     },
-
+    
+    GtpStatsColumn : {
+       APP_FAMILY   : { id : 110, label: "App Family"},
+       CONTENT_CLASS: { id : 111, label: "Content Class"},
+       IP_SRC       : { id : 112, label: ""},
+       IP_DST       : { id : 113, label: ""},
+       TEID_1       : { id : 114, label: ""},
+       TEID_2       : { id : 115, label: ""},
+     },
     /**
      * Data format description for Radius reports
      */
@@ -470,10 +478,10 @@ MMTDrop.constants = {
         /** Index of the MAC address source column */
         MAC_SRC           : {id: 5, label: "MAC Src."},
         /** Index of the MAC address source column */
-        MAC_DEST          : {id: 6 , label: "MAC Dst."},
+        MAC_DST          : {id: 6 , label: "MAC Dst."},
         IS_OVER_TCP       : {id: 7,  label: "Parent Protocol"},
         IP_SRC            : {id: 8, label: "IP Src."},
-        IP_DEST           : {id: 9, label: "IP Dst."} ,
+        IP_DST           : {id: 9, label: "IP Dst."} ,
         QUERY             : {id: 10, label: "Query"},
         NAME              : {id: 11,  label: "Name"},
         PACKET_TYPE           : {id: 12, label: "Pkt. Type"},

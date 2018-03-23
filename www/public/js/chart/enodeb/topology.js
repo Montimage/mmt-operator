@@ -47,70 +47,6 @@ const FROM_TRAFFIC = "traffic";
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
-//MongoDB match expression
-var get_match_query = function( p ){
-   var param = MMTDrop.tools.getURLParameters();
-   var $match = {};
-   var collection = undefined;
-   const REPORT_COLLECTION = "reports_all";
-   // location
-   if( param.loc ){
-      $match[ COL.DST_LOCATION.id ] = decodeURI( param.loc );
-      collection = REPORT_COLLECTION;
-   }
-
-   if( param.profile ){
-      $match[ COL.PROFILE_ID.id ] = MMTDrop.constants.getCategoryIdFromName( param.profile );
-      collection = REPORT_COLLECTION;
-   }
-
-   if( param.app ){
-      $match[ COL.APP_ID.id ] = MMTDrop.constants.getProtocolIDFromName( param.app );
-      collection = REPORT_COLLECTION;
-   }
-
-   // when a specific IP is selected
-   if( param.ip ){
-      collection = REPORT_COLLECTION;
-
-      if( param.ip == NO_IP ){
-         $match[ COL.IP_SRC.id ] = NULL;
-      }else if( param.ip == LOCAL ) {
-         $match[ COL.SRC_LOCATION.id ] = LOCAL;
-      }else if( param.ip == REMOTE ) {
-         $match[ COL.DST_LOCATION.id ] = {"$ne" : LOCAL};
-      }else{
-         var obj = {};
-         obj[ COL.IP_SRC.id ]  = param.ip
-         $match["$or"] = [ obj ];
-
-         obj = {};
-         obj[ COL.IP_DEST.id ] = param.ip;
-         $match["$or"].push( obj );
-      } 
-   }else{
-      $match[ COL.IP_SRC.id ] =  {$nin:[NULL, MICRO_FLOW]};
-      $match[ COL.IP_DEST.id ] = {$nin:[NULL, MICRO_FLOW]};
-   }
-
-   if( param.link ){
-      var link = param.link.split(",");
-      $match[ COL.IP_SRC.id ]  = {$in: link};
-      $match[ COL.IP_DEST.id ] = {$in: link};
-
-      collection = REPORT_COLLECTION;
-   }
-
-   if( _.isEmpty( $match ))
-      return null;
-
-
-   obj = {match: $match};
-
-   if( collection )
-      obj.collection = collection;
-   return obj;
-}
 
 //limit number of rows of a table/number of pies per chart
 const LIMIT_SIZE=500;
@@ -981,7 +917,7 @@ var ReportFactory = {
                switch( type ){
                   case "enodeb":
                      svg.addNodes( [
-                        { type: "enodeb", name: elem.name, label: elem.name, data: elem },
+                        { type: "enodeb", name: elem.name, label: elem.name + ": " + elem.ip, data: elem },
                         { type: "mme", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi } 
                         ], false);
                      svg.addLinks([
@@ -1054,6 +990,11 @@ var ReportFactory = {
                               return node;
                            data.ip = ip;
                            break;
+                        case "gw":
+                           if( node.data.ip == ip )
+                              return node;
+                           data.ip = ip;
+                           break;
                      }
                   }
                }
@@ -1062,19 +1003,20 @@ var ReportFactory = {
                return { type: type, name: ip, label: ip, data: data};
             }
             
-            
+            //add a link: gtpIpSrc --> basedIpSrc --> basedIpDst
             svg.addGtpLink = function( basedIpSrc, basedIpDst, gtpIpSrc, gtpIpDst, needToUpdate ){
                //enodeb
                const enodeb = svg.findNodeByIP( "enodeb", basedIpSrc );
-               //_findNodeByIP( "", basedIpSrc ),
+               const gw     = svg.findNodeByIP( "gw", basedIpDst );
                //UE
-               const ue_1 = svg.findNodeByIP( "ue", gtpIpSrc );
-               const ue_2 = svg.findNodeByIP( "ue", gtpIpSrc );
-               svg.addNodes( [enodeb, ue_1, ue_2], false );
+               const ue_1   = svg.findNodeByIP( "ue", gtpIpSrc );
+               //const ue_2 = svg.findNodeByIP( "ue", gtpIpSrc );
+               svg.addNodes( [ enodeb, gw, ue_1 ], false );
                
                svg.addLinks( [
                   {source: ue_1.name,   target: enodeb.name, label: ""},
-                  {source: enodeb.name, target: ue_2.name,   label: ""},
+                  {source: enodeb.name, target: gw.name,     label: ""},
+                  //{source: gw.name,     target: ue_2.name,   label: ""}, 
                ], needToUpdate );
             }
             
@@ -1087,34 +1029,26 @@ var ReportFactory = {
                links: []
          });
 
-         const database = MMTDrop.databaseFactory.createStatDB( {collection: "data_link", 
+         const database = MMTDrop.databaseFactory.createStatDB( {collection: "gtp", 
             action: "aggregate", query: [], raw: true });
          //this is called each time database is reloaded
          database.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [ COL.IP_SRC.id , COL.IP_DEST.id ].forEach( function( el, index){
+            [  COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
             [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
               group[ el ] = {"$sum" : "$" + el};
             });
-            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DEST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
               group[ el ] = {"$first" : "$"+ el};
-            } );
+            });
             
-           const $match = {}; // get_match_query();
-           if( $match.collection != undefined ){
-              param.collection = $match.collection;
-              param.no_group = true;
-           }
-           else
-              group._id = "$link";
-
            const sort = {};
            sort[ COL.DATA_VOLUME.id ] = -1;
            
-           //param.period = status_db.time, 
+           param.period = status_db.time, 
            param.period_groupby = fPeriod.selectedOption().id, 
      
            param.query = [{$group: group}, {$sort: sort}, {$limit: 100}];
@@ -1125,10 +1059,17 @@ var ReportFactory = {
          database.afterReload( function( data ){
             for( var i=0; i<data.length; i++ ){
                const msg = data[i];
-               svg.addGtpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DEST.id ], msg[ COL.IP_SRC.id ], msg[ COL.IP_DEST.id ] );
+               svg.addGtpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ], msg[ GTP.IP_SRC.id ], msg[ GTP.IP_DST.id ] );
             }
             svg.redraw();
          });
+         
+         //load traffic from server when we got server's status in status_db
+         status_db.afterReload( function(){
+            //load network traffic
+            if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_TRAFFIC ) )
+               database.reload();
+         })
          
          //when user click on group buttons to toggle elements(UE, MME, eNodeB)
          window.toggleChartElements = function( dom ){
@@ -1188,9 +1129,6 @@ var ReportFactory = {
                         data[i].from = FROM_MONGO;
                      svg.addElements( "ue", data );
                      
-                     //load network traffic
-                     if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_TRAFFIC ) )
-                        database.reload();
                   }
                });
             }

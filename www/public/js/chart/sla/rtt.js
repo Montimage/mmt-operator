@@ -420,7 +420,7 @@ var ReportFactory = {
                     HISTORY    = {};
                     openingRow = {};
 
-                    var col_key  = {id: COL.IP_DEST.id,  label: "Server" };
+                    var col_key  = {id: COL.IP_DST.id,  label: "Server" };
                         //col_key  = {id: COL.APP_PATH.id, label: "App/protocol Path"};
 
                     var columns = [{id: COL.START_TIME.id, label: "Start Time"   , align:"left"},
@@ -454,7 +454,7 @@ var ReportFactory = {
                         if( host == undefined || host == "" )
                             host = msg[ SSL.SERVER_NAME.id ];
                         if( host != undefined && host != ""){
-                            obj[COL.IP_DEST.id]  = obj[COL.IP_DEST.id] + " (" + host  + ")" ;
+                            obj[COL.IP_DST.id]  = obj[COL.IP_DST.id] + " (" + host  + ")" ;
                             delete( obj.__needUpdateIP2Name );
                         }
                     }
@@ -480,7 +480,7 @@ var ReportFactory = {
                             obj[ col_key.id ] = msg[ col_key.id ];
 
                             //IP
-                            if( col_key.id == COL.IP_DEST.id ){
+                            if( col_key.id == COL.IP_DST.id ){
                                 obj.__needUpdateIP2Name = true;
                                 updateIP2Name( obj, msg );
                             }else
@@ -496,7 +496,7 @@ var ReportFactory = {
                         }
                         else{
                             var obj = HISTORY[ key_val ].data;
-                            if( col_key.id == COL.IP_DEST.id )
+                            if( col_key.id == COL.IP_DST.id )
                                 updateIP2Name( obj, msg );
 
                             if( obj[ COL.START_TIME.id ] >  start_time ) obj[ COL.START_TIME.id ] = start_time;
@@ -615,7 +615,7 @@ var ReportFactory = {
                     var columns = [{id: COL.START_TIME.id, label: "Start Time", align:"left"},
                                    {id: COL.IP_SRC.id    , label: "Client"    , align:"left"},
                                    {id: COL.PORT_SRC.id  , label: "Src. Port" , align:"right"},
-                                   {id: COL.PORT_DEST.id  , label: "Dst. Port" , align:"right"},
+                                   {id: COL.PORT_DST.id  , label: "Dst. Port" , align:"right"},
                                    {id: COL.APP_PATH.id  , label: "Proto/App Path"    , align:"left"},
                                   ];
 
@@ -655,7 +655,7 @@ var ReportFactory = {
                         obj[ COL.DL_DATA_VOLUME.id] = msg[ COL.DL_DATA_VOLUME.id];
                         obj[ COL.IP_SRC.id]         = msg[ COL.IP_SRC.id]; // ip
                         obj[ COL.PORT_SRC.id ]      = msg[ COL.PORT_SRC.id ];
-                        obj[ COL.PORT_DEST.id ]      = msg[ COL.PORT_DEST.id ];
+                        obj[ COL.PORT_DST.id ]      = msg[ COL.PORT_DST.id ];
 
                         for( var j in colSum ){
                                 var val = msg[ colSum[j].id ];
