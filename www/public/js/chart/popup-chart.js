@@ -271,4 +271,5 @@ function createPopupReport( collection, key, id, title, probe_id, no_group, no_o
          }
       }, rep);
    }, 1000);
+   return rep;
 }

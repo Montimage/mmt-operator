@@ -55,6 +55,7 @@ mongodb.Collection.prototype.aggregate = function( query, options, cb ){
    
    //enable cursor
    newOptions.cursor = {};
+   newOptions.maxTimeMS = 60*1000; //limit in milliseconds for processing operations on a cursor.
    
    var cursor =  this._aggregate( query, newOptions );
    

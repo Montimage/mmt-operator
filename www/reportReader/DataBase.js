@@ -65,7 +65,7 @@ function flatAppPath( str ){
    
    const arr = [];
    while(  pathArr.length > 0 ){
-      var msg = {path: pathArr.join("."), app: pathArr[ pathArr.length - 1 ], depth: pathArr.length};
+      var msg = {path: pathArr.join("."), app: parseInt(pathArr[ pathArr.length - 1 ]), depth: pathArr.length};
       //__mi_keys is used by mongodb to accelate bson functions
       //this must be used together with the hack was done in node_module/bson
       //msg.__mi_keys = flat_key_array;
@@ -232,14 +232,24 @@ module.exports = function(){
          //for eNodeB
          gtp: new DataCache( inserter, "data_gtp",
                {
-            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST],
+            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST, GTP.TEIDs],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                ],
-            set:[COL.MAC_SRC, COL.MAC_DST, GTP.TEID_1, GTP.TEID_2, COL.IP_SRC_INIT_CONNECTION ]
+            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION ]
                }
          ),
+         sctp: new DataCache( inserter, "data_sctp",
+            {
+         key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST],
+         inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
+            COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
+            COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+            ],
+         set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_PATH, COL.APP_ID ]
+            }
+      ),
    };
    
    //TODO: remove this block. This is used only for high bw
@@ -412,7 +422,8 @@ module.exports = function(){
                //HTTP
                switch( msg[ COL.FORMAT_TYPE ] ){
                   case MMTDrop.CsvFormat.GTP_APP_FORMAT:
-                     self.dataCache.gtp.addMessage( msg );
+                     //clone a new message to add to gtp
+                     self.dataCache.gtp.addMessage( dataAdaptor.formatReportItem( message ) );
                      break;
                      
                   case MMTDrop.CsvFormat.WEB_APP_FORMAT: 
@@ -432,7 +443,6 @@ module.exports = function(){
                      //msg[ HTTP.RESPONSE_TIME ] = 0;
                      break;
                }
-                       
 
                //traffic of local IP
                //do not add report 99 to data_ip collection as it has no IP
@@ -469,6 +479,15 @@ module.exports = function(){
             //expand application path: 
             const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
+            if( self.dataCache.sctp ){
+               //Collection contains only info about SCTP proto for eNodeB
+               for( var i=0; i<app_arr.length; i++ )
+                  if( app_arr[i].app == 304 ){ //SCTP
+                     self.dataCache.sctp.addMessage( msg );
+                     break;
+                  }
+            }
+            
             //add to protocols collections
             if( self.dataCache.protocol ){
                const original_app_id = msg[ COL.APP_ID ],

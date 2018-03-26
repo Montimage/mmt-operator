@@ -322,8 +322,7 @@ MMTDrop.constants = {
        CONTENT_CLASS: { id : 111, label: "Content Class"},
        IP_SRC       : { id : 112, label: ""},
        IP_DST       : { id : 113, label: ""},
-       TEID_1       : { id : 114, label: ""},
-       TEID_2       : { id : 115, label: ""},
+       TEIDs       : { id : 114, label: ""},
      },
     /**
      * Data format description for Radius reports

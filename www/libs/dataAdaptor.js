@@ -303,7 +303,7 @@ else{
             break;
          case MMTDrop.CsvFormat.GTP_APP_FORMAT:
             _start = MMTDrop.GtpStatsColumnId.APP_FAMILY;
-            _end   = MMTDrop.GtpStatsColumnId.TEID_2;
+            _end   = MMTDrop.GtpStatsColumnId.TEIDs;
             break;
          default:
             return msg;
@@ -324,6 +324,13 @@ else{
       }
       
       const isGTP = (format_type == MMTDrop.CsvFormat.GTP_APP_FORMAT );
+      
+      //change TEID to an array of 2 elements: TEID_1 and TEID_2
+      if( isGTP ){
+         msg[ MMTDrop.GtpStatsColumnId.TEIDs ] = [ msg[ MMTDrop.GtpStatsColumnId.TEIDs ], 
+            new_msg[ _end + 1 - _new ] ];
+      }
+      
       //reserve direction if IP dst is the one of a machine in monitoring network
       const ipSrc = isGTP? 
             msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] : msg[ MMTDrop.StatsColumnId.IP_SRC ];

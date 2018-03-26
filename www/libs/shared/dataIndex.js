@@ -178,8 +178,7 @@ module.exports = {
          CONTENT_CLASS : 111,
          IP_SRC        : 112,
          IP_DST        : 113,
-         TEID_1        : 114,
-         TEID_2        : 115
+         TEIDs         : 114
       },
 
        LicenseColumnId           : {
