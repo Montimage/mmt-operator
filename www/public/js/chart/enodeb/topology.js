@@ -44,6 +44,7 @@ if( param.profile ){
 const FROM_MONGO   = "mongo";
 const FROM_MYSQL   = "mysql";
 const FROM_TRAFFIC = "traffic";
+const FROM_SCTP = "sctp";
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
@@ -127,10 +128,10 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "Name", "name", {maxlength: 15, required: true} ),
+                     createInput( "Name", "enb_name", {maxlength: 15, required: true} ),
                      createInput( "MME Code", "mmec", {required: true} ),
                      createInput( "MMT Group Identifier", "mmegi", {required: true} ),
-                     createInput( "IP", "ip", {required: true} ),
+                     createInput( "IP", "enb_ip", {required: true} ),
                      ]
                },
                //Form: User Equipment
@@ -362,15 +363,7 @@ var ReportFactory = {
                      onclick: "toggleChartElements(this)",
                      html  : '<span class="icon-satellite"></span>'
                   }
-               },/*{
-                  type : "<button>",
-                  attr : {
-                     class : "btn btn-primary",
-                     type  : "button",
-                     title : "Toggle Gateway",
-                     html  : '<span class="fa fa-random"></span>'
-                  }
-               }*/]
+               }]
             },{
                type : "<div>",
                attr: {
@@ -378,16 +371,36 @@ var ReportFactory = {
                   role : "group",
                   style : "margin-right:30px" 
                },
-               children:[{
+               children:[/*{
                   type: "<button>",
                   attr: {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle network traffic",
+                     title : "Toggle elements from DB",
+                     "data-type": FROM_MYSQL,
+                     onclick: "toggleChartElements(this)",
+                     html  : "DB"//'<span class="icon-wireless"></span>'
+                  },
+               },*/{
+                  type: "<button>",
+                  attr: {
+                     class : "btn btn-primary",
+                     type  : "button",
+                     title : "Toggle GTP traffic",
                      "data-type": FROM_TRAFFIC,
                      onclick: "toggleChartElements(this)",
-                     html  : '<span class="icon-wireless"></span>'
+                     html  : "GTP"//'<span class="icon-wireless"></span>'
                   },
+               },{
+                  type : "<button>",
+                  attr : {
+                     class : "btn btn-primary",
+                     type  : "button",
+                     title : "Toggle SCTP traffic",
+                     "data-type": FROM_SCTP,
+                     onclick: "toggleChartElements(this)",
+                     html  : "SCTP"//'<span class="fa fa-random"></span>'
+                  }
                }]
             },{
                type : "<a>",
@@ -445,13 +458,13 @@ var ReportFactory = {
                
                
                if( o.type == null )
-                  o.type = ["enodeb", "GW", "ue", "mme", "DB"][ Math.floor(Math.random() * 5) ];
+                  o.type = ["enodeb", "gw", "ue", "mme"][ Math.floor(Math.random() * 5) ];
 
                switch( o.type ){
                   case "enodeb" : 
                      o.radius = 24;
                      break;
-                  case "GW":
+                  case "gw":
                      o.radius = 12;
                      break;
                   case "ue":
@@ -460,7 +473,7 @@ var ReportFactory = {
                   case "mme":
                      o.radius = 14;
                      break;
-                  case "DB":
+                  case "db":
                      o.radius = 14;
                      break;
                   default:
@@ -550,11 +563,11 @@ var ReportFactory = {
                   return "3,0";
                })
                .style("stroke", function( d ){
-                  //connect to MME
-//                  if( d.source.type == "mme" || d.target.type == "mme")
-//                     return "red";
-//                  else
-                     return "grey";
+                  //from traffic
+                  if( (d.source.data && d.source.data.from == FROM_TRAFFIC) || 
+                        (d.target.data &&  d.target.data.from == FROM_TRAFFIC ))
+                     return "blue";
+                  return "grey";
                })
                .style("fill", "none")
                .style("stroke-linejoin", "miter")
@@ -576,7 +589,7 @@ var ReportFactory = {
                //for the links that will be removed
                link.exit().remove();
             }
-            svg.fixedNodes = MMTDrop.tools.localStorage.get( "fixedNodes" ) || {};
+            svg.fixedNodes = MMTDrop.tools.localStorage.get( "fixedNodes", false ) || {};
 
             var is_draging = false;
             function updateNodes(){
@@ -620,6 +633,62 @@ var ReportFactory = {
                   node.style("opacity", 1);
                   link.style("opacity", 1);
                   link.selectAll("text").style("opacity", 0);
+               })
+               
+               ;
+
+               nodeEnter.append("circle")
+               .attr("r", function(d){
+                  if( d.type == "enodeb")
+                     return d.radius;
+                  else
+                     return d.radius + 10;
+               })
+               .attr("stroke-width", function( d ){
+                  if( d.type == "gw" )
+                     return 1;
+                  else
+                     return 0
+                 })
+               .attr("stroke", "black")
+               .attr("fill", "white")
+               ;
+
+               nodeEnter.append("text")
+               .attr("text-anchor", "middle" )
+               .attr("dy", ".4em")
+               .attr("dx", function( d ) {
+                  if( d.type == "enodeb" )
+                     return ".25em";
+                  else
+                     return 0;
+               })
+               .attr('style', function( d ) {
+                  const style = "font-size: "+ (d.radius*2) +"px; cursor: default; "
+                  if( d.type == "enodeb")
+                     return style + "font-family: fontmfizz"
+                     else
+                        return style + "font-family: fontawesome";
+               })
+               .attr("fill", "white")
+               .text(function(d) {
+                  switch( d.type ){
+                     case "enodeb": return "\uf104"; //antenna from font-mfizz
+                     case "gw"    : return "\uf074"; //router from font-awesome
+                     case "mme"   : return "\uf233"; //server from font-awesome
+                     case "ue"    : return "\uf10b"; //mobile from font-awesome
+                     case "db"    : return "\uf1c0"; //database from font-awesome
+                  }
+                  return d.type ;
+               })
+               .on("dblclick", function(d){
+                  if( d.fixed ){
+                     d.fixed = false;
+                     delete( d.pos );
+                     delete svg.fixedNodes[ d.name ];
+                     //save to localstorage
+                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
+                  }
                })
                .call(
                   d3.behavior.drag()
@@ -675,66 +744,11 @@ var ReportFactory = {
                      //save postion of d
                      svg.fixedNodes[ d.name ] = d.pos;
                      //save to localstorage
-                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes );
+                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
 
                      force.resume();
                   })
                )
-               ;
-
-               nodeEnter.append("circle")
-               .attr("r", function(d){
-                  if( d.type == "enodeb")
-                     return d.radius;
-                  else
-                     return d.radius + 10;
-               })
-               .attr("stroke-width", "0" )
-               .attr("fill", function( d ){
-//                if( d.type == "GW" )
-//                return "black";
-//                else
-//                return "white"
-                  return "white";
-               })
-               ;
-
-               nodeEnter.append("text")
-               .attr("text-anchor", "middle" )
-               .attr("dy", ".4em")
-               .attr("dx", function( d ) {
-                  if( d.type == "enodeb" )
-                     return ".25em";
-                  else
-                     return 0;
-               })
-               .attr('style', function( d ) {
-                  const style = "font-size: "+ (d.radius*2) +"px; cursor: default; "
-                  if( d.type == "enodeb")
-                     return style + "font-family: fontmfizz"
-                     else
-                        return style + "font-family: fontawesome";
-               })
-               .attr("fill", "white")
-               .text(function(d) {
-                  switch( d.type ){
-                     case "enodeb": return "\uf104"; //antenna from font-mfizz
-                     case "gw"    : return "\uf074"; //router from font-awesome
-                     case "mme"   : return "\uf233"; //server from font-awesome
-                     case "ue"    : return "\uf10b"; //mobile from font-awesome
-                     case "db"    : return "\uf1c0"; //database from font-awesome
-                  }
-                  return d.type ;
-               })
-               .on("dblclick", function(d){
-                  if( d.fixed ){
-                     d.fixed = false;
-                     delete( d.pos );
-                     delete svg.fixedNodes[ d.name ];
-                     //save to localstorage
-                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes );
-                  }
-               })
                ;
 
                nodeEnter.append("text")
@@ -883,18 +897,23 @@ var ReportFactory = {
             svg.hideNodesAndLinks = function( nodeType, isHidden ){
                const val = (isHidden ? "none" : "block")
                link.attr("display", function( l ){
-                  if( nodeType == FROM_TRAFFIC ){
+                  if( nodeType == FROM_TRAFFIC || nodeType == FROM_SCTP ){
                      if( (l.source.data && l.source.data.from == nodeType) 
                            ||  (l.target.data && l.target.data.from == nodeType ))
                         return val;
-                  }else 
+                  }else if( nodeType == FROM_MYSQL){
+                     if( (l.source.data && l.source.data.from == nodeType) 
+                           &&  (l.target.data && l.target.data.from == nodeType ))
+                        return val;
+                  }else
                      if( l.source.type == nodeType || l.target.type == nodeType )
                         return val;
                   //other
                   return $(this).attr("display");
                });
+               
                node.attr("display", function( l ){
-                  if( nodeType == FROM_TRAFFIC ){
+                  if( nodeType == FROM_TRAFFIC || nodeType == FROM_SCTP ){
                      if( l.data && l.data.from == nodeType )
                         return val;
                   }else{
@@ -916,12 +935,11 @@ var ReportFactory = {
             svg.addElement = function( type, elem, needToUpdate ){
                switch( type ){
                   case "enodeb":
-                     svg.addNodes( [
-                        { type: "enodeb", name: elem.name, label: elem.name + ": " + elem.ip, data: elem },
-                        { type: "mme", name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi } 
-                        ], false);
+                     const enb = { type: "enodeb", name: elem.enb_name, label: elem.enb_name + ": " + elem.enb_ip, data: elem };
+                     const mme = { type: "mme",    name: elem.mmec + "-" + elem.mmegi, label: elem.mmec + "-" + elem.mmegi };
+                     svg.addNodes( [ enb, mme ], false);
                      svg.addLinks([
-                        {source: elem.name, target: elem.mmec + "-" + elem.mmegi, label: "" }
+                        {source: enb.name, target: mme.name, label: "" }
                      ], needToUpdate)
                      break;
                   case "ue":
@@ -974,32 +992,38 @@ var ReportFactory = {
                $modal.modal();
             };
             
-            svg.findNodeByIP = function( type, ip ){
+            svg.findNodeByIP = function( type, ip, from ){
                const data = {};
+               var ipField = "";
+               switch( type ){
+                  case "ue":
+                     ipField = "ue_ip";
+                     break;
+                  case "enodeb":
+                     ipField = "enb_ip";
+                     break;
+                  case "gw":
+                     ipField = "ip";
+                     break;
+                  case "mme":
+                     ipField = "ip";
+                     break;
+               }
+               
                for( var name in nodes_obj ){
                   var node = nodes_obj[name];
-                  if( node.data ){
-                     switch( type ){
-                        case "ue":
-                           if( node.data.ue_ip == ip )
-                              return node;
-                           data.ue_ip = ip;
-                           break;
-                        case "enodeb":
-                           if( node.data.ip == ip )
-                              return node;
-                           data.ip = ip;
-                           break;
-                        case "gw":
-                           if( node.data.ip == ip )
-                              return node;
-                           data.ip = ip;
-                           break;
-                     }
+                  if( node.data && node.type == type ){
+                     if( node.data[ ipField ] == ip )
+                           return node;
                   }
                }
                //node does not exist
-               data.from = FROM_TRAFFIC;
+               if( from != undefined )
+                  data.from = from;
+               else
+                  data.from = FROM_TRAFFIC;
+               data[ ipField ] = ip;
+               
                return { type: type, name: ip, label: ip, data: data};
             }
             
@@ -1020,6 +1044,19 @@ var ReportFactory = {
                ], needToUpdate );
             }
             
+            
+            //add a link: sctIpSrc --> sctpIpDst (eNodeB --> MME)
+            svg.addSctpLink = function( ipSrc, ipDst, needToUpdate ){
+               //enodeb
+               const enodeb = svg.findNodeByIP( "enodeb", ipSrc, FROM_SCTP );
+               const mme    = svg.findNodeByIP( "mme", ipDst, FROM_SCTP );
+               svg.addNodes( [ enodeb, mme ], false );
+               
+               svg.addLinks( [
+                  {source: enodeb.name, target: mme.name, label: ""}
+               ], needToUpdate );
+            }
+            
             return svg;
          }// end topoChart
 
@@ -1029,31 +1066,30 @@ var ReportFactory = {
                links: []
          });
 
-         const database = MMTDrop.databaseFactory.createStatDB( {collection: "data_gtp", 
+         const databaseGTP = MMTDrop.databaseFactory.createStatDB( {collection: "data_gtp", 
             action: "aggregate", query: [], raw: true });
          //this is called each time database is reloaded
-         database.updateParameter = function( param ){
+         databaseGTP.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [  COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
+            [  COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
             [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
               group[ el ] = {"$sum" : "$" + el};
             });
-            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id, GTP.IP_DST.id ].forEach( function( el, index){
+            [ COL.IP_SRC.id, COL.IP_DST.id, GTP.IP_SRC.id ].forEach( function( el, index){
               group[ el ] = {"$first" : "$"+ el};
             });
             
            param.period = status_db.time, 
            param.period_groupby = fPeriod.selectedOption().id, 
      
-           param.query = [{$group: group}];
-           //param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 100}];
+           param.query = [ {$group: group}];
          }
          
          //callback is triggered each time database reloaded its data from server
-         database.afterReload( function( data ){
+         databaseGTP.afterReload( function( data ){
             for( var i=0; i<data.length; i++ ){
                const msg = data[i];
                svg.addGtpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ], msg[ GTP.IP_SRC.id ], msg[ GTP.IP_DST.id ] );
@@ -1061,12 +1097,36 @@ var ReportFactory = {
             svg.redraw();
          });
          
-         //load traffic from server when we got server's status in status_db
-         status_db.afterReload( function(){
-            //load network traffic
-            if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_TRAFFIC ) )
-               database.reload();
-         })
+         const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {collection: "data_sctp", 
+            action: "aggregate", query: [], raw: true });
+         //this is called each time database is reloaded
+         databaseSCTP.updateParameter = function( param ){
+            //mongoDB aggregate
+            const group = { _id : {} };
+            [  COL.IP_SRC.id, COL.IP_DST.id, COL.IP_DST.id ].forEach( function( el, index){
+              group["_id"][ el ] = "$" + el;
+            } );
+            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+              group[ el ] = {"$sum" : "$" + el};
+            });
+            [ COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
+              group[ el ] = {"$first" : "$"+ el};
+            });
+            
+           param.period = status_db.time, 
+           param.period_groupby = fPeriod.selectedOption().id, 
+     
+           param.query = [ {$group: group}];
+         }
+         
+         //callback is triggered each time database reloaded its data from server
+         databaseSCTP.afterReload( function( data ){
+            for( var i=0; i<data.length; i++ ){
+               const msg = data[i];
+               svg.addSctpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ] );
+            }
+            svg.redraw();
+         });
          
          //when user click on group buttons to toggle elements(UE, MME, eNodeB)
          window.toggleChartElements = function( dom ){
@@ -1082,11 +1142,19 @@ var ReportFactory = {
 
             svg.hideNodesAndLinks( type, isHidden );
             //remember setting
-            MMTDrop.tools.localStorage.set( "toggle-" + type, isHidden );
+            MMTDrop.tools.localStorage.set( "toggle-" + type, isHidden, false );
 
             //reload database to get elemetns from network traffic
-            if( type == FROM_TRAFFIC && ! isHidden )
-               database.reload();
+            if( ! isHidden ){
+               switch( type ){
+                  case FROM_TRAFFIC:
+                     databaseGTP.reload();
+                     break;
+                  case FROM_SCTP:
+                     databaseSCTP.reload();
+                     break;
+               }
+            }
          }
          
          //hide elements corresponding to the the status of buttons that was saved 
@@ -1097,7 +1165,7 @@ var ReportFactory = {
                const type = $dom.data("type");
                if( type == undefined )
                   return;
-               var isHidden = MMTDrop.tools.localStorage.get( "toggle-" + type );
+               var isHidden = MMTDrop.tools.localStorage.get( "toggle-" + type, false );
                if( ! isHidden )
                   return;
                $dom.attr("class", "btn btn-default");
@@ -1105,32 +1173,39 @@ var ReportFactory = {
             })
          }
          
-         //load eNodeB
-         MMTDrop.tools.ajax("/api/enodeb/find?raw", {}, "POST", {
-            success: function( data ){
-               if( data.data == undefined )
-                  return;
-               data = data.data;
-               for( var i in data )
-                  data[i].from = FROM_MONGO;
-               svg.addElements( "enodeb", data );
-               
-               
-             //load UE
-               MMTDrop.tools.ajax("/api/ue/find?raw", {}, "POST", {
-                  success: function( data ){
-                     if( data.data == undefined )
-                        return;
-                     data = data.data;
-                     for( var i in data )
-                        data[i].from = FROM_MONGO;
-                     svg.addElements( "ue", data );
-                     
-                  }
-               });
-            }
-          });
+         function addElems( url, type, source, cb ){
+            MMTDrop.tools.ajax( url, {}, "GET", {
+               success: function( data ){
+                  if( data.data == undefined )
+                     return;
+                  data = data.data;
+                  for( var i in data )
+                     data[i].from = source;
+                  svg.addElements( type, data );
+                  if( cb )
+                     cb();
+               }
+            });
+         }
          
+         //load elements from mongodb
+         addElems( "/api/enodeb/find?raw", "enodeb", FROM_MONGO, function(){
+            addElems( "/api/ue/find?raw", "ue", FROM_MONGO, function(){
+               //load elements from mysql
+               addElems( '/api/mysql/query?query="select * from enb_data"', "enodeb", FROM_MYSQL, function(){
+                  addElems( '/api/mysql/query?query="select * from service_data"', "ue", FROM_MYSQL, function(){
+                     //load traffic from server when we got server's status in status_db
+                     status_db.afterReload( function(){
+                        //load network traffic
+                        if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_TRAFFIC, false ) )
+                           databaseGTP.reload();
+                        if( ! MMTDrop.tools.localStorage.get( "toggle-" + FROM_SCTP, false ) )
+                           databaseSCTP.reload();
+                     });
+                  });
+               });
+            });
+         });
       },
 }
 

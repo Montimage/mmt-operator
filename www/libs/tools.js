@@ -72,6 +72,33 @@ var _tools = {
     return;
   },
 
+  /**
+   * Get value of an attribute of an object
+   * Example: obj = {
+   *  a : {
+   *     b : 1
+   *  }
+   * }
+   * => getValue( obj, "a" ) => {b:1}
+   * => getValue( obj, "b" ) => null
+   * => getValue( obj, ["a","b"] ) => 1
+   * => getValue( obj, ["a","b","c"] ) => null
+   * => getValue( obj, ["c","b"] ) => null
+   */
+  getValue: function( obj, attributeArr ){
+    if( ! Array.isArray( attributeArr ) )
+       return obj[ attributeArr ];
+    
+    for( var i=0; i<attributeArr.length; i++ ){
+       var key = attributeArr[i];
+       obj = obj[ key ];
+       if( obj == undefined || typeof( obj ) != "object" )
+          break;
+    }
+    if( i == attributeArr.length )
+       return obj;
+    return null;
+  },
   
   cloneData : function( obj ){
     if( Array.isArray( obj ))

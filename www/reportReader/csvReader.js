@@ -17,7 +17,10 @@ const DBInserter     = require('./DBInserter');
 const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
 
-const NB_CSV_BEFORE_RESTART = 2;
+//after reading xx files, this process will automatically exit,
+// then ReportReader will start a new process to replace this process.
+//This allows to clean memory used by the readers' processes
+const NB_CSV_BEFORE_RESTART = 200;
 //total number of reader processes
 const TOTAL_READERS = process.argv[3];
 //index of the current process

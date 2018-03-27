@@ -64,37 +64,26 @@ MMTDrop.config = {
 
 MMTDrop.alert = {
     error: function( msg, delay ){
-        //avoid two consecutif identique alerts
-        var now = (new Date()).getTime();
-
-        if( this._lastAlert
-           && this._lastAlert.msg == msg
-           && this._lastAlert.delay == delay
-           && this._lastAlert.time >= now - 100 )
-            return;
-
-        this._lastAlert = {
-            msg  : msg,
-            delay: delay,
-            time : now
-        };
-
-        if( delay == undefined )
-            delay = 0;//forever
-        else if( delay < 1000 )
-          delay = 1000;//1second
-            //defined in pre-commond.js to show a loading popup
+        //defined in pre-commond.js to show a loading popup
         if( loading )
             loading.onHide();
 
-        alertify.log( msg, "error",  delay);
+        this.alert( msg, "error",  delay);
     },
     success: function( msg, delay ){
-      if( delay == undefined )
+      this.alert( msg, "success", delay );
+    },
+    alert: function( msg, type, delay ){
+       if( delay == undefined )
           delay = 0;//forever
       else if( delay < 1000 )
         delay = 1000;//1second
-      alertify.log( msg, "success",  delay);
+       
+       //hide old alert
+       $("#alertify-item").trigger("click");
+       msg = '<span id="alertify-item">' + msg + '</span>';
+       
+       alertify.log( msg, type,  delay);
     }
 }
 /**

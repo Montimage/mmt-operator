@@ -64,19 +64,21 @@ var ReportFactory = {
                group[ el ] = {"$first" : "$"+ el};
             });
 
-            group["teid"] = {$addToSet : "$" + GTP.TEIDs.id };
+            [ GTP.TEIDs.id, COL.IP_SRC.id ].forEach( function( el ){
+               group[ el ] = {$addToSet : "$" + el };
+            })
             
             param.period = status_db.time;
             param.period_groupby = fPeriod.selectedOption().id;
 
             const project = {};
-            [ COL.PROBE_ID.id, GTP.IP_SRC.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, GTP.IP_SRC.id, GTP.IP_DST.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                project[ el ] = 1;
             });
             
-            project.teid = {
+            project[GTP.TEIDs.id  ] = {
                $reduce: {
-                 input: "$teid",
+                 input: "$" + GTP.TEIDs.id,
                  initialValue: [],
                  in: { $setUnion: [ "$$value", "$$this" ] }
                }
@@ -169,17 +171,18 @@ var ReportFactory = {
 
                      msg[ GTP.IP_SRC.id ] = '<a title="Click to show detail of this IP" onclick="showDetailUE(this)">' + msg[ GTP.IP_SRC.id ] + '</a>';
                      
-                     var teids = msg["teid"].sort( function( a, b ){
+                     var teids = msg[ GTP.TEIDs.id ].sort( function( a, b ){
                         return a-b;
                      } ).join(", ")
-                     msg[ "teid" ] = '<a href="#" title="'+ teids +'">' + msg["teid"].length + '</a>';
+                     msg[ GTP.TEIDs.id ] = '<a title="'+ teids +'">' + msg[GTP.TEIDs.id].length + '</a>';
                   }
                   return {
                      columns : [
                         {id: GTP.IP_SRC.id, label: "IP of UE"},
+                        {id: COL.IP_SRC.id, label: "eNodeB"},
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data Volume (B)"},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "Packet Count"}, 
-                        {id: "teid", label:"TEID Count"},
+                        {id: GTP.TEIDs.id, label:"TEID Count"},
                         {id: "graph"}
                         ],
                         data : arr
