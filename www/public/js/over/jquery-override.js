@@ -14,7 +14,7 @@ jQuery.fn.flash = function(){
     var current = this.css( 'background-color' );
     this.animate( { "background-color": '#FF0000' }, duration / 2 );
     this.animate( { "background-color": current }, duration / 2 );
-
+    return this;
 }
 
 jQuery.fn.setEnable = function( val ){
@@ -22,13 +22,16 @@ jQuery.fn.setEnable = function( val ){
     val = true;
   this.prop('disabled', !val );
   this.attr('disabled', !val );
+  return this;
 }
 
 jQuery.fn.disable = function(){
   this.setEnable( false );
+  return this;
 }
 jQuery.fn.enable = function(){
   this.setEnable( true );
+  return this;
 }
 
 jQuery.fn.isDisabled = function(){

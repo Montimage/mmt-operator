@@ -36,9 +36,25 @@ const arr = [
 
 const availableReports = {};
 
+var isShowAlert = false;
+
 MMTDrop.callback = {
       chart : {
-         afterRender : loading.onChartLoad
+         afterRender : function(){
+            //hide loading
+            loading.onChartLoad();
+            if( URL_PARAM.elem ){
+               if( isShowAlert )
+                  return;
+               isShowAlert = true;
+               setTimeout( function(){
+                  if( $("a:contains('"+  URL_PARAM.elem +"')").length == 0 )
+                     MMTDrop.alert.error("Not found any element having<br/> IP = " + URL_PARAM.elem );
+                  else
+                     $("a:contains('"+  URL_PARAM.elem +"')").click();
+               }, 200 );
+            }
+         }
       }
 };
 
