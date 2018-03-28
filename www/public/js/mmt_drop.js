@@ -660,8 +660,20 @@ MMTDrop.constants = {
        628: 'ORACLE',
        629: 'REDIS',
        630: 'VMWARE',
-       631: 'MP2T',
-       632: 'M3U8',
+       631: 'SCTP_DATA',
+       632: 'SCTP_SACK',
+       633: 'SCTP_INIT',
+       634: 'LLMNR',
+       635: 'ECLIPSE_TCF',
+       636: 'LOOPBACK',
+       637: 'TPKT',
+       638: 'COTP',
+       639: 'S7COMM',
+       640: 'CTP',
+       641: 'LLC',
+       642: 'XID',
+       643: 'CDP',
+       644: 'DTP'
     },
 
     /**
@@ -1954,7 +1966,10 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
        _param.isReload = true;
         console.log("Reload database: " + JSON.stringify(_param));
     }
-    var onSuccess = function( newData ){
+    const onSuccess = function( newData ){
+       //dismiss error message if any
+       $("#alertify-db-error").trigger("click");
+       
         console.log("  - got " + newData.data.length + " elements");
         _originalData = newData.data;
         _this.time    = newData.time;
@@ -1981,14 +1996,11 @@ MMTDrop.Database = function(param, dataProcessingFn, isAutoLoad) {
             if( status == "timeout")
                 msg = "Error: Connection timeout";
             else if( msg == "" || msg == undefined ){
-                msg = "Error: Cannot connect to server";
-                MMTDrop.alert.error( msg, 55000 );
-                return;
+                msg = 'Error: Cannot connect to server</span>';
             }else
                 msg = "Error: " + msg;
 
-            MMTDrop.alert.error( msg, 10000 );
-            //throw new Error( msg );
+            MMTDrop.alert.error( '<span id="alertify-db-error">' + msg + '</span>', 10000 );
         }
     } );
 
