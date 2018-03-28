@@ -14,7 +14,14 @@ const mysqlConnection = mysql.createConnection( mysqlConfig );
 const mysqlApi = {
    query: function( sqlString, cb ){
       console.log("mysql query: " + sqlString );
-      return mysqlConnection.query( sqlString, cb );
+      return mysqlConnection.query( sqlString, function( err, data, fields ){
+         cb = cb || function(){};
+         if( err ){
+            console.error( err );
+            return cb( "Cannot connect to mysql server" );
+         }
+         cb( null, data );
+      });
    }
 }
 

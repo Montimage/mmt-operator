@@ -100,8 +100,6 @@ reportReader.start();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(compress());
 app.use(express.static(path.join(__dirname, 'public'),{
     lastModified: true,
@@ -116,12 +114,10 @@ app.use('/proxy', require("./routes/proxy.js"))
 
 //log http req/res
 morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} )
-app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',
-               {
-                 stream: config.outStream
-               }
-              )
-       );
+app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',{
+   stream: config.outStream
+})
+);
 
 //limit size of file to upload
 app.use(bodyParser.json({limit: '200mb'}));
@@ -131,12 +127,20 @@ app.use(cookieParser());
 app.use(session({
     cookie: { maxAge: 4*60*60*1000 }, //4h
     secret: 'mmt2montimage',    //hash code to generate cookie
-    resave: true, saveUninitialized: true,
+    resave: true, 
+    saveUninitialized: true,
+    //save cookie to mongodb
     store : new MongoStore({
-        url       : dbadmin.connectString,
-        touchAfter: 60, //lazy session update, time period in seconds
-        collection: "_expressjs_session",
-        ttl       : 1 * 24 * 60 * 60 // = 1 days. Default
+        url         : dbadmin.connectString,
+        mongoOptions: {
+           autoReconnect: true,     // Reconnect on error.
+           reconnectTries:  3000, // Server attempt to reconnect #times
+           reconnectInterval: 5000, // Server will wait # milliseconds between retries.
+           bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connectio
+        },
+        touchAfter  : 60, //lazy session update, time period in seconds
+        collection  : "_expressjs_session",
+        ttl         : 12 * 60 * 60 // = 12 hours
     })
 }))
 

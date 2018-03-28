@@ -259,13 +259,32 @@ var ReportFactory = {
    ,
    
    createControlPlaneReportMME: function(){
+      //2 steps:
+      //- get list of MME IPs from data_gtp collection
+      //- select on data_sctp the documents having IPs as the same as the ones get from step1
+      
       const database = MMTDrop.databaseFactory.createStatDB( {
+         collection : "data_gtp",
+         action : "aggregate",
+         query : [{"$group": {"_id": "$" + COL.IP_DST.id, "ip": {"$first": "$" + COL.IP_DST.id}}}],
+         raw : true
+      });
+      
+      const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
          action : "aggregate",
          query : [],
          raw : true
       });
-      database.updateParameter = function( param ){
+      database.afterReload( function( data ){
+       //list of IPs
+         const ipList = [];
+         for( var i=0; i<data.length; i++ )
+            ipList.push( data[i].ip );
+         
+         const match = {};
+         match[ COL.IP_DST.id ] = {"$in": ipList};
+         
          //mongoDB aggregate
          const group = { _id : {} };
          [  COL.PROBE_ID.id, COL.IP_DST.id ].forEach( function( el, index){
@@ -278,11 +297,17 @@ var ReportFactory = {
             group[ el ] = {"$first" : "$"+ el};
          });
 
+         const param = {};
          param.period = status_db.time, 
          param.period_groupby = fPeriod.selectedOption().id, 
 
-         param.query = [{$group: group}];
-      };
+         param.query = [{$match: match},{$group: group}];
+         
+         databaseSCTP.reload( param, function(){
+            cTable.attachTo( databaseSCTP );
+            cTable.redraw();
+         });
+      });
       
       const detailDB = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
@@ -300,13 +325,13 @@ var ReportFactory = {
          match[ COL.IP_DST.id ] = detailDB.__ip;
          
          const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
+         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
          });
          [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
          });
-         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id ].forEach( function( el, index){
+         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id ].forEach( function( el, index){
             group[ el ] = {"$first" : "$"+ el};
          });
          
@@ -327,6 +352,12 @@ var ReportFactory = {
                { data: COL.MAC_DST.id,      title: "MME's MAC" },
                { data: COL.IP_SRC.id,       title: "eNodeB's IP" },
                { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
+               { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
+                  //remove unk proto
+                  if( path.endsWith(".0"))
+                     path = path.substr(0, path.length - 2 );
+                  return MMTDrop.constants.getPathFriendlyName( path );
+               }},
                { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
                { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
                ]
@@ -412,7 +443,7 @@ var ReportFactory = {
             });
             $widget.trigger("widget-resized", [$widget]);
          }
-      } );
+      });
 
       return new MMTDrop.Report(
          null,
@@ -423,19 +454,38 @@ var ReportFactory = {
                width : 12
             }, ],
 
-          [{ object : cTable }] 
+          [] 
       );
    },
    
    
    createControlPlaneReporteNodeB: function(){
+      //2 steps:
+      //- get list of eNodeB IPs from data_gtp collection
+      //- select on data_sctp the documents having IPs as the same as the ones get from step1
+      
       const database = MMTDrop.databaseFactory.createStatDB( {
+         collection : "data_gtp",
+         action : "aggregate",
+         query : [{"$group": {"_id": "$" + COL.IP_SRC.id, "ip": {"$first": "$" + COL.IP_SRC.id}}}],
+         raw : true
+      });
+      
+      const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
          action : "aggregate",
          query : [],
          raw : true
       });
-      database.updateParameter = function( param ){
+      database.afterReload( function( data ){
+         //list of IPs
+         const ipList = [];
+         for( var i=0; i<data.length; i++ )
+            ipList.push( data[i].ip );
+         
+         const match = {};
+         match[ COL.IP_SRC.id ] = {"$in": ipList};
+         
          //mongoDB aggregate
          const group = { _id : {} };
          [  COL.PROBE_ID.id, COL.IP_SRC.id ].forEach( function( el, index){
@@ -448,11 +498,17 @@ var ReportFactory = {
             group[ el ] = {"$first" : "$"+ el};
          });
 
+         const param = {};
          param.period = status_db.time, 
          param.period_groupby = fPeriod.selectedOption().id, 
 
-         param.query = [{$group: group}];
-      };
+         param.query = [{$match: match},{$group: group}];
+         
+         databaseSCTP.reload( param, function(){
+            cTable.attachTo( databaseSCTP );
+            cTable.redraw();
+         });
+      });
       
       const detailDB = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
@@ -469,13 +525,13 @@ var ReportFactory = {
          match[ COL.IP_SRC.id ] = detailDB.__ip;
          
          const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
+         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
          });
          [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
          });
-         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id ].forEach( function( el, index){
+         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
             group[ el ] = {"$first" : "$"+ el};
          });
          
@@ -496,6 +552,12 @@ var ReportFactory = {
                { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
                { data: COL.IP_DST.id,       title: "MME's MAC" },
                { data: COL.MAC_DST.id,      title: "MME's MAC" },
+               { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
+                  //remove unk proto
+                  if( path.endsWith(".0"))
+                     path = path.substr(0, path.length - 2 );
+                  return MMTDrop.constants.getPathFriendlyName( path );
+               }},
                { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
                { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
                ]
@@ -594,7 +656,7 @@ var ReportFactory = {
                width : 12
             }, ],
 
-          [{ object : cTable }] 
+         [] 
       );
    }
 }

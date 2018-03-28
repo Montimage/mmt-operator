@@ -242,12 +242,12 @@ module.exports = function(){
          ),
          sctp: new DataCache( inserter, "data_sctp",
             {
-         key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST],
+         key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, COL.APP_PATH],
          inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
             COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
             COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
             ],
-         set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_PATH, COL.APP_ID ]
+         set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_ID ]
             }
       ),
    };
@@ -479,11 +479,16 @@ module.exports = function(){
             //expand application path: 
             const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
+            //a flag to say whether do we need to add 
+            //an inverted message to sctp collection
+            var needToAddToSctp = false;
+            
             if( self.dataCache.sctp ){
                //Collection contains only info about SCTP proto for eNodeB
                for( var i=0; i<app_arr.length; i++ )
                   if( app_arr[i].app == 304 ){ //SCTP
                      self.dataCache.sctp.addMessage( msg );
+                     needToAddToSctp = true;
                      break;
                   }
             }
@@ -536,6 +541,9 @@ module.exports = function(){
                msg.isGen = true;
                msg = dataAdaptor.inverseStatDirection( msg );
 
+               if( needToAddToSctp )
+                  self.dataCache.sctp.addMessage( msg );
+               
                //change session_id of this clone message
                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 

@@ -13,8 +13,6 @@ mongodb.MongoClient.connect = function( dbName, callback ){
    this._connect( connectString, {
       
       autoReconnect: true,     // Reconnect on error.
-      
-      //TODO: to check as these 2 parameters do not work
       reconnectTries:  3000, // Server attempt to reconnect #times
       reconnectInterval: 5000, // Server will wait # milliseconds between retries.
       
