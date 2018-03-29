@@ -76,7 +76,7 @@ var ReportFactory = {
             [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                group[ el ] = {"$sum" : "$" + el};
             });
-            [ COL.PROBE_ID.id, GTP.IP_SRC.id, COL.IP_SRC.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, GTP.IP_SRC.id ].forEach( function( el, index){
                group[ el ] = {"$first" : "$"+ el};
             });
 
@@ -88,7 +88,7 @@ var ReportFactory = {
             param.period_groupby = fPeriod.selectedOption().id;
 
             const project = {};
-            [ COL.PROBE_ID.id, GTP.IP_SRC.id, GTP.IP_DST.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, GTP.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                project[ el ] = 1;
             });
             
@@ -279,7 +279,6 @@ var ReportFactory = {
                   return {
                      columns : [
                         {id: GTP.IP_SRC.id, label: "IP of UE"},
-                        {id: COL.IP_SRC.id, label: "eNodeB"},
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data Volume (B)"},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "Packet Count"}, 
                         {id: GTP.TEIDs.id, label:"TEID Count"},

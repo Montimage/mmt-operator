@@ -459,6 +459,7 @@ var ReportFactory = {
             $configForm.$content.find("#enodeb-type")
                .enable()
                .parent().parent().show();
+            $configForm.$content.find(".btn-detail").hide();
             
             $configForm.$title.html("Add a new Element");
             $configForm.modal();
