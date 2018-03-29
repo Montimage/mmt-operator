@@ -228,7 +228,9 @@ $(function () {
     if( URL_PARAM.period )
       fPeriod.selectedOption({id: URL_PARAM.period});
     fPeriod.onFilter( function( opt ){
-      MMTDrop.tools.reloadPage("period=" + opt.id );
+      //MMTDrop.tools.reloadPage("period=" + opt.id );
+       //enodeb: remove elem from URL
+      MMTDrop.tools.reloadPage("elem=null&&period=" + opt.id );
     });
 
 

@@ -1058,7 +1058,7 @@ var ReportFactory = {
                   case "ue":
                      //add its nodes
                      const ue = svg.getNodeByIP( "ue", elem.ue_ip, elem.from, elem ); 
-                     ue.label = elem.imsi + ": " + elem.ue_ip;
+                     ue.label = elem.imsi ;//+ ": " + elem.ue_ip;
                      ue.data = MMTDrop.tools.mergeObjects( ue.data, elem );
                      
                      const enodeb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from  );
@@ -1292,7 +1292,7 @@ var ReportFactory = {
          //load set of eNodeB IPs
          databaseeNodeB.afterReload( function( data ){
             if( data.length == 0 ){
-               console.error("Not found any eNodeB IP");
+               console.error("Not found any eNodeB IPs from traffic");
                return;
             }
             //list of IPs of eNodeB

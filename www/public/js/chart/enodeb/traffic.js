@@ -159,12 +159,95 @@ var ReportFactory = {
          })
 
          //when user click on an IP
-         window.showDetailUE = function( dom ){
-            const IP = $(dom).text();
-            console.log( IP );
+         window.showDetailUE = function( IP ){
             if( IP != "" ){
                detailDB.__ip = IP;
                detailDB.reload();
+            }
+            return false;
+         };
+         
+         ///
+         const teidDB = MMTDrop.databaseFactory.createStatDB( {
+            collection : "data_gtp",
+            action : "aggregate",
+            query : [],
+            raw : true
+         } );
+         
+         teidDB.updateParameter = function( param ){
+            //mongoDB aggregate
+            const group = { _id : {} };
+            [  COL.PROBE_ID.id, COL.TIMESTAMP.id, GTP.IP_SRC.id ].forEach( function( el, index){
+               group["_id"][ el ] = "$" + el;
+            });
+            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+               group[ el ] = {"$sum" : "$" + el};
+            });
+            [  COL.TIMESTAMP.id, GTP.IP_SRC.id, GTP.TEIDs.id ].forEach( function( el, index){
+               group[ el ] = {"$first" : "$"+ el};
+            });
+            
+            [ GTP.TEIDs.id ].forEach( function( el ){
+               group[ el ] = {$addToSet : "$" + el };
+            })
+            
+            param.period = status_db.time;
+            param.period_groupby = fPeriod.selectedOption().id;
+
+            const project = {};
+            [ COL.PROBE_ID.id, COL.TIMESTAMP.id, GTP.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+               project[ el ] = 1;
+            });
+            
+            project[GTP.TEIDs.id  ] = {
+               $reduce: {
+                 input: "$" + GTP.TEIDs.id,
+                 initialValue: [],
+                 in: { $setUnion: [ "$$value", "$$this" ] }
+               }
+             };
+            
+            param.query = [{$group: group}, {$project: project}];
+
+            param.period = status_db.time;
+            param.period_groupby = fPeriod.selectedOption().id;
+
+            //value of match will be filled by UE's IP when user click on one row
+            const match = {};
+            match[ GTP.IP_SRC.id ] = teidDB.__ip;
+            param.query = [{$match: match}, {$group: group}, {$project: project}];
+         }
+
+         teidDB.afterReload( function( data ){
+            const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
+            $detailDlg.$title.html("TEIDs of UE: " + teidDB.__ip );
+            $detailDlg.$content.html('<table id="detail-ue" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
+            //console.log($("#detail-ue").html());
+            $detailDlg.modal();
+
+            $('#detail-ue').DataTable( {
+               data: data,
+               columns: [
+                  { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
+                  { data: GTP.TEIDs.id,        title: "TEID Count", type: "num", className: "text-right",
+                     render: function( arr ){ return arr.length; }
+                  },
+                  { data: GTP.TEIDs.id,        title: "TEIDs", className: "text-right", 
+                     render: function( arr ){
+                        return arr.sort( function( a, b ){ return a - b; }).join(", ");
+                     }
+                  },
+                  { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
+                  { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
+                  ]
+            });
+         });
+         
+         window.showDetailTEID = function( IP ){
+            if( IP != "" ){
+               teidDB.__ip = IP;
+               teidDB.reload();
             }
             return false;
          };
@@ -177,20 +260,21 @@ var ReportFactory = {
                   for( var i=0; i<arr.length; i++ ){
                      var msg = arr[i];
 
+                     var teids = msg[ GTP.TEIDs.id ].sort( function( a, b ){
+                        return a-b;
+                     } ).join(", ");
+                     
+                     msg[ GTP.TEIDs.id ] = '<a title="'+ teids +'" onclick="showDetailTEID(\''+ msg[ GTP.IP_SRC.id ] +'\')" >' + msg[GTP.TEIDs.id].length + '</a>';
+                     
                      var fun = "createPopupReport('gtp'," //collection
                         + GTP.IP_SRC.id  //key 
                         +",'" + msg[ GTP.IP_SRC.id ] //id
                      +"','IP: " + msg[ GTP.IP_SRC.id ] //title 
                      + "' )";
-
+                     
                      msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
 
-                     msg[ GTP.IP_SRC.id ] = '<a title="Click to show detail of this IP" onclick="showDetailUE(this)">' + msg[ GTP.IP_SRC.id ] + '</a>';
-                     
-                     var teids = msg[ GTP.TEIDs.id ].sort( function( a, b ){
-                        return a-b;
-                     } ).join(", ")
-                     msg[ GTP.TEIDs.id ] = '<a title="'+ teids +'">' + msg[GTP.TEIDs.id].length + '</a>';
+                     msg[ GTP.IP_SRC.id ] = '<a title="Click to show detail of this IP" onclick="showDetailUE(\''+ msg[ GTP.IP_SRC.id ] +'\')">' + msg[ GTP.IP_SRC.id ] + '</a>';
                   }
                   return {
                      columns : [
