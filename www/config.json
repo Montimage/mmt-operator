@@ -1,6 +1,5 @@
 {
 	"database_server": {
-	   "_host": "37.48.247.124",
 		"host": "localhost",
 		"port": 27017
 	},
@@ -9,16 +8,14 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"_host": "37.48.247.124",
 		"host": "192.168.0.195",
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
 	"file_input": {
-		"_data_folder": "/tmp/",
 		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
-		"nb_readers": 16
+		"nb_readers": 1
 	},
 	"input_mode": "file",
 	"probe_analysis_mode": "online",
@@ -74,5 +71,16 @@
    "log" : ["error", "warn", "log"],
    
 	"_modules": ["link","network","dpi","application","security","behavior","ndn","video","sla","stat"],
-	"modules": ["unknown_traffic","behavior", "enodeb"]
+	"modules": ["link","network","dpi","security","enodeb"],
+	"modules_config" : {
+     "enodeb" : {
+        "mysql_server" : {
+           "host": "localhost",
+           "port": 3306,
+           "user": "root",
+           "password": "montimage",
+           "database": "eNodeB"
+        }
+     }
+   }
 }

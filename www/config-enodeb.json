@@ -20,7 +20,7 @@
 	"input_mode": "file",
 	"probe_analysis_mode": "offline",
 	"pcap_dump": {
-		"folder": "//Users/nhnghia/temps/share_vbox/pcap/",
+		"folder": "/tmp/",
 		"interval": 3600
 	},
 	"local_network": [
@@ -64,7 +64,7 @@
 	},
 	"retain_detail_report_period": 300,
 	"limit_database_size": 10000000,
-	"port_number": 8080,
+	"port_number": 80,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
 	"_log": [
