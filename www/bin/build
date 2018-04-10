@@ -196,7 +196,7 @@ function build(built_type) {
                 fs.writeFileSync( path.join( DEB_PATH, "DEBIAN", "control"),
                     "Package: mmt-operator" +
                     "\nVersion: " + VERSION.VERSION_NUMBER +
-                    "\nDepends: nodejs" +
+                    "\nDepends: nodejs (>= 8.9.1)" +
                     "\nSection: base" +
                     "\nPriority: standard" +
                     "\nArchitecture: all" +

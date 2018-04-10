@@ -4,7 +4,7 @@ var fs      = require('fs');
 var _os     = require("os");
 var exec    = require('child_process').exec;
 var path    = require('path');
-var config  = require('../../libs/config.js')
+var config  = require('../../libs/config.js');
 
 
 router.get("/list_pcap_dump", function( req, res, next ){
@@ -17,7 +17,7 @@ router.get("/list_pcap_dump", function( req, res, next ){
      return;
   }
   
-  fs.readdir(dump_folder, (err, files) => {
+  fs.readdir(dump_folder, function(err, files) {
      if( err ){
         res.send([]);
         console.error( err );
