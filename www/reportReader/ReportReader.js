@@ -35,7 +35,7 @@ function Reader(){
 		switch( config.input_mode ){
 		case constant.REDIS_STR:
 		case constant.KAFKA_STR:
-			var ret = child_proces( __dirname + "/busReader.js", [configLocation],
+			var ret = child_process( __dirname + "/busReader.js", [configLocation],
 			      {execArgv: execArgv}  ).start();
 
 			//console.log("started kafka client", ret);
@@ -61,11 +61,11 @@ function Reader(){
 		if( ! config.is_probe_analysis_mode_offline )
 		{
       		//this process removes older records from Database
-      		var ret = child_process.fork( __dirname + "/maintainDB.js", [configLocation]
+      		var ret = child_process( __dirname + "/maintainDB.js", [configLocation]
       		      , {execArgv: [
       		         //'--debug=5857'
       		         ]} 
-      		);
+      		).start();
       		
       		process._children.push( ret );
 		}
