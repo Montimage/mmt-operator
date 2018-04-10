@@ -66,7 +66,12 @@ function ProcessMessage( database ){
 	self.process = function( message ) {
 		//console.log( message );
 		//message = message.replace(/\(null\)/g, 'null');
-		var msg = mmtAdaptor.formatMessage( '[' + message + ']' );
+		var msg;
+		//report is a JSON array ???
+		if( message.charAt(0) == '[' )
+		   msg = mmtAdaptor.formatMessage( message );
+		else //report is a CSV line
+		   msg = mmtAdaptor.formatMessage( '[' + message + ']' );
 
 		if( msg === null )
 			return;
