@@ -1344,7 +1344,7 @@ var ReportFactory = {
             addElems( "/api/enodeb/find?raw", "enodeb", FROM_MONGO, function(){
                addElems( "/api/ue/find?raw", "ue", FROM_MONGO, function(){
                   //load elements from mysql
-                  addElems( '/api/mysql/query?query="select * from enb_data"', "enodeb", FROM_MYSQL, function(){
+                  addElems( '/api/mysql/query?query="select * from amf_enb_data"', "enodeb", FROM_MYSQL, function(){
                      addElems( '/api/mysql/query?query="select * from service_data"', "ue", FROM_MYSQL, function(){
                         loadTopoFromTraffic();
                      });
