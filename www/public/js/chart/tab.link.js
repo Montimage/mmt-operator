@@ -116,7 +116,7 @@ var ReportFactory = {
         database.afterReload( function( data ){
            //add ethernet to get total
         		const app_path_arr = ["99"];
-        		const app_id_arr   = ["99"];
+        		const app_id_arr   = [99];
         		
         		//get the top protocol paths having the highest data_volume
         		for( var i=0; i<data.length; i++ ){

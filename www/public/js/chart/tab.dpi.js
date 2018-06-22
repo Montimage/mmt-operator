@@ -204,7 +204,7 @@ var ReportFactory = {
                 
                 const app_id_arr = [];
                 for( var i=0; i<app_path_arr.length; i++ )
-                   app_id_arr.push( MMTDrop.constants.getAppIdFromPath( app_path_arr[i] ) + ""  );
+                   app_id_arr.push( MMTDrop.constants.getAppIdFromPath( app_path_arr[i] ) );
 
                 const $match0 = {isGen: false};
                 //as every "app_paths" has root element is "99" - ETH
