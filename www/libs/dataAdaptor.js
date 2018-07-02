@@ -388,18 +388,19 @@ else{
             break;
          case MMTDrop.CsvFormat.SECURITY_FORMAT:
             msg[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( msg[ MMTDrop.SecurityColumnId.HISTORY ] );
+            break;
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
-            if( msg[ mmtAdaptor.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" 
-               || msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] 
-               || msg[ mmtAdaptor.BehaviourBandwidthColumnId.IP ] === "undefined" ){
+            if( msg[ MMTDrop.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" 
+               || msg[ MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] 
+               || msg[ MMTDrop.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                return null;
             }
             break;
          case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
             //ip
-            if( msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
+            if( msg[ MMTDrop.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
                //|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
-               || msg[ mmtAdaptor.BehaviourProfileColumnId.IP ]      === "undefined" ){
+               || msg[ MMTDrop.BehaviourProfileColumnId.IP ]      === "undefined" ){
                return null;
                //console.log( mmtAdaptor.formatReportItem( msg ) );
             }
