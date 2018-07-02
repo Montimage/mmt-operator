@@ -391,7 +391,7 @@ else{
             break;
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
             if( msg[ MMTDrop.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" 
-               || msg[ MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ mmtAdaptor.BehaviourBandwidthColumnId.BW_AFTER ] 
+               || msg[ MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ MMTDrop.BehaviourBandwidthColumnId.BW_AFTER ] 
                || msg[ MMTDrop.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                return null;
             }
@@ -399,10 +399,10 @@ else{
          case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
             //ip
             if( msg[ MMTDrop.BehaviourProfileColumnId.VERDICT ] === "NO_CHANGE_CATEGORY"
-               //|| msg[ mmtAdaptor.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
+               //|| msg[ MMTDrop.BehaviourProfileColumnId.VERDICT ] === "NO_ACTIVITY_BEFORE"
                || msg[ MMTDrop.BehaviourProfileColumnId.IP ]      === "undefined" ){
                return null;
-               //console.log( mmtAdaptor.formatReportItem( msg ) );
+               //console.log( MMTDrop.formatReportItem( msg ) );
             }
             break;
          case MMTDrop.CsvFormat.LICENSE:
