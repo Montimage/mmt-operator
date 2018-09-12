@@ -1,7 +1,9 @@
 const express = require('express');
 const router  = express.Router();
-const config  = require("../libs/config.js")
-const enodeb  = require("./api/enodeb");
+const config  = require("../libs/config.js");
+
+if( config.modules.indexOf( "enodeb" ) != -1 )
+   var enodeb  = require("./api/enodeb");
 
 function proc_request(req, res, next) {
 

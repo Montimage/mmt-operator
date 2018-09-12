@@ -30,7 +30,9 @@ mongodb.MongoClient.connect = function( dbName, callback ){
                 minor : parseInt( arr[1] ),
                 build : parseInt( arr[2] ),
           }
-          if( version.major != 3 || version.minor != 6 ){
+          var versionNo = version.major*100 + version.minor*10 + version.build;
+          
+          if( versionNo < (3*100 + 6*10) ){
              console.error("Current MongoDB version is "+ info.version +". MMT-Operator needs MongoDB version 3.6.x");
              
              process.exit();

@@ -92,7 +92,7 @@ function process_file (file_name, cb) {
 				//remove csv file only when there are no errors
 				if( !hasError )
 					fs.unlink( file_name, function( e ){
-						if( err ) console.error( err );
+						if( e ) console.error( e );
 						cb( totalLines );
 					});
 				else{

@@ -107,7 +107,7 @@ function Cache ( option ) {
 		
 		_inserter.add( _collection_name, data, function( err, result){
 		   if( err )
-		      console.error( err );
+		      console.error( "Cannot insert " + data.length + " records to DB", err );
 		   //else
 		   //   console.info( "=> flushed " + result.insertedCount + "(" + data.length + ") records to [" + _collection_name + "]" );
 

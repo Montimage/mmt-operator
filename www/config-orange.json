@@ -1,4 +1,5 @@
 {
+   "profile": "orange-test",
 	"database_server": {
 		"_host": "37.48.247.124",
 		"host": "localhost",
@@ -18,7 +19,7 @@
 		"_data_folder": "/tmp/",
 		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
-		"nb_readers": 4
+		"nb_readers": 8
 	},
 	"input_mode": "file",
 	"probe_analysis_mode": "online",
@@ -220,44 +221,14 @@
 			"mask": "255.255.240.0"
 		}
 	],
-	"_local_network": [
-		{
-			"ip": "192.168.0.0",
-			"mask": "255.255.0.0"
-		},
-		{
-			"ip": "172.16.0.0",
-			"mask": "255.240.0.0"
-		},
-		{
-			"ip": "10.0.0.0",
-			"mask": "255.0.0.0"
-		},
-		{
-			"ip": "fe80::",
-			"mask": "8"
-		},
-		{
-			"ip": "0.0.0.0",
-			"mask": "255.255.255.255"
-		},
-		{
-			"ip": "255.255.255.255",
-			"mask": "255.255.255.255"
-		},
-		{
-			"ip": "127.0.0.1",
-			"mask": "255.255.255.255"
-		}
-	],
 	"probe_stats_period": 5,
 	"buffer": {
-		"max_length_size": 300000,
+		"max_length_size": 200000,
 		"max_interval": 5
 	},
 	"micro_flow": {
-		"packet": 1,
-		"byte": 64
+		"packet": 0,
+		"byte": 32
 	},
 	"retain_detail_report_period": 300,
 	"limit_database_size": 50000000000,
@@ -289,7 +260,6 @@
 	],
 	"modules": [
 		"link",
-		"network",
 		"dpi",
 		"unknown_flow",
 		"security",

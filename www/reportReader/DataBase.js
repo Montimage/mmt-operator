@@ -253,11 +253,14 @@ module.exports = function(){
    };
    
    //TODO: remove this block. This is used only for high bw
-   //delete self.dataCache.reports;
-   //delete self.dataCache.link;
-   delete self.dataCache.session;
-   delete self.dataCache.unknownFlows ;
-   delete self.dataCache.location ;
+   if( config.profile == "orange-test"){
+      delete self.dataCache.reports;
+      delete self.dataCache.link;
+      delete self.dataCache.session;
+      delete self.dataCache.unknownFlows ;
+      delete self.dataCache.location ;
+      delete self.dataCache.ip;
+   }
    
    function hasModule( module_name ){
       return config.modules.indexOf( module_name ) != -1
