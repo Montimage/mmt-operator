@@ -1,17 +1,21 @@
 const _global = require("./global");
-
+const path = require('path');
 const val = _global.get("config");
+
 if( val != undefined ){
    module.exports = val;
 }
 else{
 // allow to change config.json
-   var configPath = "config.json";
+   var configPath = "../config.json";
    process.argv.forEach(function (val, index, array) {
       //console.log(index + ': ' + val);
       var arr = val.split("=");
       if( arr[0] == "--config"){
-         configPath = arr[1];
+         if( path.isAbsolute( arr[1] ))
+            configPath = arr[1];
+         else
+            configPath = "../" + arr[1];
          
          //parent process
          if( process.send == undefined )
@@ -21,11 +25,10 @@ else{
    });
 
    const
-   config  = require( "../" + configPath ),
+   config  = require( configPath ),
    fs      = require("fs"),
    util    = require("util"),
    moment  = require('moment'),
-   path    = require('path'),
    tools   = require('./tools.js'),
    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH,
    constant= require('./constant.js')

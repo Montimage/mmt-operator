@@ -254,6 +254,7 @@ module.exports = function(){
    
    //TODO: remove this block. This is used only for high bw
    if( config.profile == "orange-test"){
+      console.warn("Use this option for high-bandwidth only");
       delete self.dataCache.reports;
       delete self.dataCache.link;
       delete self.dataCache.session;
@@ -281,6 +282,7 @@ module.exports = function(){
       delete self.dataCache.ip;
    if( !hasModule("network") && !hasModule("application"))
       delete self.dataCache.reports;
+   
    if( !hasModule("network") )
       delete self.dataCache.location;
    if( !hasModule("network") )
@@ -400,9 +402,9 @@ module.exports = function(){
                  msg[ COL.SESSION_ID ] = ts ;
                  //msg[ COL.APP_PATH   ] = "99";  //ethernet
                  //msg[ COL.APP_ID     ] = 99;  //ethernet
-                 msg[ COL.IP_SRC     ] = MICRO_FLOW_STR ;
+                 msg[ COL.IP_SRC    ] = MICRO_FLOW_STR ;
                  msg[ COL.IP_DST    ] = MICRO_FLOW_STR ;
-                 msg[ COL.MAC_SRC    ] = MICRO_FLOW_STR ;
+                 msg[ COL.MAC_SRC   ] = MICRO_FLOW_STR ;
                  msg[ COL.MAC_DST   ] = MICRO_FLOW_STR ;
             }else
                //as 2 threads may produce a same session_ID for 2 different sessions
@@ -410,7 +412,7 @@ module.exports = function(){
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
             
             //unknow flows
-            if( msg[ COL.APP_ID ] == 0 && self.dataCache.unknownFlows)
+            if( self.dataCache.unknownFlows && msg[ COL.APP_ID ] == 0)
                self.dataCache.unknownFlows.addMessage( msg );
             
             
@@ -447,29 +449,35 @@ module.exports = function(){
                      break;
                }
 
-               //traffic of local IP
-               //do not add report 99 to data_ip collection as it has no IP
-               msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
-               msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DST]  );
-               if( self.dataCache.ip )
-                  self.dataCache.ip.addMessage( msg );
+               //add data to a link between 2 IPs
+               //to easy distinguish 2 links, we identify a link by lower_IP_number + "-" + higher_IP_number
+               if( self.dataCache.link || self.dataCache.ip ){
+                  //traffic of local IP
+                  //do not add report 99 to data_ip collection as it has no IP
+                  msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
+                  msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DST]  );
+                  
+                  if( self.dataCache.ip )
+                     self.dataCache.ip.addMessage( msg );
 
-               /////////////////////////////////////////////////////////////
-               //symetric link between 2 IPs
-               if(  msg.ip <  msg.ip_dest ){
-                  msg.link = msg.ip + "," + msg.ip_dest;
-                  if( self.dataCache.link )
-                     self.dataCache.link.addMessage( msg );
-               }else{
-                  msg.link = msg.ip_dest + "," + msg.ip;
-                  msg = dataAdaptor.inverseStatDirection( msg );
-                  if( self.dataCache.link )
-                     self.dataCache.link.addMessage( msg );
-                  //revert
-                  msg = dataAdaptor.inverseStatDirection( msg );
+                  /////////////////////////////////////////////////////////////
+                  //symetric link between 2 IPs
+                  if(  msg.ip <  msg.ip_dest ){
+                     msg.link = msg.ip + "," + msg.ip_dest;
+                     if( self.dataCache.link )
+                        self.dataCache.link.addMessage( msg );
+                  }else{
+                     msg.link = msg.ip_dest + "," + msg.ip;
+                     msg = dataAdaptor.inverseStatDirection( msg );
+                     if( self.dataCache.link )
+                        self.dataCache.link.addMessage( msg );
+                     
+                     //revert to normal
+                     msg = dataAdaptor.inverseStatDirection( msg );
+                  }
+                  /////////////////////////////////////////////////////////////
                }
-               /////////////////////////////////////////////////////////////
-
+               
                //destination location
                if( self.dataCache.location )
                   self.dataCache.location.addMessage( msg );
@@ -555,7 +563,7 @@ module.exports = function(){
 
                //only if its partner is local
                //if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
-               if( format === 100 && self.dataCache.ip && msg[ COL.SRC_LOCATION ]  === "_local" ){
+               if(  self.dataCache.ip && format === 100 && msg[ COL.SRC_LOCATION ]  === "_local" ){
                   //do not add report 99 to data_ip collection as it has no IP
                   msg.ip  = msg.ip_dest;
                   self.dataCache.ip.addMessage( msg );

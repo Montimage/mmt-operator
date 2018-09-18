@@ -224,7 +224,7 @@
 	"probe_stats_period": 5,
 	"buffer": {
 		"max_length_size": 200000,
-		"max_interval": 5
+		"max_interval": 10
 	},
 	"micro_flow": {
 		"packet": 0,
@@ -233,7 +233,7 @@
 	"retain_detail_report_period": 300,
 	"limit_database_size": 50000000000,
 	"port_number": 80,
-	"log_folder": "/tmp/",
+	"log_folder": "/home/mmt/mmt/mmt-operator/",
 	"is_in_debug_mode": true,
 	"_log": [
 		"error",
