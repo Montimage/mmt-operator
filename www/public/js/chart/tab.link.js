@@ -1121,7 +1121,6 @@ var ReportFactory = {
                     for (var i in data) {
                         var msg   = data[i];
                         var proto = msg[COL.APP_ID.id];
-
                         var time  = msg[COL.TIMESTAMP.id];
                         var exist = true;
 
@@ -1134,22 +1133,18 @@ var ReportFactory = {
                         
                         for (var j in cols) {
                            var id  = cols[j].id;
-                           var val = ( msg[id] != undefined )? msg[id] : 0;
-
-                           //we use total (e.g., PAYLOAD, DATA_VOLUME, PACKET_COUNT) only for 99-report
-                           //==> for 100-reports:
-                           //     + put zero if probe is running
-                           if( cols[j].isNoIP === true && msg[0] == 100 ){
-                               if( ! exist ) 
-                                   obj[time][id] = 0;
-                               continue;
-                           }
-
-                           if (exist)
-                               obj[time][id] += val;
                            //first time
-                           else
-                               obj[time][id] = val;
+                           if( ! exist ) 
+                               obj[time][id] = 0;
+                           
+                           var val = ( msg[id] != undefined )? msg[id] : 0;
+                           
+                           //use 99 for noIP
+                           //100 for IP
+                           if( cols[j].isNoIP === true && msg[0] == 99 
+                        		   || cols[j].isNoIP !== true && msg[0] == 100 ){
+                        	   obj[time][id] += val;
+                           }
                        }
                     }
 
