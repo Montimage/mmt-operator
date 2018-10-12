@@ -9,6 +9,7 @@ const PROBE_ID        = dataAdaptor.StatsColumnId.PROBE_ID;
 const FORMAT_ID       = dataAdaptor.StatsColumnId.FORMAT_ID;
 const LongNumber      = require('mongodb').Long;
 const StringBuilder   = require("../libs/StringBuilder");
+const moment          = require('moment');
 
 /**
  * @param   {Object} option
