@@ -758,6 +758,9 @@ MMTDrop.constants = {
       * @param {string} path application protocol path (given by application IDs)
       */
     getPathFriendlyName : function(path, separator) {
+       if( path == undefined )
+          return "";
+       
        var id = path.split(".");
        var arr = [];
        for( var i=0; i<id.length; i++){

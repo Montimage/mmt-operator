@@ -80,7 +80,7 @@ var all_pages = {
      title: "System"
     },
     'unknown_traffic':{
-       title: "Unknown Flows"
+       title: "Unknown Traffic"
     },
     'unknown_flow':{
        title: "Unknown Flows"

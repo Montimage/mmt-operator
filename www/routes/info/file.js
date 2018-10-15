@@ -83,4 +83,52 @@ router.get("/get_pcap_dump/:fileName", function( req, res, next ){
    });
 });
 
+router.get("/extract_pcap_dump/:fileName/:localIP/:remoteIP", function( req, res, next ){
+   const fileName = req.params.fileName;
+   const localIP  = req.params.localIP;
+   const remoteIP = req.params.remoteIP;
+   
+   //not define
+   if( config.pcap_dump == undefined || config.pcap_dump.folder == undefined || fileName == undefined ){
+      res.writeHead(400, {"Content-Type": "text/plain"});
+      res.end("ERROR File does not exist");
+      return;
+   }
+   
+   
+   const filePath = path.join( config.pcap_dump.folder, fileName);
+    
+   //Check if file specified by the filePath exists 
+   fs.exists(filePath, function(exists){
+      if (exists) {     
+         //extract packets concerning localIP and remoteIP
+         // the output is on tmpFile
+         var tmpFile = "/tmp/__mmt_pcapdump.pcap";
+         var command = 'tcpdump -n --dont-verify-checksums -w '+ tmpFile +' -r "' + filePath + '" host '+ localIP +' and ' + remoteIP;
+         var tcpdump = exec( command );
+         tcpdump.on('exit', function (code ){
+            //normally the tmpFile must be exit, unless some problem was happening
+            fs.exists( tmpFile, function(exists){
+               if (exists) {     
+                  //we need to stream output file to res
+                  // Content-type is very interesting part that guarantee that
+                  // Web browser will handle response in an appropriate manner.
+                  res.writeHead(200, {
+                     "Content-Type"       : "application/octet-stream",
+                     "Content-Disposition": "attachment; filename=" + localIP + "-" + remoteIP + "-" + fileName
+                  });
+                  fs.createReadStream(tmpFile).pipe(res);
+               }else{
+                  res.writeHead(400, {"Content-Type": "text/plain"});
+                  res.end("ERROR File does not exist");
+               }
+            });
+         });
+      } else {
+         res.writeHead(400, {"Content-Type": "text/plain"});
+         res.end("ERROR File does not exist");
+      }
+   });
+});
+
 module.exports = router

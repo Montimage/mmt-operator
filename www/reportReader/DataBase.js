@@ -188,15 +188,14 @@ module.exports = function(){
          ),
          
          unknownFlows : new DataCache( inserter, "data_unknown_flows",{
-            key : [COL.SESSION_ID],
+            key : [COL.IP_SRC, COL.IP_DST, COL.THREAD_NUMBER],
             inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                ],
-            set  : [COL.IP_SRC, COL.IP_DST, COL.PORT_SRC, COL.PORT_DST,
-               COL.APP_PATH, COL.FORMAT_ID, COL.PROBE_ID,
-               COL.APP_ID, COL.MAC_SRC, COL.MAC_DST,
-               COL.THREAD_NUMBER],
+            set  : [
+               COL.PROBE_ID, COL.MAC_SRC, COL.MAC_DST
+               ],
             init: [COL.START_TIME]
             },
             CONST.period.REAL
@@ -252,23 +251,12 @@ module.exports = function(){
       ),
    };
    
-   //TODO: remove this block. This is used only for high bw
-   if( config.profile == "orange-test"){
-      console.warn("Use this option for high-bandwidth only");
-      delete self.dataCache.reports;
-      delete self.dataCache.link;
-      delete self.dataCache.session;
-      delete self.dataCache.unknownFlows ;
-      delete self.dataCache.location ;
-      delete self.dataCache.ip;
-   }
-   
    function hasModule( module_name ){
       return config.modules.indexOf( module_name ) != -1
    }
    
    //eliminate some caches if we do not need them
-   if( !hasModule("unknown_traffic") && !hasModule("unknown_flow")  )
+   if( !hasModule("unknown_traffic")   )
       delete self.dataCache.unknownFlows ;
    if( !hasModule("link"))
       delete self.dataCache.protocol;
@@ -392,6 +380,11 @@ module.exports = function(){
             if( self.dataCache.reports )
                self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
 
+
+            //unknown flows
+            if( self.dataCache.unknownFlows && msg[ COL.APP_ID ] == 0)
+               self.dataCache.unknownFlows.addMessage( msg );
+            
             //this is original message comming from mmt-probe
             msg.isGen = false;
 
@@ -411,9 +404,6 @@ module.exports = function(){
                //this ensures that session_id is uniqueelse
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
             
-            //unknow flows
-            if( self.dataCache.unknownFlows && msg[ COL.APP_ID ] == 0)
-               self.dataCache.unknownFlows.addMessage( msg );
             
             
             //session

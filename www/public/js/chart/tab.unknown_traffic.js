@@ -1,7 +1,7 @@
 var arr = [
    {
       id: "unknown_traffic",
-      title: "Unknown Flow Statistic",
+      title: "Unknown Statistic",
       x: 0,
       y: 0,
       width: 12,
@@ -32,7 +32,12 @@ ReportFactory.createReport = function () {
    //match[ COL.APP_ID.id ] = 0; //unknown app
    
    const group = { _id : {} };
-   group["_id"] = "$" + COL.SESSION_ID.id; //groupby protocol path
+   [COL.APP_PATH.id, 
+      COL.IP_SRC.id, COL.IP_DST.id
+   ].forEach( function( el ){
+      group["_id"][ el ] = "$" + el; 
+   });
+   
    //total
    [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el ){
       group[ el ] = {"$sum": "$" + el};
@@ -41,12 +46,15 @@ ReportFactory.createReport = function () {
    //first
    [COL.APP_PATH.id, COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.MAC_DST.id,
       COL.IP_SRC.id, COL.IP_DST.id,
-      COL.PORT_SRC.id, COL.PORT_DST.id,
       COL.THREAD_NUMBER.id,
       COL.START_TIME.id //start time
    ].forEach( function( el ){
       group[ el ] = {"$first":  "$" + el}; 
    });
+   
+   //got all thread_id
+   group[ COL.THREAD_NUMBER.id ] = {"$addToSet": "$" + COL.THREAD_NUMBER.id };
+   
    group[ "end-time" ]   = {"$last":  "$" + COL.TIMESTAMP.id}; //end time
    
    const sort = {};
@@ -69,29 +77,22 @@ ReportFactory.createReport = function () {
          label: "Duration (s)",
          align: "right"
       },
+//      {
+//         id: COL.APP_PATH.id,
+//         label: "Protocol path"
+//      },
       {
-         id: COL.APP_PATH.id,
-         label: "Protocol path"
-      },{
          id: COL.MAC_SRC.id,
-         label: "MAC src."
+         label: "local MAC"
       },{
          id: COL.MAC_DST.id,
-         label: "MAC dst."
+         label: "remote MAC"
       },{
          id: COL.IP_SRC.id,
-         label: "IP src."
+         label: "local IP"
       },{
          id: COL.IP_DST.id,
-         label: "IP dst."
-      },{
-         id: COL.PORT_SRC.id,
-         label: "Port src.",
-         align: "right"
-      },{
-         id: COL.PORT_DST.id,
-         label: "Port dst.",
-         align: "right"
+         label: "remote IP"
       },
       {
          id: COL.PACKET_COUNT.id,
@@ -103,8 +104,12 @@ ReportFactory.createReport = function () {
          label: "Data (B)",
          align: "right"
       },{
+         id: "packetSize",
+         label: "Avg. Pkt Size (B)",
+         align: "right"
+      },{
          id: "percentData",
-         label: "Data (%)",
+         label: "% Total Data",
          align: "right"
       },
       {
@@ -197,37 +202,53 @@ ReportFactory.createReport = function () {
             
             for( var i=0; i<arr.length; i++ ){
                var msg = arr[i];
+               var match = {};
+               match[ COL.IP_SRC.id ] = msg[ COL.IP_SRC.id ];
+               match[ COL.IP_DST.id ] = msg[ COL.IP_DST.id ];
+               match = JSON.stringify( match );
+               
                //friendly values to show
                msg[ "percentData" ]      = MMTDrop.tools.formatPercentage( msg[ COL.DATA_VOLUME.id ] / STAT.dataVolume );
                var duration = msg[ "end-time" ] - msg[ COL.TIMESTAMP.id ];
                //we donn't know exactly duration of one flow as we do sample for each x seconds (5s for example)
                //so if a flow starts then ends inside the sample period, i.e., the duration is zero, 
                //then we say its duration is x seconds ????
-//               if( duration == 0 )
-//                  msg[ "duration"  ] = "0s";// MMTDrop.config.probe_stats_period + 's';
-//               else
-               duration /= 1000; //milisecond => second
+               if( duration == 0 )
+                  msg[ "duration"  ] = MMTDrop.config.probe_stats_period;
+               else
+                  duration /= 1000; //milisecond => second
+               
                msg[ "duration" ] = '<span title="' + MMTDrop.tools.formatInterval( duration, true ) + '">'+ duration +'</span>';
-               msg["pcap_file"]          = '<span class="data-pcap-files" data-thread-id="' + msg[COL.THREAD_NUMBER.id] 
-                  + '" data-timestamp="'+ msg[ COL.TIMESTAMP.id ] +'"><i class = "fa fa-spinner fa-pulse fa-fw"/></span>';
+               msg["pcap_file"]          = '<span class="data-pcap-files" data-thread-id="' + JSON.stringify( msg[COL.THREAD_NUMBER.id] ) + '"'
+                  + ' data-timestamp="'+ msg[ COL.TIMESTAMP.id ] + '"'
+                  + ' data-localip="'  + msg[ COL.IP_SRC.id ] +'"'
+                  + ' data-remoteip="' + msg[ COL.IP_DST.id ] +'"'
+                  + '><i class = "fa fa-spinner fa-pulse fa-fw"/></span>';
                
                msg[ COL.TIMESTAMP.id ]   = MMTDrop.tools.formatDateTime( msg[ COL.TIMESTAMP.id ] );
                
-               msg[ COL.APP_PATH.id ]    = MMTDrop.constants.getPathFriendlyName( msg[ COL.APP_PATH.id ], '.' );
+               if( msg[ COL.PACKET_COUNT.id] == 0 )
+                  msg["packetSize"] = 0;
+               else
+                  msg["packetSize"] = Math.round( msg[ COL.DATA_VOLUME.id] / msg[ COL.PACKET_COUNT.id] );
+               
                msg[ COL.DATA_VOLUME.id]  = MMTDrop.tools.formatLocaleNumber( msg[ COL.DATA_VOLUME.id ] );
                msg[ COL.PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.PACKET_COUNT.id ] );
                
                
+               
                var fun = "createPopupReport('unknown_flows_real'," //collection
-                  + COL.SESSION_ID.id  //key 
-                  +",'" + msg[ "_id" ] //id
-                  +"', 'flow " + msg[ COL.IP_SRC.id ] + ":" + msg[ COL.PORT_SRC.id ] + " &#x21cb; " + msg[ COL.IP_DST.id ] + ":" + msg[ COL.PORT_DST.id ] //title 
+                  //+ COL.SESSION_ID.id  //key
+        	      //+",'" + msg[ "_id" ] //id
+            	  + "'match'"
+            	   + ", this.getAttribute('match')"
+                  +", 'unknown flows " + msg[ COL.IP_SRC.id ]  + " &#x21cb; " + msg[ COL.IP_DST.id ]  //title 
                   //+"', " + fProbe.selectedOption().id //probe_id
                   +"', undefined"
                   + ", true" //no_group
                   //+ ", true" //no_override_when_reload
                   + " )";
-               msg["detail"]      = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
+               msg["detail"] = '<a title="Click to show graph" onclick="'+ fun +'" match=\''+ match +'\'><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
             }
             
             return {
@@ -310,20 +331,25 @@ ReportFactory.createReport = function () {
          $el.html("");
 
          const timestamp = parseInt( $el.data("timestamp") ) / 1000; //mili => second
-         const threadId  = $el.data("thread-id");
+         const threadIds = $el.data("thread-id");
+         if( ! Array.isArray( threadIds ))
+            return;
+         
          //
          //for each pcap file
          for( var i=0; i<PCAP_LIST.length; i++ ){
             var file = PCAP_LIST[i];
             //must be in the same thread
-            if( threadId != file.thread )
+            if( threadIds.indexOf( file.thread ) == -1 )
                continue;
             //must be in the same period
             if( timestamp >= file.start && timestamp < file.end ){
                $el.append($(" <a>", {
-                  "title": "Download " + file.file,
+                  "title": "Download packets of thread " + file.thread 
+                           + "\n from " + MMTDrop.tools.formatDateTime( file.start * 1000 )
+                           + "\n to "   + MMTDrop.tools.formatDateTime( file.end * 1000 ),
                   "class": "pcapFile",
-                  "href" : "/info/file/get_pcap_dump/" + file.file,
+                  "href" : "/info/file/extract_pcap_dump/" + file.file + "/" +  $el.data("localip") + "/" +  $el.data("remoteip") ,
                   "html" : '<i class="fa fa-file" aria-hidden="true">'
                }));
             }

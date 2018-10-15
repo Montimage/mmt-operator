@@ -16,10 +16,10 @@ IP=localhost
 #USER=montimage
 #IP=192.168.0.194
 
-#TARGET=/home/mmt/mmt/mmt-operator
-#USER=mmt
-#PORT=22
-#IP=192.168.0.35
+TARGET=/home/mmt/mmt/mmt-operator
+USER=mmt
+PORT=22
+IP=192.168.0.35
 
 #TARGET=/home/mmt/mmt-operator
 #USER=mmt
