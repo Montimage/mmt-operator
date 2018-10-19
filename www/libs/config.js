@@ -7,7 +7,7 @@ if( val != undefined ){
 }
 else{
 // allow to change config.json
-   var configPath = "../config.json";
+   var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
    process.argv.forEach(function (val, index, array) {
       //console.log(index + ': ' + val);
       var arr = val.split("=");
@@ -15,7 +15,7 @@ else{
          if( path.isAbsolute( arr[1] ))
             configPath = arr[1];
          else
-            configPath = "../" + arr[1];
+            configPath = path.resolve( arr[1] );
          
          //parent process
          if( process.send == undefined )
