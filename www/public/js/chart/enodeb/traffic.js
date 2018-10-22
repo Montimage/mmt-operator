@@ -152,8 +152,8 @@ var ReportFactory = {
                         return arr.sort( function( a, b ){ return a - b; }).join(", ");
                      }
                   },
-                  { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
-                  { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
+                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
+                  { data: COL.PACKET_COUNT.id, title: "#Packets",   type: "num", className: "text-right" },
                   ]
             });
          })
@@ -230,16 +230,16 @@ var ReportFactory = {
                data: data,
                columns: [
                   { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: GTP.TEIDs.id,        title: "TEID Count", type: "num", className: "text-right",
+                  { data: GTP.TEIDs.id,        title: "#TEIDs", type: "num", className: "text-right",
                      render: function( arr ){ return arr.length; }
                   },
                   { data: GTP.TEIDs.id,        title: "TEIDs", className: "text-right", 
                      render: function( arr ){
-                        return arr.sort( function( a, b ){ return a - b; }).join(", ");
+                        return arr.sort( function( a, b ){ return a - b; }).join("; ");
                      }
                   },
-                  { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
-                  { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
+                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
+                  { data: COL.PACKET_COUNT.id, title: "#Packets",   type: "num", className: "text-right" },
                   ]
             });
          });
@@ -279,9 +279,9 @@ var ReportFactory = {
                   return {
                      columns : [
                         {id: GTP.IP_SRC.id, label: "IP of UE"},
-                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data Volume (B)"},
-                        {id: COL.PACKET_COUNT.id, align: "right", label: "Packet Count"}, 
-                        {id: GTP.TEIDs.id, label:"TEID Count"},
+                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data(B)"},
+                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
+                        {id: GTP.TEIDs.id, label:"#TEIDs"},
                         {id: "graph"}
                         ],
                         data : arr
@@ -457,8 +457,8 @@ var ReportFactory = {
                      path = path.substr(0, path.length - 2 );
                   return MMTDrop.constants.getPathFriendlyName( path );
                }},
-               { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
-               { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
+               { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num",  className: "text-right" },
+               { data: COL.PACKET_COUNT.id, title: "#Packets",  type: "num", className: "text-right" },
                ]
          });
          //console.log( data );
@@ -497,8 +497,8 @@ var ReportFactory = {
                   columns : [
                      {id: COL.IP_DST.id, label: "IP of MME"},
                      {id: COL.MAC_DST.id, label: "MAC of MME"},
-                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data Volume (B)"},
-                     {id: COL.PACKET_COUNT.id, align: "right", label: "Packet Count"}, 
+                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
+                     {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
                      {id: "graph"}
                      ],
                      data : arr
@@ -657,8 +657,8 @@ var ReportFactory = {
                      path = path.substr(0, path.length - 2 );
                   return MMTDrop.constants.getPathFriendlyName( path );
                }},
-               { data: COL.DATA_VOLUME.id,  title: "Data Volume (B)", type: "num", className: "text-right" },
-               { data: COL.PACKET_COUNT.id, title: "Packets Count",   type: "num", className: "text-right" },
+               { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
+               { data: COL.PACKET_COUNT.id, title: "#Packets", type: "num", className: "text-right" },
                ]
          });
          //console.log( data );
@@ -697,8 +697,8 @@ var ReportFactory = {
                   columns : [
                      {id: COL.IP_SRC.id, label: "IP of eNodeB"},
                      {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
-                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data Volume (B)"},
-                     {id: COL.PACKET_COUNT.id, align: "right", label: "Packet Count"}, 
+                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
+                     {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
                      {id: "graph"}
                      ],
                      data : arr

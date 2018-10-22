@@ -18,7 +18,7 @@
 		"nb_readers": 1
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "oline",
 	"pcap_dump": {
       "folder": "/opt/mmt/probe/pcap/",
       "interval": 3600

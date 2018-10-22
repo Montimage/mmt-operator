@@ -1,28 +1,15 @@
 {
 	"database_server": {
-		"host": "10.0.1.20",
+		"host": "localhost",
 		"port": 27017
 	},
-	"redis_input": {
-		"host": "localhost",
-		"port": 6379
-	},
-	"kafka_input": {
-		"host": "10.0.1.20",
-		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert"
-	},
 	"file_input": {
-		"data_folder": "/Users/nhnghia/temps/share_vbox/csv/",
+		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
 		"nb_readers": 1
 	},
 	"input_mode": "file",
 	"probe_analysis_mode": "offline",
-	"pcap_dump": {
-		"folder": "/tmp/",
-		"interval": 3600
-	},
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -64,15 +51,9 @@
 	},
 	"retain_detail_report_period": 300,
 	"limit_database_size": 10000000,
-	"port_number": 80,
+	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
-	"_log": [
-		"error",
-		"warn",
-		"log",
-		"info"
-	],
 	"log": [
 		"error",
 		"warn",
@@ -83,20 +64,18 @@
 		"link",
 		"network",
 		"dpi",
-		"application",
 		"security",
-		"behavior",
-		"unknown_traffic",
 		"enodeb"
 	],
 	"modules_config" : {
 	  "enodeb" : {
 	     "mysql_server" : {
-   	     "host": "10.0.1.20",
+   	     "host": "localhost",
    	     "port": 3306,
    	     "user": "root",
    	     "password": "montimage",
-   	     "database": "eNodeB"
+   	     "database": "hss_lte_db",
+   	     "enodeb-table-name": "amf_enb_data"
 	     }
 	  }
 	}

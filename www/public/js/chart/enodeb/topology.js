@@ -44,7 +44,13 @@ if( param.profile ){
 const FROM_MONGO   = "mongo";
 const FROM_MYSQL   = "mysql";
 const FROM_TRAFFIC = "traffic";
-const FROM_SCTP = "sctp";
+const FROM_SCTP    = "sctp";
+
+//const TYPE_ENODEB   = "enodeb";
+//const TYPE_UE       = "ue";
+//const TYPE_MME      = "mme";
+//const TYPE_GATEWAY  = "gw";
+
 
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
@@ -67,7 +73,7 @@ var ReportFactory = {
                   ipField = "ip";
                   break;
                case "mme":
-                  ipField = "ip";
+                  ipField = "s1_adr"; //this must be the same as in amf_settings table of mysql db
                   break;
             }
             return ipField;
@@ -1010,6 +1016,19 @@ var ReportFactory = {
                return { type: type, name: name + "-" + type, label: name, data: data};
             }
             
+            //search a node having: node[ fieldID ] = fieldData
+            // return node if found
+            //        null otherwise
+            svg.getNodeByField = function( type, fieldID, fieldData ){
+               for( var name in nodes_obj ){
+                  var node = nodes_obj[name];
+                  if( node.type == type && node.data && node.data[ fieldID ] == fieldData ){
+                     return node;
+                  }
+               }
+               return null;
+            };
+            
             svg.getNodeByIP = function( type, ip, from, data ){
                const ipField = findIpField( type );
                
@@ -1029,15 +1048,14 @@ var ReportFactory = {
                return svg.createNewNode( type, ip, from, data )
             };
             
-            svg.getNodeByName = function( type, name, from, data ){
+            svg.getNodeByName = function( type, name, from ){
                const key = name + "-" + type;
                if( nodes_obj[ key ] != undefined ){
                   nodes_obj[key].isHiddens[ from ] = false;
                   return nodes_obj[key]; 
                }
-               
-               return svg.createNewNode( type, name, from, data )
-            }
+               return null;
+            };
             
          
             /**
@@ -1045,37 +1063,62 @@ var ReportFactory = {
              */
             svg.addElement = function( type, elem, needToUpdate ){
                switch( type ){
-                  case "enodeb":
-                     const enb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from, elem );
+               case "mme":
+                  var node = svg.getNodeByName( "mme", elem.name, elem.from );
+                  if( node == null ){
+                     node = svg.createNewNode( "mme", elem.name, elem.from, elem );
+                  }
+                  else{
                      //enb.label = elem.enb_name + ": " + elem.enb_ip;
-                     enb.data = MMTDrop.tools.mergeObjects( enb.data, elem );
-                           
-                     const mme1 = svg.getNodeByName( "mme",  elem.mmec + "-" + elem.mmegi, elem.from );
-                     svg.addNodes( [ enb, mme1 ], false);
-                     svg.addLinks([
-                        {source: enb.name, target: mme1.name, label: "" }
+                     node.data = MMTDrop.tools.mergeObjects( node.data, elem );
+                  }
+                  svg.addNodes( [ node ], needToUpdate);
+                  break;
+               case "enodeb":
+                  var enb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from );
+                  
+                  if( enb == null ){
+                     if( elem.enb_name ){  //first time
+                        enb = svg.createNewNode( "enodeb", elem.enb_name, elem.from, elem )
+                     }else{
+                        MMTDrop.alert.error("No enb_name of " + JSON.stringify( elem ));
+                     }
+                  }
+                  
+//                  if( elem.enb_ip )
+//                     enb.label = elem.enb_name + ": " + elem.enb_ip;
+                  
+                  enb.data = MMTDrop.tools.mergeObjects( enb.data, elem );
+
+                  var mme1 = svg.getNodeByName( "mme",  elem.amf_name, elem.from );
+                  svg.addNodes( [ enb, mme1 ], false);
+
+                  svg.addLinks([
+                     {source: enb.name, target: mme1.name, label: "" }
                      ], needToUpdate)
-                     break;
-                  case "ue":
-                     //add its nodes
-                     const ue = svg.getNodeByIP( "ue", elem.ue_ip, elem.from, elem ); 
-                     ue.label = elem.imsi ;//+ ": " + elem.ue_ip;
-                     ue.data = MMTDrop.tools.mergeObjects( ue.data, elem );
-                     
-                     const enodeb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from  );
-                     //{ type: "enodeb", name: elem.enb_name, label: elem.enb_name, data: {from: elem.from} };
-                     const mme2    = svg.getNodeByName( "mme", elem.mmec + "-" + elem.mmegi, elem.from, {mmec: elem.mmec, mmegi: elem.mmegi} ); 
-                     
-                     svg.addNodes([ enodeb, mme2, ue ], 
+
+                  break;
+               case "ue":
+                  //add its nodes
+                  var ue = svg.getNodeByIP( "ue", elem.ue_ip, elem.from, elem );
+                  ue.label = elem.imsi;// + ": " + elem.ue_ip;
+                  ue.data = MMTDrop.tools.mergeObjects( ue.data, elem );
+
+                  var enodeb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from  );
+                  //{ type: "enodeb", name: elem.enb_name, label: elem.enb_name, data: {from: elem.from} };
+                  //var mme2   = svg.getNodeByName( "mme", elem.mmec + "-" + elem.mmegi, elem.from, {mmec: elem.mmec, mmegi: elem.mmegi} ); 
+
+                  svg.addNodes([ enodeb,  ue ], 
                         false //do not redraw immediatelly
-                     );
-                     svg.addLinks([
-                        //UE --> eNodeB
-                        {source: ue.name, target: enodeb.name, label: ""},
-                        //eNodeB --> MMC
-                        {source: enodeb.name, target: mme2.name, label: "" }
-                        ], needToUpdate);
-                     break;
+                  );
+                  
+                  svg.addLinks([
+                     //UE --> eNodeB
+                     {source: ue.name, target: enodeb.name, label: ""},
+                     //eNodeB --> MMC
+//                     {source: enodeb.name, target: mme2.name, label: "" }
+                     ], needToUpdate);
+                  break;
                }
             }
 
@@ -1100,7 +1143,17 @@ var ReportFactory = {
                $modal.$content.find("form").trigger("reset");
                
                for( var i in data ){
-                  $(".enodeb-" + i).val( data[i] );
+                  var val = data[i];
+                  if( typeof( val ) == "object" ){
+                     if( val && val.type == "Buffer" && val.data )
+                        val = val.data.join("");
+                  }
+                  
+                  var controlType = $(".enodeb-" + i).attr('type');
+                  if( controlType == "checkbox" )
+                     $(".enodeb-" + i).prop("checked", val );
+                  else
+                     $(".enodeb-" + i).val( val );
                }
                
                
@@ -1153,7 +1206,8 @@ var ReportFactory = {
             svg.addSctpLink = function( ipSrc, ipDst, needToUpdate ){
                //enodeb
                const enodeb = svg.getNodeByIP( "enodeb", ipSrc, FROM_SCTP );
-               const mme    = svg.getNodeByIP( "mme", ipDst, FROM_SCTP );
+               const mme    = svg.getNodeByIP( "mme",    ipDst, FROM_SCTP );
+               
                svg.addNodes( [ enodeb, mme ], false );
                
                svg.addLinks( [
@@ -1344,9 +1398,11 @@ var ReportFactory = {
             addElems( "/api/enodeb/find?raw", "enodeb", FROM_MONGO, function(){
                addElems( "/api/ue/find?raw", "ue", FROM_MONGO, function(){
                   //load elements from mysql
-                  addElems( '/api/mysql/query?query="select * from amf_enb_data"', "enodeb", FROM_MYSQL, function(){
-                     addElems( '/api/mysql/query?query="select * from service_data"', "ue", FROM_MYSQL, function(){
-                        loadTopoFromTraffic();
+                  addElems( '/api/mysql/query?query="select * from amf_settings"', "mme", FROM_MYSQL, function(){
+                     addElems( '/api/mysql/query?query="select * from amf_enb_data"', "enodeb", FROM_MYSQL, function(){
+                        addElems( '/api/mysql/query?query="select * from service_data"', "ue", FROM_MYSQL, function(){
+                           loadTopoFromTraffic();
+                        });
                      });
                   });
                });
