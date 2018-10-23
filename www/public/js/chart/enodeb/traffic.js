@@ -67,6 +67,7 @@ var ReportFactory = {
             query : [],
             raw : true
          });
+         
          database.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
@@ -149,7 +150,8 @@ var ReportFactory = {
                   { data: GTP.IP_DST.id,       title: "Destination" },
                   { data: GTP.TEIDs.id,        title: "TEIDs",           type: "num", className: "text-right", 
                      render: function( arr ){
-                        return arr.sort( function( a, b ){ return a - b; }).join(", ");
+                        arr = arr.sort( function( a, b ){ return a - b; });
+                        return arr.join("; ");
                      }
                   },
                   { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
@@ -167,7 +169,7 @@ var ReportFactory = {
             return false;
          };
          
-         ///
+         ///when user click on TEIDs to see detail of TEID
          const teidDB = MMTDrop.databaseFactory.createStatDB( {
             collection : "data_gtp",
             action : "aggregate",
@@ -262,7 +264,7 @@ var ReportFactory = {
 
                      var teids = msg[ GTP.TEIDs.id ].sort( function( a, b ){
                         return a-b;
-                     } ).join(", ");
+                     } ).join("; ");
                      
                      msg[ GTP.TEIDs.id ] = '<a title="'+ teids +'" onclick="showDetailTEID(\''+ msg[ GTP.IP_SRC.id ] +'\')" >' + msg[GTP.TEIDs.id].length + '</a>';
                      
@@ -368,6 +370,15 @@ var ReportFactory = {
          query : [{"$group": {"_id": "$" + COL.IP_DST.id, "ip": {"$first": "$" + COL.IP_DST.id}}}],
          raw : true
       });
+      //get IP of MME from mysql DB
+//      const database = MMTDrop.databaseFactory.createStatDB( {
+//         collection : "mysql",
+//         action     : "query",
+//         query      : ["select s1_adr as ip from amf_settings"],
+//         raw        : true,
+//         no_group   : true, 
+//         no_override_when_reload: true,
+//      });
       
       const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
@@ -375,6 +386,7 @@ var ReportFactory = {
          query : [],
          raw : true
       });
+      
       database.afterReload( function( data ){
        //list of IPs
          const ipList = [];
@@ -576,6 +588,7 @@ var ReportFactory = {
          query : [],
          raw : true
       });
+      
       database.afterReload( function( data ){
          //list of IPs
          const ipList = [];

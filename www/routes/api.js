@@ -98,6 +98,9 @@ function proc_request(req, res, next) {
          if( typeof( enodeb[ action ] ) != "function" )
             return sendResponse("Does not support action " + action );
          
+         if( Array.isArray( query ) )
+            query = query[0];
+         
          enodeb[ action ]( query, function( error, results, fields ){
             sendResponse( error, results );
          })

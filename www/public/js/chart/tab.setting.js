@@ -554,8 +554,9 @@ var ReportFactory = {
         attr: {
           class  : "btn btn-warning pull-right",
           text   : 'Add new Probe',
-          href   : "setting/add_probe"
-          //disabled: true
+          href   : "setting/add_probe",
+          style  : "color:white",
+          disabled: true
         }
       }//end buttons
       ]
@@ -818,7 +819,8 @@ var ReportFactory = {
               type : "submit",
               class: "btn btn-primary",
               value: 'Save',
-              id   : "conf-btnSave"
+              id   : "conf-operator-btnSave",
+              disabled: true
             }
           }]
         }]
@@ -847,7 +849,8 @@ var ReportFactory = {
               type : "submit",
               class: "btn btn-primary",
               value: 'Save',
-              id   : "conf-btnSave"
+              id   : "conf-network-btnSave",
+              disabled: true
             }
           }]
         }]

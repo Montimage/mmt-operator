@@ -327,11 +327,17 @@ else{
       
       //change TEID to an array of 2 elements: TEID_1 and TEID_2
       if( isGTP ){
-         msg[ MMTDrop.GtpStatsColumnId.TEIDs ] = [ msg[ MMTDrop.GtpStatsColumnId.TEIDs ], 
-            new_msg[ _end + 1 - _new ] ];
+         var arr = [];
+         if( msg[ MMTDrop.GtpStatsColumnId.TEIDs ] != 0 )
+            arr.push( msg[ MMTDrop.GtpStatsColumnId.TEIDs ] );
+         if( new_msg[ _end + 1 - _new ] != 0  )
+            arr.push( new_msg[ _end + 1 - _new ] );
+         
+         msg[ MMTDrop.GtpStatsColumnId.TEIDs ] = arr;
       }
       
       //reserve direction if IP dst is the one of a machine in monitoring network
+      //in case of GTP, we check IP address after GTP
       const ipSrc = isGTP? 
             msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] : msg[ MMTDrop.StatsColumnId.IP_SRC ];
       
@@ -342,6 +348,7 @@ else{
       
       msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = false;
       msg = MMTDrop.inverseStatDirection( msg );
+      
       //switch also IP over GTP
       if( isGTP ){
          msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] = msg[ MMTDrop.GtpStatsColumnId.IP_DST  ];
