@@ -5,7 +5,7 @@ var arr = [
       x: 6,
       y: 0,
       width: 12,
-      height: 9,
+      height: 8,
       type: "danger",
       userData: {
          fn: "createTopoReport"

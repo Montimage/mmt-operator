@@ -3,9 +3,9 @@ const arr = [
       id : "user-plane",
       title : "User Plane",
       x : 0,
-      y : 7,
+      y : 0,
       width : 6,
-      height : 10,
+      height : 7,
       type : "success",
       userData : {
          fn : "createUserPlaneReport"
@@ -16,7 +16,7 @@ const arr = [
       x : 7,
       y : 0,
       width : 6,
-      height : 6,
+      height : 4,
       type : "warning",
       userData : {
          fn : "createControlPlaneReporteNodeB"
@@ -25,9 +25,9 @@ const arr = [
       id : "control-plane-mme",
       title : "Control Plane: MME",
       x : 7,
-      y : 6,
+      y : 4,
       width : 6,
-      height : 4,
+      height : 3,
       type : "danger",
       userData : {
          fn : "createControlPlaneReportMME"
@@ -266,7 +266,9 @@ var ReportFactory = {
                         return a-b;
                      } ).join("; ");
                      
-                     msg[ GTP.TEIDs.id ] = '<a title="'+ teids +'" onclick="showDetailTEID(\''+ msg[ GTP.IP_SRC.id ] +'\')" >' + msg[GTP.TEIDs.id].length + '</a>';
+                     
+                     msg["count"] = msg[GTP.TEIDs.id].length ;
+                     msg[ GTP.TEIDs.id ] = teids;
                      
                      var fun = "createPopupReport('gtp'," //collection
                         + GTP.IP_SRC.id  //key 
@@ -280,10 +282,11 @@ var ReportFactory = {
                   }
                   return {
                      columns : [
-                        {id: GTP.IP_SRC.id, label: "IP of UE"},
-                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data(B)"},
-                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
-                        {id: GTP.TEIDs.id, label:"#TEIDs"},
+                        {id: GTP.IP_SRC.id,                       label: "IP of UE"},
+                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
+                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"},
+                        {id: "count",             align: "right", label:"#TEIDs"},
+                        {id: GTP.TEIDs.id,                        label:"TEIDs"},
                         {id: "graph"}
                         ],
                         data : arr
