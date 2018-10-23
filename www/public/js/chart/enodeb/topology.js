@@ -497,6 +497,8 @@ var ReportFactory = {
             const nodes = [];
             const nodes_obj = {};
             function normalizeNode( o ){
+               if( o == null )
+                  return;
                //is existing a node having the same name?
                if( nodes_obj[ o.name ] != undefined ){
                   //cummulate "from"
@@ -1048,49 +1050,93 @@ var ReportFactory = {
                return svg.createNewNode( type, ip, from, data )
             };
             
-            svg.getNodeByName = function( type, name, from ){
-               const key = name + "-" + type;
-               if( nodes_obj[ key ] != undefined ){
-                  nodes_obj[key].isHiddens[ from ] = false;
-                  return nodes_obj[key]; 
+            svg.findNodeByIP = function( type, ip, from ){
+               const ipField = findIpField( type );
+               
+               for( var name in nodes_obj ){
+                  var node = nodes_obj[name];
+                  if( node.type == type && node.data && node.data[ ipField ] == ip ){
+                     node.isHiddens[ from ] = false;
+                     return node;
+                  }
                }
                return null;
+            };
+            
+            svg.findNodeByName = function( type, name, from ){
+               var node = svg.getNodeByField( type, "name", name );
+               if( node != null )
+                  node.isHiddens[ from ] = false;
+               return node;
             };
             
          
             /**
              * Add an eNodeB element to chart
+             * This function is called when add elements from mysqlDB 
              */
             svg.addElement = function( type, elem, needToUpdate ){
                switch( type ){
                case "mme":
-                  var node = svg.getNodeByName( "mme", elem.name, elem.from );
+                  var node = svg.findNodeByName( "mme", elem.name, elem.from );
+                  //node == null when
+                  //- either this is first time the MME is created
+                  //- or when there exist an MMT by IP
                   if( node == null ){
-                     node = svg.createNewNode( "mme", elem.name, elem.from, elem );
+                     //try to find by IP
+                     var ipField = findIpField("mme");
+                     if( elem[ ipField ] ){
+                        node = svg.findNodeByIP("mme", elem[ipField], elem.from );
+                        //it is existing
+                        if( node != null ){
+                           //update its label: from its IP to its name
+                           node.label = elem.name;
+                        }
+                     }
                   }
+                  
+
+                  if( node == null )
+                     node = svg.createNewNode( "mme", elem.name, elem.from, elem );
                   else{
                      //enb.label = elem.enb_name + ": " + elem.enb_ip;
                      node.data = MMTDrop.tools.mergeObjects( node.data, elem );
                   }
+                  
                   svg.addNodes( [ node ], needToUpdate);
                   break;
                case "enodeb":
-                  var enb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from );
+                  elem.name = elem.enb_name;
                   
+                  var enb = svg.findNodeByName( "enodeb", elem.name, elem.from );
+                  //enb=null when:
+                  //- either this is first time
+                  //- or an enodeB has been created by IP
                   if( enb == null ){
-                     if( elem.enb_name ){  //first time
-                        enb = svg.createNewNode( "enodeb", elem.enb_name, elem.from, elem )
-                     }else{
-                        MMTDrop.alert.error("No enb_name of " + JSON.stringify( elem ));
+                   //try to find by IP
+                     var ipField = findIpField("enodeb");
+                     if( elem[ ipField ] ){
+                        enb = svg.findNodeByIP("enodeb", elem[ipField], elem.from );
+                        
+                        if( enb != null ){
+                           if( elem.name )
+                              enb.label = elem.name;
+                           else
+                              MMTDrop.alert.error("No enb_name of " + JSON.stringify( elem ));
+                        }
                      }
                   }
                   
-//                  if( elem.enb_ip )
-//                     enb.label = elem.enb_name + ": " + elem.enb_ip;
+                  if( enb == null)
+                     enb = svg.createNewNode( "enodeb", elem.name, elem.from, elem )
+                  else
+                     enb.data = MMTDrop.tools.mergeObjects( enb.data, elem );
                   
-                  enb.data = MMTDrop.tools.mergeObjects( enb.data, elem );
-
-                  var mme1 = svg.getNodeByName( "mme",  elem.amf_name, elem.from );
+                  var mme1 = svg.findNodeByName( "mme",  elem.amf_name, elem.from );
+                  
+                  if( mme1 == null )
+                     MMTDrop.alert.error("Not found MME " + elem.amf_name );
+                  
                   svg.addNodes( [ enb, mme1 ], false);
 
                   svg.addLinks([
@@ -1104,7 +1150,10 @@ var ReportFactory = {
                   ue.label = elem.imsi;// + ": " + elem.ue_ip;
                   ue.data = MMTDrop.tools.mergeObjects( ue.data, elem );
 
-                  var enodeb = svg.getNodeByName( "enodeb", elem.enb_name, elem.from  );
+                  var enodeb = svg.findNodeByName( "enodeb", elem.enb_name, elem.from  );
+                  if( enodeb == null )
+                     MMTDrop.alert.error("Not found eNodeB " + elem.enb_name );
+                  
                   //{ type: "enodeb", name: elem.enb_name, label: elem.enb_name, data: {from: elem.from} };
                   //var mme2   = svg.getNodeByName( "mme", elem.mmec + "-" + elem.mmegi, elem.from, {mmec: elem.mmec, mmegi: elem.mmegi} ); 
 

@@ -5,7 +5,7 @@ var arr = [
         x: 0,
         y: 0,
         width: 12,
-        height: 6,
+        height: 7,
         type: "success",
         userData: {
             fn: "createNodeReport"
@@ -271,7 +271,7 @@ var ReportFactory = {
                         "height"    : height
                     });
                 
-                    var width  = $widget.find(".grid-stack-item-content").innerWidth() - 510;
+                    var width  = $widget.find(".grid-stack-item-content").innerWidth() - 530;
                     
                     //$(".col-md-4").css("max-width", "450px !important;");
                     //$(".col-md-8").css("max-width", width + "px !important;");
