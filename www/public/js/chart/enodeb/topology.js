@@ -393,7 +393,8 @@ var ReportFactory = {
                      title : "Toggle eNodeB",
                      "data-type": 'enodeb',
                      onclick: "toggleChartElements(this)",
-                     html  : '<span class="icon-satellite"></span>'
+                     //html  : '<span class="icon-antenna"></span>'
+                     html  : '<span class="icon-wireless"></span>'
                   }
                },{
                   type: "<button>",
@@ -444,7 +445,7 @@ var ReportFactory = {
                      html  : '<span class="fa fa-database"></span>'
                   }
                }]
-            },{
+            }/*,{
                type : "<a>",
                attr: {
                   class: "btn btn-success",
@@ -455,7 +456,8 @@ var ReportFactory = {
                   type : "<span>",
                   class: "fa fa-plus"
                }]
-            }]
+            }*/
+            ]
          }));
 
          window.showConfigFormNew = function(){
@@ -1380,18 +1382,28 @@ var ReportFactory = {
          }
          
          //database to get list of IPs of eNodeB from gtp traffic
+//         const databaseeNodeB = MMTDrop.databaseFactory.createStatDB( {
+//            collection : "data_gtp",
+//            action : "aggregate",
+//            query : [{"$group": {"_id": "$" + COL.IP_SRC.id, "ip": {"$first": "$" + COL.IP_SRC.id}}}],
+//            raw : true
+//         });
+         //
+//       databaseeNodeB.updateParameter = function( param ){
+//          param.period = status_db.time;
+//          param.period_groupby = fPeriod.selectedOption().id;
+//       };
+         
+         //get list of IPs of eNodeB from mysql DB
          const databaseeNodeB = MMTDrop.databaseFactory.createStatDB( {
-            collection : "data_gtp",
-            action : "aggregate",
-            query : [{"$group": {"_id": "$" + COL.IP_SRC.id, "ip": {"$first": "$" + COL.IP_SRC.id}}}],
-            raw : true
+            collection : "mysql",
+            action     : "query",
+            query      : ["select enb_ip as ip from amf_enb_data"],
+            raw        : true,
+            no_group   : true, 
+            no_override_when_reload: true,
          });
          
-         //
-         databaseeNodeB.updateParameter = function( param ){
-            param.period = status_db.time;
-            param.period_groupby = fPeriod.selectedOption().id;
-         };
          
          //load set of eNodeB IPs
          databaseeNodeB.afterReload( function( data ){
