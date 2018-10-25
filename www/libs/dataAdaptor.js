@@ -325,17 +325,6 @@ else{
       
       const isGTP = (format_type == MMTDrop.CsvFormat.GTP_APP_FORMAT );
       
-      //change TEID to an array of 2 elements: TEID_1 and TEID_2
-      if( isGTP ){
-         var arr = [];
-         if( msg[ MMTDrop.GtpStatsColumnId.TEIDs ] != 0 )
-            arr.push( msg[ MMTDrop.GtpStatsColumnId.TEIDs ] );
-         if( new_msg[ _end + 1 - _new ] != 0  )
-            arr.push( new_msg[ _end + 1 - _new ] );
-         
-         msg[ MMTDrop.GtpStatsColumnId.TEIDs ] = arr;
-      }
-      
       //reserve direction if IP dst is the one of a machine in monitoring network
       //in case of GTP, we check IP address after GTP
       const ipSrc = isGTP? 
