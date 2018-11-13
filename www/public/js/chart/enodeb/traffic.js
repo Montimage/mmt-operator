@@ -71,17 +71,17 @@ var ReportFactory = {
          database.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [  COL.PROBE_ID.id, COL.IP_SRC.id ].forEach( function( el, index){
+            [  COL.PROBE_ID.id, GTP.IMSI.id ].forEach( function( el, index){
                group["_id"][ el ] = "$" + el;
             });
             [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                group[ el ] = {"$sum" : "$" + el};
             });
-            [ COL.PROBE_ID.id, COL.IP_SRC.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, GTP.IMSI.id ].forEach( function( el, index){
                group[ el ] = {"$first" : "$"+ el};
             });
 
-            [ GTP.TEIDs.id ].forEach( function( el ){
+            [ GTP.TEIDs.id, COL.IP_SRC.id ].forEach( function( el ){
                group[ el ] = {$addToSet : "$" + el };
             })
             
@@ -89,17 +89,19 @@ var ReportFactory = {
             param.period_groupby = fPeriod.selectedOption().id;
 
             const project = {};
-            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, GTP.IMSI.id ].forEach( function( el, index){
                project[ el ] = 1;
             });
             
-            project[GTP.TEIDs.id  ] = {
-               $reduce: {
-                 input: "$" + GTP.TEIDs.id,
-                 initialValue: [],
-                 in: { $setUnion: [ "$$value", "$$this" ] }
-               }
-             };
+            [ GTP.TEIDs.id ].forEach( function( el ){
+               project[ el ] = {
+                  $reduce: {
+                    input: "$" + el,
+                    initialValue: [],
+                    in: { $setUnion: [ "$$value", "$$this" ] }
+                  }
+                };
+            });
             
             param.query = [{$group: group}, {$project: project}];
          }
@@ -111,6 +113,7 @@ var ReportFactory = {
             query : [],
             raw : true
          } );
+         
          detailDB.updateParameter = function( param ){
 
             //mongoDB aggregate
@@ -121,7 +124,7 @@ var ReportFactory = {
             [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                group[ el ] = {"$sum" : "$" + el};
             });
-            [  COL.TIMESTAMP.id, COL.PROBE_ID.id, GTP.IP_SRC.id, COL.IP_SRC.id, GTP.IP_DST.id, COL.IP_DST.id, GTP.TEIDs.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+            [  COL.TIMESTAMP.id, COL.PROBE_ID.id, GTP.IP_SRC.id, COL.IP_SRC.id, GTP.IP_DST.id, COL.IP_DST.id, GTP.IMSI.id, GTP.TEIDs.id, GTP.ENB_NAME.id, GTP.MME_NAME.id, COL.DST_LOCATION.id ].forEach( function( el, index){
                group[ el ] = {"$first" : "$"+ el};
             });
 
@@ -145,7 +148,10 @@ var ReportFactory = {
                data: data,
                columns: [
                   { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: GTP.IP_SRC.id,       title: "eNodeB" },
+                  { data: GTP.IMSI.id,         title: "IMSI"},
+                  { data: GTP.IP_SRC.id,       title: "eNb IP" },
+                  { data: GTP.ENB_NAME.id,     title: "eNb Name" },
+                  { data: GTP.MME_NAME.id,     title: "MME Name" },
                   { data: GTP.IP_DST.id,       title: "GW" },
                   { data: COL.IP_DST.id,       title: "IP Dest." },
                   { data: COL.DST_LOCATION.id, title: "Contry Dest." },
@@ -155,8 +161,8 @@ var ReportFactory = {
                         return arr.join("; ");
                      }
                   },
-                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
-                  { data: COL.PACKET_COUNT.id, title: "#Packets",   type: "num", className: "text-right" },
+                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right", render: MMTDrop.tools.formatLocaleNumber },
+                  { data: COL.PACKET_COUNT.id, title: "#Packets", type: "num", className: "text-right", render: MMTDrop.tools.formatLocaleNumber },
                   ]
             });
          })
@@ -198,9 +204,10 @@ var ReportFactory = {
                   }
                   return {
                      columns : [
-                        {id: COL.IP_SRC.id,                       label: "IP of UE"},
-                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
-                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"},
+                        GTP.IMSI,
+                        {id: COL.IP_SRC.id,                       label: "IPs of UE"},
+                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
+                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet",  format: MMTDrop.tools.formatLocaleNumber},
                         {id: "count",             align: "right", label:"#TEIDs"},
                         {id: GTP.TEIDs.id,                        label:"TEIDs"},
                         {id: "graph"}

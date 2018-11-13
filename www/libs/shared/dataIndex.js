@@ -176,9 +176,12 @@ module.exports = {
       GtpStatsColumnId: {
          APP_FAMILY    : 110,
          CONTENT_CLASS : 111,
-         IP_SRC        : 112,
-         IP_DST        : 113,
-         TEIDs         : 114
+         IP_SRC        : 112, //IP of eNodeB
+         IP_DST        : 113, //IP of GW
+         TEIDs         : 114, //Array of TEIDs
+         IMSI          : 115, //IMSI of UE generating this GTP flow
+         ENB_NAME      : 116,
+         MME_NAME      : 117
       },
 
        LicenseColumnId           : {

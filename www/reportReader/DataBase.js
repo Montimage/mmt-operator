@@ -12,7 +12,9 @@ CONST           = require("../libs/constant"),
 MMTDrop         = require("../libs/shared/dataIndex"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
-FORMAT          = require('util').format;
+FORMAT          = require('util').format,
+enodeb          = require("./enodebData.js")
+;
 
 const IP        = new (require("../libs/shared/IP.js"));
 
@@ -235,12 +237,12 @@ module.exports = function(){
          //for eNodeB
          gtp: new DataCache( inserter, "data_gtp",
                {
-            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST, GTP.TEIDs],
+            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST, GTP.TEIDs, GTP.IMSI],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                ],
-            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION ]
+            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION, GTP.ENB_NAME, GTP.MME_NAME ]
                }
          ),
          sctp: new DataCache( inserter, "data_sctp",
@@ -422,7 +424,13 @@ module.exports = function(){
                switch( msg[ COL.FORMAT_TYPE ] ){
                   case MMTDrop.CsvFormat.GTP_APP_FORMAT:
                      //clone a new message to add to gtp
-                     self.dataCache.gtp.addMessage( dataAdaptor.formatReportItem( message ) );
+                     var gtp_msg = dataAdaptor.formatReportItem( message );
+                     
+                     //get information of UE from its IP
+                     enodeb.appendSuplementData( gtp_msg, function( m ){
+                        self.dataCache.gtp.addMessage( m );
+                     })
+
                      break;
                      
                   case MMTDrop.CsvFormat.WEB_APP_FORMAT: 

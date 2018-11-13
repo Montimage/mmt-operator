@@ -309,9 +309,12 @@ MMTDrop.constants = {
     GtpStatsColumn : {
        APP_FAMILY   : { id : 110, label: "App Family"},
        CONTENT_CLASS: { id : 111, label: "Content Class"},
-       IP_SRC       : { id : 112, label: ""},
-       IP_DST       : { id : 113, label: ""},
-       TEIDs       : { id : 114, label: ""},
+       IP_SRC       : { id : 112, label: "ENB_IP"},
+       IP_DST       : { id : 113, label: "GW IP"},
+       TEIDs        : { id : 114, label: "TEIDs"},
+       IMSI         : { id : 115, label: "IMSI"},
+       ENB_NAME     : { id : 116, label: "ENB_NAME"},
+       MME_NAME     : { id : 117, label: "MME_NAME"},
      },
     /**
      * Data format description for Radius reports
@@ -6624,6 +6627,9 @@ MMTDrop.chartFactory = {
 
                             if( option.columns[j].isMultiProbes == false){
                                 var val = msg[j];
+                                if( option.columns[j].format )
+                                   val = option.columns[j].format( val );
+                                
                                 var opt = {
                                         html : val,
                                     };
