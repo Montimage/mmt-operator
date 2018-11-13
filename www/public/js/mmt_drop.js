@@ -673,7 +673,10 @@ MMTDrop.constants = {
        641: 'LLC',
        642: 'XID',
        643: 'CDP',
-       644: 'DTP'
+       644: 'DTP',
+       645: "SCTP_HEARTBEAT", 646: "SCTP_SHUTDOWN", 647: "SCTP_SHUTDOWN_COMPLETE", 648: "SCTP_ABORT", 649: "SCTP_ERROR", 650: "SCTP_COOKIE_ECHO",
+       651: "SCTP_ECNE", 652: "SCTP_CWR", 653: "SCTP_AUTH", 654: "SCTP_ASCONF", 655: "SCTP_RE_CONFIG",
+       900: "S1AP"
     },
 
     /**

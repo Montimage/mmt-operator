@@ -1301,7 +1301,7 @@ var ReportFactory = {
          databaseGTP.afterReload( function( data ){
             for( var i=0; i<data.length; i++ ){
                const msg = data[i];
-               svg.addGtpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ], msg[ GTP.IP_SRC.id ], msg[ GTP.IP_DST.id ] );
+               svg.addGtpLink( msg[ GTP.IP_SRC.id ], msg[ GTP.IP_DST.id ], msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ] );
             }
             svg.redraw();
          });

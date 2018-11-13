@@ -160,33 +160,22 @@ else{
          },
 
 
-
-         inverseStatDirection: function( msg ){
-            /*
-             * very slow: function inside function
-             * See: test/functionCall
-        var swap = function( id_1, id_2){
+         _swap: function(msg, id_1, id_2 ){
             var tmp   = msg[id_1];
             msg[id_1] = msg[id_2];
             msg[id_2] = tmp;
-        };
-        var COL       = this.StatsColumnId;
-        swap( COL.IP_SRC  ,  COL.IP_DST );
-        swap( COL.MAC_SRC ,  COL.MAC_DST );
-        swap( COL.PORT_SRC,  COL.PORT_DST );
-        swap( COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
-        swap( COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
-        swap( COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
-        swap( COL.SRC_LOCATION,      COL.DST_LOCATION );
-             */
-            var COL = this.StatsColumnId, tmp;
-            tmp = msg[ COL.IP_SRC           ];  msg[ COL.IP_SRC           ] = msg[ COL.IP_DST            ];   msg[ COL.IP_DST            ] = tmp;
-            tmp = msg[ COL.MAC_SRC          ];  msg[ COL.MAC_SRC          ] = msg[ COL.MAC_DST           ];   msg[ COL.MAC_DST           ] = tmp;
-            tmp = msg[ COL.PORT_SRC         ];  msg[ COL.PORT_SRC         ] = msg[ COL.PORT_DST          ];   msg[ COL.PORT_DST          ] = tmp;
-            tmp = msg[ COL.UL_DATA_VOLUME   ];  msg[ COL.UL_DATA_VOLUME   ] = msg[ COL.DL_DATA_VOLUME     ];   msg[ COL.DL_DATA_VOLUME     ] = tmp;
-            tmp = msg[ COL.UL_PACKET_COUNT  ];  msg[ COL.UL_PACKET_COUNT  ] = msg[ COL.DL_PACKET_COUNT    ];   msg[ COL.DL_PACKET_COUNT    ] = tmp;
-            tmp = msg[ COL.UL_PAYLOAD_VOLUME];  msg[ COL.UL_PAYLOAD_VOLUME] = msg[ COL.DL_PAYLOAD_VOLUME  ];   msg[ COL.DL_PAYLOAD_VOLUME  ] = tmp;
-            tmp = msg[ COL.SRC_LOCATION     ];  msg[ COL.SRC_LOCATION     ] = msg[ COL.DST_LOCATION       ];   msg[ COL.DST_LOCATION       ] = tmp;
+         },
+         
+
+         inverseStatDirection: function( msg ){
+            var COL       = this.StatsColumnId;
+            this._swap( msg, COL.IP_SRC  ,          COL.IP_DST );
+            this._swap( msg, COL.MAC_SRC ,          COL.MAC_DST );
+            this._swap( msg, COL.PORT_SRC,          COL.PORT_DST );
+            this._swap( msg, COL.UL_DATA_VOLUME ,   COL.DL_DATA_VOLUME );
+            this._swap( msg, COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
+            this._swap( msg, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
+            this._swap( msg, COL.SRC_LOCATION,      COL.DST_LOCATION );
             return msg;
          },
 
@@ -267,8 +256,6 @@ else{
    MMTDrop.formatSessionReport = function ( msg ){
       var PATH_INDEX = MMTDrop.StatsColumnId.APP_PATH;
       var UP_PATH = msg[ PATH_INDEX ], DOWN_PATH = msg[ PATH_INDEX + 1 ];
-
-
       /**
        * in the probe version 98f750c, on May 03 2016
        * report id = 100 has 2 protocol path: one for uplink, one for down link
@@ -282,7 +269,9 @@ else{
       if( MMTDrop.getAppLevelFromPath( UP_PATH ) > MMTDrop.getAppLevelFromPath( DOWN_PATH ))
          msg[ PATH_INDEX ] = UP_PATH;
 
+      var isGTP = false;
       var format_type = msg[ MMTDrop.StatsColumnId.FORMAT_TYPE ];
+      
       var _start = 0, _end = 0 ;
       switch (format_type) {
          case MMTDrop.CsvFormat.WEB_APP_FORMAT:
@@ -304,6 +293,7 @@ else{
          case MMTDrop.CsvFormat.GTP_APP_FORMAT:
             _start = MMTDrop.GtpStatsColumnId.APP_FAMILY;
             _end   = MMTDrop.GtpStatsColumnId.TEIDs;
+            isGTP = true;
             break;
          default:
             return msg;
@@ -323,14 +313,7 @@ else{
          msg[ i ] = new_msg[ i - _new ];
       }
       
-      const isGTP = (format_type == MMTDrop.CsvFormat.GTP_APP_FORMAT );
-      
-      //reserve direction if IP dst is the one of a machine in monitoring network
-      //in case of GTP, we check IP address after GTP
-      const ipSrc = isGTP? 
-            msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] : msg[ MMTDrop.StatsColumnId.IP_SRC ];
-      
-      if( ip2loc.isLocal( ipSrc ) ){
+      if( ip2loc.isLocal( msg[MMTDrop.StatsColumnId.IP_SRC] ) ){
          msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = true;
          return msg;
       }
@@ -338,11 +321,9 @@ else{
       msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = false;
       msg = MMTDrop.inverseStatDirection( msg );
       
-      //switch also IP over GTP
-      if( isGTP ){
-         msg[ MMTDrop.GtpStatsColumnId.IP_SRC ] = msg[ MMTDrop.GtpStatsColumnId.IP_DST  ];
-         msg[ MMTDrop.GtpStatsColumnId.IP_DST ] = ipSrc;
-      }
+      //switch also IPs in GTP reports
+      if( isGTP )
+         MMTDrop._swap( msg, MMTDrop.GtpStatsColumnId.IP_SRC, MMTDrop.GtpStatsColumnId.IP_DST);
       
       return msg;
    }
@@ -376,8 +357,11 @@ else{
             msg = MMTDrop.formatSessionReport( msg ); 
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = msg[ MMTDrop.StatsColumnId.START_TIME ] * 1000; //to milisecond
-            //msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
-            //msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DST ] );
+            
+            //TODO: comment the 2 lines below to increase performance in case of high bandwidth
+            msg[ MMTDrop.StatsColumnId.SRC_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_SRC ] );
+            msg[ MMTDrop.StatsColumnId.DST_LOCATION ] = ip2loc.country( msg[ MMTDrop.StatsColumnId.IP_DST ] );
+            
             //continue in NO_SESSION_STATS_FORMAT
          case MMTDrop.CsvFormat.NO_SESSION_STATS_FORMAT:
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );
@@ -439,7 +423,7 @@ else{
          if( MMTDrop._cacheCategoryIdFromAppId[ appID ] != undefined )
             console.warn("Double category for appID = " + appID );
          else
-            MMTDrop._cacheCategoryIdFromAppId[ appID ] = catID;
+            MMTDrop._cacheCategoryIdFromAppId[ appID ] = parseInt( catID );
       }
    }
 // end cache of category

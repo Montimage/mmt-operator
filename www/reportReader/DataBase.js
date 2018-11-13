@@ -39,13 +39,17 @@ MICRO_FLOW_STR  = "micro";
 //collections "data_protocol_*" store only protocols
 const PURE_PROTOCOLS = {};
 [
-   0, //unknown
+   //0, //unknown
    30,81,82,85,99,
-   117,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,
+   117,141,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,
    228,231,241,247,272,273,298,299,
-   314,322,323,324,325,339,340,341,354,357,358,363,376,388,
+   304,314,322,323,324,325,339,340,341,354,357,358,363,376,388,
    461,
-   625,626,627,628
+   625,626,627,628,
+   //sctp chunks
+   631,632,645,646,647,648,649,650,651,652,653,654,655,
+   //s1ap
+   900
    ].forEach( function( el ){
       PURE_PROTOCOLS[ el ] = true;
    });
@@ -236,7 +240,7 @@ module.exports = function(){
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                ],
-            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION ]
+            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION ]
                }
          ),
          sctp: new DataCache( inserter, "data_sctp",
@@ -501,10 +505,17 @@ module.exports = function(){
                
                for( var i=0; i<app_arr.length; i++ ){
                   var o = app_arr[i];
-                  //store only maximally 4 level: ETH.IP.TCP.HTTP
-                  if( o.depth != 4 && o.depth !== 1 ) //starting from zero
-                     continue;
-   
+                  
+                  if( o.depth > 4 )
+                     continue; //store only maximally 4 level: ETH.IP.TCP.HTTP
+                  
+                  if( !
+                        (o.depth == 4  //store only maximally 4 level: ETH.IP.TCP.HTTP
+                        || o.depth == 1 //Ethernet
+                        || o.depth == app_arr.length //in case, hierarchy length < 4
+                        ) )
+                        continue;
+                  
                   //this is a protocol
                   if( PURE_PROTOCOLS[ o.app ] )
                   {

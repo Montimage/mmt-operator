@@ -9,7 +9,7 @@
 		"nb_readers": 1
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "10.0.0.0",
@@ -22,8 +22,8 @@
 		"max_interval": 5
 	},
 	"micro_flow": {
-		"packet": 1,
-		"byte": 64
+		"packet": 0,
+		"byte": 0
 	},
 	"retain_detail_report_period": 300,
 	"limit_database_size": 10000000,

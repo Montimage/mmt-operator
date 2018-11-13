@@ -39,7 +39,7 @@ else{
    config.version = VERSION; 
    
    config.rootDirectory = path.join( __dirname, ".." );
-
+   
    if( config.input_mode != constant.REDIS_STR 
          && config.input_mode != constant.FILE_STR 
          && config.input_mode != constant.KAFKA_STR)
@@ -131,7 +131,7 @@ else{
          logFile.stream = fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' });
       }
 
-      logFile.stream.write( msg );
+      logFile.stream.write( msg + "\n" );
    }
 
    var logStdout = process.stdout;

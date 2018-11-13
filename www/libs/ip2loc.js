@@ -54,8 +54,68 @@ ip2loc.isLocal = function( ip ){
    return false;
 }
 
-ip2loc.isMulticast = function( ipString ){
-   const arr = ipString.split('.');
+/**
+ * Verify whether an IP is in a private network
+ */
+ip2loc.isPrivate = function( i ){
+   /* IPv6
+    * fd00::/8
+    */
+   if( i[0] == 'f' && i[1] == 'd' && i[2] == '0' && i[3] == '0' )
+      return true;
+   
+   const arr = i.split('.');
+   if( arr.length == 4 ){
+      /* IPv4
+       * + 10.0.0.0    - 10.255.255.255
+       * + 172.16.0.0  - 172.31.255.255
+       * + 192.168.0.0 - 192.168.255.255
+       */
+      arr[0] = parseInt( arr[0] );
+      switch( arr[0] ){
+      case 10:
+         return true;
+      case 172:
+         arr[1] = parseInt( arr[1] );
+         return ( 16 <= arr[1] && arr[1] <= 31 );
+      case 192:
+         return ( arr[1] == "168" );
+      }
+   }
+   return false;
+}
+
+ip2loc.isMulticast = function( i ){
+   //IPv6
+   /*
+ff00::/16
+ff0f::/16   Reserved
+ffx1::/16   127.0.0.0/8 Interface-local   Packets with this destination address may not be sent over any network link, but must remain within the current node; this is the multicast equivalent of the unicast loopback address.
+ffx2::/16   224.0.0.0/24   Link-local  Packets with this destination address may not be routed anywhere.
+ffx3::/16   239.255.0.0/16 IPv4 local scope
+ffx4::/16      Admin-local The smallest scope that must be administratively configured.
+ffx5::/16      Site-local  Restricted to the local physical network.
+ffx8::/16   239.192.0.0/14 Organization-local   Restricted to networks used by the organization administering the local network. (For example, these addresses might be used over VPNs; when packets for this group are routed over the public internet (where these addresses are not valid), they would have to be encapsulated in some other protocol.)
+ffxe::/16   224.0.1.0-238.255.255.255  Global scope   Eligible to be routed over the public internet.
+    */
+   if( i[0] == 'f' && i[1] == 'f' ){
+      if( i[2] == '0' ) //see "Well-known IPv6 multicast addresses" at https://en.wikipedia.org/wiki/Multicast_address
+         return true;
+      switch( i[3] ){
+      case '0':
+      case 'f':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '8':
+      case 'e':
+         return true;
+      }
+   }
+   
+   const arr = i.split('.');
    //IPv4
    if( arr.length == 4 ){
 /* https://en.wikipedia.org/wiki/Multicast_address
@@ -78,6 +138,7 @@ ip2loc.isMulticast = function( ipString ){
       }else if( arr[0] == 232 || arr[0] == 233 || arr[0] == 234 || arr[0] == 239)
          return true;
    }
+  
    return false;
 }
 
@@ -97,7 +158,8 @@ ip2loc.country = function( ip ){
 ip2loc._country = function( ip ){
    if( ip2loc.isLocal( ip ) )
       return "_local"
-      
+   if( ip2loc.isPrivate( ip ) )
+      return "_private";
    if( ip2loc.isMulticast( ip ) )
       return "_multicast";
    

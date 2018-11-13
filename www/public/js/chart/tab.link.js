@@ -655,6 +655,7 @@ var ReportFactory = {
           $match[ COL.TIMESTAMP.id ] = {$gte: lastMinute, $lte: status_db.time.end };
 
           $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
+          $match[ COL.MAC_SRC.id ] = { $exists: true, $ne: null };
           
           var group = { _id : {} };
           //[ COL.TIMESTAMP.id, COL.MAC_SRC.id, COL.PROBE_ID.id ]
