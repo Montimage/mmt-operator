@@ -3213,9 +3213,9 @@ MMTDrop.filterFactory = {
             if( MMTDrop.config.periodFilterOptions != undefined)
                 options = MMTDrop.config.periodFilterOptions
             else{
-                options.push( { id: periods.MINUTE     , label: "Last 5 minutes" });
+                options.push( { id: periods.MINUTE     , label: "Last 5 minutes", selected: true });
                 options.push( { id: periods.HOUR       , label: "Last hour"      });
-                options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours", selected: true });
+                options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
                 options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"  });
                 options.push( { id: periods.DAY        , label: "Last 24 hours"  });
                 options.push( { id: periods.WEEK       , label: "Last 7 days"    });

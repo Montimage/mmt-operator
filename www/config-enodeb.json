@@ -9,11 +9,11 @@
 		"nb_readers": 1
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
 	"local_network": [
 		{
 			"ip": "10.0.0.0",
-			"mask": "255.255.0.0"
+			"mask": "255.255.255.0"
 		}
 	],
 	"probe_stats_period": 5,
@@ -26,7 +26,7 @@
 		"byte": 0
 	},
 	"retain_detail_report_period": 300,
-	"limit_database_size": 10000000,
+	"limit_database_size": 300000000,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,

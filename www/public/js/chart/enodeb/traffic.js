@@ -133,13 +133,25 @@ var ReportFactory = {
 
             //value of match will be filled by UE's IP when user click on one row
             const match = {};
-            match[ COL.IP_SRC.id ] = detailDB.__ip;
+            var o = detailDB.__param;
+            switch( o.type ){
+            case "IP":
+               match[ COL.IP_SRC.id ] = o.data;
+               break;
+            case "IMSI":
+               match[ GTP.IMSI.id ] = o.data;
+               break;
+            case "TEID":
+               match[ GTP.TEIDs.id ] = {"$elemMatch": { "$eq": o.data }};
+               break;
+            }
+            
             param.query = [{$match: match}, {$group: group}];
          }
 
          detailDB.afterReload( function( data ){
             const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
-            $detailDlg.$title.html("Detail of UE: " + detailDB.__ip );
+            $detailDlg.$title.html("Detail of UE: " + detailDB.__param.type + "=" + detailDB.__param.data );
             $detailDlg.$content.html('<table id="detail-ue" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
             //console.log($("#detail-ue").html());
             $detailDlg.modal();
@@ -148,14 +160,15 @@ var ReportFactory = {
                data: data,
                columns: [
                   { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: GTP.IMSI.id,         title: "IMSI"},
+                  { data: GTP.IMSI.id,         title: "UE IMSI"},
+                  { data: COL.IP_SRC.id,       title: "UE IP"},
                   { data: GTP.IP_SRC.id,       title: "eNb IP" },
                   { data: GTP.ENB_NAME.id,     title: "eNb Name" },
                   { data: GTP.MME_NAME.id,     title: "MME Name" },
                   { data: GTP.IP_DST.id,       title: "GW" },
                   { data: COL.IP_DST.id,       title: "IP Dest." },
                   { data: COL.DST_LOCATION.id, title: "Contry Dest." },
-                  { data: GTP.TEIDs.id,        title: "TEIDs",           type: "num", className: "text-right", 
+                  { data: GTP.TEIDs.id,        title: "TEIDs",   type: "num", className: "text-right", 
                      render: function( arr ){
                         arr = arr.sort( function( a, b ){ return a - b; });
                         return arr.join("; ");
@@ -168,11 +181,9 @@ var ReportFactory = {
          })
 
          //when user click on an IP
-         window.showDetailUE = function( IP ){
-            if( IP != "" ){
-               detailDB.__ip = IP;
-               detailDB.reload();
-            }
+         window.showDetailUE = function( type, data ){
+            detailDB.__param = {type: type, data: data};
+            detailDB.reload();
             return false;
          };
          
@@ -184,23 +195,40 @@ var ReportFactory = {
                   for( var i=0; i<arr.length; i++ ){
                      var msg = arr[i];
 
-                     var teids = msg[ GTP.TEIDs.id ].sort( function( a, b ){
-                        return a-b;
-                     } ).join("; ");
-                     
-                     
                      msg["count"] = msg[GTP.TEIDs.id].length ;
-                     msg[ GTP.TEIDs.id ] = teids;
+                     
+                     msg[ GTP.TEIDs.id ] = msg[ GTP.TEIDs.id ]
+                     .sort( function( a, b ){
+                        return a-b;
+                     } )
+                     .map( function( teid ){
+                        return '<a title="Click to show detail of this TEID" onclick="showDetailUE(\'TEID\','+ teid +')">' + teid + '</a>';
+                     })
+                     .join(", ");
+                     
                      
                      var fun = "createPopupReport('gtp'," //collection
-                        + COL.IP_SRC.id  //key 
-                        +",'" + msg[ COL.IP_SRC.id ] //id
-                     +"','IP: " + msg[ COL.IP_SRC.id ] //title 
+                        + GTP.IMSI.id  //key 
+                        +",'" + msg[ GTP.IMSI.id ] //id
+                     +"','IMSI: " + msg[ GTP.IMSI.id ] //title 
                      + "' )";
                      
                      msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
 
-                     msg[ COL.IP_SRC.id ] = '<a title="Click to show detail of this IP" onclick="showDetailUE(\''+ msg[ COL.IP_SRC.id ] +'\')">' + msg[ COL.IP_SRC.id ] + '</a>';
+                     //console.log( msg[ COL.IP_SRC.id ] );
+                     var IPs = msg[ COL.IP_SRC.id ];
+                     
+                     if( ! Array.isArray( IPs ))
+                        IPs = [ IPs ];
+                     
+                     msg[ COL.IP_SRC.id ] =  IPs.map( function( ip ){
+                        return '<a title="Click to show detail of this IP" onclick="showDetailUE(\'IP\',\''+ ip +'\')">' + ip + '</a>';
+                     }).join(", ");
+                        
+                     var data = msg[ GTP.IMSI.id ];
+                     if( data == null )
+                        data = "_unknown";
+                     msg[ GTP.IMSI.id ] = '<a title="Click to show detail of this IMSI" onclick="showDetailUE(\'IMSI\',\''+ data +'\')">' + data + '</a>'
                   }
                   return {
                      columns : [
@@ -208,7 +236,7 @@ var ReportFactory = {
                         {id: COL.IP_SRC.id,                       label: "IPs of UE"},
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet",  format: MMTDrop.tools.formatLocaleNumber},
-                        {id: "count",             align: "right", label:"#TEIDs"},
+                        //{id: "count",             align: "right", label:"#TEIDs"},
                         {id: GTP.TEIDs.id,                        label:"TEIDs"},
                         {id: "graph"}
                         ],
@@ -362,7 +390,8 @@ var ReportFactory = {
 
          //value of match will be filled by UE's IP when user click on one row
          const match = {};
-         match[ COL.IP_DST.id ] = detailDB.__ip;
+         match[ COL.IP_SRC.id ] = detailDB.__ip;
+         
          
          const group = { _id : {} };
          [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
