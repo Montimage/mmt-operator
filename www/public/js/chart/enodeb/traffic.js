@@ -289,24 +289,26 @@ var ReportFactory = {
       //2 steps:
       //- get list of MME IPs from data_gtp collection
       //- select on data_sctp the documents having IPs as the same as the ones get from step1
-//      
-//      const database = MMTDrop.databaseFactory.createStatDB( {
-//         collection : "data_gtp",
-//         action : "aggregate",
-//         query : [{"$group": {"_id": "$" + COL.IP_DST.id, "ip": {"$first": "$" + COL.IP_DST.id}}}],
-//         raw : true
-//      });
-//      
-      //get IP of MME from mysql DB
-      const database = MMTDrop.databaseFactory.createStatDB( {
-         collection : "mysql",
-         action     : "query",
-         query      : ["select s1_adr as ip from amf_settings"],
-         raw        : true,
-         no_group   : true, 
-         no_override_when_reload: true,
-      });
       
+      const database = MMTDrop.databaseFactory.createStatDB( {
+         collection : "data_gtp",
+         action : "aggregate",
+         query : [{"$group": {"_id": "$" + GTP.IP_DST.id, 
+            "ip":   {"$first" : "$" + GTP.IP_DST.id}, 
+            "name": {"$first" : "$" + GTP.MME_NAME.Id}}}],
+         raw : true
+      });
+
+//      //get IP of MME from mysql DB
+//      const database = MMTDrop.databaseFactory.createStatDB( {
+//         collection : "mysql",
+//         action     : "query",
+//         query      : ["select s1_adr as ip from amf_settings"],
+//         raw        : true,
+//         no_group   : true, 
+//         no_override_when_reload: true,
+//      });
+
       const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",
          action : "aggregate",
@@ -502,20 +504,20 @@ var ReportFactory = {
       //- get list of eNodeB IPs from data_gtp collection
       //- select on data_sctp the documents having IPs as the same as the ones get from step1
       
-//      const database = MMTDrop.databaseFactory.createStatDB( {
-//         collection : "data_gtp",
-//         action : "aggregate",
-//         query : [{"$group": {"_id": "$" + COL.IP_SRC.id, "ip": {"$first": "$" + COL.IP_SRC.id}}}],
-//         raw : true
-//      });
       const database = MMTDrop.databaseFactory.createStatDB( {
-         collection : "mysql",
-         action     : "query",
-         query      : ["select enb_ip as ip from amf_enb_data"],
-         raw        : true,
-         no_group   : true, 
-         no_override_when_reload: true,
+         collection : "data_gtp",
+         action : "aggregate",
+         query : [{"$group": {"_id": "$" + GTP.IP_SRC.id, "ip": {"$first": "$" + GTP.IP_SRC.id}}}],
+         raw : true
       });
+//      const database = MMTDrop.databaseFactory.createStatDB( {
+//         collection : "mysql",
+//         action     : "query",
+//         query      : ["select enb_ip as ip from amf_enb_data"],
+//         raw        : true,
+//         no_group   : true, 
+//         no_override_when_reload: true,
+//      });
       
       const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
          collection : "data_sctp",

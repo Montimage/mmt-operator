@@ -28,9 +28,11 @@ const sqlString =
       "      service_data.mmegi = amf_settings.mmegi " +
       "  AND service_data.mmec  = amf_settings.mmec "
 ;
- 
+
+//interval, in miliseconds, to query data from mysql
+const DB_QUERY_INTERVAL = 5000;
 const self = {
-      cache: {},
+      lteCache: {},
       lastMsgTimestamp : 0,
       /*
        * Append LTE information, such as, imsi, ue_ip, to session report (100)
@@ -41,9 +43,13 @@ const self = {
       appendSuplementData : function( msg, cb ){
          var ts  = msg[ COL.TIMESTAMP ];
          var ip  = msg[ COL.IP_SRC ];
-         var lte = this.cache[ ip ];
+         var lte = this.lteCache[ ip ];
          
-         if( this.lastMsgTimestamp != ts || lte == undefined ){
+         if( this.lastMsgTimestamp + DB_QUERY_INTERVAL < ts || lte == null ){
+            //remember this moment
+            this.lastMsgTimestamp = ts;
+            console.info( ts );
+            
             return mysqlConnection.query( sqlString, function( err, data, fields ){
 //               console.log( data );
                if( err )
@@ -58,22 +64,24 @@ const self = {
                      m[ GTP.ENB_NAME ] = o.enb_name;
                      m[ GTP.MME_NAME ] = o.enb_name;
                      
-                     self.cache[ o.ue_ip ] = m;
+                     self.lteCache[ o.ue_ip ] = m;
                      
                      if( o.ue_ip == ip )
                         lte = m;
                   }
                }
-               
+               //even after quering DB, we didn't find info of this IP
                if( lte == null ){
                   lte = {}; 
                   lte[ GTP.IMSI ]     = "_unknown";
                   lte[ GTP.ENB_NAME ] = "_unknown";
                   lte[ GTP.MME_NAME ] = "_unknown";
+                  
+                  //ignore this UE in a moment (DB_QUERY_INTERVAL)
+                  self.lteCache[ o.ue_ip ] = lte;
                }
                
                self.appendData( msg, lte, cb );
-               
             });
          }else
             self.appendData( msg, lte, cb );
