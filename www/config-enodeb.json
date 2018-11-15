@@ -25,8 +25,8 @@
 		"packet": 0,
 		"byte": 0
 	},
-	"retain_detail_report_period": 300,
-	"limit_database_size": 300000000,
+	"retain_detail_report_period": 86400,
+	"limit_database_size": 500000000,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
