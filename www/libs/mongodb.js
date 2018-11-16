@@ -10,7 +10,7 @@ mongodb.MongoClient.connect = function( dbName, callback ){
    const connectString = 'mongodb://' + config.database_server.host 
    + ":" + config.database_server.port + "/" + dbName;
    
-   this._connect( connectString, {
+   mongodb.MongoClient._connect( connectString, {
       
       autoReconnect: true,     // Reconnect on error.
       reconnectTries:  3000, // Server attempt to reconnect #times
@@ -19,8 +19,14 @@ mongodb.MongoClient.connect = function( dbName, callback ){
       bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connection
    },
    function( err, client ){
-      if( err )
-         throw err;
+      if( err ){
+         console.error( "Error when connecting to MongoDB. Retry in 10 seconds." + err.message );
+         
+         setTimeout( mongodb.MongoClient.connect, 10*1000, dbName, callback );
+         
+         return;
+      }
+      
       const db = client.db( dbName );
       db.admin().serverStatus(function(err, info) {
           //console.info("MongoDB version " + info.version );
