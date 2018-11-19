@@ -160,7 +160,7 @@ function _maintainDatabase( database ){
          
          //retain only the last 5 minutes
          // reduce each half of DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "data_mac_real"     , m.time - 5*60*1000 + additionalTime*30*1000, m._id );
+         _removeOldRecords( database, "data_mac_real" , m.time - 5*60*1000 + additionalTime*30*1000, m._id );
          
          //other "*real" collection, we retain 61 minutes
          _maintainCollection( database, "data_app_"         , m.time, m._id );
@@ -170,13 +170,18 @@ function _maintainDatabase( database ){
          _maintainCollection( database, "data_protocol_"    , m.time, m._id );
          _maintainCollection( database, "data_session_"     , m.time, m._id );
          _maintainCollection( database, "data_total_"       , m.time, m._id );
+         //other collections that are used in specific projects
+         _maintainCollection( database, "data_gtp_"         , m.time, m._id );
+         _maintainCollection( database, "data_sctp_"        , m.time, m._id );
+         _maintainCollection( database, "data_ndn_"         , m.time, m._id );
+         _maintainCollection( database, "availability"      , m.time, m._id );
       }
       
       //this avoids delete DB so frequently
       //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
       // (as DB_LIMIT_SIZE is too small)
       //maintain by db size
-      setTimeout( _maintainDatabaseSize, 2000, database );
+      setTimeout( _maintainDatabaseSize, 5000, database );
    });
    //manually garbage
    //if( global && global.gc )

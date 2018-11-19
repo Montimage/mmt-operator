@@ -139,6 +139,80 @@ function proc_request(req, res, next) {
    }
 }
 
+const PERIOD = {
+      MINUTE      : "minute",
+      HOUR        : "hour",
+      HALF_DAY    : "12hours",
+      QUARTER_DAY : "6hours",
+      DAY         : "day",
+      WEEK        : "week",
+      MONTH       : "month"
+};
+
+function getOptionsByPeriod(period) {
+   var retval = {
+         period_groupby : 'real',
+         time : 5 * 60 * 1000
+   };
+   switch( period ){
+   case PERIOD.HOUR:
+      retval = {
+            period_groupby : "real",//'minute',
+            time : 60 * 60 * 1000
+      };
+      break;
+      
+   case PERIOD.HALF_DAY:
+      retval = {
+            period_groupby : 'minute',
+            time : 12 * 60 * 60 * 1000
+      };
+      break;
+   case PERIOD.QUARTER_DAY:
+      retval = {
+            period_groupby : 'minute',
+            time : 6 * 60 * 60 * 1000
+      };
+      break;
+   case PERIOD.DAY:
+      retval = {
+            period_groupby : 'minute',
+            time : 24 * 60 * 60 * 1000
+      };
+      break;
+   case PERIOD.WEEK:
+      retval = {
+            period_groupby : 'hour',
+            time : 7 * 24 * 3600 * 1000
+      };
+      break;
+   case PERIOD.MONTH:
+      retval = {
+            period_groupby : 'day',
+            time : 30 * 24 * 3600 * 1000
+            //TODO a month does not always have 30 days
+      };
+      break;
+   }
+   return retval;
+}
+
+function getOptionsByPeriod2 (period) {
+   var retval = {
+         time : {
+            begin : period.begin,
+            end : period.end
+         },
+         period_groupby : 'day',
+   };
+
+   var now = (new Date()).getTime();
+   if (retval.time.end > now)
+      retval.time.end = now;
+
+   return retval;
+}
+
 router.get('/:collection/:action', proc_request);
 router.post('/:collection/:action', proc_request);
 
@@ -146,72 +220,6 @@ router.post('/:collection/:action', proc_request);
 router.get('/*', function(req, res, next) {
 
    var dbconnector = router.dbconnector;
-
-   var PERIOD = {
-         MINUTE : "minute",
-         HOUR : "hour",
-         HALF_DAY : "12hours",
-         QUARTER_DAY : "6hours",
-         DAY : "day",
-         WEEK : "week",
-         MONTH : "month"
-   };
-
-   var getOptionsByPeriod = function(period) {
-      var retval = {
-            period_groupby : 'real',
-            time : 5 * 60 * 1000
-      };
-      if (period === PERIOD.HOUR) {
-         retval = {
-               period_groupby : "real",//'minute',
-               time : 60 * 60 * 1000
-         };
-      } else if (period === PERIOD.HALF_DAY) {
-         retval = {
-               period_groupby : 'minute',
-               time : 12 * 60 * 60 * 1000
-         };
-      } else if (period === PERIOD.QUARTER_DAY) {
-         retval = {
-               period_groupby : 'minute',
-               time : 6 * 60 * 60 * 1000
-         };
-      } else if (period === PERIOD.DAY) {
-         retval = {
-               period_groupby : 'minute',
-               time : 24 * 60 * 60 * 1000
-         };
-      } else if (period === PERIOD.WEEK) {
-         retval = {
-               period_groupby : 'hour',
-               time : 7 * 24 * 3600 * 1000
-         };
-      } else if (period === PERIOD.MONTH) {
-         retval = {
-               period_groupby : 'day',
-               time : 30 * 24 * 3600 * 1000
-               //TODO a month does not always have 30 days
-         };
-      }
-      return retval;
-   }
-
-   var getOptionsByPeriod2 = function(period) {
-      var retval = {
-            time : {
-               begin : period.begin,
-               end : period.end
-            },
-            period_groupby : 'day',
-      };
-
-      var now = (new Date()).getTime();
-      if (retval.time.end > now)
-         retval.time.end = now;
-
-      return retval;
-   }
 
    var period = req.query.period || PERIOD.MINUTE;
    //QoSVideo
