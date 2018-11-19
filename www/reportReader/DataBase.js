@@ -252,7 +252,7 @@ module.exports = function(){
             COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
             COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
             ],
-         set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_ID ]
+         set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_ID,  GTP.ENB_NAME, GTP.MME_NAME ]
             }
       ),
    };
@@ -427,7 +427,7 @@ module.exports = function(){
                      var gtp_msg = dataAdaptor.formatReportItem( message );
                      
                      //get information of UE from its IP
-                     enodeb.appendSuplementData( gtp_msg, function( m ){
+                     enodeb.appendSuplementDataGtp( gtp_msg, function( m ){
                         self.dataCache.gtp.addMessage( m );
                      })
 
@@ -492,16 +492,18 @@ module.exports = function(){
             //expand application path: 
             const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
-            //a flag to say whether do we need to add 
-            //an inverted message to sctp collection
-            var needToAddToSctp = false;
             
             if( self.dataCache.sctp ){
                //Collection contains only info about SCTP proto for eNodeB
                for( var i=0; i<app_arr.length; i++ )
                   if( app_arr[i].app == 304 ){ //SCTP
-                     self.dataCache.sctp.addMessage( msg );
-                     needToAddToSctp = true;
+                   //clone a new message to add to gtp
+                     var sctp_msg = dataAdaptor.formatReportItem( message );
+                     
+                     //get information of UE from its IP
+                     enodeb.appendSuplementDataSctp( sctp_msg, function( m ){
+                        self.dataCache.sctp.addMessage( m );
+                     })
                      break;
                   }
             }
@@ -561,9 +563,6 @@ module.exports = function(){
                msg.isGen = true;
                msg = dataAdaptor.inverseStatDirection( msg );
 
-               if( needToAddToSctp )
-                  self.dataCache.sctp.addMessage( msg );
-               
                //change session_id of this clone message
                msg[ COL.SESSION_ID ] = "-" + msg[ COL.SESSION_ID ];
 
