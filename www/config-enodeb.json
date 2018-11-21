@@ -9,7 +9,7 @@
 		"nb_readers": 1
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "10.0.0.0",

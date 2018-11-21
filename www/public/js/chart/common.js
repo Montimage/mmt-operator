@@ -51,10 +51,13 @@ const GTP     = MMTDrop.constants.GtpStatsColumn;
 //this db contains status of probe, interval to get data of reports
 const status_db = new MMTDrop.Database({collection: "status"});
 
-var fAutoReload = {
+const fAutoReload = {
   hide : function(){
     $("#autoReload").hide();
     $("#isAutoReloadChk").prop("checked", false);
+  },
+  show: function(){
+     $("#autoReload").show();
   }
 };
 
@@ -480,8 +483,9 @@ $(function () {
 
             //add water mark
 	    	    ctx.font      = "14px Arial";
-		        ctx.fillStyle = "grey";
-	    	    ctx.fillText("Montimage", 15, canvas.height - 12);
+		       ctx.fillStyle = "grey";
+		       var copyright = String.fromCharCode( 169 );
+	    	    ctx.fillText( copyright + " Montimage", 15, canvas.height - 12);
 
 		        var fileName = node.title + "-" + (new Date()).toLocaleString() + ".png";
 

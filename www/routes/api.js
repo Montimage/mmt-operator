@@ -52,27 +52,11 @@ function proc_request(req, res, next) {
                return next(err);
 
             const interval = parseInt(action);
-            //do not take into account the 2 last sample periods
+            
+            //do not take into account the last sample period that is being updated to DB
             //apply only for online analysis
             if( ! config.is_probe_analysis_mode_offline )
-               switch( interval ){
-                  case  5*60*1000: //5minutes
-                  case 60*60*1000: //1hours
-                     time -= 2*config.probe_stats_period * 1000;
-                     break;
-                  case  6*60*60*1000: //6h
-                  case 12*60*60*1000: //12h
-                  case 24*60*60*1000: //24h
-                     time -= 60*1000; //do not take into account the last minute
-                     break;
-                  case  7*24*60*60*1000:
-                  case 30*24*60*60*1000:
-                     time -= 60*60*1000 //do not take into account the last hour
-                     break;
-                  default:
-                     time -= 24*60*60*1000 //do not take into account the day
-                     break;
-               }
+                  time -= config.probe_stats_period * 1000;
 
             var time = {
                   begin : time - interval,

@@ -43,15 +43,12 @@ MMTDrop.callback = {
          afterRender : function(){
             //hide loading
             loading.onChartLoad();
-            if( URL_PARAM.elem ){
+            if( URL_PARAM.func ){
                if( isShowAlert )
                   return;
                isShowAlert = true;
                setTimeout( function(){
-                  if( $("a:contains('"+  URL_PARAM.elem +"')").length == 0 )
-                     MMTDrop.alert.error("Not found any element having<br/> IP = " + URL_PARAM.elem );
-                  else
-                     $("a:contains('"+  URL_PARAM.elem +"')").click();
+                  eval( decodeURI( URL_PARAM.func ));
                }, 200 );
             }
          }
@@ -67,7 +64,7 @@ var ReportFactory = {
             query : [],
             raw : true
          });
-         
+
          database.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
@@ -84,7 +81,7 @@ var ReportFactory = {
             [ GTP.TEIDs.id, COL.IP_SRC.id ].forEach( function( el ){
                group[ el ] = {$addToSet : "$" + el };
             })
-            
+
             param.period = status_db.time;
             param.period_groupby = fPeriod.selectedOption().id;
 
@@ -92,17 +89,17 @@ var ReportFactory = {
             [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, GTP.IMSI.id ].forEach( function( el, index){
                project[ el ] = 1;
             });
-            
+
             [ GTP.TEIDs.id ].forEach( function( el ){
                project[ el ] = {
-                  $reduce: {
-                    input: "$" + el,
-                    initialValue: [],
-                    in: { $setUnion: [ "$$value", "$$this" ] }
-                  }
-                };
+                     $reduce: {
+                        input: "$" + el,
+                        initialValue: [],
+                        in: { $setUnion: [ "$$value", "$$this" ] }
+                     }
+               };
             });
-            
+
             param.query = [{$group: group}, {$project: project}];
          }
 
@@ -113,7 +110,7 @@ var ReportFactory = {
             query : [],
             raw : true
          } );
-         
+
          detailDB.updateParameter = function( param ){
 
             //mongoDB aggregate
@@ -145,7 +142,7 @@ var ReportFactory = {
                match[ GTP.TEIDs.id ] = {"$elemMatch": { "$eq": o.data }};
                break;
             }
-            
+
             param.query = [{$match: match}, {$group: group}];
          }
 
@@ -186,7 +183,7 @@ var ReportFactory = {
             detailDB.reload();
             return false;
          };
-         
+
          const cTable = MMTDrop.chartFactory
          .createTable( {
             getData : {
@@ -196,7 +193,7 @@ var ReportFactory = {
                      var msg = arr[i];
 
                      msg["count"] = msg[GTP.TEIDs.id].length ;
-                     
+
                      msg[ GTP.TEIDs.id ] = msg[ GTP.TEIDs.id ]
                      .sort( function( a, b ){
                         return a-b;
@@ -204,27 +201,27 @@ var ReportFactory = {
                      .map( function( teid ){
                         return '<a title="Click to show detail of this TEID" onclick="showDetailUE(\'TEID\','+ teid +')">' + teid + '</a>';
                      })
-                     .join(", ");
-                     
-                     
+                     .join("; ");
+
+
                      var fun = "createPopupReport('gtp'," //collection
                         + GTP.IMSI.id  //key 
                         +",'" + msg[ GTP.IMSI.id ] //id
                      +"','IMSI: " + msg[ GTP.IMSI.id ] //title 
                      + "' )";
-                     
+
                      msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
 
                      //console.log( msg[ COL.IP_SRC.id ] );
                      var IPs = msg[ COL.IP_SRC.id ];
-                     
+
                      if( ! Array.isArray( IPs ))
                         IPs = [ IPs ];
-                     
+
                      msg[ COL.IP_SRC.id ] =  IPs.map( function( ip ){
                         return '<a title="Click to show detail of this IP" onclick="showDetailUE(\'IP\',\''+ ip +'\')">' + ip + '</a>';
-                     }).join(", ");
-                        
+                     }).join("; ");
+
                      var data = msg[ GTP.IMSI.id ];
                      if( data == null )
                         data = "_unknown";
@@ -249,7 +246,7 @@ var ReportFactory = {
                "paging": false,
                "scrollCollapse": true,
                "scrollY": "20px",
-                dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTable_UE't>",
+               dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTable_UE't>",
             },
             afterEachRender : function ( _chart ) {
                var $widget = $("#" + _chart.elemID).getWidgetParent();
@@ -267,474 +264,390 @@ var ReportFactory = {
                   var h = $div.parents().filter( ".grid-stack-item-content" )
                   .height() - 110;
                   $div.find(".dataTables_scrollBody").css({
-                        'max-height' : h,
-                        'height' : h,
-                        "border-top" : "thin solid #ddd"
+                     'max-height' : h,
+                     'height' : h,
+                     "border-top" : "thin solid #ddd"
                   })
                   .find(".table").css({
                      "border-top": "none"
                   });
                });
-               
+
                // resize when changing window size
                $widget.on("widget-resized", null, table, function (event, widget) {
                   if (event.data){
                      event.data.api().draw(false);
-                 }
+                  }
                });
                $widget.trigger("widget-resized", [$widget]);
             }
          } );
 
          var report = new MMTDrop.Report(
-            // title
-            null,
+               // title
+               null,
 
-            // database
-            database,
+               // database
+               database,
 
-            // filers
-            [],
+               // filers
+               [],
 
-            // charts
-            [
-               {
-                  charts : [ cTable],
-                  width : 12
-               }, ],
-
-               //order of data flux
+               // charts
                [
                   {
-                     object : cTable
-                  }] );
+                     charts : [ cTable],
+                     width : 12
+                  }, ],
+
+                  //order of data flux
+                  [
+                     {
+                        object : cTable
+                     }] );
 
          return report;
       }
-   ,
-   
-   createControlPlaneReportMME: function(){
-      //2 steps:
-      //- get list of MME IPs from data_gtp collection
-      //- select on data_sctp the documents having IPs as the same as the ones get from step1
-      
-      const database = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_gtp",
-         action : "aggregate",
-         query : [{"$group": {"_id": "$" + GTP.IP_DST.id, 
-            "ip":   {"$first" : "$" + GTP.IP_DST.id}, 
-            "name": {"$first" : "$" + GTP.MME_NAME.Id}}}],
-         raw : true
+,
+
+createControlPlaneReportMME: function(){
+   //mongoDB aggregate
+   const group = { _id : {} };
+   [  COL.PROBE_ID.id, GTP.MME_NAME.id ].forEach( function( el, index){
+      group["_id"][ el ] = "$" + el;
+   });
+   [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+      group[ el ] = {"$sum" : "$" + el};
+   });
+   [ COL.PROBE_ID.id, GTP.MME_NAME.id, COL.IP_DST.id, COL.MAC_DST.id ].forEach( function( el, index){
+      group[ el ] = {"$first" : "$"+ el};
+   });
+
+
+   const database = MMTDrop.databaseFactory.createStatDB( {
+      collection : "data_sctp",
+      action : "aggregate",
+      query : [{$group: group}],
+      raw: true
+   });
+
+
+   const detailDB = MMTDrop.databaseFactory.createStatDB( {
+      collection : "data_sctp",
+      action : "aggregate",
+      query : [],
+      raw : true
+   } );
+
+   detailDB.updateParameter = function( param ){
+      param.period = status_db.time;
+      param.period_groupby = fPeriod.selectedOption().id;
+
+      //value of match will be filled by UE's IP when user click on one row
+      const match = {};
+      match[ GTP.MME_NAME.id ] = detailDB.__mme_name;
+
+
+      const group = { _id : {} };
+      [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
+         group["_id"][ el ] = "$" + el;
+      });
+      [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+         group[ el ] = {"$sum" : "$" + el};
+      });
+      [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+         group[ el ] = {"$first" : "$"+ el};
       });
 
-//      //get IP of MME from mysql DB
-//      const database = MMTDrop.databaseFactory.createStatDB( {
-//         collection : "mysql",
-//         action     : "query",
-//         query      : ["select s1_adr as ip from amf_settings"],
-//         raw        : true,
-//         no_group   : true, 
-//         no_override_when_reload: true,
-//      });
+      param.query = [{$match: match}, {$group: group}];
+   }
 
-      const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_sctp",
-         action : "aggregate",
-         query : [],
-         raw : true
+   detailDB.afterReload( function( data ){
+      const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
+      $detailDlg.$title.html("Detail of control plane traffic of MME " + detailDB.__mme_name );
+      $detailDlg.$content.html('<table id="detail-mme" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
+      $detailDlg.modal();
+
+      $('#detail-mme').DataTable( {
+         data: data,
+         columns: [
+            { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
+            { data: COL.IP_DST.id,       title: "MME's IP" },
+            { data: COL.MAC_DST.id,      title: "MME's MAC" },
+            { data: GTP.ENB_NAME.id,     title: "eNodeB" },
+            { data: COL.IP_SRC.id,       title: "eNodeB's IP" },
+            { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
+            { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
+               //remove unk proto
+               if( path.endsWith(".0"))
+                  path = path.substr(0, path.length - 2 );
+               return MMTDrop.constants.getPathFriendlyName( path );
+            }},
+            { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num",  className: "text-right" },
+            { data: COL.PACKET_COUNT.id, title: "#Packets",  type: "num", className: "text-right" },
+            ]
       });
-      
-      database.afterReload( function( data ){
-       //list of IPs
-         const ipList = [];
-         for( var i=0; i<data.length; i++ )
-            ipList.push( data[i].ip );
-         
-         const match = {};
-         match[ COL.IP_DST.id ] = {"$in": ipList};
-         
-         //mongoDB aggregate
-         const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.IP_DST.id ].forEach( function( el, index){
-            group["_id"][ el ] = "$" + el;
-         });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-            group[ el ] = {"$sum" : "$" + el};
-         });
-         [ COL.PROBE_ID.id, COL.IP_DST.id, COL.MAC_DST.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
-         });
+      //console.log( data );
+   })
 
-         const param = {};
-         param.period = status_db.time, 
-         param.period_groupby = fPeriod.selectedOption().id, 
-
-         param.query = [{$match: match},{$group: group}];
-         
-         databaseSCTP.reload( param, function(){
-            cTable.attachTo( databaseSCTP );
-            cTable.redraw();
-         });
-      });
-      
-      const detailDB = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_sctp",
-         action : "aggregate",
-         query : [],
-         raw : true
-      } );
-      
-      detailDB.updateParameter = function( param ){
-         param.period = status_db.time;
-         param.period_groupby = fPeriod.selectedOption().id;
-
-         //value of match will be filled by UE's IP when user click on one row
-         const match = {};
-         match[ COL.IP_SRC.id ] = detailDB.__ip;
-         
-         
-         const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
-            group["_id"][ el ] = "$" + el;
-         });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-            group[ el ] = {"$sum" : "$" + el};
-         });
-         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
-         });
-         
-         param.query = [{$match: match}, {$group: group}];
+   //when user click on an IP
+   window.showDetaileMME = function( mme_name ){
+      if( mme_name != "" ){
+         detailDB.__mme_name = mme_name;
+         detailDB.reload();
       }
+      return false;
+   };
 
-      detailDB.afterReload( function( data ){
-         const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
-         $detailDlg.$title.html("Detail of control plane traffic of MME " + detailDB.__ip );
-         $detailDlg.$content.html('<table id="detail-mme" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
-         $detailDlg.modal();
+   const cTable = MMTDrop.chartFactory
+   .createTable({
+      getData : {
+         getDataFn : function ( db ) {
+            const arr = db.data();
+            for( var i=0; i<arr.length; i++ ){
+               var msg = arr[i];
 
-         $('#detail-mme').DataTable( {
-            data: data,
-            columns: [
-               { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-               { data: COL.IP_DST.id,       title: "MME's IP" },
-               { data: COL.MAC_DST.id,      title: "MME's MAC" },
-               { data: COL.IP_SRC.id,       title: "eNodeB's IP" },
-               { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
-               { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
-                  //remove unk proto
-                  if( path.endsWith(".0"))
-                     path = path.substr(0, path.length - 2 );
-                  return MMTDrop.constants.getPathFriendlyName( path );
-               }},
-               { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num",  className: "text-right" },
-               { data: COL.PACKET_COUNT.id, title: "#Packets",  type: "num", className: "text-right" },
-               ]
-         });
-         //console.log( data );
-      })
+               var fun = "createPopupReport('sctp'," //collection
+                  + GTP.MME_NAME.id  //key 
+                  +",'" + msg[ GTP.MME_NAME.id ] //id
+               +"','MME: " + msg[ GTP.MME_NAME.id ] //title 
+               + "' )";
 
-      //when user click on an IP
-      window.showDetaileMME = function( dom ){
-         const IP = $(dom).text();
-         console.log( IP );
-         if( IP != "" ){
-            detailDB.__ip = IP;
-            detailDB.reload();
-         }
-         return false;
-      };
-
-      const cTable = MMTDrop.chartFactory
-      .createTable({
-         getData : {
-            getDataFn : function ( db ) {
-               const arr = db.data();
-               for( var i=0; i<arr.length; i++ ){
-                  var msg = arr[i];
-
-                  var fun = "createPopupReport('sctp'," //collection
-                     + COL.IP_DST.id  //key 
-                     +",'" + msg[ COL.IP_DST.id ] //id
-                  +"','IP: " + msg[ COL.IP_DST.id ] //title 
-                  + "' )";
-
-                  msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
-
-                  msg[ COL.IP_DST.id ] = '<a title="Click to show detail of this IP" onclick="showDetaileMME(this)">' + msg[ COL.IP_DST.id ] + '</a>';
-               }
-               return {
-                  columns : [
-                     {id: COL.IP_DST.id, label: "IP of MME"},
-                     {id: COL.MAC_DST.id, label: "MAC of MME"},
-                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
-                     {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
-                     {id: "graph"}
-                     ],
-                     data : arr
-               };
+               msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
             }
-         },
-         chart : {
-            "order" : [ [ 0, "asc"]],
-            dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTables_MME't>",
-         },
-         afterEachRender : function ( _chart ) {
-            var $widget = $("#" + _chart.elemID).getWidgetParent();
-            // /configuration of interface: arrange components
-            // hide the filers of report (not the one of Datatable)
-            $( "#report_filters" ).hide();
 
-            var table = _chart.chart;
-            if ( table == undefined )
-               return;
-
-            table.on( "draw.dt", function () {
-               console.log( "redraw" );
-               var $div = $( '.dataTable_MME' );
-               var h = $div.parents().filter( ".grid-stack-item-content" )
-               .height() - 110;
-               $div.find(".dataTables_scrollBody").css({
-                     'max-height' : h,
-                     'height' : h,
-                     "border-top" : "thin solid #ddd"
-               })
-               .find(".table").css({
-                  "border-top": "none"
-               });
-            });
-            
-            // resize when changing window size
-            $widget.on("widget-resized", null, table, function (event, widget) {
-               if (event.data){
-                  event.data.api().draw(false);
-              }
-            });
-            $widget.trigger("widget-resized", [$widget]);
+            return {
+               columns : [
+                  {id: GTP.MME_NAME.id, label: "Name", format: function( val ){
+                     return '<a title="Click to show detail of this MME" onclick="showDetaileMME(\''+ val +'\')">' + val + '</a>';;
+                  }},
+                  {id: COL.IP_DST.id, label: "IP"},
+                  {id: COL.MAC_DST.id, label: "MAC"},
+                  {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
+                  {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet", format: MMTDrop.tools.formatLocaleNumber}, 
+                  {id: "graph"}
+                  ],
+                  data : arr
+            };
          }
-      });
+      },
+      chart : {
+         "order" : [ [ 0, "asc"]],
+         dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTables_MME't>",
+      },
+      afterEachRender : function ( _chart ) {
+         var $widget = $("#" + _chart.elemID).getWidgetParent();
+         // /configuration of interface: arrange components
+         // hide the filers of report (not the one of Datatable)
+         $( "#report_filters" ).hide();
 
-      return new MMTDrop.Report(
+         var table = _chart.chart;
+         if ( table == undefined )
+            return;
+
+         table.on( "draw.dt", function () {
+            console.log( "redraw" );
+            var $div = $( '.dataTable_MME' );
+            var h = $div.parents().filter( ".grid-stack-item-content" )
+            .height() - 110;
+            $div.find(".dataTables_scrollBody").css({
+               'max-height' : h,
+               'height' : h,
+               "border-top" : "thin solid #ddd"
+            })
+            .find(".table").css({
+               "border-top": "none"
+            });
+         });
+
+         // resize when changing window size
+         $widget.on("widget-resized", null, table, function (event, widget) {
+            if (event.data){
+               event.data.api().draw(false);
+            }
+         });
+         $widget.trigger("widget-resized", [$widget]);
+      }
+   });
+
+   return new MMTDrop.Report(
          null,
          database,
          [],
          [ {
-               charts : [ cTable],
-               width : 12
-            }, ],
+            charts : [ cTable],
+            width : 12
+         }, ],
 
-          [] 
-      );
-   },
-   
-   
-   createControlPlaneReporteNodeB: function(){
-      //2 steps:
-      //- get list of eNodeB IPs from data_gtp collection
-      //- select on data_sctp the documents having IPs as the same as the ones get from step1
-      
-      const database = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_gtp",
-         action : "aggregate",
-         query : [{"$group": {"_id": "$" + GTP.IP_SRC.id, "ip": {"$first": "$" + GTP.IP_SRC.id}}}],
-         raw : true
+         //order of data flux
+         [{object : cTable }]
+   );
+},
+
+
+createControlPlaneReporteNodeB: function(){
+   //mongoDB aggregate
+   const group = { _id : {} };
+   [  COL.PROBE_ID.id, GTP.MME_NAME.id ].forEach( function( el, index){
+      group["_id"][ el ] = "$" + el;
+   });
+   [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+      group[ el ] = {"$sum" : "$" + el};
+   });
+   [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.MAC_SRC.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+      group[ el ] = {"$first" : "$"+ el};
+   });
+
+
+   const database = MMTDrop.databaseFactory.createStatDB( {
+      collection : "data_sctp",
+      action : "aggregate",
+      query : [{$group: group}],
+      raw : true
+   });
+
+   const detailDB = MMTDrop.databaseFactory.createStatDB( {
+      collection : "data_sctp",
+      action : "aggregate",
+      query : [],
+      raw : true
+   } );
+   detailDB.updateParameter = function( param ){
+      param.period = status_db.time;
+      param.period_groupby = fPeriod.selectedOption().id;
+
+      //value of match will be filled by UE's IP when user click on one row
+      const match = {};
+      match[ GTP.ENB_NAME.id ] = detailDB.__enb_name;
+
+      const group = { _id : {} };
+      [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
+         group["_id"][ el ] = "$" + el;
       });
-//      const database = MMTDrop.databaseFactory.createStatDB( {
-//         collection : "mysql",
-//         action     : "query",
-//         query      : ["select enb_ip as ip from amf_enb_data"],
-//         raw        : true,
-//         no_group   : true, 
-//         no_override_when_reload: true,
-//      });
-      
-      const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_sctp",
-         action : "aggregate",
-         query : [],
-         raw : true
+      [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+         group[ el ] = {"$sum" : "$" + el};
       });
-      
-      database.afterReload( function( data ){
-         //list of IPs
-         const ipList = [];
-         for( var i=0; i<data.length; i++ )
-            ipList.push( data[i].ip );
-         
-         const match = {};
-         match[ COL.IP_SRC.id ] = {"$in": ipList};
-         
-         //mongoDB aggregate
-         const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.IP_SRC.id ].forEach( function( el, index){
-            group["_id"][ el ] = "$" + el;
-         });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-            group[ el ] = {"$sum" : "$" + el};
-         });
-         [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.MAC_SRC.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
-         });
-
-         const param = {};
-         param.period = status_db.time, 
-         param.period_groupby = fPeriod.selectedOption().id, 
-
-         param.query = [{$match: match},{$group: group}];
-         
-         databaseSCTP.reload( param, function(){
-            cTable.attachTo( databaseSCTP );
-            cTable.redraw();
-         });
+      [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, COL.APP_PATH.id, GTP.MME_NAME.id ].forEach( function( el, index){
+         group[ el ] = {"$first" : "$"+ el};
       });
-      
-      const detailDB = MMTDrop.databaseFactory.createStatDB( {
-         collection : "data_sctp",
-         action : "aggregate",
-         query : [],
-         raw : true
-      } );
-      detailDB.updateParameter = function( param ){
-         param.period = status_db.time;
-         param.period_groupby = fPeriod.selectedOption().id;
 
-         //value of match will be filled by UE's IP when user click on one row
-         const match = {};
-         match[ COL.IP_SRC.id ] = detailDB.__ip;
-         
-         const group = { _id : {} };
-         [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
-            group["_id"][ el ] = "$" + el;
-         });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-            group[ el ] = {"$sum" : "$" + el};
-         });
-         [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
-            group[ el ] = {"$first" : "$"+ el};
-         });
-         
-         param.query = [{$match: match}, {$group: group}];
-      }
+      param.query = [{$match: match}, {$group: group}];
+   }
 
-      detailDB.afterReload( function( data ){
-         const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
-         $detailDlg.$title.html("Detail of control plane traffic of eNodeB " + detailDB.__ip );
-         $detailDlg.$content.html('<table id="detail-enodeb" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
-         $detailDlg.modal();
+   detailDB.afterReload( function( data ){
+      const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
+      $detailDlg.$title.html("Detail of control plane traffic of eNodeB: " + detailDB.__enb_name );
+      $detailDlg.$content.html('<table id="detail-enodeb" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
+      $detailDlg.modal();
 
-         $('#detail-enodeb').DataTable( {
-            data: data,
-            columns: [
-               { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-               { data: COL.IP_SRC.id,       title: "eNodeB's IP" },
-               { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
-               { data: COL.IP_DST.id,       title: "MME's MAC" },
-               { data: COL.MAC_DST.id,      title: "MME's MAC" },
-               { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
-                  //remove unk proto
-                  if( path.endsWith(".0"))
-                     path = path.substr(0, path.length - 2 );
-                  return MMTDrop.constants.getPathFriendlyName( path );
-               }},
-               { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
-               { data: COL.PACKET_COUNT.id, title: "#Packets", type: "num", className: "text-right" },
-               ]
-         });
-         //console.log( data );
-      })
+      $('#detail-enodeb').DataTable( {
+         data: data,
+         columns: [
+            { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
+            { data: COL.IP_SRC.id,       title: "eNodeB's IP" },
+            { data: COL.MAC_SRC.id,      title: "eNodeB's MAC" },
+            { data: GTP.MME_NAME.id,     title: "MME" },
+            { data: COL.IP_DST.id,       title: "MME's MAC" },
+            { data: COL.MAC_DST.id,      title: "MME's MAC" },
+            { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
+               //remove unk proto
+               if( path.endsWith(".0"))
+                  path = path.substr(0, path.length - 2 );
+               return MMTDrop.constants.getPathFriendlyName( path );
+            }},
+            { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
+            { data: COL.PACKET_COUNT.id, title: "#Packets", type: "num", className: "text-right" },
+            ]
+      });
+      //console.log( data );
+   })
 
-      //when user click on an IP
-      window.showDetaileNodeB = function( dom ){
-         const IP = $(dom).text();
-         console.log( IP );
-         if( IP != "" ){
-            detailDB.__ip = IP;
-            detailDB.reload();
+   //when user click on an IP
+   window.showDetaileNodeB = function( enb_name ){
+      detailDB.__enb_name = enb_name;
+      detailDB.reload();
+      return false;
+   };
+
+   const cTable = MMTDrop.chartFactory
+   .createTable({
+      getData : {
+         getDataFn : function ( db ) {
+            const arr = db.data();
+            return {
+               columns : [
+                  {id: GTP.ENB_NAME.id, label: "Name", format(val){
+                     return '<a title="Click to show detail of this eNodeB" onclick="showDetaileNodeB(\''+ val +'\')">' + val + '</a>';
+                  }},
+                  {id: COL.IP_SRC.id, label: "IP of eNodeB"},
+                  {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
+                  {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
+                  {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
+                  {id: "graph", format(val, msg){
+                     var fun = "createPopupReport('sctp'," //collection
+                        + GTP.ENB_NAME.id  //key 
+                        +",'" + msg[ GTP.ENB_NAME.id ] //id
+                     +"','eNodeB: " + msg[ GTP.ENB_NAME.id ] //title 
+                     + "' )";
+
+                     return '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
+                  }}
+                  ],
+                  data : arr
+            };
          }
-         return false;
-      };
+      },
+      chart : {
+         "order" : [ [ 0, "asc"]],
+         "paging": false,
+         dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTables_eNodeB't>",
+      },
+      afterEachRender : function ( _chart ) {
+         var $widget = $("#" + _chart.elemID).getWidgetParent();
+         // /configuration of interface: arrange components
+         // hide the filers of report (not the one of Datatable)
+         $( "#report_filters" ).hide();
 
-      const cTable = MMTDrop.chartFactory
-      .createTable({
-         getData : {
-            getDataFn : function ( db ) {
-               const arr = db.data();
-               for( var i=0; i<arr.length; i++ ){
-                  var msg = arr[i];
+         var table = _chart.chart;
+         if ( table == undefined )
+            return;
 
-                  var fun = "createPopupReport('sctp'," //collection
-                     + COL.IP_SRC.id  //key 
-                     +",'" + msg[ COL.IP_SRC.id ] //id
-                  +"','IP: " + msg[ COL.IP_SRC.id ] //title 
-                  + "' )";
+         table.on( "draw.dt", function () {
+            console.log( "redraw" );
+            var $div = $( '.dataTable_UE' );
+            var h = $div.parents().filter( ".grid-stack-item-content" )
+            .height() - 110;
+            $div.find(".dataTables_scrollBody").css({
+               'max-height' : h,
+               'height' : h,
+               "border-top" : "thin solid #ddd"
+            })
+            .find(".table").css({
+               "border-top": "none"
+            });
+         });
 
-                  msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
-
-                  msg[ COL.IP_SRC.id ] = '<a title="Click to show detail of this IP" onclick="showDetaileNodeB(this)">' + msg[ COL.IP_SRC.id ] + '</a>';
-               }
-               return {
-                  columns : [
-                     {id: COL.IP_SRC.id, label: "IP of eNodeB"},
-                     {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
-                     {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
-                     {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
-                     {id: "graph"}
-                     ],
-                     data : arr
-               };
+         // resize when changing window size
+         $widget.on("widget-resized", null, table, function (event, widget) {
+            if (event.data){
+               event.data.api().draw(false);
             }
-         },
-         chart : {
-            "order" : [ [ 0, "asc"]],
-            "paging": false,
-            dom : "<'row' <'col-sm-9'i><'col-sm-3'f>><'dataTables_eNodeB't>",
-         },
-         afterEachRender : function ( _chart ) {
-            var $widget = $("#" + _chart.elemID).getWidgetParent();
-            // /configuration of interface: arrange components
-            // hide the filers of report (not the one of Datatable)
-            $( "#report_filters" ).hide();
+         });
+         $widget.trigger("widget-resized", [$widget]);
+      }
+   } );
 
-            var table = _chart.chart;
-            if ( table == undefined )
-               return;
-
-            table.on( "draw.dt", function () {
-               console.log( "redraw" );
-               var $div = $( '.dataTable_UE' );
-               var h = $div.parents().filter( ".grid-stack-item-content" )
-               .height() - 110;
-               $div.find(".dataTables_scrollBody").css({
-                     'max-height' : h,
-                     'height' : h,
-                     "border-top" : "thin solid #ddd"
-               })
-               .find(".table").css({
-                  "border-top": "none"
-               });
-            });
-            
-            // resize when changing window size
-            $widget.on("widget-resized", null, table, function (event, widget) {
-               if (event.data){
-                  event.data.api().draw(false);
-              }
-            });
-            $widget.trigger("widget-resized", [$widget]);
-         }
-      } );
-
-      return new MMTDrop.Report(
+   return new MMTDrop.Report(
          // title
          null,
          database,
          [],
          [ {
-               charts : [ cTable],
-               width : 12
-            }, ],
+            charts : [ cTable],
+            width : 12
+         }, ],
 
-         [] 
-      );
-   }
+         [{object: cTable}] 
+   );
+}
 }
