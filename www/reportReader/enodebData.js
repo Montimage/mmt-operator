@@ -1,7 +1,8 @@
-const dataIndex = require("../libs/shared/dataIndex");
-const config    = require("../libs/config.js");
-const tools     = require("../libs/tools");
-const mysql     = require('mysql');
+const dataIndex   = require("../libs/shared/dataIndex");
+const dataAdaptor = require("../libs/dataAdaptor");
+const config      = require("../libs/config.js");
+const tools       = require("../libs/tools");
+const mysql       = require('mysql');
 
 
 
@@ -164,8 +165,17 @@ function _appendSuplementData( type, msg, cb ){
                   o[ GTP.ENB_NAME ] = "_unknown";
                   o[ GTP.MME_NAME ] = "_unknown";
                }else{
-                  o[ GTP.ENB_NAME ] = "_unknown";
-                  o[ GTP.MME_NAME ] = "_unknown";
+                  //try onther end
+                  ip = msg[ COL.IP_DST ]
+                  o = cache[type][ip];
+                  if( o == undefined ){
+                     o[ GTP.ENB_NAME ] = "_unknown";
+                     o[ GTP.MME_NAME ] = "_unknown";
+                  }
+                  else{
+                     //to ensure that IP_SRC is IP of eNodeB
+                     dataAdaptor.inverseStatDirection( msg );
+                  }
                }
                //ignore this UE in a moment (DB_QUERY_INTERVAL)
                cache[type][ ip ] = o;
