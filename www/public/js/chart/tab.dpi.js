@@ -255,7 +255,17 @@ var ReportFactory = {
             afterEachRender: function (_chart) {
                 //show total of detected protocol/app
                 if( _chart.totalProtocols == undefined )
+                   _chart.totalProtocols = 0;
+                
+                if( _chart.totalProtocols == 0 ){
                     _chart.totalProtocols = 0;
+                    //do not take into account cLine
+                    loading.totalChart = 1;
+                }else{
+                    //take into account cLine
+                    loading.totalChart = 2;
+                }
+                
                 var str = _chart.totalProtocols +" distinct protocols/applications";
 
                 $("#" + _chart.elemID).append('<div style="font-size:12px; margin-top: 10px; color:green">'+ str +'</div>');
@@ -280,12 +290,6 @@ var ReportFactory = {
                     _chart.chart.updateSize( 450 );
                 });
                 $widget.trigger("widget-resized", [$widget]);
-                
-                
-                
-                
-                //take into account cLine
-                loading.totalChart = 2;
             }
         });
 
