@@ -576,14 +576,14 @@ createControlPlaneReporteNodeB: function(){
             const arr = db.data();
             return {
                columns : [
-                  {id: GTP.ENB_NAME.id, label: "Name", format(val){
+                  {id: GTP.ENB_NAME.id, label: "Name", format: function(val){
                      return '<a title="Click to show detail of this eNodeB" onclick="showDetaileNodeB(\''+ val +'\')">' + val + '</a>';
                   }},
                   {id: COL.IP_SRC.id, label: "IP of eNodeB"},
                   {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
                   {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
                   {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
-                  {id: "graph", format(val, msg){
+                  {id: "graph", format : function(val, msg){
                      var fun = "createPopupReport('sctp'," //collection
                         + GTP.ENB_NAME.id  //key 
                         +",'" + msg[ GTP.ENB_NAME.id ] //id
