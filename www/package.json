@@ -6,8 +6,9 @@
     "build": "node ./bin/build build",
     "build-deb": "node ./bin/build deb",
     "build-rpm": "node ./bin/build rpm",
+    "build-tar": "node ./bin/build tar",
     "install": "node ./bin/build install",
-    "clean": "node ./bin/build dist-clean",
+    "dist-clean": "node ./bin/build dist-clean",
     "test": "echo '=> testing' && mocha test-cases/"
   },
   "engines": {

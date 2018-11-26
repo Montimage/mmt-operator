@@ -269,8 +269,8 @@ function build(built_type) {
                   cp.execSync( "mkdir -p "+ rpmDir +"/{RPMS,BUILD}" );
                   cp.execSync('rpmbuild --quiet --rmspec --define "_topdir '+ rpmDir +'" --define "_rpmfilename ../../'+ NAME +'.rpm" -bb ./mmt.spec');
                   cp.execSync( "rm -rf " + rpmDir + " " + DEB_PATH );
-            }else
-                console.log("Unknow build type: " + built_type );
+            }//else
+             //   console.log("Unknow build type: " + built_type );
 
 
 
@@ -282,21 +282,23 @@ function build(built_type) {
 }
 
 
-
+const SERVICE_FILE = "/etc/systemd/system//mmt-operator.service";
 
 function install() {
     if (PLATFORM != "linux")
-        return console.log("Install for Linux platform only.");
+        return console.error("Install for Linux platform only.");
+    if( ! fs.existsSync(DIST_PATH) )
+        return console.error("Do firstly 'npm run build'");
 
     log("Install MMT-Operator at /opt/mmt/operator");
     mkdir("/opt/mmt", function () {
         copy(DIST_PATH, " /opt/mmt/", function () {
             log("Set MMT-Operator as service");
-            var daemon_file = path.join(__dirname, "..", "daemon.sh");
-            copy(daemon_file, "/etc/init.d/operator_d", function () {
-                cp.exec("chmod +x " + daemon_file, function (err) {
+            var daemon_file = path.join(__dirname, "..", "mmt-operator.service");
+            copy(daemon_file, SERVICE_FILE, function () {
+                cp.exec("chmod +x " + SERVICE_FILE + " & systemctl daemon-reload", function (err) {
                     if (err) return console.error(err);
-                    console.log("now you can use MMT-Operator using the commands:\n sudo service operator_d start|stop|restart|status");
+                    console.log("now you can use MMT-Operator using the commands:\n sudo systemctl start|stop|restart|status mmt-operator");
                     console.log("the config file is located at /opt/mmt/operator/config.json");
                     console.log("");
                 })
@@ -308,7 +310,7 @@ function install() {
 function dist_clean() {
     log("Remove MMT-Operator")
     remove("/opt/mmt/operator", function () {
-        remove("/etc/init.d/operator_d", function () {
+        remove(SERVICE_FILE, function () {
             log("Done", 1);
         })
     })
@@ -319,16 +321,25 @@ var action = "";
 if (process.argv.length > 2)
     action = process.argv[2];
 
-
-if (action == "tar")
+switch( action ){
+case "build":
+    build("");
+    break;
+case "tar":
     build("tar");
-else if (action == "install") {
+    break;
+case "install":
     install();
-} else if (action == "dist-clean")
+    break;
+case "dist-clean":
     dist_clean();
-else if (action == "deb") 
+    break;
+case "deb": 
     build("deb");
-else if (action == "rpm")
+    break;
+case "rpm":
     build("rpm");
-else
-    console.error("Usage: " + process.argv[0] + " " + process.argv[1] + " tar|deb|rpm|dist-clean|install\n");
+    break;
+default:
+    console.error("Unknown action: " + action);
+}

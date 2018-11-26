@@ -1,0 +1,16 @@
+[Unit]
+Description = MMT-Operator
+Wants       = network.target mongod.service
+After       = network.target mongod.service
+
+[Service]
+Type             = simple
+WorkingDirectory = /opt/mmt/operator
+ExecStart        = /bin/bash -c '$$(which node) ./bin/www'
+Restart          = on-failure
+StandardOutput   = syslog
+StandardError    = syslog
+PIDFile          = /var/run/mmt-operator.pid
+
+[Install]
+WantedBy = multi-user.target
