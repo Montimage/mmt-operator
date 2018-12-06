@@ -221,7 +221,7 @@ var ReportFactory = {
                 [ COL.TIMESTAMP.id, COL.PROBE_ID.id ].forEach( function( el, index){
                   $group["_id"][ el ] = "$" + el;
                 } );
-                $group["_id"]["ap"] = "$app_paths.app";
+                $group["_id"]["ap"] = "$app_paths.path";
                 
                 [ COL.DATA_VOLUME.id, COL.PAYLOAD_VOLUME.id, COL.PACKET_COUNT.id, COL.ACTIVE_FLOWS.id
                 ].forEach( function( el, index){
