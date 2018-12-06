@@ -233,7 +233,7 @@ var ReportFactory = {
             /**
              * {
              * nodes: {
-             *    a : { type: "xx", label: "hihi"}, //name : data 
+             *    a : { type: "xx", label: "hihi"},
              *    b : { type: "zz", label: "hehe"} 
              * },
              * links: [
@@ -252,8 +252,11 @@ var ReportFactory = {
             const nodes_obj = {};
             function normalizeNode( o ){
                //node exists
-               if( nodes_obj[o.name ] != undefined )
+               if( nodes_obj[o.name ] != undefined ){
+                  //remove __toBeCleared flag
+                  delete( nodes_obj[ o.name ].__toBeCleared );
                   return;
+               }
                
                if( o == null )
                   return;
@@ -307,15 +310,19 @@ var ReportFactory = {
                   links_obj[ name ] = o;
                   links.push( o );
                }
-               else
+               else{
+                  //remove __toBeCleared flag
+                  delete( links_obj[ name ].__toBeCleared );
+                  
                   //is existing a link having the same source-dest?
                   //if yes, cummulate their labels
                   //links_obj[name].label += " " + msg.label;
                   return;
+               }
             }
 
-            for( var i=0; i<obj.links.length; i++ )
-               normalizeLink( obj.links[i] );
+            //normalize each link
+            obj.links.forEach( normalizeLink )
 
 
             // size of display content
@@ -337,16 +344,17 @@ var ReportFactory = {
             .friction(0.7)
             .linkDistance( function(d){
                return 70 + d.source.radius + d.target.radius;
-            } )
-            // .gravity(.7)
+            })
             .size([width, height]);
 
 
             // Creates the graph data structure out of the json data
             force.nodes(nodes)
-            .links(links)
-            .start();
+            .links(links);
 
+            svg.nodes = nodes;
+            svg.links = links;
+            
             var  node = svg.selectAll(".node");
             var link  = svg.selectAll(".link");
 
@@ -587,10 +595,13 @@ var ReportFactory = {
                
             }
 
+            
+            
             function updatePosition() {
+               //console.log("update position, force.alpha = " + force.alpha() );
 //             if (force.alpha() < 0.01)
 //             return;
-               const linkSVG = svg.selectAll(".link");
+               const linkSVG = link; //svg.selectAll(".link");
                linkSVG.selectAll("path")
                .attr("d", function(d) {
                   //use saved position rather than the one being given by d3.force
@@ -610,7 +621,7 @@ var ReportFactory = {
                ;
 
                //node
-               const nodeSVG = svg.selectAll(".node");
+               const nodeSVG = node;//svg.selectAll(".node");
                nodeSVG.selectAll("circle")
                .attr("cx", function(d) { 
                   // fix 2 nodes
@@ -657,7 +668,7 @@ var ReportFactory = {
                      return "red";
                   return "black";
                })
-               ;               
+               ;
             }
 
             updateLinks();
@@ -666,23 +677,44 @@ var ReportFactory = {
             // generating the co-ordinates which this code is using to update
             // the attributes of the SVG elements
             force.on("tick", updatePosition);
+            force.start();
 
-            /*
+            /**
              * Clear our data structure of nodes and links
              */
             svg.clearData = function(){
-               nodes.length = 0;
-               links.length = 0;
-               for( var i in nodes_obj )
-                  delete nodes_obj[i];
-               for( var i in links_obj )
-                  delete links_obj[i];
+               //mark all elements as being cleared
+               nodes.forEach( function( el ){
+                  el.__toBeCleared = true;
+               });
+               links.forEach( function( el ){
+                  el.__toBeCleared = true;
+               });
             }
             
-            /*
+            /**
              * Redraw the svg
              */
             svg.redraw = function() {
+               //remove the elements being marked by __toBeCleared flag
+               links.forEach( function( el, i ){
+                  if( el.__toBeCleared ){
+                     //remove its from links_obj
+                     delete( links_obj[ el.name ] );
+                     //remove its from links array
+                     links.splice( i, 1 );
+                  }
+               });
+               //remove the elements being marked by __toBeCleared flag
+               nodes.forEach( function( el, i ){
+                  if( el.__toBeCleared ){
+                     //remove its from links_obj
+                     delete( nodes_obj[ el.name ] );
+                     //remove its from links array
+                     nodes.splice( i, 1 );
+                  }
+               });
+               
                updateLinks();
                updateNodes();
 
@@ -698,8 +730,7 @@ var ReportFactory = {
              * If there exist a node having the same name, the new node will not be added 
              */
             svg.addNodes = function( arr ){
-               for( var i=0; i<arr.length; i++ )
-                  normalizeNode( arr[i] );
+               arr.forEach( normalizeNode );
             }
 
             /**
@@ -707,8 +738,7 @@ var ReportFactory = {
              * elem = {source: "b", target: "a", label: 1},
              */
             svg.addLinks = function( arr ){
-               for( var i=0; i<arr.length; i++ )
-                  normalizeLink( arr[i] );
+               arr.forEach( normalizeLink );
             }
 
             svg.hideNodesAndLinks = function( nodeType, isHidden ){
@@ -839,7 +869,6 @@ var ReportFactory = {
                   {source: enodeb.name, target: gw.name,     label: ""},
                   //{source: gw.name,     target: ue_2.name,   label: ""}, 
                ] );
-               
             }
             
             
@@ -862,7 +891,7 @@ var ReportFactory = {
                   {source: enodeb.name, target: mme.name, label: ""}
                ] );
             }
-            
+            window.svg = svg;
             return svg;
          }// end topoChart
 
@@ -907,10 +936,9 @@ var ReportFactory = {
          
          //callback is triggered each time database reloaded its data from server
          databaseGTP.afterReload( function( data ){
-            for( var i=0; i<data.length; i++ ){
-               const msg = data[i];
+            data.forEach( function( msg ){
                svg.addGtpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.IP_DST.id ], msg[ GTP.IMSI.id ], msg );
-            }
+            });
             
             //now we can redraw the svg
             svg.redraw();
@@ -951,10 +979,9 @@ var ReportFactory = {
             svg.clearData();
             
             //2. load sctp to get ENB and MME nodes
-            for( var i=0; i<data.length; i++ ){
-               const msg = data[i];
+            data.forEach( function( msg ){
                svg.addSctpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.MME_NAME.id ], msg );
-            }
+            });
             
             //3. load network traffic to get UE, ENB, MME, and GW nodes 
             databaseGTP.reload();
@@ -1019,7 +1046,6 @@ var ReportFactory = {
                //reload the current page
                MMTDrop.tools.reloadPage();
             }
-            
          }
          
          //load traffic from server when we got server's status in status_db
