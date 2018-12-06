@@ -305,15 +305,13 @@ var ReportFactory = {
                   var o = { 
                         source: nodes_obj[ msg.source ], //refer to its source object
                         target: nodes_obj[ msg.target ], //refer to its dest object
-                        label : msg.label
+                        label : msg.label,
+                        name  : name
                   };
                   links_obj[ name ] = o;
                   links.push( o );
                }
                else{
-                  //remove __toBeCleared flag
-                  delete( links_obj[ name ].__toBeCleared );
-                  
                   //is existing a link having the same source-dest?
                   //if yes, cummulate their labels
                   //links_obj[name].label += " " + msg.label;
@@ -596,11 +594,18 @@ var ReportFactory = {
             }
 
             
-            
+            force.__lastAlpha = 0;
             function updatePosition() {
                //console.log("update position, force.alpha = " + force.alpha() );
-//             if (force.alpha() < 0.01)
-//             return;
+               
+               if( force.alpha() != 0 ){
+                  var delta = Math.abs( force.__lastAlpha - force.alpha() );
+                  if( delta < 0.002  )
+                     return;
+               
+                  force.__lastAlpha = force.alpha();
+               }
+               
                const linkSVG = link; //svg.selectAll(".link");
                linkSVG.selectAll("path")
                .attr("d", function(d) {
@@ -683,11 +688,8 @@ var ReportFactory = {
              * Clear our data structure of nodes and links
              */
             svg.clearData = function(){
-               //mark all elements as being cleared
+               //mark all nodes as being cleared
                nodes.forEach( function( el ){
-                  el.__toBeCleared = true;
-               });
-               links.forEach( function( el ){
                   el.__toBeCleared = true;
                });
             }
@@ -696,24 +698,27 @@ var ReportFactory = {
              * Redraw the svg
              */
             svg.redraw = function() {
-               //remove the elements being marked by __toBeCleared flag
-               links.forEach( function( el, i ){
-                  if( el.__toBeCleared ){
+               //remove the links having source or target are marked by __toBeCleared flag
+               for( var i=links.length-1; i>=0; i--){
+                  var el = links[i];
+                  if( el.source.__toBeCleared || el.target.__toBeCleared ){
                      //remove its from links_obj
                      delete( links_obj[ el.name ] );
                      //remove its from links array
                      links.splice( i, 1 );
                   }
-               });
-               //remove the elements being marked by __toBeCleared flag
-               nodes.forEach( function( el, i ){
+               };
+               
+               //remove the nodes being marked by __toBeCleared flag
+               for( var i=nodes.length - 1; i>=0; i--){
+                  var el = nodes[i];
                   if( el.__toBeCleared ){
                      //remove its from links_obj
                      delete( nodes_obj[ el.name ] );
-                     //remove its from links array
+                     //remove its from nodes array
                      nodes.splice( i, 1 );
                   }
-               });
+               };
                
                updateLinks();
                updateNodes();
