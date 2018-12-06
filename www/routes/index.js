@@ -1,7 +1,8 @@
 var format        = require('util').format,
     dataAdaptor   = require('../libs/dataAdaptor'),
     HttpException = require('../libs/HttpException'),
-    AdminDB       = require("../libs/AdminDB");
+    AdminDB       = require("../libs/AdminDB"),
+    config        = require("../libs/config.js");;
 
 var express = require('express');
 var router  = express.Router();
@@ -200,12 +201,10 @@ router.get("/profile", function (req, res, next) {
         
         if( msg == undefined ){ 
             msg = {};
-            version = "No License";
         }
-        else
-            version = "MMT-Operator: " + router.config.version 
-                  + "\nMMT-Probe   : " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] 
-                  + "\nMMT-SDK     : " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK]
+            version = "MMT-Operator: " + config.version 
+                  + "\nMMT-Probe: " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] 
+                  + "\nMMT-SDK: " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK]
         
         
         res.render('profile', {
