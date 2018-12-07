@@ -121,155 +121,171 @@ function process_dirs() {
 
 
 
+const SERVICE_FILE = "/etc/systemd/system//mmt-operator.service";
 
 function build(built_type) {
-    mkdir(DIST_PATH, function () {
-        //minify css
-        process_file(["public", "css"], "style.css", function (content, file) {
-            log("minify css: " + file);
-            return new CleanCSS().minify(content).styles;
-        });
+   if( fs.existsSync(DIST_PATH) )
+      cp.execSync("rm -rf " + DIST_PATH );
+   
+   mkdir(DIST_PATH, function () {
+      //minify css
+      process_file(["public", "css"], "style.css", function (content, file) {
+         log("minify css: " + file);
+         return new CleanCSS().minify(content).styles;
+      });
 
-        //minify javascript
-        var includeArr = ["www", "build"];
+      //minify javascript
+      var includeArr = ["www", "build"];
 
-        process_dirs(["."],
+      process_dirs(["."],
             function (content, file) {
-                try {
-                    if (includeArr.indexOf(file) == -1 && path.extname(file) != ".js")
-                        return;
-                        
-                    //exclude
-                    if( ["tab.network.js"].indexOf( file ) != -1 )
-                        return content;
-                        
-                    log("minify javascript: " + file);
-                    var ret = UglifyJS.minify(content, {
-                        fromString: true
-                    });
-                    return ret.code;
-                } catch (err) {
-                    console.error("Error when minify [" + file + "]: " + err.toString());
-                }
-            }
-        );
+         try {
+            if (includeArr.indexOf(file) == -1 && path.extname(file) != ".js")
+               return;
 
-        //beautify JSON
-        process_dirs(["."],
-            function (content, file) {
-                if (path.extname(file) != ".json")
-                    return;
-                log("beautify json: " + file);
-                var ret = JSON.parse(content);
-                return JSON.stringify(ret, null, "  ");
+            //exclude
+            if( ["tab.network.js"].indexOf( file ) != -1 )
+               return content;
+
+            log("minify javascript: " + file);
+            var ret = UglifyJS.minify(content, {
+               fromString: true
             });
+            return ret.code;
+         } catch (err) {
+            console.error("Error when minify [" + file + "]: " + err.toString());
+         }
+      }
+      );
+
+      //beautify JSON
+      process_dirs(["."],
+            function (content, file) {
+         if (path.extname(file) != ".json")
+            return;
+         log("beautify json: " + file);
+         var ret = JSON.parse(content);
+         return JSON.stringify(ret, null, "  ");
+      });
 
 
-        var copy_msg = function (file) {
-            log("copy folder: " + file);
-        }
-        copy_folder(["data"], copy_msg);
-        copy_folder(["node_modules"], copy_msg);
-        copy_folder(["public", "lib"], copy_msg);
-        copy_folder(["public", "img"], copy_msg);
-        copy_folder(["views"], copy_msg);
-        copy_folder(["public/favicon.ico"]);
+      var copy_msg = function (file) {
+         log("copy folder: " + file);
+      }
+      copy_folder(["data"], copy_msg);
+      copy_folder(["node_modules"], copy_msg);
+      copy_folder(["public", "lib"], copy_msg);
+      copy_folder(["public", "img"], copy_msg);
+      copy_folder(["views"], copy_msg);
+      copy_folder(["public/favicon.ico"]);
 
 
-        //Compressing output
-        process.on('exit', function () {
-            const NAME = "mmt-operator_" + VERSION.VERSION_NUMBER + "_" + VERSION.VERSION_HASH + "_" + moment().format("YYYY-MM-DD");
-            var command_str = "";
-            if (built_type == "tar") {
-                console.log("Compressing ... " + NAME);
-                command_str = "tar -czf " + NAME + ".tar.gz " + DIST_FOLDER;
-                
-                console.log(command_str);
-                cp.execSync(command_str, { cwd: BASE_PATH });
-            }else if( built_type == "deb" ){
-                const  DEB_PATH = path.join( BASE_PATH, NAME ),
-                        OP_PATH = path.join( DEB_PATH, "opt", "mmt");
-                cp.execSync( "mkdir -p " + OP_PATH );
+      //Compressing output
+      process.on('exit', function () {
+         const NAME = "mmt-operator_" + VERSION.VERSION_NUMBER + "_" + VERSION.VERSION_HASH + "_" + moment().format("YYYY-MM-DD");
+         var command_str = "";
+         if (built_type == "tar") {
+            console.log("Compressing ... " + NAME);
+            command_str = "tar -czf " + NAME + ".tar.gz " + DIST_FOLDER;
 
-                //create DEBIAN/control file
-                cp.execSync( "mkdir -p " + path.join( DEB_PATH, "DEBIAN" ) );
-                fs.writeFileSync( path.join( DEB_PATH, "DEBIAN", "control"),
-                    "Package: mmt-operator" +
-                    "\nVersion: " + VERSION.VERSION_NUMBER +
-                    "\nDepends: nodejs (>= 8.9.1)" +
-                    "\nSection: base" +
-                    "\nPriority: standard" +
-                    "\nArchitecture: all" +
-                    "\nMaintainer: Montimage <contact@montimage.com>" +
-                    "\nDescription: MMT-Operator: An Web application to visualize MMT meta-data" +
-                    "\n  Version id: " + VERSION.VERSION_HASH + ". Build time: " + moment().format("YYYY-MM-DD HH:mm:SS") +
-                    "\nHomepage: http://www.montimage.com\n"
-                );
-                
-                //copy source
-                cp.execSync("mv " + DIST_PATH + " " + OP_PATH );
-                
-                cp.execSync( "chmod +x " + path.join( OP_PATH, "operator", "bin", "www" ) );
-                //create symbol link mmt-operator to /opt/mmt/operator/bin/www
-                cp.execSync( "mkdir -p " + path.join( DEB_PATH, "usr", "bin" ) );
-                cp.execSync( "ln -s /opt/mmt/operator/bin/www " + path.join( DEB_PATH, "usr", "bin", "mmt-operator" ) );
-                
-                log("create " + NAME + ".deb")
-                //create deb file
-                cp.execSync("dpkg-deb -b " + NAME, { cwd: BASE_PATH });
-                //delete source folder
-                log("delete source folder")
-                cp.execSync("rm -rf " + NAME );
+            console.log(command_str);
+            cp.execSync(command_str, { cwd: BASE_PATH });
+         }else if( built_type == "deb" || built_type == "rpm" ){
+
+            var  DEB_PATH = path.join( BASE_PATH, NAME );
+            //clean the build folder if it is existing
+            if( fs.existsSync(DEB_PATH) )
+               cp.execSync( "rm -rf "   + DEB_PATH );
+            
+            var OP_PATH = path.join( DEB_PATH, "opt", "mmt");
+            cp.execSync( "mkdir -p " + OP_PATH );
+            
+            //copy source
+            cp.execSync("mv " + DIST_PATH + " " + OP_PATH );
+
+            cp.execSync( "chmod +x " + path.join( OP_PATH, "operator", "bin", "www" ) );
+            //create symbol link mmt-operator to /opt/mmt/operator/bin/www
+            cp.execSync( "mkdir -p " + path.join( DEB_PATH, "usr", "bin" ) );
+            cp.execSync( "ln -s /opt/mmt/operator/bin/www " + path.join( DEB_PATH, "usr", "bin", "mmt-operator" ) );
+            
+            //Set MMT-Operator as service
+            var daemon_file  = path.join(__dirname, "..", "mmt-operator.service");
+            var service_file = path.join( DEB_PATH, SERVICE_FILE ); //target file
+            cp.execSync( "mkdir -p " + path.dirname( service_file ) ); //create folder containing the service file
+            cp.execSync( "cp " + daemon_file + " " + service_file );
+            cp.execSync( "chmod +x " + service_file );
+            
+            if( built_type == "deb" ){
+               //create DEBIAN folder
+               cp.execSync( "mkdir -p " + path.join( DEB_PATH, "DEBIAN" ) );
+               
+               //the script will be executed after installing the deb file
+               var postinst_file = path.join( DEB_PATH, "DEBIAN", "postinst" );
+               fs.writeFileSync( postinst_file, "systemctl daemon-reload" );
+               cp.execSync( "chmod +x " + postinst_file );
+               
+               //create DEBIAN/control file
+               fs.writeFileSync( path.join( DEB_PATH, "DEBIAN", "control"),
+                     "Package: mmt-operator" +
+                     "\nVersion: " + VERSION.VERSION_NUMBER +
+                     "\nDepends: nodejs (>= 8.9.1)" +
+                     "\nSection: base" +
+                     "\nPriority: standard" +
+                     "\nArchitecture: all" +
+                     "\nMaintainer: Montimage <contact@montimage.com>" +
+                     "\nDescription: MMT-Operator: An Web application to visualize MMT meta-data" +
+                     "\n  Version id: " + VERSION.VERSION_HASH + ". Build time: " + moment().format("YYYY-MM-DD HH:mm:SS") +
+                     "\nHomepage: http://www.montimage.com\n"
+               );
+
+               log("create " + NAME + ".deb")
+               //create deb file
+               cp.execSync("dpkg-deb -b " + NAME, { cwd: BASE_PATH });
+               //delete source folder
+               log("delete source folder")
+               cp.execSync("rm -rf " + NAME, { cwd: BASE_PATH } );
             }else if( built_type == "rpm" ){
-                const  DEB_PATH = path.join( BASE_PATH, NAME ),
-                OP_PATH = path.join( DEB_PATH, "opt", "mmt");
-                cp.execSync( "mkdir -p " + OP_PATH );
-        
-                //copy source
-                cp.execSync("mv " + DIST_PATH + " " + OP_PATH );
-                
-                cp.execSync( "chmod +x " + path.join( OP_PATH, "operator", "bin", "www" ) );
-                //create symbol link mmt-operator to /opt/mmt/operator/bin/www
-                cp.execSync( "mkdir -p " + path.join( DEB_PATH, "usr", "bin" ) );
-                cp.execSync( "ln -s /opt/mmt/operator/bin/www " + path.join( DEB_PATH, "usr", "bin", "mmt-operator" ) );
-                
-                log("create " + NAME + ".rpm")
-                
-                fs.writeFileSync( "mmt.spec",
-                      "Summary:  MMT-Operator" +
-                      "\nName: mmt-operator" +
-                      "\nVersion: " + VERSION.VERSION_NUMBER +
-                      "\nRelease: " + VERSION.VERSION_HASH +
-                      "\nLicense: proprietary" +
-                      "\nGroup: Development/Tools" +
-                      "\nURL: http://montimage.com/" +
-                      "\n" +
-                      "\nBuildRoot: %{_topdir}/BUILD/%{name}-%{version}-%{release}" +
-                      "\n" +
-                      "\n%description" +
-                      "\nMMT-Operator is a tool for visualisation results of MMT-Probe." +
-                      "\nBuild date: " + moment().format("YYYY-MM-DD HH:mm:SS") +
-                      "\n" +
-                      "\n%prep" +
-                      "\nrm -rf %{buildroot}" +
-                      "\nmkdir -p %{buildroot}/" +
-                      "\nmv "+ DEB_PATH +"/*  %{buildroot}/" +
-                      "\n" +
-                      "\n%clean" +
-                      "\nrm -rf %{buildroot}" +
-                      "\n" +
-                      "\n%files" +
-                      "\n%defattr(-,root,root,-)" +
-                      "\n/opt/mmt/operator/*" +
-                      "\n/usr/bin/mmt-operator" +
-                      "\n%post" +
-                      "\nldconfig"
-                  );
-                  const rpmDir = path.join( BASE_PATH, "rpmbuild" );
-                  cp.execSync( "mkdir -p "+ rpmDir +"/{RPMS,BUILD}" );
-                  cp.execSync('rpmbuild --quiet --rmspec --define "_topdir '+ rpmDir +'" --define "_rpmfilename ../../'+ NAME +'.rpm" -bb ./mmt.spec');
-                  cp.execSync( "rm -rf " + rpmDir + " " + DEB_PATH );
-            }//else
+
+               log("create " + NAME + ".rpm")
+
+               fs.writeFileSync( "mmt.spec",
+                     "Summary:  MMT-Operator" +
+                     "\nName: mmt-operator" +
+                     "\nVersion: " + VERSION.VERSION_NUMBER +
+                     "\nRelease: " + VERSION.VERSION_HASH +
+                     "\nLicense: proprietary" +
+                     "\nGroup: Development/Tools" +
+                     "\nURL: http://montimage.com/" +
+                     "\n" +
+                     "\nBuildRoot: %{_topdir}/BUILD/%{name}-%{version}-%{release}" +
+                     "\n" +
+                     "\n%description" +
+                     "\nMMT-Operator is a tool for visualisation results of MMT-Probe." +
+                     "\nBuild date: " + moment().format("YYYY-MM-DD HH:mm:SS") +
+                     "\n" +
+                     "\n%prep" +
+                     "\nrm -rf %{buildroot}" +
+                     "\nmkdir -p %{buildroot}/" +
+                     "\nmv "+ DEB_PATH +"/*  %{buildroot}/" +
+                     "\n" +
+                     "\n%clean" +
+                     "\nrm -rf %{buildroot}" +
+                     "\n" +
+                     "\n%files" +
+                     "\n%defattr(-,root,root,-)" +
+                     "\n/opt/mmt/operator/*" +
+                     "\n/usr/bin/mmt-operator" +
+                     "\n%post" +
+                     "\nldconfig"
+               );
+               const rpmDir = path.join( BASE_PATH, "rpmbuild" );
+               cp.execSync( "mkdir -p "+ rpmDir +"/{RPMS,BUILD}" );
+               cp.execSync('rpmbuild --quiet --rmspec --define "_topdir '+ rpmDir +'" --define "_rpmfilename ../../'+ NAME +'.rpm" -bb ./mmt.spec');
+               cp.execSync( "rm -rf " + rpmDir + " " + DEB_PATH );
+            }
+         }
+
+               //else
              //   console.log("Unknow build type: " + built_type );
 
 
@@ -280,9 +296,6 @@ function build(built_type) {
 
     }); //end mkdir( DIST_PATH)
 }
-
-
-const SERVICE_FILE = "/etc/systemd/system//mmt-operator.service";
 
 function install() {
     if (PLATFORM != "linux")
@@ -296,7 +309,7 @@ function install() {
             log("Set MMT-Operator as service");
             var daemon_file = path.join(__dirname, "..", "mmt-operator.service");
             copy(daemon_file, SERVICE_FILE, function () {
-                cp.exec("chmod +x " + SERVICE_FILE + " & systemctl daemon-reload", function (err) {
+                cp.exec("chmod +x " + SERVICE_FILE + " && systemctl daemon-reload", function (err) {
                     if (err) return console.error(err);
                     console.log("now you can use MMT-Operator using the commands:\n sudo systemctl start|stop|restart|status mmt-operator");
                     console.log("the config file is located at /opt/mmt/operator/config.json");
