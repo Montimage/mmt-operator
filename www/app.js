@@ -295,6 +295,7 @@ function processError( err ){
    }
 }
 
+// the last routine handler which is called when no routine above is satisfied
 // error handler
 app.use(function(err, req, res, next) {
    processError( err );
@@ -315,13 +316,12 @@ function exit(){
         process._children[i].stop();
    }
    
- //Begin reading from stdin so the process does not exit instantly
    console.logStdout("Bye!\n");
-   process.exit(1);
+   process.exit();
 }
 
 //clean up
-function cleanup ( cb ){
+process.abort = function(){
     console.logStdout( "\nCleaning up before exiting ... ");
     //reset state of db-backup to default
     dbadmin.connect( function(err, db){
@@ -354,7 +354,7 @@ process.on('SIGINT',function(){
       }
       
       isExitImmediately = true;
-      cleanup();
+      process.abort();
     }catch( err ){
         console.error( "Error while quiting");
         console.error( err );

@@ -158,7 +158,7 @@ function _appendSuplementData( type, msg, cb ){
             o = cache[type][ip];
 
             //even after quering DB, we didn't find info of this IP
-            if( o == null ){
+            if( o == undefined  ){
                o = {};
                if( type == "ue" ){
                   o[ GTP.IMSI ]     = "_unknown";
@@ -169,6 +169,7 @@ function _appendSuplementData( type, msg, cb ){
                   ip = msg[ COL.IP_DST ]
                   o = cache[type][ip];
                   if( o == undefined ){
+                     o = {};
                      o[ GTP.ENB_NAME ] = "_unknown";
                      o[ GTP.MME_NAME ] = "_unknown";
                   }
@@ -189,6 +190,6 @@ function _appendSuplementData( type, msg, cb ){
 }
 
 module.exports = {
-      appendSuplementDataGtp: function( msg, cb ){ _appendSuplementData( "ue", msg, cb) },
+      appendSuplementDataGtp:  function( msg, cb ){ _appendSuplementData( "ue", msg, cb) },
       appendSuplementDataSctp: function( msg, cb ){ _appendSuplementData( "enb", msg, cb) }
 }; 
