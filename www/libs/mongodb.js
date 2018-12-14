@@ -11,10 +11,10 @@ mongodb.MongoClient.connect = function( dbName, callback ){
    + ":" + config.database_server.port + "/" + dbName;
    
    mongodb.MongoClient._connect( connectString, {
-      
-      autoReconnect: true,     // Reconnect on error.
-      reconnectTries:  3000, // Server attempt to reconnect #times
-      reconnectInterval: 5000, // Server will wait # milliseconds between retries.
+      useNewUrlParser:   true, // Determines whether or not to use the new url parser
+      autoReconnect:     true,  // Reconnect on error.
+      reconnectTries:    3000,  // Server attempt to reconnect #times
+      reconnectInterval: 5000,  // Server will wait # milliseconds between retries.
       
       bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connection
    },
@@ -35,19 +35,22 @@ mongodb.MongoClient.connect = function( dbName, callback ){
                 major : parseInt( arr[0] ),
                 minor : parseInt( arr[1] ),
                 build : parseInt( arr[2] ),
-          }
-          var versionNo = version.major*100 + version.minor*10 + version.build;
+          };
+          const versionNo = version.major*100 + version.minor*10 + version.build;
           
           if( versionNo < (3*100 + 6*10) ){
              console.error("Current MongoDB version is "+ info.version +". MMT-Operator needs MongoDB version 3.6.x");
              
-             process.exit();
+             process.abort();
           }
-      })
+      });
       
       callback( null,  db);
    });
 };
+
+mongodb.Collection.prototype._insert = mongodb.Collection.prototype.insert;
+mongodb.Collection.prototype.insert  = mongodb.Collection.prototype.insertOne;
 
 //override aggregate
 mongodb.Collection.prototype._aggregate = mongodb.Collection.prototype.aggregate;
@@ -73,6 +76,6 @@ mongodb.Collection.prototype.aggregate = function( query, options, cb ){
    }
    
    return cursor;
-}
+};
 
 module.exports = mongodb;

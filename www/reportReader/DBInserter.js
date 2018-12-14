@@ -45,7 +45,7 @@ module.exports = function( databaseName ){
 		if (err){
 			console.error("Cannot connect to Database " + connectString );
 			console.logStdout("Cannot connect to Database");
-			process.exit( 1 );
+			process.abort();
 		}
 
 		//connect OK

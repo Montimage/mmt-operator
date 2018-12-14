@@ -96,7 +96,7 @@ var MongoConnector = function () {
 	self.operatorStatus = {
 			set: function( status ){
 				var date = (new Date()).getTime();
-				self.mdb.collection("operator_status").insert({time: date, status: status});
+				self.mdb.collection("operator_status").insertOne({time: date, status: status});
 			},
 			get: function( period, callback ){
 				self.mdb.collection("operator_status").find({time: {$gte : period.begin, $lte: period.end}}).toArray( callback );

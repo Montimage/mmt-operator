@@ -54,13 +54,13 @@ function Cache ( option ) {
    const key_arr      = [];
    const stringBuilder = new StringBuilder( 2000 );
    
-   const add_val = function( o ){
+   function add_val( o ){
       for( var i in o ){
          var val = "" + o[i];
          if( key_arr.indexOf( val ) == -1)
             key_arr.push( val );
       }
-   }
+   };
    
    //when we want to retain all elements of one report 
    if( _IS_RETAIN_ALL ){
@@ -98,7 +98,7 @@ function Cache ( option ) {
 		
 		_this.clear();
 
-		if( data.length == 0 ){
+		if( data.length === 0 ){
 		   if( cb )
 		      cb( null, [] );
 		   return [];
@@ -117,7 +117,7 @@ function Cache ( option ) {
 		});
 		
 		return data;
-	}
+	};
 
 	const _IS_NDN_COLLECTION = (_collection_name === "data_ndn_real");
 	var _nextUpdateTime = 0;

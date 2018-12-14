@@ -14,7 +14,7 @@ const config = require("../config.json"),
     os = require("os"),
     moment = require('moment'),
     CleanCSS = require('clean-css'),
-    UglifyJS = require("uglify-js"),
+    UglifyJS = require("uglify-es"),
       
     VERSION = require("../version.json"),
     PLATFORM = os.platform(),
@@ -149,8 +149,14 @@ function build(built_type) {
 
             log("minify javascript: " + file);
             var ret = UglifyJS.minify(content, {
-               fromString: true
+               output:{
+                  beautify: false,
+                  preamble: "/* Montimage all Rights Reserved. "+ config.version +"*/"
+               }
             });
+            if( ret.error )
+               throw ret.error;
+            
             return ret.code;
          } catch (err) {
             console.error("Error when minify [" + file + "]: " + err.toString());

@@ -134,8 +134,9 @@ app.use(session({
     store : new MongoStore({
         url         : dbadmin.connectString,
         mongoOptions: {
-           autoReconnect: true,     // Reconnect on error.
-           reconnectTries:  3000, // Server attempt to reconnect #times
+           //useNewUrlParser:   true, // Determines whether or not to use the new url parser
+           autoReconnect:     true, // Reconnect on error.
+           reconnectTries:    3000, // Server attempt to reconnect #times
            reconnectInterval: 5000, // Server will wait # milliseconds between retries.
            bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connectio
         },
@@ -278,6 +279,7 @@ app.use(function(req, res, next) {
 });
 
 function processError( err ){
+   console.trace();
    console.error( err );
 
    //hide stack

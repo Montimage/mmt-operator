@@ -78,7 +78,7 @@ function flatAppPath( str ){
       
       arr.push( msg );
       pathArr.length --;
-   };
+   }
    return arr;
 }
 
@@ -258,7 +258,7 @@ module.exports = function(){
    };
    
    function hasModule( module_name ){
-      return config.modules.indexOf( module_name ) != -1
+      return config.modules.indexOf( module_name ) != -1;
    }
    
    //eliminate some caches if we do not need them
@@ -285,12 +285,12 @@ module.exports = function(){
    //flush
    setInterval( function(){
       self.flush( function(){} );
-   }, config.probe_stats_period_in_ms*2 )
+   }, config.probe_stats_period_in_ms*2 );
    
    //message contain only zero
    const zero_msg = [];
    
-   function update_zero_msg( format, probe_id, intput_src, ts ){
+   function update_zero_msg( format, probe_id, input_src, ts ){
       zero_msg[ 0 ] = format;
       zero_msg[ 1 ] = probe_id;
       zero_msg[ 2 ] = input_src;
@@ -346,7 +346,7 @@ module.exports = function(){
             //copy some attrs of msg to new_msg;
             [ COL.PROBE_ID, COL.TIMESTAMP, NDN.MAC_SRC, NDN.IFA ].forEach( function(el){
                new_msg[ el ] = msg[ el ];
-            } )
+            } );
 
             inserter.add( "ndn_alerts", [new_msg] );
 
@@ -429,7 +429,7 @@ module.exports = function(){
                      //get information of UE from its IP
                      enodeb.appendSuplementDataGtp( gtp_msg, function( m ){
                         self.dataCache.gtp.addMessage( m );
-                     })
+                     });
 
                      break;
                      
@@ -503,7 +503,7 @@ module.exports = function(){
                      //get information of UE from its IP
                      enodeb.appendSuplementDataSctp( sctp_msg, function( m ){
                         self.dataCache.sctp.addMessage( m );
-                     })
+                     });
                      break;
                   }
             }
@@ -520,9 +520,9 @@ module.exports = function(){
                      continue; //store only maximally 4 level: ETH.IP.TCP.HTTP
                   
                   if( !
-                        (o.depth == 4  //store only maximally 4 level: ETH.IP.TCP.HTTP
-                        || o.depth == 1 //Ethernet
-                        || o.depth == app_arr.length //in case, hierarchy length < 4
+                        (o.depth   === 4  //store only maximally 4 level: ETH.IP.TCP.HTTP
+                        || o.depth === 1 //Ethernet
+                        || o.depth === app_arr.length //in case, hierarchy length < 4
                         ) )
                         continue;
                   
@@ -594,13 +594,12 @@ module.exports = function(){
          cacheCount --;
          if( cacheCount <= 0 )
             return cb();
-      }
+      };
 
       //flush all caches in dataCache
       for( var c in self.dataCache ){
          self.dataCache[ c ].flush( callback );
       }
-
-   }
+   };
 
 };
