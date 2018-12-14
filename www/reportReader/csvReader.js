@@ -24,23 +24,39 @@ const NB_CSV_BEFORE_RESTART = 48;
 //total number of reader processes
 const TOTAL_READERS = process.argv[3];
 //index of the current process
-const READER_INDEX  = process.argv[2];
-const DATA_FOLDER               = config.file_input.data_folder;
+const READER_INDEX              = process.argv[2];
 const DELETE_FILE_AFTER_READING = config.file_input.delete_data;
+//array of folders containing reports
+const DATA_FOLDERS              = [];
+
+function addDataFolder( path ){
+   // ensure data directory exists
+   if( !fs.existsSync( path ) )
+      console.error("Ignore data folder [" + path + "] as it does not exists.");
+   else
+      DATA_FOLDERS.push( path );
+}
+
+if( Array.isArray( config.file_input.data_folder ))
+   config.file_input.data_folder.forEach( addDataFolder );
+else
+   addDataFolder( config.file_input.data_folder );
+
+//ensure there exists at least one folder
+if( DATA_FOLDERS.length == 0 ){
+   console.error("No data_folder is given. Please set it in 'file_input.data_folder'");
+   process.exit(1);
+}
 
 const database = new DataBase();
 const dbadmin  = new DBInserter( config.adminDatabaseName );
 const processMessage = new ProcessMessage( database );
 
 process.title = "mmt-operator-csv-reader-" + READER_INDEX;
-// ensure data directory exists
-if( !fs.existsSync( DATA_FOLDER ) ){
-	console.error("Error: Data folder [" + DATA_FOLDER + "] does not exists.");
-	process.exit( 1 );
-}
+
 
 if( READER_INDEX == 0 )
-   process.stdout.write("\n"+ TOTAL_READERS +" csv readers is waiting for data in the folder [" + DATA_FOLDER + "] ...\n");
+   process.stdout.write("\n"+ TOTAL_READERS +" csv readers is waiting for data in the folder(s) [" + DATA_FOLDERS + "] ...\n");
 
 console.info( "start csv reader " + READER_INDEX );
 
@@ -52,7 +68,7 @@ function restart_process(){
    database.flush( function(){
       console.warn("Exit reader " + READER_INDEX );
       //the reader will be restarted by libs/child_process
-      process.exit( 0 );
+      process.exit(0);
    });
 }
 
@@ -115,7 +131,7 @@ var isStop = false;
 //list of csv files to be read
 var _cache_files = [];
 //get the oldest file containing data and not beeing locked
-function get_csv_file(dir) {
+function get_csv_file() {
    if( isStop )
       return null;
    
@@ -124,35 +140,41 @@ function get_csv_file(dir) {
 		return _cache_files.splice(0, 1)[0];
 	}
 
-	//Returns an array of filenames excluding '.' and '..'.
-	var files = fs.readdirSync(dir);
 	var arr = []; //will contain list of csv files
+	
+	//for each folder in the list
+	DATA_FOLDERS.forEach( function( dir ){
 
-	for (var i=0; i<files.length; i++) {
-		var file_name = files[i];
+	   //Returns an array of filenames excluding '.' and '..'.
+	   var files = fs.readdirSync(dir);
 
-		//filename format: timestamp_threadid_name.csv
-		//  1500992643_10_dataoutput.csv
-		var thread_index = file_name.split("_")[1];
-		
-		//process only some csv files
-		if( thread_index % TOTAL_READERS != READER_INDEX  )
-			continue
+	   for (var i=0; i<files.length; i++) {
+	      var file_name = files[i];
 
-			//file was read (check in database when the read files are not deleted)
-			if( DELETE_FILE_AFTER_READING !== true )
-				if( read_files.indexOf( dir + file_name ) > -1 )
-					continue;
+	      //filename format: timestamp_threadid_name.csv
+	      //  1500992643_10_dataoutput.csv
+	      var thread_index = file_name.split("_")[1];
 
-		//need to end with csv
-		if (file_name.match(/csv$/i) == null)
-			continue;
+	      //process only some csv files
+	      if( thread_index % TOTAL_READERS != READER_INDEX  )
+	         continue
 
-		//check if there exists its semaphore
-		if ( files.indexOf( file_name + ".sem" ) > -1 )
-			arr.push(dir + file_name);
-	}
+	         //file was read (check in database when the read files are not deleted)
+	         if( DELETE_FILE_AFTER_READING !== true )
+	            if( read_files.indexOf( dir + file_name ) > -1 )
+	               continue;
 
+	      //need to end with csv
+	      if (file_name.match(/csv$/i) == null)
+	         continue;
+
+	      //check if there exists its semaphore
+	      if ( files.indexOf( file_name + ".sem" ) > -1 )
+	         arr.push(dir + file_name);
+	   }
+	});
+	
+	//no reports
 	if( arr.length == 0 )
 		return null;
 
@@ -166,7 +188,7 @@ function get_csv_file(dir) {
 //=READER_INDEX to ensure that all processes do not clean garbage in the same time
 var fileCounter = 0;
 var process_folder = function () {
-	var file_name = get_csv_file( DATA_FOLDER );
+	var file_name = get_csv_file();
 	if (file_name == null) {
 	   //if threre is no report => wait for 0.5 second
 		setTimeout(process_folder, 500);

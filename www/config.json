@@ -13,7 +13,7 @@
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
 	"file_input": {
-		"data_folder": "/opt/mmt/probe/result/report/online/",
+		"data_folder": ["/opt/mmt/probe/result/report/online/", "/tmp/"],
 		"delete_data": true,
 		"nb_readers": 1
 	},
@@ -64,7 +64,7 @@
 	},
 	"retain_detail_report_period": 300,
 	"limit_database_size" :  100000000,
-	"port_number": 80,
+	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
