@@ -32,6 +32,7 @@ const database = new DataBase();
 const dbadmin  = new DBInserter( config.adminDatabaseName );
 const processMessage = new ProcessMessage( database );
 
+process.title = "mmt-operator-csv-reader-" + READER_INDEX;
 // ensure data directory exists
 if( !fs.existsSync( DATA_FOLDER ) ){
 	console.error("Error: Data folder [" + DATA_FOLDER + "] does not exists.");

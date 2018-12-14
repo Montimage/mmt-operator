@@ -23,6 +23,7 @@ module.exports = {
           NDN_FORMAT              : 625,
           DUMMY_FORMAT            : 200,
           SYS_STAT_FORMAT         : 201,
+          EVENT_BASE_FORMAT       : 1000,
           OTT_QOS                 : 70
       },
       /* IMPORTANCE: This is maximum number where any column index must not be greater than
@@ -245,6 +246,13 @@ module.exports = {
         MEM_AVAIL: 7,
         MEM_TOTAL: 8,
         COUNT    : 9
+      },
+      EventBaseStatColumnId: {
+         FORMAT_ID: 0,
+         PROBE_ID : 1,
+         SOURCE_ID: 2,
+         TIMESTAMP: 3,
+         EVEN_NAME: 4,
       },
       /**
        * A table of Category-Id: Application-Id[]

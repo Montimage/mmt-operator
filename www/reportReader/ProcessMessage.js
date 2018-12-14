@@ -10,7 +10,7 @@ const DataBase   = require("./DataBase.js");
 const router = {};
 const COL = mmtAdaptor.StatsColumnId;
 const _IS_OFFLINE = (config.probe_analysis_mode === "offline");
-
+const s1apTopo    = require("./enodebTopo");
 
 
 //DONOT remove this block
@@ -50,6 +50,7 @@ setInterval( function(){
 	}
 }, 1000);
 //end caches
+
 
 
 function ProcessMessage( database ){
@@ -105,7 +106,14 @@ function ProcessMessage( database ){
 //			//if( typeof databaseadmin )
 //			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
 //			break;
-
+		
+		case mmtAdaptor.CsvFormat.EVENT_BASE_FORMAT:
+		   var eventName = msg[ mmtAdaptor.EventBaseStatColumnId.EVEN_NAME ];
+		   if( eventName === "lte-s1ap" || eventName === "lte-sctp" )
+		      s1apTopo.processMessage( msg );
+		   
+		   break;
+		   
 			//Video QoS
 		case mmtAdaptor.CsvFormat.OTT_QOS:
 			send_to_client( "qos", msg );
