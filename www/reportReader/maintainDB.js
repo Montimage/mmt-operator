@@ -83,23 +83,31 @@ var additionalTime = 0;
  * @returns
  */
 function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
+   /*
+    * By default, each kind of collection must retain data in some period. 
+    * For example, 
+    * - xxx_real   must retain at least 61 minutes
+    * - xxx_minute must retain at least 24 hours
+    * - xxx_hour   must retain at least  7 days
+    * - xxx_day    must retain at least  1 year 
+    * However, these periods can be reduce if the total size of DB is greater than a given threshold.
+    */
+   
    //retain the last 61 minutes
    // reduce each DB_STEP_INCREASE minutes if need (when storage size of DB is bigger than a limit)
-   _removeOldRecords( db, collectionPrefix + CONST.period.REAL,   timestamp    - 61*60*1000      + additionalTime*60*1000, probeID );
+   _removeOldRecords( db, collectionPrefix + CONST.period.REAL,   timestamp - 61*60*1000 + additionalTime*60*1000, probeID );
    
-   if( additionalTime != 0 ){
-       //retain the last 24 hours
-       // reduce each a half of DB_STEP_INCREASE hours if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.MINUTE, timestamp - 24*60*60*1000 + additionalTime*30*60*1000, probeID );
-   
-      //retain the last 7 days
-      // reduce each a 1/4 of DB_STEP_INCREASE days if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000 + additionalTime*6*60*60*1000, probeID );
-      
-      //retain the last 365 days
-      // reduce each 30xDB_STEP_INCREASE days if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000 + 30*additionalTime*24*60*60*1000, probeID );      
-   }
+   //retain the last 24 hours
+   // reduce each a half of DB_STEP_INCREASE hours if need
+   _removeOldRecords( db, collectionPrefix + CONST.period.MINUTE, timestamp - 24*60*60*1000 + additionalTime*30*60*1000, probeID );
+
+   //retain the last 7 days
+   // reduce each a 1/4 of DB_STEP_INCREASE days if need
+   _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000 + additionalTime*6*60*60*1000, probeID );
+
+   //retain the last 365 days
+   // reduce each 10xDB_STEP_INCREASE days if need
+   _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000 + 10*additionalTime*24*60*60*1000, probeID );      
 }
 
 //restart 
@@ -121,7 +129,7 @@ function _maintainDatabaseSize( database ){
          return _startOver( database );
       }
       
-      console.info("DB's storage size " + stat.storageSize + "B, data size " + stat.dataSize + "B" );
+      console.info("DB's storage size " + stat.storageSize + "B, data size " + stat.dataSize + "B, limit " + DB_LIMIT_SIZE + "B" );
       //everything is ok => wait for 10 seconds to check again
       //==> need use stat.dataSize in case the deleted documents have not been yet updated on disk
       if( stat.storageSize <= DB_LIMIT_SIZE || stat.dataSize <= DB_LIMIT_SIZE )
@@ -129,8 +137,8 @@ function _maintainDatabaseSize( database ){
       
       //additional documents to remove to remain storage size of DB
       additionalTime += DB_STEP_INCREASE;
-      
-      console.info( "increase additional interval %d (%d > %d)", additionalTime, stat.storageSize, DB_LIMIT_SIZE );
+   
+      console.info( "===> increase additional interval %d (%d > %d)", additionalTime, stat.storageSize, DB_LIMIT_SIZE );
       
       setTimeout( _maintainDatabase, 1000, database );
    });
