@@ -6227,7 +6227,9 @@ if( typeof Highcharts !== "undefined" )
 
                //render to elemID
                var treeWrapper = $('<div>', {
-                  'class' : 'report-element-tree'
+                  'class'     : 'report-element-tree',
+                  'style'     : 'border: 1px solid #888; overflow-x: scroll',
+                  
                });
 
                treeWrapper.appendTo($('#' + elemID));
@@ -6237,6 +6239,7 @@ if( typeof Highcharts !== "undefined" )
                   'cellpadding' : 0,
                   'cellspacing' : 0,
                   'border'      : 0,
+                  'style'       : 'border: 0 !important'
 
                });
 
@@ -6253,7 +6256,8 @@ if( typeof Highcharts !== "undefined" )
                var th0 = null;
                for (var i = 0; i < option.columns.length; i++) {
                   th = $('<th>', {
-                     'text' : option.columns[i].label
+                     'text' : option.columns[i].label,
+                     'style': "width: "+ (i==0? 200: 120) +"px"
                   });
                   if( i== 0 )
                      th0 = th;
@@ -6284,7 +6288,8 @@ if( typeof Highcharts !== "undefined" )
                      if( option.columns[i].isMultiProbes ){
                         for( var j=0; j<option.columns[i].probes.length; j++ ){
                            th = $('<th>', {
-                              'text' : "Probe " + option.columns[i].probes[j]
+                              'text'  : "Probe " + option.columns[i].probes[j],
+                              'style' : "width: 120px"
                            });
                            th.appendTo(tr);
                         }
@@ -6360,20 +6365,27 @@ if( typeof Highcharts !== "undefined" )
                   var path   = msg[0].path;
                   var name   = msg[0].name;
                   var parent = msg[0].parent;
+                  var title  = MMTDrop.constants.getPathFriendlyName( path );
 
                   //root
                   var row_tr = $('<tr>', {
-                     'data-tt-id'        : path,
+                     'data-tt-id' : path,
+                     'title'      : title
                   });
 
                   if (parent != null)
                      row_tr = $('<tr>', {
                         'data-tt-id'        : path,
-                        'data-tt-parent-id' : parent
+                        'data-tt-parent-id' : parent,
+                        'title'             : title
                      });
 
                   //first column
-                  var row_name = $('<td>', {text: name, title: name});
+                  var row_name = $('<td>', {
+                     text : name,
+                     title: name,
+                     style: "width: 200px"
+                  });
                   row_name.appendTo(row_tr);
 
                   var count = 0;
@@ -6381,7 +6393,8 @@ if( typeof Highcharts !== "undefined" )
                      if( option.columns[j].isMultiProbes == false){
                         var cell = $('<td>', {
                            text : msg[j],
-                           align: "right"
+                           align: "right",
+                           style: "width: 120px"
                         });
                         cell.appendTo(row_tr);
                         count ++;
@@ -6394,7 +6407,8 @@ if( typeof Highcharts !== "undefined" )
 
                            var cell = $('<td>', {
                               text : val,
-                              align: "right"
+                              align: "right",
+                              style: "width: 120px"
                            });
                            cell.appendTo(row_tr);
                            count ++;
@@ -6426,33 +6440,17 @@ if( typeof Highcharts !== "undefined" )
                table.treetable( chart_opt );
 
                table.no_columns = no_columns;
+               table.css('width', (200 + no_columns * 120) );
 
-               table.updateSize = function( width ){
-                  if( width == undefined )
-                     width = table.width();
-                  else
-                     table.width( width );
-
-                  width -= table.no_columns * 140;
-                  width += "px";
-
-                  $("#" + elemID + "_treetable tbody tr td").css({ 
-                     "max-width" : "140px",
-                     "width"     : "140px"});
-                  $("#" + elemID + "_treetable thead tr th").css({ 
-                     "width" : "140px" });
-
-                  $("#" + elemID + "_treetable tbody tr td:first-child").css( {
-                     "max-width": width,
-                     "width"    : width,});
-                  $("#" + elemID + "_treetable thead tr th:first-child").css( {
-                     "max-width": width,
-                     "width"    : width });
+               table.updateSize = function( w ){
+                  if( w == undefined )
+                     return;
+                  if( w > table.width() )
+                     w = table.width();
+                  
+                  treeWrapper.width( w );
                };
-               table.updateSize();
-
-               $(window).resize( table.updateSize );
-
+               
                //when user click on a row
                $("#" + elemID + "_treetable tbody tr td:not(:first-child)").click({
                   chart : this
@@ -6501,7 +6499,6 @@ if( typeof Highcharts !== "undefined" )
 
                return table;
             });
-
 
             chart.getIcon = function(){
                return $('<i>', {'class': 'fa fa-table'});

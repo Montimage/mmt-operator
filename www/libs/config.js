@@ -61,8 +61,10 @@ else{
 
    set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
-   if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" )
-      config.probe_analysis_mode = "offline";
+   if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" ){
+      console.error("[ERROR]: 'probe_analysis_mode' in config file must be either 'online' or 'offline'");
+      process.exit();
+   }
 
    config.is_probe_analysis_mode_offline = (config.probe_analysis_mode === "offline");
 

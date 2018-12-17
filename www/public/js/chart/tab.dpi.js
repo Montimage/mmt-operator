@@ -287,7 +287,7 @@ var ReportFactory = {
                     //$(".col-md-8").css("max-width", width + "px !important;");
                     $(".col-md-4").width( 450 );
                     $(".col-md-8").width( width );
-                    _chart.chart.updateSize( 450 );
+                    _chart.chart.updateSize( 440 );
                 });
                 $widget.trigger("widget-resized", [$widget]);
             }

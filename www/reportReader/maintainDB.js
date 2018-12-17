@@ -16,6 +16,8 @@
  * This reduction is decided by additionalTime variable.
  */
 
+process.title = "mmt-operator-maintain-db";
+
 const 
 MongoClient = require('../libs/mongodb').MongoClient,
 format      = require('util').format;
@@ -39,7 +41,14 @@ const WRITE_CONCERN = {
 	single: false, //delete all documents that satisfy the filter
 };
 
-
+/**
+ * Delete from a collection all records being older than the given timestamp 
+ * @param db
+ * @param collectionName
+ * @param timestamp
+ * @param probeID
+ * @returns
+ */
 function _removeOldRecords( db, collectionName, timestamp, probeID ){
 	const query = {};
 	if( probeID != undefined )
@@ -65,25 +74,31 @@ function _removeOldRecords( db, collectionName, timestamp, probeID ){
 //additional interval 
 var additionalTime = 0;
 
+/**
+ * 
+ * @param db
+ * @param collectionPrefix
+ * @param timestamp: the timestamp of the last report of a probe having the given probeID
+ * @param probeID
+ * @returns
+ */
 function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
    //retain the last 61 minutes
    // reduce each DB_STEP_INCREASE minutes if need (when storage size of DB is bigger than a limit)
    _removeOldRecords( db, collectionPrefix + CONST.period.REAL,   timestamp    - 61*60*1000      + additionalTime*60*1000, probeID );
    
-   if( additionalTime != 0 )
-    //retain the last 24 hours
-    // reduce each a half of DB_STEP_INCREASE hours if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.MINUTE, timestamp - 24*60*60*1000   + additionalTime*30*60*1000, probeID );
+   if( additionalTime != 0 ){
+       //retain the last 24 hours
+       // reduce each a half of DB_STEP_INCREASE hours if need
+      _removeOldRecords( db, collectionPrefix + CONST.period.MINUTE, timestamp - 24*60*60*1000 + additionalTime*30*60*1000, probeID );
    
-   if( additionalTime != 0 )
       //retain the last 7 days
       // reduce each a 1/4 of DB_STEP_INCREASE days if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000  + additionalTime*6*60*60*1000, probeID );
+      _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000 + additionalTime*6*60*60*1000, probeID );
       
-   if( additionalTime != 0 ){
       //retain the last 365 days
-      // reduce each DB_STEP_INCREASE days if need
-      _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000  + additionalTime*24*60*60*1000, probeID );      
+      // reduce each 30xDB_STEP_INCREASE days if need
+      _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000 + 30*additionalTime*24*60*60*1000, probeID );      
    }
 }
 

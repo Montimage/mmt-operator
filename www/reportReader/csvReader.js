@@ -118,6 +118,9 @@ function process_file (file_name, cb) {
 			});
 		}
 		else{
+		   //if the report files are not deleted by MMT-Operator
+		   //=> Operator must remember the list of files that have been processed to do not process the files again
+		   //
 			read_files.push( file_name );
 			dbadmin.add("read-files", [{"file_name": file_name}], function(){
 				cb( totalLines );

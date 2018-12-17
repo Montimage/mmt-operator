@@ -20,7 +20,6 @@ function addDataFolder( path ){
       DATA_FOLDERS.push( path );
 }
 
-console.error("typeof = " + typeof(config.file_input.data_folder) );
 if( Array.isArray( config.file_input.data_folder ))
    config.file_input.data_folder.forEach( addDataFolder );
 else
@@ -76,17 +75,15 @@ function Reader(){
          }
       }
 
-      if( ! config.is_probe_analysis_mode_offline )
-      {
-         //this process removes older records from Database
-         var ret = child_process( __dirname + "/maintainDB.js", [configLocation]
-         , {execArgv: [
-            //'--debug=5857'
-            ]} 
-         ).start();
+      
+      //this process removes older records from Database
+      var ret = child_process( __dirname + "/maintainDB.js", [configLocation]
+      , {execArgv: [
+         //'--debug=5857'
+         ]} 
+      ).start();
 
-         process._children.push( ret );
-      }
+      process._children.push( ret );
    }
 }
 
