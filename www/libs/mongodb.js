@@ -52,6 +52,9 @@ mongodb.MongoClient.connect = function( dbName, callback ){
 mongodb.Collection.prototype._insert = mongodb.Collection.prototype.insert;
 mongodb.Collection.prototype.insert  = mongodb.Collection.prototype.insertOne;
 
+mongodb.Collection.prototype._update = mongodb.Collection.prototype.update;
+mongodb.Collection.prototype.update  = mongodb.Collection.prototype.updateOne;
+
 //override aggregate
 mongodb.Collection.prototype._aggregate = mongodb.Collection.prototype.aggregate;
 mongodb.Collection.prototype.aggregate = function( query, options, cb ){

@@ -256,7 +256,8 @@ router.get('/*', function(req, res, next) {
       req.query.probe.forEach(function(e) {
          options.probe.push(parseInt(e));
       });
-   }
+   }else if( req.query.probe )
+      options.probe.push(parseInt(req.query.probe));
 
    if (req.query.source instanceof Array) {
       req.query.source.forEach(function(e) {
@@ -268,7 +269,9 @@ router.get('/*', function(req, res, next) {
       req.query.proto.forEach(function(e) {
          options.proto.push(e);
       });
-
+   else if( req.query.proto )
+      options.proto.push( req.query.proto );
+   
    if (req.query.isReload)
       options.isReload = (req.query.isReload === 'true');
 
@@ -288,7 +291,7 @@ router.get('/*', function(req, res, next) {
          var obj = {
                data : data,
                time : op.time,
-         }
+         };
 
          if (op.userData != undefined && op.userData.getProbeStatus) {
             dbconnector.probeStatus.get(op.time, function(err, arr) {
@@ -301,10 +304,10 @@ router.get('/*', function(req, res, next) {
                   obj.probeStatus[msg.id].push({
                      start       : msg.start,
                      last_update : msg.last_update
-                  })
+                  });
                }
                res.send(obj);
-            })
+            });
          } else
             res.send(obj);
       });
