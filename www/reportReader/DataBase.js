@@ -16,7 +16,7 @@ FORMAT          = require('util').format,
 enodeb          = require("./enodebData.js")
 ;
 
-const IP        = new (require("../libs/shared/IP.js"));
+const IP        = new (require("../libs/shared/IP.js"))();
 
 const COL      = dataAdaptor.StatsColumnId;
 const HTTP     = dataAdaptor.HttpStatsColumnId;
@@ -270,7 +270,7 @@ module.exports = function(){
       delete self.dataCache.mac;
    if( !hasModule("network") && !hasModule("dpi") && !hasModule("application"))
       delete self.dataCache.app;
-   if(  !hasModule("network")  && !hasModule("application"))
+   if(  !hasModule("application"))
       delete self.dataCache.session;
    if( !hasModule("network") && !hasModule("application"))
       delete self.dataCache.ip;
