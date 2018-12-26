@@ -108,13 +108,13 @@ app.use(express.static(path.join(__dirname, 'public'),{
     maxAge: 5*60*1000
 }));
 //share js libraries 
-app.use('/_js', require("./routes/server2client.js"))
+app.use('/_js', require("./routes/server2client.js"));
 
 //a proxy to access outside API to avoid CORS
-app.use('/proxy', require("./routes/proxy.js"))
+app.use('/proxy', require("./routes/proxy.js"));
 
 //log http req/res
-morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} )
+morgan.token('time', function(req, res){ return  moment().format("HH:mm:ss");} );
 app.use(morgan(':time :method :url :status :response-time ms - :res[content-length]',{
    stream: config.outStream
 })
@@ -144,7 +144,7 @@ app.use(session({
         collection  : "_expressjs_session",
         ttl         : 12 * 60 * 60 // = 12 hours
     })
-}))
+}));
 
 //active checking for MUSA
 //TODO to remove in final product
@@ -187,7 +187,7 @@ routes.dbconnector        = dbconnector;
 app.use('/', routes);
 app.use('/chart/', chartRoute);
 
-app.use('/ip', require("./routes/ip2loc.js"))
+app.use('/ip', require("./routes/ip2loc.js"));
 
 api.dbconnector = dbconnector;
 app.use('/api', api);

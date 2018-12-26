@@ -164,10 +164,6 @@ function _maintainDatabase( database ){
       //for each probe
       for( var i=0; i<data.length; i++ ){
          var m = data[i];
-         if( m.time == undefined ){
-            console.error( "Cannot find timestamp in data_total_real collection" );
-            return _startOver( database );
-         }
          
          //uk flow reports: retain only last 61minutes
          // reduce each DB_STEP_INCREASE minutes if need
@@ -219,7 +215,7 @@ MongoClient.connect( config.databaseName, function (err, db) {
 	if (err){
 		console.warn("Cannot connect to Database " + config.databaseName );
 		console.logStdout("Cannot connect to Database");
-		process.exit( 1 );
+		process.exit();
 	}
 	console.info("Start maintainer");
 	//connect OK
@@ -230,8 +226,9 @@ MongoClient.connect( config.databaseName, function (err, db) {
 /*
 process.stdin.resume();//so the program will not close instantly
 //Ctrl+C
+*/
 process.on('SIGINT',function(){
-   console.log("byeeeeeeeeeeeeeee");
+   console.log("Exit maintainer");
    process.exit(0);
 });
-*/
+

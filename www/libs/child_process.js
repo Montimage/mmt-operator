@@ -21,8 +21,33 @@ function childProcess( file, params, env, autoRestart ){
    self.start = function(){
       self.childProcess = child_process.fork( self.file, self.params, self.env );
       self.childProcess.on("exit", self.restart );
+
+      //a communication channel between parent 'process' and the child 'childProcess'
+      //when the parent receives a message  from its children
+      // a message must be structured:
+      // {
+      //    type       : "socketio",
+      //    action     : "emit",
+      //    arguments  : [ firstArgs, secondArgs, ... ]
+      //}
+      self.childProcess.on("message", function( msg ){
+         var cb = null;
+         switch( msg.type ){
+         case "socketio":
+            if( global._mmt && global._mmt.socketio  ){
+               if( msg.action ) {
+                  cb = global._mmt.socketio.sockets[ msg.action ];
+                  if( typeof( cb ) == "function" )
+                     cb.apply( global._mmt.socketio.sockets, msg.arguments );
+               }
+                  
+            }   
+         }
+      });
+      
+         
       return self;
-   }
+   };
    
    self.restart = function(){
       //exec only one time left
@@ -42,20 +67,20 @@ function childProcess( file, params, env, autoRestart ){
       
       //restart the process: start a new process
       return self.start();
-   }
+   };
    
 
    self.kill = function(){
       self.childProcess.kill( 'SIGKILL' );
       self.childProcess = null;
       return self;
-   }
+   };
    
    self.stop = function(){
       self.childProcess.kill( 'SIGINT' );
       self.childProcess = null;
       return self;
-   }
+   };
    return self;
 }
 

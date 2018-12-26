@@ -90,6 +90,16 @@ function proc_request(req, res, next) {
             sendResponse( error, results );
          })
          return;
+      
+         //get lte-topology
+      case "lte-topology":
+         dbconnector.queryDB( "cache_lte_topo", "find", {}, function(err, data){
+            console.log( data );
+            if( data && data[0] )
+               data = data[0].data;
+            sendResponse( err, data );
+         }, false);
+         return;
    }
 
    var checkNotNull = function( obj, msg ){

@@ -3,46 +3,57 @@
  */
 
 "use strict";
-const mmtAdaptor = require('../libs/dataAdaptor');
-const config     = require('../libs/config');
-const ip2loc     = require('../libs/ip2loc');
-const DataBase   = require("./DataBase.js");
-const router = {};
-const COL = mmtAdaptor.StatsColumnId;
-const _IS_OFFLINE = (config.probe_analysis_mode === "offline");
+const mmtAdaptor  = require('../libs/dataAdaptor');
+const config      = require('../libs/config');
+const ip2loc      = require('../libs/ip2loc');
+const DataBase    = require("./DataBase.js");
+const COL         = mmtAdaptor.StatsColumnId;
 const s1apTopo    = require("./enodebTopo");
-
+const DBInserter  = require("./DBInserter");
+const inserterDB  = new DBInserter( config.databaseName );
 
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
 var caches = {};
-function send_to_client( channel, msg ){
-	if( caches[ channel ] == undefined )
+function saveToDatabase( channel, msg ){
+	if( caches[ channel ] === undefined )
 		caches[ channel ] = [];
 	//add msg to caches
 	//caches will be verified each seconds and sent to client
 	//caches[ channel ].push( msg );
 }
 
+function saveLteTopologyToDatabase(){
+   const channel = "lte_topo";
+   if( caches[ channel ] === undefined )
+      caches[ channel ] = [];
+   caches[channel] = [ s1apTopo.getTopology() ];
+}
+
+function _saveToDB( collectionName, dataArr ){
+   inserterDB.set( collectionName, 0, dataArr );
+}
+
 setInterval( function(){
-	for( var channel in caches ){
-		var cache = caches[ channel ];
+	for( const channel in caches ){
+		const cache = caches[ channel ];
 		//no data in this cache
-		if( cache.length == 0 )
+		if( cache.length === 0 )
 			continue;
 		//avg
 		if (channel === "qos" ){
-			for( var j=1; j<cache.length; j++)
-				for( var i=4; i<13;i++ )
+			for( let j=1; j<cache.length; j++)
+				for( let i=4; i<13;i++ )
 					cache[0][i] += cache[j][i];
 
-			for( var i=4; i<13;i++ )
-				if( i != 9 || i != 10 )
+			for( let i=4; i<13;i++ )
+				if( i !== 9 || i !== 10 )
 					cache[0][i] /= cache.length;
 
 			//router.socketio.emit( "qos", cache[0] );
 		}else {
-			//router.socketio.emit( channel, cache );
+		   //broadcast a message to Web browsers using socketio
+		   _saveToDB( "cache_" + channel, cache );
 		}
 
 		//reset this cache to zero
@@ -107,11 +118,9 @@ function ProcessMessage( database ){
 //			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
 //			break;
 		
-		case mmtAdaptor.CsvFormat.EVENT_BASE_FORMAT:
-		   var eventName = msg[ mmtAdaptor.EventBaseStatColumnId.EVEN_NAME ];
-		   if( eventName === "lte-s1ap" || eventName === "lte-sctp" )
-		      s1apTopo.processMessage( msg );
-		   
+		case mmtAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:
+		   s1apTopo.processMessage( msg );
+		   saveLteTopologyToDatabase();
 		   break;
 		   
 			//Video QoS

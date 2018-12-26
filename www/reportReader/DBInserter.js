@@ -99,5 +99,40 @@ module.exports = function( databaseName ){
 				//insertion options
 				WRITE_CONCERN,
 				callback );
-	}
+	};
+	
+	
+
+   self.set = function( collection, id, data, callback ){
+      //we are wating for connection to DB
+      //=> put msg to cache
+      if( self.db == undefined ){
+         if( self._setCache == undefined )
+            self._setCache = {};
+         
+         self._setCache[collection + "-" + id ] = {
+               collection: collection,
+               id        : id,
+               data      : data,
+               callback  : callback
+         }
+         
+         return;
+      }
+      
+      if( self._setCache != null )
+         for( var i in self._setCache ){
+            const m = self._setCache[i];
+            self._set( m.collection, m.id, m.data, m.callback );
+         }
+      self._set( collection, id, data, callback );
+   };
+   
+   self._set = function( collection, id, data, callback ){
+      self.db.collection( collection ).updateOne(
+            {_id: id},             //filter
+            {$set: {_id: id, data: data}}, //data
+            {upsert: true },       //insert if does not exist
+            callback );
+   };
 };

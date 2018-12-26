@@ -23,6 +23,7 @@ module.exports = {
           NDN_FORMAT              : 625,
           DUMMY_FORMAT            : 200,
           SYS_STAT_FORMAT         : 201,
+          LTE_TOPOLOGY_REPORT     : 400,/**< LTE toplogy*/
           EVENT_BASE_FORMAT       : 1000,
           OTT_QOS                 : 70
       },
@@ -253,6 +254,20 @@ module.exports = {
          SOURCE_ID: 2,
          TIMESTAMP: 3,
          EVEN_NAME: 4,
+      },
+      LteTopoStatColumnId: {
+         FORMAT_ID    : 0,
+         PROBE_ID     : 1,
+         SOURCE_ID    : 2,
+         TIMESTAMP    : 3,
+         ELEMENT_ID   : 4,
+         EVENT        : 5,
+         PARENT_ID    : 6, /**< incase of remove link*/
+         IP           : 6,
+         ELEMENT_TYPE : 7,
+         NAME         : 8,
+         UE_IMSI      : 8, /**< incase of UE*/
+         UE_M_TMSI    : 9,
       },
       /**
        * A table of Category-Id: Application-Id[]
