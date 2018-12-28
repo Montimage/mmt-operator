@@ -6,16 +6,20 @@ module.exports = {
        * Constants: MMTDrop defined csv format types
        */
       CsvFormat : {
-          DEFAULT_APP_FORMAT      : 0/**< Default application flow report format id */,
-          WEB_APP_FORMAT          : 1/**< WEB flow report format id */,
-          SSL_APP_FORMAT          : 2/**< SSL flow report format id */,
-          RTP_APP_FORMAT          : 3/**< RTP flow report format id */,
-          FTP_APP_FORMAT          : 4,
-          GTP_APP_FORMAT          : 5,
+          DEFAULT_APP_FORMAT      : 0  /**< Sub report of STATS_FORMAT: Default application flow report format id */,
+          WEB_APP_FORMAT          : 1  /**< Sub report of STATS_FORMAT: WEB flow report format id */,
+          SSL_APP_FORMAT          : 2  /**< Sub report of STATS_FORMAT: SSL flow report format id */,
+          RTP_APP_FORMAT          : 3  /**< Sub report of STATS_FORMAT: RTP flow report format id */,
+          FTP_APP_FORMAT          : 4, /**< Sub report of STATS_FORMAT: FTP flow report*/
+          GTP_APP_FORMAT          : 5, /**< Sub report of STATS_FORMAT: For LTE network*/
+          STATS_FORMAT            : 100/**< Statistics format id */,
+          
+          
+          STARTUP_REPORT          : 1, /**< This report is sent only once when starting*/
           MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
           RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
           NO_SESSION_STATS_FORMAT : 99,
-          STATS_FORMAT            : 100/**< Statistics format id */,
+          
           SECURITY_FORMAT         : 10,
           BA_PROFILE_FORMAT       : 12,
           BA_BANDWIDTH_FORMAT     : 11,
@@ -185,7 +189,16 @@ module.exports = {
          ENB_NAME      : 116,
          MME_NAME      : 117
       },
-
+      StartupColumnId           : {
+         FORMAT_ID       : 0, /**< Index of the format id column */
+         PROBE_ID        : 1, /**< Index of the probe id column */
+         SOURCE_ID       : 2, /**< Index of the data source id column */
+         TIMESTAMP       : 3, /**< Index of the timestamp column when probe is starting up */
+         VERSION_PROBE   : 4, /**< Current version of MMT-Probe*/
+         VERSION_DPI     : 5, /**< Current version of MMT-DPI*/
+         VERSION_SECURITY: 6  /**< Current version of MMT-Security if it is enable, otherwise this field is null*/
+     },
+     
        LicenseColumnId           : {
           FORMAT_ID       : 0, /**< Index of the format id column */
           PROBE_ID        : 1, /**< Index of the probe id column */

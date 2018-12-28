@@ -370,8 +370,8 @@ else{
             msg[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( msg[ MMTDrop.SecurityColumnId.HISTORY ] );
             break;
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
-            if( msg[ MMTDrop.BehaviourBandwidthColumnId.VERDICT ] == "NO_CHANGE_BANDWIDTH" 
-               || msg[ MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE ] == msg[ MMTDrop.BehaviourBandwidthColumnId.BW_AFTER ] 
+            if( msg[ MMTDrop.BehaviourBandwidthColumnId.VERDICT ] === "NO_CHANGE_BANDWIDTH" 
+               || msg[ MMTDrop.BehaviourBandwidthColumnId.BW_BEFORE ] === msg[ MMTDrop.BehaviourBandwidthColumnId.BW_AFTER ] 
                || msg[ MMTDrop.BehaviourBandwidthColumnId.IP ] === "undefined" ){
                return null;
             }

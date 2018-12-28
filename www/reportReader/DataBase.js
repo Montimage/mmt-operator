@@ -359,6 +359,9 @@ module.exports = function(){
             //statistic reports
 
             //receive this msg when probe is starting
+         case dataAdaptor.CsvFormat.STARTUP_REPORT:
+            
+            return;
          case dataAdaptor.CsvFormat.LICENSE:
             //new running period
             //this report is sent at each end of x seconds (after seding all other reports)
@@ -501,9 +504,7 @@ module.exports = function(){
                      var sctp_msg = dataAdaptor.formatReportItem( message );
                      
                      //get information of UE from its IP
-                     enodeb.appendSuplementDataSctp( sctp_msg, function( m ){
-                        self.dataCache.sctp.addMessage( m );
-                     });
+                     enodeb.appendSuplementDataSctp( sctp_msg, self.dataCache.sctp.addMessage );
                      break;
                   }
             }

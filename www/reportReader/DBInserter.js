@@ -34,6 +34,9 @@ MongoClient     = require('../libs/mongodb').MongoClient;
 
 
 module.exports = function( databaseName ){
+   if( databaseName == undefined )
+      databaseName = config.databaseName;
+   
 	const self = this;
 	/**
 	 * The cache to store messages before being able to connect to DB
@@ -43,7 +46,7 @@ module.exports = function( databaseName ){
 	//connect to DB
 	MongoClient.connect( databaseName, function (err, db) {
 		if (err){
-			console.error("Cannot connect to Database " + connectString );
+			console.error("Cannot connect to Database " + databaseName );
 			console.logStdout("Cannot connect to Database");
 			process.abort();
 		}
@@ -70,7 +73,7 @@ module.exports = function( databaseName ){
 				collection: collection,
 				msgArray  : msgArray,
 				callback  : callback
-			})
+			});
 			return;
 		}
 		
@@ -78,7 +81,7 @@ module.exports = function( databaseName ){
 		if( self.cache.length > 0 )
 			self.cache.length.forEach( function( el ){
 				self._insert( el.collection, el.msgArray, el.callback );
-			})
+			});
 			
 		//insert directly messages to db
 		self._insert( collection, msgArray, callback );
@@ -129,10 +132,28 @@ module.exports = function( databaseName ){
    };
    
    self._set = function( collection, id, data, callback ){
+      data._id = id;
       self.db.collection( collection ).updateOne(
-            {_id: id},             //filter
-            {$set: {_id: id, data: data}}, //data
+            {_id   : id},          //filter
+            {$set  : data},        //data
             {upsert: true },       //insert if does not exist
             callback );
    };
+   
+   
+   /**
+    * Update data having a given id of a collection
+    */
+   self.update = function( collection, id, update, options, callback ){
+      
+      if( self.db === undefined ){
+         if( callback )
+            callback( new Error("Database is undefined") );
+         else
+            console.error( "Database is undefined");
+         return
+      }
+      
+      self.db.collection( collection ).updateOne( {_id: id}, update, options, callback );
+   }
 };

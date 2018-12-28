@@ -8,9 +8,7 @@ const config      = require('../libs/config');
 const ip2loc      = require('../libs/ip2loc');
 const DataBase    = require("./DataBase.js");
 const COL         = mmtAdaptor.StatsColumnId;
-const s1apTopo    = require("./enodebTopo");
-const DBInserter  = require("./DBInserter");
-const inserterDB  = new DBInserter( config.databaseName );
+const s1apTopo    = require("./EnodebTopo");
 
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
@@ -21,13 +19,6 @@ function saveToDatabase( channel, msg ){
 	//add msg to caches
 	//caches will be verified each seconds and sent to client
 	//caches[ channel ].push( msg );
-}
-
-function saveLteTopologyToDatabase(){
-   const channel = "lte_topo";
-   if( caches[ channel ] === undefined )
-      caches[ channel ] = [];
-   caches[channel] = [ s1apTopo.getTopology() ];
 }
 
 function _saveToDB( collectionName, dataArr ){
@@ -117,19 +108,22 @@ function ProcessMessage( database ){
 //			//if( typeof databaseadmin )
 //			//	databaseadmin.insertLicense( mmtAdaptor.formatReportItem( msg ));
 //			break;
-		
+		//report is sent only once when starting up	
+		case mmtAdaptor.CsvFormat.STARTUP_REPORT:
+		   s1apTopo.resetTopology( msg );
+		   break;
+
 		case mmtAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:
 		   s1apTopo.processMessage( msg );
-		   saveLteTopologyToDatabase();
 		   break;
 		   
 			//Video QoS
 		case mmtAdaptor.CsvFormat.OTT_QOS:
-			send_to_client( "qos", msg );
+			//send_to_client( "qos", msg );
 			break;
 			//Security alerts
 		case mmtAdaptor.CsvFormat.SECURITY_FORMAT:
-			send_to_client( "security", msg );
+			//send_to_client( "security", msg );
 			break;
 			//availability
 		//case 50:
