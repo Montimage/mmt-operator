@@ -29,7 +29,8 @@ function proc_request(req, res, next) {
       });
    };
    
-   const collection = req.params.collection, action = req.params.action;
+   const collection  = req.params.collection;
+   const action      = req.params.action;
    const dbconnector = router.dbconnector;
    //query database
    var query = undefined;
@@ -90,16 +91,6 @@ function proc_request(req, res, next) {
             sendResponse( error, results );
          })
          return;
-      
-         //get lte-topology
-      case "lte-topology":
-         dbconnector.queryDB( "cache_lte_topo", "find", {}, function(err, data){
-            console.log( data );
-            if( data && data[0] )
-               data = data[0].data;
-            sendResponse( err, data );
-         }, false);
-         return;
    }
 
    var checkNotNull = function( obj, msg ){
@@ -120,12 +111,12 @@ function proc_request(req, res, next) {
       checkNotNull( query.$data, "Need $data" );
 
       console.log( JSON.stringify(query ) );
-      if( action == "update" ){
+      if( action === "update" ){
          checkNotNull( query.$match, "Need $match" );
 
          var ret = dbconnector.mdb.collection( collection ).update( query.$match, query.$data, query.$options, sendResponse);
 
-      }else if( action == "insert" ){
+      }else if( action === "insert" ){
          dbconnector.mdb.collection( collection ).insert( query.$data, query.$options, sendResponse );
       }else {
          sendResponse( "Tobe implemented" );

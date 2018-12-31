@@ -31,6 +31,7 @@ function childProcess( file, params, env, autoRestart ){
       //    arguments  : [ firstArgs, secondArgs, ... ]
       //}
       self.childProcess.on("message", function( msg ){
+         console.log( msg );
          var cb = null;
          switch( msg.type ){
          case "socketio":

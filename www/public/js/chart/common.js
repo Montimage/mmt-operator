@@ -51,6 +51,7 @@ const GTP     = MMTDrop.constants.GtpStatsColumn;
 //this db contains status of probe, interval to get data of reports
 const status_db = new MMTDrop.Database({collection: "status"});
 
+//auto reload button
 const fAutoReload = {
   hide : function(){
     $("#autoReload").hide();
@@ -58,6 +59,18 @@ const fAutoReload = {
   },
   show: function(){
      $("#autoReload").show();
+  },
+  onChange: function( cb ){
+     $("#isAutoReloadChk").off("change");
+     $("#isAutoReloadChk").change( function(){
+        var is_on = $(this).is(":checked");
+        fAutoReload.isOn = is_on;
+        console.log( "autoReload: " + is_on );
+        MMTDrop.tools.localStorage.set("autoreload", is_on, false);
+        
+        if( typeof( cb ) === "function" )
+           cb( is_on );
+    });
   }
 };
 
@@ -381,6 +394,11 @@ $(function () {
             p = 60*1000;
         //always reload each 60 seconds
         p = 60*1000;
+        
+        //overwrite by interval of fAutoReload
+        if( fAutoReload.interval )
+           p = fAutoReload.interval;
+        
         auto_reload_timer = setInterval( function(){
             reloadCount ++;
             console.log( reloadCount + " Reload ======>");
@@ -394,10 +412,11 @@ $(function () {
             status_db.reload({}, reloadReports, fPeriod.selectedOption().id);
         }, p);
     }
-    $("#isAutoReloadChk").change( function(){
-        var is_on = $(this).is(":checked");
-        console.log( "autoReload: " + is_on );
-        MMTDrop.tools.localStorage.set("autoreload", is_on, false);
+    //if fAutoReload.onchange is defined somewhere => fire it 
+    if( fAutoReload.onchange )
+       fAutoReload.onChange( fAutoReload.onchange );
+    else
+      fAutoReload.onChange( function( is_on ){
         if( is_on ){
             start_auto_reload_timer();
         }else{

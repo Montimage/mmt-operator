@@ -1,7 +1,7 @@
 /**
- * LTE network topology constructed by using data plane
+ * LTE network topology constructed by using control plane
  */
-var arr = [
+const arr = [
    {
       id: "topo",
       title: "Topology",
@@ -16,7 +16,7 @@ var arr = [
    }
    ];
 
-var availableReports = {
+const availableReports = {
 };
 
 
@@ -54,6 +54,8 @@ const LIMIT_SIZE=500;
 //create reports
 var ReportFactory = {
       createTopoReport: function (filter) {
+         fPeriod.hide();
+         fAutoReload.interval = 1000;
          
          //support to create an input form to add new elements
          const createInput = function( label, name, otherAttr ){
@@ -99,9 +101,8 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "Name",     "enb_name", {maxlength: 15, required: true} ),
-                     createInput( "IP",       "enb_ip", {required: true} ),
-                     createInput( "MME Name", "mme_name", {maxlength: 15, required: true} ),
+                     createInput( "Name", "name", {maxlength: 15, required: true} ),
+                     createInput( "IP",   "ip",   {required: true} )
                      ]
                },
                //Form: MME
@@ -112,8 +113,8 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "Name",     "mme_name", {maxlength: 15, required: true} ),
-                     createInput( "IP",       "mme_ip", {required: true} ),
+                     createInput( "Name", "name", {maxlength: 15, required: true} ),
+                     createInput( "IP",   "ip",   {required: true} ),
                      ]
                },
                //Form: User Equipment
@@ -124,10 +125,8 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "IMSI", "imsi", {maxlength: 15, required: true} ),
-                     createInput( "IP", "ue_ip", {required: true} ),
-                     createInput( "eNodeB Name", "enb_name", {maxlength: 15, required: true} ),
-                     createInput( "MME Name",    "mme_name", {maxlength: 15, required: true} ),
+                     createInput( "IMSI", "imsi",  {maxlength: 15, required: true} ),
+                     createInput( "IP"  , "ip",    {required: true} ),
                      ]
                },
                //Buttons
@@ -209,18 +208,6 @@ var ReportFactory = {
                      html  : '<span class="fa fa-random"></span>'
                   },
                }]
-            },{
-               type : "<a>",
-               attr: {
-                  class: "btn btn-default",
-                  title: "Update the current topology in realtime",
-                  "data-type": "realtime",
-                  onclick:'updateTopoOnRealTime( this );'
-               },
-               children: [{
-                  type : "<span>",
-                  class: "fa fa-line-chart"
-               }]
             }
             ]
          }));
@@ -228,36 +215,18 @@ var ReportFactory = {
          /*
           * Function create a graph using D3
           */
-         function drawGraph(eID, dataObj) {
+         function drawGraph( eID ) {
             // draw a topo graph on a DOM element given by eID
-            // console.log( data );
-            const obj = dataObj;
-            //example:
-            /**
-             * {
-             * nodes: {
-             *    a : { type: "xx", label: "hihi"},
-             *    b : { type: "zz", label: "hehe"} 
-             * },
-             * links: [
-             *    {source: "a", target: "b", label: 1},
-             *    {source: "a", target: "b", label: 4},
-             *    {source: "b", target: "a", label: 1},
-             * ]
-             * }  
-             */
-            if( typeof (obj.nodes ) != "object" )
-               throw "Type of nodes is note correct. It must be an object.";
-            if( ! Array.isArray( obj.links ))
-               throw "Type of links is not correct. It must be an array of links";
 
             const nodes = [];
             const nodes_obj = {};
+            
+            //a Node: { id: "a", type: "zz", name: "hehe"}
             function normalizeNode( o ){
                //node exists
-               if( nodes_obj[o.name ] != undefined ){
+               if( nodes_obj[o.id ] != undefined ){
                   //remove __toBeCleared flag
-                  delete( nodes_obj[ o.name ].__toBeCleared );
+                  delete( nodes_obj[ o.id ].__toBeCleared );
                   return;
                }
                
@@ -265,7 +234,7 @@ var ReportFactory = {
                   return;
                
                
-               nodes_obj[ o.name ] = o;
+               nodes_obj[ o.id ] = o;
                
                
                //if( o.type == null )
@@ -292,39 +261,33 @@ var ReportFactory = {
                nodes.push( o );
             }
 
-            //normalize the existing nodes in obj
-            for( var i in obj.nodes){
-               obj.nodes[ i ].name = i;
-               normalizeNode( obj.nodes[ i ] );
-            }
-
             const links = [];
             const links_obj = {};
 
+            //a link: {"source": id-of-source-node, "target": id-of-target-node}
             function normalizeLink( msg ){
-               var name = msg.source + "-" + msg.target;
+               if( nodes_obj[ msg.source ] == undefined || nodes_obj[ msg.target ] == undefined )
+                  return;
+               
+               const id = msg.source + "-" + msg.target;
                //is existing a link having the same source-dest?
-               if( links_obj[ name ] == undefined ){
+               if( links_obj[ id ] == undefined ){
                   var o = { 
                         source: nodes_obj[ msg.source ], //refer to its source object
                         target: nodes_obj[ msg.target ], //refer to its dest object
                         label : msg.label,
-                        name  : name
+                        id    : id
                   };
-                  links_obj[ name ] = o;
+                  links_obj[ id ] = o;
                   links.push( o );
                }
                else{
                   //is existing a link having the same source-dest?
                   //if yes, cummulate their labels
-                  //links_obj[name].label += " " + msg.label;
+                  //links_obj[id].label += " " + msg.label;
                   return;
                }
             }
-
-            //normalize each link
-            obj.links.forEach( normalizeLink )
-
 
             // size of display content
             const width = $(eID).getWidgetContentOfParent().innerWidth() - 20,
@@ -573,7 +536,11 @@ var ReportFactory = {
                })
                .attr("dy", ".35em")
                .text(function(d) { 
-                  return d.label  //IP
+                  if( d.name != undefined )
+                     return d.name;
+                  if( d.imsi != undefined )
+                     return d.imsi;
+                  return d.ip //IP
                })
                .attr("style", function( d ){
                   if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
@@ -706,7 +673,7 @@ var ReportFactory = {
                   var el = links[i];
                   if( el.source.__toBeCleared || el.target.__toBeCleared ){
                      //remove its from links_obj
-                     delete( links_obj[ el.name ] );
+                     delete( links_obj[ el.id ] );
                      //remove its from links array
                      links.splice( i, 1 );
                   }
@@ -717,7 +684,7 @@ var ReportFactory = {
                   var el = nodes[i];
                   if( el.__toBeCleared ){
                      //remove its from links_obj
-                     delete( nodes_obj[ el.name ] );
+                     delete( nodes_obj[ el.id ] );
                      //remove its from nodes array
                      nodes.splice( i, 1 );
                   }
@@ -775,27 +742,18 @@ var ReportFactory = {
                console.log( data );
                const type = data.type;
                
-               data = data.data || {};
-               
                const $modal = MMTDrop.tools.getModalWindow("enodeb-config");
                
                //hide all forms
                $modal.$content.find(".add-form-content").hide();
                //show the form of this type: either ue, enodeb, mme, or gw
-               $modal.$content.find("#form-content-" + type ).show();
+               const $form = $modal.$content.find("#form-content-" + type );
+               $form.show();
                
-               for( var i in data ){
-                  var val = data[i];
-                  if( typeof( val ) == "object" ){
-                     if( val && val.type == "Buffer" && val.data )
-                        val = val.data.join("");
-                  }
-                  
-                  var controlType = $(".enodeb-" + i).attr('type');
-                  if( controlType == "checkbox" )
-                     $(".enodeb-" + i).prop("checked", val );
-                  else
-                     $(".enodeb-" + i).val( val );
+               //asign data content to each input control
+               for( const i in data ){
+                  const val = data[i];
+                  $form.find(".enodeb-" + i).val( val );
                }
                
                
@@ -811,10 +769,10 @@ var ReportFactory = {
                   func = "showDetailUE('IMSI','"+ data.imsi +"')";
                   break;
                case TYPE_ENODEB:
-                  func = "showDetaileNodeB('"+ data.enb_name +"')"
+                  func = "showDetaileNodeB('"+ data.name +"')"
                   break;
                case TYPE_MME:
-                  func = "showDetaileMME('"+ data.mme_name +"')"
+                  func = "showDetaileMME('"+ data.name +"')"
                   break;
                }
                //show detail button only if there exist something to show
@@ -832,168 +790,45 @@ var ReportFactory = {
                $modal.modal();
             };
 
-            /*
-             * find a node having given type and name
-             * Return the node if exist
-             *        otherwise, create a new node and return it
-             */
-            svg.getNodeByName = function( type, name, data ){
-               data = data || {};
-               
-               var new_name = name + "-" + type;
-               for( var i in nodes_obj ){
-                  var n = nodes_obj[i];
-                  if( n.type == type && n.name == new_name ){
-                     MMTDrop.tools.mergeObjects( n.data, data );
-                     return n;
-                  }
-               }
-               
-               return { type: type, name: new_name, label: name, data: data};
-            };
-            
-            //add a link: gtpIpSrc --> basedIpSrc --> basedIpDst
-            svg.addGtpLink = function( enb_name, gw_ip, ue_imsi, msg ){
-               //enodeb
-               const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
-                  "enb_name" : enb_name,
-                  "enb_ip"   : msg[ GTP.IP_SRC.id ],
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
-               });
-               const gw     = svg.getNodeByName( TYPE_GATEWAY, gw_ip );
-               //UE
-               const ue_1   = svg.getNodeByName( TYPE_UE, ue_imsi, {
-                  //based on column IDs of service_data table in mysql DB
-                  "imsi"     : ue_imsi,
-                  "ue_ip"    : msg[ COL.IP_SRC.id ],
-                  "enb_name" : enb_name,
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
-               });
-               //const ue_2 = svg.getNodeByIP( TYPE_UE, gtpIpSrc );
-               svg.addNodes( [ enodeb, gw, ue_1 ] );
-               
-               svg.addLinks( [
-                  {source: ue_1.name,   target: enodeb.name, label: ""},
-                  {source: enodeb.name, target: gw.name,     label: ""},
-                  //{source: gw.name,     target: ue_2.name,   label: ""}, 
-               ] );
-            }
-            
-            
-            //add a link: eNodeB --> MME
-            svg.addSctpLink = function( enb_name, mme_name, msg ){
-               //enodeb
-               const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
-                  "enb_name" : enb_name,
-                  "enb_ip"   : msg[ COL.IP_SRC.id ],
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
-               });
-               const mme    = svg.getNodeByName( TYPE_MME, mme_name, {
-                  "mme_name" : mme_name,
-                  "mme_ip"   : msg[ COL.IP_DST.id ],
-               } );
-               
-               svg.addNodes( [ enodeb, mme ] );
-               
-               svg.addLinks( [
-                  {source: enodeb.name, target: mme.name, label: ""}
-               ] );
-            }
             window.svg = svg;
             return svg;
          }// end topoChart
 
          //empty graph
-         const svg = drawGraph( "#topo-content",  {
-               nodes: {},
-               links: []
-         });
+         const svg = drawGraph( "#topo-content" );
 
-         const databaseGTP = MMTDrop.databaseFactory.createStatDB( {collection: "data_gtp", 
-            action: "aggregate", query: [], raw: true });
-         //this is called each time database is reloaded
-         databaseGTP.updateParameter = function( param ){
-            //mongoDB aggregate
-            const group = { _id : {} };
-            [  GTP.IP_SRC.id, GTP.IP_DST.id, GTP.IMSI.id ].forEach( function( el, index){
-              group["_id"][ el ] = "$" + el;
-            } );
-            [ GTP.IMSI.id, GTP.ENB_NAME.id, GTP.IP_SRC.id, GTP.IP_DST.id, GTP.MME_NAME.id ].forEach( function( el, index){
-              group[ el ] = {"$last" : "$"+ el};
+         const reloadData = function(){
+            MMTDrop.tools.ajax( "/api/lte_topology/find?raw", {}, "GET", {
+               success: function( data ){
+                  if( data.data == undefined )
+                     return;
+                  const topo = data.data[0];
+                  /*
+                  topo = { //other attributes...
+                        "links":[{"source":1,"target":2}],
+                        "nodes":{"1":{"id":1,"ip":"172.16.0.2","name":"eNB_Eurecom_LTEBox","timestamp":1539855310000,"type":"enodeb"},
+                                 "2":{"id":2,"ip":"172.16.0.1","timestamp":1539855310000,"type":"mme"}
+                                 }
+                        };
+                  */
+                  const nodes = [];
+                  let links   = [];
+                  if( topo ){
+                     for( const n in topo.nodes ){
+                        const node = topo.nodes[n];
+                        node.id    = n;
+                        nodes.push( node );
+                     }
+                     links = topo.links;
+                  }
+                  
+                  svg.clearData();
+                  svg.addNodes( nodes );
+                  svg.addLinks( links );
+                  svg.redraw();
+               }
             });
-            
-            [ COL.IP_SRC.id ].forEach( function( el ){
-               group[ el ] = {$addToSet : "$" + el };
-            });
-            
-           param.period = status_db.time;
-           
-           //update in realtime
-           if( window._updateTopoTimer != null ){
-              //select data only from the last 10 seconds (2 x stats_period
-              param.period.begin = param.period.end - 2*MMTDrop.config.probe_stats_period*1000;
-              //alway select data on the same collection with "Last 5 minutes" or "Last hour"
-              param.period_groupby = "minute";
-           }
-           else
-              //in case of non-realtime, the collection is decided by "Period" combobox
-              param.period_groupby = fPeriod.selectedOption().id;
-     
-           param.query = [ {$group: group}];
          }
-         
-         //callback is triggered each time database reloaded its data from server
-         databaseGTP.afterReload( function( data ){
-            data.forEach( function( msg ){
-               svg.addGtpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.IP_DST.id ], msg[ GTP.IMSI.id ], msg );
-            });
-            
-            //now we can redraw the svg
-            svg.redraw();
-         });
-         
-         const databaseSCTP = MMTDrop.databaseFactory.createStatDB( {collection: "data_sctp", 
-            action: "aggregate", query: [], raw: true });
-         //this is called each time database is reloaded
-         databaseSCTP.updateParameter = function( param ){
-            //mongoDB aggregate
-            const group = { _id : {} };
-            [  GTP.MME_NAME.id, GTP.ENB_NAME.id ].forEach( function( el, index){
-              group["_id"][ el ] = "$" + el;
-            } );
-            [ COL.IP_SRC.id, COL.IP_DST.id, GTP.MME_NAME.id, GTP.ENB_NAME.id ].forEach( function( el, index){
-              group[ el ] = {"$last" : "$"+ el};
-            });
-            
-           param.period = status_db.time;
-
-           //update in realtime
-           if( window._updateTopoTimer != null ){
-              //select data only from the last 10 seconds (2 x stats_period
-              param.period.begin = param.period.end - 2*MMTDrop.config.probe_stats_period*1000;
-              //alway select data on the same collection with "Last 5 minutes" or "Last hour"
-              param.period_groupby = "minute";
-           }
-           else
-              //in case of non-realtime, the collection is decided by "Period" combobox
-              param.period_groupby = fPeriod.selectedOption().id;
-     
-           param.query = [ {$group: group}];
-         }
-         
-         //callback is triggered each time database reloaded its data from server
-         databaseSCTP.afterReload( function( data ){
-            //1. clear the current data of topology
-            svg.clearData();
-            
-            //2. load sctp to get ENB and MME nodes
-            data.forEach( function( msg ){
-               svg.addSctpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.MME_NAME.id ], msg );
-            });
-            
-            //3. load network traffic to get UE, ENB, MME, and GW nodes 
-            databaseGTP.reload();
-         });
          
          //when user click on group buttons to toggle elements(UE, MME, eNodeB)
          window.toggleChartElements = function( dom ){
@@ -1028,40 +863,25 @@ var ReportFactory = {
             })
          }
          
-         window.updateTopoOnRealTime = function( dom ){
-            const $dom = $(dom);
-            var isEnable = false
-            //is showing?
-            if( $dom.attr("class").indexOf( "btn-primary" ) >= 0 ){
-               $dom.attr("class", "btn btn-default");
-            }else{
-               $dom.attr("class", "btn btn-primary");
-               isEnable = true;
-            }
-            
-            if( isEnable ){
-               fPeriod.hide();
-               fAutoReload.hide();
-               //reload each 5 second
-               window._updateTopoTimer = setInterval( function(){
-                  status_db.reload();
-               }, 5000 );
-            }else{
-               if( window._updateTopoTimer ){
-                  clearInterval( window._updateTopoTimer );
-                  window._updateTopoTimer  = null;
-               }
-               //reload the current page
-               MMTDrop.tools.reloadPage();
-            }
-         }
-         
          //load traffic from server when we got server's status in status_db
          status_db.afterReload( function(){
-            //load topo from sctp traffic
-            databaseSCTP.reload();
+            reloadData();
          });
          
+         //disable the default onchange event of fAutoReload
+         fAutoReload.onchange = console.log;
+         //when the topology has been changed, we received a notification from server via socketio
+         socket.on("reload-lte-topology", function( needToClean ){
+            if( !fAutoReload.isOn )
+               return;
+            
+            if( needToClean ){
+               svg.clearData();
+               svg.redraw();
+            }
+               
+            reloadData();
+         });
          
          //this is to udpate state of buttons
          hideChartElementsDependingOnButtons();
