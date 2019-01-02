@@ -209,18 +209,6 @@ var ReportFactory = {
                      html  : '<span class="fa fa-random"></span>'
                   },
                }]
-            },{
-               type : "<a>",
-               attr: {
-                  class: "btn btn-default",
-                  title: "Update the current topology in realtime",
-                  "data-type": "realtime",
-                  onclick:'updateTopoOnRealTime( this );'
-               },
-               children: [{
-                  type : "<span>",
-                  class: "fa fa-line-chart"
-               }]
             }
             ]
          }));

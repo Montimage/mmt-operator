@@ -73,9 +73,12 @@ if( typeof Highcharts !== "undefined" )
          success: function( msg, delay ){
             this.alert( msg, "success", delay );
          },
+         warning: function( msg, delay ){
+            this.alert( msg, "error", delay ); 
+         },
          alert: function( msg, type, delay ){
-            if( delay == undefined )
-               delay = 0;//forever
+            if( delay === undefined )
+               delay = 10000;//10s
             else if( delay < 1000 )
                delay = 1000;//1second
 

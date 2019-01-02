@@ -228,16 +228,22 @@ var ReportFactory = {
             
             //a Node: { id: "a", type: "zz", name: "hehe"}
             function normalizeNode( o ){
+               if( o == null )
+                  return;
+               
                //node exists
                if( nodes_obj[o.id ] != undefined ){
                   //remove __toBeCleared flag
                   delete( nodes_obj[ o.id ].__toBeCleared );
+                  
+                  
+                  //update new data field if need
+                  for( const k in o )
+                     if( o[k] !== undefined && o[k] !== 0 && o[k] !== "" )
+                        nodes_obj[ o.id ][k] = o[k];
+                  
                   return;
                }
-               
-               if( o == null )
-                  return;
-               
                
                nodes_obj[ o.id ] = o;
                
@@ -269,9 +275,20 @@ var ReportFactory = {
             const links = [];
             const links_obj = {};
 
+            //list of entities' ID having no detailed informations in nodes_obj
+            const inconnueEntities = [];
             //a link: {"source": id-of-source-node, "target": id-of-target-node}
             function normalizeLink( msg ){
-               if( nodes_obj[ msg.source ] == undefined || nodes_obj[ msg.target ] == undefined )
+               if( msg == undefined )
+                  return;
+               
+               
+               if( nodes_obj[ msg.source ] == undefined )
+                  inconnueEntities.push( msg.source );
+               if( nodes_obj[ msg.target ] == undefined )
+                  inconnueEntities.push( msg.target );
+               
+               if( inconnueEntities.length > 0 )
                   return;
                
                const id = msg.source + "-" + msg.target;
@@ -297,8 +314,6 @@ var ReportFactory = {
             // size of display content
             const width = $(eID).getWidgetContentOfParent().innerWidth() - 20,
             height = $(eID).getWidgetContentOfParent().innerHeight() - 60;
-
-            const COLOR = d3.scale.category10();
 
             const svg = d3.select( eID ).append("svg")
             .attr("width", width)
@@ -326,7 +341,8 @@ var ReportFactory = {
             
             function updateLinks(){
                // Create all the line svgs but without locations yet
-               const link = svg.selectAll(".link").data( links );
+               const link = svg.selectAll(".link")
+                  .data( links, (d) => { return d.id;}  );
                
                link.exit().remove();//remove unneeded links
                
@@ -364,10 +380,15 @@ var ReportFactory = {
             //set of nodes being fixed their positions
             svg.fixedNodes = MMTDrop.tools.localStorage.get( "fixedNodes", false ) || {};
 
+            const refreshData = function( d ){
+               return d;
+            }
+            
             //indicate when user is draging the mouse or not
             var is_draging = false;
             function updateNodes(){
-               const node = svg.selectAll(".node").data( nodes );
+               const node = svg.selectAll(".node")
+                  .data( nodes, (d) => { return d.id;} );
                
                node.exit().remove();//remove unneeded circles
                
@@ -520,7 +541,7 @@ var ReportFactory = {
                   .attr("class", "node-title");
                
                //update node-name
-               svg.selectAll(".node-name")
+               node.selectAll(".node-name")
                   .attr("dx", function( d ){
                      if( d.type == TYPE_ENODEB || d.type == TYPE_UE)
                         return d.radius;
@@ -528,7 +549,6 @@ var ReportFactory = {
                         return d.radius + 10;
                   })
                   .text(function(d) {
-                     console.log( d );
                      if( d.name !== undefined )
                         return d.name;
                      if( d.imsi !== undefined )
@@ -693,6 +713,16 @@ var ReportFactory = {
                force.start();
                
                hideChartElementsDependingOnButtons();
+               
+               if( inconnueEntities.length > 0 ){
+                  if( inconnueEntities.length == 1 )
+                     MMTDrop.alert.warning("Not found element having id = " + inconnueEntities[0] );
+                  else
+                     MMTDrop.alert.warning("Not found elements having id in " + JSON.stringify( inconnueEntities ) );
+                  
+                  inconnueEntities.length = 0;
+               }
+               
             };
 
             /**
@@ -889,9 +919,8 @@ var ReportFactory = {
          
          //this is to udpate state of buttons
          hideChartElementsDependingOnButtons();
+
          
-         for( var i=0; i<testData.length; i++ )
-            setTimeout( start, (i+1)*5000, i );
       },
 }
 
@@ -972,6 +1001,7 @@ const testData =[
             "6": {
                "id": 6,
                "ip": "10.0.0.10",
+               "imsi": "nghia",
                "m_tmsi": 1111,
                "timestamp": 1546267650000,
                "type": "ue"
@@ -1022,12 +1052,15 @@ const testData =[
                "timestamp": 1546267650000,
                "type": "ue"
             }
-         },
+         }
+   },{
+      
    }
    ];
 
 function start( i ){
-   const topo = testData[i];
+   //do a copy of data
+   const topo = JSON.parse( JSON.stringify( testData[i] ));
    const nodes = [];
    let links   = [];
    if( topo ){
