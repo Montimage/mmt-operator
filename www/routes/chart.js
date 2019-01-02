@@ -88,7 +88,10 @@ var all_pages = {
     "enodeb" : {
       title: "eNodeB",
       children : {
-         "topology":{
+         "topo-control-plane": {
+            title : "Control Plane Topology"
+         },
+         "topology": {
             title : "Network Topology"
          },
          "traffic": {
@@ -103,7 +106,7 @@ var all_pages = {
 
 //list of tabs to be shown on the tab bar
 var pages_to_show = {};
-const listOfPageIdToShow = config.modules 
+const listOfPageIdToShow = config.modules ;
    
 //for testing
 //listOfPageIdToShow.push( "sla" );

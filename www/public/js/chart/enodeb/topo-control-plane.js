@@ -33,11 +33,11 @@ const LIMIT = 1000;
 var param = MMTDrop.tools.getURLParameters();
 //top profile => detail of 1 profile (list app) => one app
 if( param.profile ){
-   arr[1].title =  param.profile + " &#10095; "
+   arr[1].title =  param.profile + " &#10095; ";
    if( param.app )
       arr[1].title += param.app;
    else
-      arr[1].title += "eNodeB/Network Topology"
+      arr[1].title += "eNodeB/Network Topology";
 }
 
 const TYPE_ENODEB   = "enodeb";
@@ -69,7 +69,7 @@ var ReportFactory = {
                      class       : "form-control enodeb-" + name,
                   }
             };
-            if( otherAttr != null )
+            if( otherAttr !== null )
                obj.attr = MMTDrop.tools.mergeObjects( obj.attr, otherAttr );
             return obj;
          };
@@ -102,7 +102,8 @@ var ReportFactory = {
                   },
                   children : [
                      createInput( "Name", "name", {maxlength: 15, required: true} ),
-                     createInput( "IP",   "ip",   {required: true} )
+                     createInput( "IP",   "ip",   {required: true} ),
+                     createInput( "Last Change",   "timestamp",   {} ),
                      ]
                },
                //Form: MME
@@ -115,6 +116,7 @@ var ReportFactory = {
                   children : [
                      createInput( "Name", "name", {maxlength: 15, required: true} ),
                      createInput( "IP",   "ip",   {required: true} ),
+                     createInput( "Last Change",   "timestamp",   {} ),
                      ]
                },
                //Form: User Equipment
@@ -125,10 +127,13 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "IMSI", "imsi",  {maxlength: 15, required: true} ),
-                     createInput( "IP"  , "ip",    {required: true} ),
+                     createInput( "IMSI",   "imsi",   {maxlength: 15, required: true} ),
+                     createInput( "M_TMSI", "m_tmsi", {maxlength: 15, required: true} ),
+                     createInput( "IP",     "ip",     {required: true} ),
+                     createInput( "Last Change",   "timestamp",   {} ),
                      ]
                },
+               
                //Buttons
                {
                   type : "<div>",
@@ -302,64 +307,58 @@ var ReportFactory = {
 
             // Set up the force layout
             const force = d3.layout.force()
-            .gravity(0.1)
-            // .charge(function(d, i) { return i ? 0 : 2000; })
-            .charge(-1000)
-            .friction(0.7)
-            .linkDistance( function(d){
-               return 70 + d.source.radius + d.target.radius;
-            })
-            .size([width, height]);
+               .gravity(0.1)
+               // .charge(function(d, i) { return i ? 0 : 2000; })
+               .charge(-1000)
+               .friction(0.7)
+               .linkDistance( function(d){
+                  return 70 + d.source.radius + d.target.radius;
+               })
+               .size([width, height]);
 
 
             // Creates the graph data structure out of the json data
             force.nodes(nodes)
-            .links(links);
+               .links(links);
 
             svg.nodes = nodes;
             svg.links = links;
             
-            var  node = svg.selectAll(".node");
-            var link  = svg.selectAll(".link");
-
             function updateLinks(){
                // Create all the line svgs but without locations yet
-               link = link.data( links );
+               const link = svg.selectAll(".link").data( links );
                
                link.exit().remove();//remove unneeded links
                
                const linkEnter = link.enter()
-               .insert("g", ":first-child") //ensure that links are always inserted first => on below of nodes
-               .attr("class", "link")
+                  .insert("g", ":first-child") //ensure that links are always inserted first => on below of nodes
+                  .attr("class", "link")
                ;
 
                linkEnter.append("path")
-               .style("stroke-width", function (d) {
-                  return 1;
-                  //return d.val;
-               })
-               .style("stroke-dasharray", function (d) {
-                  return "3,0";
-               })
-               .style("stroke", function( d ){
-                  return "blue";
-               })
-               .style("fill", "none")
-               .style("stroke-linejoin", "miter")
-               .attr('id',function(d,i) {return 'edgepath'+i})
+                  .style("stroke-width", function (d) {
+                     return 1;
+                     //return d.val;
+                  })
+                  .style("stroke-dasharray", "3,0")
+                  .style("stroke", "blue")
+                  .style("fill", "none")
+                  .style("stroke-linejoin", "miter")
+                  .attr('id',function(d,i) {return 'edgepath'+i})
                ;
 
+               /*
                linkEnter.append("text")
-               .attr("dx", function(d){
-                  return d.source.radius + 10;
-               })
-               .attr("dy",  - 10 )
-               .attr("opacity", 0)
-               .append("textPath")
-               .text(function(d) { return d.label; })
-               .attr('xlink:href',function(d,i) {return '#edgepath'+i})
-               .style("pointer-events", "none")
-               ;
+                  .attr("dx", function(d){
+                     return d.source.radius + 10;
+                  })
+                  .attr("dy",  - 10 )
+                  .attr("opacity", 0)
+                  .append("textPath")
+                  .text(function(d) { return d.label; })
+                  .attr('xlink:href',function(d,i) {return '#edgepath'+i;})
+                  .style("pointer-events", "none")
+               ;*/
             }
             
             //set of nodes being fixed their positions
@@ -368,197 +367,195 @@ var ReportFactory = {
             //indicate when user is draging the mouse or not
             var is_draging = false;
             function updateNodes(){
-               // Do the same with the circles for the nodes - no
-               node = node.data( nodes );
+               const node = svg.selectAll(".node").data( nodes );
                
                node.exit().remove();//remove unneeded circles
                
-               const nodeEnter = node.enter()
-               .append("g")
-               .attr("class", "node")
-               .attr("name", function( d ){
-                  d.pos   = svg.fixedNodes[ d.name ];
-                  d.fixed = ( d.pos != null );
+               const nodeEnter = node.enter().append("g")
+                  //a group of elements of a node, such as, icon, title, label 
+                  .attr("class", "node")
+                  .on('mouseover', function( d ){
+                     if( is_draging === true )
+                        return;
 
-                  return d.name;
-               })
-               .on('mouseover', function( d ){
-                  if( is_draging === true )
-                     return;
+                     // Reduce the opacity of all but the neighbouring nodes
+                     svg.selectAll(".node").style("opacity", function (o) {
+                        return d.index == o.index ? 1 : 0.1;
+                     });
 
-                  // Reduce the opacity of all but the neighbouring nodes
-                  node.style("opacity", function (o) {
-                     return d.index==o.index ? 1 : 0.1;
-                  });
+                     svg.selectAll(".link").style("opacity", function (o) {
+                        if( d.index === o.source.index || d.index === o.target.index ){
+                           return 1;
+                        }
+                        return 0.1;
+                     });
 
-                  link.style("opacity", function (o) {
-                     if( d.index==o.source.index || d.index==o.target.index ){
-                        return 1;
-                     }
-                     return 0.1;
-                  });
-
-                  link.selectAll("text").style("opacity", function (o) {
-                     if( d.index==o.source.index || d.index==o.target.index ){
-                        return 1;
-                     }
-                     return 0;
-                  });
-               })
-               .on('mouseout', function(){
-                  // Put them back to opacity=1
-                  node.style("opacity", 1);
-                  link.style("opacity", 1);
-                  link.selectAll("text").style("opacity", 0);
-               })
+                     svg.selectAll(".link").selectAll("text").style("opacity", function (o) {
+                        if( d.index === o.source.index || d.index === o.target.index ){
+                           return 1;
+                        }
+                        return 0;
+                     });
+                  })
+                  .on('mouseout', function(){
+                     // Put them back to opacity=1
+                     svg.selectAll(".node").style("opacity", 1);
+                     svg.selectAll(".link").style("opacity", 1);
+                     svg.selectAll(".link").selectAll("text").style("opacity", 0);
+                  })
                ;
 
+               //icon of a node
                nodeEnter.append("circle")
-               .attr("r", function(d){
-                  if( d.type == TYPE_ENODEB)
-                     return d.radius;
-                  else
-                     return d.radius + 10;
-               })
-               .attr("stroke-width", function( d ){
-                  if( d.type == TYPE_GATEWAY )
-                     return 1;
-                  else
-                     return 0
-                 })
-               .attr("stroke", "black")
-               .attr("fill", "white")
-               ;
-
-               nodeEnter.append("text")
-               .attr("text-anchor", "middle" )
-               .attr("dy", ".4em")
-               .attr("dx", function( d ) {
-                  if( d.type == TYPE_ENODEB )
-                     return ".25em";
-                  else
-                     return 0;
-               })
-               .attr('style', function( d ) {
-                  const style = "font-size: "+ (d.radius*2) +"px; cursor: default; "
-                  if( d.type == TYPE_ENODEB)
-                     return style + "font-family: fontmfizz"
+                  .attr("r", function(d){
+                     if( d.type == TYPE_ENODEB)
+                        return d.radius;
                      else
-                        return style + "font-family: fontawesome";
-               })
-               .attr("fill", "white")
-               .text(function(d) {
-                  switch( d.type ){
-                     case TYPE_ENODEB   : return "\uf104"; //antenna from font-mfizz
-                     case TYPE_GATEWAY  : return "\uf074"; //router from font-awesome
-                     case TYPE_MME      : return "\uf233"; //server from font-awesome
-                     case TYPE_UE       : return "\uf10b"; //mobile from font-awesome
-                  }
-                  return d.type ;
-               })
-               //when user double-click
-               .on("dblclick", function(d){
-                  if( d.fixed ){
-                     d.fixed = false;
-                     delete( d.pos );
-                     delete svg.fixedNodes[ d.name ];
-                     //save to localstorage
-                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
-                  }
-               })
-               .call(
-                  d3.behavior.drag()
-                  .on("dragstart", function(d, i) {
-                     //if d.pos => delete it to be able to move
-                     delete( d.pos );
-
-                     d.draging  = true;
-                     is_draging = true;
-                     d.fixed    = true; // of course set the node to fixed so
-                     // the force doesn't include the node
-                     // in its auto positioning stuff
-                     force.stop() // stops the force auto positioning before
-                     // you start dragging
+                        return d.radius + 10;
                   })
-                  .on("drag", function(p, i) {
-                     // ensure that the nodes do not go outside
-                     var x = d3.event.dx,
-                     y = d3.event.dy;
-
-                     p.px += x;
-                     p.py += y;
-                     p.x  += x;
-                     p.y  += y;
-
-                     var r = 15;
-                     if( p.y > height - r )
-                        p.y = height - r;
-                     if( p.y < r )
-                        p.y = r;
-                     if( p.x > width - r )
-                        p.x = width - r;
-                     if( p.x < r )
-                        p.x = r;
-
-                     if( p.py > height - r )
-                        p.py = height - r;
-                     if( p.py < r )
-                        p.py = r;
-                     if( p.px > width - r )
-                        p.px = width - r;
-                     if( p.px < r )
-                        p.px = r;
-
-                     updatePosition();
-                  })
-                  .on("dragend", function(d, i) {
-                     d.draging  = false;
-                     is_draging = false;
-
-                     d.fixed = true;
-                     d.pos   = {x: d.x, y: d.y};
-                     //save postion of d
-                     svg.fixedNodes[ d.name ] = d.pos;
-                     //save to localstorage
-                     MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
-
-                     force.resume();
-                  })
-               )
+                  .attr("stroke-width", function( d ){
+                     if( d.type == TYPE_GATEWAY )
+                        return 1;
+                     else
+                        return 0;
+                    })
+                  .attr("stroke", "black")
+                  .attr("fill", "white")
                ;
 
                nodeEnter.append("text")
-               .attr("dx", function( d ){
-                  if( d.type == TYPE_ENODEB || d.type == TYPE_UE)
-                     return d.radius;
-                  else
-                     return d.radius + 10;
-               })
-               .attr("dy", ".35em")
-               .text(function(d) { 
-                  if( d.name != undefined )
-                     return d.name;
-                  if( d.imsi != undefined )
-                     return d.imsi;
-                  return d.ip //IP
-               })
-               .attr("style", function( d ){
-                  if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
-                     return "cursor:pointer";
-                  else
-                     return "cursor: default";
-               })
-               .on("click", function(d){
-                  //MMTDrop.tools.reloadPage( "ip="+ d.name );
-                  if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
-                     showDetailElement( d );
-               })
-               .append("title").text( function( d ) {
-                  if( d.type == TYPE_ENODEB || d.type == TYPE_UE)
-                     return "click here to view detail of this element";
-                  else
-                     return "";
-               })
+                  .attr("text-anchor", "middle" )
+                  .attr("dy", ".4em")
+                  .attr("dx", function( d ) {
+                     if( d.type == TYPE_ENODEB )
+                        return ".25em";
+                     else
+                        return 0;
+                  })
+                  .attr('style', function( d ) {
+                     const style = "font-size: "+ (d.radius*2) +"px; cursor: default; ";
+                     if( d.type === TYPE_ENODEB)
+                        return style + "font-family: fontmfizz"
+                        else
+                           return style + "font-family: fontawesome";
+                  })
+                  .attr("fill", "white")
+                  .text(function(d) {
+                     switch( d.type ){
+                        case TYPE_ENODEB   : return "\uf104"; //antenna from font-mfizz
+                        case TYPE_GATEWAY  : return "\uf074"; //router from font-awesome
+                        case TYPE_MME      : return "\uf233"; //server from font-awesome
+                        case TYPE_UE       : return "\uf10b"; //mobile from font-awesome
+                     }
+                     return d.type ;
+                  })
+                  //when user double-click
+                  .on("dblclick", function(d){
+                     if( d.fixed ){
+                        d.fixed = false;
+                        delete( d.pos );
+                        delete svg.fixedNodes[ d.name ];
+                        //save to localstorage
+                        MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
+                     }
+                  })
+                  .call(
+                     d3.behavior.drag()
+                     .on("dragstart", function(d, i) {
+                        //if d.pos => delete it to be able to move
+                        delete( d.pos );
+
+                        d.draging  = true;
+                        is_draging = true;
+                        d.fixed    = true; // of course set the node to fixed so
+                        // the force doesn't include the node
+                        // in its auto positioning stuff
+                        force.stop(); // stops the force auto positioning before
+                        // you start dragging
+                     })
+                     .on("drag", function(p, i) {
+                        // ensure that the nodes do not go outside
+                        var x = d3.event.dx,
+                        y = d3.event.dy;
+
+                        p.px += x;
+                        p.py += y;
+                        p.x  += x;
+                        p.y  += y;
+
+                        const r = 15;
+                        p.y = Math.min( p.y, height - r);
+                        p.y = Math.max( p.y, r );
+                        p.x = Math.min( p.x, width - r );
+                        p.x = Math.max( p.x, r );
+
+                        p.py = Math.min( p.py, height - r );
+                        p.py = Math.max( p.py, r );
+                        p.px = Math.min( p.px, width - r );
+                        p.px = Math.max( p.px, r );
+
+                        updatePosition();
+                     })
+                     .on("dragend", function(d, i) {
+                        d.draging  = false;
+                        is_draging = false;
+
+                        d.fixed = true;
+                        d.pos   = {x: d.x, y: d.y};
+                        //save postion of d
+                        svg.fixedNodes[ d.name ] = d.pos;
+                        //save to localstorage
+                        MMTDrop.tools.localStorage.set( "fixedNodes", svg.fixedNodes, false );
+
+                        force.resume();
+                     })
+                  )
+               ;
+
+               //name of a node
+               nodeEnter.append("text")
+                  .attr("class", "node-name")
+                  .attr("dy", ".35em")
+                  .append("title")
+                  .attr("class", "node-title");
+               
+               //update node-name
+               svg.selectAll(".node-name")
+                  .attr("dx", function( d ){
+                     if( d.type == TYPE_ENODEB || d.type == TYPE_UE)
+                        return d.radius;
+                     else
+                        return d.radius + 10;
+                  })
+                  .text(function(d) {
+                     console.log( d );
+                     if( d.name !== undefined )
+                        return d.name;
+                     if( d.imsi !== undefined )
+                        return d.imsi;
+                     return d.ip; //IP
+                  })
+                  .attr("style", function( d ){
+                     if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
+                        return "cursor:pointer";
+                     else
+                        return "cursor: default";
+                  })
+                  .on("click", function(d){
+                     //MMTDrop.tools.reloadPage( "ip="+ d.name );
+                     if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
+                        showDetailElement( d );
+                  })
+               ;
+
+               //update node-title
+               svg.selectAll(".node-title")
+                  .text( function( d ) {
+                     if( d.type == TYPE_ENODEB || d.type == TYPE_UE)
+                        return "click here to view detail of this element";
+                     else
+                        return "";
+                  })
                ;
                
             }
@@ -568,86 +565,86 @@ var ReportFactory = {
             function updatePosition() {
                //console.log("update position, force.alpha = " + force.alpha() );
                
-               if( force.alpha() != 0 ){
-                  var delta = Math.abs( force.__lastAlpha - force.alpha() );
+               if( force.alpha() !== 0 ){
+                  const delta = Math.abs( force.__lastAlpha - force.alpha() );
                   if( delta < 0.002  )
                      return;
                
                   force.__lastAlpha = force.alpha();
                }
                
-               const linkSVG = link; //svg.selectAll(".link");
+               const linkSVG = svg.selectAll(".link");
                linkSVG.selectAll("path")
-               .attr("d", function(d) {
-                  //use saved position rather than the one being given by d3.force
-                  if( d.source.pos ){
-                     d.source.x = d.source.pos.x;
-                     d.source.y = d.source.pos.y;
-                  }
-                  if( d.target.pos ){
-                     d.target.x = d.target.pos.x;
-                     d.target.y = d.target.pos.y;
-                  }
+                  .attr("d", function(d) {
+                     //use saved position rather than the one being given by d3.force
+                     if( d.source.pos ){
+                        d.source.x = d.source.pos.x;
+                        d.source.y = d.source.pos.y;
+                     }
+                     if( d.target.pos ){
+                        d.target.x = d.target.pos.x;
+                        d.target.y = d.target.pos.y;
+                     }
 
-                  const dr = 0; //bend
+                     const dr = 0; //bend
 
-                  return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
-               })
+                     return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+                  })
                ;
 
                //node
-               const nodeSVG = node;//svg.selectAll(".node");
+               const nodeSVG = svg.selectAll(".node");
                nodeSVG.selectAll("circle")
-               .attr("cx", function(d) { 
-                  // fix 2 nodes
-                  if( d.name == MICRO_FLOW || d.name == NO_IP )
-                     return d.x = 10 + d.radius;
+                  .attr("cx", function(d) { 
+                     // fix 2 nodes
+                     if( d.name === MICRO_FLOW || d.name === NO_IP )
+                        return d.x = 10 + d.radius;
 
-                  //use saved position rather than the one being given by d3.force
-                  if( d.pos )
-                     d.x = d.pos.x;
+                     //use saved position rather than the one being given by d3.force
+                     if( d.pos )
+                        d.x = d.pos.x;
 
-                  return d.x = Math.max(d.radius, Math.min(width  - d.radius, d.x)); 
-               })
-               .attr("cy", function(d) {
-                  // fix 2 nodes
-                  if( d.name == MICRO_FLOW )
-                     return d.y = 10 + d.radius;
-                  if( d.name == NO_IP )
-                     return d.y = 50 + d.radius;
+                     d.x = Math.max(d.radius, Math.min(width  - d.radius, d.x));
+                     return d.x;
+                  })
+                  .attr("cy", function(d) {
+                     // fix 2 nodes
+                     if( d.name === MICRO_FLOW )
+                        return d.y = 10 + d.radius;
+                     if( d.name === NO_IP )
+                        return d.y = 50 + d.radius;
 
-                  //use saved position rather than the one being given by d3.force
-                  if( d.pos )
-                     d.y = d.pos.y;
+                     //use saved position rather than the one being given by d3.force
+                     if( d.pos )
+                        d.y = d.pos.y;
 
-                  return d.y = Math.max(d.radius, Math.min(height - d.radius, d.y)); 
-               })
+                     d.y = Math.max(d.radius, Math.min(height - d.radius, d.y));
+                     return d.y;
+                  })
                ;
 
                nodeSVG.selectAll("text")
-               .attr("x", function (d) {
-                  //use saved position rather than the one being given by d3.force
-                  if( d.pos )
-                     return d.pos.x;
+                  .attr("x", function (d) {
+                     //use saved position rather than the one being given by d3.force
+                     if( d.pos )
+                        return d.pos.x;
 
-                  return d.x;
-               })
-               .attr("y", function (d) {
-                  //use saved position rather than the one being given by d3.force
-                  if( d.pos )
-                     return d.pos.y;
-                  return d.y;
-               })
-               .style("fill", function (d) {
-                  if( d.fixed )
-                     return "red";
-                  return "black";
-               })
+                     return d.x;
+                  })
+                  .attr("y", function (d) {
+                     //use saved position rather than the one being given by d3.force
+                     if( d.pos )
+                        return d.pos.y;
+                     return d.y;
+                  })
+                  .style("fill", function (d) {
+                     if( d.fixed )
+                        return "red";
+                     return "black";
+                  })
                ;
             }
 
-            updateLinks();
-            updateNodes();
             // Now we are giving the SVGs co-ordinates - the force layout is
             // generating the co-ordinates which this code is using to update
             // the attributes of the SVG elements
@@ -662,7 +659,7 @@ var ReportFactory = {
                nodes.forEach( function( el ){
                   el.__toBeCleared = true;
                });
-            }
+            };
             
             /**
              * Redraw the svg
@@ -696,7 +693,7 @@ var ReportFactory = {
                force.start();
                
                hideChartElementsDependingOnButtons();
-            }
+            };
 
             /**
              * Add a set of nodes to chart
@@ -706,7 +703,7 @@ var ReportFactory = {
              */
             svg.addNodes = function( arr ){
                arr.forEach( normalizeNode );
-            }
+            };
 
             /**
              * Add a set of links to chart
@@ -714,11 +711,11 @@ var ReportFactory = {
              */
             svg.addLinks = function( arr ){
                arr.forEach( normalizeLink );
-            }
+            };
 
             svg.hideNodesAndLinks = function( nodeType, isHidden ){
                
-               node.attr("display", function( n ){
+               svg.selectAll(".node").attr("display", function( n ){
                   if( n.type == nodeType )
                      n.isHidden = isHidden;
                   
@@ -728,7 +725,7 @@ var ReportFactory = {
                      return "block";
                });
                
-               link.attr("display", function( l ){
+               svg.selectAll(".link").attr("display", function( l ){
                   //hide a link if its source or target are hidden
                   if( l.source.isHidden || l.target.isHidden  )
                         return "none";
@@ -752,37 +749,43 @@ var ReportFactory = {
                
                //asign data content to each input control
                for( const i in data ){
-                  const val = data[i];
+                  let val = data[i];
+                  if( i == "timestamp" )
+                     val = MMTDrop.tools.formatDateTime( val );
+                  
                   $form.find(".enodeb-" + i).val( val );
                }
                
                
-               var title = type.toUpperCase();
+               let title = type.toUpperCase();
                if( type == TYPE_ENODEB )
                   title = "eNodeB";
                
                $modal.$title.html("Detail of " + title );
 
-               var func = null;
+               let func = null;
                switch( type ){
                case TYPE_UE:
-                  func = "showDetailUE('IMSI','"+ data.imsi +"')";
+                  if( data.imsi )
+                     func = "showDetailUE('IMSI','"+ data.imsi +"')";
                   break;
                case TYPE_ENODEB:
-                  func = "showDetaileNodeB('"+ data.name +"')"
+                  if( data.name )
+                     func = "showDetaileNodeB('"+ data.name +"')";
                   break;
                case TYPE_MME:
-                  func = "showDetaileMME('"+ data.name +"')"
+                  if( data.name )
+                     func = "showDetaileMME('"+ data.name +"')";
                   break;
                }
                //show detail button only if there exist something to show
                if( func ){
                   //show a button to goto detail of traffic monitoring of this IP
-                  var detailBtn = $modal.$content.find(".btn-detail");
+                  const detailBtn = $modal.$content.find(".btn-detail");
                   detailBtn.show().enable();
                   detailBtn.click( func, function( ev ){
-                     var f = ev.data;
-                     MMTDrop.tools.gotoURL("traffic", {param:["period", "probe_id"], add: "func=" + f})         
+                     const f = ev.data;
+                     MMTDrop.tools.gotoURL("traffic", {param:["period", "probe_id"], add: "func=" + f});     
                   });
                }
                
@@ -819,7 +822,8 @@ var ReportFactory = {
                         node.id    = n;
                         nodes.push( node );
                      }
-                     links = topo.links;
+                     if( Array.isArray( topo.links ))
+                        links = topo.links;
                   }
                   
                   svg.clearData();
@@ -845,7 +849,7 @@ var ReportFactory = {
             svg.hideNodesAndLinks( type, isHidden );
             //remember setting
             MMTDrop.tools.localStorage.set( "toggle-" + type, isHidden, false );
-         }
+         };
          
          //hide elements corresponding to the the status of buttons that was saved 
          window.hideChartElementsDependingOnButtons = function(){
@@ -860,8 +864,8 @@ var ReportFactory = {
                   return;
                $dom.attr("class", "btn btn-default");
                svg.hideNodesAndLinks( type, true );
-            })
-         }
+            });
+         };
          
          //load traffic from server when we got server's status in status_db
          status_db.afterReload( function(){
@@ -885,7 +889,162 @@ var ReportFactory = {
          
          //this is to udpate state of buttons
          hideChartElementsDependingOnButtons();
+         
+         for( var i=0; i<testData.length; i++ )
+            setTimeout( start, (i+1)*5000, i );
       },
+}
+
+
+const testData =[
+   {
+      "links": [
+         {
+            "source": 1,
+            "target": 2
+         },
+         {
+            "source": 3,
+            "target": 1
+         },
+         {
+            "source": 6,
+            "target": 1
+         }
+         ],
+         "nodes": {
+            "1": {
+               "id": 1,
+               "ip": "172.16.0.2",
+               "name": "eNB_Eurecom_LTEBox",
+               "timestamp": 1546266155000,
+               "type": "enodeb"
+            },
+            "2": {
+               "id": 2,
+               "ip": "172.16.0.1",
+               "timestamp": 1546266155000,
+               "type": "mme",
+               "name": "develMME"
+            },
+            "3": {
+               "id": 3,
+               "ip": "10.0.0.9",
+               "m_tmsi": 1112,
+               "timestamp": 1546267610000,
+               "type": "ue"
+            },
+            "6": {
+               "id": 6,
+               "ip": "10.0.0.10",
+               "m_tmsi": 1111,
+               "timestamp": 1546267650000,
+               "type": "ue"
+            }
+         },
+   },
+   {
+      "links": [
+         {
+            "source": 1,
+            "target": 2
+         },
+         {
+            "source": 6,
+            "target": 1
+         }
+         ],
+         "nodes": {
+            "1": {
+               "id": 1,
+               "ip": "172.16.0.2",
+               "name": "eNB_Eurecom_LTEBox",
+               "timestamp": 1546266155000,
+               "type": "enodeb"
+            },
+            "2": {
+               "id": 2,
+               "ip": "172.16.0.1",
+               "timestamp": 1546266155000,
+               "type": "mme",
+               "name": "develMME"
+            },
+            "6": {
+               "id": 6,
+               "ip": "10.0.0.10",
+               "m_tmsi": 1111,
+               "timestamp": 1546267650000,
+               "type": "ue"
+            }
+         },
+   },
+   {
+      "links": [
+         {
+            "source": 1,
+            "target": 2
+         },
+         {
+            "source": 6,
+            "target": 1
+         },
+         {
+            "source": 3,
+            "target": 1
+         }
+         ],
+         "nodes": {
+            "1": {
+               "id": 1,
+               "ip": "172.16.0.2",
+               "name": "eNB_Eurecom_LTEBox",
+               "timestamp": 1546266155000,
+               "type": "enodeb"
+            },
+            "2": {
+               "id": 2,
+               "ip": "172.16.0.1",
+               "timestamp": 1546266155000,
+               "type": "mme",
+               "name": "develMME"
+            },
+            "3": {
+               "id": 3,
+               "ip": "10.0.0.9",
+               "m_tmsi": 1112,
+               "timestamp": 1546267805000,
+               "type": "ue"
+            },
+            "6": {
+               "id": 6,
+               "ip": "10.0.0.10",
+               "m_tmsi": 1111,
+               "timestamp": 1546267650000,
+               "type": "ue"
+            }
+         },
+   }
+   ];
+
+function start( i ){
+   const topo = testData[i];
+   const nodes = [];
+   let links   = [];
+   if( topo ){
+      for( const n in topo.nodes ){
+         const node = topo.nodes[n];
+         node.id    = n;
+         nodes.push( node );
+      }
+      if( Array.isArray( topo.links ))
+         links = topo.links;
+   }
+
+   svg.clearData();
+   svg.addNodes( nodes );
+   svg.addLinks( links );
+   svg.redraw();
+
 }
 
 
