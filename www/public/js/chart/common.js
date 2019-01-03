@@ -250,14 +250,17 @@ $(function () {
     });
 
 
-    var renderReport = function (node) {
+    const renderReport = function (node) {
         try {
-            var key = node.userData.fn;
-            var cb = ReportFactory[key];
+            const key   = node.userData.fn;
+            const cb    = ReportFactory[key];
+            const domID = node.id + "-content"; //DOM element on which the report will be rendered
+            
             if (MMTDrop.tools.isFunction(cb)) {
-                var rep = ReportFactory[key]( fPeriod );
+               //trigger the function that generates the report
+                const rep = cb( fPeriod, {domID: domID, node: node} );
                 if (rep) {
-                    rep.renderTo(node.id + "-content");
+                    rep.renderTo( domID );
                     reports.push( rep );
                 }else{
                   //rep is not a real report (it could be a form, ...)
@@ -271,7 +274,7 @@ $(function () {
                 loading.totalChart ++;
 
         } catch (ex) {
-            console.error("Error when rending report [" + key + "] to the DOM [" + node.id + "]");
+            console.error("Error when rending report [" + node.userData.fn + "] to the DOM [" + node.id + "]");
             console.error(ex.stack);
         }
     }

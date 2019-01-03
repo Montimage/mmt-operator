@@ -58,7 +58,7 @@ if( typeof Highcharts !== "undefined" )
          /**
           * Chart render: "highchart", "c3js"
           */
-         render: "highchart"
+         render: "c3js"
    };
 
 
@@ -76,19 +76,20 @@ if( typeof Highcharts !== "undefined" )
          warning: function( msg, delay ){
             this.alert( msg, "error", delay ); 
          },
+         hideAll: function(){
+            //hide old alert
+            $("#alertify-item").trigger("click");
+            msg = '<span id="alertify-item">' + msg + '</span>';
+         },
          alert: function( msg, type, delay ){
             if( delay === undefined )
                delay = 10000;//10s
             else if( delay < 1000 )
                delay = 1000;//1second
 
-            //hide old alert
-            $("#alertify-item").trigger("click");
-            msg = '<span id="alertify-item">' + msg + '</span>';
-
             alertify.log( msg, type,  delay);
          }
-   }
+   };
    /**
     * Constants using in the library.
     * It contains mainly constants for data format.
