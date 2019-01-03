@@ -130,9 +130,6 @@ function ProcessMessage( database ){
 		//   console.info( msg );
 		}
 
-		//update last timestamp of topology
-		s1apTopo.maintainTopology( msg );
-		
 		//TODO: to be remove, this chages probe ID, only for Thales demo
 		//msg[1] = "Sodium";
 

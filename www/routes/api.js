@@ -2,6 +2,8 @@ const express = require('express');
 const router  = express.Router();
 const config  = require("../libs/config.js");
 
+const lteTopology = require("../libs/lteTopology");
+
 if( config.modules.indexOf( "enodeb" ) != -1 )
    var enodeb  = require("./api/enodeb");
 
@@ -90,6 +92,15 @@ function proc_request(req, res, next) {
          enodeb[ action ]( query, function( error, results, fields ){
             sendResponse( error, results );
          })
+         return;
+         
+      //get topology of enodeb
+      case "lte_topology":
+         dbconnector.queryDB(collection, action, query, function( err, data){
+            if( err )
+               return sendResponse( err );
+            lteTopology( data, sendResponse );
+         }, false);
          return;
    }
 

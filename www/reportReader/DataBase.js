@@ -362,6 +362,10 @@ module.exports = function(){
          case dataAdaptor.CsvFormat.STARTUP_REPORT:
             
             return;
+            
+         case dataAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:
+            inserter.add("lte_topology", [msg] );
+            return;
          case dataAdaptor.CsvFormat.LICENSE:
             //new running period
             //this report is sent at each end of x seconds (after seding all other reports)
