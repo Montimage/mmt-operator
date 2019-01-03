@@ -348,6 +348,7 @@ else{
 
       //timestamp
       //msg[ 3 ] = formatTime( msg[3] );
+      const timestamp = msg[3];
       msg[ 3 ] = Math.round( msg[3] / config.probe_stats_period ) * config.probe_stats_period * 1000;
 
       //format
@@ -401,6 +402,8 @@ else{
 //          case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT :
 //          case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT :
 //          default :
+         case MMTDrop.CsvFormat.LTE_TOPOLOGY_REPORT:
+            msg[ 3 ] = timestamp;
 
       }
       return msg;

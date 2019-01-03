@@ -59,6 +59,8 @@ function _getElement( msg ){
    case ELEMENT_TYPE.UE:
       data.imsi   = msg[ COL.UE_IMSI ];
       data.m_tmsi = msg[ COL.UE_M_TMSI ];
+      //if( msg[ COL.GTP_TEID ] )
+      //   data.gtp_teid.push( msg[ COL.GTP_TEID ] );
       data.type   = "ue";
       break;
    case ELEMENT_TYPE.ENODEB:
@@ -132,8 +134,10 @@ function updateMessage( msg ){
    const ts = msg[ COL.TIMESTAMP ];
    
    //do not process older reports or the ones that do not concernt
-   if( ts < lastTimestamp )
+   if( ts < lastTimestamp ){
+      console.log("LTE-Topo: received old message " + JSON.stringify( msg ));
       return;
+   }
    
    lastTimestamp = ts;
    
