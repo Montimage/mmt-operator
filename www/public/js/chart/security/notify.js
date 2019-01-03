@@ -5,7 +5,7 @@ var arr = [
       x: 0,
       y: 7,
       width: 12,
-      height: 0,
+      height: 7,
       type: "danger",
       userData: {
          fn: "createSecurityRealtimeReport"
@@ -24,8 +24,51 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod, opt) {
    //hide period filter
    fPeriod.hide();
    //hide the report itself
-   $("#" + opt.domID).parent().hide();
-
+   //$("#" + opt.domID).parent().hide();
+   
+   
+   const obj = {
+         type : "<div>",
+         attr: {
+            class: "container-fluid", 
+            style: "padding-top: 20px; padding-bottom: 10px"
+         },
+         children: [{
+            type: "<div>",
+            attr: {
+               class: "col-md-12", 
+            },
+            children: [{
+               type : "<table>",
+               attr : {
+                  class: "table table-striped table-bordered table-condensed dataTable no-footer",
+                  id   : "alertList"
+               },
+               children : [
+                  {
+                     type: "<thead>",
+                     children: [{
+                        type: "<tr>",
+                        children:[{
+                           type: "<th>",
+                           attr: {
+                              html: "Timestamp"
+                           }
+                        },{
+                           type: "<th>",
+                           attr: {
+                              html: "Notifications"
+                           }
+                        }]
+                     }]
+                  }
+                  ]
+            }]
+         }]
+   };
+   
+   $("#security-content" ).html( MMTDrop.tools.createForm( obj ) ) ;
+   
    //list of IP being blocked
    const blockedIPs = {};
    
@@ -59,9 +102,11 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod, opt) {
          //remember the ip
          blockedIPs[ip] = ts;
          
-         const html = '<strong>' + MMTDrop.tools.formatDateTime( ts*1000 ) + '</strong><br/>'
-                     + '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Blocked ' + ip;
-         MMTDrop.alert.error( html );
+         //ip
+         
+         const html = '<tr><td>' + MMTDrop.tools.formatDateTime( ts*1000 ) + '</td><td>'
+                     + ' Blocked ' + ip + "</td></tr>";
+         $("#alertList").prepend( $(html) );         
       });
    };
    
