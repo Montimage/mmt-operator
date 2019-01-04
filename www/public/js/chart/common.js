@@ -258,7 +258,7 @@ $(function () {
             
             if (MMTDrop.tools.isFunction(cb)) {
                //trigger the function that generates the report
-                const rep = cb( fPeriod, {domID: domID, node: node} );
+                const rep = ReportFactory[key]( fPeriod, {domID: domID, node: node} );
                 if (rep) {
                     rep.renderTo( domID );
                     reports.push( rep );

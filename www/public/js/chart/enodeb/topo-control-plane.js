@@ -282,13 +282,14 @@ var ReportFactory = {
                if( msg == undefined )
                   return;
                
-               
+               const oldInconnueEntitiesLength = inconnueEntities.length;
                if( nodes_obj[ msg.source ] == undefined )
                   inconnueEntities.push( msg.source );
                if( nodes_obj[ msg.target ] == undefined )
                   inconnueEntities.push( msg.target );
                
-               if( inconnueEntities.length > 0 )
+               //either source or target are not identified in nodes_obj
+               if( inconnueEntities.length > oldInconnueEntitiesLength )
                   return;
                
                const id = msg.source + "-" + msg.target;
@@ -716,9 +717,9 @@ var ReportFactory = {
                
                if( inconnueEntities.length > 0 ){
                   if( inconnueEntities.length == 1 )
-                     MMTDrop.alert.warning("Not found element having id = " + inconnueEntities[0] );
+                     console.warn("Not found element having id = " + inconnueEntities[0] );
                   else
-                     MMTDrop.alert.warning("Not found elements having id in " + JSON.stringify( inconnueEntities ) );
+                     console.warn("Not found elements having id in " + JSON.stringify( inconnueEntities ) );
                   
                   inconnueEntities.length = 0;
                }

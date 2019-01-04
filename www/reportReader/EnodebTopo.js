@@ -41,7 +41,6 @@ function processMessage( msg ){
 
 function resetTopology( msg ){
    needToClean = true;
-   lastTimestamp = 0;
    console.log( "Reset LTE-Topology" );
    
    //init template for the topology
