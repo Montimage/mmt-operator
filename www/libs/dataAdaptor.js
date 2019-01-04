@@ -403,8 +403,7 @@ else{
 //          case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT :
 //          default :
          case MMTDrop.CsvFormat.LTE_TOPOLOGY_REPORT:
-            msg[ 3 ] = timestamp;
-
+            msg[ 3 ] = timestamp*1000; //=> change to miliseconds
       }
       return msg;
    }
