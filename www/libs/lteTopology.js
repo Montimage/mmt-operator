@@ -145,8 +145,6 @@ function updateMessage( msg ){
       // such that the elements have either same source or taget than elem_id
       for( const i in topo.links ){
          const link = topo.links[i];
-         console.log( link );
-         
          if( link.source === elem_id || link.target === elem_id )
             delete( topo.links[ i ] );
       }
@@ -160,6 +158,11 @@ module.exports = function( dataArr, callback ){
       callback = console.log;
    
    if( dataArr.length > 0 ){
+      //sort by asc timestamp
+      dataArr.sort( function( a, b ){
+         return a[ COL.TIMESTAMP ] - b[COL.TIMESTAMP];
+      });
+      
       initTopo( dataArr[0] );
       dataArr.forEach( updateMessage );
    

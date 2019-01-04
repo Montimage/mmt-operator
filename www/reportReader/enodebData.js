@@ -70,7 +70,7 @@ function _loadCacheFromDB( cb ){
             var o = data[i];
             var m = {};
             m[ GTP.ENB_NAME ] = o.enb_name;
-            m[ GTP.MME_NAME ] = o.mme_name;
+            m[ GTP.MME_NAME ] = "montimageMME"//o.mme_name;
 
             cache.enb[ o.enb_ip ] = m;
          }
@@ -88,7 +88,7 @@ function _loadCacheFromDB( cb ){
                var m = {};
                m[ GTP.IMSI ]     = o.imsi;
                m[ GTP.ENB_NAME ] = o.enb_name;
-               m[ GTP.MME_NAME ] = o.mme_name;
+               m[ GTP.MME_NAME ] = "montimageMME";//o.mme_name;
 
                cache.ue[ o.ue_ip ] = m;
             }
