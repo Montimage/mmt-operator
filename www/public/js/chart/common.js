@@ -518,7 +518,7 @@ $(function () {
                   saveAs(blob, fileName);
               });
             } catch (e) {
-              $form.attr("action", "/export?filename=" + fileName);
+              $form.attr("action", "/export/img?filename=" + fileName);
               $form.attr("method", "POST");
               //get image based_64
               $form.children().val( canvas.toDataURL("image/png") );
@@ -535,5 +535,32 @@ $(function () {
       render_image( 0 );
 
     })//end $("#exportBtn").click
+
+    //download as html page
+    $("#exportHtmlBtn").click( function(){
+        waiting.show();
+
+        getPlainHtml();
+
+        waiting.hide();
+        
+        setTimeout( function(){    
+            const data = $("html").html();
+
+            /*
+            * Save a text file locally with a filename by triggering a download
+            */
+
+            const blob = new Blob([data], { type: 'text/plain' }),
+            anchor = document.createElement('a');
+
+            anchor.download = $('head').find('title').text() + ".html";
+            anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+            anchor.dataset.downloadurl = ['text/html', anchor.download, anchor.href].join(':');
+            anchor.click();
+
+            setTimeout( MMTDrop.tools.reloadPage, 1000 );
+        }, 500);
+    })//end $("#exportHtmlBtn").click
 });
 

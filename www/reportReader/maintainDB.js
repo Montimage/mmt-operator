@@ -167,7 +167,7 @@ function _maintainDatabase( database ){
          
          //uk flow reports: retain only last 61minutes
          // reduce each DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "data_unknown_flows_" + CONST.period.REAL , m.time - 61*60*1000 + additionalTime*60*1000, m._id )
+         _removeOldRecords( database, "data_unknown_flows_" + CONST.period.REAL , m.time - 61*60*1000 + additionalTime*60*1000, m._id );
          
          //detail reports
          // reduce each DB_STEP_INCREASE minutes if need
@@ -228,7 +228,7 @@ process.stdin.resume();//so the program will not close instantly
 //Ctrl+C
 */
 process.on('SIGINT',function(){
-   console.log("Exit maintainer");
+   console.log("Exit maintainer " + process.pid);
    process.exit(0);
 });
 

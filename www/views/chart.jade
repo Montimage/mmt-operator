@@ -132,8 +132,12 @@ block content
 
     #toolbar
         ul.nav.navbar-nav
-            li: button#exportBtn.btn.btn-default.btn-block( title="Export graphs to images")
-                i.fa.fa-download( aria-hidden="true")
+            li
+                button.btn.btn-default.btn-block.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")
+                    i.fa.fa-download( aria-hidden="true")
+                ul.dropdown-menu
+                    li: a#exportBtn( title="Save graphs as images") Save as Images
+                    li: a#exportHtmlBtn( title="Save the page as html file") Save as HTML
                 
             li: button#addBtn.btn.btn-default.btn-block( title="Add a report", data-toggle="modal", data-target="#modal")
                 span.glyphicon.glyphicon-plus

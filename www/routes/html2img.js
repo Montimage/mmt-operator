@@ -6,7 +6,7 @@
 var express = require('express');
 var router  = express.Router();
 
-router.post('/*', function(req, res, next) {
+router.post('img/*', function(req, res, next) {
   if( req.body.data == undefined )
     return res.status(500).send("No data");
 
@@ -27,4 +27,22 @@ router.post('/*', function(req, res, next) {
   return res.status(200).send(fileContents);
 });
 
+
+router.post('html/*', function(req, res, next) {
+   if( req.body.data == undefined )
+     return res.status(500).send("No data");
+
+   var data = req.body.data;
+
+   var filename = req.query.filename;
+   var filesize = data.length;
+
+   //tell the browser to download this
+   res.setHeader('Content-disposition', 'attachment; filename=' + filename);
+   res.setHeader("Content-Length", filesize);
+   res.setHeader('Content-type'  , "text/html");
+   res.setHeader("Cache-Control" , "private");
+
+   return res.status(200).send(data);
+ });
 module.exports = router;
