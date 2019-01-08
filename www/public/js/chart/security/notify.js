@@ -83,12 +83,13 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod, opt) {
          const event = history[ i ].attributes;
          for( const j in event ){
              const atts = event[j];
-             for( const key in atts )
-                 if( key.indexOf( "ip.src") === 0 || key.indexOf( "ip.dst") === 0 ){
-                     const ip = atts[key];
-                     const ts = history[ i ].timestamp;
-                     cb( ip, ts );
-                 }
+             const key  = atts[0]; //the first element is key, the second one is value
+             const val  = atts[1];
+             if( key.indexOf( "ip.src") === 0 || key.indexOf( "ip.dst") === 0 ){
+                const ip = val;
+                const ts = history[ i ].timestamp;
+                cb( ip, ts );
+             }
          }
      }
    }

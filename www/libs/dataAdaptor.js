@@ -218,6 +218,7 @@ else{
 
 // object => array
    MMTDrop.reverseFormatReportItem = function(entry) {
+      /*
       switch( entry[0] ) {
          case MMTDrop.CsvFormat.DEFAULT_APP_FORMAT :
             break;
@@ -230,7 +231,8 @@ else{
          case MMTDrop.CsvFormat.STATS_FORMAT :
             break;
          case MMTDrop.CsvFormat.SECURITY_FORMAT:
-            entry[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.parse( entry[ MMTDrop.SecurityColumnId.HISTORY ] );
+            //no need since mmt-security v 1.2.8
+            //entry[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.parse( entry[ MMTDrop.SecurityColumnId.HISTORY ] );
             break;
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
          case MMTDrop.CsvFormat.BA_PROFILE_FORMAT:
@@ -238,6 +240,7 @@ else{
          case MMTDrop.CsvFormat.MICROFLOWS_STATS_FORMAT : //TODO
          case MMTDrop.CsvFormat.RADIUS_REPORT_FORMAT : //TODO
       }
+      */
 
       var arr = [];
       //faster
@@ -368,7 +371,8 @@ else{
             msg[ MMTDrop.StatsColumnId.PROFILE_ID ]   = MMTDrop.getCategoryIdFromAppId( msg[ MMTDrop.StatsColumnId.APP_ID ] );
             break;
          case MMTDrop.CsvFormat.SECURITY_FORMAT:
-            msg[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( msg[ MMTDrop.SecurityColumnId.HISTORY ] );
+            //no need since mmt-security v 1.2.8
+            //msg[ MMTDrop.SecurityColumnId.HISTORY ] = JSON.stringify( msg[ MMTDrop.SecurityColumnId.HISTORY ] );
             break;
          case MMTDrop.CsvFormat.BA_BANDWIDTH_FORMAT:
             if( msg[ MMTDrop.BehaviourBandwidthColumnId.VERDICT ] === "NO_CHANGE_BANDWIDTH" 

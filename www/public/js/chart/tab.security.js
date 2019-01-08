@@ -16,7 +16,7 @@ var arr = [
 
 var availableReports = {
     "createNodeReport":     "Security",
-}
+};
 
 MMTDrop.callback = {
     chart : {
@@ -62,7 +62,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         VERDICT[ vdict ] += num_verdict;
 
         for( var i=0; i<DATA.length; i++ ){
-            var obj = DATA[ i ];
+            const obj = DATA[ i ];
             if( obj.key == key ){
                 obj.verdict[ vdict ] += num_verdict;
 
@@ -75,7 +75,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
             }
         }
 
-        var obj = {};
+        const obj = {};
         obj.key              = key;
         obj.index            = DATA.length;
         obj.verdict          = {
@@ -121,7 +121,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         }
         ];
 
-    var getVerdictHTML = function( verdict ){
+    const getVerdictHTML = function( verdict ){
         var bootstrap_class_name = {
             "detected"      : "label-danger",
             "not_detected"  : "label-info",
@@ -131,8 +131,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
         };
         var html = "";
         for( var v in verdict ){
-            if( verdict[v] == 0 ) continue;
-            if( html != "") html += ", ";
+            if( verdict[v] === 0 ) continue;
+            if( html !== "") html += ", ";
             html += '<span class="label '+ bootstrap_class_name[v] +' mmt-verdict-label"> ' + v + '</span><span class="badge">' + verdict[v] + '</span> ';
         }
         return html;
@@ -173,20 +173,21 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                             var event = history[ i ].attributes;
                             for( var j in event ){
                                 var atts = event[j];
-                                for( var key in atts )
-                                    if( key.indexOf( "ip.") === 0 || key.indexOf("mac") === 0 ){
-                                        //if the att is not yet added
-                                        if( concernt.indexOf( atts[key] ) === -1 ){
-                                            //
-                                            if( concernt != "") concernt += ", ";
-                                            concernt += atts[key];
-                                        }
+                                const key = atts[0]; //since mmt-security v 1.2.8, the first element is key, the second one is value
+                                const val = atts[1];
+                                if( key.indexOf( "ip.src") === 0 || key.indexOf( "ip.dst") === 0 || key.indexOf("mac") === 0 ){
+                                    //if the att is not yet added
+                                    if( concernt.indexOf( val ) === -1 ){
+                                        //
+                                        if( concernt != "") concernt += ", ";
+                                        concernt += val;
                                     }
+                                }
                             }
                         }
                         msg.concernt = concernt;
                     }
-                    o[ "concern" ] = concernt;
+                    o.concern = concernt;
                     arr.push( o );
                 }
                 return {
