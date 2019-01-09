@@ -78,10 +78,13 @@ module.exports = function( databaseName ){
 		}
 		
 		//insert cache if any
-		if( self.cache.length > 0 )
-			self.cache.length.forEach( function( el ){
+		if( self.cache.length > 0 ){
+			self.cache.forEach( function( el ){
 				self._insert( el.collection, el.msgArray, el.callback );
 			});
+			//clear the cache
+			self.cache.length = 0;
+		}
 			
 		//insert directly messages to db
 		self._insert( collection, msgArray, callback );
@@ -118,16 +121,19 @@ module.exports = function( databaseName ){
                id        : id,
                data      : data,
                callback  : callback
-         }
+         };
          
          return;
       }
       
-      if( self._setCache != null )
+      if( self._setCache != null ){
          for( var i in self._setCache ){
             const m = self._setCache[i];
             self._set( m.collection, m.id, m.data, m.callback );
-         }
+			}
+			//clear the cache
+			self._setCache = {};
+		}
       self._set( collection, id, data, callback );
    };
    
@@ -151,9 +157,9 @@ module.exports = function( databaseName ){
             callback( new Error("Database is undefined") );
          else
             console.error( "Database is undefined");
-         return
+         return;
       }
       
       self.db.collection( collection ).updateOne( {_id: id}, update, options, callback );
-   }
+   };
 };
