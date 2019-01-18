@@ -1,6 +1,7 @@
 const _global = require("./global");
 const path = require('path');
 const val = _global.get("config");
+const isMainProcess = ( process.send == undefined ); 
 
 if( val != undefined ){
    module.exports = val;
@@ -8,9 +9,9 @@ if( val != undefined ){
 else{
 // allow to change config.json
    var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
-   process.argv.forEach(function (val, index, array) {
+   process.argv.forEach(function (val) {
       //console.log(index + ': ' + val);
-      var arr = val.split("=");
+      const arr = val.split("=");
       if( arr[0] == "--config"){
          if( path.isAbsolute( arr[1] ))
             configPath = arr[1];
@@ -18,9 +19,8 @@ else{
             configPath = path.resolve( arr[1] );
          
          //parent process
-         if( process.send == undefined )
+         if( isMainProcess )
             console.warn("[INFO] MMT-Operator used configuration in " + arr[1] );
-         
       }
    });
 
@@ -33,6 +33,39 @@ else{
    VERSION = require("../version.json").VERSION_NUMBER + "-" + require("../version.json").VERSION_HASH,
    constant= require('./constant.js')
    ;
+
+   //override config attributes by running parameters
+   process.argv.forEach(function ( param ) {
+      //the parameter must start by -X
+      if( param.indexOf('-X') !== 0 )
+         return;
+      const val = param.substring(2).trim(); //remove -X
+      //For example: val = 'database_server.host="localhost"'
+
+
+      //console.log(index + ': ' + val);
+      const arr = val.split("=");
+      if( arr.length !== 2 && isMainProcess)
+         console.warn("[WARN] Ignore incorrect paramter: " + param);
+      
+      const nameArr = arr[0].split('.'); //get array of the attribute hierarchy: 
+      let obj = config;
+      let isOverriden = true;
+      for( let i=0; i<nameArr.length - 1; i++){
+         let key = nameArr[i];
+         if( obj[key] === undefined  ){
+            obj[key] = {};
+            isOverriden = false; //we created a new obj for this key => not override the one existing
+         }
+         obj = obj[key];
+      }
+      //assign value
+      obj[ nameArr[ nameArr.length - 1 ] ] = arr[1];
+      if( isOverriden && isMainProcess)
+         console.info("[INFO] Override parameter: " + param );
+   });
+
+
 
    config.location = configPath;
 
@@ -50,10 +83,10 @@ else{
    if( Number.isNaN( config.port_number ) || config.port_number < 0 )
       config.port_number = 80;
 
-   function set_default_value( variable, prop, value ){
+   const set_default_value = function( variable, prop, value ){
       if( variable[prop] == undefined )
          variable[prop] = value;
-   }
+   };
 
 // == Database name
    config.databaseName      = "mmt-data";  //database 

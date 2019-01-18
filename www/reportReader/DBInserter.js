@@ -38,6 +38,9 @@ module.exports = function( databaseName ){
       databaseName = config.databaseName;
    
 	const self = this;
+	self.onReady = function( cb ){
+		self._onReady = cb;
+	};
 	/**
 	 * The cache to store messages before being able to connect to DB
 	 */
@@ -52,7 +55,10 @@ module.exports = function( databaseName ){
 		}
 
 		//connect OK
-		self.db       = db;
+		self.db = db;
+
+		if( typeof(self._onReady) === "function" )
+			self._onReady( db );
 	});
 	
 	/**

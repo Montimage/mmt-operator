@@ -35,10 +35,6 @@ function Reader(){
       //"--expose_gc",
       "--max-old-space-size=2048"
       ];
-   //forward location of config file
-   var configLocation = "";
-   if( config.location )
-      configLocation =  ("--config=" + config.location );
 
    self.start = function(){
 
@@ -49,7 +45,7 @@ function Reader(){
       switch( config.input_mode ){
       case constant.REDIS_STR:
       case constant.KAFKA_STR:
-         var ret = child_process( __dirname + "/busReader.js", [configLocation],
+         var ret = child_process( __dirname + "/busReader.js", [],
                {execArgv: execArgv}  ).start();
 
          //console.log("started kafka client", ret);
@@ -67,7 +63,7 @@ function Reader(){
          //create processes to parallel readering
          const total_processes = config.file_input.nb_readers;
          for( var i=0; i<total_processes; i++ ){
-            var ret = child_process( __dirname + '/csvReader.js', [i, total_processes, configLocation], 
+            var ret = child_process( __dirname + '/csvReader.js', [i, total_processes], 
                   {execArgv: execArgv}
             ).start();
             process._children.push( ret );
@@ -76,8 +72,8 @@ function Reader(){
 
       
       //this process removes older records from Database
-      var ret = child_process( __dirname + "/maintainDB.js", [configLocation]
-      , {execArgv: [
+      var ret = child_process( __dirname + "/maintainDB.js", [],
+      {execArgv: [
          //'--debug=5857'
          ]} 
       ).start();

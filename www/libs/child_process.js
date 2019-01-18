@@ -18,6 +18,17 @@ function childProcess( file, params, env, autoRestart ){
    self.onExit = null;
    self.onRestart = null;
    
+   if( !Array.isArray(self.params))
+      self.params = [];
+
+   //forward customized parameters of the current process
+   process.argv.forEach(function ( param ) {
+      //the parameter must start by -X
+      if( param.indexOf('-X') !== 0 && param.indexOf("--config") !== 0 )
+         return;
+      self.params.push( param );
+   });
+
    self.start = function(){
       self.childProcess = child_process.fork( self.file, self.params, self.env );
       self.childProcess.on("exit", self.restart );

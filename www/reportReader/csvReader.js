@@ -160,7 +160,7 @@ function get_csv_file() {
 
 	      //process only some csv files
 	      if( thread_index % TOTAL_READERS != READER_INDEX  )
-	         continue
+	         continue;
 
 	         //file was read (check in database when the read files are not deleted)
 	         if( DELETE_FILE_AFTER_READING !== true )
@@ -190,7 +190,7 @@ function get_csv_file() {
 
 //=READER_INDEX to ensure that all processes do not clean garbage in the same time
 var fileCounter = 0;
-var process_folder = function () {
+const process_folder = function () {
 	var file_name = get_csv_file();
 	if (file_name == null) {
 	   //if threre is no report => wait for 0.5 second
@@ -217,30 +217,33 @@ var process_folder = function () {
 	}
 };
 
-//need to delete .csv and .sem files after reading
-if( DELETE_FILE_AFTER_READING ){
-	//start after 2 seconds
-	setTimeout( process_folder, 2000);
-}else{
-	//connect to DB to store list of read files
-	var start_process = function(){
-		return process_folder();
-		dbadmin.connect( function( err, mdb ) {
-			if( err ){
-				throw new Error( "Cannot connect to mongoDB" );
-				process.exit(0);
-			}
-			mdb.collection("read-files").find().toArray( function(err, doc){
-				read_files = [];
-				for(var i in doc)
-					read_files.push( doc[i].file_name );
-				process_folder();
+//start processing when database is connected
+database.onReady( function(){
+	//need to delete .csv and .sem files after reading
+	if( DELETE_FILE_AFTER_READING ){
+		//start after 2 seconds
+		setTimeout( process_folder, 2000);
+	}else{
+		//connect to DB to store list of read files
+		var start_process = function(){
+			return process_folder();
+			dbadmin.connect( function( err, mdb ) {
+				if( err ){
+					throw new Error( "Cannot connect to mongoDB" );
+					process.exit(0);
+				}
+				mdb.collection("read-files").find().toArray( function(err, doc){
+					read_files = [];
+					for(var i in doc)
+						read_files.push( doc[i].file_name );
+					process_folder();
+				});
 			});
-		});
-	};
+		};
 
-	setTimeout( start_process, 2000);
-}
+		setTimeout( start_process, 2000);
+	}
+});
 
 process.stdin.resume();//so the program will not close instantly
 //Ctrl+C

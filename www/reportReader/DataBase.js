@@ -85,6 +85,7 @@ function flatAppPath( str ){
 module.exports = function(){
    const self     = this;
    const inserter = new DBInserter( config.databaseName );
+   self.onReady   = inserter.onReady;
    //count number of reports containing only one packet
    var no_1_packet_reports = 0;
    self.dataCache = {
