@@ -1,6 +1,8 @@
 const express = require('express');
+
 const router  = express.Router();
-const config  = require("../libs/config.js");
+const config    = require("../libs/config.js");
+const CacheFile = require("../libs/CacheFile.js");
 
 const lteTopology = require("../libs/lteTopology");
 
@@ -117,7 +119,24 @@ function proc_request(req, res, next) {
 
 
    if( ["find", "aggregate"].indexOf(action) != -1 ){
-      dbconnector.queryDB(collection, action, query, sendResponse, req.query.raw);
+      //for each query, we check firstly if there exist a cache that contains the result of the query
+      //if this is a case, we return the content of the file
+      const obj = {col: collection, act: action, query: query, raw: req.query.raw};
+      const cacheFile = new CacheFile( obj );
+      
+      if( cacheFile.hasData()  ){
+         console.info( "Load data from cache " + cacheFile.getFileName() );
+         cacheFile.getDataFromCache( sendResponse );
+      }else{
+         
+         dbconnector.queryDB(collection, action, query, function( err, data){
+            sendResponse( err, data );
+            
+            if( !err )
+               cacheFile.saveDataToCache( data );
+            
+         }, req.query.raw);
+      }
    }else{
       checkNotNull( query.$data, "Need $data" );
 
@@ -293,36 +312,53 @@ router.get('/*', function(req, res, next) {
    console.log( JSON.stringify( options ));
 
    var queryData = function(op) {
-      dbconnector.getProtocolStats(op, function(err, data) {
-         if (err) {
-            return next(err);
-         }
-         //this allow a req coming from a different domain
-         //res.setHeader("Access-Control-Allow-Origin", "*");
-         res.setHeader("Content-Type", "application/json");
-         var obj = {
-               data : data,
-               time : op.time,
-         };
+      
+       //for each query, we check firstly if there exist a cache that contains the result of the query
+      //if this is a case, we return the content of the file
+      const cacheFile = new CacheFile( op );
+      
+      if( cacheFile.hasData()  ){
+         console.info( "Load data from cache " + cacheFile.getFileName() );
+         cacheFile.getDataFromCache( function( err, data ){
+            if( err )
+               return next( err );
+            res.send( data );
+         });
+      } else {
+         dbconnector.getProtocolStats(op, function(err, data) {
+            if (err) {
+               return next(err);
+            }
+            //this allow a req coming from a different domain
+            //res.setHeader("Access-Control-Allow-Origin", "*");
+            res.setHeader("Content-Type", "application/json");
+            var obj = {
+                  data : data,
+                  time : op.time,
+            };
 
-         if (op.userData != undefined && op.userData.getProbeStatus) {
-            dbconnector.probeStatus.get(op.time, function(err, arr) {
-               obj.probeStatus = {};
-               for ( var i in arr){
-                  var msg = arr[i];
-                  if( obj.probeStatus[ msg.id ] == undefined )
-                     obj.probeStatus[msg.id] = [];
+            if (op.userData != undefined && op.userData.getProbeStatus) {
+               dbconnector.probeStatus.get(op.time, function(err, arr) {
+                  obj.probeStatus = {};
+                  for ( var i in arr){
+                     var msg = arr[i];
+                     if( obj.probeStatus[ msg.id ] == undefined )
+                        obj.probeStatus[msg.id] = [];
 
-                  obj.probeStatus[msg.id].push({
-                     start       : msg.start,
-                     last_update : msg.last_update
-                  });
-               }
+                     obj.probeStatus[msg.id].push({
+                        start       : msg.start,
+                        last_update : msg.last_update
+                     });
+                  }
+                  res.send(obj);
+                  cacheFile.saveDataToCache( obj );
+               });
+            } else {
                res.send(obj);
-            });
-         } else
-            res.send(obj);
-      });
+               cacheFile.saveDataToCache( obj );
+            }
+         });
+      }
    };
 
    if (options.time.begin === undefined)//interval

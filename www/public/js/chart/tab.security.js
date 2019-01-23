@@ -27,11 +27,55 @@ MMTDrop.callback = {
 var ReportFactory = {};
 
 ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
-    var database = new MMTDrop.Database({
-        format: MMTDrop.constants.CsvFormat.SECURITY_FORMAT,
+   const COL = MMTDrop.constants.SecurityColumn;
+
+   //this database is used when user click on one security alert to show its detail
+   const databaseDetail = new MMTDrop.Database({
+      collection: "security",
+      action: "aggregate",
+      no_group : true, 
+      raw: true,
+   }, function( data ){
+      if( !Array.isArray( data ) )
+         return;
+      for( var i=0; i<data.length; i++ ){
+         const msg = data[i];
+         if( typeof( msg[ COL.HISTORY.id ]) === "string" )
+            msg[ COL.HISTORY.id ] = JSON.parse( msg[ COL.HISTORY.id ] );
+      }
+      return data;
+   }, false);
+   
+   const database = new MMTDrop.Database({
+       collection: "security",
+       action: "aggregate",
+       no_group : true, 
+       no_override_when_reload: true, 
+       raw: true,
     }, null, false);
 
-    var COL = MMTDrop.constants.SecurityColumn;
+   database.updateParameter = function( _old_param ){
+      const $match = {};
+      $match[ COL.PROBE_ID.id ]  = URL_PARAM.probe_id;
+      $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
+      
+      const $group = { _id: {}};
+      [ COL.PROPERTY.id, COL.VERDICT.id, COL.PROBE_ID.id ].forEach( function( el, index){
+        $group["_id"][ el ] = "$" + el;
+      } );
+      
+      $group[ COL.VERDICT_COUNT.id ] = {"$sum" : {"$ifNull": [1, "$" + COL.VERDICT_COUNT.id ]}};
+      
+      [ COL.TIMESTAMP.id, COL.PROBE_ID.id, COL.VERDICT.id, COL.PROPERTY.id, 
+         COL.TYPE.id,
+         COL.DESCRIPTION.id].forEach( function( el, index){
+        $group[ el ] = {"$last" : "$"+ el};
+      });
+      
+      //$group.detail = {$push: {history: "$" + COL.HISTORY.id, timestamp: "$" + COL.TIMESTAMP.id }};
+      
+      return {query: [{$match: $match}, {$group : $group}]};
+   };
 
     var DATA    = [];
     var VERDICT = {};
@@ -51,7 +95,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
     fPeriod.onChange( reset );
 
     var appendData = function( msg ){
-        var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ];
+        var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ] + "-" + msg[COL.VERDICT.id];
         var vdict = msg[ COL.VERDICT.id ];
         var ts    = msg[ COL.TIMESTAMP.id ];
         var num_verdict = 1;
@@ -173,8 +217,17 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                             var event = history[ i ].attributes;
                             for( var j in event ){
                                 var atts = event[j];
+                                //since mmt-security v 1.2.8, atts is an array [key, value]
+                                // instead of an object {key: value}
+                                if( !Array.isArray( atts )){
+                                   //this is for older version
+                                   const firstKey = Object.keys(atts)[0];
+                                   atts = [ firstKey, atts[ firstKey ] ];
+                                }
+                                
                                 const key = atts[0]; //since mmt-security v 1.2.8, the first element is key, the second one is value
                                 const val = atts[1];
+                                
                                 if( key.indexOf( "ip.src") === 0 || key.indexOf( "ip.dst") === 0 || key.indexOf("mac") === 0 ){
                                     //if the att is not yet added
                                     if( concernt.indexOf( val ) === -1 ){
@@ -256,7 +309,8 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
         }
     });
-
+    popupTable.attachTo( databaseDetail, false );
+    
     var updateTotalVerdictDisplay = function(){
         $("#mmt-verdict-total").html( "<strong>Total:</strong> " + getVerdictHTML( VERDICT ) );
     };
@@ -361,23 +415,12 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                     //$currentRow.removeClass('active');
 
                 //popup a modal when user clicks on an item of the table
-                var showModal = function (data) {
+                const showModal = function (msg, data ) {
                     detailOfPopupProperty = data;
-                    var prop = 0;
-                    var des  = "";
-                    for( var i in data )
-                        if( prop !== 0 && des != "")
-                            break;
-                        else{
-                            prop = data[i][4];
-                            des  = data[i][7]
-                        }
+                    var prop = msg[ COL.PROPERTY.id ];
+                    var des  = msg[ COL.DESCRIPTION.id ];
 
                     $("#detailItem").html("<strong>Property " + prop + "</strong><br/>" + des + '<br/><div id="popupTable"/>');
-
-                    var db = new MMTDrop.Database( {}, null, false );
-                    db.data( data );
-                    popupTable.attachTo( db, false );
 
                     popupTable.renderTo( "popupTable" );
 
@@ -393,12 +436,32 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
                 //get value of the first column == index
                 var index = $currentRow.find('td:first').find("span").data("index");
+                if( index == undefined )
+                   return;
+                
                 var item = DATA[index].detail;
                 if ( item ){
-                    if( loading && item.length > 200)
+                   const msg = item[0];
+                   
+                    
+                      const $match = {};
+                      $match[ COL.PROBE_ID.id ]  = msg[ COL.PROBE_ID.id ];
+                      $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
+                      $match[ COL.PROPERTY.id ]  = msg[ COL.PROPERTY.id ];
+                      
+                      const $project = {};
+                      [ COL.TIMESTAMP.id, COL.VERDICT.id, COL.HISTORY.id ].forEach( function( el, index){
+                        $project[ el ] = 1;
+                      });
+                      
+                    if( loading )
                         loading.onShowing();
 
-                    setTimeout(showModal, 100, item );
+                    databaseDetail.reload( {query: [{$match: $match}, { $project : $project}]},
+                          function( new_data ){
+                       
+                       showModal( msg, new_data );   
+                    });
                 }
                 return false;
             });

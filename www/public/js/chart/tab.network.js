@@ -148,8 +148,8 @@ var get_match_query = function( p ){
 	    $match["$or"].push( obj );
 	} 
   }else{
-     $match[ COL.IP_SRC.id ] =  {$nin:[NULL, MICRO_FLOW]};
-     $match[ COL.IP_DST.id ] = {$nin:[NULL, MICRO_FLOW]};
+     $match[ COL.IP_SRC.id ] =  {"$ne": NULL};//{$nin:[NULL, MICRO_FLOW]};
+     //$match[ COL.IP_DST.id ] = {$nin:[NULL, MICRO_FLOW]};
   }
 
   if( param.link ){
@@ -407,15 +407,12 @@ var ReportFactory = {
     createTopProfileReport: function (filter, ip) {
         var self = this;
         //mongoDB aggregate
-        var group  = { _id : {} };
+        var group  = { _id : "$" + COL.PROFILE_ID.id };
 
-        [ COL.PROFILE_ID.id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.PROFILE_ID.id].forEach( function( el, index){
+        [ COL.PROBE_ID.id, COL.PROFILE_ID.id].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
 
@@ -424,7 +421,7 @@ var ReportFactory = {
 
         //isGen:false => select only app/proto given by mmt-probe
         //mmt-operator generates also parent protos of them to get hierarchy
-        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", 
+        var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_app", action: "aggregate", raw: true, 
         		query: [{$match:{isGen: false}},{$group: group}]} );
 
         //this is called each time database is reloaded
@@ -1200,27 +1197,29 @@ var ReportFactory = {
     createTopUserReport: function (filter, userData) {
         var self = this;
         //mongoDB aggregate
-        var group = { _id : {} };
-
-        [ COL.IP_SRC.id ].forEach( function( el, index){
+        var group = { _id : "$" + COL.IP_SRC.id };
+        /*
+        [  ].forEach( function( el, index){
           group["_id"][ el ] = "$" + el;
+          $project[ el ] = 1;
         } );
+        */
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.IP_SRC.id, COL.MAC_SRC.id ].forEach( function( el, index){
+        [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.MAC_SRC.id ].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
 
         const sort = {};
         sort[ COL.DATA_VOLUME.id ] = -1;
         var database = MMTDrop.databaseFactory.createStatDB( {collection: "data_ip", action: "aggregate", 
-        		query: [{$group: group}, {$sort: sort}, {$limit: 500}], raw: true} );
+        		query: [{$group: group}, {$sort: sort}], raw: true} );
         //this is call each time database is reloaded
         database.updateParameter = function( param ){
           var $match = get_match_query();
           if( $match != undefined ){
-            param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 500}];
+            param.query = [{$match : $match.match}, {$group: group}, {$sort: sort}, {$limit: 1000}];
             
             if( $match.collection != undefined ){
                param.collection = $match.collection;
@@ -1577,15 +1576,12 @@ var ReportFactory = {
         var COL  = MMTDrop.constants.StatsColumn;
 
         //mongoDB aggregate
-        var group = { _id : {} };
+        var group = { _id : "$" + COL.DST_LOCATION.id };
 
-        [ COL.DST_LOCATION.id ].forEach( function( el, index){
-          group["_id"][ el ] = "$" + el;
-        } );
         [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
           group[ el ] = {"$sum" : "$" + el};
         });
-        [ COL.TIMESTAMP.id ,COL.PROBE_ID.id, COL.FORMAT_ID.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+        [ COL.DST_LOCATION.id ].forEach( function( el, index){
           group[ el ] = {"$first" : "$"+ el};
         } );
 
@@ -2457,7 +2453,7 @@ $(str).appendTo("head");
            [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id ].forEach( function( el, index){
              group[ el ] = {"$sum" : "$" + el};
            });
-           [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.IP_DST.id, COL.SRC_LOCATION.id, COL.DST_LOCATION.id ].forEach( function( el, index){
+           [ COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
              group[ el ] = {"$first" : "$"+ el};
            } );
            

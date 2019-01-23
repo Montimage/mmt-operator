@@ -43,7 +43,7 @@ else
    addDataFolder( config.file_input.data_folder );
 
 //ensure there exists at least one folder
-if( DATA_FOLDERS.length == 0 ){
+if( DATA_FOLDERS.length === 0 ){
    console.error("No data_folder is given. Please set it in 'file_input.data_folder'");
    process.exit(1);
 }
@@ -55,7 +55,7 @@ const processMessage = new ProcessMessage( database );
 process.title = "mmt-operator-csv-reader-" + READER_INDEX;
 
 
-if( READER_INDEX == 0 )
+if( READER_INDEX === 0 )
    process.stdout.write("\n"+ TOTAL_READERS +" csv readers is waiting for data in the folder(s) [" + DATA_FOLDERS + "] ...\n");
 
 console.info( "start csv reader " + READER_INDEX );
@@ -73,20 +73,19 @@ function restart_process(){
 }
 
 //load list of read csv file from db
-var read_files = [];
+var read_files = {};
 
 function process_file (file_name, cb) {
 	const lr = lineReader.createInterface({
 		input: fs.createReadStream( file_name )
 	});
-	var totalLines = 0;
+	
 	var hasError   = false;
 	var start_ts = tools.getTimestamp();
 
 	lr.on ('line', function (line) {
 		// 'line' contains the current line without the trailing newline character.
 		try{
-		   //_TODO: re-enable this
 			processMessage.process( line );
 		}catch( e ){
 			console.error( "Error when processing line " + (totalLines + 1) + " of file " + file_name, e );
@@ -121,13 +120,13 @@ function process_file (file_name, cb) {
 		   //if the report files are not deleted by MMT-Operator
 		   //=> Operator must remember the list of files that have been processed to do not process the files again
 		   //
-			read_files.push( file_name );
+			read_files[ file_name ] = true;
 			dbadmin.add("read-files", [{"file_name": file_name}], function(){
 				cb( totalLines );
 			});
 		}
 	});
-};
+}
 
 
 var isStop = false;
@@ -159,12 +158,12 @@ function get_csv_file() {
 	      var thread_index = file_name.split("_")[1];
 
 	      //process only some csv files
-	      if( thread_index % TOTAL_READERS != READER_INDEX  )
+	      if( thread_index % TOTAL_READERS !== READER_INDEX  )
 	         continue;
 
 	         //file was read (check in database when the read files are not deleted)
 	         if( DELETE_FILE_AFTER_READING !== true )
-	            if( read_files.indexOf( dir + file_name ) > -1 )
+	            if( read_files[ dir + file_name ] === true )
 	               continue;
 
 	      //need to end with csv
@@ -178,7 +177,7 @@ function get_csv_file() {
 	});
 	
 	//no reports
-	if( arr.length == 0 )
+	if( arr.length === 0 )
 		return null;
 
 	//sort by ascending of file name
@@ -186,7 +185,7 @@ function get_csv_file() {
 
 	//delete the first element from _cache_files and return the element
 	return _cache_files.splice(0, 1)[0];
-};
+}
 
 //=READER_INDEX to ensure that all processes do not clean garbage in the same time
 var fileCounter = 0;
@@ -219,30 +218,32 @@ const process_folder = function () {
 
 //start processing when database is connected
 database.onReady( function(){
+   let start_process = process_folder;
+   
 	//need to delete .csv and .sem files after reading
-	if( DELETE_FILE_AFTER_READING ){
-		//start after 2 seconds
-		setTimeout( process_folder, 2000);
-	}else{
-		//connect to DB to store list of read files
-		var start_process = function(){
-			return process_folder();
+	if( !DELETE_FILE_AFTER_READING ){
+	   
+		//connect to DB to get the list of read files
+	   start_process = function(){
 			dbadmin.connect( function( err, mdb ) {
 				if( err ){
 					throw new Error( "Cannot connect to mongoDB" );
 					process.exit(0);
 				}
 				mdb.collection("read-files").find().toArray( function(err, doc){
-					read_files = [];
+					read_files = {};
 					for(var i in doc)
-						read_files.push( doc[i].file_name );
+						read_files[ doc[i].file_name ] = true;
+					
+					//start processing csv files
 					process_folder();
 				});
 			});
 		};
-
-		setTimeout( start_process, 2000);
 	}
+	
+	
+	setTimeout( start_process, 2000);
 });
 
 process.stdin.resume();//so the program will not close instantly

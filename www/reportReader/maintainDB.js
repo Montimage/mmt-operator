@@ -41,6 +41,8 @@ const WRITE_CONCERN = {
 	single: false, //delete all documents that satisfy the filter
 };
 
+
+let queryCount = 0; //number of queries being executing
 /**
  * Delete from a collection all records being older than the given timestamp 
  * @param db
@@ -58,14 +60,17 @@ function _removeOldRecords( db, collectionName, timestamp, probeID ){
 
 	//console.log( query );
 	try{
-      	db.collection( collectionName ).deleteMany( query, WRITE_CONCERN, function( err, ret){
-      	   if( err )
-      	      return console.error( err );
-      	   
-      		if(ret && ret.deletedCount > 0 )
-      		   console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
-      	} );
+	   queryCount ++;
+//	   db.collection( collectionName ).deleteMany( query, WRITE_CONCERN, function( err, ret){
+//	      queryCount --;
+//	      if( err )
+//	         return console.error( err );
+//
+//	      if(ret && ret.deletedCount > 0 )
+//	         console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
+//	   } );
 	}catch( e ){
+	   queryCount --;
 	   console.error("Error while deleting old records in collection " + collectionName );
 	   console.error( e );
 	}
@@ -114,7 +119,7 @@ function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
 function _startOver( database ){
    //reset to default => do not delete additional documents to reduce storage size of DB
    additionalTime = 0;
-   setTimeout( _maintainDatabase, 10*1000, database );
+   setTimeout( _maintainDatabase, 20*1000, database );
 }
 
 /**
@@ -145,9 +150,17 @@ function _maintainDatabaseSize( database ){
 }
 
 function _maintainDatabase( database ){
+   //waiting for the queries well terminated
+   if( queryCount > 0 ){
+      console.info("Waiting for " + queryCount + " queries");
+      return setTimeout( _maintainDatabase, 1000, database );
+   }
+   
+   queryCount = 0;
    
    //get last time of each probe
-   database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){
+   //database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){
+   database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){   
       //no data found
       if( err || data == undefined ){
          console.error( err );
@@ -200,7 +213,7 @@ function _maintainDatabase( database ){
       //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
       // (as DB_LIMIT_SIZE is too small)
       //maintain by db size
-      setTimeout( _maintainDatabaseSize, 5000, database );
+      setTimeout( _maintainDatabaseSize, 10000, database );
    });
    //manually garbage
    //if( global && global.gc )

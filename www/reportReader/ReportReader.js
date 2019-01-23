@@ -51,6 +51,27 @@ function Reader(){
          //console.log("started kafka client", ret);
          process._children.push( ret );
          break;
+         
+      case constant.SOCKET_STR:
+         //Create and return a net.Server object, the function will be invoked when client connect to this server.
+         const tcpServer = net.createServer( function( client ) {
+            console.log( 'Client connect : ' + client.remoteAddress + ':' + client.remotePort );
+            
+            let child = child_process( __dirname + '/streamProcess.js', [], 
+                     {execArgv: execArgv} ).start();
+            
+            child.send('socket', client );
+            process._children.push( child );
+         });
+
+         tcpServer.maxConnections( MAX_CONNECTIONS );
+         tcpServer.on('error', console.error);
+         tcpServer.listen( config.socket_input.port, config.socket_input.host, function () {
+            console.info('MMT-Operator is waiting for reports on address : ' + tcpServer.address());
+         });
+
+         
+         break;
       default:
          // ensure data directory exists
 
