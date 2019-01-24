@@ -120,6 +120,12 @@ else{
 
    set_default_value( config, "probe_stats_period", 5);
    config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
+   
+   set_default_value( config, "query_cache", {} );
+   set_default_value( config.query_cache, "enable", false );
+   set_default_value( config.query_cache, "folder", "/tmp/" );
+   set_default_value( config.query_cache, "bytes",  5*1000*1000 ); //5MB
+   set_default_value( config.query_cache, "files",  999 );
 
 // use in Cache to decide when we will push caches to DB:
 // - either their size >= max_length_size

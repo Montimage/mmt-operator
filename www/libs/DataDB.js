@@ -296,7 +296,8 @@ var MongoConnector = function () {
 		if( action == "aggregate" )
 			cursor = self.mdb.collection(collection).aggregate(query, {
 		        allowDiskUse: true,
-		        cursor: {batchSize: 1000}
+		        cursor: {batchSize: 1000},
+		        maxTimeMS: 60e3
 			});
 		
 		//query of "find" uses the format of "aggreate": $match, $project, $limit, $sort

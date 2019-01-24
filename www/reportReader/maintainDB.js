@@ -153,7 +153,7 @@ function _maintainDatabase( database ){
    //waiting for the queries well terminated
    if( queryCount > 0 ){
       console.info("Waiting for " + queryCount + " queries");
-      return setTimeout( _maintainDatabase, 1000, database );
+      return setTimeout( _maintainDatabase, 2000, database );
    }
    
    queryCount = 0;
