@@ -17,8 +17,13 @@
 		"delete_data": true,
 		"nb_readers": 1
 	},
+	"socket_input": {
+	  "host": "localhost",
+	  "port": 5000,
+	  "maxConnections": 0
+	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"pcap_dump": {
       "folder": "/opt/mmt/probe/pcap/",
       "interval": 3600
@@ -54,13 +59,14 @@
 		"packet": 1,
 		"byte": 64
 	},
-	"retain_detail_report_period": 300,
-	"limit_database_size" :  1000000000,
+	"auto_reload_report": false,
+	"retain_detail_report_period": 604800,
+	"limit_database_size" :  999999999999,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
    "_log" : ["error", "warn", "log", "info"],
-   "log" : ["error", "warn", "log"],
+   "log" : ["error", "warn", "log", "info"],
    
 	"_modules": ["link","network","dpi","application","security","behavior","enodeb","ndn","video","sla","stat"],
 	"modules": ["link","network","dpi","security"],

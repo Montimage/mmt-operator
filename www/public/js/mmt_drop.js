@@ -5859,11 +5859,11 @@ if( typeof Highcharts !== "undefined" )
 
                var obj = [];
                var n   = columns.length;
-               if( n > 11 ){
-                  //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
-                  MMTDrop.alert.error("Line chart draws only the first 10 elements", 10);
-                  n = 10;
-               }
+               //if( n > 11 ){
+               //   //console.log("There are totally " + n + " line charts. I draw only the first 20 lines on the chart");
+               //   MMTDrop.alert.error("Line chart draws only the first 10 elements", 10);
+               //   n = 10;
+               //}
 
                //header
                obj[0] = ["x"];    //ox

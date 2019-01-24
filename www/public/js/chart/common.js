@@ -76,7 +76,9 @@ const fAutoReload = {
 
 $(function () {
     'use strict'
-
+    if( MMTDrop.config.others && !MMTDrop.config.others.auto_reload_report )
+       fAutoReload.hide();
+    
     if( typeof arr === "undefined" ){
         console.error("No Reports are defined!");
         $("#waiting").hide();
