@@ -66,7 +66,7 @@
 	  "files" : 9999
 	},
 	"auto_reload_report": false,
-	"retain_detail_report_period": 604800,
+	"retain_detail_report_period": 3600,
 	"limit_database_size" :  999999999999,
 	"port_number": 8080,
 	"log_folder": "/tmp/",

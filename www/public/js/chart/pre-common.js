@@ -80,7 +80,10 @@ const supportsES6 = function() {
       return true;
    }
    catch (err) {
-      alert("This browser does not support javascript ES6.\nMMT-Operator may not work properly.")
+      $(function(){
+         var msg = "<strong>MMT-Operator might not work properly:</strong><br/><center>The browser does not support <br>ECMAScript 6.</center>";
+         MMTDrop.alert.error( msg, 10000 );
+      })
       return false;
    }
 }();

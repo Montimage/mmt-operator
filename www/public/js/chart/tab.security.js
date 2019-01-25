@@ -293,7 +293,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
    reset();
    fPeriod.onChange( reset );
 
-   var appendData = function( msg ){
+   function appendData( msg ){
       var key   = msg[ COL.PROBE_ID.id ] + "-" + msg[ COL.PROPERTY.id ] + "-" + msg[COL.VERDICT.id];
       var vdict = msg[ COL.VERDICT.id ];
       var ts    = msg[ COL.TIMESTAMP.id ];
@@ -318,21 +318,21 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
          }
       }
 
-      const obj = {};
-      obj.key              = key;
-      obj.index            = DATA.length;
-      obj.verdict          = {
+      const o = {};
+      o.key              = key;
+      o.index            = DATA.length;
+      o.verdict          = {
             "detected"      : 0,
             "not_detected"  : 0,
             "respected"     : 0,
             "not_respected" : 0,
             "unknown"       : 0
       };
-      obj.verdict[ vdict ] += num_verdict ;
-      obj.detail           = [ msg ];
-      obj.data             = MMTDrop.tools.cloneData( msg );    //data to show to the table
+      o.verdict[ vdict ] += num_verdict ;
+      o.detail           = [ msg ];
+      o.data             = MMTDrop.tools.cloneData( msg );    //data to show to the table
 
-      DATA.push( obj );
+      DATA.push( o );
 
       return -1;
    };

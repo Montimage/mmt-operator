@@ -81,7 +81,7 @@ function plainCssLinks(){
 
       console.log( "Got CSS " + href );
       
-      let cssData = res.data;
+      var cssData = res.data;
 
       //get url content, then, embedde it into base64 
       const regex = /url\((?!['"]?(?:data|http):)['"]?([^'"\)]*)['"]?\)/g;

@@ -2,6 +2,7 @@ const constant = {
 	REDIS_STR : "redis",
 	FILE_STR  : "file",
 	KAFKA_STR : "kafka",
+	SOCKET_STR: "socket",
 	
 	//musa sla
 	VIOLATION_STR: "violation",
