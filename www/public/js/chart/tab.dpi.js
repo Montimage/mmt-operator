@@ -268,7 +268,7 @@ var ReportFactory = {
                 
                 var str = _chart.totalProtocols +" distinct protocols/applications";
 
-                $("#" + _chart.elemID).append('<div style="font-size:12px; margin-top: 10px; color:green">'+ str +'</div>');
+                $("#" + _chart.elemID).append('<div style="font-size:12px; margin-top: 0px; color:green">'+ str +'</div>');
 
                 var $widget = $("#" + _chart.elemID).getWidgetParent();
                 //resize when changing window size
