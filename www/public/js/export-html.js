@@ -6,7 +6,9 @@ function correctGrid(){
       const $item = $(this);
 
       //clearly indicate these attribute in inline style
-      ["top", "height", "width", "min-width"].forEach( key => $item.css( key, $item.css(key) ) );
+      ["top", "height", "width", "min-width"].forEach( function(key){
+         $item.css( key, $item.css(key) );  
+      });
       //$item.css( "width", (($item.width() / $item.parent().width) * 100) + '/%');
    });
 }

@@ -7,6 +7,11 @@ if( val != undefined ){
    module.exports = val;
 }
 else{
+ //ensure that mmt-operator is running on a good nodejs version
+   if( isMainProcess && (process.release.lts == undefined || process.release.lts != 'Dubnium' )){
+      console.warn("[WARN] MMT-Operator works well on Carbon release of NodeJS. It may not work on this version "+ process.version +".");
+   }
+   
 // allow to change config.json
    var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
    process.argv.forEach(function (val) {
@@ -60,7 +65,10 @@ else{
          obj = obj[key];
       }
       //assign value
-      obj[ nameArr[ nameArr.length - 1 ] ] = arr[1];
+      let value = arr[1];
+      
+      obj[ nameArr[ nameArr.length - 1 ] ] = value;
+         
       if( isOverriden && isMainProcess)
          console.info("[INFO] Override parameter: " + param );
    });
@@ -83,10 +91,13 @@ else{
    if( Number.isNaN( config.port_number ) || config.port_number < 0 )
       config.port_number = 80;
 
-   const set_default_value = function( variable, prop, value ){
-      if( variable[prop] == undefined )
+   function set_default_value( variable, prop, value, convertFn ){
+      if( variable[prop] === undefined )
          variable[prop] = value;
-   };
+      //if we need to convert its value
+      else if( convertFn )
+         variable[prop] = convertFn( variable[prop] );
+   }
 
 // == Database name
    config.databaseName      = "mmt-data";  //database 
@@ -104,19 +115,19 @@ else{
    set_default_value( config, "database_server", {} );
 
    set_default_value( config.database_server, "host", "127.0.0.1" );
-   set_default_value( config.database_server, "port", 27017 );
+   set_default_value( config.database_server, "port", 27017, parseInt );
 
    set_default_value( config, "redis_input", {});
    set_default_value( config.redis_input, "host", "127.0.0.1" );
-   set_default_value( config.redis_input, "port", 6379 );
+   set_default_value( config.redis_input, "port", 6379, parseInt );
 
    set_default_value( config, "micro_flow", {});
-   set_default_value( config.micro_flow, "packet", 7 );
-   set_default_value( config.micro_flow, "byte"  , 448 );
+   set_default_value( config.micro_flow, "packet", 7, parseInt );
+   set_default_value( config.micro_flow, "byte"  , 448, parseInt );
 
 // period to retain detail reports (1 report for 1 session during sample period, e.g. sconds)
 // retain 7days
-   set_default_value( config, "retain_detail_report_period", 7*24*3600 );
+   set_default_value( config, "retain_detail_report_period", 7*24*3600, parseInt );
 
    set_default_value( config, "probe_stats_period", 5);
    config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
@@ -124,23 +135,18 @@ else{
    set_default_value( config, "query_cache", {} );
    set_default_value( config.query_cache, "enable", false );
    set_default_value( config.query_cache, "folder", "/tmp/" );
-   set_default_value( config.query_cache, "bytes",  5*1000*1000 ); //5MB
-   set_default_value( config.query_cache, "files",  999 );
+   set_default_value( config.query_cache, "bytes",  5*1000*1000, parseInt ); //5MB
+   set_default_value( config.query_cache, "files",  999, parseInt );
 
 // use in Cache to decide when we will push caches to DB:
 // - either their size >= max_length_size
 // - or interval between 2 reports >= max_interval
    set_default_value( config, "buffer", {});
-   set_default_value( config.buffer, "max_length_size", 10000 );
-   set_default_value( config.buffer, "max_interval", 30 );
+   set_default_value( config.buffer, "max_length_size", 10000, parseInt );
+   set_default_value( config.buffer, "max_interval", 30, parseInt );
 
 
    config.json = JSON.stringify( config );
-
-//ensure that mmt-operator is running on a good nodejs version
-   if( process.release.lts == undefined || process.release.lts != 'Carbon' ){
-      console.warn("[WARN] MMT-Operator works well on Carbon release of NodeJS. It may not work on this version "+ process.version +".");
-   }
    
 // ensure log directory exists
    if( !fs.existsSync( config.log_folder ) ){

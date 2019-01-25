@@ -1,3 +1,10 @@
+var ts_start = 0;
+
+$( function(){
+    ts_start = (new Date()).getTime();
+    //loading.onHide();
+} );
+
 const Loading = function( ){
     this.chartLoaded = 0;
     this.totalChart  = 0;
@@ -12,18 +19,32 @@ const Loading = function( ){
             setTimeout( function( l ){
                 l.onHide();
             }, 500, _his );
-    }
+    };
 
     this.onHide = function(){
         waiting.hide();
-    }
+    };
 
     this.onShowing = function(){
         waiting.show();
         _his.chartLoaded = 0;
         ts_start = (new Date()).getTime();
+    };
+};
+
+const loading = new Loading();
+
+MMTDrop.callback = {
+    chart : {
+        afterRender : loading.onChartLoad
     }
-}
+};
+
+MMTDrop.setOptions({
+   format_payload: true
+});
+
+
 const URL_PARAM = MMTDrop.tools.getURLParameters();
 if( URL_PARAM.probe_id )
   URL_PARAM.probe_id = parseInt( URL_PARAM.probe_id );
@@ -34,24 +55,7 @@ else
 
 if( URL_PARAM.ts )
   URL_PARAM.ts = parseInt( URL_PARAM.ts );
-const loading = new Loading();
 
-MMTDrop.callback = {
-    chart : {
-        afterRender : loading.onChartLoad
-    }
-};
-
-var ts_start = 0;
-
-$( function(){
-    ts_start = (new Date()).getTime();
-    //loading.onHide();
-} );
-
-MMTDrop.setOptions({
-    format_payload: true
-});
 
 
 $(function(){
@@ -65,4 +69,18 @@ $(function(){
     //remove animation
     MMTDrop.tools.createStylesheet('.c3-chart-arc,.c3-chart-lines{animation: none; -ms-animation: none; -moz-animation: none;-webkit-animation: none; opacity:1}');
   }
-})
+});
+
+
+
+//check browser support ES6
+const supportsES6 = function() {
+   try {
+      new Function("(a = 0) => a");
+      return true;
+   }
+   catch (err) {
+      alert("This browser does not support javascript ES6.\nMMT-Operator may not work properly.")
+      return false;
+   }
+}();

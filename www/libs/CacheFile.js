@@ -42,8 +42,9 @@ function standalizeCacheFolder( reservedSize, cb ){
       //remove oldest files to maintain config.query_cache.files
       let rmFiles = 0; //number of files being removed
       let rmBytes = 0; //number of bytes being removed
-      while( !((stats.length - rmFiles <= config.query_cache.files) 
-            && (totalSize  - rmBytes <= config.query_cache.bytes - reservedSize ))){
+      while( rmFiles < stats.length 
+            && !((stats.length - rmFiles <= config.query_cache.files) 
+              && (totalSize  - rmBytes <= config.query_cache.bytes - reservedSize ))){
          
          try{
             fs.unlinkSync( stats[rmFiles].file );

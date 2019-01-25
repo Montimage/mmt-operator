@@ -51,24 +51,21 @@ let queryCount = 0; //number of queries being executing
  * @param probeID
  * @returns
  */
-function _removeOldRecords( db, collectionName, timestamp, probeID ){
+function _removeOldRecords( db, collectionName, timestamp ){
 	const query = {};
-	if( probeID != undefined )
-	   query[ COL.PROBE_ID ]  = probeID;
-	
 	query[ COL.TIMESTAMP ] = {$lt: timestamp};
 
 	//console.log( query );
 	try{
 	   queryCount ++;
-//	   db.collection( collectionName ).deleteMany( query, WRITE_CONCERN, function( err, ret){
-//	      queryCount --;
-//	      if( err )
-//	         return console.error( err );
-//
-//	      if(ret && ret.deletedCount > 0 )
-//	         console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)));
-//	   } );
+	   db.collection( collectionName ).deleteMany( query, WRITE_CONCERN, function( err, ret){
+	      queryCount --;
+	      if( err )
+	         return console.error( err );
+
+	      if( ret )
+	         console.info(" <= del " + ret.deletedCount + " in [" + collectionName + "] older than " + (new Date(timestamp)).toLocaleString());
+	   } );
 	}catch( e ){
 	   queryCount --;
 	   console.error("Error while deleting old records in collection " + collectionName );
@@ -110,9 +107,11 @@ function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
    // reduce each a 1/4 of DB_STEP_INCREASE days if need
    _removeOldRecords( db, collectionPrefix + CONST.period.HOUR,   timestamp - 7*24*60*60*1000 + additionalTime*6*60*60*1000, probeID );
 
-   //retain the last 365 days
-   // reduce each 10xDB_STEP_INCREASE days if need
-   _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000 + 10*additionalTime*24*60*60*1000, probeID );      
+   //DAY collection is maintained only if DB size > limit
+   if( additionalTime > 0 )
+      //retain the last 365 days
+      // reduce each 10xDB_STEP_INCREASE days if need
+      _removeOldRecords( db, collectionPrefix + CONST.period.DAY,    timestamp - 365*24*60*60*1000 + 10*additionalTime*24*60*60*1000, probeID );      
 }
 
 //restart 
@@ -149,6 +148,26 @@ function _maintainDatabaseSize( database ){
    });
 }
 
+function _maintainSecurityCollection(  database, cb ){
+   //collection security is cutoff only if Database size >= the limit
+   if( additionalTime === 0 )
+      return cb();
+   
+   database.collection("security").aggregate([{$group: {_id: null, time: {$min: "$" + COL.TIMESTAMP} }}], function( err, data ){   
+      //no data found
+      if( err || data == undefined || data.length == 0 ){
+         console.error( err );
+         return cb();
+      }
+      
+      const m = data[0];
+      _removeOldRecords( database, "security", m.time + additionalTime*60*1000 );
+      
+      cb();
+   });
+}
+
+let lastDeleteTimestamp = 0;
 function _maintainDatabase( database ){
    //waiting for the queries well terminated
    if( queryCount > 0 ){
@@ -158,63 +177,71 @@ function _maintainDatabase( database ){
    
    queryCount = 0;
    
-   //get last time of each probe
-   //database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){
-   database.collection("data_total_real").aggregate([{$group: {_id: "$" + COL.PROBE_ID, time: {$last: "$" + COL.TIMESTAMP} }}], function( err, data ){   
+   //get last time of any probe
+   database.collection("data_total_real").aggregate([{$group: {_id: null, time: {$max: "$" + COL.TIMESTAMP} }}], function( err, data ){   
       //no data found
-      if( err || data == undefined ){
+      if( err || data == undefined || data.length == 0 ){
          console.error( err );
          return _startOver( database );
       }
       
       //if there is no more data in data_total_real
       //=> use the current time of system
-      if( data.length == 0 )
-         data = [{time: (new Date()).getTime()}];
+      //if( data.length === 0 )
+      //   data = [{time: (new Date()).getTime()}];
       
 //      console.( data[0] );
       
-      //for each probe
-      for( var i=0; i<data.length; i++ ){
-         var m = data[i];
-         
-         //uk flow reports: retain only last 61minutes
-         // reduce each DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "data_unknown_flows_" + CONST.period.REAL , m.time - 61*60*1000 + additionalTime*60*1000, m._id );
-         
-         //detail reports
-         // reduce each DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "reports_" + CONST.period.SPECIAL , m.time - config.retain_detail_report_period*1000 + additionalTime*60*1000, m._id );
-         
-         //security reports
-         // reduce each DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "security", m.time - config.retain_detail_report_period*1000 + additionalTime*60*1000, m._id );
-         
-         //retain only the last 5 minutes
-         // reduce each half of DB_STEP_INCREASE minutes if need
-         _removeOldRecords( database, "data_mac_real" , m.time - 5*60*1000 + additionalTime*30*1000, m._id );
-         
-         //other "*real" collection, we retain 61 minutes
-         _maintainCollection( database, "data_app_"         , m.time, m._id );
-         _maintainCollection( database, "data_ip_"          , m.time, m._id );
-         _maintainCollection( database, "data_link_"        , m.time, m._id );
-         _maintainCollection( database, "data_location_"    , m.time, m._id );
-         _maintainCollection( database, "data_protocol_"    , m.time, m._id );
-         _maintainCollection( database, "data_session_"     , m.time, m._id );
-         _maintainCollection( database, "data_total_"       , m.time, m._id );
-         //other collections that are used in specific projects
-         _maintainCollection( database, "data_gtp_"         , m.time, m._id );
-         _maintainCollection( database, "data_sctp_"        , m.time, m._id );
-         _maintainCollection( database, "data_ndn_"         , m.time, m._id );
-         _maintainCollection( database, "availability"      , m.time, m._id );
-      }
+      const timestamp = data[0].time;
       
-      //this avoids delete DB so frequently
-      //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
-      // (as DB_LIMIT_SIZE is too small)
-      //maintain by db size
-      setTimeout( _maintainDatabaseSize, 10000, database );
+      //nothing change in DB and it is not needed to reduce the size
+      if( lastDeleteTimestamp === timestamp && additionalTime === 0 )
+         return setTimeout( _maintainDatabaseSize, 10000, database );
+      
+      lastDeleteTimestamp = timestamp;
+      
+      //uk flow reports: retain only last 61minutes
+      // reduce each DB_STEP_INCREASE minutes if need
+      _removeOldRecords( database, "data_unknown_flows_" + CONST.period.REAL , timestamp - 61*60*1000 + additionalTime*60*1000 );
+      
+      //detail reports
+      // reduce each DB_STEP_INCREASE minutes if need
+      _removeOldRecords( database, "reports_" + CONST.period.SPECIAL , timestamp - config.retain_detail_report_period*1000 + additionalTime*60*1000 );
+      
+      //security reports
+      // reduce each DB_STEP_INCREASE minutes if need
+      //_removeOldRecords( database, "security", timestamp - config.retain_detail_report_period*1000 + additionalTime*60*1000 );
+      
+      //retain only the last 5 minutes
+      // reduce each half of DB_STEP_INCREASE minutes if need
+      _removeOldRecords( database, "data_mac_real" , timestamp - 5*60*1000 + additionalTime*30*1000 );
+      
+      //other "*real" collection, we retain 61 minutes
+      _maintainCollection( database, "data_app_"         , timestamp );
+      _maintainCollection( database, "data_ip_"          , timestamp );
+      _maintainCollection( database, "data_link_"        , timestamp );
+      _maintainCollection( database, "data_location_"    , timestamp );
+      _maintainCollection( database, "data_protocol_"    , timestamp );
+      _maintainCollection( database, "data_session_"     , timestamp );
+      _maintainCollection( database, "data_total_"       , timestamp );
+      //other collections that are used in specific projects
+      _maintainCollection( database, "data_gtp_"         , timestamp );
+      _maintainCollection( database, "data_sctp_"        , timestamp );
+      _maintainCollection( database, "data_ndn_"         , timestamp );
+      _maintainCollection( database, "availability_"     , timestamp );
+      
+
+      //collection security is cutoff only if Database size >= the limit
+      _maintainSecurityCollection( database, function(){
+         
+         //this avoids delete DB so frequently
+         //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
+         // (as DB_LIMIT_SIZE is too small)
+         //maintain by db size
+         setTimeout( _maintainDatabaseSize, 10000, database );
+      });
    });
+   
    //manually garbage
    //if( global && global.gc )
    //   global.gc();

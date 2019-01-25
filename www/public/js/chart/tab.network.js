@@ -80,11 +80,11 @@ const LIMIT = 1000;
 var param = MMTDrop.tools.getURLParameters();
 //top profile => detail of 1 profile (list app) => one app
 if( param.profile ){
-  arr[1].title =  param.profile + " &#10095; "
+  arr[1].title =  param.profile + " &#10095; ";
   if( param.app )
     arr[1].title += param.app;
   else
-    arr[1].title += "Top Apps/Protos"
+    arr[1].title += "Top Apps/Protos";
 }
 
 //when all paramerters are selected
@@ -107,7 +107,7 @@ if( param.profile && param.app && param.link )
 const NO_IP = "no-ip", MICRO_FLOW = "micro-flow", REMOTE = "remote", LOCAL = "_local", NULL="null";
 
 //MongoDB match expression
-var get_match_query = function( p ){
+function get_match_query( p ){
   var param = MMTDrop.tools.getURLParameters();
   var $match = {};
   var collection = undefined;
@@ -139,8 +139,8 @@ var get_match_query = function( p ){
 	}else if( param.ip == REMOTE ) {
 		$match[ COL.DST_LOCATION.id ] = {"$ne" : LOCAL};
 	}else{
-	    var obj = {};
-	    obj[ COL.IP_SRC.id ]  = param.ip
+	    let obj = {};
+	    obj[ COL.IP_SRC.id ]  = param.ip;
 	    $match["$or"] = [ obj ];
 	    
 	    obj = {};
@@ -153,7 +153,7 @@ var get_match_query = function( p ){
   }
 
   if( param.link ){
-    var link = param.link.split(",");
+    let link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
     $match[ COL.IP_DST.id ] = {$in: link};
     
@@ -164,15 +164,25 @@ var get_match_query = function( p ){
     return null;
   
   
-  obj = {match: $match};
+  const obj = {match: $match};
   
   if( collection )
      obj.collection = collection;
   return obj;
 }
 
+//whether we show a link to enter detail of each element, such as, each IP, profile, country, etc.
+function disableDetail(){
+   
+   //if interval of conservation of detail reports >= the period to show 
+   if( fPeriod && MMTDrop.config && MMTDrop.config.others )
+      return (MMTDrop.config.others.retain_detail_report_period < fPeriod.getSamplePeriodTotal());
+   
+   return false;
+}
+
 //limit number of rows of a table/number of pies per chart
-const LIMIT_SIZE=500;
+const LIMIT_SIZE=1000;
 //create reports
 var ReportFactory = {
     /**
@@ -613,29 +623,36 @@ var ReportFactory = {
                         .appendTo($tr);
 
                       var $a = null;
-                      if( query_by_app ){
-                        if( legend.length == 1 && key == MMTDrop.tools.getURLParameters("app") ){
-                          $("<td>",{
+                      if( disableDetail() ){
+                         $("<td>",{
                             html : key
                           }).appendTo($tr);
-                        }else{
-                          $a = $("<a>", {
-                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile", "probe_id", "period"], "app=" + key ),
-                             title: "click to show detail of this application/protocol",
-                             text : key,
-                           });
-                           $("<td>").append($a).appendTo( $tr );
-                         }
-                      }else{
-                       $a = $("<a>", {
-                          href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "probe_id", "period"], "profile=" + key ),
-                          title: "click to show detail of this profile",
-                          text : key,
-
-                        });
-                        $("<td>").append($a).appendTo($tr);
                       }
+                      else{
+                         if( query_by_app ){
+                           if( (legend.length == 1 && key == MMTDrop.tools.getURLParameters("app") )){
+                             $("<td>",{
+                               html : key
+                             }).appendTo($tr);
+                           }else{
+                             $a = $("<a>", {
+                                href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "profile", "probe_id", "period"], "app=" + key ),
+                                title: "click to show detail of this application/protocol",
+                                text : key,
+                              });
+                              $("<td>").append($a).appendTo( $tr );
+                            }
+                         }else{
+                            
+                          $a = $("<a>", {
+                             href : MMTDrop.tools.getCurrentURL(["loc", "link", "ip", "probe_id", "period"], "profile=" + key ),
+                             title: "click to show detail of this profile",
+                             text : key,
 
+                           });
+                           $("<td>").append($a).appendTo($tr);
+                         }
+                      }
                     $("<td>", {align: "right"}).text(  MMTDrop.tools.formatDataVolume( val ) ).appendTo($tr);
 
                     $("<td>", {
@@ -1014,7 +1031,7 @@ var ReportFactory = {
                         .appendTo($tr);
 
                     var link = ips.join(",");
-                    if( legend.length == 1 && link == MMTDrop.tools.getURLParameters("link") ){
+                    if( disableDetail() || (legend.length == 1 && link == MMTDrop.tools.getURLParameters("link") )){
                       $("<td>",{
                         html : key
                       }).appendTo($tr);
@@ -1387,7 +1404,7 @@ var ReportFactory = {
                             //$(this).css("background-color", chart.color(id) );
                         })
                         .appendTo($tr);
-                    if( legend.length == 1 && key == MMTDrop.tools.getURLParameters("ip") ){
+                    if( disableDetail() || (legend.length == 1 && key == MMTDrop.tools.getURLParameters("ip") )){
                       $("<td>",{
                         html : key
                       }).appendTo($tr);
@@ -1749,7 +1766,7 @@ var ReportFactory = {
                         })
                         .appendTo($tr);
 
-                    if( legend.length == 1 && key == MMTDrop.tools.getURLParameters("loc") ){
+                    if( disableDetail() || (legend.length == 1 && key == MMTDrop.tools.getURLParameters("loc") )){
                       $("<td>",{
                         html : key
                       }).appendTo($tr);
@@ -2328,7 +2345,7 @@ $(str).appendTo("head");
                   })
               ;
               
-              node.append("text")
+              let _ipLabel = node.append("text")
                   .attr("dx", function( d ){
                       return d.radius + 5;
                   })
@@ -2337,11 +2354,16 @@ $(str).appendTo("head");
                       //IP
                       return d.name 
                   })
-                  .on("click", function(d){
-                    MMTDrop.tools.reloadPage( "ip="+ d.name );
-                  })
-                  .append("title").text("click here to view detail of this IP");
               ;
+              
+              //allow to click only when we can goto detail of this IP
+              if( !disableDetail() )
+                 _ipLabel
+                     .on("click", function(d){
+                       MMTDrop.tools.reloadPage( "ip="+ d.name );
+                     })
+                     .append("title").text("click here to view detail of this IP");
+                 ;
 
               node.append("text")
                   .attr("text-anchor", "middle")
