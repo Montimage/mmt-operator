@@ -3,14 +3,17 @@ const path = require('path');
 const val = _global.get("config");
 const isMainProcess = ( process.send == undefined ); 
 
-if( val != undefined ){
+function parseBool( val ){
+   return val === 'true';
+}
+
+if( val !== undefined ){
    module.exports = val;
 }
 else{
  //ensure that mmt-operator is running on a good nodejs version
-   if( isMainProcess && (process.release.lts == undefined || process.release.lts != 'Dubnium' )){
+   if( isMainProcess && (process.release.lts === undefined || process.release.lts !== 'Dubnium' ))
       console.warn("[WARN] MMT-Operator works well on Carbon release of NodeJS. It may not work on this version "+ process.version +".");
-   }
    
 // allow to change config.json
    var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
@@ -128,6 +131,7 @@ else{
 // period to retain detail reports (1 report for 1 session during sample period, e.g. sconds)
 // retain 7days
    set_default_value( config, "retain_detail_report_period", 7*24*3600, parseInt );
+   set_default_value( config, "auto_reload_report", true, parseBool );
 
    set_default_value( config, "probe_stats_period", 5);
    config.probe_stats_period_in_ms = config.probe_stats_period * 1000;
