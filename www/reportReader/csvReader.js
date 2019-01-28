@@ -22,9 +22,9 @@ const DataBase       = require("./DataBase.js");
 //This allows to clean memory used by the readers' processes
 const NB_CSV_BEFORE_RESTART = 48;
 //total number of reader processes
-const TOTAL_READERS = process.argv[3];
+const TOTAL_READERS = parseInt( process.argv[3] );
 //index of the current process
-const READER_INDEX              = process.argv[2];
+const READER_INDEX              = parseInt( process.argv[2] );
 const DELETE_FILE_AFTER_READING = config.file_input.delete_data;
 //array of folders containing reports
 const DATA_FOLDERS              = [];
@@ -82,6 +82,7 @@ function process_file (file_name, cb) {
 	
 	var hasError   = false;
 	var start_ts = tools.getTimestamp();
+	var totalLines = 0;
 
 	lr.on ('line', function (line) {
 		// 'line' contains the current line without the trailing newline character.

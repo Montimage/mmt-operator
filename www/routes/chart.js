@@ -91,8 +91,8 @@ var all_pages = {
          "topo-control-plane": {
             title : "Control Plane Topology"
          },
-         "topology": {
-            title : "Network Topology"
+         "topo-user-plane": {
+            title : "User Plane Topology"
          },
          "traffic": {
             title: "Traffic Monitoring"

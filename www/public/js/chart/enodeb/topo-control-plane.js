@@ -4,7 +4,7 @@
 const arr = [
    {
       id: "topo",
-      title: "Topology",
+      title: "Control Plane Topology",
       x: 6,
       y: 0,
       width: 12,

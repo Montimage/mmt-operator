@@ -361,7 +361,9 @@ module.exports = function(){
 
             //receive this msg when probe is starting
          case dataAdaptor.CsvFormat.STARTUP_REPORT:
-            
+            //when probe is starting up
+            //=> clean lte_topology
+            inserter.clean( "lte_topology" );
             return;
             
          case dataAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:

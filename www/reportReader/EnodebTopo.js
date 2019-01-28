@@ -47,20 +47,7 @@ function resetTopology( msg ){
    notifyClientToRedrawTopology();
 }
 
-function maintainTopology( msg ){
-   const data = {};
-   
-   //to maintain the compatibility with other collection
-   [COL.TIMESTAMP].forEach( function( e ){
-      data[ e ] = msg[ e ];
-   });
-   
-   //init template for the topology
-   inserterDB.set( COLLECTION, getID( msg ), data );
-}
-
 module.exports = {
       processMessage  : processMessage,   //update topolog content
       resetTopology   : resetTopology,    //clear/init topology content
-      maintainTopology: maintainTopology, //update timestamp
 };

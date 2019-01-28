@@ -168,4 +168,13 @@ module.exports = function( databaseName ){
       
       self.db.collection( collection ).updateOne( {_id: id}, update, options, callback );
    };
+   
+   self.clean = function( collection, callback ){
+      self.db.collection( collection ).drop( function( err, delOK ){
+         if( err )
+            console.error("Error while dropping collection " + collection, err );
+         if( typeof( callback ) === "function" )
+            callback( err, delOK );
+      });
+   }
 };

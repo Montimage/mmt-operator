@@ -4,7 +4,7 @@
 var arr = [
    {
       id: "topo",
-      title: "Topology",
+      title: "User Plan Topology",
       x: 6,
       y: 0,
       width: 12,
@@ -272,7 +272,6 @@ var ReportFactory = {
                   case TYPE_MME:
                      o.radius = 14;
                      break;
-                     break;
                   default:
                      o.radius = 20;
                }
@@ -292,7 +291,7 @@ var ReportFactory = {
             function normalizeLink( msg ){
                var name = msg.source + "-" + msg.target;
                //is existing a link having the same source-dest?
-               if( links_obj[ name ] == undefined ){
+               if( links_obj[ name ] === undefined ){
                   var o = { 
                         source: nodes_obj[ msg.source ], //refer to its source object
                         target: nodes_obj[ msg.target ], //refer to its dest object
@@ -311,7 +310,7 @@ var ReportFactory = {
             }
 
             //normalize each link
-            obj.links.forEach( normalizeLink )
+            obj.links.forEach( normalizeLink );
 
 
             // size of display content
@@ -403,7 +402,7 @@ var ReportFactory = {
                .attr("class", "node")
                .attr("name", function( d ){
                   d.pos   = svg.fixedNodes[ d.name ];
-                  d.fixed = ( d.pos != null );
+                  d.fixed = ( d.pos != undefined );
 
                   return d.name;
                })
@@ -413,11 +412,11 @@ var ReportFactory = {
 
                   // Reduce the opacity of all but the neighbouring nodes
                   node.style("opacity", function (o) {
-                     return d.index==o.index ? 1 : 0.1;
+                     return d.index === o.index ? 1 : 0.1;
                   });
 
                   link.style("opacity", function (o) {
-                     if( d.index==o.source.index || d.index==o.target.index ){
+                     if( d.index === o.source.index || d.index === o.target.index ){
                         return 1;
                      }
                      return 0.1;
@@ -502,7 +501,7 @@ var ReportFactory = {
                      d.fixed    = true; // of course set the node to fixed so
                      // the force doesn't include the node
                      // in its auto positioning stuff
-                     force.stop() // stops the force auto positioning before
+                     force.stop(); // stops the force auto positioning before
                      // you start dragging
                   })
                   .on("drag", function(p, i) {
@@ -561,7 +560,7 @@ var ReportFactory = {
                })
                .attr("dy", ".35em")
                .text(function(d) { 
-                  return d.label  //IP
+                  return d.label;  //IP
                })
                .attr("style", function( d ){
                   if( d.type == TYPE_ENODEB || d.type == TYPE_UE || d.type == TYPE_MME)
@@ -589,7 +588,7 @@ var ReportFactory = {
             function updatePosition() {
                //console.log("update position, force.alpha = " + force.alpha() );
                
-               if( force.alpha() != 0 ){
+               if( force.alpha() !== 0 ){
                   var delta = Math.abs( force.__lastAlpha - force.alpha() );
                   if( delta < 0.002  )
                      return;
