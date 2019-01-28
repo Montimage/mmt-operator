@@ -43,8 +43,7 @@ function resetTopology( msg ){
    needToClean = true;
    console.log( "Reset LTE-Topology" );
    
-   //init template for the topology
-   notifyClientToRedrawTopology();
+   inserterDB.clean( "lte_topology",  notifyClientToRedrawTopology );
 }
 
 module.exports = {

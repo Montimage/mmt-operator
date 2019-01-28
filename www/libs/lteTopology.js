@@ -137,8 +137,29 @@ function updateMessage( msg ){
       break;
       
    case EVENT_TYPE.RM_ELEMENT:
+      //remove also the UEs being attached to this element
+      if( topo.nodes[ elem_id ] && topo.nodes[ elem_id ].type === ELEMENT_TYPE.ENODEB ){
+         for( const i in topo.links ){
+            const link = topo.links[i];
+            
+            if( link.source === elem_id || link.target === elem_id ){
+               
+               let otherElement = topo.nodes[ link.target ];
+               if( link.target === elem_id )
+                  otherElement = topo.nodes[ link.source ];
+            
+               //the other end is an UE
+               if( otherElement && otherElement.type === ELEMENT_TYPE.UE ){
+                  delete( topo.nodes[ otherElement.id ]);
+                  delete( topo.links[ i ] );
+               }
+            }
+         }           
+      }
+         
       //remove a node from nodes
       delete topo.nodes[ elem_id ] ;
+      
       //no break: as rm an element and then rm all its links
    case EVENT_TYPE.RM_LINK:
       //remove all elements in the links array
