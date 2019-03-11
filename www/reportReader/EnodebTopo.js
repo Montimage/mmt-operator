@@ -1,6 +1,6 @@
 /**
- * This module will recontruct LTE topology and save it into DB.
- * Each topology is identified by PROBE_ID.
+ * This module will inform GUI to update its current control-plane topology.
+ * 
  * A topology is empty when Probe is starting.
  * It will be updated time by time when Operator receives LTE_TOPOLOGY_REPORT from Probe.
  */

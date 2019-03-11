@@ -7,7 +7,7 @@ const DataBase       = require("./DataBase.js");
 const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
 
-process.title = "mmt-operator-report-reader-" + process.pid();
+process.title = "mmt-operator-stream-reader-" + process.pid();
 
 
 

@@ -129,7 +129,10 @@ function _appendSuplementData( type, msg, cb ){
    var ip  = msg[ COL.IP_SRC ];
    var o   = cache[type][ ip ]; //type = "ue" or "enb"
 
-   if( lastMsgTimestamp + DB_QUERY_INTERVAL < ts || o == null ){
+   //if timeout
+   if( lastMsgTimestamp + DB_QUERY_INTERVAL < ts
+         //or data is not available in the cache
+         || o == null ){
       //mark 
       isQueringDB = true;
       
@@ -164,7 +167,7 @@ function _appendSuplementData( type, msg, cb ){
                   o[ GTP.IMSI ]     = "_unknown";
                   o[ GTP.ENB_NAME ] = "_unknown";
                   o[ GTP.MME_NAME ] = "_unknown";
-               }else{
+               } else {
                   //try onther end
                   ip = msg[ COL.IP_DST ]
                   o = cache[type][ip];

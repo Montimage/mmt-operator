@@ -38,7 +38,7 @@ function Reader(){
 
    self.start = function(){
 
-      if( process._children == undefined ){
+      if( process._children === undefined ){
          process._children = [];
       }
 

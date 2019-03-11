@@ -100,7 +100,7 @@ var ReportFactory = {
                   },
                   children : [
                      createInput( "Name",     "enb_name", {maxlength: 15, required: true} ),
-                     createInput( "IP",       "enb_ip", {required: true} ),
+                     createInput( "IP",       "enb_ip",   {required: true} ),
                      createInput( "MME Name", "mme_name", {maxlength: 15, required: true} ),
                      ]
                },
@@ -841,6 +841,10 @@ var ReportFactory = {
             
             //add a link: gtpIpSrc --> basedIpSrc --> basedIpDst
             svg.addGtpLink = function( enb_name, gw_ip, ue_imsi, msg ){
+               //TODO: need more work, currently hide the _unknown
+               if( enb_name === "_unknown" || ue_imsi === "_unknown" )
+                  return svg;
+               
                //enodeb
                const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
                   "enb_name" : enb_name,
@@ -869,6 +873,10 @@ var ReportFactory = {
             
             //add a link: eNodeB --> MME
             svg.addSctpLink = function( enb_name, mme_name, msg ){
+               //TODO: need more work, currently hide the _unknown
+               if( enb_name === "_unknown" || mme_name === "_unknown" )
+                  return svg;
+               
                //enodeb
                const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
                   "enb_name" : enb_name,

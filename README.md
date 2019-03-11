@@ -34,9 +34,21 @@ Follow the procedure described on the following link to install the latest versi
  #start
  npm start
  # use another configuration file
- node app.js --config=test.json
+ node bin/www --config=test.json
 ```
 
+An option in the configuration file can be overriden by giving a new parameter when running operator, for example:
+
+```bash
+ cd www
+ 
+ node bin/www --config=test.json -Xdatabase_server.host=10.0.0.2 -Xlocal_network.0.ip=192.168.1.0
+```
+
+`X` parameter is in format: `attribute=value` where:
+ 
+- `attribute`
+- `value` is a primitive value: number, string. It must not be an Object or Array.
 
 Once MMT-Operator is up and running, open your favorite browser and goto
 

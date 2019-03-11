@@ -33,6 +33,9 @@ function childProcess( file, params, env, autoRestart ){
       self.childProcess = child_process.fork( self.file, self.params, self.env );
       self.childProcess.on("exit", self.restart );
 
+      
+      self.send = self.childProcess.send;
+      
       //a communication channel between parent 'process' and the child 'childProcess'
       //when the parent receives a message  from its children
       // a message must be structured:
@@ -63,7 +66,7 @@ function childProcess( file, params, env, autoRestart ){
    
    self.restart = function(){
       //exec only one time left
-      if( self.autoRestart == 1 ){
+      if( self.autoRestart === 1 ){
          if( typeof( self.onExit ) == "function" )
             self.onExit( self );
          return;
