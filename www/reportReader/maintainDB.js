@@ -181,7 +181,8 @@ function _maintainDatabase( database ){
    database.collection("data_total_real").aggregate([{$group: {_id: null, time: {$max: "$" + COL.TIMESTAMP} }}], function( err, data ){   
       //no data found
       if( err || data == undefined || data.length == 0 ){
-         console.error( err );
+         if( err )
+            console.error( err );
          return _startOver( database );
       }
       

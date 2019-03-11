@@ -61,8 +61,10 @@ const cache = {
 function _loadCacheFromDB( cb ){
    //1. load enb data
    mysqlConnection.query( enbSqlString, function( err, data, fields ){
-      if( err )
+      if( err ){
+         console.error("Cannot connect to mysql");
          console.error( err );
+      }
       else{
          //clear cache
          cache.enb = {};
