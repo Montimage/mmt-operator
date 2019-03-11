@@ -427,7 +427,10 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                         const key = atts[0]; //since mmt-security v 1.2.8, the first element is key, the second one is value
                         const val = atts[1];
 
-                        if( key.indexOf( "ip.src") === 0 || key.indexOf( "ip.dst") === 0 || key.indexOf("mac") === 0 ){
+                        //check if key is one of the followings
+                        const ipArr = ["ip.src", "ip.dst", "ethernet.src", "ethernet.dst", "s1ap.ue_ipv4", "s1ap.enb_ipv4", "s1ap.mme_ipv4"];
+                        
+                        if( ipArr.indexOf( key )  !== -1 ){
                            //if the att is not yet added
                            if( concernt.indexOf( val ) === -1 ){
                               //
