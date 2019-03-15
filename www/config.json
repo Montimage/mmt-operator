@@ -20,7 +20,7 @@
 	"socket_input": {
 	  "host": "localhost",
 	  "port": 5000,
-	  "maxConnections": 0
+	  "max_connections": 0
 	},
 	"input_mode": "file",
 	"probe_analysis_mode": "offline",
@@ -61,7 +61,7 @@
 	},
 	"query_cache": {
 	  "enable" : true,
-	  "folder" : "./cache/",
+	  "folder" : "/tmp/cache/",
 	  "bytes" : 10e6,
 	  "files" : 9999
 	},

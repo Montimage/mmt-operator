@@ -34,7 +34,9 @@ function childProcess( file, params, env, autoRestart ){
       self.childProcess.on("exit", self.restart );
 
       
-      self.send = self.childProcess.send;
+      self.send = function(){
+         self.childProcess.send.apply( self.childProcess, arguments );
+      };
       
       //a communication channel between parent 'process' and the child 'childProcess'
       //when the parent receives a message  from its children
@@ -72,6 +74,8 @@ function childProcess( file, params, env, autoRestart ){
          return;
       }
       
+      console.log("restart child process " + self.childProcess.pid );
+      
       //reduce timelife
       if( self.autoRestart > 0 )
          self.autoRestart --;
@@ -86,12 +90,18 @@ function childProcess( file, params, env, autoRestart ){
    
 
    self.kill = function(){
+      if( self.childProcess == null )
+         return;
+      
       self.childProcess.kill( 'SIGKILL' );
       self.childProcess = null;
       return self;
    };
    
    self.stop = function(){
+      if( self.childProcess == null )
+         return;
+      
       self.childProcess.kill( 'SIGINT' );
       self.childProcess = null;
       return self;

@@ -226,11 +226,7 @@ database.onReady( function(){
 	   
 		//connect to DB to get the list of read files
 	   start_process = function(){
-			dbadmin.connect( function( err, mdb ) {
-				if( err ){
-					throw new Error( "Cannot connect to mongoDB" );
-					process.exit(0);
-				}
+			dbadmin.onReady( function( mdb ) {
 				mdb.collection("read-files").find().toArray( function(err, doc){
 					read_files = {};
 					for(var i in doc)

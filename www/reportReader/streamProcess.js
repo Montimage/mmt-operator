@@ -7,7 +7,7 @@ const DataBase       = require("./DataBase.js");
 const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
 
-process.title = "mmt-operator-stream-reader-" + process.pid();
+process.title = "mmt-operator-socket-reader-" + process.pid;
 
 
 
@@ -27,8 +27,8 @@ function _cleanUp(){
 
    isStop = true;
    database.flush( function(){
-      console.warn("Ended stream reader " + process.pid() );
-      process.exit(1);
+      console.warn("Ended " + process.title );
+      process.exit();
    });
 }
 
@@ -95,7 +95,8 @@ process.stdin.resume();//so the program will not close instantly
 process.on('SIGINT', _cleanUp);
 
 process.on('message', function(message, socket) {
-   processStream( socket );
+   if( message === "socket" )
+      processStream( socket );
 });
 
 

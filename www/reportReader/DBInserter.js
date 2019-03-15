@@ -170,9 +170,19 @@ module.exports = function( databaseName ){
    };
    
    self.clean = function( collection, callback ){
+      if( self.db === undefined ){
+         if( callback )
+            callback( new Error("Database is undefined") );
+         else
+            console.error( "Database is undefined");
+         return;
+      }
+         
       self.db.collection( collection ).drop( function( err, delOK ){
-         if( err )
-            console.error("Error while dropping collection " + collection, err );
+         //when collection does not exist => error NamespaceNotFound
+         // => in such a case, no error
+         if( err && err.codeName != "NamespaceNotFound" )
+            console.error("Error while dropping collection " + collection, JSON.stringify(err) );
          if( typeof( callback ) === "function" )
             callback( err, delOK );
       });

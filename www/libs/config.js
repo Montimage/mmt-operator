@@ -4,7 +4,17 @@ const val = _global.get("config");
 const isMainProcess = ( process.send == undefined ); 
 
 function parseBool( val ){
+   if( val === true || val === false )
+      return val;
    return val === 'true';
+}
+
+function set_default_value( variable, prop, value, convertFn ){
+   if( variable[prop] === undefined )
+      variable[prop] = value;
+   //if we need to convert its value
+   else if( convertFn )
+      variable[prop] = convertFn( variable[prop] );
 }
 
 if( val !== undefined ){
@@ -13,7 +23,7 @@ if( val !== undefined ){
 else{
  //ensure that mmt-operator is running on a good nodejs version
    if( isMainProcess && (process.release.lts === undefined || process.release.lts !== 'Dubnium' ))
-      console.warn("[WARN] MMT-Operator works well on Carbon release of NodeJS. It may not work on this version "+ process.version +".");
+      console.warn("[WARN] MMT-Operator works well on Dubnium release of NodeJS. It may not work on this version "+ process.version +".");
    
 // allow to change config.json
    var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
@@ -84,29 +94,17 @@ else{
    
    config.rootDirectory = path.join( __dirname, ".." );
    
-   if( config.input_mode != constant.REDIS_STR 
-         && config.input_mode != constant.FILE_STR 
-         && config.input_mode != constant.KAFKA_STR)
-      config.input_mode = constant.FILE_STR;
-
-
-// == HTTP server port number
-   if( Number.isNaN( config.port_number ) || config.port_number < 0 )
-      config.port_number = 80;
-
-   function set_default_value( variable, prop, value, convertFn ){
-      if( variable[prop] === undefined )
-         variable[prop] = value;
-      //if we need to convert its value
-      else if( convertFn )
-         variable[prop] = convertFn( variable[prop] );
+   if( [ constant.REDIS_STR,
+         constant.KAFKA_STR,
+         constant.FILE_STR, 
+         constant.SOCKET_STR
+       ].indexOf( config.input_mode ) === -1 )
+   {
+      
+      console.warn("[ERROR] Unknown input_mode=" + config.input_mode);
+      process.exit();
    }
 
-// == Database name
-   config.databaseName      = "mmt-data";  //database 
-   config.adminDatabaseName = "mmt-admin"; //database for administrator
-
-   set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
 
    if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" ){
       console.error("[ERROR]: 'probe_analysis_mode' in config file must be either 'online' or 'offline'");
@@ -114,6 +112,21 @@ else{
    }
 
    config.is_probe_analysis_mode_offline = (config.probe_analysis_mode === "offline");
+   
+
+// == HTTP server port number
+   if( Number.isNaN( config.port_number ) || config.port_number < 0 )
+      config.port_number = 80;
+
+
+
+// == Database name
+   config.databaseName      = "mmt-data";  //database 
+   config.adminDatabaseName = "mmt-admin"; //database for administrator
+
+   //default values when they are ignored
+   set_default_value( config, "log_folder", path.join( __dirname, "..", "log") );
+
 
    set_default_value( config, "database_server", {} );
 
@@ -123,6 +136,16 @@ else{
    set_default_value( config, "redis_input", {});
    set_default_value( config.redis_input, "host", "127.0.0.1" );
    set_default_value( config.redis_input, "port", 6379, parseInt );
+  
+   set_default_value( config, "file_input", {});
+   set_default_value( config.file_input, "data_folder", "/tmp/" );
+   set_default_value( config.file_input, "delete_data", true, parseBool );
+   set_default_value( config.file_input, "nb_readers",  1, parseInt );
+   
+   set_default_value( config, "socket_input", {});
+   set_default_value( config.socket_input, "host", "127.0.0.1" );
+   set_default_value( config.socket_input, "port", 50000, parseInt );
+   set_default_value( config.socket_input, "max_connections", 0, parseInt );
 
    set_default_value( config, "micro_flow", {});
    set_default_value( config.micro_flow, "packet", 7, parseInt );
@@ -169,7 +192,7 @@ else{
    const logFile = {
          date   : (new Date()).getDate(),
          stream : fs.createWriteStream(path.join(config.log_folder, (moment().format("YYYY-MM-DD")) + '.log'), { flags: 'a' })
-   }
+   };
    
    const _writeLog = function( msg, date ){
       //output to console
@@ -183,7 +206,7 @@ else{
       }
 
       logFile.stream.write( msg + "\n" );
-   }
+   };
 
    var logStdout = process.stdout;
    var errStdout = process.stderr;
@@ -198,7 +221,7 @@ else{
       var prefix = date.toLocaleString() + ", " + logLineDetails + ", " + txt + "\n  ";
 
       return {msg: prefix, date: date.getDate()};
-   }
+   };
    
    //console.log, debug, info, warn, error
    if( !Array.isArray( config.log ) )
@@ -209,7 +232,8 @@ else{
       var prefix  = getPrefix("ERROR");
       var content = util.format.apply(null, arguments);
       _writeLog( prefix.msg + content, prefix.date );
-   }
+   };
+   
    console.log = console.warn = console.info = function(){};
    
    for( var i in config.log ){
@@ -220,19 +244,19 @@ else{
                var prefix  = getPrefix("LOG");
                var content = util.format.apply(null, arguments);
                _writeLog( prefix.msg + content, prefix.date );
-            }
+            };
          case "warn":
             console.warn = function(){
                var prefix  = getPrefix("WARN");
                var content = util.format.apply(null, arguments);
                _writeLog( prefix.msg + content, prefix.date );
-            }
+            };
          case "info":
             console.info = function(){
                var prefix  = getPrefix("INFO");
                var content = util.format.apply(null, arguments);
                _writeLog( prefix.msg + content, prefix.date );
-            }
+            };
       }
    }
 
