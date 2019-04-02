@@ -165,22 +165,27 @@ if( config.isSLA ){
   reaction.dbconnector = dbconnector;
   app.use("/musa/sla", reaction);
   
+  
+   const musaStatus = require("./routes/musa/status.js");
+   musaStatus.pub_sub     = pub_sub;
+   musaStatus.dbconnector = dbconnector;
+   app.use("/", musaStatus);
+   
+     
+  //2 factors authentication for Luhstansa case study
+  require("./routes/musa/2factors.js").start( pub_sub, dbconnector );
+
+*/
+   
   const sla = require("./routes/musa/sla.js");
   sla.dbconnector = dbconnector;
   app.use("/musa/sla", sla);
-  
-  //2 factors authentication for Luhstansa case study
-  require("./routes/musa/2factors.js").start( pub_sub, dbconnector );
 
   const connector = require("./routes/musa/connector.js");
   connector.dbconnector = dbconnector;
   app.use("/musa/connector", connector);
 
-   const musaStatus = require("./routes/musa/status.js");
-   musaStatus.pub_sub     = pub_sub;
-   musaStatus.dbconnector = dbconnector;
-   app.use("/", musaStatus);
-*/
+
 }
   
 

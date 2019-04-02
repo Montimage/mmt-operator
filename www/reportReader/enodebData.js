@@ -6,8 +6,6 @@ const mysql       = require('mysql');
 
 const isEnableEnodeB = Array.isArray( config.modules ) && (config.modules.indexOf("enodeb") != -1); 
 
-console.log("Enable eNodeB " + isEnableEnodeB );
-
 if( isEnableEnodeB ){
    const mysqlConfig = tools.getValue( config, ["modules_config", "enodeb", "mysql_server"]);
    if( mysqlConfig == null ){

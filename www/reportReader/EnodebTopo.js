@@ -7,10 +7,8 @@
 
 
 "use strict";
-
+const config         = require("../libs/config.js");
 const isEnableEnodeB = Array.isArray( config.modules ) && (config.modules.indexOf("enodeb") != -1); 
-
-console.log("Enable eNodeB " + isEnableEnodeB );
 
 if( isEnableEnodeB ){
 
