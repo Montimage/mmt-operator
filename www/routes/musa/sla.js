@@ -12,17 +12,15 @@ router._data = {};
 router._sla  = {};
 
 router.post("/uploadRaw/:id", function(req, res, next) {
-   const app_id = req.params.id;
+   const app_id = (req.params.id == undefined? "__app" : req.params.id);
 
-if( app_id == undefined ) app_id = "_undefined";
-   
    const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
    const comp_index = parseInt(req.body.component_index);
-   
+
    //first component of the app
    if( router._sla[ app_id ]  === undefined  || comp_index == 0)
       router._sla[ app_id ] = {};
-   
+
    const app_config = router._sla[ app_id ];
 
    if( app_config.id == undefined )
@@ -30,7 +28,7 @@ if( app_id == undefined ) app_id = "_undefined";
    if( app_config.init_metrics == undefined )
       app_config.init_metrics    = config.sla.init_metrics; //JSON.parse( req.body.init_metrics );
    if( req.body.init_components !== undefined )
-         app_config.init_components = req.body.init_components;
+      app_config.init_components = req.body.init_components;
 
    if( app_config.components == undefined )
       app_config.components = [];
@@ -40,9 +38,9 @@ if( app_id == undefined ) app_id = "_undefined";
 
    //id of component
    //const comp_index = parseInt(req.body.component_id);
-   
+
    const slaXml     = req.body.slaXml; 
-            //got content of SLA file
+   //got content of SLA file
 
    //parse file content as json
    parser.parseString( slaXml, function (err_2, result) {
@@ -66,9 +64,9 @@ if( app_id == undefined ) app_id = "_undefined";
          //202: the request has been accepted for processing, but the processing has not been completed. 
          //     The request might or might not be eventually acted upon, and may be disallowed when processing occurs
          res.status(202).setHeader("Content-Type", "application/json");
-         
+
          res.send({message: "Got "+ count +" metrics", appId: app_id });
-         
+
       });
 
    });//parser.parseString
@@ -77,21 +75,19 @@ if( app_id == undefined ) app_id = "_undefined";
 //upload SLA files
 router.post("/upload/:id", function(req, res, next) {
    //status of processing SLA files
-   const app_id = req.params.id;
-   if( app_id == undefined ) app_id = "_undefined";
-   
+   const app_id = (req.params.id == undefined ? "__app" : req.params.id );
    const status = router._data[ app_id ] = {progress: 0, message:"", error: false};
-   
+
    //handle SLA files uploading
    multer({ dest: '/tmp/' }).single("filename")( req, res, function( err ){
-      
-    //id of component
+
+      //id of component
       const comp_index = parseInt(req.body.component_id);
-      
+
       //first component of the app
       if( router._sla[ app_id ]  === undefined || comp_index == 0)
          router._sla[ app_id ] = {};
-      
+
       const app_config = router._sla[ app_id ];
 
       if( app_config.id == undefined )
@@ -106,7 +102,7 @@ router.post("/upload/:id", function(req, res, next) {
 
       if( app_config.sla == undefined )
          app_config.sla = {};
-      
+
       if( err ){
          status.progress = 100;
          status.error = true;
@@ -127,7 +123,7 @@ router.post("/upload/:id", function(req, res, next) {
 
          console.error( status );
       }
-      
+
       //waiting for 1 second before parsing SLA file
       //this gives times to show a message above on web browser
       setTimeout( function(){
@@ -212,7 +208,7 @@ function get_violation( expr, type ){
    else{
       expr = get_value( expr, [0, "oneOpExpression", 0] );
    }
-   
+
    //console.log( JSON.stringify( expr ));
 
    var opr = get_value( expr, ["operator"]);
@@ -224,10 +220,10 @@ function get_violation( expr, type ){
 
    if( val == undefined )
       return "";
-   
+
    if( OPERATOR[opr] != undefined )
       opr = OPERATOR[opr];
-   
+
    if( type == "string")
       return opr + " \"" + val + "\"";
    return opr + " " + val;
@@ -244,7 +240,7 @@ function extract_metrics( app_config, index, cb ){
       var comp = app_config.init_components[ index ];
       var sla  = app_config.sla[ index ];
       var sla_str = JSON.stringify( sla );
-      
+
       //remove namespace
       sla_str = sla_str.replace(/[a-zA-Z0-9]+:/g, "");
       sla = JSON.parse( sla_str );
@@ -288,7 +284,7 @@ function extract_metrics( app_config, index, cb ){
       if( slos == undefined )
          //return cb( {message: "Not found SLO"}, 0, null );
          return cb( null, total, title );
-      
+
       comp.metrics = [];
 
       //get data type of each metrics
@@ -296,49 +292,61 @@ function extract_metrics( app_config, index, cb ){
       if( specs == undefined )
          //return cb( {message: "Not found security metric"}, 0, null );
          return cb( null, total, title );
-      
+
       const TYPES = {};
       const TITLES = {};
       for( var j=0; j<specs.length; j++ ){
+         let name = get_value( spec, ["$", "name"] );
          //console.log( JSON.stringify( spec ));
          var spec = specs[ j ];
          var type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "enumUnit", 0, "enumItemsType", 0]);
          if( type == undefined )
             type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "intervalUnit", 0, "intervalItemsType", 0]);
-         TYPES[ get_value( spec, ["$", "name"] ) ] = type;
+         TYPES[ name ] = type;
+
+         let refID = get_value( spec, ["$", "referenceId"] );
          
-         TITLES[ get_value( spec, ["$", "referenceId"] ) ] = get_value( spec, ["$", "name"] ) ;
+         if( refID )
+            TITLES[ refID ] = name ;
+         else
+            TITLES[ name ] = name;
       }
-      
-      
-     
+
+
+
 
       comp.metric_types = TYPES;
       const DUPLICATE = {};
       for( var j=0; j<slos.length; j++ ){
-         var slo = slos[ j ],
-         type    = get_value( slo, ["MetricREF", 0] ); //data type
+         const slo = slos[ j ],
+             refID = get_value( slo, ["MetricREF", 0] ),
+             type  = TYPES[ refID ]; //data type
+         
          //title   = TYPES[ type ],
-         title   = TITLES[ type ],
+         let title   = TITLES[ refID ],
          name    = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
          enable  = false,
          support = false
          ;
+
+         if( title == undefined )
+            continue;
          
          if( DUPLICATE[ title ] != undefined )
             continue;
-         DUPLICATE[ title ] = title;
          
+         DUPLICATE[ title ] = title;
+
          /*
          if( title.toLowerCase().indexOf("scan") >= 0  ){
             name = "vuln_scan_freq";
             enable = true;
             support = true;
          }else 
-            */
-            if( title.toLowerCase().indexOf("resiliance to attacks") >= 0 
-                  //|| title.toLowerCase().indexOf("incident") >= 0 
-                  ){
+          */
+         if( title && title.toLowerCase().indexOf("resiliance to attacks") >= 0 
+               //|| title.toLowerCase().indexOf("incident") >= 0 
+         ){
             name = "incident";
             enable = true;
             support = true;
@@ -369,44 +377,48 @@ function extract_metrics( app_config, index, cb ){
 
 function insert_to_db( app_id, cb ) {
    const app_config = router._sla[ app_id ];
-   
+
    //reset
    router._sla[ app_id ] = null;
-   
+
    if( app_config === undefined || app_config.id === undefined )
       return cb( "nothing to update" );
 
    //upsert to database
-   router.dbconnector.mdb.collection("metrics").update( {app_id: app_config.id}, {
-      _id       : app_config.id,
-      app_id    : app_config.id,
-      init_components: app_config.init_components,
-      components: app_config.components,
-      metrics   : app_config.init_metrics,
-   }, {upsert : true}, cb);
+   router.dbconnector.mdb.collection("metrics").update( {app_id: app_config.id}, 
+         { 
+            $set : {
+               _id       : app_config.id,
+               app_id    : app_config.id,
+               init_components: app_config.init_components,
+               components: app_config.components,
+               metrics   : app_config.init_metrics,
+            }
+         }, 
+         {upsert : true}, cb);
 }
 
 function _redirectToMetric( req, res ){
    //reset
    router._data = {};
    router._sla  = {};
-   
- //maintain query string between pages
+
+   //maintain query string between pages
    var query_string = [];
    //no need probe_id as we want 
    var arr = ["period", "app_id", "period_id"];  
 
    for (var i in arr) {
-       var el = arr[i];
-       if (req.query[el] != undefined)
-           query_string.push(el + "=" + req.query[el]);
+      var el = arr[i];
+      if (req.query[el] != undefined)
+         query_string.push(el + "=" + req.query[el]);
    }
 
    if (query_string.length > 0)
-       query_string = "?" + query_string.join("&");
+      query_string = "?" + query_string.join("&");
    else
-       query_string = "";
-   
+      query_string = "";
+
    res.redirect("/chart/sla/metric" + query_string );
 }
 
@@ -418,12 +430,14 @@ function _redirectToMetric( req, res ){
  * @returns
  */
 router.get("/upload/:id", function( req, res, next ){
-   const id     = req.params.id || "_undefined";
+   const id     = req.params.id || "__app";
    const status = router._data[ id ];
    const act = req.query.act;
 
    if( act === "finish" ) {
-      return insert_to_db(id, function(){
+      return insert_to_db(id, function(err, db){
+         if( err )
+            console.error( err );
          return _redirectToMetric( req, res );
       });
    }

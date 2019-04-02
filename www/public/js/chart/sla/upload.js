@@ -342,7 +342,7 @@ var ReportFactory = {
     fProbe.hide();
     fAutoReload.hide();
 
-    var app_id = MMTDrop.tools.getURLParameters().app_id || "_undefined";
+    var app_id = MMTDrop.tools.getURLParameters().app_id || "__app";
     var form_config = function( com ){ 
       return {
       type: "<div>",

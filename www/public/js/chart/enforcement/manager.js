@@ -25,7 +25,7 @@ var ReportFactory = {
     var _this    = this;
     var app_id = MMTDrop.tools.getURLParameters().app_id;
     if( app_id == undefined )
-        app_id = "_undefined";
+        app_id = "__app";
 
     //RENDER TABLE
     var renderTable = function ( obj ){

@@ -42,7 +42,7 @@ router.get("/:type/:app_id/:com_id/:metric_id/:threshold/:value/:priority", func
    }
    
    if( req.params.app_id == undefined )
-      req.params.app_id = "_undefined";
+      req.params.app_id = "__app";
    
    _raiseMessage( timestamp, req.params.type, req.params.app_id, req.params.com_id, req.params.metric_id, req.params.threshold, req.params.value, req.params.priority )
    

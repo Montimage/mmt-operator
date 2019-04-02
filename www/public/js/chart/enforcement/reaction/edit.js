@@ -33,7 +33,7 @@ var ReportFactory = {
             return;
          }
 
-         const REACTORS = MMTDrop.config.others.sla.actions;
+         const REACTORS = MMTDrop.config.others.modules_config.sla.actions;
 
          //RENDER TABLE
          var renderTable = function ( obj ){

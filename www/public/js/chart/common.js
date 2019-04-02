@@ -111,11 +111,11 @@ $(function () {
     
     //SLA
     if( MMTDrop.config.others && MMTDrop.config.others.modules 
-          && MMTDrop.config.others.sla != undefined 
+          && MMTDrop.config.others.modules_config.sla != undefined 
           && MMTDrop.config.others.modules.indexOf("sla") != -1 //active SLA
           ){
 
-       const SLAs = MMTDrop.config.others.sla;
+       const SLAs = MMTDrop.config.others.modules_config.sla;
        if( SLAs != undefined ){
           //list of reaction agents
           const $reactionsAgents = $($(".menu_enforcement")[0].children[1]);
@@ -135,7 +135,7 @@ $(function () {
           $metrics_list.append('<li role="separator" class="divider"></li>');
        }
        //update list of metrics getting from SLA
-       const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
+       const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "__app": MMTDrop.tools.getURLParameters().app_id);
        MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
           error  : function(){},
           success: function( data ){
@@ -161,7 +161,8 @@ $(function () {
              const $metrics_list = $($(".menu_sla")[0].children[1]);
              const queryString = "&app_id=" + URL_PARAM.app_id + ( URL_PARAM.probe_id == undefined ? "" : ( "&probe_id=" + URL_PARAM.probe_id));
              for( var m in metrics )
-                $metrics_list.append( '<li class="sub_menu_'+ metrics[m].id +' disabled"><a href="/chart/sla/alerts?metric_id='+ metrics[m].id + queryString + '">'+ metrics[m].title +'</a></li>' );
+                if( metrics[m].title != null )
+                  $metrics_list.append( '<li class="sub_menu_'+ metrics[m].id +' disabled"><a>'+ metrics[m].title +'</a></li>' );
           }
        } );
     }
@@ -177,7 +178,7 @@ $(function () {
       if( fProbe.isVisible() && MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1 ){
          
          //load metric from DB
-         const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "_undefined": MMTDrop.tools.getURLParameters().app_id);
+         const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined? "__app": MMTDrop.tools.getURLParameters().app_id);
          MMTDrop.tools.ajax("/api/metrics/find?raw", [{$match: {app_id : app_id}}], "POST", {
             error  : function(){},
             success: function( data ){

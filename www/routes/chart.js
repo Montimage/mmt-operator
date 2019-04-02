@@ -66,7 +66,7 @@ var all_pages = {
              title: "Reactions"
            },
            "separator_1" : "separator",
-
+/*
            "enforcement" : {
               title: "Enforcement Dashboard",
               _url  : "http://assurance-platform.musa-project.eu/enforcement/admin/login",
@@ -74,6 +74,7 @@ var all_pages = {
               target: "_blank"
            },
            "separator_2" : "separator"
+*/
          }
      },
     'stat':{

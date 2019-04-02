@@ -26,7 +26,7 @@ var arr = [
 
 function getAppID (){
    if (MMTDrop.tools.getURLParameters().app_id == undefined )
-      return "_undefined";
+      return "__app";
    return MMTDrop.tools.getURLParameters().app_id;
 }
 
@@ -788,8 +788,8 @@ function _getActions( reaction_id ){
 //reaction: {"comp_id": "30",
 //              "conditions": { "availability": [  "violate" ], "incident": [  "alert" ]},
 //              "actions": [ "filtre_port", "restart_apache"],"priority": "MEDIUM","note": "note","enable": true}
-//data    : [{"alert":0,"violate":63,"app_id":"_undefined","comp_id":1,"me_id":"1"},
-//             {"alert":0,"violate":63,"app_id":"_undefined","comp_id":30,"me_id":"1"}
+//data    : [{"alert":0,"violate":63,"app_id":"__app","comp_id":1,"me_id":"1"},
+//             {"alert":0,"violate":63,"app_id":"__app","comp_id":30,"me_id":"1"}
 //            ]
 function _verifyCondition( reaction, data ){
    const conditions = reaction.conditions;
