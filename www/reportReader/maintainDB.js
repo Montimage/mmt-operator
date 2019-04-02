@@ -270,6 +270,6 @@ process.stdin.resume();//so the program will not close instantly
 */
 process.on('SIGINT',function(){
    console.log("Exit maintainer " + process.pid);
-   process.exit(0);
+   process.exit();
 });
 

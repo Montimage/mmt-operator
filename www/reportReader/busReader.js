@@ -21,7 +21,7 @@ case constant.KAFKA_STR:
     break;
 default:
 	console.error( "Does not support input mode = " + config.input_mode );
-	process.exit( 1 );
+	process.exit();
 }
 
 function receiveMessage (channel, message) {

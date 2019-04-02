@@ -171,7 +171,8 @@ else{
    set_default_value( config, "buffer", {});
    set_default_value( config.buffer, "max_length_size", 10000, parseInt );
    set_default_value( config.buffer, "max_interval", 30, parseInt );
-
+   
+   set_default_value( config, "modules_config", {});
 
    config.json = JSON.stringify( config );
    
@@ -288,18 +289,18 @@ else{
       "active_check_period"   : 5,
       "violation_check_period": 5,
       "reaction_check_period" : 5
-   }, config.sla);
+   }, config.modules_config.sla);
 
 
 // check Musa
    if( config.isSLA ){
-      if( config.input_mode == constant.FILE_STR ){   
-         console.error('Error in config.json: input_mode must be either "kafka" or "redis" when enabling "sla" module.');
-         process.exit( 1 );
-      }
+//      if( config.input_mode == constant.FILE_STR ){   
+//         console.error('Error in config.json: input_mode must be either "kafka" or "redis" when enabling "sla" module.');
+//         process.exit( 1 );
+//      }
 
       if( config.sla == undefined ){
-         console.error('Error in config.json: sla must be defined.');
+         console.error('Error in '+ config.location +': sla must be defined.');
          process.exit( 1 );
       }
 

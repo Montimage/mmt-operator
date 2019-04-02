@@ -1,12 +1,24 @@
 const child_process   = require("child_process");
 const fs              = require('fs');
 
-
+/**
+ * Create a child process
+ * @param file to execute
+ * @param params to give to the executed file
+ * @param env environment variables
+ * @param autoRestart number of times restarts the child process when it exits by error.
+ *         1 or undefined => do not restart
+ *         0 restart each time it exits
+ *         x restart x times
+ * Note: a child process will not be restarted when it exits normally, by process.exit() or process.exit(0).
+ * To be restarted, it must be exited by process.exit(x), with x != 0.
+ * @returns
+ */
 function childProcess( file, params, env, autoRestart ){
    const self = {};
    
    if( autoRestart == undefined )
-      autoRestart = 0;
+      autoRestart = 1;
    
    self.file   = file;
    self.params = params;
@@ -66,9 +78,11 @@ function childProcess( file, params, env, autoRestart ){
       return self;
    };
    
-   self.restart = function(){
+   self.restart = function(code, signal){
       //exec only one time left
-      if( self.autoRestart === 1 ){
+      // or if it exited successfully
+      //=> do not need to restart it
+      if( self.autoRestart === 1 || code === 0 ){
          if( typeof( self.onExit ) == "function" )
             self.onExit( self );
          return;

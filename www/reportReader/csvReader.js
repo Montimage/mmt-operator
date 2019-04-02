@@ -45,7 +45,7 @@ else
 //ensure there exists at least one folder
 if( DATA_FOLDERS.length === 0 ){
    console.error("No data_folder is given. Please set it in 'file_input.data_folder'");
-   process.exit(1);
+   process.exit();
 }
 
 const database = new DataBase();
@@ -68,7 +68,7 @@ function restart_process(){
    database.flush( function(){
       console.warn("Exit reader " + READER_INDEX );
       //the reader will be restarted by libs/child_process
-      process.exit(0);
+      process.exit(1);
    });
 }
 
@@ -248,7 +248,7 @@ process.stdin.resume();//so the program will not close instantly
 process.on('SIGINT',function(){
    //press Ctrl+C again
    if( isStop )
-      process.exit( 1 );
+      process.exit();
    
    isStop = true;
    database.flush( function(){

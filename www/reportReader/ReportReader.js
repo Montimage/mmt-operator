@@ -89,7 +89,7 @@ function Reader(){
          //ensure there exists at least one folder
          if( DATA_FOLDERS.length === 0 ){
             console.error("No data_folder is given. Please set it in 'file_input.data_folder'");
-            process.abort();
+            process.exit();
          }
 
          //create processes to parallel readering

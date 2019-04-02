@@ -23,7 +23,7 @@ let isStop = false;
 function _cleanUp(){
    //press Ctrl+C again
    if( isStop )
-      process.exit(1);
+      process.exit();
 
    isStop = true;
    database.flush( function(){
