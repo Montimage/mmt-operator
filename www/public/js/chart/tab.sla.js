@@ -38,6 +38,7 @@ function getCompID (){
 }
 //create reports
 
+
 var ReportFactory = {
       createUploadForm: function( fPeriod ){
          const COL = MMTDrop.constants.StatsColumn;
@@ -68,7 +69,7 @@ var ReportFactory = {
             total_db.reload( {query : [{$match: match}, {$group : group}]}, function( data ){
 
                //find value (number of alerts/violations)
-               const _getData = function ( el, data ){
+               const _getData = function ( el, data, cb ){
                   var obj = {};
                   if (el.dataset)
                      obj  = el.dataset;
@@ -78,36 +79,55 @@ var ReportFactory = {
                   const comp_id  = parseInt( obj.compid ),
                   metric_id  = obj.metricid,
                   type       = obj.type; //either "alert" or "violation"
-
+                  name       = obj.metricname;
+                  
+                  switch( name ){
+                  case "limit_gtp":
+                     break;
+                  case "isolation_access":
+                     const db = new MMTDrop.Database({collection: "data_link", action: "aggregate", raw: true});
+                     //_checkIsolation( new , cb );
+                     db.reload({query:[]}, function( data ){
+                        
+                     });
+                     return;
+                     break;
+                  
+                  }
+                  
                   for( var i=0; i<data.length; i++ ){
                      var o = data[i];
                      if( o.me_id == metric_id && o.comp_id == comp_id ){
                         //if having data?
                         if( o[ type ] )
-                           return o[ type ];
+                           return cb( o[ type ] );
                         break;
                      }
                   }
-                  return 0;
+                  return cb( 0 );
                };//end _getData
 
                //for each element of either alert or violation of a metric
                //update value to DOM element
                $(".alerts").each( function( i, el ){
                   //$(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
-                  const val = _getData( this, data );
+                  _getData( this, data, function( val ){
+                     
+                  
                   
                   $(el).attr( "data-count", val );
-                  /*
-                  $(el)
+                     /*
+                     $(el)
                      .delay( 0+i*5000 )
                      .html( '<span class="badge">' + val + i + '</span>' );
                      */
-                  setTimeout( function( e ){
-                     $(e).html( '<span class="badge">' + val + '</span>' );
-                     //ensure this element is showing
-                     $("#div-alerts").scrollToChild( e, 100, 40 );
-                  }, i*100, el );
+                  
+                     setTimeout( function( e ){
+                        $(e).html( '<span class="badge">' + val + '</span>' );
+                        //ensure this element is showing
+                        //$("#div-alerts").scrollToChild( e, 100, 40 );
+                     }, i*100, el );
+                  } );
                } );
 
                //update reaction table

@@ -25,6 +25,9 @@ var MongoConnector = function () {
 
 	self.onReadyCallback = [];
 	self.onReady = function( cb ){
+	   if( self.mdb )
+	      return cb( self );
+	   
 		self.onReadyCallback.push( cb );
 	}
 

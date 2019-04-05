@@ -13,7 +13,8 @@ MMTDrop         = require("../libs/shared/dataIndex"),
 DataCache       = require("./Cache"),
 DBInserter      = require("./DBInserter"),
 FORMAT          = require('util').format,
-enodeb          = require("./enodebData.js")
+enodeb          = require("./enodebData.js"),
+ipLib           = require("ip")
 ;
 
 const IP        = new (require("../libs/shared/IP.js"))();
@@ -171,7 +172,9 @@ module.exports = function(){
                COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT,
                COL.ACTIVE_FLOWS
                ],
-            set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DST]
+            set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DST, "ip_src", "ip_dst"]
+                     //SENDATE: add some attribute for SLA verification
+                     .concat( config.isSLA?[ "slices" ] : [] )
                }
          ),
          
@@ -280,7 +283,7 @@ module.exports = function(){
    
    if( !hasModule("network") )
       delete self.dataCache.location;
-   if( !hasModule("network") )
+   if( !hasModule("network") && ! config.isSLA ) //sla needs link collection to check isolation access => SENDATE demo
       delete self.dataCache.link;
    
    //flush
@@ -463,23 +466,41 @@ module.exports = function(){
 
                //add data to a link between 2 IPs
                //to easy distinguish 2 links, we identify a link by lower_IP_number + "-" + higher_IP_number
-               if( self.dataCache.link || self.dataCache.ip ){
+               if( ! is_micro_flow && (self.dataCache.link || self.dataCache.ip )){
                   //traffic of local IP
                   //do not add report 99 to data_ip collection as it has no IP
-                  msg.ip       = IP.string2NumberV4( msg[COL.IP_SRC]  );
-                  msg.ip_dest  = IP.string2NumberV4( msg[COL.IP_DST]  );
+                  msg.ip_src  = IP.string2NumberV4( msg[COL.IP_SRC]  );
+                  msg.ip_dst  = IP.string2NumberV4( msg[COL.IP_DST]  );
+                  
+                  msg.ip = msg.ip_src;
                   
                   if( self.dataCache.ip )
                      self.dataCache.ip.addMessage( msg );
 
+                  //SENDATE: this is used only when SLA is active
+                  if( config.isSLA ){
+                     msg.slices = [];
+                     const components = config.sla.init_components;
+                     components.forEach( function( com ){
+                        const ipRanges = com["ip-ranges"];
+                        //if exists an ip range that contains either IP_SRC or IP_DST 
+                        // =>  add the component ID as concerning Slice
+                        if( ipRanges.some( function( val ){
+                           const subnet = ipLib.subnet( val.ip, val.mask );
+                           return subnet.contains( msg[COL.IP_SRC] ) || subnet.contains( msg[COL.IP_DST] );
+                        }))
+                           msg.slices.push( com.id );
+                     });
+                  }
+                  
                   /////////////////////////////////////////////////////////////
                   //symetric link between 2 IPs
-                  if(  msg.ip <  msg.ip_dest ){
-                     msg.link = msg.ip + "," + msg.ip_dest;
+                  if(  msg.ip_src <  msg.ip_dst ){
+                     msg.link = msg.ip_src + "," + msg.ip_dst;
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
                   }else{
-                     msg.link = msg.ip_dest + "," + msg.ip;
+                     msg.link = msg.ip_dst + "," + msg.ip_src;
                      msg = dataAdaptor.inverseStatDirection( msg );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
@@ -581,7 +602,7 @@ module.exports = function(){
                //if( ip2loc.isLocal( msg[ COL.IP_SRC ] )){
                if(  self.dataCache.ip && format === 100 && msg[ COL.SRC_LOCATION ]  === "_local" ){
                   //do not add report 99 to data_ip collection as it has no IP
-                  msg.ip  = msg.ip_dest;
+                  msg.ip  = msg.ip_dst;
                   self.dataCache.ip.addMessage( msg );
                }
             }

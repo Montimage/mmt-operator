@@ -317,7 +317,6 @@ function extract_metrics( app_config, index, cb ){
          
          let description = get_value( spec, ["MetricDefinition", 0, "definition", 0 ] );
          DESCRIPTION[ refID ] = description;
-         console.log( description );
       }
 
 
@@ -335,7 +334,6 @@ function extract_metrics( app_config, index, cb ){
          const description = DESCRIPTION[ refID ];
          //title   = TYPES[ type ],
           
-         const name  = comp.id + "." + slo_id;
          let enable  = false,
          support = false
          ;
@@ -366,7 +364,7 @@ function extract_metrics( app_config, index, cb ){
          comp.metrics.push({
             id         : comp.id + "." + slo_id,
             title      : title,
-            name       : name, 
+            name       : slo_id, 
             description: description,
             priority   : get_value( slo, ["importance_weight", 0]),
             violation  : get_violation( get_value( slo, ["SLOexpression"] ), type ),

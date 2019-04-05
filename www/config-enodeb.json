@@ -4,7 +4,7 @@
 		"port": 27017
 	},
 	"file_input": {
-		"data_folder": "/opt/mmt/probe/result/report/online/",
+		"data_folder": ["/opt/mmt/probe/result/report/online/", "/tmp/"],
 		"delete_data": true,
 		"nb_readers": 1
 	},

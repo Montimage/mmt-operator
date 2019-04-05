@@ -12,7 +12,7 @@ var arr = [
         },
     },{
         id: "remote",
-        title: "Get SLAs from Dashboard", //a MUSA Dashboard 
+        title: "Get SLAs from Repository", //a MUSA Dashboard 
         x: 6,
         y: 0,
         width: 6,

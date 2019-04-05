@@ -19,7 +19,7 @@
 	},
 	"_input_mode": "file",
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -69,15 +69,6 @@
 		"log",
 		"info"
 	],
-	"__modules": [
-		"security",
-		"stat",
-		"behavior",
-		"ndn",
-		"video",
-		"sla",
-		"enforcement"
-	],
 	"modules": [
 	   "link",
 	   "network",
@@ -92,45 +83,28 @@
 	"modules_config": {
 		"sla": {
 			"active_check_period": 5,
-			"violation_check_period": 60,
+			"violation_check_period": 10,
 			"reaction_check_period": 5,
 			"init_components": [
 				{
 					"id": "1",
-					"_ip": "192.168.1.10",
-					"_url": "http://192.168.1.10",
 					"metrics": [],
-					"title": "Slice 1"
+					"title": "Slice 1",
+					"ip-ranges":[
+					    {"ip": "172.16.0.10", "mask": "255.255.0.0"}
+					]
 				},
 				{
 					"id": "3",
-					"_ip": "37.48.247.117",
-					"_url": "http://37.48.247.117",
 					"metrics": [],
-					"title": "Slice 2"
+					"title": "Slice 2",
+					"ip-ranges":[
+                   {"ip": "192.168.1.10", "mask": "255.255.255.254"},
+                   {"ip": "192.168.2.10", "mask": "255.255.255.254"}
+               ]
 				}
 			],
 			"init_metrics": [],
-			"__init_metrics": [
-				{
-					"id": "1",
-					"name": "limit_gtp",
-					"alert": "",
-					"violation": "> 2",
-					"title": "Limit GTP sessions",
-					"enable": false,
-					"support": true
-				},
-				{
-					"id": "2",
-					"name": "isolation_access",
-					"alert": "",
-					"violation": "! in [192.167.0.3/24, 2.2.5.4/30]",
-					"title": "Access Isolation",
-					"enable": true,
-					"support": true
-				}
-			],
 			"actions": {
 				"add_new_rules": {
 					"description": "User needs to add one or several new rules in the IDS",

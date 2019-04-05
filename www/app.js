@@ -152,12 +152,13 @@ if( config.isSLA ){
 /*
   //module to check preodically if components of apps are available
   require("./routes/musa/active_check.js").start( pub_sub, dbconnector );
- 
+*/
+   
   //module to verify preodically if the current data are violdated
-  const engine = require("./routes/musa/violation_check_engine.js");
-  engine.start( pub_sub, dbconnector );
-  app.use("/musa/dummy", engine.router );
-  
+  //const engine = require("./routes/musa/violation_check_engine.js");
+  //engine.start( pub_sub, dbconnector );
+  //app.use("/musa/dummy", engine.router );
+/*  
   //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
   
   const reaction = require("./routes/musa/reaction.js");

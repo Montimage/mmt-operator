@@ -170,6 +170,14 @@ function _checkIncident( metric, m, app, com ){
    //console.log( "check availability" );
 }
 
+function _checkIsolationAccesss( metric, m, app, com ){
+   //nothing to do, the work is done in reportReader/DataBase, in data_link_ collection
+}
+
+function _checkGtpLimitation( metric, m, app, com ){
+   //nothing to do   
+}
+
 function perform_check(){
 
    //get a list of applications defined in metrics collections
@@ -206,13 +214,13 @@ function perform_check(){
 
             var metrics = com.metrics
 
-            if( metrics == undefined || metrics.length == 0 )
+            if( metrics == undefined || metrics.length === 0 )
                metrics = app.metrics; //common metrics being used by any app
             else
                metrics = metrics.concat( app.metrics );
 
             //no metrics
-            if( metrics == undefined || metrics.length == 0 )
+            if( metrics == undefined || metrics.length === 0 )
                continue;
 
 
@@ -223,17 +231,33 @@ function perform_check(){
 
                //prameter of the metric is set by user
                var m = selectedMetrics[ metric.id ];
-
+               if( m == undefined )
+                  continue;
+               
                //metric is disable
-               if( m.enable == false )
+               if( m.enable === false )
+                  continue;
+               
+               //no alerts nor violation conditions
+               if( m.alert == "" && m.violation == "" )
                   continue;
 
+               console.log("checking metric " + metric.name);
+               
                switch( metric.name ){
+                  //musa project
                   case "availability":
                      _checkAvailability( metric, m, app, com );
                      break;
                   case "incident":
                      _checkIncident( metric, m, app, com );
+                     break;
+                  //sendate demo
+                  case "isolation_access":
+                     _checkIsolationAccesss( metric, m, app, com );
+                     break;
+                  case "limit_gtp":
+                     _checkGtpLimitation( metric, m, app, com );
                      break;
                }
             }
@@ -245,20 +269,22 @@ function perform_check(){
 
 
 function start( pub_sub, _dbconnector ){
+   console.log("Start SLA viloation checking engine");
    //donot check if redis/kafka is not using
-   if( pub_sub == undefined ){
-      console.error("This work only for kafka/redis bus");
-      process.exit( 1 );
-      return;
-   }
+   //if( pub_sub == undefined ){
+   //   console.error("This work only for kafka/redis bus");
+   //   process.exit( 1 );
+   //   return;
+   //}
 
    //when db is ready
    _dbconnector.onReady( function(){
       dbconnector = _dbconnector;
-      publisher   = pub_sub.createClient("producer", "musa-violation-checker");
+      if( pub_sub )
+         publisher = pub_sub.createClient("producer", "musa-violation-checker");
 
       setInterval( perform_check, 
-            _mmt.config.sla.violation_check_period*1000 //each 5 seconds
+            config.sla.violation_check_period*1000 //each 5 seconds
       );
    });
 }
