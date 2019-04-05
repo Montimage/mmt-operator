@@ -295,21 +295,29 @@ function extract_metrics( app_config, index, cb ){
 
       const TYPES = {};
       const TITLES = {};
+      const DESCRIPTION = {};
+      
       for( var j=0; j<specs.length; j++ ){
-         let name = get_value( spec, ["$", "name"] );
+         let spec = specs[ j ];
          //console.log( JSON.stringify( spec ));
-         var spec = specs[ j ];
-         var type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "enumUnit", 0, "enumItemsType", 0]);
+         
+         let refID = get_value( spec, ["$", "referenceId"] );
+         let name = get_value( spec, ["$", "name"] );
+         let type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "enumUnit", 0, "enumItemsType", 0]);
          if( type == undefined )
             type = get_value( spec, ["MetricDefinition", 0, "unit", 0, "intervalUnit", 0, "intervalItemsType", 0]);
+
+         
          TYPES[ name ] = type;
 
-         let refID = get_value( spec, ["$", "referenceId"] );
+         if( refID  == null || refID.length == 0)
+            refID = name ;
          
-         if( refID )
-            TITLES[ refID ] = name ;
-         else
-            TITLES[ name ] = name;
+         TITLES[ refID ] = name;
+         
+         let description = get_value( spec, ["MetricDefinition", 0, "definition", 0 ] );
+         DESCRIPTION[ refID ] = description;
+         console.log( description );
       }
 
 
@@ -320,23 +328,29 @@ function extract_metrics( app_config, index, cb ){
       for( var j=0; j<slos.length; j++ ){
          const slo = slos[ j ],
              refID = get_value( slo, ["MetricREF", 0] ),
-             type  = TYPES[ refID ]; //data type
+             title = TITLES[ refID ],
+             type  = TYPES[ refID ] != null ? TYPES[ refID ] : TYPES[ title ]; //data type
          
+         const slo_id = get_value( slo, ["$", "SLO_ID"] );
+         const description = DESCRIPTION[ refID ];
          //title   = TYPES[ type ],
-         let title   = TITLES[ refID ],
-         name    = comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-         enable  = false,
+          
+         const name  = comp.id + "." + slo_id;
+         let enable  = false,
          support = false
          ;
 
-         if( title == undefined )
+         if( title == undefined ){
+            console.log("Not found title for MetricREF=" + refID );
             continue;
+         }
          
          if( DUPLICATE[ title ] != undefined )
             continue;
          
          DUPLICATE[ title ] = title;
 
+         
          /*
          if( title.toLowerCase().indexOf("scan") >= 0  ){
             name = "vuln_scan_freq";
@@ -344,26 +358,21 @@ function extract_metrics( app_config, index, cb ){
             support = true;
          }else 
           */
-         if( title && title.toLowerCase().indexOf("resiliance to attacks") >= 0 
-               //|| title.toLowerCase().indexOf("incident") >= 0 
-         ){
-            name = "incident";
-            enable = true;
+         if(["limit_gtp", "isolation_access"].indexOf( slo_id ) >= 0 ) {
             support = true;
-
-         }else if(["Vulnerability Measure","Resiliance to attacks","Database activity monitoring","SQL injection","Data encryption","M6-HTTP to HTTPS Redirects","Number of Data Subject Access Requests"].indexOf( title ) >= 0 ) {
-            support = true;
+            enable  = true;
          }
 
          comp.metrics.push({
-            id       : comp.id * 1000 + get_value( slo, ["$", "SLO_ID"] ),
-            title    : title,
-            name     : name, 
-            priority : get_value( slo, ["importance_weight", 0]),
-            violation: get_violation( get_value( slo, ["SLOexpression"] ), type ),
-            data_type: type,
-            enable   : enable,
-            support  : support,
+            id         : comp.id + "." + slo_id,
+            title      : title,
+            name       : name, 
+            description: description,
+            priority   : get_value( slo, ["importance_weight", 0]),
+            violation  : get_violation( get_value( slo, ["SLOexpression"] ), type ),
+            data_type  : type,
+            enable     : enable,
+            support    : support,
          });
 
          total ++;

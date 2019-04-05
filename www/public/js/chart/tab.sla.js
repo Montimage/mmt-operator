@@ -157,7 +157,7 @@ var ReportFactory = {
                         attr : {
                            colspan : 5,
                            style   : "font-weight: bold",
-                           html    : "<u>C" + comp_id + "</u>: "+ comp.title + " ("+ (comp.ip == undefined? "not found public IP" : comp.ip) +")"
+                           html    : "<u>C" + comp_id + "</u>: "+ comp.title + (comp.ip == undefined? "" :  "(" + comp.ip +")")
                         }
                      }]
                };
@@ -201,9 +201,18 @@ var ReportFactory = {
                   row.children.push({
                      type : "<td>",
                      attr : {
-                        html : "<u><b>" + me.name + "</b></u>: " + me.title,
+                        html : "<u><b>" + me.name + "</b></u>: " + me.title + " ",
                         width: "30%",
-                     }
+                     },
+                     children:[{
+                        type : "<i>",
+                        attr : {
+                           class: "fa fa-info-circle",
+                           "data-toggle":"tooltip",
+                           title: me.description
+                        } 
+                     }]
+                  
                   })
 
                   //alert
@@ -325,7 +334,8 @@ var ReportFactory = {
             };
 
             $("#sla-metric-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
-
+            $('[data-toggle="tooltip"]').tooltip();
+            
             //after redering the table, update their values (#alert, #violation)
             setTimeout( updateValue, 1000);
 

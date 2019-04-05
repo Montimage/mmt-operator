@@ -110,64 +110,20 @@
 					"title": "Slice 2"
 				}
 			],
-			"init_metrics": [
+			"init_metrics": [],
+			"__init_metrics": [
 				{
 					"id": "1",
-					"name": "availability",
-					"alert": "<= 0.98",
-					"violation": "<= 0.95",
-					"title": "Availability",
-					"enable": true,
+					"name": "limit_gtp",
+					"alert": "",
+					"violation": "> 2",
+					"title": "Limit GTP sessions",
+					"enable": false,
 					"support": true
 				},
 				{
 					"id": "2",
-					"name": "security_incident",
-					"alert": "",
-					"violation": "< 0",
-					"title": "Security Incident",
-					"enable": true,
-					"support": true
-				},
-				{
-					"id": "3",
-					"name": "vul_scan",
-					"alert": "",
-					"violation": "in [TCP:24-79, UDP:100, UDP200-300]",
-					"title": "Vulnerability Scan Ports",
-					"enable": true,
-					"support": true
-				},
-				{
-					"id": "4",
-					"name": "vul_protocol",
-					"alert": "in [BITTORRENT]",
-					"violation": "in [BITTORRENT, TOR, P2P]",
-					"title": "Vulnerability Communication Protocols",
-					"enable": true,
-					"support": true
-				},
-				{
-					"id": "5",
-					"name": "data_privacy",
-					"alert": "",
-					"violation": "< 0",
-					"title": "Data Privacy",
-					"enable": true,
-					"support": true
-				},
-				{
-					"id": "6",
-					"name": "access_logging",
-					"alert": "",
-					"violation": "< 0",
-					"title": "Accesses Logging",
-					"enable": true,
-					"support": true
-				},
-				{
-					"id": "7",
-					"name": "isolation",
+					"name": "isolation_access",
 					"alert": "",
 					"violation": "! in [192.167.0.3/24, 2.2.5.4/30]",
 					"title": "Access Isolation",
@@ -176,140 +132,29 @@
 				}
 			],
 			"actions": {
-				"add_more_disk_space": {
-					"description": "More hard disk space is needed",
-					"channel_name": "more_disk_space_needed",
-					"agent_description": "This agent is installed together with openStack to be able to change driver size of VMs",
-					"candidate_metrics": {
-						"access_logging": {
-							"alert": true,
-							"violate": true
-						}
-					}
-				},
-				"move_log": {
-					"description": "User needs to move the log to a remote server",
-					"agent_description": "This agent allows to move logs to a remote server",
-					"channel_name": "move_log",
-					"candidate_metrics": {
-						"access_logging": {
-							"alert": true,
-							"violate": true
-						}
-					}
-				},
-				"rotate_log": {
-					"description": "Active logrotate program to delete old log entries",
-					"agent_description": "This agent allows to active logrotate program to delete old log entries",
-					"channel_name": "rotate_log",
-					"candidate_metrics": {
-						"access_logging": {
-							"alert": true,
-							"violate": true
-						}
-					}
-				},
-				"update_attacks_signatures": {
-					"description": "User needs to update attacks signatures",
-					"agent_description": "This agent allows to update new attacks signatures to DB of IDS",
-					"channel_name": "update_attacks_signatures",
-					"candidate_metrics": {
-						"security_incident": {
-							"alert": true,
-							"violate": true
-						}
-					}
-				},
 				"add_new_rules": {
 					"description": "User needs to add one or several new rules in the IDS",
 					"agent_description": "This agent allows to add one or several rules in the IDS",
 					"channel_name": "add_new_rules",
 					"candidate_metrics": {
-						"security_incident": {
-							"alert": true,
-							"violate": true
-						}
-					}
-				},
-				"restart_web_server": {
-					"description": "Restart Web server to bring the website up",
-					"agent_description": "This agent is implemented in NodeJS and installed together with Web server to be able to restart the server when needed",
-					"channel_name": "mmt-agent-restart-apache",
-					"candidate_metrics": {
-						"availability": {
-							"violate": true
-						}
-					}
-				},
-				"use_HA_framework": {
-					"description": "User needs to deploy VM or container in a HA Framework",
-					"agent_description": "This agent allows user to deploy VM or container in a HA Framework",
-					"channel_name": "use_HA_framework",
-					"candidate_metrics": {
-						"availability": {
+						"isolation_access": {
 							"alert": true,
 							"violate": true
 						}
 					}
 				},
 				"update_access_control": {
-					"description": "Update access control to block malicious behaviours",
+					"description": "Update access control to block malicious accesses",
 					"agent_description": "This agent allows to control user access",
 					"url": "/enforcement/admin/",
 					"channel_name": "update_access_control",
 					"candidate_metrics": {
-						"access_control": {
+						"limit_gtp": {
 							"alert": true,
 							"violate": true
 						},
-						"incident": {
+						"isolation": {
 							"alert": true
-						}
-					}
-				},
-				"anonymize_data": {
-					"description": "User needs to anonymize data",
-					"agent_description": "This agent allows to anonymize data",
-					"channel_name": "anonymize_data",
-					"candidate_metrics": {
-						"data_privacy": {
-							"alert": true
-						}
-					}
-				},
-				"encrypt_data": {
-					"description": "User needs to encrypt data",
-					"agent_description": "This agent allows to encrypt data",
-					"channel_name": "encrypt_data",
-					"candidate_metrics": {
-						"data_privacy": {
-							"alert": true
-						},
-						"authentication": {
-							"alert": true,
-							"violation": true
-						}
-					},
-					"configure_scanner_frequency": {
-						"description": "Scanner frequency needs to be updated to meet SLA requirement",
-						"agent_description": "This agent allows to update scanner frequency paramter",
-						"channel_name": "configure_scanner_frequency",
-						"candidate_metrics": {
-							"vul_scan_freq": {
-								"alert": true,
-								"violation": true
-							}
-						}
-					},
-					"apply_two_factors_authentication": {
-						"description": "Two factors authentication needs to be activated",
-						"agent_description": "This agent allows to activate two factors authentication",
-						"channel_name": "apply_two_factors_authentication",
-						"candidate_metrics": {
-							"authentication": {
-								"alert": true,
-								"violation": true
-							}
 						}
 					}
 				}

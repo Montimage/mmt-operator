@@ -130,8 +130,16 @@ var ReportFactory = {
                      row.children.push({
                         type  : "<td>",
                         attr  : {
-                           text : me.title
-                        }
+                           html : me.title+ " "
+                        },
+                        children:[{
+                           type : "<i>",
+                           attr : {
+                              class: "fa fa-info-circle",
+                              "data-toggle":"tooltip",
+                              title: me.description
+                           } 
+                        }]
                      });
 
                   //alert
@@ -332,6 +340,7 @@ var ReportFactory = {
 
             $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
             window._loadSelectedMetrics();
+            $('[data-toggle="tooltip"]').tooltip();   
          }//end rederTable function
 
 
@@ -387,17 +396,17 @@ var ReportFactory = {
                if( comp.metrics )
                   metrics = metrics.concat( comp.metrics.slice( 0 ) )
 
-                  for( var j=0; j<metrics.length; j++ ){
-                     var me = metrics[ j ];
-                     var id = comp.id + "-" + me.id;
+               for( var j=0; j<metrics.length; j++ ){
+                  var me = metrics[ j ];
+                  var id = comp.id + "-" + me.id;
 
-                     selectedMetric[ comp.id ][ me.id ] = {
-                           alert     : $("#alert-" + id).val(),
-                           violation : $("#violation-" + id).val(),
-                           priority  : $("#priority-" + id).val(),
-                           enable    : $("#enable-" + id).is(":checked")
-                     };
-                  }
+                  selectedMetric[ comp.id ][ me.id ] = {
+                        alert     : $("[id='alert-" + id + "']").val(),
+                        violation : $("[id='violation-" + id + "']").val(),
+                        priority  : $("[id='priority-" + id + "']").val(),
+                        enable    : $("[id='enable-" + id + "']").is(":checked")
+                  };
+               }
             }
             //save to db
             MMTDrop.tools.ajax("/api/metrics/update", {
