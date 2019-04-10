@@ -295,7 +295,7 @@ else{
             break;
          case MMTDrop.CsvFormat.GTP_APP_FORMAT:
             _start = MMTDrop.GtpStatsColumnId.APP_FAMILY;
-            _end   = MMTDrop.GtpStatsColumnId.TEIDs;
+            _end   = MMTDrop.GtpStatsColumnId.MME_NAME;
             isGTP = true;
             break;
          default:
@@ -303,7 +303,6 @@ else{
       }
       //APP_FAMILY: starting index of  each types HTTP/SSL/TLS/FTP
       var _new = _start - (MMTDrop.StatsColumnId.FORMAT_TYPE + 1),
-      i,
       new_msg = {};//clone: avoid being overrided
 
       for( var i=(MMTDrop.StatsColumnId.FORMAT_TYPE + 1); i<_start; i++){
@@ -329,7 +328,7 @@ else{
          MMTDrop._swap( msg, MMTDrop.GtpStatsColumnId.IP_SRC, MMTDrop.GtpStatsColumnId.IP_DST);
       
       return msg;
-   }
+   };
    
    /**
     * Convert a message in string format to an array

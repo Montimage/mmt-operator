@@ -59,7 +59,8 @@
 		"packet": 1,
 		"byte": 64
 	},
-	"retain_detail_report_period": 300,
+	"retain_detail_report_period": 3600,
+	"limit_database_size" :  999999999999,
 	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
@@ -91,7 +92,8 @@
 					"metrics": [],
 					"title": "Slice 1",
 					"ip-ranges":[
-					    {"ip": "172.16.0.10", "mask": "255.255.0.0"}
+					    {"ip": "172.16.0.10", "mask": "255.255.0.0"},
+					    {"ip": "10.0.2.2", "mask": "255.255.0.0"}
 					]
 				},
 				{
@@ -99,7 +101,7 @@
 					"metrics": [],
 					"title": "Slice 2",
 					"ip-ranges":[
-                   {"ip": "192.168.1.10", "mask": "255.255.255.254"},
+                   {"ip": "173.194.183.234", "mask": "255.255.0.0"},
                    {"ip": "192.168.2.10", "mask": "255.255.255.254"}
                ]
 				}

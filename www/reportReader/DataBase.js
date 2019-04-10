@@ -174,7 +174,7 @@ module.exports = function(){
                ],
             set: [COL.SRC_LOCATION, COL.DST_LOCATION, COL.IP_SRC, COL.IP_DST, "ip_src", "ip_dst"]
                      //SENDATE: add some attribute for SLA verification
-                     .concat( config.isSLA?[ "slices" ] : [] )
+                     .concat( config.isSLA ? ["slices", GTP.TEIDs] : [] )
                }
          ),
          

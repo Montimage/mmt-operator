@@ -13,7 +13,7 @@ var arr = [
    }
    ];
 
-var availableReports = {}
+var availableReports = {};
 
 //create reports
 
@@ -379,6 +379,25 @@ var ReportFactory = {
 
 
 
+
+function _convertStringToThreshold( str ){
+   let expr = str
+      .replace(">=", '"$gte":').replace(">", '"$gt" :')
+      .replace("<=", '"$lte":').replace("<", '"$lt" :')
+      .replace("!=", '"$ne":')
+      .replace("==",  '"$eq" :')
+      .replace("=",  '"$eq" :');
+   try{
+      expr = JSON.parse( "{" + expr + "}" );
+   }catch( err ){
+      MMTDrop.alert.error( "Incorrect expression: <pre>"+ str +"</pre>");
+      MMTDrop.alert.alert("Support currently only 6 operators: <pre>>=, <=, >, <, !=, ==</pre>");
+      return;
+   }
+   return expr;
+}
+
+
 //       SUBMIT FORM
          window._checkSubmit = function(){
             var obj = window._mmt;
@@ -399,10 +418,18 @@ var ReportFactory = {
                for( var j=0; j<metrics.length; j++ ){
                   var me = metrics[ j ];
                   var id = comp.id + "-" + me.id;
+                  const alert = $("[id='alert-" + id + "']").val();
+
+                  if( alert != "" && _convertStringToThreshold( alert ) == undefined )
+                     return false;
+
+                  const violation = $("[id='violation-" + id + "']").val();
+                  if( violation != "" && _convertStringToThreshold( violation ) == undefined )
+                     return false;
 
                   selectedMetric[ comp.id ][ me.id ] = {
-                        alert     : $("[id='alert-" + id + "']").val(),
-                        violation : $("[id='violation-" + id + "']").val(),
+                        alert     : alert,
+                        violation : violation,
                         priority  : $("[id='priority-" + id + "']").val(),
                         enable    : $("[id='enable-" + id + "']").is(":checked")
                   };
