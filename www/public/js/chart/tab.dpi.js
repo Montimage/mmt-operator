@@ -246,6 +246,12 @@ var ReportFactory = {
                       {$sort: $sort}
                    ] };
 
+                //depnding on probe being selected => query DB
+                var probe_id = URL_PARAM.probe_id;
+                if (probe_id != undefined) 
+                   db_options.probe = parseInt( probe_id );
+
+                
                 waiting.show(); //show spinner
                 detail_db.reload( db_options, function( new_data ){
                     cLine.attachTo( detail_db );
