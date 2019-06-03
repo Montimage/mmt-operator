@@ -5,6 +5,9 @@ const path    = require('path');
 const config  = require('./config');
 
 
+//clean cache folder
+
+
 //remove oldest files to maintain its limitations of number of files and size
 function standalizeCacheFolder( reservedSize, cb ){
    const dir = config.query_cache.folder;
@@ -148,5 +151,21 @@ function CacheFile( obj ){
    };
 }
 
+
+
+CacheFile.clean = function( cb ){
+   const dir = config.query_cache.folder;
+   const f   = require('./filePromise');
+   if( !cb )
+      cb = function(){};
+      
+   console.log("Clean " + dir );
+   
+   f.rm( dir )
+   .then( function(){ cb() }  )
+   .catch( function(e){ throw e; })     
+         
+   
+}
 
 module.exports = CacheFile;

@@ -8,6 +8,8 @@ var router  = express.Router();
 var backup  = require("../../libs/backup_db");
 var fs      = require("fs");
 
+const CacheFile = require("../../libs/CacheFile.js");
+
 router.get("/", function( req, res, next ){
   backup.get_data( function( err, obj ){
     if( err )
@@ -24,7 +26,9 @@ router.post("/", function( req, res, next ){
   if( action == "empty-db"){
     router._objRef.dbconnector.emptyDatabase(
         function(){
-          res.send({});
+           CacheFile.clean( function(){
+               res.send({});    
+           })
         }
     );
     return ;
