@@ -173,7 +173,7 @@ var ReportFactory = {
                                 if( obj[time][id] == undefined ){
                                     if( id == COL.PROBABILITY_BUFFERING.id || id == COL.VIDEO_QUALITY.id || id == COL.NETWORK_BITRATE.id || id == COL.VIDEO_BITRATE.id)
                                         obj[time][id] = last_val[ id ];
-                                    else if ( id == COL.RETRANSMISSION_COUNT.id || id == COL.OUT_OF_ORDER.id )
+                                    else if ( id == COL.DL_RETRANSMISSION.id || id == COL.OUT_OF_ORDER.id )
                                         obj[time][id] = 0;
                                 }else
                                     last_val[id] = obj[time][id];
@@ -218,7 +218,7 @@ var ReportFactory = {
             color: { pattern: ["#CC99CC"] },
             axis:  { y: {max: 100, min: 0, padding: {top: 0} } }
         } );
-        var cError   = createLineChart( [ COL.RETRANSMISSION_COUNT, COL.OUT_OF_ORDER ], 200, "(packets)", false, {
+        var cError   = createLineChart( [ COL.DL_RETRANSMISSION, COL.OUT_OF_ORDER ], 200, "(packets)", false, {
             color: { pattern: ["violet","red"] },
             axis : {y : { tick: { format: function( v ){ 
                 if (v<1000) return Math.round( v ); 

@@ -176,6 +176,12 @@ else{
             this._swap( msg, COL.UL_PACKET_COUNT,   COL.DL_PACKET_COUNT );
             this._swap( msg, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME);
             this._swap( msg, COL.SRC_LOCATION,      COL.DST_LOCATION );
+            
+            this._swap( msg, COL.RTT_MIN_SERVER,    COL.RTT_MIN_CLIENT );
+            this._swap( msg, COL.RTT_MAX_SERVER,    COL.RTT_MAX_CLIENT );
+            this._swap( msg, COL.RTT_AVG_SERVER,    COL.RTT_AVG_CLIENT );
+            this._swap( msg, COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION );
+            
             return msg;
          },
 

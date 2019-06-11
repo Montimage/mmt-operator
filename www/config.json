@@ -48,7 +48,11 @@
 		{
 			"ip": "127.0.0.1",
 			"mask": "255.255.255.255"
-		}
+		},
+      {
+         "ip": "45.45.0.1",
+         "mask": "255.255.255.0"
+      }
 	],
 	"probe_stats_period": 5,
 	"buffer": {
@@ -75,7 +79,7 @@
    "log" : ["error", "warn", "log", "info"],
    
 	"_modules": ["link","network","dpi","application","security","behavior","enodeb","ndn","video","sla","stat"],
-	"modules": ["link","network","dpi","security"],
+	"modules": ["link","network","dpi","security", "application", "enodeb"],
 	"modules_config" : {
      "enodeb" : {
         "mysql_server" : {

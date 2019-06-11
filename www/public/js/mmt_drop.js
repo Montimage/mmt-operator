@@ -175,31 +175,33 @@ if( typeof Highcharts !== "undefined" )
             /** Index of the start timestamp of the flow */
             START_TIME        : {id: 17, label: "Start Time"},
 
-            IP_SRC           : {id: 18, label: "IP Source"},
-            IP_DST          : {id: 19, label: "IP Destination"} ,
+            IP_SRC            : {id: 18, label: "IP Source"},
+            IP_DST            : {id: 19, label: "IP Destination"} ,
 
             /** Index of the MAC address source column */
             MAC_SRC           : {id: 20, label: "MAC Source"},
             /** Index of the MAC address source column */
-            MAC_DST          : {id: 21 , label: "MAC Destination "},
+            MAC_DST           : {id: 21 , label: "MAC Destination "},
             SESSION_ID        : {id: 22 , label: "Session ID"},
-            PORT_DST         : {id: 23 , label: "Port Destination"},
+            PORT_DST          : {id: 23 , label: "Port Destination"},
             PORT_SRC          : {id: 24 , label: "Port Source"},
             THREAD_NUMBER     : {id: 25 , label: "Thread Number"},
 
-            RTT               : {id: 26 , label: "RTT"},
-            RTT_MIN_SERVER    : {id: 27 , label: "RTT min Server"},
-            RTT_MIN_CLIENT    : {id: 28 , label: "RTT min Client"},
-            RTT_MAX_SERVER    : {id: 29 , label: "RTT min Server"},
-            RTT_MAX_CLIENT    : {id: 30 , label: "RTT min Client"},
-            RTT_AVG_SERVER    : {id: 31 , label: "RTT min Server"},
-            RTT_AVG_CLIENT    : {id: 32 , label: "RTT min Client"},
+            HANDSHAKE_TIME    : {id: 26 , label: "RTT"},
+            APP_RESPONSE_TIME : {id: 27 , label: "App. response time"},
+            DATA_TRANSFER_TIME: {id: 28 , label: "Data transfer time"},
+            RTT_MIN_SERVER    : {id: 29 , label: "RTT min Server"},
+            RTT_MIN_CLIENT    : {id: 30 , label: "RTT min Client"},
+            RTT_MAX_SERVER    : {id: 31 , label: "RTT min Server"},
+            RTT_MAX_CLIENT    : {id: 32 , label: "RTT min Client"},
+            RTT_AVG_SERVER    : {id: 33 , label: "RTT min Server"},
+            RTT_AVG_CLIENT    : {id: 34 , label: "RTT min Client"},
 
-            DATA_TRANSFER_TIME  : {id: 33, label: "Data Transfer Time"},
-            RETRANSMISSION_COUNT: {id: 34, label: "Retransmision Count"},
+            UL_RETRANSMISSION  : {id: 35, label: "Data Transfer Time"},
+            DL_RETRANSMISSION  : {id: 36, label: "Retransmision Count"},
 
 
-            FORMAT_TYPE       : {id: 35, label: "Type"},//Identifier of the format of the encapsulated application report
+            FORMAT_TYPE       : {id: 37, label: "Type"},//Identifier of the format of the encapsulated application report
 
             //this part is created by mmt-operator
             SRC_LOCATION          : {id: 40, label: "Source"},
@@ -503,7 +505,7 @@ if( typeof Highcharts !== "undefined" )
             VIDEO_BITRATE               : {id: 7 , label: "Video Bitrate" },
             TOTAL_VIDEO_DURATION        : {id: 8 , label: "" },
             TOTAL_VIDEO_DOWNLOAD        : {id: 9 , label: "" },
-            RETRANSMISSION_COUNT        : {id: 10, label: "Retransmision" },
+            DL_RETRANSMISSION        : {id: 10, label: "Retransmision" },
             OUT_OF_ORDER                : {id: 11, label: "Out-of-order" },
             PROBABILITY_BUFFERING       : {id: 12, label: "Probability Buffering" }
          },

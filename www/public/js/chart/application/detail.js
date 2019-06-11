@@ -108,12 +108,12 @@ var ReportFactory = {
           [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id,
                COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id,
                COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
-               COL.RTT.id, COL.RTT_AVG_CLIENT.id, COL.RTT_AVG_SERVER.id,
+               COL.HANDSHAKE_TIME.id, COL.RTT_AVG_CLIENT.id, COL.RTT_AVG_SERVER.id,
                COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
                COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
-               COL.RETRANSMISSION_COUNT.id,
-               COL.DATA_TRANSFER_TIME.id,
-               HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.INTERACTION_TIME.id,
+               COL.DL_RETRANSMISSION.id,
+               COL.UL_RETRANSMISSION.id,
+               COL.APP_RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, HTTP.INTERACTION_TIME.id,
                RTP.PACKET_LOSS_RATE.id, RTP.PACKET_LOSS_BURSTINESS.id, RTP.ORDER_ERROR.id,
                FTP.RESPONSE_TIME.id
           ].forEach( function( el, index){
@@ -157,7 +157,7 @@ var ReportFactory = {
                                    {id: COL.APP_PATH.id              , label: "Proto. Path"    , align:"left"},
                                    {id: COL.UL_PACKET_COUNT.id       , label: "#Up. (pkt)"     , align:"right"},
                                    {id: COL.DL_PACKET_COUNT.id       , label: "#Down. (pkt)"   , align:"right"},
-                                   {id: COL.RETRANSMISSION_COUNT.id  , label: "#Retran."       , align:"right"},
+                                   {id: COL.DL_RETRANSMISSION.id  , label: "#Retran."       , align:"right"},
                                    {id:"EURT"                        , label: "EURT"           , align: "right"}
                                   ];
 
@@ -201,9 +201,9 @@ var ReportFactory = {
 
                         obj[ COL.UL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.UL_PACKET_COUNT.id] );
                         obj[ COL.DL_PACKET_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_PACKET_COUNT.id] );
-                        obj[ COL.RETRANSMISSION_COUNT.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.RETRANSMISSION_COUNT.id] );
+                        obj[ COL.DL_RETRANSMISSION.id] = MMTDrop.tools.formatLocaleNumber( msg[ COL.DL_RETRANSMISSION.id] );
 
-                        var val = msg[ COL.RTT.id ] + msg[ HTTP.RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ];
+                        var val = msg[ COL.HANDSHAKE_TIME.id ] + msg[ COL.APP_RESPONSE_TIME.id ] + msg[ COL.DATA_TRANSFER_TIME.id ];
                         val /= 1000; //usec => ms
                         var label = MMTDrop.tools.formatInterval( val/1000 );// /1000 : msec => second
                         obj.EURT = '<a onclick="loadDetail('+ i +')">' + label + '</a>';
@@ -424,7 +424,7 @@ function loadDetail( index ) {
     cols     = MMTDrop.tools.mergeObjects(cols, FTP);
     cols     = MMTDrop.tools.mergeObjects(cols, RTP);
     var other_dom = [];
-    var exclude   = [ HTTP.RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
+    var exclude   = [ COL.APP_RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
        FTP.RESPONSE_TIME.id,
        RTP.PACKET_LOSS_RATE.id, RTP.PACKET_LOSS_BURSTINESS.id, RTP.ORDER_ERROR.id
     ];
@@ -590,8 +590,8 @@ function loadDetail( index ) {
       createBar({
         bindto: "#detail_perf_chart",
         data: {
-          columns : [["NRT", format_nu( msg[ COL.RTT.id ])/1000 ],
-                     ["ART", format_nu( msg[ HTTP.RESPONSE_TIME.id ])/1000 ],
+          columns : [["NRT", format_nu( msg[ COL.HANDSHAKE_TIME.id ])/1000 ],
+                     ["ART", format_nu( msg[ COL.APP_RESPONSE_TIME.id ])/1000 ],
                      ["DTT", format_nu( msg[ COL.DATA_TRANSFER_TIME.id ])/1000 ]
                     ],
           groups  : [["NRT","ART","DTT"]],
@@ -634,7 +634,7 @@ function loadDetail( index ) {
       createBar({
         bindto: "#detail_tcp_chart",
         data: {
-          columns : [["Retrans."     , format_nu( msg[ COL.RETRANSMISSION_COUNT.id ]) ],
+          columns : [["Retrans."     , format_nu( msg[ COL.DL_RETRANSMISSION.id ]) ],
                      ["Out of Order", 0 ]
                     ],
           groups  : [["Retrans.","Out of Order"]],

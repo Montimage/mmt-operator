@@ -12,18 +12,23 @@ module.exports = {
           RTP_APP_FORMAT          : 3  /**< Sub report of STATS_FORMAT: RTP flow report format id */,
           FTP_APP_FORMAT          : 4, /**< Sub report of STATS_FORMAT: FTP flow report*/
           GTP_APP_FORMAT          : 5, /**< Sub report of STATS_FORMAT: For LTE network*/
-          STATS_FORMAT            : 100/**< Statistics format id */,
+          
           
           
           STARTUP_REPORT          : 1, /**< This report is sent only once when starting*/
           MICROFLOWS_STATS_FORMAT : 8/**< Micro flows statistics format id */,
           RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
+          
           NO_SESSION_STATS_FORMAT : 99,
+          STATS_FORMAT            : 100/**< Statistics format id */,
           
           SECURITY_FORMAT         : 10,
+          
           BA_PROFILE_FORMAT       : 12,
           BA_BANDWIDTH_FORMAT     : 11,
+          
           LICENSE                 : 30,
+          
           NDN_FORMAT              : 625,
           DUMMY_FORMAT            : 200,
           SYS_STAT_FORMAT         : 201,
@@ -47,6 +52,13 @@ module.exports = {
           TIMESTAMP           : 3, /**< Index of the format id column */
           REPORT_NUMBER       : 4,
           APP_ID              : 5, /**< Index of the application id column */
+          
+          /* An application might have different statistics entries.
+             * Example: Facebook might have two entries one with path eth.ip.tcp.http.fb
+             * while the second with path eth.ip.tcp.ssl.fb.
+             * This is completely normal.
+             * It allows to build a hierarchical view on the protocol statistics.
+             */
           APP_PATH            : 6, /**< Index of the application path column */
           ACTIVE_FLOWS        : 7, /**< Index of the active flows column */
           DATA_VOLUME         : 8, /**< Index of the data volume column */
@@ -60,26 +72,31 @@ module.exports = {
           DL_PACKET_COUNT     : 16, /**< Index of the packet count column */
           START_TIME          : 17, /**< Index of the start timestamp of the flow */
           IP_SRC              : 18, /**< Index of the IP address source column */
-          IP_DST             : 19, /**< Index of the IP address destination column */
+          IP_DST              : 19, /**< Index of the IP address destination column */
           MAC_SRC             : 20, /**< Index of the MAC address source column */
-          MAC_DST            : 21, /**< Index of the MAC address destination column */
-          SESSION_ID          : 22, //Identifier of the session or if the protocol does not have session its session id = 0
-          PORT_DST           : 23, //Server port number (0 if transport protocol is session less like ICMP)
-          PORT_SRC            : 24, //Client port number (0 if transport protocol is session less like ICMP)
+          MAC_DST             : 21, /**< Index of the MAC address destination column */
+          SESSION_ID          : 22, /**< Identifier of the session or if the protocol does not have session its session id = 0*/
+          PORT_DST            : 23, /**< Server port number (0 if transport protocol is session less like ICMP)*/
+          PORT_SRC            : 24, /**< Client port number (0 if transport protocol is session less like ICMP) */
           THREAD_NUMBER       : 25,
-          RTT                 : 26,
-          RTT_MIN_SERVER      : 27,
-          RTT_MIN_CLIENT      : 28,
-          RTT_MAX_SERVER      : 29,
-          RTT_MAX_CLIENT      : 30,
-          RTT_AVG_SERVER      : 31,
-          RTT_AVG_CLIENT      : 32,
-          DATA_TRANSFER_TIME  : 33, //Time difference between first data packet time and the last packet time received in the sample interval
-          RETRANSMISSION_COUNT: 34,
+          
+          HANDSHAKE_TIME      : 26,
+          APP_RESPONSE_TIME   : 27,
+          DATA_TRANSFER_TIME  : 28,
+          
+          RTT_MIN_SERVER      : 29,
+          RTT_MIN_CLIENT      : 30,
+          RTT_MAX_SERVER      : 31,
+          RTT_MAX_CLIENT      : 32,
+          RTT_AVG_SERVER      : 33,
+          RTT_AVG_CLIENT      : 34,
+          
+          UL_RETRANSMISSION   : 35, /**< */
+          DL_RETRANSMISSION   : 36,
 
+          FORMAT_TYPE         : 37, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
 
-          FORMAT_TYPE         : 35, //0: default, 1: http, 2: tls, 3: rtp, 4: FTP
-
+          
           SRC_LOCATION            : 40,
           DST_LOCATION            : 41,
           IP_SRC_INIT_CONNECTION  : 42, //true: if IP_SRC (local IP) is init connection, else false ( IP_DST initilizes connection)
@@ -220,10 +237,10 @@ module.exports = {
           TIMESTAMP             : 3 ,
           PACKET_ID             : 4 ,
           MAC_SRC               : 5 ,
-          MAC_DST              : 6 ,
+          MAC_DST               : 6 ,
           PARENT_PROTO          : 7 ,
           IP_SRC                : 8 ,
-          IP_DST               : 9 ,
+          IP_DST                : 9 ,
           QUERY                 : 10,
           NAME                  : 11,
           PACKET_TYPE           : 12,
@@ -245,7 +262,7 @@ module.exports = {
           VIDEO_BITRATE               : 7,
           TOTAL_VIDEO_DURATION        : 8,
           TOTAL_VIDEO_DOWNLOAD        : 9,
-          RETRANSMISSION_COUNT        : 10,
+          DL_RETRANSMISSION           : 10,
           OUT_OF_ORDER                : 11,
           PROBABILITY_BUFFERING       : 12
       },

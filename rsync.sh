@@ -13,13 +13,25 @@ USER=mmt
 PORT=2222
 IP=localhost
 
+TARGET=mmt/mmt-operator
+USER=epc
+IP=192.168.0.192
+PORT=22
+
+
+
+#PORT=22
+#IP=192.168.0.220
+#USER=epc
+#TARGET=/home/epc/mmt/mmt-operator
+
 #USER=montimage
 #IP=192.168.0.194
 
-#TARGET=/home/mmt/mmt/mmt-operator
-#USER=mmt
+#TARGET=/home/montimage/mmt-operator
+#USER=montimage
 #PORT=22
-#IP=192.168.0.35
+#IP=192.168.0.210
 
 #TARGET=/home/montimage/mmt-operator
 #USER=montimage

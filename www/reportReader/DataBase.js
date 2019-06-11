@@ -189,9 +189,11 @@ module.exports = function(){
             inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-               COL.RTT,
-               COL.RETRANSMISSION_COUNT,
-               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,COL.DATA_TRANSFER_TIME,
+               
+               COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, COL.DATA_TRANSFER_TIME,
+               COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
+               
+               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
@@ -427,11 +429,11 @@ module.exports = function(){
             
             //session
             if( format === 100 ){
-               //console.log( msg[ COL.DATA_TRANSFER_TIME ] )
+               //console.log( msg[ COL.UL_RETRANSMISSION ] )
 
                //this should not happen
-               //if( msg[ COL.DATA_TRANSFER_TIME ] > DOUBLE_STAT_PERIOD_IN_MS )
-               //	msg[ COL.DATA_TRANSFER_TIME ] = 0;
+               //if( msg[ COL.UL_RETRANSMISSION ] > DOUBLE_STAT_PERIOD_IN_MS )
+               //	msg[ COL.UL_RETRANSMISSION ] = 0;
 
                //HTTP
                switch( msg[ COL.FORMAT_TYPE ] ){
@@ -580,14 +582,16 @@ module.exports = function(){
                self.dataCache.app.addMessage( msg );
             ///////////////////////////////////////////////////////////////
 
-            //each session
-            if( self.dataCache.session )
-               self.dataCache.session.addMessage( msg );
             
             //self.dataCache.detail.addMessage(  msg );
-
-
             if( !is_micro_flow ){
+               
+
+               //each session
+               if( self.dataCache.session )
+                  self.dataCache.session.addMessage( msg );
+               
+               
                //add traffic for the other side (src <--> dest )
                msg.isGen = true;
                msg = dataAdaptor.inverseStatDirection( msg );

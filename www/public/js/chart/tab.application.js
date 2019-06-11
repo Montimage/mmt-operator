@@ -1,7 +1,7 @@
 var arr = [
     {
         id: "response_time",
-        title: "Response Time",
+        title: "Transaction Time",
         x: 0,
         y: 0,
         width: 12,
@@ -18,9 +18,9 @@ var arr = [
         y: 0,
         width: 4,
         height: 4,
-        type: "warning",
+        type: "success",
         userData: {
-            fn: "createSlowestUsersReport"
+            fn: "createSlowestLocalsReport"
         },
     },{
         id: "top_app",
@@ -29,7 +29,7 @@ var arr = [
         y: 0,
         width: 4,
         height: 4,
-        type: "danger",
+        type: "success",
         userData: {
             fn: "createSlowestAppsReport"
         },
@@ -40,7 +40,7 @@ var arr = [
         y: 0,
         width: 4,
         height: 4,
-        type: "warning",
+        type: "success",
         userData: {
             fn: "createSlowestRemotesReport"
         },
@@ -65,6 +65,8 @@ URL_PARAM.app_id = function(){
   return URL_PARAM._app_id;
 }
 
+//select only TCP-based app
+const APP_PATH_REGEX = {"$regex" : ".354.", "$options" : ""};
 //create reports
 var ReportFactory = {
     formatTime : function( date ){
@@ -83,7 +85,6 @@ var ReportFactory = {
     createResponseTimeReport: function (fPeriod) {
         var _this = this;
         var COL   = MMTDrop.constants.StatsColumn;
-        var HTTP  = MMTDrop.constants.HttpStatsColumn;
         var FTP   = MMTDrop.constants.FtpStatsColumn;
 
         var fApp  = MMTDrop.filterFactory.createAppFilter();
@@ -115,7 +116,7 @@ var ReportFactory = {
           $match[ COL.TIMESTAMP.id ]  = {$gte: period.begin, $lte: period.end };
 
           //select only proto/app based on TCP : 354
-          $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
+          $match[ COL.APP_PATH.id ]  = APP_PATH_REGEX;
 
           appList_db.reload( {query: [{"$match": $match}, {"$group" : group}],
                                period_groupby: fPeriod.selectedOption().id},
@@ -156,8 +157,8 @@ var ReportFactory = {
 
             //group by timestamp
             var cols = [ COL.DATA_VOLUME, COL.PAYLOAD_VOLUME, COL.PACKET_COUNT, COL.ACTIVE_FLOWS,
-               COL.RTT, COL.RETRANSMISSION_COUNT,
-               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT, COL.DATA_TRANSFER_TIME ];
+               COL.HANDSHAKE_TIME, COL.DATA_TRANSFER_TIME, COL.APP_RESPONSE_TIME,
+               COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION ];
 
             //sort by inc of time
             data.sort( function( a, b){
@@ -171,15 +172,13 @@ var ReportFactory = {
               data[i][0] = i+1;
               //avg of 1 session
               var val = data[i][ COL.ACTIVE_FLOWS.id ] * 1000; //micro second => milli second
-              data[i][ COL.RTT.id ]                = _this.divide( data[i][ COL.RTT.id ], val);
+              data[i][ COL.HANDSHAKE_TIME.id ]     = _this.divide( data[i][ COL.HANDSHAKE_TIME.id ], val);
               data[i][ COL.DATA_TRANSFER_TIME.id ] = _this.divide( data[i][ COL.DATA_TRANSFER_TIME.id ], val);
-
-              val = data[i][ HTTP.TRANSACTIONS_COUNT.id ] * 1000; //micro second => milli second
-              data[i][ HTTP.RESPONSE_TIME.id ] = _this.divide( data[i][ HTTP.RESPONSE_TIME.id ] , val);
+              data[i][ COL.APP_RESPONSE_TIME.id ]  = _this.divide( data[i][ COL.APP_RESPONSE_TIME.id ] , val);
 
 
               //% of retransmision
-              data[i][ COL.RETRANSMISSION_COUNT.id ] = _this.divide( data[i][ COL.RETRANSMISSION_COUNT.id ]*100, data[i][ COL.PACKET_COUNT.id ] );
+              data[i][ COL.DL_RETRANSMISSION.id ] = _this.divide( (data[i][ COL.DL_RETRANSMISSION.id ] + data[i][COL.UL_RETRANSMISSION]) *100, data[i][ COL.PACKET_COUNT.id ] );
               //% of payload
               data[i][ COL.PAYLOAD_VOLUME.id ] = _this.divide( data[i][ COL.PAYLOAD_VOLUME.id ]*100, data[i][ COL.DATA_VOLUME.id ] );
               //bit per second
@@ -281,8 +280,8 @@ var ReportFactory = {
             group["_id"][ el ] = "$" + el;
           } );
           [ COL.DATA_VOLUME.id, COL.ACTIVE_FLOWS.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
-            COL.RETRANSMISSION_COUNT.id, COL.RTT.id, COL.DATA_TRANSFER_TIME.id,
-            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id,
+            COL.DL_RETRANSMISSION.id, COL.UL_RETRANSMISSION.id,
+            COL.HANDSHAKE_TIME.id, COL.APP_RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id,
           ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
           });
@@ -297,7 +296,7 @@ var ReportFactory = {
           $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
           $match.isGen  = false;
           //only on TCP: ETH.VLAN?.IP?.*.TCP
-          $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
+          $match[ COL.APP_PATH.id ] = APP_PATH_REGEX;
 
           //load data corresponding to the selected app
           var probe_id  = URL_PARAM.probe_id;
@@ -321,11 +320,12 @@ var ReportFactory = {
             getData: {
                 getDataFn: function (db) {
                     var cols = [ COL.TIMESTAMP,
-                                {id: COL.RTT.id                , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
-                                {id: HTTP.RESPONSE_TIME.id     , label: "App Response Time (ART)"     , type: "area-stack"},
+                                {id: COL.HANDSHAKE_TIME.id     , label: "Network Rountrip Time (NRT)" , type: "area-stack"},
+                                {id: COL.APP_RESPONSE_TIME.id  , label: "App Response Time (ART)"     , type: "area-stack"},
                                 {id: COL.DATA_TRANSFER_TIME.id , label: "Data Transfer Time (DTT)"    , type: "area-stack"},
                                 //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
-                                {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"}
+                                {id: COL.DATA_VOLUME.id        , label: "Data Rate"                   , type: "line"},
+                                //{id: COL.UL_RETRANSMISSION.id  , label: "Retransmission Rate"         , type: "line"}
                                ];
                     var data  = db.data();
 
@@ -334,9 +334,12 @@ var ReportFactory = {
                       return v;
                     }
 
+                    //calculate the avg of time 
                     var length = 0, total  = 0, val;
                     for( var i=0; i<data.length; i++ ){
-                      val = get_number( data[i][ COL.RTT.id ] ) + get_number( data[i][ COL.DATA_TRANSFER_TIME.id ] ) + get_number( data[i][ HTTP.RESPONSE_TIME.id ] );
+                      val = get_number( data[i][ COL.HANDSHAKE_TIME.id ] ) 
+                              + get_number( data[i][ COL.DATA_TRANSFER_TIME.id ] ) 
+                              + get_number( data[i][ COL.APP_RESPONSE_TIME.id ] );
                       //val = -3
                       if( val >= 0 ){
                         total  += val;
@@ -355,7 +358,7 @@ var ReportFactory = {
                             y: {
                               lines : [
                                 //granularity/average
-                                {value: total, text: total + " ms", position: 'start'}
+                                {value: total, text: total + " ms/flow", position: 'start'}
                               ]
                             }
                           }
@@ -460,13 +463,13 @@ var ReportFactory = {
                 getDataFn: function (db) {
                     var cols = [ {id: 0, label:""},
                                 {id: COL.TIMESTAMP.id            , label: "Time"            , align: "left"},
-                                {id: COL.RTT.id                  , label: "NRT (ms/flow)"   , align: "right"},
-                                {id: HTTP.RESPONSE_TIME.id       , label: "ART (ms/trans.)" , align: "right"},
+                                {id: COL.HANDSHAKE_TIME.id       , label: "NRT (ms/flow)"   , align: "right"},
+                                {id: COL.APP_RESPONSE_TIME.id    , label: "ART (ms/trans.)" , align: "right"},
                                 {id: COL.DATA_TRANSFER_TIME.id   , label: "DTT (ms/flow)"   , align: "right"},
-                                {id: HTTP.TRANSACTIONS_COUNT.id  , label: "#HTTP Trans."    , align: "right"},
+                                
                                 {id: COL.ACTIVE_FLOWS.id         , label: "#Flows"          , align: "right"},
                                 {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
-                                {id: COL.RETRANSMISSION_COUNT.id , label: "%Retrans."       , align: "right"},
+                                {id: "retransmission"            , label: "%Retrans."       , align: "right"},
                                 {id: COL.DATA_VOLUME.id          , label: "Data Rate (bps)" , align: "right"},
                                 {id: "packet_size"               , label: "Pkt Size (B)"    , align: "right"},
                                 {id: COL.PAYLOAD_VOLUME.id       , label: "%Payload"        , align: "right"},
@@ -500,13 +503,13 @@ var ReportFactory = {
 
                         //DATA_VOLUME represents bandwith bps => need to divide by 8 to get bytes
                         msg["packet_size"] = _this.divide(msg[ COL.DATA_VOLUME.id ], msg[ COL.PACKET_COUNT.id ] * 8).toFixed(2);
-                        msg[ COL.DATA_TRANSFER_TIME.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_TRANSFER_TIME.id ] );
-                        msg[ COL.DATA_VOLUME.id ]        = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
-                        msg[ COL.PACKET_COUNT.id ]       = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
+                        msg[ "retransmission" ]    = _this.divide( (msg[ COL.UL_RETRANSMISSION.id ] + msg[ COL.DL_RETRANSMISSION.id ])*100, msg[COL.PACKET_COUNT.id]);
+                        msg[ COL.DATA_VOLUME.id ]  = MMTDrop.tools.formatDataVolume( msg[ COL.DATA_VOLUME.id ] );
+                        msg[ COL.PACKET_COUNT.id ] = MMTDrop.tools.formatDataVolume( msg[ COL.PACKET_COUNT.id ] );
                         //% payload
-                        msg[ COL.PAYLOAD_VOLUME.id ]       += "%";
+                        msg[ COL.PAYLOAD_VOLUME.id ]  += "%";
                         //% Retransmision
-                        msg[ COL.RETRANSMISSION_COUNT.id ] += "%";
+                        msg[ "retransmission" ]      += "%";
                         msg.__formated = true;
 
                         arr.push( msg );
@@ -570,35 +573,38 @@ var ReportFactory = {
     createSlowestRemotesReport: function (fPeriod ){
       return this.createSlowestUsersReport( fPeriod, MMTDrop.constants.StatsColumn.IP_DST.id );
     },
+    createSlowestLocalsReport: function (fPeriod ){
+       return this.createSlowestUsersReport( fPeriod, MMTDrop.constants.StatsColumn.IP_SRC.id );
+     },
     createSlowestUsersReport: function (fPeriod, col_id) {
-        var _this = this;
-        var COL   = MMTDrop.constants.StatsColumn;
-        var HTTP  = MMTDrop.constants.HttpStatsColumn;
-        var FTP   = MMTDrop.constants.FtpStatsColumn;
-        if( col_id == undefined )
+       var _this = this;
+       var COL   = MMTDrop.constants.StatsColumn;
+       var HTTP  = MMTDrop.constants.HttpStatsColumn;
+       var FTP   = MMTDrop.constants.FtpStatsColumn;
+       if( col_id == undefined )
           col_id = COL.IP_SRC.id;
-        var is_app = (col_id == COL.APP_ID.id);
+       var is_app = (col_id == COL.APP_ID.id);
 
 
 
-        var database = new MMTDrop.Database({collection: "data_session", action: "aggregate", raw: true, no_override_when_reload: true, period_groupby: fPeriod.selectedOption().id });
-        //this is called each time database is reloaded to update parameters of database
-        database.updateParameter = function( _old_param ){
+       var database = new MMTDrop.Database({collection: "data_session", action: "aggregate", raw: true, no_override_when_reload: true, period_groupby: fPeriod.selectedOption().id });
+       //this is called each time database is reloaded to update parameters of database
+       database.updateParameter = function( _old_param ){
           //mongoDB aggregate
           var $group = { _id : {} };
 
           [ col_id ].forEach( function( el, index){
-            $group["_id"][ el ] = "$" + el;
+             $group["_id"][ el ] = "$" + el;
           } );
 
-          [ COL.RTT.id, COL.ACTIVE_FLOWS.id,
-            HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id, COL.DATA_TRANSFER_TIME.id
-          ].forEach( function( el, index){
-            $group[ el ] = {"$sum" : "$" + el};
-            //group._total["$sum"].push( "$" + el );
-          });
+          [  COL.ACTIVE_FLOWS.id,
+             COL.HANDSHAKE_TIME.id, COL.APP_RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id
+             ].forEach( function( el, index){
+                $group[ el ] = {"$sum" : "$" + el};
+                //group._total["$sum"].push( "$" + el );
+             });
           [ col_id ].forEach( function( el, index){
-            $group[ el ] = {"$first" : "$"+ el};
+             $group[ el ] = {"$first" : "$"+ el};
           } );
 
           var $match = {} ;
@@ -609,285 +615,286 @@ var ReportFactory = {
           //only IP (session report)
           $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
           //select only APP or IP that contains APPs on the top of tcp
-          $match[ COL.APP_PATH.id ]  = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
+          $match[ COL.APP_PATH.id ]  = APP_PATH_REGEX;
 
           if( URL_PARAM.app_id() )
-            $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
+             $match[ COL.APP_ID.id ] = URL_PARAM.app_id();
           if( URL_PARAM.ip )
-            $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
+             $match[ COL.IP_SRC.id ] = URL_PARAM.ip;
           if( URL_PARAM.remote )
-            $match[ COL.IP_DST.id ] = URL_PARAM.remote;
+             $match[ COL.IP_DST.id ] = URL_PARAM.remote;
 
           //load data corresponding to the selected app
           var probe_id   = URL_PARAM.probe_id;
           if( probe_id != undefined )
-            $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
+             $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
 
           return { query : [{"$match": $match},{"$group" : $group}] };
-        }//end database.updateParameter
+       }//end database.updateParameter
 
-        //is_trans : show only transactions
-        function createBar( is_trans ){
+       //is_trans : show only transactions
+       function createBar( is_trans ){
           if( is_trans == undefined ) is_trans = false;
 
           return MMTDrop.chartFactory.createBar({
-            getData: {
-              getDataFn: function (db) {
-                var data = db.data();
+             getData: {
+                getDataFn: function (db) {
+                   var data = db.data();
 
-                var divide = function( a, b ){
-                  if( a == null || isNaN( a ) || b == null || isNaN( b ) || b == 0)
-                    return 0;
-                  return a/b;
-                }
+                   var divide = function( a, b ){
+                      if( a == null || isNaN( a ) || b == null || isNaN( b ) || b == 0)
+                         return 0;
+                      return a/b;
+                   }
 
-                for( var i in data ){
-                  var v = 1000; // * 1000  to get milliseconds
-                  if( data[i][ COL.ACTIVE_FLOWS.id ] != 0 )
-                    v *= data[i][ COL.ACTIVE_FLOWS.id ];
-                  data[i][ COL.RTT.id ]                =  divide( data[i][ COL.RTT.id ], v);
-                  data[i][ COL.DATA_TRANSFER_TIME.id ] =  divide( data[i][ COL.DATA_TRANSFER_TIME.id ], v);
-
-                  v = 1000;
-                  if( data[i][ HTTP.TRANSACTIONS_COUNT.id ] != 0 )
-                    v *= data[i][ HTTP.TRANSACTIONS_COUNT.id ];
-                  data[i][ HTTP.RESPONSE_TIME.id ]      =  divide( data[i][ HTTP.RESPONSE_TIME.id ], v);
+                   for( var i in data ){
+                      var v = 1000; // * 1000  to get milliseconds
+                      if( data[i][ COL.ACTIVE_FLOWS.id ] != 0 )
+                         v *= data[i][ COL.ACTIVE_FLOWS.id ];
+                      data[i][ COL.HANDSHAKE_TIME.id ]     =  divide( data[i][ COL.HANDSHAKE_TIME.id ], v);
+                      data[i][ COL.DATA_TRANSFER_TIME.id ] =  divide( data[i][ COL.DATA_TRANSFER_TIME.id ], v);
+                      data[i][ COL.APP_RESPONSE_TIME.id ]  =  divide( data[i][ COL.APP_RESPONSE_TIME.id ], v);
 
 
-                 data[i]._total = data[i][ COL.RTT.id ] + data[i][ HTTP.RESPONSE_TIME.id ] +  data[i][ COL.DATA_TRANSFER_TIME.id ];
-                }
+                      data[i]._total = data[i][ COL.HANDSHAKE_TIME.id ] 
+                                     + data[i][ COL.APP_RESPONSE_TIME.id ] 
+                                     + data[i][ COL.DATA_TRANSFER_TIME.id ];
+                   }
 
-                //get top 8
-                //sort by DESC of #Trans
-                data.sort( function( a, b ){
-                  var val = b[ HTTP.TRANSACTIONS_COUNT.id ] - a[ HTTP.TRANSACTIONS_COUNT.id ];
-                  if( val == 0 )
-                    return b._total - a._total
-                  return val;
-                });
+                   //get top 8
+                   //sort by DESC of #Trans
+                   data.sort( function( a, b ){
+                      var val = b._total - a._total;
+                      
+                      if( val == 0 )
+                         val = b[ COL.ACTIVE_FLOWS.id ] - a[ COL.ACTIVE_FLOWS.id ];
+                      
+                      return val;
+                   });
 
-                var obj = [
-                  ["RTT"],
-                  ["ART"],
-                  ["DTT"],
-                ];
-                if( is_trans )
-                  obj = [["#HTTP Transaction"]];
+                   var obj = [
+                      ["RTT"],
+                      ["ART"],
+                      ["DTT"],
+                      ];
+                   if( is_trans )
+                      obj = [["#Flows"]];
 
-                var groups = [];
-                for( var i in obj )
-                  groups.push( obj[i][0]);
-
-
-                var ips = [];
-                for( var i=0; i<8; i++ ){
-                  var msg = data[i];
-                  var label = "";
-                  if( is_trans )
-                    ips.push( "");
-                  else{
-                    if( is_app )
-                      ips.push( msg == undefined? "" : MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
-                    else
-                      ips.push( msg == undefined? "" : msg[ col_id ] );
-                  }
-
-                  if( is_trans ){
-                    obj[0].push( msg == undefined? 0 : - msg[ HTTP.TRANSACTIONS_COUNT.id ] );
-                  }else{
-                    obj[0].push( msg == undefined? 0 : msg[ COL.RTT.id ] );
-                    obj[1].push( msg == undefined? 0 : msg[ HTTP.RESPONSE_TIME.id ] );
-                    obj[2].push( msg == undefined? 0 : msg[ COL.DATA_TRANSFER_TIME.id ] );
-                  }
-                }
-                var cols = [];
-                for( var i in ips )
-                  cols.push( {id: i, label: ips[i]} );
+                   var groups = [];
+                   for( var i in obj )
+                      groups.push( obj[i][0]);
 
 
-                return {
-                  data   : obj,
-                  columns: cols,
-                  chart  : {
-                    data :{
-                      groups: [groups]
-                    },
-                    axis : {
-                      x  : {
-                        categories : ips,
+                   var ips = [];
+                   for( var i=0; i<8; i++ ){
+                      var msg = data[i];
+                      var label = "";
+                      if( is_trans )
+                         ips.push( "");
+                      else{
+                         if( is_app )
+                            ips.push( msg == undefined? "" : MMTDrop.constants.getProtocolNameFromID( msg[ col_id ] ));
+                         else
+                            ips.push( msg == undefined? "" : msg[ col_id ] );
                       }
-                    }
-                  }
+
+                      if( is_trans ){
+                         obj[0].push( msg == undefined? 0 : - msg[ COL.ACTIVE_FLOWS.id ] );
+                      }else{
+                         obj[0].push( msg == undefined? 0 : msg[ COL.HANDSHAKE_TIME.id ] );
+                         obj[1].push( msg == undefined? 0 : msg[ COL.APP_RESPONSE_TIME.id ] );
+                         obj[2].push( msg == undefined? 0 : msg[ COL.DATA_TRANSFER_TIME.id ] );
+                      }
+                   }
+                   var cols = [];
+                   for( var i in ips )
+                      cols.push( {id: i, label: ips[i]} );
+
+
+                   return {
+                      data   : obj,
+                      columns: cols,
+                      chart  : {
+                         data :{
+                            groups: [groups]
+                         },
+                         axis : {
+                            x  : {
+                               categories : ips,
+                            }
+                         }
+                      }
+                   }
                 }
-              }
-            },
-            chart: {
-              //Set a callback which is executed when the chart is rendered. Basically, this callback will be called in each time when the chart is redrawed.
-              onrendered: function(){
-                var _id = this.config.bindto;
-                //hide tick for transsitions bar chart
-                d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX ).
-                  selectAll(".tick").selectAll("line").style("visibility","hidden");
+             },
+             chart: {
+                //Set a callback which is executed when the chart is rendered. Basically, this callback will be called in each time when the chart is redrawed.
+                onrendered: function(){
+                   var _id = this.config.bindto;
+                   //hide tick for transsitions bar chart
+                   d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX ).
+                   selectAll(".tick").selectAll("line").style("visibility","hidden");
 
-                if( is_trans ){
-                  d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX )
-                    // and translate it to the y = 0 position
-                   .attr('transform', "translate(" + this.yMax + ",0)")
-                   //hide Ox label
-                   .selectAll("text").style('visibility', 'hidden')
-                  ;
+                   if( is_trans ){
+                      d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX )
+                      // and translate it to the y = 0 position
+                      .attr('transform', "translate(" + this.yMax + ",0)")
+                      //hide Ox label
+                      .selectAll("text").style('visibility', 'hidden')
+                      ;
 
-                   var $el = $( _id ).parents().filter(".col-md-5");
-                   if( $el.length > 0 )
-                     $el.css("padding-right", "0px");
-                  //add class
-                  d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation-inverted", true);
-                }else{
+                      var $el = $( _id ).parents().filter(".col-md-5");
+                      if( $el.length > 0 )
+                         $el.css("padding-right", "0px");
+                      //add class
+                      d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation-inverted", true);
+                   }else{
 
-                  d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
-                    //set middle
-                   .selectAll("text").style({
-                      //'text-anchor' : 'middle',
-                    })
-                   .attr({"class" : "ahref", "fill": "#337ab7"})
-                   .on("click", function(){
-                     var cat = $(this).text();
-                     MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : (col_id == COL.IP_SRC.id ? "ip=": "remote=")) + cat) )
-                   })
-                  // .on("mouseover", function(){
-                  //   var text = $(this).text();
-                  // })
-                   //.selectAll("tspan").attr('x', -50)
-                   ;
+                      d3.select( _id ).select('.' + c3.chart.internal.fn.CLASS.axisX)
+                      //set middle
+                      .selectAll("text").style({
+                         //'text-anchor' : 'middle',
+                      })
+                      .attr({"class" : "ahref", "fill": "#337ab7"})
+                      .on("click", function(){
+                         var cat = $(this).text();
+                         MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : (col_id == COL.IP_SRC.id ? "ip=": "remote=")) + cat) )
+                      })
+                      // .on("mouseover", function(){
+                      //   var text = $(this).text();
+                      // })
+                      //.selectAll("tspan").attr('x', -50)
+                      ;
 
-                  var $el = $( _id ).parents().filter(".col-md-7");
-                  if( $el.length > 0 )
-                    $el.css("padding-left", "0px");
+                      var $el = $( _id ).parents().filter(".col-md-7");
+                      if( $el.length > 0 )
+                         $el.css("padding-left", "0px");
 
-                  d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation", true);
-               }
-              },
-              data: {
-                onclick: function (d, element) {
-                  var cat = this.category( d.x );
-                  MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : (col_id == COL.IP_SRC.id ? "ip=": "remote=")) + cat) )
+                      d3.select( _id ).select(".c3-chart-bars").classed("mmt-c3-chart-bars-animation", true);
+                   }
                 },
-                selection: {
-                  enabled     : true,
-                  grouped     : true,
-                  multiple    : false,
-                  isselectable: function (d) {
-                    window._tt = d;
-                    return false;
-                  }
-                },
-                onmouseover: function( d ){
-                  //avoid 2 consecutif calls
-                  var now = (new Date()).getTime();
-                  if( this._lastCall_MouseOver == undefined )
-                    this._lastCall_MouseOver = 0;
-                  if( now - this._lastCall_MouseOver < 100 )
-                    return;
-                  this._lastCall_MouseOver = now;
+                data: {
+                   onclick: function (d, element) {
+                      var cat = this.category( d.x );
+                      MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], (is_app? "app=" : (col_id == COL.IP_SRC.id ? "ip=": "remote=")) + cat) )
+                   },
+                   selection: {
+                      enabled     : true,
+                      grouped     : true,
+                      multiple    : false,
+                      isselectable: function (d) {
+                         window._tt = d;
+                         return false;
+                      }
+                   },
+                   onmouseover: function( d ){
+                      //avoid 2 consecutif calls
+                      var now = (new Date()).getTime();
+                      if( this._lastCall_MouseOver == undefined )
+                         this._lastCall_MouseOver = 0;
+                      if( now - this._lastCall_MouseOver < 100 )
+                         return;
+                      this._lastCall_MouseOver = now;
 
-                  var neighbour = this.parent._neighbour;
-                  if( neighbour )
-                    neighbour.chart.tooltip.show( {x: d.x} );
-                },
-                onmouseout: function( d ){
-                  //avoid 2 consecutif calls
-                  var now = (new Date()).getTime();
-                  if( this._lastCall_MouseOut == undefined )
-                    this._lastCall_MouseOut = 0;
-                  if( now - this._lastCall_MouseOut < 100 )
-                    return;
-                  this._lastCall_MouseOut = now;
+                      var neighbour = this.parent._neighbour;
+                      if( neighbour )
+                         neighbour.chart.tooltip.show( {x: d.x} );
+                   },
+                   onmouseout: function( d ){
+                      //avoid 2 consecutif calls
+                      var now = (new Date()).getTime();
+                      if( this._lastCall_MouseOut == undefined )
+                         this._lastCall_MouseOut = 0;
+                      if( now - this._lastCall_MouseOut < 100 )
+                         return;
+                      this._lastCall_MouseOut = now;
 
-                  var neighbour = this.parent._neighbour;
-                  if( neighbour )
-                    neighbour.chart.tooltip.hide();
-                }
-              },
-              color: {
-                pattern: (is_trans ? ["green"] : ['violet', 'orange', 'DeepSkyBlue'])
-              },
-              bar : {
-                width: 15,
-              },
-              axis: {
-                rotated: true,
-                y : {
-                  //inverted: true,
-                  tick : {
-                    format: function( val ){
-                      if( val < 0 )
-                        val = -val;
-                      return MMTDrop.tools.formatDataVolume( val );
-                    },
-                    count: is_trans? 4 : 4
-                  },
-                  label: {
-                    text    : is_trans? "trans." : "ms/trans.",
-                    position: is_trans? 'outter-left'   : 'outter-right'
-                  },
-                  padding: {
-                    top: 0,
-                    bottom: 0
-                  },
+                      var neighbour = this.parent._neighbour;
+                      if( neighbour )
+                         neighbour.chart.tooltip.hide();
+                   }
                 },
-                x : {
-                  //show : is_trans? false: true
+                color: {
+                   pattern: (is_trans ? ["#D35400"] : ['violet', 'orange', 'DeepSkyBlue'])
+                },
+                bar : {
+                   width: 15,
+                },
+                axis: {
+                   rotated: true,
+                   y : {
+                      //inverted: true,
+                      tick : {
+                         format: function( val ){
+                            //number of flows
+                            if( val < 0 )
+                               return MMTDrop.tools.formatDataVolume( -val, true );
+                            return MMTDrop.tools.formatDataVolume( val );
+                         },
+                         count: is_trans? 4 : 4
+                      },
+                      label: {
+                         text    : is_trans? "flows" : "ms/flow",
+                               position: is_trans? 'outter-left'   : 'outter-right'
+                      },
+                      padding: {
+                         top: 0,
+                         bottom: 0
+                      },
+                   },
+                   x : {
+                      //show : is_trans? false: true
+                   }
+                },
+                grid: {
+                   y: {
+                      show : true,
+                   }
+                },
+                padding: {
+                   right: (is_trans ? 5: 30 ),
+                   top  : 10
+                },
+                size:{
+                   height: 250
+                },
+                legend : {
+                   item: {
+                      onclick: (is_trans ? function (id) {
+                         //this function prevents hidding bars in Transaction
+                      } : null)
+                   }
                 }
-              },
-              grid: {
-                y: {
-                  show : true,
-                }
-              },
-              padding: {
-                right: (is_trans ? 5: 30 ),
-                top  : 10
-              },
-              size:{
-                height: 250
-              },
-              legend : {
-                item: {
-                  onclick: (is_trans ? function (id) {
-                    //this function prevents hidding bars in Transaction
-                  } : null)
-                }
-              }
-            },
+             },
           });
-        }//end createBar;
+       }//end createBar;
 
-        var cBar_time = createBar( ),
-            cBar_tran = createBar( true );
+       var cBar_time = createBar( ),
+       cBar_tran = createBar( true );
 
-        cBar_time._neighbour = cBar_tran;
-        cBar_tran._neighbour = cBar_time;
+       cBar_time._neighbour = cBar_tran;
+       cBar_tran._neighbour = cBar_time;
 
-        var report = new MMTDrop.Report(
-            // title
-            null,
-            // database
-            database,
-            // filers
-					[],
-            // charts
-					[{
-            charts: [cBar_tran],
-            width: 5
-          },{
-            charts: [cBar_time],
-            width: 7
-          }],
-            //order of data flux
-            [{object: cBar_tran}, {object: cBar_time}]
-        );
+       var report = new MMTDrop.Report(
+             // title
+             null,
+             // database
+             database,
+             // filers
+             [],
+             // charts
+             [{
+                charts: [cBar_tran],
+                width: 5
+             },{
+                charts: [cBar_time],
+                width: 7
+             }],
+             //order of data flux
+             [{object: cBar_tran}, {object: cBar_time}]
+       );
 
-        return report;
+       return report;
     },
 
     createDetailChart : function( ){
@@ -919,16 +926,15 @@ var ReportFactory = {
                                    ];
 
                     var colSum = [
-                      {id: COL.RTT.id                 , label: "NRT (ms)"    , align:"right"},
-                      {id: HTTP.RESPONSE_TIME.id      , label: "ART (ms)"    , align:"right"},
-                      {id: COL.DATA_TRANSFER_TIME.id  , label: "DTT (ms)"    , align: "right"},
-                      {id: HTTP.TRANSACTIONS_COUNT.id , label: "#HTTP Trans.", align:"right"},
-                      {id: COL.ACTIVE_FLOWS.id        , label: "#Act. Flows" , align:"right"},
+                      {id: COL.HANDSHAKE_TIME.id      , label: "NRT (ms)"    , align:"right"},
+                      {id: COL.APP_RESPONSE_TIME.id   , label: "ART (ms)"    , align:"right"},
+                      {id: COL.DATA_TRANSFER_TIME.id  , label: "DTT (ms)"    , align:"right"},
+                      {id: COL.ACTIVE_FLOWS.id        , label: "#Flows"      , align:"right"},
                       {id: COL.UL_DATA_VOLUME.id      , label: "Up. (B)"     , align:"right"},
                       {id: COL.DL_DATA_VOLUME.id      , label: "Down. (B)"   , align:"right"},
                       {id: COL.DATA_VOLUME.id         , label: "Total (B)"   , align:"right"},
                       {id: COL.PACKET_COUNT.id        , label: "#Packets"    , align:"right"},
-                      {id: COL.RETRANSMISSION_COUNT.id, label: "#Retrans."   , align:"right"},
+                      //{id: "retransmission"           , label: "#Retrans."   , align:"right"},
                     ];
 
                     var data = db.data();
@@ -1052,14 +1058,11 @@ var ReportFactory = {
                         obj[ COL.DATA_VOLUME.id]    = MMTDrop.tools.formatDataVolume( obj[ COL.DATA_VOLUME.id]    );
 
                         //1000: micro second => milli second
-                        obj[ HTTP.RESPONSE_TIME.id ] = self.divide( obj[ HTTP.RESPONSE_TIME.id ], obj[ HTTP.TRANSACTIONS_COUNT.id ] * 1000 );
-
-
+                        obj[ COL.APP_RESPONSE_TIME.id ]  = self.divide( obj[ COL.APP_RESPONSE_TIME.id ] , obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
                         obj[ COL.DATA_TRANSFER_TIME.id ] = self.divide( obj[ COL.DATA_TRANSFER_TIME.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
+                        obj[ COL.HANDSHAKE_TIME.id ]     = self.divide( obj[ COL.HANDSHAKE_TIME.id ]    , obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
 
-                        obj[ COL.RTT.id ] = self.divide( obj[ COL.RTT.id ], obj[ COL.ACTIVE_FLOWS.id ] * 1000 );
-
-                        obj.EURT = self.divide( obj[ COL.RTT.id ] + obj[ HTTP.RESPONSE_TIME.id ] + obj[ COL.DATA_TRANSFER_TIME.id ], 1 );
+                        obj.EURT = self.divide( obj[ COL.HANDSHAKE_TIME.id ] + obj[ COL.APP_RESPONSE_TIME.id ] + obj[ COL.DATA_TRANSFER_TIME.id ], 1 );
                     }
                     columns = columns.concat( colSum  );
                     columns.unshift( {id: "index", label: ""});
@@ -1117,7 +1120,7 @@ function loadDetail(timestamp) {
     //only session protocols
     $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
     //only on TCP: ETH.VLAN?.IP?.*.TCP
-    $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
+    $match[ COL.APP_PATH.id ] = APP_PATH_REGEX;
     if (URL_PARAM.probe_id )
       $match[ COL.PROBE_ID.id ] = URL_PARAM.probe_id;
     if (URL_PARAM.app_id() )
@@ -1139,12 +1142,14 @@ function loadDetail(timestamp) {
     [ COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.UL_PACKET_COUNT.id,
      COL.DL_PACKET_COUNT.id, COL.UL_PAYLOAD_VOLUME.id, COL.DL_PAYLOAD_VOLUME.id,
      COL.ACTIVE_FLOWS.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, COL.PAYLOAD_VOLUME.id,
-     COL.RTT.id, COL.RTT_AVG_CLIENT.id, COL.RTT_AVG_SERVER.id,
-     COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
-     COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
-     COL.RETRANSMISSION_COUNT.id,
-     COL.DATA_TRANSFER_TIME.id,
-     HTTP.RESPONSE_TIME.id, HTTP.TRANSACTIONS_COUNT.id
+     COL.HANDSHAKE_TIME.id, COL.APP_RESPONSE_TIME.id, COL.DATA_TRANSFER_TIME.id, 
+     //COL.RTT_AVG_CLIENT.id, COL.RTT_AVG_SERVER.id,
+     //COL.RTT_MAX_CLIENT.id, COL.RTT_MAX_SERVER.id,
+     //COL.RTT_MIN_CLIENT.id, COL.RTT_MIN_SERVER.id,
+     COL.DL_RETRANSMISSION.id,
+     COL.UL_RETRANSMISSION.id,
+     
+     //, HTTP.TRANSACTIONS_COUNT.id
     ].forEach( function( el, index){
       $group[ el ] = {"$sum" : "$" + el};
       //group._total["$sum"].push( "$" + el );
