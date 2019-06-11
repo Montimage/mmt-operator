@@ -8,7 +8,7 @@ var router  = express.Router();
 var _os     = require("os");
 
 function getHardDrive(callback){
-    require('child_process').exec('df -k', function(error, stdout, stderr) {
+    require('child_process').exec('df -k `pwd`', function(error, stdout, stderr) {
 
         var total = 0;
         var used = 0;
