@@ -182,7 +182,6 @@ module.exports = function(){
                {}, 
                CONST.period.SPECIAL //keep original reports
          ),
-         
          session: new DataCache(inserter, "data_session",
                {
             key : ["link", COL.APP_PATH, COL.FORMAT_ID, COL.PROBE_ID],
@@ -191,6 +190,10 @@ module.exports = function(){
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
                
                COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, COL.DATA_TRANSFER_TIME,
+               
+               COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
+               COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+               COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
                
                HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,

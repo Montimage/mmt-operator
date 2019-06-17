@@ -197,8 +197,8 @@ if( typeof Highcharts !== "undefined" )
             RTT_AVG_SERVER    : {id: 33 , label: "RTT min Server"},
             RTT_AVG_CLIENT    : {id: 34 , label: "RTT min Client"},
 
-            UL_RETRANSMISSION  : {id: 35, label: "Data Transfer Time"},
-            DL_RETRANSMISSION  : {id: 36, label: "Retransmision Count"},
+            UL_RETRANSMISSION  : {id: 35, label: "UL Retrans."},
+            DL_RETRANSMISSION  : {id: 36, label: "DL Retrans."},
 
 
             FORMAT_TYPE       : {id: 37, label: "Type"},//Identifier of the format of the encapsulated application report
@@ -2177,6 +2177,7 @@ if( typeof Highcharts !== "undefined" )
             throw new Error("action is not defined");
             return;
          }
+         
          var group_by = "";
          if( param.no_group == undefined )
             switch ( param.period_groupby ) {
@@ -2233,6 +2234,12 @@ if( typeof Highcharts !== "undefined" )
                   $match[ MMTDrop.constants.StatsColumn.PROBE_ID.id ] = {$in:  param.probe};
             }
          }
+         
+         if( param.action == "aggregate" ){
+            if( ! param.keepId )
+               query.push({$project: {_id: 0}})
+         }
+         
          //need for "POST"
          query = JSON.stringify( query );
          MMTDrop.tools.ajax(url, query, "POST", callback);

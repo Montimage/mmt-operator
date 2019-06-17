@@ -17,6 +17,10 @@ const child_process   = require("child_process");
 //3rd lib
 const MongoStore      = require('connect-mongo')(session);
 
+
+global.rootRequire = name => require(`${__dirname}/${name}`);
+global.libRequire  = name => require(`${__dirname}/libs/${name}`);
+
 const config          = require("./libs/config");
 const routes          = require('./routes/index');
 const chartRoute      = require('./routes/chart');
@@ -200,6 +204,10 @@ app.use('/ip', require("./routes/ip2loc.js"));
 
 api.dbconnector = dbconnector;
 app.use('/api', api);
+
+const restful = require('./routes/restful.js');
+restful.dbconnector = dbconnector;
+app.use('/restful', restful);
 
 app.use("/a_api", require("./routes/a_api.js"));
 
