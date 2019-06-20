@@ -1917,11 +1917,9 @@ if( typeof Highcharts !== "undefined" )
          isAutoLoad = false;
 
       var _serverURL = MMTDrop.config.serverURL || "http://localhost:8088";
-      if (_serverURL.substring(_serverURL.length - 1, 1) === "/")
-         _serverURL += "api";
-      else
-         _serverURL += "/api";
-
+      if (_serverURL.substring(_serverURL.length - 1, 1) !== "/")
+         _serverURL += '/';
+            
       var _param = param || {};
       var _data = [];        //it is data getting from MMT-Operator and it can    be modified during using of this object
       var _originalData = []; //it is data getting from MMT-Operator and it cannot be modified
@@ -2021,8 +2019,13 @@ if( typeof Highcharts !== "undefined" )
                _reloadCallback[i]( _originalData, user_data );
          };
 
+         var getDataFn = _get;
 
-         _get (_param, {
+         if( param.id != undefined )
+            getDataFn = _getRestful;
+         
+         
+         getDataFn (_param, {
             success: onSuccess.bind( this ),
             error  : function( xhr, status, msg){
                if( status == "timeout")
@@ -2034,7 +2037,7 @@ if( typeof Highcharts !== "undefined" )
 
                MMTDrop.alert.error( '<span id="alertify-db-error">' + msg + '</span>', 10000 );
             }
-         } );
+         });
 
       };
 
@@ -2161,12 +2164,25 @@ if( typeof Highcharts !== "undefined" )
 
          return stat;
       }();
-
+      
+      /**
+       * Get data from restful api
+       */
+      function _getRestful( param, callback ){
+         var url = _serverURL + "restful/" + param.id + '/' + param.period.begin + '/' + param.period.end;
+         if( param.query == undefined )
+            param.query = {};
+         
+         var query = JSON.stringify( param.query );
+         MMTDrop.tools.ajax(url, query, "GET", callback);
+      };
+      
       function _get(param, callback) {
+         var url = _serverURL + 'api';
+         
          if( param.url !== undefined )
             return MMTDrop.tools.ajax( param.url, param, "GET", callback );
 
-         var url = _serverURL;
          //old
          if( param.collection == undefined ){
             return MMTDrop.tools.ajax( url, param, "GET", callback );

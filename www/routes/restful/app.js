@@ -1,6 +1,8 @@
 const dataAdaptor = libRequire("dataAdaptor");
 /**
  * Supported paramerts:
+ * - param.format = 99/100
+ * 
  * - param.probe = 1
  * - param.ip = 'x.x.x.x'
  */
