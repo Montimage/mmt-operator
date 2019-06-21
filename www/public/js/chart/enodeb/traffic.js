@@ -287,17 +287,25 @@ var ReportFactory = {
                   //console.log(yMin, yMax, y2Min, y2Max);
                   //get same proportion for y and y2 axis
                   //fix y, change y2 to get the same proportion
-                  var propo  = yMax / yMin;
-                  var new_y2Max = y2Min * propo;
-                  if( new_y2Max < y2Max )
-                     y2Min = y2Max / propo;
-                  else
-                     y2Max = new_y2Max;
-                     
-                  //this must be true: (y2Max/y2Min == yMax/yMin)
-                  //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
-                  
-                  
+                  if( yMin == yMax && yMin == 0 ){
+                     if( y2Min == 0 ){
+                        yMin = 0;
+                        yMax = y2Max;
+                     } else {
+                        yMin = 1;
+                        yMax = y2Max/y2Min;
+                     }
+                  }else{
+                     var propo  = yMax / yMin;
+                     var new_y2Max = y2Min * propo;
+                     if( new_y2Max < y2Max )
+                        y2Min = y2Max / propo;
+                     else
+                        y2Max = new_y2Max;
+                        
+                     //this must be true: (y2Max/y2Min == yMax/yMin)
+                     //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
+                  }
                   
                   return {
                      data    : data,
