@@ -2169,10 +2169,25 @@ if( typeof Highcharts !== "undefined" )
        * Get data from restful api
        */
       function _getRestful( param, callback ){
-         var url = _serverURL + "restful/" + param.id + '/' + param.period.begin + '/' + param.period.end;
+         if( param == undefined )
+            param = {};
+         
+         //auto add time if it is not defined
+         if( param.period === undefined && typeof( status_db ) !== 'undefined')
+            param.period = status_db.time
+         
          if( param.query == undefined )
             param.query = {};
          
+         //auto add probe filter if it is not defined
+         if( param.probe === undefined  && typeof( fProbe ) !== 'undefined'){
+            var probe_id = parseInt( fProbe.selectedOption().id );
+            if( probe_id !== 0 )
+               param.query.probe = probe_id;
+         }
+         
+
+         var url = _serverURL + "restful/" + param.id + '/' + param.period.begin + '/' + param.period.end;
          var query = JSON.stringify( param.query );
          MMTDrop.tools.ajax(url, query, "GET", callback);
       };

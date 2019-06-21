@@ -2,9 +2,8 @@ const dataAdaptor = libRequire("dataAdaptor");
 /**
  * Supported paramerts:
  * - param.format = 99/100
- * 
- * - param.probe = 1
- * - param.ip = 'x.x.x.x'
+ * - param.probe  = 1
+ * - param.ip     = 'x.x.x.x'
  */
 module.exports = function( startTime, endTime, period, param, dbconnector, cb ){
    //select only TCP-based app
@@ -44,6 +43,9 @@ module.exports = function( startTime, endTime, period, param, dbconnector, cb ){
          el[ COL.APP_ID ]   = dataAdaptor.getProtocolNameFromID( el[ COL.APP_ID ] );
          el[ COL.APP_PATH ] = dataAdaptor.getPathFriendlyName( el[ COL.APP_PATH ] );
       });
+      
+      //sort data by asc of APP_ID (name)
+      data.sort( (a,b) => ('' + a[ COL.APP_ID ]).localeCompare( b[ COL.APP_ID ] ));
       
       cb( err, data );
    }, false);

@@ -33,7 +33,7 @@ router.use( function( req, res, next){
    next();
 });
 
-function sendResponse( res, error, data ){
+function sendResponse( res, error, data, time ){
    res.setHeader("Content-Type", "application/json");
    
    if( error ){
@@ -42,9 +42,13 @@ function sendResponse( res, error, data ){
       return;
    }
    
+   if( time == undefined )
+      time = {};
+   time.now = (new Date()).getTime();
+   
    res.send({
-      data : data == undefined ? []: data,
-      now  : (new Date()).getTime()
+      data  : data == undefined ? []: data,
+      time  : time
    });
 };
 
@@ -65,6 +69,23 @@ function getPeriod(start, end){
       return PERIOD.HOUR;
    else
       return PERIOD.DAY;
+}
+
+function getSampling( period ){
+   const PERIOD = constant.period;
+   
+   switch( period ){
+      case PERIOD.REAL:
+         return 5000; 
+      case PERIOD.MINUTE:
+         return 60*1000;
+      case PERIOD.HOUR:
+         return 60*60*1000;
+      case PERIOD.DAY:
+         return 24*60*60*1000;
+      default:
+         return 1;
+   }
 }
 
 function getQuery( str ){
@@ -104,7 +125,7 @@ router.get( '/:collection/:start/:end', function (req, res, next) {
       
       const proc = PROCESSORS[ collection ];
       if( proc ) //found a middleware
-         return proc( startTime, endTime, period, query, dbconnector, (err, data) => sendResponse( res, err, data) );
+         return proc( startTime, endTime, period, query, dbconnector, (err, data) => sendResponse( res, err, data, {begin: startTime, end: endTime, sampling: getSampling( period)}) );
       else
          return sendResponse( res, new Error("Unsupported") );      
    }catch( ex ){

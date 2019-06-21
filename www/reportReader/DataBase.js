@@ -196,7 +196,7 @@ module.exports = function(){
                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
                
-               HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
+               //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }

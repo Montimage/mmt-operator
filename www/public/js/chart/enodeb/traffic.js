@@ -136,35 +136,27 @@ var ReportFactory = {
          
          appList_db._reload = function(){
             //var $match = {isGen: false}; //select only App given by probe
-
-            appList_db.reload( {period: status_db.time},
-               function( new_data, f ){
-                  var arr = [];
+            appList_db.reload( {},
+               function( new_data ){
+                  //new array
+                  var arr = new_data.map( function(row, i){
+                     var app = row[ COL.APP_ID.id ];
+                     return {id: i+1, label: app, selected: (app === URL_PARAM.app)};
+                  });
                   
-                  for( var i in new_data ){
-                     var app  = new_data[i][ COL.APP_ID.id ];
-                     i = app;
-                     
-                     if (app == URL_PARAM.app)
-                        arr.push( {id: i, label : app, selected : true} );
-                     else
-                        arr.push( {id: i, label : app} );
-                  }
                   //add all to app list when having serval apps
                   if( arr.length > 1 )
-                     if( URL_PARAM.app == undefined )
-                        arr.unshift({ id: 0, label: "All", selected : true });
-                     else
-                        arr.unshift({ id: 0, label: "All" });
+                     arr.unshift({ id: 0, label: "All", selected : (URL_PARAM.app == undefined) });
 
-                  f.option( arr );
-                  f.redraw();
+                  fApp.option( arr );
+                  fApp.redraw();
                   //f.attachTo( appList_db );
                   //f.filter();
-               }, fApp );
+               });
          }//end appList_db._reload
 
-         var UL_METRIC, DL_METRIC;
+         
+         var UL_METRIC, DL_METRIC; //which matric is being selected: either 'pelr' or 'packet_delay'
          var AXIS_Y_TITLE;
          var DATA_PROC_FN;
          switch( URL_PARAM.metric ){
@@ -172,10 +164,8 @@ var ReportFactory = {
                UL_METRIC = {id: COL.UL_RETRANSMISSION, label: "UL PELR"};
                DL_METRIC = {id: COL.DL_RETRANSMISSION, label: "DL PELR"};
                AXIS_Y_TITLE = "Packet error lost rate (%)";
-               DATA_PROC_FN = function( data, tot ){
-                  if( tot == 0 || tot == undefined )
-                     tot = 1;
-                  return Math.round( data * 100 / tot );
+               DATA_PROC_FN = function( data ){
+                  return data
                }
                break;
                
@@ -183,12 +173,11 @@ var ReportFactory = {
             default:
                UL_METRIC = {id: COL.RTT_AVG_CLIENT.id, label: "UL Packet Delay" };
                DL_METRIC = {id: COL.RTT_AVG_SERVER.id, label: "DL Packet Delay" };
-               AXIS_Y_TITLE = "Packet delay (ns)";
+               AXIS_Y_TITLE = "Packet delay (ms)";
                DATA_PROC_FN = function( data ){
-                  return (data / 1000).toFixed(2); //nanosecond => micro second
+                  return (data / 1000 / 1000); //nanosecond => mili second
                }
                break;
-               
          }
          
          //group by timestamp         
@@ -197,53 +186,18 @@ var ReportFactory = {
             UL_METRIC, DL_METRIC,
             COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION ];
 
-         var database = new MMTDrop.Database( {collection: "data_session", action: "aggregate", raw:true,
-            no_override_when_reload: true, period_groupby: fPeriod.selectedOption().id },
+         var database = new MMTDrop.Database( {id: "lte-qos"},
             //this function is called when database got data from server
             function( data ){
                //reload list of app/proto
                appList_db._reload();
                return data;
             });//end new Database
+         
          //this is called each time database is reloaded to update parameters of database
-         database.updateParameter = function( _old_param ){
-            //mongoDB aggregate
-            var group = { _id : {} };
-
-            [ COL.TIMESTAMP.id ].forEach( function( el, index){
-               group["_id"][ el ] = "$" + el;
-            } );
-            
-            cols.forEach( function( el, index){
-                  group[ el.id ] = {"$sum" : "$" + el.id};
-               });
-            [ COL.TIMESTAMP.id ].forEach( function( el, index){
-               group[ el ] = {"$last" : "$"+ el};
-            });
-
-            var $match = {};
-            //timestamp
-            $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
-            //only IP (session report)
-            $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
-            $match.isGen  = false;
-            //only on TCP: ETH.VLAN?.IP?.*.TCP
-            $match[ COL.APP_PATH.id ] = APP_PATH_REGEX;
-
-            //load data corresponding to the selected app
-            var probe_id  = URL_PARAM.probe_id;
-            if( probe_id != undefined )
-               $match[ COL.PROBE_ID.id ] = parseInt( probe_id );
-
-
-            if( URL_PARAM.app_id() )
-               $match[ COL.APP_ID.id] = URL_PARAM.app_id();
-            if( URL_PARAM.ip )
-               $match[ COL.IP_SRC.id] = URL_PARAM.ip;
-
-
-            return {query : [{"$match": $match},{"$group" : group}]};
-         };//end database.updateParameter
+         //database.updateParameter = function( _old_param ){
+         //   return {query : [{"$match": $match},{"$group" : group}]};
+         //};//end database.updateParameter
 
          //line chart on the top
          var cLine = MMTDrop.chartFactory.createTimeline({
@@ -259,6 +213,8 @@ var ReportFactory = {
                   ];
                   
                   var data  = db.data();
+                  var sampling = db.time.sampling / 1000; //milisecond => second
+                  sampling /= 8; //bit per second
 
                   var get_number = function( v ){
                      if( v == null || isNaN( v )) return -1;
@@ -269,22 +225,26 @@ var ReportFactory = {
                   var length_ul = 0, total_ul = 0, val;
                   var length_dl = 0, total_dl = 0;
                   
-                  var y2Min = -10, y2Max = 10;
-                  var yMin  = -10, yMax  = 10;
+                  var y2Min = y2Max = 0;
+                  var yMin  = yMax  = 0;
                   
                   for( var i=0; i<data.length; i++ ){
-                     data[i][UL_METRIC.id] = DATA_PROC_FN(data[i][UL_METRIC.id], data[i][COL.UL_PACKET_COUNT.id]);
-                     data[i][DL_METRIC.id] = DATA_PROC_FN(data[i][DL_METRIC.id], data[i][COL.DL_PACKET_COUNT.id]);
+                     var m = data[i];
+                     m[UL_METRIC.id] = DATA_PROC_FN(m[UL_METRIC.id]);
+                     m[DL_METRIC.id] = DATA_PROC_FN(m[DL_METRIC.id]);
+                     //bit per second
+                     m[COL.UL_DATA_VOLUME.id] /= sampling;
+                     m[COL.UL_DATA_VOLUME.id] /= sampling;
                      
                      //calculate avg
-                     val =  get_number( data[i][ UL_METRIC.id ] );
+                     val =  get_number( m[ UL_METRIC.id ] );
                      //val = -3
                      if( val >= 0 ){
                         total_ul  += val;
                         length_ul ++;
                      }
                      
-                     val =  get_number( data[i][ DL_METRIC.id ] );
+                     val =  get_number( m[ DL_METRIC.id ] );
                      if( val >= 0 ){
                         total_dl  += val;
                         length_dl ++;
@@ -293,21 +253,20 @@ var ReportFactory = {
                      
                      //upside down
                      [COL.DL_DATA_VOLUME.id, DL_METRIC.id].forEach( function( el ){
-                        data[i][el] = - data[i][el];   
+                        m[el] = - m[el];   
                      });
 
                      
-                     if( yMax < data[i][ UL_METRIC.id ] )
-                        yMax = data[i][ UL_METRIC.id ];
-                     if( yMin > data[i][ DL_METRIC.id ] )
-                        yMin = data[i][ DL_METRIC.id ];
+                     if( yMax < m[ UL_METRIC.id ] )
+                        yMax = m[ UL_METRIC.id ];
+                     if( yMin > m[ DL_METRIC.id ] )
+                        yMin = m[ DL_METRIC.id ];
                      
                      
-                     if( y2Max < data[i][ COL.UL_DATA_VOLUME.id ] )
-                        y2Max = data[i][ COL.UL_DATA_VOLUME.id ];
-                     if( y2Min > data[i][ COL.DL_DATA_VOLUME.id ] )
-                        y2Min = data[i][ COL.DL_DATA_VOLUME.id ];
-                     
+                     if( y2Max < m[ COL.UL_DATA_VOLUME.id ] )
+                        y2Max = m[ COL.UL_DATA_VOLUME.id ];
+                     if( y2Min > m[ COL.DL_DATA_VOLUME.id ] )
+                        y2Min = m[ COL.DL_DATA_VOLUME.id ];
                   }
                   
                   total_ul = divise(total_ul, length_ul);
@@ -324,16 +283,21 @@ var ReportFactory = {
                   var height = $widget.find(".grid-stack-item-content").innerHeight();
                   height -= $widget.find(".filter-bar").outerHeight(true) + 15;
 
+                  
+                  //console.log(yMin, yMax, y2Min, y2Max);
                   //get same proportion for y and y2 axis
-                  if (y2Min < 0 || yMin < 0) {
-                     var prop1 = yMin < 0 ? -(yMax / yMin) : Math.Infinity; 
-                     var prop2 = y2Min < 0 ? -(y2Max / y2Min) : Math.Infinity;
-                     if (prop1 > prop2) {
-                        yMin = -(yMax / prop2);
-                     } else {
-                        y2Min = -(y2Max / prop1);
-                     }
-                  }
+                  //fix y, change y2 to get the same proportion
+                  var propo  = yMax / yMin;
+                  var new_y2Max = y2Min * propo;
+                  if( new_y2Max < y2Max )
+                     y2Min = y2Max / propo;
+                  else
+                     y2Max = new_y2Max;
+                     
+                  //this must be true: (y2Max/y2Min == yMax/yMin)
+                  //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
+                  
+                  
                   
                   return {
                      data    : data,
@@ -344,7 +308,7 @@ var ReportFactory = {
                      addZeroPoints:{
                         time_id       : COL.TIMESTAMP.id,
                         time          : status_db.time,
-                        sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
+                        sample_period : db.time.sampling,
                         probeStatus   : status_db.probeStatus
                     },
                     //other parameter for the c3js line chart
@@ -352,7 +316,7 @@ var ReportFactory = {
                         //show avg lines of time
                         grid: {
                            y: {
-                              lines : gridLines
+                              //lines : gridLines
                            }
                         },
                         //synchronize zero line of two axis: y and y2
@@ -389,7 +353,7 @@ var ReportFactory = {
                   },
                },
                color: {
-                  pattern: ['violet', 'orange', 'DeepSkyBlue', 'green']
+                  pattern: ['violet', 'DeepSkyBlue', 'orange',  'green']
                },
                grid: {
                   x: {
@@ -405,6 +369,7 @@ var ReportFactory = {
                   y: {
                      show : true,
                      tick:{
+                        count: 5,
                         //override the default format
                         format: function( v ){
                            if( v < 0 ) 
@@ -412,7 +377,7 @@ var ReportFactory = {
                            return  MMTDrop.tools.formatDataVolume(v);
                         }
                      },
-                     pading: {top: 0, bottom: 0},
+                     padding: {top: 0, bottom: 0},
                   },
                   y2: {
                      show : true,
@@ -421,14 +386,14 @@ var ReportFactory = {
                         position: "outer"
                      },
                      tick: {
-                        //count: 6,
+                        count: 5,
                         format: function( v ){
                            if( v < 0 ) 
                               v = -v;
                            return MMTDrop.tools.formatDataVolume( v, true );
                         }
                      },
-                     pading: {top: 0, bottom: 0},
+                     padding: {top: 0, bottom: 0},
                   }
                },
                zoom: {
@@ -444,16 +409,17 @@ var ReportFactory = {
             afterEachRender: function (_chart) {
                var chart = _chart.chart;
                // Add event listener for opening and closing details
+               //console.log(_chart.chart.axis.range())
                //_chart.chart.axis.range( {max: {y: 600, y2: 100}, min: {y: -100, y2: 0}} )
                
                //translate oX line to zero
                //select the x axis
+               
                d3.select(chart.element)
                   .select('.' + c3.chart.internal.fn.CLASS.axisX)
                   .transition()
                   // and translate it to the y = 0 position
                  .attr('transform', "translate(" + 0 + "," + chart.internal.y(0) + ")")
-                 
             }
          });
 
