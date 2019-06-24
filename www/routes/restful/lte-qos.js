@@ -61,15 +61,15 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
          if( y == 0 )
             return 0;
          //get percentage
-         x = (x*100/y);
+         x = (x/y);
          //round to 2 numbers after ., e.g., 10.xx
          return Math.round( x * 100 )/100;
       }
       
       //data processing
       data.map( (el) => {
-         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ]/100, el[ COL.ACTIVE_FLOWS ]);
-         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ]/100, el[ COL.ACTIVE_FLOWS ]);
+         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ], el[ COL.ACTIVE_FLOWS ]);
+         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ], el[ COL.ACTIVE_FLOWS ]);
          //packet error lost rate: number packet erros / total packet
          el[ COL.DL_RETRANSMISSION ] = percentage( el[ COL.DL_RETRANSMISSION ], el[ COL.DL_PACKET_COUNT ] );
          el[ COL.UL_RETRANSMISSION ] = percentage( el[ COL.UL_RETRANSMISSION ], el[ COL.UL_PACKET_COUNT ] );

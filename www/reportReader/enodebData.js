@@ -44,9 +44,10 @@ if( isEnableEnodeB ){
    function _appendData( msg, lte, cb ){
       if( lte == null )
          console.warn("No eNodeB info for this report: " + JSON.stringify( msg ) );
-      //append data from lte to msg
-      for( var i in lte )
-         msg[i] = lte[i];
+      else
+         //append data from lte to msg
+         for( var i in lte )
+            msg[i] = lte[i];
 
       cb( msg );
    }
@@ -63,8 +64,8 @@ if( isEnableEnodeB ){
       //1. load enb data
       mysqlConnection.query( enbSqlString, function( err, data, fields ){
          if( err ){
-            console.error("Cannot connect to mysql");
-            console.error( err );
+            console.error("Cannot connect to mysql: " + err.message);
+            return cb();
          }
          else{
             //clear cache
@@ -135,7 +136,8 @@ if( isEnableEnodeB ){
       //if timeout
       if( lastMsgTimestamp + DB_QUERY_INTERVAL < ts
             //or data is not available in the cache
-            || o == null ){
+            //|| o == null 
+            ){
          //mark 
          isQueringDB = true;
 

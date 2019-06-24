@@ -119,11 +119,16 @@ var ReportFactory = {
          
          if (URL_PARAM.metric != undefined)
             fMetric.selectedOption( {id: URL_PARAM.metric} );
+         else
+            fMetric.selectedOption( {id: 'packet_delay'} );
          
          
          var fApp  = MMTDrop.filterFactory.createAppFilter();
          fApp.onFilter( function( opt ){
-            MMTDrop.tools.reloadPage( "app=" + opt.label );
+            if( opt.label == 'All')
+               MMTDrop.tools.reloadPage( "app=undefined" );
+            else
+               MMTDrop.tools.reloadPage( "app=" + opt.label );
          });
 
          var appList_db = MMTDrop.databaseFactory.createStatDB(
@@ -138,17 +143,24 @@ var ReportFactory = {
             //var $match = {isGen: false}; //select only App given by probe
             appList_db.reload( {},
                function( new_data ){
+                  var selectedOption = undefined;
                   //new array
                   var arr = new_data.map( function(row, i){
                      var app = row[ COL.APP_ID.id ];
-                     return {id: i+1, label: app, selected: (app === URL_PARAM.app)};
+                     if( app === URL_PARAM.app )
+                        selectedOption =  {id: i+1, label: app};
+                     
+                     return {id: i+1, label: app};
                   });
-                  
                   //add all to app list when having serval apps
                   if( arr.length > 1 )
-                     arr.unshift({ id: 0, label: "All", selected : (URL_PARAM.app == undefined) });
+                     arr.unshift({ id: 0, label: "All"} );
+                  
+                  if( selectedOption == undefined )
+                     selectedOption = arr[0];
 
                   fApp.option( arr );
+                  fApp.selectedOption( selectedOption );
                   fApp.redraw();
                   //f.attachTo( appList_db );
                   //f.filter();
@@ -159,13 +171,15 @@ var ReportFactory = {
          var UL_METRIC, DL_METRIC; //which matric is being selected: either 'pelr' or 'packet_delay'
          var AXIS_Y_TITLE;
          var DATA_PROC_FN;
+         var METRIC_UNIT;
          switch( URL_PARAM.metric ){
             case "pelr":
-               UL_METRIC = {id: COL.UL_RETRANSMISSION, label: "UL PELR"};
-               DL_METRIC = {id: COL.DL_RETRANSMISSION, label: "DL PELR"};
+               UL_METRIC = {id: COL.UL_RETRANSMISSION.id, label: "UL PELR"};
+               DL_METRIC = {id: COL.DL_RETRANSMISSION.id, label: "DL PELR"};
                AXIS_Y_TITLE = "Packet error lost rate (%)";
+               METRIC_UNIT = ' %';
                DATA_PROC_FN = function( data ){
-                  return data
+                  return data * 100;//percentage
                }
                break;
                
@@ -174,6 +188,7 @@ var ReportFactory = {
                UL_METRIC = {id: COL.RTT_AVG_CLIENT.id, label: "UL Packet Delay" };
                DL_METRIC = {id: COL.RTT_AVG_SERVER.id, label: "DL Packet Delay" };
                AXIS_Y_TITLE = "Packet delay (ms)";
+               METRIC_UNIT = " ms/flow";
                DATA_PROC_FN = function( data ){
                   return (data / 1000 / 1000); //nanosecond => mili second
                }
@@ -186,18 +201,17 @@ var ReportFactory = {
             UL_METRIC, DL_METRIC,
             COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION ];
 
-         var database = new MMTDrop.Database( {id: "lte-qos"},
-            //this function is called when database got data from server
-            function( data ){
-               //reload list of app/proto
-               appList_db._reload();
-               return data;
-            });//end new Database
-         
+         var database = new MMTDrop.Database( {id: "lte-qos"} );//end new Database
          //this is called each time database is reloaded to update parameters of database
-         //database.updateParameter = function( _old_param ){
-         //   return {query : [{"$match": $match},{"$group" : group}]};
-         //};//end database.updateParameter
+         database.updateParameter = function( _old_param ){
+            //reload appList metric
+            appList_db._reload();
+            
+            var query = {};
+            if( URL_PARAM.app !== 'All' && URL_PARAM.app != undefined )
+               query.app = URL_PARAM.app;
+            return {query : query};
+         };//end database.updateParameter
 
          //line chart on the top
          var cLine = MMTDrop.chartFactory.createTimeline({
@@ -205,10 +219,10 @@ var ReportFactory = {
                getDataFn: function (db) {
                   var cols = [ COL.TIMESTAMP,
                      UL_METRIC,
-                     DL_METRIC,
                      //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
-                     
                      {id: COL.UL_DATA_VOLUME.id, label: "UL Data Rate", type: "line"},
+                     
+                     DL_METRIC,
                      {id: COL.DL_DATA_VOLUME.id, label: "DL Data Rate", type: "line"},
                   ];
                   
@@ -225,13 +239,14 @@ var ReportFactory = {
                   var length_ul = 0, total_ul = 0, val;
                   var length_dl = 0, total_dl = 0;
                   
-                  var y2Min = y2Max = 0;
-                  var yMin  = yMax  = 0;
+                  var yMax = y2Max = 1;
+                  var yMin = y2Min = -1;
                   
                   for( var i=0; i<data.length; i++ ){
                      var m = data[i];
                      m[UL_METRIC.id] = DATA_PROC_FN(m[UL_METRIC.id]);
                      m[DL_METRIC.id] = DATA_PROC_FN(m[DL_METRIC.id]);
+
                      //bit per second
                      m[COL.UL_DATA_VOLUME.id] /= sampling;
                      m[COL.UL_DATA_VOLUME.id] /= sampling;
@@ -253,7 +268,7 @@ var ReportFactory = {
                      
                      //upside down
                      [COL.DL_DATA_VOLUME.id, DL_METRIC.id].forEach( function( el ){
-                        m[el] = - m[el];   
+                        m[el] = - m[el]; 
                      });
 
                      
@@ -275,9 +290,9 @@ var ReportFactory = {
                   var gridLines = [];
                   if( total_ul != 0 )
                      //granularity/average
-                     gridLines.push( {value: total_ul, text: "UL: " + total_ul + " ms/flow", position: 'start'} );
+                     gridLines.push( {value: total_ul, text: UL_METRIC.label + ": " + total_ul + METRIC_UNIT, position: 'start'} );
                   if( total_dl != 0 )
-                     gridLines.push({value: -total_dl, text: "DL: " + total_dl + " ms/flow", position: 'start'});
+                     gridLines.push({value: -total_dl, text: DL_METRIC.label + ": " + total_dl + METRIC_UNIT, position: 'start'});
                   
                   var $widget = $("#" + cLine.elemID).getWidgetParent();
                   var height = $widget.find(".grid-stack-item-content").innerHeight();
@@ -287,25 +302,15 @@ var ReportFactory = {
                   //console.log(yMin, yMax, y2Min, y2Max);
                   //get same proportion for y and y2 axis
                   //fix y, change y2 to get the same proportion
-                  if( yMin == yMax && yMin == 0 ){
-                     if( y2Min == 0 ){
-                        yMin = 0;
-                        yMax = y2Max;
-                     } else {
-                        yMin = 1;
-                        yMax = y2Max/y2Min;
-                     }
-                  }else{
-                     var propo  = yMax / yMin;
-                     var new_y2Max = y2Min * propo;
-                     if( new_y2Max < y2Max )
-                        y2Min = y2Max / propo;
-                     else
-                        y2Max = new_y2Max;
-                        
-                     //this must be true: (y2Max/y2Min == yMax/yMin)
-                     //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
-                  }
+                  var propo  = yMax / yMin;
+                  var new_y2Max = y2Min * propo;
+                  if( new_y2Max < y2Max )
+                     y2Min = y2Max / propo;
+                  else
+                     y2Max = new_y2Max;
+                     
+                  //this must be true: (y2Max/y2Min == yMax/yMin)
+                  //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
                   
                   return {
                      data    : data,
@@ -324,7 +329,7 @@ var ReportFactory = {
                         //show avg lines of time
                         grid: {
                            y: {
-                              //lines : gridLines
+                              lines : gridLines
                            }
                         },
                         //synchronize zero line of two axis: y and y2
@@ -361,7 +366,7 @@ var ReportFactory = {
                   },
                },
                color: {
-                  pattern: ['violet', 'DeepSkyBlue', 'orange',  'green']
+                  pattern: ['DeepSkyBlue', 'green', 'violet', 'orange']
                },
                grid: {
                   x: {
@@ -405,7 +410,7 @@ var ReportFactory = {
                   }
                },
                zoom: {
-                  enabled: false,
+                  enabled: true,
                   rescale: true
                },
                tooltip:{
@@ -975,8 +980,8 @@ var ReportFactory = {
                         }},
                         {id: COL.IP_SRC.id, label: "IP of eNodeB"},
                         {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
-                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)"},
-                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet"}, 
+                        {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber },
+                        {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet", format: MMTDrop.tools.formatLocaleNumber}, 
                         {id: "graph", format : function(val, msg){
                            var fun = "createPopupReport('sctp'," //collection
                               + GTP.ENB_NAME.id  //key 

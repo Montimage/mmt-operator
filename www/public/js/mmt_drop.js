@@ -2188,7 +2188,7 @@ if( typeof Highcharts !== "undefined" )
          
 
          var url = _serverURL + "restful/" + param.id + '/' + param.period.begin + '/' + param.period.end;
-         var query = JSON.stringify( param.query );
+         var query = param.query; //JSON.stringify( param.query );
          MMTDrop.tools.ajax(url, query, "GET", callback);
       };
       

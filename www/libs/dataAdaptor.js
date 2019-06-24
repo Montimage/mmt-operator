@@ -1,22 +1,7 @@
 const config  = require("../config.json");
 const ip2loc  = require("./ip2loc");
 const dataIndex = require("./shared/dataIndex");
-const _global    = require("./global");
-/** Class: MMTDrop
- *  An object container for all MMTDrop library functions.
- *
- *  This class is just a container for all the objects and constants
- *  used in the library.  It is not meant to be instantiated, but to
- *  provide a namespace for library objects, constants, and functions.
- */
-
-const val = _global.get("mmt-drop");
-if( val != undefined ){
-   module.exports = val;
-}
-
-else{
-   const MMTDrop = {
+  const MMTDrop = {
          /**
           * Get Category ID of an application
           * @param {number} appId - application Id
@@ -438,9 +423,13 @@ else{
       }
    }
 // end cache of category
-
-
-   _global.set( "mmt-drop", MMTDrop );
-
-   module.exports = MMTDrop;
-}
+   
+//reserved name => id
+   MMTDrop.ProtocolsNameID = {};
+   for( var protoID in MMTDrop.ProtocolsIDName ){
+      var protoName = MMTDrop.ProtocolsIDName[ protoID ];
+      MMTDrop.ProtocolsNameID[ protoName ] = parseInt( protoID );
+   }
+   
+   
+module.exports = MMTDrop;

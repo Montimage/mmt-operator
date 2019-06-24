@@ -30,6 +30,9 @@ module.exports = function( startTime, endTime, period, param, dbconnector, cb ){
 
    if( param.ip )
       $match[ COL.IP_SRC] = param.ip;
+   
+   if( param.format != undefined )
+      $match[ COL.FORMAT_ID ] = parseInt( param.format );
 
    const project = {"_id": 0};
 
@@ -45,7 +48,10 @@ module.exports = function( startTime, endTime, period, param, dbconnector, cb ){
       });
       
       //sort data by asc of APP_ID (name)
-      data.sort( (a,b) => ('' + a[ COL.APP_ID ]).localeCompare( b[ COL.APP_ID ] ));
+      const UNKNOWN = '_unknown';
+      data.sort( function(a,b){
+         return ('' + a[ COL.APP_ID ]).localeCompare( b[ COL.APP_ID ] );
+      });
       
       cb( err, data );
    }, false);
