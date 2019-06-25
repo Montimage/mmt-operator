@@ -279,7 +279,7 @@ module.exports = function(){
       delete self.dataCache.mac;
    if( !hasModule("network") && !hasModule("dpi") && !hasModule("application"))
       delete self.dataCache.app;
-   if(  !hasModule("application"))
+   if(  !hasModule("application") && !hasModule('enodeb'))
       delete self.dataCache.session;
    if( !hasModule("network") && !hasModule("application"))
       delete self.dataCache.ip;
