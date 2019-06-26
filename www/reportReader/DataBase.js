@@ -197,6 +197,7 @@ module.exports = function(){
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
                
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
+               GTP.EXPECTED_DELAY, GTP.EXPECTED_PELR,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
@@ -377,6 +378,9 @@ module.exports = function(){
          case dataAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:
             inserter.add("lte_topology", [msg] );
             return;
+         case dataAdaptor.CsvFormat.LTE_QOS_REPORT:
+            enodeb.addQci( msg );
+            return;
          case dataAdaptor.CsvFormat.LICENSE:
             //new running period
             //this report is sent at each end of x seconds (after seding all other reports)
@@ -384,6 +388,8 @@ module.exports = function(){
             //mark avaibility of this probe
             self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
+            
+         
 
          case 99:
          case 100:

@@ -3,6 +3,7 @@ const dataAdaptor = require("../libs/dataAdaptor");
 const config      = require("../libs/config.js");
 const tools       = require("../libs/tools");
 const mysql       = require('mysql');
+const interProcCache  = require('../libs/InterProcessCache.js');
 
 const isEnableEnodeB = Array.isArray( config.modules ) && (config.modules.indexOf("enodeb") != -1); 
 
@@ -42,9 +43,9 @@ if( isEnableEnodeB ){
     * Append all attribute from lte to msg
     */
    function _appendData( msg, lte, cb ){
-      if( lte == null )
-         console.warn("No eNodeB info for this report: " + JSON.stringify( msg ) );
-      else
+      if( lte == null ){
+         //console.warn("No eNodeB info for this report: " + JSON.stringify( msg ) );
+      }else
          //append data from lte to msg
          for( var i in lte )
             msg[i] = lte[i];
@@ -112,8 +113,63 @@ if( isEnableEnodeB ){
 // this cache contains messages that comme (by calling _appendSuplementData) when we are loading data from DB
    var msgCache = [];
    var isQueringDB = false;
+   
+   
+   //https://en.wikipedia.org/wiki/QoS_Class_Identifier
+   const QCI = {
+      1: {delay: 100, pelr: 10e-2}, //delay 100ms, packet error lost rate: 10-2 = 1%
+      2: {delay: 150, pelr: 10e-3},
+      3: {delay:  50, pelr: 10e-3},
+      4: {delay: 300, pelr: 10e-6},
 
+      5: {delay: 100, pelr: 10e-6},
+      6: {delay: 300, pelr: 10e-6},
+      7: {delay: 100, pelr: 10e-3},
+      8: {delay: 300, pelr: 10e-6},
+      9: {delay: 300, pelr: 10e-6},
+      
+      64: {delay:  75, pelr: 10e-2},
+      66: {delay: 100, pelr: 10e-2},
+      69: {delay:  60, pelr: 10e-6},
+      70: {delay: 200, pelr: 10e-6},
+   }
+   
+   var qciCache = {};
+   function _addQci( msg ){
+      const teid = msg[ 5 ];
+      const qci  = msg[ 6 ];
+      qciCache[ teid ] = qci;
+   }
 
+   function _appendExpectedQoS( msg ){
+      msg[ GTP.EXPECTED_DELAY ] = 0;
+      msg[ GTP.EXPECTED_PELR ]  = 0;
+      
+      let teids = msg[ GTP.TEIDs ];
+      if( teids == undefined )
+         return;
+      
+      if( ! Array.isArray( teids ))
+         teids = [ teids ];
+      
+      
+      
+      teids.forEach( (teid) => {
+         let qci = qciCache[ teid ];
+         if( qci == undefined )
+            qci = 9; //use default qci
+         
+         const data = QCI[ qci ];
+         if( data == undefined )
+            return console.warn('Unsupported qci=' + qci + ' of teid=' + teid );
+         
+         msg[ GTP.EXPECTED_DELAY ] = data.delay;
+         msg[ GTP.EXPECTED_PELR ]  = data.pelr;
+      });
+   }
+   
+   
+   
    /*
     * Append LTE information, such as, imsi, ue_ip, to session report (100)
     * This function will check in its cache to find info of UE.
@@ -121,6 +177,7 @@ if( isEnableEnodeB ){
     * Then it call appendData to append info of UE to the gtp reports before inserting them to DB 
     */
    function _appendSuplementData( type, msg, cb ){
+      
       //when this function is called again while we are quering DB
       //=> stock its parameters (type, msg, cb) into cache
       //=> they will be processed once the quering DB terminates
@@ -198,12 +255,18 @@ if( isEnableEnodeB ){
    }
 
    module.exports = {
-         appendSuplementDataGtp:  function( msg, cb ){ _appendSuplementData( "ue", msg, cb); },
-         appendSuplementDataSctp: function( msg, cb ){ _appendSuplementData( "enb", msg, cb); }
+         appendSuplementDataGtp:  function( msg, cb ){ 
+            _appendExpectedQoS( msg );
+            _appendSuplementData( "ue", msg, cb); 
+         },
+         
+         appendSuplementDataSctp: function( msg, cb ){ _appendSuplementData( "enb", msg, cb); },
+         addQci: _addQci
    }; 
 } else {
    module.exports = {
          appendSuplementDataGtp:  function( msg, cb ){},
-         appendSuplementDataSctp: function( msg, cb ){}
+         appendSuplementDataSctp: function( msg, cb ){},
+         addQci: function( msg ){}
    }; 
 }

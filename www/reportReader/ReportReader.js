@@ -32,9 +32,10 @@ function Reader(){
    const self     = this;
 
    const execArgv = [
+      //"--inspect-brk",
       //"--inspect-brk=10.0.0.2",
       //"--expose_gc",
-      "--max-old-space-size=2048"
+      //"--max-old-space-size=2048"
       ];
 
    self.start = function(){
@@ -117,13 +118,15 @@ function Reader(){
 
 //when main process exit, need to stop all its children
 function _cleanUp(){
-   if( process._children )
+   if( process._children ){
       process._children.forEach( function( child ){
          if( child == undefined )
             return;
          
          child.stop();
       });
+      process._children = undefined;
+   }
 }
 
 process.on('SIGINT', _cleanUp);

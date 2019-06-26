@@ -33,6 +33,7 @@ module.exports = {
           DUMMY_FORMAT            : 200,
           SYS_STAT_FORMAT         : 201,
           LTE_TOPOLOGY_REPORT     : 400,/**< LTE toplogy*/
+          LTE_QOS_REPORT          : 401,
           EVENT_BASE_FORMAT       : 1000,
           OTT_QOS                 : 70
       },
@@ -150,6 +151,17 @@ module.exports = {
           VERDICT                 : 10,
           DESCRIPTION             : 11
       },
+      
+      LTEQoSColumnId             : {
+         FORMAT_ID               : 0, /**< Index of the format id column */
+         PROBE_ID                : 1, /**< Index of the probe id column */
+         SOURCE_ID               : 2, /**< Index of the data source id column */
+         TIMESTAMP               : 3, /**< Index of the format id column */
+         UE_ID                   : 4, /**< Index of the application id column */
+         TEID                    : 5,
+         QCI                     : 6
+     },
+
 
       HttpStatsColumnId : {
           APP_FAMILY         : 50,
@@ -204,7 +216,9 @@ module.exports = {
          TEIDs         : 114, //Array of TEIDs
          IMSI          : 115, //IMSI of UE generating this GTP flow
          ENB_NAME      : 116,
-         MME_NAME      : 117
+         MME_NAME      : 117,
+         EXPECTED_DELAY: 119,  //expected delay getting from qci 
+         EXPECTED_PELR : 120,  //expected packet-error-lost-rate
       },
       StartupColumnId           : {
          FORMAT_ID       : 0, /**< Index of the format id column */

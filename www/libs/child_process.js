@@ -79,17 +79,20 @@ function childProcess( file, params, env, autoRestart ){
    };
    
    self.restart = function(code, signal){
+      //console.trace();
+      
       console.log("autoRestart: " + self.autoRestart + ", code: " + code );
       //exec only one time left
       // or if it exited successfully
       //=> do not need to restart it
-      if( self.autoRestart === 1 || code === 0 ){
+      if( self.autoRestart === 1 || code === 0 || code === undefined){
          if( typeof( self.onExit ) == "function" )
             self.onExit( self );
-         return;
+         return self;
       }
-      
-      console.log("restart child process " + self.childProcess.pid );
+
+      if( self.childProcess !== undefined )
+         console.log("restart child process " + self.childProcess.pid );
       
       //reduce timelife
       if( self.autoRestart > 0 )
@@ -115,7 +118,7 @@ function childProcess( file, params, env, autoRestart ){
    
    self.stop = function(){
       if( self.childProcess == null )
-         return;
+         return self;
       
       self.childProcess.kill( 'SIGINT' );
       self.childProcess = null;

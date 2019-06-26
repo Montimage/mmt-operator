@@ -33,6 +33,7 @@ const AdminDB         = require('./libs/AdminDB');
 const Probe           = require('./libs/Probe');
 const constant        = require('./libs/constant.js');
 const ReportReader    = require('./reportReader/ReportReader.js');
+const interProcCache  = require('./libs/InterProcessCache.js');
 
 process.title = "mmt-operator";
 console.log( "Start MMT-Operator" );

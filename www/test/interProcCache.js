@@ -1,9 +1,7 @@
 const fork = require('child_process').fork;
-const Cache = require("../libs/InterProcessCache.js");
+const cache = require("../libs/InterProcessCache.js");
 
-const cache = new Cache();
-
-if( Cache.isMaster() ){
+if( cache.isMaster() ){
    const child = fork( __filename, [], {
             //execArgv: ['--inspect-brk=9222']
    });

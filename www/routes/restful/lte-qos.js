@@ -10,6 +10,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    //select only TCP-based app
    const APP_PATH_REGEX = {"$regex" : ".354.", "$options" : ""};
    const COL = dataAdaptor.StatsColumnId;
+   const GTP = dataAdaptor.GtpStatsColumnId
    //mongoDB aggregate
    const group = { _id : {} };
 
@@ -24,6 +25,9 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
       COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
       //COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, 
       COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+      
+      GTP.EXPECTED_PELR, GTP.EXPECTED_DELAY,
+      
       ].forEach( function( el, index){
          group[ el ] = {"$sum" : "$" + el};
       });
