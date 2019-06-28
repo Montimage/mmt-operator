@@ -14,27 +14,30 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    //mongoDB aggregate
    const group = { _id : {} };
 
-   [ COL.TIMESTAMP ].forEach( function( el, index){
-      group["_id"][ el ] = "$" + el;
-   });
+   [ COL.TIMESTAMP ]
+   .forEach( (el) =>  group["_id"][ el ] = "$" + el );
    
    //sum
-   [ COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
+   [ 
+      COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
       COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
       COL.ACTIVE_FLOWS,
       COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
       //COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, 
-      COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-      
-      GTP.EXPECTED_PELR, GTP.EXPECTED_DELAY,
-      
-      ].forEach( function( el, index){
-         group[ el ] = {"$sum" : "$" + el};
-      });
+   ]
+      .forEach( ( el ) =>  group[ el ] = {"$sum" : "$" + el} );
    
-   [ COL.TIMESTAMP ].forEach( function( el, index){
-      group[ el ] = {"$last" : "$"+ el};
-   } );
+   [ 
+      COL.TIMESTAMP 
+   ]
+      .forEach( ( el ) => group[ el ] = {"$last" : "$"+ el} );
+   
+   [
+      COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+      GTP.EXPECTED_PELR_UL, GTP.EXPECTED_DELAY_UL,
+      GTP.EXPECTED_PELR_DL, GTP.EXPECTED_DELAY_DL
+   ]
+      .forEach( (el) => group[el] = {'$avg' : '$' + el})
 
    const $match = {};
    //timestamp
@@ -70,10 +73,26 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
          return Math.round( x * 100 )/100;
       }
       
+      const NANO_TO_MILLI = 1000*1000
+      
+      //
+
+      var defaultQCI = {delay: 300, pelr: 10e-6}; //qCI = 9
+      
+      
       //data processing
       data.map( (el) => {
-         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ], el[ COL.ACTIVE_FLOWS ]);
-         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ], el[ COL.ACTIVE_FLOWS ]);
+         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ],  NANO_TO_MILLI); //nanosecond to millisecond
+         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ],  NANO_TO_MILLI);
+         
+         //get expected values, if they are zero => use default ones
+         el[ GTP.EXPECTED_DELAY_UL ] = el[ GTP.EXPECTED_DELAY_UL ] || defaultQCI.delay ; //these values are in millisecond
+         el[ GTP.EXPECTED_DELAY_DL ] = el[ GTP.EXPECTED_DELAY_DL ] || defaultQCI.delay ;
+        
+         el[ GTP.EXPECTED_PELR_UL ]  = el[ GTP.EXPECTED_PELR_UL ]  || defaultQCI.pelr;
+         el[ GTP.EXPECTED_PELR_DL ]  = el[ GTP.EXPECTED_PELR_DL ]  || defaultQCI.pelr;
+         
+         
          //packet error lost rate: number packet erros / total packet
          el[ COL.DL_RETRANSMISSION ] = percentage( el[ COL.DL_RETRANSMISSION ], el[ COL.DL_PACKET_COUNT ] );
          el[ COL.UL_RETRANSMISSION ] = percentage( el[ COL.UL_RETRANSMISSION ], el[ COL.UL_PACKET_COUNT ] );

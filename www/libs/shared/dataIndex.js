@@ -217,8 +217,10 @@ module.exports = {
          IMSI          : 115, //IMSI of UE generating this GTP flow
          ENB_NAME      : 116,
          MME_NAME      : 117,
-         EXPECTED_DELAY: 119,  //expected delay getting from qci 
-         EXPECTED_PELR : 120,  //expected packet-error-lost-rate
+         EXPECTED_DELAY_UL: 119,  //expected delay getting from qci 
+         EXPECTED_PELR_UL : 120,  //expected packet-error-lost-rate
+         EXPECTED_DELAY_DL: 121,  //expected delay getting from qci 
+         EXPECTED_PELR_DL : 122,  //expected packet-error-lost-rate
       },
       StartupColumnId           : {
          FORMAT_ID       : 0, /**< Index of the format id column */

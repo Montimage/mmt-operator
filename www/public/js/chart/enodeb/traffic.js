@@ -100,7 +100,6 @@ var ReportFactory = {
          };
          var _this = this;
          
-         
          //metric selector
          var options = [
             {id: "packet_delay", label: "Packet Delay" },
@@ -167,8 +166,41 @@ var ReportFactory = {
                });
          }//end appList_db._reload
 
+         //using log function to scale metric values
+         //=> avoid showing long distance between smallest value and the biggest one
+         function _scale(x){
+            //if( -1 <= x && x <= 1 )
+            //   return x;
+            
+            //avoid x < 1 ==> get negative value
+            x += 1;
+            
+            x = Math.log10( x );
+            //x *= sign;
+            return x;
+         }
+         
+         function _unscale( x ){
+            //if( -1 <= x && x <= 1 )
+            //   return x;
+            
+            //var sign = 1;
+            //if( x < 0 ){
+            //   sign = -1;
+            //   x    = -x;
+            //}
+            
+            x = Math.pow( 10, x );
+            x -= 1;
+            
+            //x *= sign;
+            //if( x === 0.01 )
+            //   x = 0;
+            return x;
+         }
          
          var UL_METRIC, DL_METRIC; //which matric is being selected: either 'pelr' or 'packet_delay'
+         var UL_EXPECT_METRIC, DL_EXPECT_METRIC;
          var AXIS_Y_TITLE;
          var DATA_PROC_FN;
          var METRIC_UNIT;
@@ -176,10 +208,17 @@ var ReportFactory = {
             case "pelr":
                UL_METRIC = {id: COL.UL_RETRANSMISSION.id, label: "UL PELR"};
                DL_METRIC = {id: COL.DL_RETRANSMISSION.id, label: "DL PELR"};
+               
+               //theory value
+               UL_EXPECT_METRIC = {id: 120, label: 'Max UL PELR'};
+               DL_EXPECT_METRIC = {id: 122, label: 'Max DL PELR'};
+               
                AXIS_Y_TITLE = "Packet error lost rate (%)";
                METRIC_UNIT = ' %';
                DATA_PROC_FN = function( data ){
-                  return data * 100;//percentage
+                  data = data * 100;//percentage
+                  data = _scale( data );
+                  return data;
                }
                break;
                
@@ -187,10 +226,15 @@ var ReportFactory = {
             default:
                UL_METRIC = {id: COL.RTT_AVG_CLIENT.id, label: "UL Packet Delay" };
                DL_METRIC = {id: COL.RTT_AVG_SERVER.id, label: "DL Packet Delay" };
+               
+               UL_EXPECT_METRIC = {id: 119, label: 'Max UL Delay'};
+               DL_EXPECT_METRIC = {id: 121, label: 'Max DL Delay'};
+               
                AXIS_Y_TITLE = "Packet delay (ms)";
                METRIC_UNIT = " ms/flow";
                DATA_PROC_FN = function( data ){
-                  return (data / 1000 / 1000); //nanosecond => mili second
+                  data = _scale( data );
+                  return data;
                }
                break;
          }
@@ -218,10 +262,12 @@ var ReportFactory = {
             getData: {
                getDataFn: function (db) {
                   var cols = [ COL.TIMESTAMP,
+                     UL_EXPECT_METRIC,
                      UL_METRIC,
                      //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
                      {id: COL.UL_DATA_VOLUME.id, label: "UL Data Rate", type: "line"},
                      
+                     DL_EXPECT_METRIC,
                      DL_METRIC,
                      {id: COL.DL_DATA_VOLUME.id, label: "DL Data Rate", type: "line"},
                   ];
@@ -239,14 +285,22 @@ var ReportFactory = {
                   var length_ul = 0, total_ul = 0, val;
                   var length_dl = 0, total_dl = 0;
                   
-                  var yMax = y2Max = 1;
-                  var yMin = y2Min = -1;
-                  
                   for( var i=0; i<data.length; i++ ){
                      var m = data[i];
+                     if( m == undefined ){
+                        console.error('Null value at index=' + i);
+                        continue;
+                     }
+                     
+                     //processing real values of the selected metric
                      m[UL_METRIC.id] = DATA_PROC_FN(m[UL_METRIC.id]);
                      m[DL_METRIC.id] = DATA_PROC_FN(m[DL_METRIC.id]);
-
+                     
+                     //processing theory values of the selected metric
+                     m[UL_EXPECT_METRIC.id] = DATA_PROC_FN(m[UL_EXPECT_METRIC.id]);
+                     m[DL_EXPECT_METRIC.id] = DATA_PROC_FN(m[DL_EXPECT_METRIC.id]);
+                     
+                     
                      //bit per second
                      m[COL.UL_DATA_VOLUME.id] /= sampling;
                      m[COL.UL_DATA_VOLUME.id] /= sampling;
@@ -267,22 +321,12 @@ var ReportFactory = {
                      
                      
                      //upside down
-                     [COL.DL_DATA_VOLUME.id, DL_METRIC.id].forEach( function( el ){
+                     [COL.DL_DATA_VOLUME.id, DL_METRIC.id, DL_EXPECT_METRIC.id]
+                     .forEach( function( el ){
                         m[el] = - m[el]; 
                      });
-
-                     
-                     if( yMax < m[ UL_METRIC.id ] )
-                        yMax = m[ UL_METRIC.id ];
-                     if( yMin > m[ DL_METRIC.id ] )
-                        yMin = m[ DL_METRIC.id ];
-                     
-                     
-                     if( y2Max < m[ COL.UL_DATA_VOLUME.id ] )
-                        y2Max = m[ COL.UL_DATA_VOLUME.id ];
-                     if( y2Min > m[ COL.DL_DATA_VOLUME.id ] )
-                        y2Min = m[ COL.DL_DATA_VOLUME.id ];
                   }
+                  
                   
                   total_ul = divise(total_ul, length_ul);
                   total_dl = divise(total_dl, length_dl);
@@ -299,6 +343,45 @@ var ReportFactory = {
                   height -= $widget.find(".filter-bar").outerHeight(true) + 15;
 
                   
+                  function _findMax( data, index ){
+                     var max = 1;
+                     for( var i=0; i<data.length; i++ )
+                        if( data[i][index] > max )
+                           max = data[i][index];
+                     return max;
+                  }
+                  
+                  function _findMin( data, index ){
+                     var min = -1;
+                     for( var i=0; i<data.length; i++ )
+                        if( data[i][index] < min )
+                           min = data[i][index];
+                     return min;
+                  }
+                  
+                  if( yMax < m[ UL_METRIC.id ] )
+                     yMax = m[ UL_METRIC.id ];
+                  if( yMin > m[ DL_METRIC.id ] )
+                     yMin = m[ DL_METRIC.id ];
+                  
+                  
+                  if( y2Max < m[ COL.UL_DATA_VOLUME.id ] )
+                     y2Max = m[ COL.UL_DATA_VOLUME.id ];
+                  if( y2Min > m[ COL.DL_DATA_VOLUME.id ] )
+                     y2Min = m[ COL.DL_DATA_VOLUME.id ];
+                  
+                  
+                  var yMax  = _findMax( data, UL_METRIC.id ),
+                      yMin  = _findMin( data, DL_METRIC.id ),
+                      _yMax = _findMax( data, UL_EXPECT_METRIC.id ),
+                      _yMin = _findMin( data, DL_EXPECT_METRIC.id ),
+                      y2Max = _findMax( data, COL.UL_DATA_VOLUME.id ),
+                      y2Min = _findMin( data, COL.DL_DATA_VOLUME.id );
+                  
+                  if( yMax < _yMax )
+                     yMax = _yMax;
+                  if( yMin > _yMin )
+                     yMin = _yMin;
                   //console.log(yMin, yMax, y2Min, y2Max);
                   //get same proportion for y and y2 axis
                   //fix y, change y2 to get the same proportion
@@ -366,7 +449,7 @@ var ReportFactory = {
                   },
                },
                color: {
-                  pattern: ['DeepSkyBlue', 'green', 'violet', 'orange']
+                  pattern: [ 'LightBlue', 'DeepSkyBlue', 'green', 'Plum', 'violet', 'red']
                },
                grid: {
                   x: {
@@ -382,11 +465,15 @@ var ReportFactory = {
                   y: {
                      show : true,
                      tick:{
-                        count: 5,
+                        count: 7,
                         //override the default format
                         format: function( v ){
                            if( v < 0 ) 
                               v = -v;
+                           v = _unscale( v );
+                           if( v < 0.1 )
+                              return Math.round( v * 1e4 ) / 1e4;
+                           
                            return  MMTDrop.tools.formatDataVolume(v);
                         }
                      },
@@ -399,7 +486,7 @@ var ReportFactory = {
                         position: "outer"
                      },
                      tick: {
-                        count: 5,
+                        count: 7,
                         format: function( v ){
                            if( v < 0 ) 
                               v = -v;
@@ -633,7 +720,7 @@ var ReportFactory = {
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet",  format: MMTDrop.tools.formatLocaleNumber},
                         //{id: "count",             align: "right", label:"#TEIDs"},
-                        {id: GTP.TEIDs.id,                        label:"TEIDs"},
+                        {id: GTP.TEIDs.id,        align: "right", label:"TEIDs"},
                         {id: "graph"}
                         ],
                         data : arr

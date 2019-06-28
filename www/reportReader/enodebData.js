@@ -146,26 +146,39 @@ if( isEnableEnodeB ){
       msg[ GTP.EXPECTED_PELR ]  = 0;
       
       let teids = msg[ GTP.TEIDs ];
-      if( teids == undefined )
-         return;
+      //if( teids == undefined )
+      //   return;
       
       if( ! Array.isArray( teids ))
          teids = [ teids ];
       
       
       
-      teids.forEach( (teid) => {
-         let qci = qciCache[ teid ];
-         if( qci == undefined )
+      const teid_ul = teids[0]
+      let qci = qciCache[ teid_ul ];
+      if( qci == undefined )
             qci = 9; //use default qci
          
-         const data = QCI[ qci ];
-         if( data == undefined )
-            return console.warn('Unsupported qci=' + qci + ' of teid=' + teid );
-         
-         msg[ GTP.EXPECTED_DELAY ] = data.delay;
-         msg[ GTP.EXPECTED_PELR ]  = data.pelr;
-      });
+      const data_ul = QCI[ qci ];
+      if( data_ul !== undefined ){
+         //console.log( data_ul );
+         msg[ GTP.EXPECTED_DELAY_UL ] = data_ul.delay;
+         msg[ GTP.EXPECTED_PELR_UL ]  = data_ul.pelr;
+      }else{
+         console.error('Does not support qCI=' + qci + ' of teid=' + teid_ul);
+      }
+      
+      const teid_dl = teids[1];
+      qci = qciCache[ teid_dl ];
+      if( qci == undefined )
+            qci = 9; //use default qci
+      const data_dl = QCI[ qci ];
+      if( data_dl !== undefined ){
+         //console.log( data_dl );
+         msg[ GTP.EXPECTED_DELAY_DL ] = data_dl.delay;
+         msg[ GTP.EXPECTED_PELR_DL ]  = data_dl.pelr;
+      }else
+         console.error('Does not support qCI=' + qci + ' of teid=' + teid_dl);
    }
    
    

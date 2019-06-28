@@ -11,6 +11,14 @@ const LongNumber      = require('mongodb').Long;
 const StringBuilder   = require("../libs/StringBuilder");
 const moment          = require('moment');
 
+function _parseInt( v ){
+   const parsed = parseInt(v, 10);
+   if (isNaN(parsed))
+      return 0;
+   else
+      return parsed;
+}
+
 /**
  * @param   {Object} option
  {
@@ -225,14 +233,14 @@ function Cache ( option ) {
                oo[ key_inc_arr[j] ] = 0;
 			else
       			for (var j=0; j<key_inc_arr.length; j++)
-      			   oo[ key_inc_arr[j] ] = msg[ key_inc_arr[j] ];
+      			   oo[ key_inc_arr[j] ] = _parseInt( msg[ key_inc_arr[j] ] );
 		}
 		else{
       		//add number only if the message is not a dummy message
 		   if( !isDummy ){
 		      //increase
          		for (var j=0; j<key_inc_arr.length; j++)
-         			oo[ key_inc_arr[ j ] ]  += msg[ key_inc_arr[ j ] ];
+         			oo[ key_inc_arr[ j ] ]  += _parseInt( msg[ key_inc_arr[ j ] ]);
       		}
 		}
 		

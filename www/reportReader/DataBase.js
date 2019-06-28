@@ -197,7 +197,8 @@ module.exports = function(){
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
                
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
-               GTP.EXPECTED_DELAY, GTP.EXPECTED_PELR,
+               GTP.EXPECTED_DELAY_UL, GTP.EXPECTED_PELR_UL,
+               GTP.EXPECTED_DELAY_DL, GTP.EXPECTED_PELR_DL,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
