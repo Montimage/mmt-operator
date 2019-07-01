@@ -51,7 +51,7 @@ function rm( dir ){
          case FILE:
             return rmFile( dir ).then( resolve, reject );
          case FOLDER:
-            return rmFolder( paht ).then( resolve, reject );
+            return rmFolder( dir ).then( resolve, reject );
          case ENOENT:
             return resolve( dir );
          default:
@@ -104,7 +104,7 @@ function rmFolder( dir ){
          //waiting for all promises are resolved
          Promise.all( promiseArr )
             .then( () => rmEmptyFolder( dir ) )
-            .catch( reject )
+            .catch( reject );
          
       }catch( e ){
          reject( e );

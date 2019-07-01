@@ -60,7 +60,7 @@ var ReportFactory = {
         $match.isGen = false;
         $match[COL.TIMESTAMP.id ] = URL_PARAM.ts;
         //only session protocols
-        $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+        $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
         //only on TCP: ETH.VLAN?.IP?.*.TCP
         $match[ COL.APP_PATH.id ] = {"$regex" : "^99(\\.\\d+){0,3}.354", "$options" : ""};
 

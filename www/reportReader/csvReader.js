@@ -20,7 +20,7 @@ const DataBase       = require("./DataBase.js");
 //after reading xx files, this process will automatically exit,
 // then ReportReader will start a new process to replace this process.
 //This allows to clean memory used by the readers' processes
-const NB_CSV_BEFORE_RESTART = 48;
+const NB_CSV_BEFORE_RESTART = 480;
 //total number of reader processes
 const TOTAL_READERS = parseInt( process.argv[3] );
 //index of the current process
@@ -60,6 +60,7 @@ if( READER_INDEX === 0 )
 
 console.info( "start csv reader " + READER_INDEX );
 
+
 /**
  * Restart this process
  */
@@ -69,6 +70,7 @@ function restart_process(){
       console.warn("Exit reader " + READER_INDEX );
       //the reader will be restarted by libs/child_process
       process.exit(1);
+      //process.exitCode = 1
    });
 }
 
@@ -243,16 +245,20 @@ database.onReady( function(){
 	setTimeout( start_process, 2000);
 });
 
-process.stdin.resume();//so the program will not close instantly
+//process.stdin.resume();//so the program will not close instantly
 //Ctrl+C
 process.on('SIGINT',function(){
+   //when user explictly press Ctrl+C or the process parent wants to stop it
+   //=> exit normally
+   process.exitCode = 0;
+   
    //press Ctrl+C again
    if( isStop )
-      process.exit();
+      process.exit( 0 );
    
    isStop = true;
    database.flush( function(){
       console.warn("Ended csv reader " + READER_INDEX );
-      process.exit();
+      process.exit( 0 );
    } );
 });

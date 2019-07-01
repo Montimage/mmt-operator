@@ -11,12 +11,11 @@ const LongNumber      = require('mongodb').Long;
 const StringBuilder   = require("../libs/StringBuilder");
 const moment          = require('moment');
 
-function _parseInt( v ){
-   const parsed = parseInt(v, 10);
-   if (isNaN(parsed))
+function _getNumber( v ){
+   if (isNaN(v))
       return 0;
    else
-      return parsed;
+      return v;
 }
 
 /**
@@ -60,7 +59,6 @@ function Cache ( option ) {
    
    //IMPORTANCE: this array "key_arr" must contain all keys of the messages that will be inserted to DB  
    const key_arr      = [];
-   const stringBuilder = new StringBuilder( 2000 );
    
    function add_val( o ){
       for( var i in o ){
@@ -96,7 +94,6 @@ function Cache ( option ) {
    
 	var _dataObj = {}; //key => data
 	var _dataArr = []; //array of "data"
-	
 	
 	/**
 	 * Flush data to DB
@@ -233,14 +230,14 @@ function Cache ( option ) {
                oo[ key_inc_arr[j] ] = 0;
 			else
       			for (var j=0; j<key_inc_arr.length; j++)
-      			   oo[ key_inc_arr[j] ] = _parseInt( msg[ key_inc_arr[j] ] );
+      			   oo[ key_inc_arr[j] ] = _getNumber( msg[ key_inc_arr[j] ] );
 		}
 		else{
       		//add number only if the message is not a dummy message
 		   if( !isDummy ){
 		      //increase
          		for (var j=0; j<key_inc_arr.length; j++)
-         			oo[ key_inc_arr[ j ] ]  += _parseInt( msg[ key_inc_arr[ j ] ]);
+         			oo[ key_inc_arr[ j ] ]  += _getNumber( msg[ key_inc_arr[ j ] ]);
       		}
 		}
 		

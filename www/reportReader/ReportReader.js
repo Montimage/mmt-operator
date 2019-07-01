@@ -10,6 +10,7 @@ const config          = require("../libs/config");
 const constant        = require('../libs/constant.js');
 const child_process   = require("../libs/child_process");
 
+
 //array of folders containing reports
 const DATA_FOLDERS              = [];
 
@@ -33,6 +34,7 @@ function Reader(){
 
    const execArgv = [
       //"--inspect-brk",
+      "--inspect=10.0.0.2",
       //"--inspect-brk=10.0.0.2",
       //"--expose_gc",
       //"--max-old-space-size=2048"

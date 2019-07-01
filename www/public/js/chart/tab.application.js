@@ -109,7 +109,7 @@ var ReportFactory = {
           // eg, when probe gives ETH.IP.TCP.HTTP, mmt-opertor will generates an entry for ETH, another for IP, and another for TCP)
 
           //select only proto/app based on IP
-          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
 
           //timestamp
           var period = status_db.time; //this comes from common.js
@@ -293,7 +293,7 @@ var ReportFactory = {
           //timestamp
           $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
           //only IP (session report)
-          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
           $match.isGen  = false;
           //only on TCP: ETH.VLAN?.IP?.*.TCP
           $match[ COL.APP_PATH.id ] = APP_PATH_REGEX;
@@ -613,7 +613,7 @@ var ReportFactory = {
           //query on data_app ==> selection only real applications/protocols
           $match.isGen = false;
           //only IP (session report)
-          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+          $match[ COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
           //select only APP or IP that contains APPs on the top of tcp
           $match[ COL.APP_PATH.id ]  = APP_PATH_REGEX;
 
@@ -1118,7 +1118,7 @@ function loadDetail(timestamp) {
     $match.isGen = false;
     $match[ COL.TIMESTAMP.id ] = timestamp;
     //only session protocols
-    $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+    $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
     //only on TCP: ETH.VLAN?.IP?.*.TCP
     $match[ COL.APP_PATH.id ] = APP_PATH_REGEX;
     if (URL_PARAM.probe_id )

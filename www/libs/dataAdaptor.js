@@ -184,7 +184,7 @@ const dataIndex = require("./shared/dataIndex");
 //    break;
 //    case MMTDrop.CsvFormat.RTP_APP_FORMAT :
 //    break;
-//    case MMTDrop.CsvFormat.STATS_FORMAT :
+//    case MMTDrop.CsvFormat.SESSION_STATS_FORMAT :
 //    break;
 //    case MMTDrop.CsvFormat.SECURITY_FORMAT:
 //    break;
@@ -219,7 +219,7 @@ const dataIndex = require("./shared/dataIndex");
             break;
          case MMTDrop.CsvFormat.RTP_APP_FORMAT :
             break;
-         case MMTDrop.CsvFormat.STATS_FORMAT :
+         case MMTDrop.CsvFormat.SESSION_STATS_FORMAT :
             break;
          case MMTDrop.CsvFormat.SECURITY_FORMAT:
             //no need since mmt-security v 1.2.8
@@ -347,7 +347,7 @@ const dataIndex = require("./shared/dataIndex");
       //format
       switch( msg[0] ) {
          //main report
-         case MMTDrop.CsvFormat.STATS_FORMAT :
+         case MMTDrop.CsvFormat.SESSION_STATS_FORMAT :
             msg = MMTDrop.formatSessionReport( msg ); 
 
             msg[ MMTDrop.StatsColumnId.START_TIME ]   = msg[ MMTDrop.StatsColumnId.START_TIME ] * 1000; //to milisecond
@@ -430,6 +430,10 @@ const dataIndex = require("./shared/dataIndex");
       var protoName = MMTDrop.ProtocolsIDName[ protoID ];
       MMTDrop.ProtocolsNameID[ protoName ] = parseInt( protoID );
    }
+   
+   //set of protocolID => protocolName
+   MMTDrop.PureProtocolsIDName = {};
+   MMTDrop.PureProtocols.forEach( (e) => MMTDrop.PureProtocolsIDName[e] = MMTDrop.ProtocolsIDName[ protoID ] )
    
    
 module.exports = MMTDrop;

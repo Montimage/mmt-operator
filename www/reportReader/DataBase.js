@@ -23,7 +23,7 @@ const COL      = dataAdaptor.StatsColumnId;
 const HTTP     = dataAdaptor.HttpStatsColumnId;
 const NDN      = dataAdaptor.NdnColumnId;
 const TLS      = dataAdaptor.TlsStatsColumnId;
-const RTP      = dataAdaptor.RtpStatsColumnId;
+const RTP      = dataAdaptor.RtpStatsColumnId;  
 const FTP      = dataAdaptor.FtpStatsColumnId;
 const GTP      = dataAdaptor.GtpStatsColumnId;
 const LICENSE  = dataAdaptor.LicenseColumnId;
@@ -40,22 +40,8 @@ MICRO_FLOW_STR  = "micro";
 //list of protocols (not application)
 //this list is used to filter out applications.
 //collections "data_protocol_*" store only protocols
-const PURE_PROTOCOLS = {};
-[
-   //0, //unknown
-   30,81,82,85,99,
-   117,141,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,
-   228,231,241,247,272,273,298,299,
-   304,314,322,323,324,325,339,340,341,354,357,358,363,376,388,
-   461,
-   625,626,627,628,
-   //sctp chunks
-   631,632,645,646,647,648,649,650,651,652,653,654,655,
-   //s1ap
-   900
-   ].forEach( function( el ){
-      PURE_PROTOCOLS[ el ] = true;
-   });
+const PURE_PROTOCOLS = dataAdaptor.PureProtocolsIDName;
+
 
 const DOUBLE_STAT_PERIOD_IN_MS = config.probe_stats_period_in_ms*1000*2;
 
@@ -197,8 +183,6 @@ module.exports = function(){
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
                
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
-               GTP.EXPECTED_DELAY_UL, GTP.EXPECTED_PELR_UL,
-               GTP.EXPECTED_DELAY_DL, GTP.EXPECTED_PELR_DL,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
@@ -248,12 +232,21 @@ module.exports = function(){
          //for eNodeB
          gtp: new DataCache( inserter, "data_gtp",
                {
-            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, GTP.IP_SRC, GTP.IP_DST, GTP.TEIDs, GTP.IMSI],
+            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, COL.APP_ID, GTP.IP_SRC, GTP.IP_DST, GTP.TEIDs, GTP.IMSI],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
+               
+               COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+               COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
+               
+               //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
+               GTP.EXPECTED_DELAY_UL, GTP.EXPECTED_PELR_UL,
+               GTP.EXPECTED_DELAY_DL, GTP.EXPECTED_PELR_DL,
                ],
-            set:[COL.MAC_SRC, COL.MAC_DST,  COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION, GTP.ENB_NAME, GTP.MME_NAME ]
+            set:[COL.MAC_SRC, COL.MAC_DST,  
+               COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION, GTP.ENB_NAME, GTP.MME_NAME,
+               COL.APP_PATH ]
                }
          ),
          sctp: new DataCache( inserter, "data_sctp",
@@ -308,6 +301,7 @@ module.exports = function(){
       zero_msg[ 3 ] = ts;
       return zero_msg;
    }
+   
    
    /**
     * Add a new message to DB
@@ -392,8 +386,8 @@ module.exports = function(){
             
          
 
-         case 99:
-         case 100:
+         case dataAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT://99:
+         case dataAdaptor.CsvFormat.SESSION_STATS_FORMAT: //100
             
             //one msg is a report of a session
             //==> total of them are number of active flows at the sample interval
@@ -406,6 +400,7 @@ module.exports = function(){
             if( msg[ COL.PACKET_COUNT ] === 0 ){
                return;
             }
+            
             
             //original message => clone a new one
             if( self.dataCache.reports )
@@ -438,7 +433,7 @@ module.exports = function(){
             
             
             //session
-            if( format === 100 ){
+            if( format === dataAdaptor.CsvFormat.SESSION_STATS_FORMAT ){
                //console.log( msg[ COL.UL_RETRANSMISSION ] )
 
                //this should not happen
@@ -448,8 +443,12 @@ module.exports = function(){
                //HTTP
                switch( msg[ COL.FORMAT_TYPE ] ){
                   case MMTDrop.CsvFormat.GTP_APP_FORMAT:
+                     if( ! enodeb.isEnable )
+                        break;
+                     
                      //clone a new message to add to gtp
-                     var gtp_msg = dataAdaptor.formatReportItem( message );
+                     var gtp_msg =  dataAdaptor.formatReportItem( message );
+                     gtp_msg[ COL.ACTIVE_FLOWS ] = 1;
                      
                      //get information of UE from its IP
                      enodeb.appendSuplementDataGtp( gtp_msg, function( m ){

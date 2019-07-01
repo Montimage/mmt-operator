@@ -950,7 +950,7 @@ var ReportFactory = {
 
             for (var i in data) {
                 var msg = data[i];
-                if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
+                if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT)
                     continue;
 
                 var time = parseInt(msg[COL.TIMESTAMP.id]);
@@ -1182,7 +1182,7 @@ var ReportFactory = {
                     type: "line"//step
                 },
                 color: {
-                    pattern: ['orange', 'green', 'gray']
+                    pattern: ['red', 'green', 'gray']
                 },
                 grid: {
                     x: {

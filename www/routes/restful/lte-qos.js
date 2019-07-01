@@ -20,10 +20,17 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    //sum
    [ 
       COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
+      
       COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
+      
       COL.ACTIVE_FLOWS,
+      
       COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
-      //COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, 
+      //COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME,
+      
+      COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
+      GTP.EXPECTED_PELR_UL, GTP.EXPECTED_DELAY_UL,
+      GTP.EXPECTED_PELR_DL, GTP.EXPECTED_DELAY_DL
    ]
       .forEach( ( el ) =>  group[ el ] = {"$sum" : "$" + el} );
    
@@ -32,21 +39,17 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    ]
       .forEach( ( el ) => group[ el ] = {"$last" : "$"+ el} );
    
-   [
-      COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
-      GTP.EXPECTED_PELR_UL, GTP.EXPECTED_DELAY_UL,
-      GTP.EXPECTED_PELR_DL, GTP.EXPECTED_DELAY_DL
-   ]
-      .forEach( (el) => group[el] = {'$avg' : '$' + el})
 
    const $match = {};
    //timestamp
    $match[ COL.TIMESTAMP ] = {$gte: startTime, $lte: endTime };
+   
+   //no need the 3 following conditions as they must be satisfied by data in data_gtp_* collections
    //only IP (session report)
-   $match[ COL.FORMAT_ID ] = dataAdaptor.CsvFormat.STATS_FORMAT;
-   $match.isGen  = false;
+   //$match[ COL.FORMAT_ID ] = dataAdaptor.CsvFormat.SESSION_STATS_FORMAT;
+   //$match.isGen  = false;
    //only on TCP: ETH.VLAN?.IP?.*.TCP
-   $match[ COL.APP_PATH ] = APP_PATH_REGEX;
+   //$match[ COL.APP_PATH ] = APP_PATH_REGEX;
 
    //load data corresponding to the selected app
    if( param.probe != undefined )
@@ -60,17 +63,17 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
 
    const query = [{"$match": $match},{"$group" : group}, {"$project": project}];
    
-   dbconnector.queryDB( "data_session_" + periodName, "aggregate", query, function( err, data ){
+   dbconnector.queryDB( "data_gtp_" + periodName, "aggregate", query, function( err, data ){
       if( err || data == null )
          return cb( err );
       
-      function percentage( x, y ){
+      function percentage( x, y, round = 100 ){
          if( y == 0 )
             return 0;
          //get percentage
          x = (x/y);
          //round to 2 numbers after ., e.g., 10.xx
-         return Math.round( x * 100 )/100;
+         return Math.round( x * round )/round;
       }
       
       const NANO_TO_MILLI = 1000*1000
@@ -82,15 +85,18 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
       
       //data processing
       data.map( (el) => {
-         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ],  NANO_TO_MILLI); //nanosecond to millisecond
-         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ],  NANO_TO_MILLI);
+         const flows = el[COL.ACTIVE_FLOWS] || 1;
+         
+         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ],  NANO_TO_MILLI * flows); //nanosecond to millisecond
+         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ],  NANO_TO_MILLI * flows);
+         
          
          //get expected values, if they are zero => use default ones
-         el[ GTP.EXPECTED_DELAY_UL ] = el[ GTP.EXPECTED_DELAY_UL ] || defaultQCI.delay ; //these values are in millisecond
-         el[ GTP.EXPECTED_DELAY_DL ] = el[ GTP.EXPECTED_DELAY_DL ] || defaultQCI.delay ;
+         el[ GTP.EXPECTED_DELAY_UL ] = percentage( el[ GTP.EXPECTED_DELAY_UL ], flows ) || defaultQCI.delay ; //these values are in millisecond
+         el[ GTP.EXPECTED_DELAY_DL ] = percentage( el[ GTP.EXPECTED_DELAY_DL ], flows ) || defaultQCI.delay ;
         
-         el[ GTP.EXPECTED_PELR_UL ]  = el[ GTP.EXPECTED_PELR_UL ]  || defaultQCI.pelr;
-         el[ GTP.EXPECTED_PELR_DL ]  = el[ GTP.EXPECTED_PELR_DL ]  || defaultQCI.pelr;
+         el[ GTP.EXPECTED_PELR_UL ]  = percentage( el[ GTP.EXPECTED_PELR_UL ], flows, 10000) || defaultQCI.pelr;
+         el[ GTP.EXPECTED_PELR_DL ]  = percentage( el[ GTP.EXPECTED_PELR_DL ], flows, 10000) || defaultQCI.pelr;
          
          
          //packet error lost rate: number packet erros / total packet

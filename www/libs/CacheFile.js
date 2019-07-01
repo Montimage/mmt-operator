@@ -72,7 +72,7 @@ function CacheFile( obj ){
          fs.mkdirSync( config.query_cache.folder, {recursive: true} );
       }catch( err ){
          console.error("Cannot create folder ["+ config.query_cache.folder +"]: ", err );
-         //when we cannot create a folder to containt cache => we need to disable the cache
+         //when we cannot create a folder to contain cache => we need to disable the cache
          config.query_cache.enable = false;
       }
    }

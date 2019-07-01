@@ -6,12 +6,12 @@ module.exports = {
        * Constants: MMTDrop defined csv format types
        */
       CsvFormat : {
-          DEFAULT_APP_FORMAT      : 0  /**< Sub report of STATS_FORMAT: Default application flow report format id */,
-          WEB_APP_FORMAT          : 1  /**< Sub report of STATS_FORMAT: WEB flow report format id */,
-          SSL_APP_FORMAT          : 2  /**< Sub report of STATS_FORMAT: SSL flow report format id */,
-          RTP_APP_FORMAT          : 3  /**< Sub report of STATS_FORMAT: RTP flow report format id */,
-          FTP_APP_FORMAT          : 4, /**< Sub report of STATS_FORMAT: FTP flow report*/
-          GTP_APP_FORMAT          : 5, /**< Sub report of STATS_FORMAT: For LTE network*/
+          DEFAULT_APP_FORMAT      : 0  /**< Sub report of SESSION_STATS_FORMAT: Default application flow report format id */,
+          WEB_APP_FORMAT          : 1  /**< Sub report of SESSION_STATS_FORMAT: WEB flow report format id */,
+          SSL_APP_FORMAT          : 2  /**< Sub report of SESSION_STATS_FORMAT: SSL flow report format id */,
+          RTP_APP_FORMAT          : 3  /**< Sub report of SESSION_STATS_FORMAT: RTP flow report format id */,
+          FTP_APP_FORMAT          : 4, /**< Sub report of SESSION_STATS_FORMAT: FTP flow report*/
+          GTP_APP_FORMAT          : 5, /**< Sub report of SESSION_STATS_FORMAT: For LTE network*/
           
           
           
@@ -20,7 +20,7 @@ module.exports = {
           RADIUS_REPORT_FORMAT    : 9/**< RADIUS protocol control format id */,
           
           NO_SESSION_STATS_FORMAT : 99,
-          STATS_FORMAT            : 100/**< Statistics format id */,
+          SESSION_STATS_FORMAT    : 100/**< Statistics format id */,
           
           SECURITY_FORMAT         : 10,
           
@@ -553,5 +553,21 @@ module.exports = {
          16: 'SocialNetwork',
       },
 
+    //list of protocols (not application)
+    //this list is used to filter out applications.
+    //collections "data_protocol_*" store only protocols
+      PureProtocols : [
+          //0, //unknown
+          30,81,82,85,99,
+          117,141,153,154,155,163,164,166,169,170,178,179,180,181,182,183,196,198,
+          228,231,241,247,272,273,298,299,
+          304,314,322,323,324,325,339,340,341,354,357,358,363,376,388,
+          461,
+          625,626,627,628,
+          //sctp chunks
+          631,632,645,646,647,648,649,650,651,652,653,654,655,
+          //s1ap
+          900
+      ]
       
 }

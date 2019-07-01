@@ -125,11 +125,11 @@ function ProcessMessage( database ){
 		//message = message.replace(/\(null\)/g, 'null');
 		var msg;
 		//report is a JSON array ???
-		if( message.charAt(0) == '[' )
-		   msg = mmtAdaptor.formatMessage( message );
-		else //report is a CSV line
-		   msg = mmtAdaptor.formatMessage( '[' + message + ']' );
+		if( message.charAt(0) == '[' ){
+		} else //report is a CSV line
+		   message = '[' + message + ']';
 
+      msg = mmtAdaptor.formatMessage( message );
 		if( msg === null )
 			return;
 		
@@ -137,6 +137,8 @@ function ProcessMessage( database ){
       
 		//For each kind of message
 		switch( msg[0] ){
+	   case mmtAdaptor.CsvFormat.SESSION_STATS_FORMAT:
+	      break;
 		/*
         case mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT:
             if( config.only_ip_session === true ){

@@ -459,7 +459,7 @@ var ReportFactory = {
 
 
         database.onMessage(function (msg) {
-            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
+            if (msg[COL.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT)
                 return;
             appendMsg(msg);
         });

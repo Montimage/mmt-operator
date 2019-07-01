@@ -133,7 +133,7 @@ var ReportFactory = {
          var appList_db = MMTDrop.databaseFactory.createStatDB(
                {id: "app", query: {
                      //select only proto/app based on IP
-                     format: MMTDrop.constants.CsvFormat.STATS_FORMAT
+                     format: MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT
                   }
                }
          );
@@ -344,7 +344,7 @@ var ReportFactory = {
 
                   
                   function _findMax( data, index ){
-                     var max = 1;
+                     var max = 0.0001;
                      for( var i=0; i<data.length; i++ )
                         if( data[i][index] > max )
                            max = data[i][index];
@@ -352,24 +352,12 @@ var ReportFactory = {
                   }
                   
                   function _findMin( data, index ){
-                     var min = -1;
+                     var min = -0.0001;
                      for( var i=0; i<data.length; i++ )
                         if( data[i][index] < min )
                            min = data[i][index];
                      return min;
                   }
-                  
-                  if( yMax < m[ UL_METRIC.id ] )
-                     yMax = m[ UL_METRIC.id ];
-                  if( yMin > m[ DL_METRIC.id ] )
-                     yMin = m[ DL_METRIC.id ];
-                  
-                  
-                  if( y2Max < m[ COL.UL_DATA_VOLUME.id ] )
-                     y2Max = m[ COL.UL_DATA_VOLUME.id ];
-                  if( y2Min > m[ COL.DL_DATA_VOLUME.id ] )
-                     y2Min = m[ COL.DL_DATA_VOLUME.id ];
-                  
                   
                   var yMax  = _findMax( data, UL_METRIC.id ),
                       yMin  = _findMin( data, DL_METRIC.id ),

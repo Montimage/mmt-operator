@@ -69,7 +69,7 @@ router.process_message = function (db, message) {
             }
         }
 
-        else if (format === mmtAdaptor.CsvFormat.STATS_FORMAT ){
+        else if (format === mmtAdaptor.CsvFormat.SESSION_STATS_FORMAT ){
             if (msg[4] == 0) {
                 console.log("[META  ] " + message);
                 return;

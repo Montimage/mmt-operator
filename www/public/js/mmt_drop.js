@@ -114,7 +114,7 @@ if( typeof Highcharts !== "undefined" )
             /** RADIUS protocol control format id */
             RADIUS_REPORT_FORMAT : 9,
             /** Statistics format id */
-            STATS_FORMAT : 100,
+            SESSION_STATS_FORMAT : 100,
             SECURITY_FORMAT: 10,
             BA_PROFILE_FORMAT: 12,
             BA_BANDWIDTH_FORMAT: 11,
@@ -2317,7 +2317,7 @@ if( typeof Highcharts !== "undefined" )
          createStatDB : function(param, isAutoLoad){
             param = param || {};
             //overwrite format to 99
-            param.format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+            param.format = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
 
             var db = new MMTDrop.Database(param, function (data){
                return data;
@@ -2440,7 +2440,7 @@ if( typeof Highcharts !== "undefined" )
                      for (var src in obj[time][probe])
                         for (var path in obj[time][probe][src]) {
                            var msg = obj[time][probe][src][path];
-                           //msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+                           //msg[COL.FORMAT_ID.id] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
                            //msg[COL.PROBE_ID.id]  = parseInt(probe);
                            //msg[COL.SOURCE_ID.id] = src;
                            //msg[COL.TIMESTAMP.id] = parseInt(time);
@@ -3599,7 +3599,7 @@ if( typeof Highcharts !== "undefined" )
                data = db.data();
                var user_col_id = MMTDrop.constants.StatsColumn.IP_SRC.id;
 
-               var format = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+               var format = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
                if( data[0] )
                   format = data[0][0];
                if( format == MMTDrop.constants.CsvFormat.DEFAULT_APP_FORMAT
@@ -3687,7 +3687,7 @@ if( typeof Highcharts !== "undefined" )
             var csv = MMTDrop.constants.CsvFormat;
             //create a list of options
             var data = {};
-            var options = [{id: csv.STATS_FORMAT,            label: "Protocol"},
+            var options = [{id: csv.SESSION_STATS_FORMAT,            label: "Protocol"},
                {id: csv.DEFAULT_APP_FORMAT,      label: "Flow"},
                {id: csv.WEB_APP_FORMAT,          label: "Web"},
                {id: csv.SSL_APP_FORMAT,          label: "SSL"},
@@ -4176,7 +4176,7 @@ if( typeof Highcharts !== "undefined" )
 
 
             database.onMessage( function( msg ){
-               if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.STATS_FORMAT)
+               if( msg[MMTDrop.constants.StatsColumn.FORMAT_ID.id] != MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT)
                   return;
                appendMsg( msg );
             });
@@ -4273,7 +4273,7 @@ if( typeof Highcharts !== "undefined" )
 
 
             database.onMessage( function( msg ){
-               if( msg[COL.FORMAT_ID.id ] == MMTDrop.constants.CsvFormat.STATS_FORMAT )
+               if( msg[COL.FORMAT_ID.id ] == MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT )
                   return;
                var app = msg[ COL.APP_NAME.id ];
                app = MMTDrop.constants.getProtocolNameFromID( app );
@@ -4868,7 +4868,7 @@ if( typeof Highcharts !== "undefined" )
             fType.onFilter( function( sel, db ){
                var format = fType.selectedOption().id;
                var matrix = [];
-               if( format == con.CsvFormat.STATS_FORMAT ){
+               if( format == con.CsvFormat.SESSION_STATS_FORMAT ){
                   matrix = MMTDrop.tools.object2Array( con.StatsColumn );
                }else if ( format == con.CsvFormat.DEFAULT_APP_FORMAT ){
                   matrix = MMTDrop.tools.object2Array( con.FlowStatsColumn );

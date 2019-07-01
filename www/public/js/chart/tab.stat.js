@@ -243,7 +243,7 @@ var ReportFactory = {
                     isGen : false
             };
             // $match.isGen = false;
-            // $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.STATS_FORMAT;
+            // $match[COL.FORMAT_ID.id ] = MMTDrop.constants.CsvFormat.SESSION_STATS_FORMAT;
 
             var group = {
                     _id : {}

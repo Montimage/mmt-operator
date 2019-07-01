@@ -39,29 +39,62 @@ if( isEnableEnodeB ){
       "       enb_ip   as enb_ip " +
       "FROM amf_enb_data";
 
+   const UNKNOWN = "_unknown";
    /*
     * Append all attribute from lte to msg
     */
-   function _appendData( msg, lte, cb ){
-      if( lte == null ){
+   function _appendData( type, msg, cb ){
+      let ip = msg[ COL.IP_SRC ];
+      let o  = cache[type][ ip ]; //type = "ue" or "enb"
+      
+      if( o == null ){
          //console.warn("No eNodeB info for this report: " + JSON.stringify( msg ) );
-      }else
-         //append data from lte to msg
-         for( var i in lte )
-            msg[i] = lte[i];
-
+       //even after quering DB, we didn't find info of this IP
+         o = {};
+         if( type === "ue" ){
+            o[ GTP.IMSI ]     = UNKNOWN;
+            o[ GTP.ENB_NAME ] = UNKNOWN;
+            o[ GTP.MME_NAME ] = UNKNOWN;
+         } else { //ENB <-> MME
+            //try onther end
+            ip = msg[ COL.IP_DST ]
+            o = cache[type][ip];
+            
+            if( o != undefined )
+               //as we found it, we need to invert the direction to ensure that IP_SRC is IP of eNodeB
+               dataAdaptor.inverseStatDirection( msg );
+            else
+            {
+               o = {};
+               o[ GTP.ENB_NAME ] = UNKNOWN;
+               o[ GTP.MME_NAME ] = UNKNOWN;
+            }
+         }
+         //ignore the real data of this UE in a moment (in DB_QUERY_INTERVAL) by adding UNKNOWN to cache
+         cache[type][ ip ] = o;
+      }
+      
+         
+      //append data from o to msg
+      for( var i in o )
+         msg[i] = o[i];
+      
       cb( msg );
    }
 
    const cache = {
-         ue: {},
-         enb: {},
-   }
+         ue : {}, //set of ue
+         enb: {}, //set of enb
+         reloaded: false //whether the cache has been loaded from DB
+   };
 
    /*
     * Load data from mysql of vEPC to cache
     */
    function _loadCacheFromDB( cb ){
+      //clear cache
+      cache.reloaded = true;
+      
       //1. load enb data
       mysqlConnection.query( enbSqlString, function( err, data, fields ){
          if( err ){
@@ -75,9 +108,10 @@ if( isEnableEnodeB ){
                var o = data[i];
                var m = {};
                m[ GTP.ENB_NAME ] = o.enb_name;
-               m[ GTP.MME_NAME ] = "develMME"//o.mme_name;
+               m[ GTP.MME_NAME ] = o.mme_name;
 
-                  cache.enb[ o.enb_ip ] = m;
+               //add to local cache
+               cache.enb[ o.enb_ip ] = m;
             }
          }
          //2. load UE data
@@ -93,8 +127,9 @@ if( isEnableEnodeB ){
                   var m = {};
                   m[ GTP.IMSI ]     = o.imsi;
                   m[ GTP.ENB_NAME ] = o.enb_name;
-                  m[ GTP.MME_NAME ] = "develMME";//o.mme_name;
-
+                  m[ GTP.MME_NAME ] = o.mme_name;
+                  
+                  //save ue to cache
                   cache.ue[ o.ue_ip ] = m;
                }
             }
@@ -106,7 +141,7 @@ if( isEnableEnodeB ){
    }
 
 // interval, in miliseconds, to query data from mysql
-   const DB_QUERY_INTERVAL = 5000;
+   const DB_QUERY_INTERVAL = 5000*6; //do query each 3 second
    var   lastMsgTimestamp = 0;
 
 
@@ -131,8 +166,8 @@ if( isEnableEnodeB ){
       64: {delay:  75, pelr: 10e-2},
       66: {delay: 100, pelr: 10e-2},
       69: {delay:  60, pelr: 10e-6},
-      70: {delay: 200, pelr: 10e-6},
-   }
+      70: {delay: 200, pelr: 10e-6}
+   };
    
    var qciCache = {};
    function _addQci( msg ){
@@ -200,14 +235,17 @@ if( isEnableEnodeB ){
       }
 
       var ts  = msg[ COL.TIMESTAMP ];
-      var ip  = msg[ COL.IP_SRC ];
-      var o   = cache[type][ ip ]; //type = "ue" or "enb"
 
-      //if timeout
+      //if timeout => do:
+      //  (1): reload cache from Database
+      //  (2): update msg with the elements getting from the cache
+      //else
+      //  do only (2)
+      
       if( lastMsgTimestamp + DB_QUERY_INTERVAL < ts
             //or data is not available in the cache
-            //|| o == null 
-            ){
+            || cache.reloaded === false ){
+         
          //mark 
          isQueringDB = true;
 
@@ -220,7 +258,6 @@ if( isEnableEnodeB ){
 
          //try to load new data from DB
          _loadCacheFromDB( function(){
-
             //quering is finish
             isQueringDB = false;
 
@@ -230,56 +267,44 @@ if( isEnableEnodeB ){
                var type = c.type;
                var cb   = c.cb;
 
-               var ip = msg[ COL.IP_SRC ];
-
-               //get new data
-               o = cache[type][ip];
-
-               //even after quering DB, we didn't find info of this IP
-               if( o == undefined  ){
-                  o = {};
-                  if( type == "ue" ){
-                     o[ GTP.IMSI ]     = "_unknown";
-                     o[ GTP.ENB_NAME ] = "_unknown";
-                     o[ GTP.MME_NAME ] = "_unknown";
-                  } else {
-                     //try onther end
-                     ip = msg[ COL.IP_DST ]
-                     o = cache[type][ip];
-                     if( o == undefined ){
-                        o = {};
-                        o[ GTP.ENB_NAME ] = "_unknown";
-                        o[ GTP.MME_NAME ] = "_unknown";
-                     }
-                     else{
-                        //to ensure that IP_SRC is IP of eNodeB
-                        dataAdaptor.inverseStatDirection( msg );
-                     }
-                  }
-                  //ignore this UE in a moment (DB_QUERY_INTERVAL)
-                  cache[type][ ip ] = o;
-               }
-               _appendData( msg, o, cb );
+               _appendData( type, msg, cb );
             }
+            
+            //reset cache
+            msgCache = [];
          });
-      }else
-         _appendData( msg, o, cb );
+      } else
+         _appendData( type, msg, cb );
 
    }
 
    module.exports = {
          appendSuplementDataGtp:  function( msg, cb ){ 
-            _appendExpectedQoS( msg );
-            _appendSuplementData( "ue", msg, cb); 
+            try{
+               _appendExpectedQoS( msg );
+               _appendSuplementData( "ue", msg, cb);
+            }catch( e ){
+               console.error( e );
+               cb( msg );
+            }
          },
          
-         appendSuplementDataSctp: function( msg, cb ){ _appendSuplementData( "enb", msg, cb); },
-         addQci: _addQci
+         appendSuplementDataSctp: function( msg, cb ){
+            try{
+               _appendSuplementData( "enb", msg, cb);
+            }catch( e ){
+               console.error( e );
+               cb( msg );
+            }
+         },
+         addQci: _addQci,
+         isEnable : true
    }; 
 } else {
    module.exports = {
-         appendSuplementDataGtp:  function( msg, cb ){},
-         appendSuplementDataSctp: function( msg, cb ){},
-         addQci: function( msg ){}
+         appendSuplementDataGtp:  function( msg, cb ){ cb(msg) },
+         appendSuplementDataSctp: function( msg, cb ){ cb(msg) },
+         addQci: function( msg ){},
+         isEnable : false
    }; 
 }
