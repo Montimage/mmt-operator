@@ -34,7 +34,7 @@ function Reader(){
 
    const execArgv = [
       //"--inspect-brk",
-      "--inspect=10.0.0.2",
+      //"--inspect=10.0.0.2",
       //"--inspect-brk=10.0.0.2",
       //"--expose_gc",
       //"--max-old-space-size=2048"

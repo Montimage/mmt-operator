@@ -64,10 +64,10 @@
 		"byte": 64
 	},
 	"query_cache": {
-	  "enable" : true,
+	  "enable" : false,
 	  "folder" : "/tmp/cache/",
 	  "bytes" : 10e6,
-	  "files" : 9999
+	  "files" : 99
 	},
 	"auto_reload_report": true,
 	"retain_detail_report_period": 3600,

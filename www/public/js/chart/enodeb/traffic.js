@@ -92,6 +92,7 @@ var ReportFactory = {
       formatRTT : function( time ){
          return (time/1000).toFixed( 2 );
       },
+      
       createTrafficReport: function( fPeriod ){
          var divise = function( a, b ){
             if (b == 0) return a;
@@ -100,26 +101,31 @@ var ReportFactory = {
          };
          var _this = this;
          
+         var fMetric = MMTDrop.filterFactory.createMetricFilter();
+         fMetric.onFilter(function () {
+            cLine.redraw();
+         });
+
          //metric selector
          var options = [
             {id: "packet_delay", label: "Packet Delay" },
             {id: "pelr", label: "Packet Error Lost Rate"},
          ];
          
-         var fMetric = new MMTDrop.Filter({
+         const fMetricQos = new MMTDrop.Filter({
             id      : "qos_metric_filter" + MMTDrop.tools.getUniqueNumber(),
-            label   : "Metric",
+            label   : "QoS",
             options : options,
+            useFullURI: false,
          }, function (opt, db){
             //how it filters database when the current selected option is @{val}
-            MMTDrop.tools.reloadPage( "metric=" + opt.id );
+            //MMTDrop.tools.reloadPage( "metric=" + opt.id );
+            cLine.redraw();
          });
          
          
          if (URL_PARAM.metric != undefined)
-            fMetric.selectedOption( {id: URL_PARAM.metric} );
-         else
-            fMetric.selectedOption( {id: 'packet_delay'} );
+            fMetricQos.selectedOption( {id: URL_PARAM.metric} );
          
          
          var fApp  = MMTDrop.filterFactory.createAppFilter();
@@ -166,85 +172,7 @@ var ReportFactory = {
                });
          }//end appList_db._reload
 
-         //using log function to scale metric values
-         //=> avoid showing long distance between smallest value and the biggest one
-         function _scale(x){
-            //if( -1 <= x && x <= 1 )
-            //   return x;
-            
-            //avoid x < 1 ==> get negative value
-            x += 1;
-            
-            x = Math.log10( x );
-            //x *= sign;
-            return x;
-         }
-         
-         function _unscale( x ){
-            //if( -1 <= x && x <= 1 )
-            //   return x;
-            
-            //var sign = 1;
-            //if( x < 0 ){
-            //   sign = -1;
-            //   x    = -x;
-            //}
-            
-            x = Math.pow( 10, x );
-            x -= 1;
-            
-            //x *= sign;
-            //if( x === 0.01 )
-            //   x = 0;
-            return x;
-         }
-         
-         var UL_METRIC, DL_METRIC; //which matric is being selected: either 'pelr' or 'packet_delay'
-         var UL_EXPECT_METRIC, DL_EXPECT_METRIC;
-         var AXIS_Y_TITLE;
-         var DATA_PROC_FN;
-         var METRIC_UNIT;
-         switch( URL_PARAM.metric ){
-            case "pelr":
-               UL_METRIC = {id: COL.UL_RETRANSMISSION.id, label: "UL PELR"};
-               DL_METRIC = {id: COL.DL_RETRANSMISSION.id, label: "DL PELR"};
-               
-               //theory value
-               UL_EXPECT_METRIC = {id: 120, label: 'Max UL PELR'};
-               DL_EXPECT_METRIC = {id: 122, label: 'Max DL PELR'};
-               
-               AXIS_Y_TITLE = "Packet error lost rate (%)";
-               METRIC_UNIT = ' %';
-               DATA_PROC_FN = function( data ){
-                  data = data * 100;//percentage
-                  data = _scale( data );
-                  return data;
-               }
-               break;
-               
-            case "packet_delay":
-            default:
-               UL_METRIC = {id: COL.RTT_AVG_CLIENT.id, label: "UL Packet Delay" };
-               DL_METRIC = {id: COL.RTT_AVG_SERVER.id, label: "DL Packet Delay" };
-               
-               UL_EXPECT_METRIC = {id: 119, label: 'Max UL Delay'};
-               DL_EXPECT_METRIC = {id: 121, label: 'Max DL Delay'};
-               
-               AXIS_Y_TITLE = "Packet delay (ms)";
-               METRIC_UNIT = " ms/flow";
-               DATA_PROC_FN = function( data ){
-                  data = _scale( data );
-                  return data;
-               }
-               break;
-         }
-         
-         //group by timestamp         
-         var cols = [
-            COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
-            UL_METRIC, DL_METRIC,
-            COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION ];
-
+     
          var database = new MMTDrop.Database( {id: "lte-qos"} );//end new Database
          //this is called each time database is reloaded to update parameters of database
          database.updateParameter = function( _old_param ){
@@ -257,24 +185,125 @@ var ReportFactory = {
             return {query : query};
          };//end database.updateParameter
 
+         
+       //using log function to scale metric values
+         //=> avoid showing long distance between smallest value and the biggest one
+         function _scale(x){
+            //avoid x < 1 ==> get negative value
+            x += 1;
+            x = Math.log10( x );
+            return x;
+         }
+         
+         function _unscale( x ){            
+            x = Math.pow( 10, x );
+            x -= 1;
+            return x;
+         }
+         
          //line chart on the top
          var cLine = MMTDrop.chartFactory.createTimeline({
             getData: {
                getDataFn: function (db) {
+                  var sampling = db.time.sampling / 1000; //milisecond => second
+                  
+                  var UL_QOS_METRIC, DL_QOS_METRIC; //which matric is being selected: either 'pelr' or 'packet_delay'
+                  var UL_EXPECT_QOS_METRIC, DL_EXPECT_QOS_METRIC;
+                  var AXIS_Y_TITLE;
+                  var DATA_PROC_FN;
+                  var METRIC_UNIT;
+                  switch( fMetricQos.selectedOption().id ){
+                     case "pelr":
+                        UL_QOS_METRIC = {id: COL.UL_RETRANSMISSION.id, label: "UL PELR"};
+                        DL_QOS_METRIC = {id: COL.DL_RETRANSMISSION.id, label: "DL PELR"};
+                        
+                        //theory value
+                        UL_EXPECT_QOS_METRIC = {id: 120, label: 'Max UL PELR'};
+                        DL_EXPECT_QOS_METRIC = {id: 122, label: 'Max DL PELR'};
+                        
+                        AXIS_Y_TITLE = "Packet error lost rate (%)";
+                        METRIC_UNIT = ' %';
+                        DATA_PROC_FN = function( data ){
+                           data = data * 100;//percentage
+                           data = _scale( data );
+                           return data;
+                        }
+                        break;
+                        
+                     case "packet_delay":
+                     default:
+                        UL_QOS_METRIC = {id: COL.RTT_AVG_CLIENT.id, label: "UL Packet Delay" };
+                        DL_QOS_METRIC = {id: COL.RTT_AVG_SERVER.id, label: "DL Packet Delay" };
+                        
+                        UL_EXPECT_QOS_METRIC = {id: 119, label: 'Max UL Delay'};
+                        DL_EXPECT_QOS_METRIC = {id: 121, label: 'Max DL Delay'};
+                        
+                        AXIS_Y_TITLE = "Packet delay (ms)";
+                        METRIC_UNIT = " ms/flow";
+                        DATA_PROC_FN = function( data ){
+                           data = _scale( data );
+                           return data;
+                        }
+                        break;
+                  }
+                  
+                  var UL_METRIC, DL_METRIC;
+                  var AXIS_Y2_TITLE;
+                  var DATA_PROC_FN2;
+                  switch( fMetric.selectedOption().id ){
+                     case COL.PACKET_COUNT.id:
+                        UL_METRIC = COL.UL_PACKET_COUNT;
+                        DL_METRIC = COL.DL_PACKET_COUNT;
+                        AXIS_Y2_TITLE = 'Packet Rate (pps)';
+                        DATA_PROC_FN2 = function( v ){
+                           return v / sampling;
+                        };
+                        break;
+                        
+                     case COL.PAYLOAD_VOLUME.id:
+                        UL_METRIC = COL.UL_PAYLOAD_VOLUME;
+                        DL_METRIC = COL.DL_PAYLOAD_VOLUME;
+                        AXIS_Y2_TITLE = 'Data Rate (bps)';
+                        DATA_PROC_FN2 = function( v ){
+                           return v*8 / sampling; //*8bit per second
+                        };
+                        break;
+                        
+                     case COL.ACTIVE_FLOWS.id:
+                        UL_METRIC = {id: COL.ACTIVE_FLOWS.id, label: 'UL Sessions'};
+                        //minus to differ from UL_METRIC
+                        DL_METRIC = {id: -COL.ACTIVE_FLOWS.id, label: 'DL Sessions'};
+                        AXIS_Y2_TITLE = 'Session Count (total)';
+                        DATA_PROC_FN2 = function( v ){
+                           return v/2;
+                        }
+                        break;
+                        
+                     case COL.DATA_VOLUME.id:
+                     default:
+                        UL_METRIC = COL.UL_DATA_VOLUME;
+                        DL_METRIC = COL.DL_DATA_VOLUME;
+                        AXIS_Y2_TITLE = 'Data Rate (bps)';
+                        DATA_PROC_FN2 = function( v ){
+                           return v*8 / sampling; //*8bit per second
+                        };
+                        break;
+                  }
+                  
+                  //group by timestamp         
                   var cols = [ COL.TIMESTAMP,
-                     UL_EXPECT_METRIC,
-                     UL_METRIC,
+                     UL_EXPECT_QOS_METRIC,
+                     UL_QOS_METRIC,
                      //label: "Data Rate" must be sync with axes: {"Data Rate": "y2"}
-                     {id: COL.UL_DATA_VOLUME.id, label: "UL Data Rate", type: "line"},
+                     {id: UL_METRIC.id, label: UL_METRIC.label, type: "line"},
                      
-                     DL_EXPECT_METRIC,
-                     DL_METRIC,
-                     {id: COL.DL_DATA_VOLUME.id, label: "DL Data Rate", type: "line"},
+                     DL_EXPECT_QOS_METRIC,
+                     DL_QOS_METRIC,
+                     {id: DL_METRIC.id, label: DL_METRIC.label, type: "line"},
                   ];
                   
                   var data  = db.data();
-                  var sampling = db.time.sampling / 1000; //milisecond => second
-                  sampling /= 8; //bit per second
+                  
 
                   var get_number = function( v ){
                      if( v == null || isNaN( v )) return -1;
@@ -285,35 +314,47 @@ var ReportFactory = {
                   var length_ul = 0, total_ul = 0, val;
                   var length_dl = 0, total_dl = 0;
                   
+                  var arr = [];
+                  
                   for( var i=0; i<data.length; i++ ){
                      var m = data[i];
-                     if( m == undefined ){
-                        console.error('Null value at index=' + i);
-                        continue;
-                     }
+                     var o = {};
+                     
+                     arr.push( o );
+                     
+                     //copy m to o
+                     for( var j=0; j<cols.length; j++)
+                        o[ cols[j].id ] = m[ cols[j].id ]
                      
                      //processing real values of the selected metric
-                     m[UL_METRIC.id] = DATA_PROC_FN(m[UL_METRIC.id]);
-                     m[DL_METRIC.id] = DATA_PROC_FN(m[DL_METRIC.id]);
+                     o[UL_QOS_METRIC.id] = DATA_PROC_FN(m[UL_QOS_METRIC.id]);
+                     o[DL_QOS_METRIC.id] = DATA_PROC_FN(m[DL_QOS_METRIC.id]);
                      
                      //processing theory values of the selected metric
-                     m[UL_EXPECT_METRIC.id] = DATA_PROC_FN(m[UL_EXPECT_METRIC.id]);
-                     m[DL_EXPECT_METRIC.id] = DATA_PROC_FN(m[DL_EXPECT_METRIC.id]);
+                     o[UL_EXPECT_QOS_METRIC.id] = DATA_PROC_FN(m[UL_EXPECT_QOS_METRIC.id]);
+                     o[DL_EXPECT_QOS_METRIC.id] = DATA_PROC_FN(m[DL_EXPECT_QOS_METRIC.id]);
                      
                      
-                     //bit per second
-                     m[COL.UL_DATA_VOLUME.id] /= sampling;
-                     m[COL.UL_DATA_VOLUME.id] /= sampling;
+                     //specific processing for DL_METRIC = COL.ACTIVE_FLOWS.id
+                     if( DL_METRIC.id == - COL.ACTIVE_FLOWS.id ){
+                        o[UL_METRIC.id] = Math.round( o[COL.ACTIVE_FLOWS.id] / 2 );
+                        o[DL_METRIC.id] = m[ COL.ACTIVE_FLOWS.id ] - o[UL_METRIC.id] ;
+                     } else {
+                        o[UL_METRIC.id] = DATA_PROC_FN2( o[UL_METRIC.id] );
+                        o[DL_METRIC.id] = DATA_PROC_FN2( o[DL_METRIC.id] );
+                     }
+                     
+                     
                      
                      //calculate avg
-                     val =  get_number( m[ UL_METRIC.id ] );
+                     val =  get_number( m[ UL_QOS_METRIC.id ] );
                      //val = -3
                      if( val >= 0 ){
                         total_ul  += val;
                         length_ul ++;
                      }
                      
-                     val =  get_number( m[ DL_METRIC.id ] );
+                     val =  get_number( m[ DL_QOS_METRIC.id ] );
                      if( val >= 0 ){
                         total_dl  += val;
                         length_dl ++;
@@ -321,9 +362,9 @@ var ReportFactory = {
                      
                      
                      //upside down
-                     [COL.DL_DATA_VOLUME.id, DL_METRIC.id, DL_EXPECT_METRIC.id]
+                     [DL_METRIC.id, DL_QOS_METRIC.id, DL_EXPECT_QOS_METRIC.id]
                      .forEach( function( el ){
-                        m[el] = - m[el]; 
+                        o[el] = - o[el]; 
                      });
                   }
                   
@@ -334,9 +375,9 @@ var ReportFactory = {
                   var gridLines = [];
                   if( total_ul != 0 )
                      //granularity/average
-                     gridLines.push( {value: total_ul, text: UL_METRIC.label + ": " + total_ul + METRIC_UNIT, position: 'start'} );
+                     gridLines.push( {value: _scale(total_ul), text: UL_QOS_METRIC.label + ": " + total_ul + METRIC_UNIT, position: 'start'} );
                   if( total_dl != 0 )
-                     gridLines.push({value: -total_dl, text: DL_METRIC.label + ": " + total_dl + METRIC_UNIT, position: 'start'});
+                     gridLines.push({value: - _scale(total_dl), text: DL_QOS_METRIC.label + ": " + total_dl + METRIC_UNIT, position: 'start'});
                   
                   var $widget = $("#" + cLine.elemID).getWidgetParent();
                   var height = $widget.find(".grid-stack-item-content").innerHeight();
@@ -359,32 +400,50 @@ var ReportFactory = {
                      return min;
                   }
                   
-                  var yMax  = _findMax( data, UL_METRIC.id ),
-                      yMin  = _findMin( data, DL_METRIC.id ),
-                      _yMax = _findMax( data, UL_EXPECT_METRIC.id ),
-                      _yMin = _findMin( data, DL_EXPECT_METRIC.id ),
-                      y2Max = _findMax( data, COL.UL_DATA_VOLUME.id ),
-                      y2Min = _findMin( data, COL.DL_DATA_VOLUME.id );
+                  var yUL  = _findMax( arr, UL_QOS_METRIC.id ),
+                      yDL  = _findMin( arr, DL_QOS_METRIC.id ),
+                      _yUL = _findMax( arr, UL_EXPECT_QOS_METRIC.id ),
+                      _yDL = _findMin( arr, DL_EXPECT_QOS_METRIC.id ),
+                      y2UL = _findMax( arr, UL_METRIC.id ),
+                      y2DL = _findMin( arr, DL_METRIC.id );
                   
-                  if( yMax < _yMax )
-                     yMax = _yMax;
-                  if( yMin > _yMin )
-                     yMin = _yMin;
-                  //console.log(yMin, yMax, y2Min, y2Max);
+                  if( yUL < _yUL )
+                     yUL = _yUL;
+                  if( yDL > _yDL )
+                     yDL = _yDL;
+                  
+                  //console.log(yDL, yUL, y2DL, y2UL);
                   //get same proportion for y and y2 axis
                   //fix y, change y2 to get the same proportion
-                  var propo  = yMax / yMin;
-                  var new_y2Max = y2Min * propo;
-                  if( new_y2Max < y2Max )
-                     y2Min = y2Max / propo;
-                  else
-                     y2Max = new_y2Max;
+                  var propo  = yUL / yDL;
+                  
+                  //ensure proportion is 1:4
+                  // as ussually UL is less than DL
+                  if( propo > -1/4 ){
+                     propo = -1/4;
+                     //keep y2DL
+                     yUL = yDL * propo;
+                  } else if ( propo < -4/1 ){
+                     propo = -4;
+                     //keep y2UL
+                     yDL = yUL/propo;
+                  }
                      
+                  var new_y2Max = y2DL * propo;
+                  if( new_y2Max < y2UL )
+                     y2DL = y2UL / propo;
+                  else
+                     y2UL = new_y2Max;
+                  
+                  var axes = {};
+                  axes[ UL_METRIC.label ] = "y2";
+                  axes[ DL_METRIC.label ] = "y2";
+                  
                   //this must be true: (y2Max/y2Min == yMax/yMin)
                   //console.log(yMin, yMax, y2Min, y2Max, (y2Max/y2Min == yMax/yMin));
                   
                   return {
-                     data    : data,
+                     data    : arr,
                      columns : cols,
                      ylabel  : AXIS_Y_TITLE,
                      height  : height,
@@ -397,6 +456,9 @@ var ReportFactory = {
                     },
                     //other parameter for the c3js line chart
                     chart   : {
+                        data:{
+                          axes: axes,
+                        },  
                         //show avg lines of time
                         grid: {
                            y: {
@@ -406,12 +468,15 @@ var ReportFactory = {
                         //synchronize zero line of two axis: y and y2
                         axis: {
                            y : {
-                              min: yMin,
-                              max: yMax
+                              min: yDL,
+                              max: yUL
                            },
                            y2: {
-                              min: y2Min,
-                              max: y2Max
+                              min: y2DL,
+                              max: y2UL,
+                              label: {
+                                 text: AXIS_Y2_TITLE,
+                              }
                            }
                         } 
                            
@@ -424,10 +489,6 @@ var ReportFactory = {
             chart: {
                data:{
                   type: "area",
-                  axes: {
-                     "UL Data Rate": "y2",
-                     "DL Data Rate": "y2"
-                  },
                   onclick: function( d, element ){
                      //loadDetail( d.x.getTime() );
                   },
@@ -437,7 +498,7 @@ var ReportFactory = {
                   },
                },
                color: {
-                  pattern: [ 'LightBlue', 'DeepSkyBlue', 'green', 'Plum', 'violet', 'red']
+                  pattern: [ 'PowderBlue', 'DeepSkyBlue', 'green', 'Lavender', 'violet', 'red']
                },
                grid: {
                   x: {
@@ -456,13 +517,19 @@ var ReportFactory = {
                         count: 7,
                         //override the default format
                         format: function( v ){
-                           if( v < 0 ) 
+                           if( v == 0 )
+                              return v;
+                           
+                           var symbol = '\u2191'; //up
+                           if( v < 0 ){
                               v = -v;
+                              symbol = '\u2193'; //down
+                           }
                            v = _unscale( v );
                            if( v < 0.1 )
                               return Math.round( v * 1e4 ) / 1e4;
                            
-                           return  MMTDrop.tools.formatDataVolume(v);
+                           return MMTDrop.tools.formatDataVolume(v);
                         }
                      },
                      padding: {top: 0, bottom: 0},
@@ -470,15 +537,17 @@ var ReportFactory = {
                   y2: {
                      show : true,
                      label: {
-                        text: "Data Rate (bps)",
                         position: "outer"
                      },
                      tick: {
                         count: 7,
                         format: function( v ){
-                           if( v < 0 ) 
+                           var symbol = '\u2191'; //up
+                           if( v < 0 ){
                               v = -v;
-                           return MMTDrop.tools.formatDataVolume( v, true );
+                              symbol = '\u2193'; //down
+                           }
+                           return  MMTDrop.tools.formatDataVolume( v, true );
                         }
                      },
                      padding: {top: 0, bottom: 0},
@@ -503,7 +572,7 @@ var ReportFactory = {
                //translate oX line to zero
                //select the x axis
                
-               d3.select(chart.element)
+               d3.select( chart.element )
                   .select('.' + c3.chart.internal.fn.CLASS.axisX)
                   .transition()
                   // and translate it to the y = 0 position
@@ -517,7 +586,7 @@ var ReportFactory = {
                null,
                database,
                // filers
-               [fMetric, fApp],
+               [fMetricQos, fApp, fMetric],
                // charts
                [
                   {

@@ -169,11 +169,29 @@ if( isEnableEnodeB ){
       70: {delay: 200, pelr: 10e-6}
    };
    
+   const QOS_CACHE_KEY = 'lteQciCache';
    var qciCache = {};
+   
+   interProcCache.get( QOS_CACHE_KEY, function(val){
+      if( val != undefined )
+         qciCache = val;
+   });
+   
+   
    function _addQci( msg ){
-      const teid = msg[ 5 ];
-      const qci  = msg[ 6 ];
-      qciCache[ teid ] = qci;
+      interProcCache.get( QOS_CACHE_KEY, function(val){
+         if( val != undefined )
+            qciCache = val;
+         
+         console.log("Qci cache:", qciCache );
+         
+         const teid = msg[ 5 ];
+         const qci  = msg[ 6 ];
+         qciCache[ teid ] = qci;
+         
+         //update
+         interProcCache.set( QOS_CACHE_KEY, qciCache );
+      });
    }
 
    function _appendExpectedQoS( msg ){

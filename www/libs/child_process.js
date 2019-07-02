@@ -103,7 +103,9 @@ function childProcess( file, params, env, autoRestart ){
          self.onRestart( self );
       
       //restart the process: start a new process
-      return self.start();
+      //0.5 second to avoid restarting so quickly
+      setTimeout( self.start, 500 );
+      return self;
    };
    
 

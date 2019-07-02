@@ -163,7 +163,7 @@ if( typeof Highcharts !== "undefined" )
             /** Index of the data volume column */
             UL_DATA_VOLUME    : {id: 11, label: "UL Data Volume"},
             /** Index of the payload data volume column */
-            UL_PAYLOAD_VOLUME : {id: 12, label: "UL Packet Count"},
+            UL_PAYLOAD_VOLUME : {id: 12, label: "UL Payload Volume"},
             /** Index of the packet count column */
             UL_PACKET_COUNT   : {id: 13, label: "UL Packet Count"},
             /** Index of the data volume column */
@@ -2900,6 +2900,7 @@ if( typeof Highcharts !== "undefined" )
       var _option = param.options;
       var _this = this;
       _this.storeState = true;
+      
       this.getId = function(){
          return param.id;
       }
@@ -2931,8 +2932,9 @@ if( typeof Highcharts !== "undefined" )
          var fdiv =       $('<div>',  {class: 'input-group input-group-sm'});
          var span =       $('<span>', {class: 'input-group-addon', text: param.label});
          var filter =     $('<select>',{class: "form-control",     id  : param.id});
-
          this.select = filter;
+         if( param.style )
+            filter.css( param.style )
 
          span.appendTo( fdiv );
          filter.appendTo( fdiv );
@@ -3236,6 +3238,7 @@ if( typeof Highcharts !== "undefined" )
                id      : "metric_filter" + MMTDrop.tools.getUniqueNumber(),
                label   : "Metric",
                options : options,
+               useFullURI: false,
             },
             function (val, db){
                //how it filters database when the current selected option is @{val}

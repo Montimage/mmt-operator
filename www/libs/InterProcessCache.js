@@ -20,7 +20,7 @@ const OP = {
 
 const UNIX_SOCKET = '/tmp/mmt-operator-shared-memory.sock';   
 
-function callback( cb, data ){
+function _fire( cb, data ){
    if( typeof(cb) === 'function' )
       cb( data );
 }
@@ -68,9 +68,10 @@ function emitMessages (stream) {
       let data = JSON.stringify( msg );
       data += dataSeparator;
       stream.write( data, 'utf8' );
-   }
+   };
 
    stream.on('data', function (data) {
+      console.log('got data', data );
       backlog += data;
       let n = backlog.indexOf( dataSeparator );
       // got a \n? emit one or more 'line' events
@@ -91,22 +92,27 @@ function emitMessages (stream) {
 }
 
 function enableDestroyServer(server) {
-   var clients = {}
-
+   const clients = {};
+   let totalClients = 0;
+   
    server.on('connection', function(conn) {
-      var key = conn.remoteAddress + ':' + conn.remotePort;
-      clients[key] = conn;
+      const clientId = totalClients ++;
+      //console.log('New cache client: ' + clientId)
+      clients[clientId] = conn;
       conn.on('close', function() {
-         delete clients[key];
+         //console.log('cache client is closed ' + clientId );
+         delete clients[ clientId ];
       });
    });
 
    server.destroy = function(cb) {
       for (var key in clients){
-         const client = clients[key];
-         client.close();
-         client.destroy();
-         console.log("close key: " + key );
+         try{
+            //console.log('Server cache forces to close client ' + key );
+            const client = clients[key];
+            _fire( client.close );
+            //_fire( client.destroy );
+         }catch(e){ console.error(e);}
       }
 
       //Emitted when the server closes. 
@@ -135,14 +141,14 @@ class Master extends Cache{
 
       //when server received a new client
       tcpServer.on('connection', function( client ) {
-         console.log( 'New client connected ', client.address() );
+         //console.log( 'New client connected ', client.address() );
 
          emitMessages( client );
 
          //when receiving a message from client
          client.on( 'message', function( msg ){
             try{
-               //console.log( msg );
+               console.log('Cache server got a message', msg );
                const operator = msg.operator;
                const key      = msg.key;
                const data     = msg.data;
@@ -180,10 +186,17 @@ class Master extends Cache{
    }
    //
    destroy(){
-      if( this.__server )
+      //console.log('Server is exitting: ' + process.pid );
+      if( this.__server ){
          this.__server.destroy();
+         //remove unix socket link
+         //remove old socket path if it is existing
+         try{
+            fs.unlinkSync( UNIX_SOCKET );
+         }catch(e){}
+      }
       
-      //clean
+      //clean the cache
       this.clean();
    };
 }
@@ -195,7 +208,7 @@ class Worker{
       this.__msgCount = 0;
       this.__callbacks = new Cache();
 
-      //close the server when its process exit
+      //close the socket when its process exit
       process.on('exit', () => this.destroy() );
    }
 
@@ -206,30 +219,29 @@ class Worker{
 
       const self = this;
       //otherwise, create a new one, and initialize it
-      const client = new net.Socket();
+      const client = net.createConnection( UNIX_SOCKET, function() {
+         emitMessages( client );
+         cb( client );
+      });
+      
       client.setKeepAlive( true );
 
       client.on('error', console.error );
       //when receiving a message from server
       client.on('message', function( msg ){
          const id = msg.__id;
-         const handler = self.__callback.get( id );
-
+         const handler = self.__callbacks.get( id );
+         //remove the callback from the list
+         self.__callbacks.remove( id );
+         
          if( id === undefined || handler === undefined ){
-            console.warn( 'Receive response with no handler', msg )
+            console.warn( 'Receive response with no handler', msg );
             return;
          }
 
-         //remove the callback from the list
-         self.__callback.remove( id );
-
-         handler( msg.data, args );
-      });
-
-      //connect to server
-      client.connect( UNIX_SOCKET, function() {
-         emitMessages( client );
-         cb( client );
+         console.log('received response', msg );
+         
+         handler.cb( msg.data, handler.args );
       });
 
       this.__socket = client;
@@ -243,7 +255,7 @@ class Worker{
          //=> we need to add an id to the message to be able to recognize it 
          //    when it is sent back to us in on('message') function
          //=> we need also to remember the callback and its arguments
-         if( cb ){
+         if( typeof( cb ) === 'function' ){
             msg.__id = (self.__msgCount ++);
             self.__callbacks.set( msg.__id, {cb: cb, args: args} );
          }
@@ -253,11 +265,11 @@ class Worker{
       });
    }
 
-   get( key, cb ){
+   get( key, cb, args ){
       this.__sendMessageToMaster( {
          operator : OP.GET,
          key      : key
-      }, cb );
+      }, cb, args );
    }
 
    set( key, data ){
@@ -281,9 +293,13 @@ class Worker{
       });
    }
    destroy(){
-      if( this.__socket ){
-         this.__socket.close();
-         this.__socket.distroy();
+      //console.log('Client is exitting: ' + process.pid );
+      if( this.__socket && ! this.__socket.destroyed ){
+         //console.log( this.__socket );
+         
+         _fire( this.__socket.close );
+         _fire( this.__socket.distroy );
+         this.__socket = null;
       }
    }
 }
@@ -300,6 +316,6 @@ else
 
 cache.isMaster = function(){
    return isInMasterProcess;
-}
+};
 
 module.exports = cache;

@@ -20,7 +20,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    //sum
    [ 
       COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
-      
+      COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
       COL.UL_PACKET_COUNT, COL.DL_PACKET_COUNT,
       
       COL.ACTIVE_FLOWS,
@@ -68,7 +68,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
          return cb( err );
       
       function percentage( x, y, round = 100 ){
-         if( y == 0 )
+         if( y === 0 )
             return 0;
          //get percentage
          x = (x/y);
@@ -76,7 +76,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
          return Math.round( x * round )/round;
       }
       
-      const NANO_TO_MILLI = 1000*1000
+      const NANO_TO_MILLI = 1000*1000;
       
       //
 
