@@ -3314,7 +3314,8 @@ if( typeof Highcharts !== "undefined" )
             filter.renderTo = function( elemID ){
                filter._renderTo( elemID );
 
-
+               $('#'+ filterID + '_container' ).css({'max-width': '200px'});
+               
                var $cal = $('<div id="'+ filterID +'-datepicker" class="datepicker-icon input-group-addon"> <span class="glyphicon glyphicon-calendar"/></div>');
                $cal.appendTo( $("#" + filterID + "_container .input-group") );
 

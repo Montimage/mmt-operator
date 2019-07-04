@@ -15,7 +15,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
    const group = { _id : {} };
 
    [ COL.TIMESTAMP ]
-   .forEach( (el) =>  group["_id"][ el ] = "$" + el );
+   .forEach( (el) =>  group._id[ el ] = "$" + el );
    
    //sum
    [ 
@@ -33,6 +33,7 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
       GTP.EXPECTED_PELR_DL, GTP.EXPECTED_DELAY_DL
    ]
       .forEach( ( el ) =>  group[ el ] = {"$sum" : "$" + el} );
+   
    
    [ 
       COL.TIMESTAMP 
@@ -67,16 +68,16 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
       if( err || data == null )
          return cb( err );
       
-      function percentage( x, y, round = 100 ){
+      function _divide( x, y, round = 100 ){
          if( y === 0 )
             return 0;
-         //get percentage
+         //get _divide
          x = (x/y);
          //round to 2 numbers after ., e.g., 10.xx
          return Math.round( x * round )/round;
       }
       
-      const NANO_TO_MILLI = 1000*1000;
+      const MICRO_TO_MILLI = 1000;
       
       //
 
@@ -87,23 +88,29 @@ module.exports = function( startTime, endTime, periodName, param, dbconnector, c
       data.map( (el) => {
          const flows = el[COL.ACTIVE_FLOWS] || 1;
          
-         el[ COL.RTT_AVG_CLIENT ] = percentage( el[ COL.RTT_AVG_CLIENT ],  NANO_TO_MILLI * flows); //nanosecond to millisecond
-         el[ COL.RTT_AVG_SERVER ] = percentage( el[ COL.RTT_AVG_SERVER ],  NANO_TO_MILLI * flows);
+         //RTT_CLIENT is the interval from data pkt to a client and its ack sent by the client
+         // => divided by 2 to get time from data pkt to client
+         el[ COL.RTT_AVG_CLIENT ] /= 2
+         
+         
+         el[ COL.RTT_AVG_CLIENT ] = _divide( el[ COL.RTT_AVG_CLIENT ],  MICRO_TO_MILLI*flows); //microsecond to millisecond
+         //as we cannot distinguish rtt of upload vs download => they are considered as the same
+         el[ COL.RTT_AVG_SERVER ] = el[ COL.RTT_AVG_CLIENT ]; //_divide( el[ COL.RTT_AVG_CLIENT ] / 2,  MICRO_TO_MILLI * flows);
          
          
          //get expected values, if they are zero => use default ones
-         el[ GTP.EXPECTED_DELAY_UL ] = percentage( el[ GTP.EXPECTED_DELAY_UL ], flows ) || defaultQCI.delay ; //these values are in millisecond
-         el[ GTP.EXPECTED_DELAY_DL ] = percentage( el[ GTP.EXPECTED_DELAY_DL ], flows ) || defaultQCI.delay ;
+         el[ GTP.EXPECTED_DELAY_UL ] = _divide( el[ GTP.EXPECTED_DELAY_UL ], flows ) || defaultQCI.delay ; //these values are in millisecond
+         el[ GTP.EXPECTED_DELAY_DL ] = _divide( el[ GTP.EXPECTED_DELAY_DL ], flows ) || defaultQCI.delay ;
         
-         el[ GTP.EXPECTED_PELR_UL ]  = percentage( el[ GTP.EXPECTED_PELR_UL ], flows, 10000) || defaultQCI.pelr;
-         el[ GTP.EXPECTED_PELR_DL ]  = percentage( el[ GTP.EXPECTED_PELR_DL ], flows, 10000) || defaultQCI.pelr;
+         el[ GTP.EXPECTED_PELR_UL ]  = _divide( el[ GTP.EXPECTED_PELR_UL ], flows, 10000) || defaultQCI.pelr;
+         el[ GTP.EXPECTED_PELR_DL ]  = _divide( el[ GTP.EXPECTED_PELR_DL ], flows, 10000) || defaultQCI.pelr;
          
          
          //packet error lost rate: number packet erros / total packet
-         el[ COL.DL_RETRANSMISSION ] = percentage( el[ COL.DL_RETRANSMISSION ], el[ COL.DL_PACKET_COUNT ] );
-         el[ COL.UL_RETRANSMISSION ] = percentage( el[ COL.UL_RETRANSMISSION ], el[ COL.UL_PACKET_COUNT ] );
+         el[ COL.DL_RETRANSMISSION ] = _divide( el[ COL.DL_RETRANSMISSION ], el[ COL.DL_PACKET_COUNT ], 10000 );
+         el[ COL.UL_RETRANSMISSION ] = _divide( el[ COL.UL_RETRANSMISSION ], el[ COL.UL_PACKET_COUNT ], 10000 );
       });
       
       cb( err, data );
    }, false);
-}
+};

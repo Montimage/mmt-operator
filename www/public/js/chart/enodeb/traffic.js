@@ -221,10 +221,11 @@ var ReportFactory = {
                         UL_EXPECT_QOS_METRIC = {id: 120, label: 'Max UL PELR'};
                         DL_EXPECT_QOS_METRIC = {id: 122, label: 'Max DL PELR'};
                         
-                        AXIS_Y_TITLE = "Packet error lost rate (%)";
+                        AXIS_Y_TITLE = "Packet error lost rate (% per second)";
                         METRIC_UNIT = ' %';
                         DATA_PROC_FN = function( data ){
                            data = data * 100;//percentage
+                           data /= sampling; //percentage of pelr per second
                            data = _scale( data );
                            return data;
                         }
@@ -324,7 +325,7 @@ var ReportFactory = {
                      
                      //copy m to o
                      for( var j=0; j<cols.length; j++)
-                        o[ cols[j].id ] = m[ cols[j].id ]
+                        o[ cols[j].id ] = m[ cols[j].id ];
                      
                      //processing real values of the selected metric
                      o[UL_QOS_METRIC.id] = DATA_PROC_FN(m[UL_QOS_METRIC.id]);
@@ -337,8 +338,8 @@ var ReportFactory = {
                      
                      //specific processing for DL_METRIC = COL.ACTIVE_FLOWS.id
                      if( DL_METRIC.id == - COL.ACTIVE_FLOWS.id ){
-                        o[UL_METRIC.id] = Math.round( o[COL.ACTIVE_FLOWS.id] / 2 );
-                        o[DL_METRIC.id] = m[ COL.ACTIVE_FLOWS.id ] - o[UL_METRIC.id] ;
+                        o[UL_METRIC.id] = DATA_PROC_FN2( m[COL.ACTIVE_FLOWS.id] ) ;
+                        o[DL_METRIC.id] = DATA_PROC_FN2( m[COL.ACTIVE_FLOWS.id] ) ;
                      } else {
                         o[UL_METRIC.id] = DATA_PROC_FN2( o[UL_METRIC.id] );
                         o[DL_METRIC.id] = DATA_PROC_FN2( o[DL_METRIC.id] );
@@ -547,7 +548,7 @@ var ReportFactory = {
                               v = -v;
                               symbol = '\u2193'; //down
                            }
-                           return  MMTDrop.tools.formatDataVolume( v, true );
+                           return  MMTDrop.tools.formatDataVolume( v );
                         }
                      },
                      padding: {top: 0, bottom: 0},

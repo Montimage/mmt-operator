@@ -167,6 +167,19 @@ const dataIndex = require("./shared/dataIndex");
             this._swap( msg, COL.RTT_AVG_SERVER,    COL.RTT_AVG_CLIENT );
             this._swap( msg, COL.UL_RETRANSMISSION, COL.DL_RETRANSMISSION );
             
+            
+            //switch also IPs in GTP reports
+            const isGTP = ( msg[ MMTDrop.StatsColumnId.FORMAT_TYPE ] === MMTDrop.CsvFormat.GTP_APP_FORMAT )
+            if( isGTP ){
+               const GTP = MMTDrop.GtpStatsColumnId;
+               MMTDrop._swap( msg, GTP.IP_SRC, GTP.IP_DST);
+               const teids = msg[ GTP.TEIDs ];
+               
+               if( teids.length === 2 )
+                  MMTDrop._swap( teids, 0, 1 ); //[a,b] => [b,a]
+            }
+
+            
             return msg;
          },
 
@@ -306,6 +319,10 @@ const dataIndex = require("./shared/dataIndex");
          msg[ i ] = new_msg[ i - _new ];
       }
       
+      if( isGTP ){
+         
+      }
+      
       if( ip2loc.isLocal( msg[MMTDrop.StatsColumnId.IP_SRC] ) ){
          msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = true;
          return msg;
@@ -313,11 +330,7 @@ const dataIndex = require("./shared/dataIndex");
       
       msg[ MMTDrop.StatsColumnId.IP_SRC_INIT_CONNECTION ] = false;
       msg = MMTDrop.inverseStatDirection( msg );
-      
-      //switch also IPs in GTP reports
-      if( isGTP )
-         MMTDrop._swap( msg, MMTDrop.GtpStatsColumnId.IP_SRC, MMTDrop.GtpStatsColumnId.IP_DST);
-      
+           
       return msg;
    };
    
