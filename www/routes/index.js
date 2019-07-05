@@ -72,6 +72,7 @@ router.post("/", function (req, res, next) {
 
     connect_to_db(function (err, db) {
         if (err) throw new HttpException(req, res, err);
+        
         db.collection("admin").find({
             username: user
         }).toArray(
@@ -98,7 +99,7 @@ router.post("/", function (req, res, next) {
                 } else{
                     loginOK = (doc[0].password === pass);
                 }
-
+                
                 if ( loginOK ) {
                     req.session.loggedin = {
                         username: user
@@ -113,6 +114,7 @@ router.post("/", function (req, res, next) {
                 });
             }
         );
+        
     });
 });
 

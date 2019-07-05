@@ -39,7 +39,7 @@ if( isEnableEnodeB ){
       "       enb_ip   as enb_ip " +
       "FROM amf_enb_data";
 
-   const UNKNOWN = "_unknown";
+   const UNKNOWN = undefined;
    /*
     * Append all attribute from lte to msg
     */

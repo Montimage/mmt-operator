@@ -84,6 +84,12 @@ URL_PARAM.app_id = function(){
 //select only TCP-based app
 const APP_PATH_REGEX = {"$regex" : ".354.", "$options" : ""};
 
+function _getName( name ){
+   if( name == undefined )
+      return '<i class="fa fa-spinner fa-pulse fa-fw"></i><span class="sr-only">Loading...</span>';
+   return name;
+}
+
 var ReportFactory = {
       formatTime : function( date ){
          return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
@@ -619,7 +625,7 @@ var ReportFactory = {
                group[ el ] = {"$sum" : "$" + el};
             });
             [ COL.PROBE_ID.id, GTP.IMSI.id ].forEach( function( el, index){
-               group[ el ] = {"$first" : "$"+ el};
+               group[ el ] = {"$last" : "$"+ el};
             });
 
             [ GTP.TEIDs.id, COL.IP_SRC.id ].forEach( function( el ){
@@ -767,9 +773,7 @@ var ReportFactory = {
                      }).join("; ");
 
                      var data = msg[ GTP.IMSI.id ];
-                     if( data == null )
-                        data = "_unknown";
-                     msg[ GTP.IMSI.id ] = '<a title="Click to show detail of this IMSI" onclick="showDetailUE(\'IMSI\',\''+ data +'\')">' + data + '</a>'
+                     msg[ GTP.IMSI.id ] = '<a title="Click to show detail of this IMSI" onclick="showDetailUE(\'IMSI\',\''+ data +'\')">' + _getName(data) + '</a>'
                   }
                   return {
                      columns : [
@@ -899,8 +903,11 @@ var ReportFactory = {
             [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                group[ el ] = {"$sum" : "$" + el};
             });
-            [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el, index){
                group[ el ] = {"$first" : "$"+ el};
+            });
+            [ COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+               group[ el ] = {"$last" : "$"+ el};
             });
 
             param.query = [{$match: match}, {$group: group}];
@@ -957,13 +964,13 @@ var ReportFactory = {
                      +"','MME: " + msg[ GTP.MME_NAME.id ] //title 
                      + "' )";
 
-                     msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
+                     msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
                   }
 
                   return {
                      columns : [
                         {id: GTP.MME_NAME.id, label: "Name", format: function( val ){
-                           return '<a title="Click to show detail of this MME" onclick="showDetaileMME(\''+ val +'\')">' + val + '</a>';;
+                           return '<a title="Click to show detail of this MME" onclick="showDetaileMME(\''+ val +'\')">' + _getName(val) + '</a>';;
                         }},
                         {id: COL.IP_DST.id, label: "IP"},
                         {id: COL.MAC_DST.id, label: "MAC"},
@@ -1121,7 +1128,7 @@ var ReportFactory = {
                   return {
                      columns : [
                         {id: GTP.ENB_NAME.id, label: "Name", format: function(val){
-                           return '<a title="Click to show detail of this eNodeB" onclick="showDetaileNodeB(\''+ val +'\')">' + val + '</a>';
+                           return '<a title="Click to show detail of this eNodeB" onclick="showDetaileNodeB(\''+ val +'\')">' + _getName(val) + '</a>';
                         }},
                         {id: COL.IP_SRC.id, label: "IP of eNodeB"},
                         {id: COL.MAC_SRC.id, label: "MAC of eNodeB"},
