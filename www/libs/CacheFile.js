@@ -1,11 +1,15 @@
-const hash    = require('object-hash');
 const fs      = require('fs');
 const zlib    = require('zlib');
 const path    = require('path');
 const config  = require('./config');
+const crypto  = require('crypto'); 
 
-
-//clean cache folder
+//hash object to get unique id
+function hash( obj ){
+   const string = JSON.stringify( obj );
+   const hashmd5 = crypto.createHash('md5').update(string).digest('hex');
+   return hashmd5;
+}
 
 
 //remove oldest files to maintain its limitations of number of files and size

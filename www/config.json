@@ -64,7 +64,7 @@
 		"byte": 64
 	},
 	"query_cache": {
-	  "enable" : false,
+	  "enable" : true,
 	  "folder" : "/tmp/cache/",
 	  "bytes" : 10e6,
 	  "files" : 99
@@ -87,7 +87,7 @@
            "port": 3306,
            "user": "root",
            "password": "montimage",
-           "database": "eNodeB"
+           "database": "hss_lte_db"
         }
      }
    }

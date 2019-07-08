@@ -88,6 +88,13 @@ if( isEnableEnodeB ){
          reloaded: false //whether the cache has been loaded from DB
    };
 
+   function _rnMME( name ){
+      if( name === 'edgardo' )
+         return 'develMME';
+      else
+         return name;
+   }
+   
    /*
     * Load data from mysql of vEPC to cache
     */
@@ -108,7 +115,7 @@ if( isEnableEnodeB ){
                var o = data[i];
                var m = {};
                m[ GTP.ENB_NAME ] = o.enb_name;
-               m[ GTP.MME_NAME ] = o.mme_name;
+               m[ GTP.MME_NAME ] = _rnMME( o.mme_name );
 
                //add to local cache
                cache.enb[ o.enb_ip ] = m;
@@ -127,7 +134,7 @@ if( isEnableEnodeB ){
                   var m = {};
                   m[ GTP.IMSI ]     = o.imsi;
                   m[ GTP.ENB_NAME ] = o.enb_name;
-                  m[ GTP.MME_NAME ] = o.mme_name;
+                  m[ GTP.MME_NAME ] = _rnMME( o.mme_name );
                   
                   //save ue to cache
                   cache.ue[ o.ue_ip ] = m;
@@ -320,8 +327,8 @@ if( isEnableEnodeB ){
    }; 
 } else {
    module.exports = {
-         appendSuplementDataGtp:  function( msg, cb ){ cb(msg) },
-         appendSuplementDataSctp: function( msg, cb ){ cb(msg) },
+         appendSuplementDataGtp:  function( msg, cb ){ cb(msg); },
+         appendSuplementDataSctp: function( msg, cb ){ cb(msg); },
          addQci: function( msg ){},
          isEnable : false
    }; 
