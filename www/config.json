@@ -89,6 +89,15 @@
            "password": "montimage",
            "database": "hss_lte_db"
         }
+     },
+     "report_forward": {
+        "report_types": [10,100],
+        "server": {
+           "host": "localhost",
+           "port": 8088
+        },
+        "data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}" ,
+        "keep_alive" : true 
      }
    }
 }

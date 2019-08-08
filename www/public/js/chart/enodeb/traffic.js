@@ -739,8 +739,13 @@ var ReportFactory = {
             getData : {
                getDataFn : function ( db ) {
                   const arr = db.data();
+                  const newArr = [];
                   for( var i=0; i<arr.length; i++ ){
                      var msg = arr[i];
+                     //ignore the one has no IMSI
+                     if( msg[ GTP.IMSI.id ] == undefined )
+                        continue;
+                     newArr.push( msg );
 
                      msg["count"] = msg[GTP.TEIDs.id].length ;
 
@@ -785,7 +790,7 @@ var ReportFactory = {
                         {id: GTP.TEIDs.id,        align: "right", label:"TEIDs"},
                         {id: "graph"}
                         ],
-                        data : arr
+                        data : newArr
                   };
                }
             },
