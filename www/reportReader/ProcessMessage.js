@@ -123,6 +123,7 @@ function forwardReport(){
       forwardClient.isConnected  = false;
       forwardClient.isConnecting = false;
    });
+   forwardClient.on('data', (data) => console.log("report_forward", data.toString() ));
    
    const isEnable = function( reportId ){
       if( isEnableForwardingReport && forwardCfg.report_types.includes( reportId ) )
@@ -162,7 +163,7 @@ function forwardReport(){
       */
       if( ! forwardClient.isConnected ){
          reportBuffer.push( msg );
-         console.log("report_forward: buffer length: ", reportBuffer.length )
+         console.log("report_forward: buffer length: ", reportBuffer.length );
          
          if( !forwardClient.isConnecting ){
             forwardClient.isConnecting = true;
@@ -172,12 +173,14 @@ function forwardReport(){
                forwardClient.isConnecting = false;
                
                reportBuffer.push( msg );
-               reportBuffer.forEach( (msg) =>  forwardClient.write( buildData(msg) ));
+               
+               forwardClient.write( buildData( reportBuffer ) );
+               
                reportBuffer = []; //clean buffer
             });
          }
       } else {
-         forwardClient.write( buildData(msg) );
+         forwardClient.write( buildData([msg]) );
       }
    }
    
