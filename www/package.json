@@ -51,6 +51,7 @@
   "devDependencies": {
     "clean-css": "^4.2.0",
     "mocha": "^5.2.0",
+    "uglify-es": "^3.3.9",
     "uglify-js": "^3.6.0"
   }
 }
