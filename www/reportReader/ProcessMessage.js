@@ -107,10 +107,10 @@ function checkVersion( probeVersion ){
 //forward reports to another server
 function forwardReport(){
    const forwardCfg = config.modules_config.report_forward;
-   const isEnableForwardingReport = ( forwardCfg != undefined);
+   const isEnableForwardingReport = ( forwardCfg != undefined) && (forwardCfg.enable == true);
    if( isEnableForwardingReport ){
       if( ! Array.isArray(forwardCfg.report_types ) ){
-         forwardCfg.report_types = [ forwardCfg.report_types ]
+         forwardCfg.report_types = [ forwardCfg.report_types ];
       }
    }
    
@@ -125,13 +125,19 @@ function forwardReport(){
    });
    forwardClient.on('data', (data) => console.log("report_forward", data.toString() ));
    
+   /**
+    * Whether the forwarding is enabled
+    */
    const isEnable = function( reportId ){
       if( isEnableForwardingReport && forwardCfg.report_types.includes( reportId ) )
          return true;
       return false;
-   }
+   };
    
    
+   /**
+    * Convert data to the format defined by user
+    */
    const buildData = function( msg ){
       if( typeof(msg) === 'object')
          msg = JSON.stringify( msg );
@@ -182,7 +188,7 @@ function forwardReport(){
       } else {
          forwardClient.write( buildData([msg]) );
       }
-   }
+   };
    
    return {
       isEnable : isEnable,

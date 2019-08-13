@@ -79,6 +79,12 @@ else{
       }
       //assign value
       let value = arr[1];
+      //try to parse the value if it is JSON
+      try{
+         value = JSON.parse( value );
+      }catch( e ){
+         //do nothing here as keep the original data format
+      }
       
       obj[ nameArr[ nameArr.length - 1 ] ] = value;
          

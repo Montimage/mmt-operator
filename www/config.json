@@ -91,6 +91,7 @@
         }
      },
      "report_forward": {
+        "enable": false,
         "report_types": [10,100],
         "server": {
            "host": "localhost",
