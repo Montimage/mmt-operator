@@ -139,7 +139,7 @@ function get_match_query( p ){
 	}else if( param.ip == REMOTE ) {
 		$match[ COL.DST_LOCATION.id ] = {"$ne" : LOCAL};
 	}else{
-	    let obj = {};
+	    var obj = {};
 	    obj[ COL.IP_SRC.id ]  = param.ip;
 	    $match["$or"] = [ obj ];
 	    
@@ -153,7 +153,7 @@ function get_match_query( p ){
   }
 
   if( param.link ){
-    let link = param.link.split(",");
+    var link = param.link.split(",");
     $match[ COL.IP_SRC.id ]  = {$in: link};
     $match[ COL.IP_DST.id ] = {$in: link};
     
