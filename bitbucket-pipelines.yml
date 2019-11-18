@@ -12,4 +12,4 @@ pipelines:
           - node
         script: # Modify the commands below to build your repository.
           - cd www
-          - npm run build-deb
+          - npm run build-tar
