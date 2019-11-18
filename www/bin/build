@@ -121,7 +121,7 @@ function process_dirs() {
 
 
 
-const SERVICE_FILE = "/etc/systemd/system//mmt-operator.service";
+const SERVICE_FILE = "/etc/systemd/system/mmt-operator.service";
 
 function build(built_type) {
    if( fs.existsSync(DIST_PATH) )
@@ -245,6 +245,8 @@ function build(built_type) {
                );
 
                log("create " + NAME + ".deb")
+               cp.execSync("chmod 0775 " + NAME, { cwd: BASE_PATH });
+               
                //create deb file
                cp.execSync("dpkg-deb -b " + NAME, { cwd: BASE_PATH });
                //delete source folder

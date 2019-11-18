@@ -11,3 +11,4 @@ lib-cov
 
 operator/node_modules
 /backup_db/
+/rsync.sh
