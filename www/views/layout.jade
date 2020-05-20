@@ -32,6 +32,8 @@ html
     block javascripts
         
     link(rel='stylesheet', href='/css/style.css')
+    if( locals.layout )
+        link(rel='stylesheet', href="/css/style_#{locals.layout}.css")
 
     script( type='text/javascript', src='/js/export-html.js')
   body

@@ -100,5 +100,10 @@
         "data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}" ,
         "keep_alive" : true 
      }
-   }
+   },
+   "_layout" : "cumucore",
+   "auth_token"  : [{
+	    "enable" : true,
+		"credentialText": "cumucore"
+	}]
 }

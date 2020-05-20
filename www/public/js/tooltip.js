@@ -393,3 +393,38 @@ setInterval(function(){
     needle.moveTo(Math.random());
 }, 1000);
 */
+
+
+
+// document ready: hide topbar when scrolling
+(function ($) {
+    var previousScroll = 20;
+    // scroll functions
+    $(window).scroll(function (e) {
+
+        // add/remove class to navbar when scrolling to hide/show
+        var scroll = $(window).scrollTop();
+        if (scroll >= previousScroll) {
+            $('.navbar').addClass("navbar-hide");
+
+        } else if (scroll < previousScroll) {
+            $('.navbar').removeClass("navbar-hide");
+        }
+        previousScroll = scroll;
+
+    });
+
+})(jQuery);
+
+//notify its parent frame about its total size 
+window.addEventListener('DOMContentLoaded', function(e) {
+    if ( window.location !== window.parent.location ) {	  // The page is in an iframe
+        window.parent.postMessage({
+            type: 'resize-iframe',
+            payload: {
+              width : document.body.scrollWidth,
+              height: document.body.scrollHeight
+            }
+          }, '*');	
+    }
+});
