@@ -56,10 +56,11 @@ const breadcrumbs = {
     for( var key in obj ){
       //app_id is used on MUSA probject
       //We donot need add period on the bar as we have fPeriod, fProbe
-      if( key == "app_id" || key == "period" || key == "probe_id" )
+      //if( key == "app_id" || key == "period" || key == "probe_id" )
+      if( ["app_id", "period", "probe_id", "token"].includes( key.toLocaleLowerCase() ))
         continue;
       
-      var val = obj[key]
+      var val = obj[key];
       //first time
       if (url == undefined ){
         url = MMTDrop.tools.getCurrentURL([""]) + "?" + key + "=" + val;
