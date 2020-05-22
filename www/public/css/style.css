@@ -16,6 +16,15 @@ body {
 .logo:hover{
   opacity: 1
 }
+
+
+.navbar {
+    transition: top 0.5s ease;
+}
+
+.navbar-hide {
+    /*top: -56px;*/
+}
 /*
  * Global add-ons
  */

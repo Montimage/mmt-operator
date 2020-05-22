@@ -5,6 +5,7 @@ var format        = require('util').format,
     config        = require("../libs/config.js");;
 
 var express = require('express');
+var auth  = require('./auth');
 var router  = express.Router();
 
 router.mdb = null;
@@ -21,21 +22,13 @@ var connect_to_db = function( cb ){
     });
 };
 
-var is_loggedin = function( req, res, redirect_url){
-    //return true;
-    if (req.session.loggedin == undefined) {
-        if( redirect_url != undefined )
-            res.redirect( redirect_url );
-        else
-            res.redirect( "/" );
 
-        return false;
-    }
-    return true;
+var is_loggedin = function( req, res, redirect=null){
+    auth.checkLogin( req, res, redirect );
 };
 
 router.all("/info/*", function( req, res, next ){
-  if ( req.session.loggedin == undefined) {
+  if (! router.isLogin( req )) {
 	  res.status(403).send("Permision Denided");
 	  return;
 	}

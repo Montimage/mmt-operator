@@ -164,7 +164,7 @@ function get_match_query( p ){
     return null;
   
   
-  const obj = {match: $match};
+  var obj = {match: $match};
   
   if( collection )
      obj.collection = collection;

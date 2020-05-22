@@ -1,5 +1,6 @@
 var express = require('express');
-var router = express.Router();
+var auth = require('./auth.js');
+var router  = express.Router();
 var HttpException = require('../libs/HttpException.js');
 var url = require("url");
 const config = require("../libs/config");
@@ -123,11 +124,8 @@ listOfPageIdToShow.forEach(
 
 router.get('/*', function(req, res, next) {
 
-   if (req.session.loggedin == undefined) {
-        res.redirect("/");
+   if (!auth.checkLogin( req, res, '/' ))
         return;
-    }
-
 
     var path = req.params[0]; //e.g. application/detail?time=1461574741511
     path = url.parse(path).pathname;
@@ -170,13 +168,20 @@ router.get('/*', function(req, res, next) {
     var title = "...";
     if (page) title = page.title;
 
-    const other_config = router.config.json;
+    let other_config = router.config.json;
+    other_config = JSON.parse( other_config );
+    //delete some sensible informations
+    ["auth_token", "database_server","redis_input","kafka_input","file_input", "socket_input", "pcap_dump", "databaseName", "adminDatabaseName", "rootDirectory"].forEach( (el) => delete(other_config[el]));
+    other_config.modules_config = {};  //TODO: need it for SLA
+
+    other_config = JSON.stringify(other_config);
     res.render("chart", {
         title              : title,
         page_id            : id,
         pages              : pages_to_show,
         pathname           : path,
         query_string       : query_string,
+        layout             : router.config.layout,
         probe_stats_period : router.config.probe_stats_period,
         probe_analysis_mode: router.config.probe_analysis_mode,
         is_in_debug_mode   : (router.config.is_in_debug_mode === true),

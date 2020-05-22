@@ -1,6 +1,7 @@
 const express = require('express');
 
-const router  = express.Router();
+const auth    = require('./auth');
+var router  = express.Router();
 const config    = require("../libs/config.js");
 const CacheFile = require("../libs/CacheFile.js");
 
@@ -12,7 +13,7 @@ if( config.modules.indexOf( "enodeb" ) != -1 )
 function proc_request(req, res, next) {
 
    //check session loggedin
-   if (req.session.loggedin == undefined) {
+   if (!auth.isLogin( req )) {
       res.status(403).send("Permision Denided");
       return;
    }

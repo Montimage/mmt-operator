@@ -1,0 +1,19 @@
+body {
+    padding-top: 35px !important;
+    background-color: inherit !important;
+}
+
+a{
+    color: #00A8E1;
+}
+
+.navbar {
+    display: none !important;
+}
+#toolbar{
+    top: 0px !important;
+}
+
+.onoffswitch-inner:before{
+    background-color: #00A8E1 !important;
+}
