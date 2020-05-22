@@ -108,14 +108,18 @@ function checkVersion( probeVersion ){
 function forwardReport(){
    const forwardCfg = config.modules_config.report_forward;
    const isEnableForwardingReport = ( forwardCfg != undefined) && (forwardCfg.enable == true);
-   if( isEnableForwardingReport ){
-      if( ! Array.isArray(forwardCfg.report_types ) ){
-         forwardCfg.report_types = [ forwardCfg.report_types ];
-      }
+   
+   if( ! isEnableForwardingReport ){
+      return {
+         isEnable : function(){return false;},
+         send     : function(){}
+      };
    }
    
-   
-   
+   if( ! Array.isArray(forwardCfg.report_types ) ){
+      forwardCfg.report_types = [ forwardCfg.report_types ];
+   }
+  
    const forwardClient = new net.Socket();
    forwardClient.setKeepAlive( forwardCfg.keep_alive );
    forwardClient.on('error', (err) => console.error("report_forward", err ) );
