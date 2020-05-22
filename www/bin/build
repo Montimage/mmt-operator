@@ -129,7 +129,9 @@ function build(built_type) {
    
    mkdir(DIST_PATH, function () {
       //minify css
-      process_file(["public", "css"], "style.css", function (content, file) {
+      process_dirs(["public", "css"], function (content, file) {
+         if (path.extname(file) != ".css")
+            return;
          log("minify css: " + file);
          return new CleanCSS().minify(content).styles;
       });
