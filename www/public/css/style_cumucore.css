@@ -13,3 +13,7 @@ a{
 #toolbar{
     top: 0px !important;
 }
+
+.onoffswitch-inner:before{
+    background-color: #00A8E1 !important;
+}

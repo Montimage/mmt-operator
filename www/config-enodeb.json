@@ -4,12 +4,15 @@
 		"port": 27017
 	},
 	"file_input": {
-		"data_folder": ["/opt/mmt/probe/result/report/online/", "/tmp/"],
+		"data_folder": [
+			"/opt/mmt/probe/result/report/online/",
+			"/tmp/"
+		],
 		"delete_data": true,
 		"nb_readers": 1
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
 	"local_network": [
 		{
 			"ip": "10.0.0.0",
@@ -43,15 +46,22 @@
 		"security",
 		"enodeb"
 	],
-	"modules_config" : {
-	  "enodeb" : {
-	     "mysql_server" : {
-   	     "host": "localhost",
-   	     "port": 3306,
-   	     "user": "root",
-   	     "password": "montimage",
-   	     "database": "hss_lte_db"
-	     }
-	  }
-	}
+	"modules_config": {
+		"enodeb": {
+			"mysql_server": {
+				"host": "localhost",
+				"port": 3306,
+				"user": "root",
+				"password": "montimage",
+				"database": "hss_lte_db"
+			}
+		}
+	},
+	"layout": "cumucore",
+	"auth_token": [
+		{
+			"enable": true,
+			"credentialText": "cumucore"
+		}
+	]
 }
