@@ -104,12 +104,8 @@
 		"stat"
 	],
 	"modules": [
-		"link",
-		"network",
-		"dpi",
-		"security",
-		"application",
-		"enodeb"
+		"exec-script",
+		"replay-traffic"
 	],
 	"modules_config": {
 		"enodeb": {
