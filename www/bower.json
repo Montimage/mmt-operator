@@ -29,6 +29,7 @@
     "alertify.js": "^0.3.11",
     "html2canvas": "^0.4.1",
     "imagesloaded": "^4.1.0",
-    "canvg": "canvg-gabelerner#*"
+    "canvg": "canvg-gabelerner#*",
+    "showdown": "^1.9.1"
   }
 }
