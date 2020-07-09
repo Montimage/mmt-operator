@@ -28,7 +28,7 @@ var is_loggedin = function( req, res, redirect=null){
 };
 
 router.all("/info/*", function( req, res, next ){
-  if (! router.isLogin( req )) {
+  if (! req.session.loggedin ) {
 	  res.status(403).send("Permision Denided");
 	  return;
 	}
