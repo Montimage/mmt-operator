@@ -101,6 +101,12 @@ var all_pages = {
          }
       }
     },
+    "exec-script" : {
+      title: "Exec Scripts"
+    },
+    "replay-traffic" : {
+      title: "Replay Traffic"
+    },
     'setting':{
       title: "Settings"
     }

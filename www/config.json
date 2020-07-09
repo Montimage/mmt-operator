@@ -111,6 +111,10 @@
 		"application",
 		"enodeb"
 	],
+	"__modules": [
+		"exec-script",
+		"replay-traffic"
+	],
 	"modules_config": {
 		"enodeb": {
 			"mysql_server": {
