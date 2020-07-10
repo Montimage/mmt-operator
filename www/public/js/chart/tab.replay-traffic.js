@@ -220,7 +220,7 @@ try to send packets based on the original packet length. \
 Bad things may happen if you specify this option.\
 "},
 
-"--limit=number": {
+"--limit": {
 	label: "Number of packets to send",
 	type: "number",
 	default: -1,
@@ -433,7 +433,12 @@ const pcapLst = [
 	{
 		file: "10.http.port.pcap",
 		label: "",
-		description: "This pcap file contains HTTP packets that **do not** use normal HTTP ports such as, 80, 8080."
+		description: "This pcap file contains HTTP packets that **do not** use normal HTTP ports such as, 80, 8080.",
+		parameters: {
+			"--unique-ip": true,
+			"--mbps": 1,
+			"--loop": 5
+		}
 	}, {
 		file: "1.ssh_brute.pcap",
 		label: "",
@@ -671,37 +676,44 @@ var ReportFactory = {
 		};
 		
 		contentEl.script().html(MMTDrop.tools.createForm(form_config));
-
+		//id of input element
+		const PARAM_INPUT_ID_PREFIX = "script-param-";
+			
 		$("#list-pcap-file").change( function(event) {
 			//prevent appearing resetGrid button
 			event.stopImmediatePropagation();
 			const selValue = $(this).val();
 			const detailForm = [];
-			const script = pcapLst[selValue];
+			const pcapFile = pcapLst[selValue];
 
-			if (script.label === "separator")
+			if (pcapFile.label === "separator")
 				$("#script-run-button").disable();
 			else
 				$("#script-run-button").enable();
 			//clear the previous run's' status
 			$("#toolbar-run-status").html('');
 
-			if (script.description)
+			if (pcapFile.description)
 				detailForm.push({
 					type: "<div>",
 					label: "Description",
 					attr: {
 						class: "text-justify",
 						style: "padding-left: 20px;padding-right: 20px",
-						html: markdown2HTML.makeHtml( script.description )
+						html: markdown2HTML.makeHtml( pcapFile.description )
 					}
 				})
-				
+			
+			/**
+			Generate input element for a parameter.
+			It can be a textbox, or a combobox
+			*/
 			function _genParamInput(e, i) {
 				//	//boolean => checkbox
 				if ( typeof(e.default) === "boolean" && e.values == undefined){
 					e.values = [{label: "yes", value: true}, {label: "no", value: false}]
 				}
+				let ret = null;
 				//enum => return a <select>, each element in the enum will be an <option>
 				if (e.values) {
 					//list of <option>
@@ -722,16 +734,19 @@ var ReportFactory = {
 							ret.attr.selected = true;
 						return ret;
 					});
-					return {
+					//create a combobox
+					ret = {
 						type: "<select>",
 						attr: {
 							class: "form-control",
-							id: "script-param-" + i,
+							//id of the combobox
+							id: PARAM_INPUT_ID_PREFIX + i,
 						},
 						children: options
 					}
 				} else {
-					let ret = {
+					//textbox
+					ret = {
 						type: "<input>",
 						attr: e.attr ? e.attr : {} //if user provides additional attr
 					}
@@ -740,16 +755,28 @@ var ReportFactory = {
 						ret.attr.type = e.type;
 					
 					ret.attr.class = "form-control";
-					ret.attr.id = "script-param-" + i;
+					ret.attr.id = PARAM_INPUT_ID_PREFIX + i;
+					//default value
 					ret.attr.value = e.default !== undefined ? e.default : "";
-					return ret;
 				}
+				//remember default value: this helps to know whether the element's value has been changed 
+				if( e.default !== undefined )
+					ret.attr["data-default-value"] = e.default
+				//remember parameter name
+				ret.attr["data-param-name"] = i;
+				return ret;
 			};
 			
 
 			//form of elements in parameters of the selected script
 			const paramForm = [];
 			for (var i in replayParameters) {
+				//parameter must not contain some special characters
+				if( i.indexOf('=') != -1 ){
+					MMTDrop.alert.warning(`Ignore parameter <code>${i}</code>.<br/>
+					Parameters must not contain <code>=</code> character.`);
+					continue;
+				}
 				const e = replayParameters[i];
 
 				paramForm.push({
@@ -811,11 +838,30 @@ var ReportFactory = {
 				type: "<div>",
 				children: detailForm
 			}));
+			
 			//enable validator
 			$("#form-pcap-parameters").validate({
 				errorClass: "text-danger",
 				errorElement: "span"
 			});
+			
+			//set default values coressponding to the selected pcap file
+			if( pcapFile.parameters ){
+				for( let i in pcapFile.parameters ){
+					//need to convert value to string
+					//because values of options of a selectbox are string, e.g., "true" (not true)
+					//=> el.val(true) will not select the right option
+					//but el.val("true") does its job
+					const v = pcapFile.parameters[i] + "";
+					
+					const el = $("#" + PARAM_INPUT_ID_PREFIX + i);
+					if( el )
+						el.val( v ) //set new value
+							.flash(1000) //animate the modifcation
+						;
+				}
+			}
+			
 			//enable tooltip
 			$('[data-toggle="popover"]').popover({
 				container: "body",
@@ -825,6 +871,23 @@ var ReportFactory = {
 		//fire change for the first time
 		.trigger('change')
 		;
+
+		function getParameterValues(){
+			const values = {};
+			for (var i in replayParameters) {
+				const e = replayParameters[i];
+				const defaultValue = e.default + "";
+				//get DOM element using jQuery
+				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
+				if( ! el )
+					continue;
+				const v = el.val();
+				//retain only the new value
+				if( v != defaultValue )
+					values[i] = v;
+			}
+			return values;
+		}
 
 		function output(txt) {
 			contentEl.output().append($("<p>").html('<b>' + MMTDrop.tools.formatDateTime(new Date(), true) + '</b> ' + txt));
@@ -842,6 +905,9 @@ var ReportFactory = {
 			$("#script-stop-button").enable();
 			//clear output
 			contentEl.output().text("");
+			
+			const paramValues = getParameterValues();
+			console.log( paramValues );
 
 			var timerCounter = 10;
 			window._outputTimer = setInterval(function() {
