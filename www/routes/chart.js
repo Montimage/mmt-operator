@@ -102,7 +102,7 @@ var all_pages = {
       }
     },
     "exec-script" : {
-      title: "Exec Scripts"
+      title: "Exec Attack"
     },
     "replay-traffic" : {
       title: "Replay Traffic"

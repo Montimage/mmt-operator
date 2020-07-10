@@ -57,16 +57,6 @@ function setToolbarButtons() {
    `))
 }
 
-function randomText() {
-	var words = ["The sky", "above", "the port", "was", "the color of television", "tuned", "to", "a dead channel", ".", "All", "this happened", "more or less", ".", "I", "had", "the story", "bit by bit", "from various people", "and", "as generally", "happens", "in such cases", "each time", "it", "was", "a different story", ".", "It", "was", "a pleasure", "to", "burn"];
-	var text = [];
-	//random between 10 20+10
-	var x = Math.floor(Math.random() * 20) + 10;
-	while (--x)
-		text.push(words[Math.floor(Math.random() * words.length)]);
-	return text.join(" ");
-}
-
 
 const _replayParameters = {
 	"target-ip": {
@@ -759,11 +749,7 @@ var ReportFactory = {
 					//create a combobox
 					ret = {
 						type: "<select>",
-						attr: {
-							class: "form-control",
-							//id of the combobox
-							id: PARAM_INPUT_ID_PREFIX + i,
-						},
+						attr: e.attr ? e.attr : {}, //if user provides additional attr
 						children: options
 					}
 				} else {
@@ -776,11 +762,13 @@ var ReportFactory = {
 					if (e.type)
 						ret.attr.type = e.type;
 
-					ret.attr.class = "form-control";
-					ret.attr.id = PARAM_INPUT_ID_PREFIX + i;
 					//default value
 					ret.attr.value = e.default !== undefined ? e.default : "";
 				}
+				
+				ret.attr.class = "form-control param-input";
+				ret.attr.id = PARAM_INPUT_ID_PREFIX + i;
+				
 				//remember default value: this helps to know whether the element's value has been changed 
 				if (e.default !== undefined)
 					ret.attr["data-default-value"] = e.default
@@ -912,11 +900,7 @@ var ReportFactory = {
 
 		function setEnableParameterInput(isEnable) {
 			$('#list-pcap-file').setEnable(isEnable);
-			forEachReplayParameter(function(e, i) {
-				//get DOM element using jQuery
-				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
-				el.setEnable(isEnable);
-			});
+			$('.param-input').setEnable(isEnable);
 		}
 
 		function setTerminateExecutionStatus(isSuccess) {
