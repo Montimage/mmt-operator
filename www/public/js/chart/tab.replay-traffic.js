@@ -566,7 +566,10 @@ const pcapLst = [
 	}, {
 		file: "38.WannaCry.pcap",
 		label: "",
-		description: ""
+		description: "This pcap file contain packets being captured from a machine that has been infected WannaCry virus.",
+		parameters: {
+			"--unique-ip": false
+		}
 	}, {
 		file: "39.tor.ip.pcap",
 		label: "",
@@ -675,6 +678,13 @@ var ReportFactory = {
 			}]
 		};
 		
+		function forEachReplayParameter( fn ){
+			for (var i in replayParameters) {
+				const e = replayParameters[i];
+				fn( e, i );
+			}
+		}
+		
 		contentEl.script().html(MMTDrop.tools.createForm(form_config));
 		//id of input element
 		const PARAM_INPUT_ID_PREFIX = "script-param-";
@@ -770,14 +780,13 @@ var ReportFactory = {
 
 			//form of elements in parameters of the selected script
 			const paramForm = [];
-			for (var i in replayParameters) {
+			forEachReplayParameter( function(e,i){
 				//parameter must not contain some special characters
 				if( i.indexOf('=') != -1 ){
 					MMTDrop.alert.warning(`Ignore parameter <code>${i}</code>.<br/>
 					Parameters must not contain <code>=</code> character.`);
-					continue;
+					return;
 				}
-				const e = replayParameters[i];
 
 				paramForm.push({
 					type: "<div>",
@@ -816,7 +825,8 @@ var ReportFactory = {
 						]
 					}]
 				});
-			};
+			});
+
 			detailForm.push({
 				type: "<form>",
 				label: "Parameters",
@@ -874,19 +884,39 @@ var ReportFactory = {
 
 		function getParameterValues(){
 			const values = {};
-			for (var i in replayParameters) {
-				const e = replayParameters[i];
+			forEachReplayParameter( function(e,i){
 				const defaultValue = e.default + "";
 				//get DOM element using jQuery
 				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
 				if( ! el )
-					continue;
+					return;
 				const v = el.val();
 				//retain only the new value
 				if( v != defaultValue )
 					values[i] = v;
-			}
+			});
 			return values;
+		}
+		
+		function setEnableParameterInput( isEnable ){
+			$('#list-pcap-file').setEnable( isEnable );
+			forEachReplayParameter( function(e,i){
+				//get DOM element using jQuery
+				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
+				el.setEnable( isEnable );
+			});
+		}
+		
+		function setTerminateExecutionStatus( isSuccess ){
+			$("#script-run-button").enable();
+			$("#script-stop-button").disable();
+			//enable editing parameters
+			setEnableParameterInput(true);
+			if( isSuccess ){
+				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok"></span>');
+			}else{
+				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:red" class="glyphicon glyphicon-remove"></span>');
+			}
 		}
 
 		function output(txt) {
@@ -905,6 +935,8 @@ var ReportFactory = {
 			$("#script-stop-button").enable();
 			//clear output
 			contentEl.output().text("");
+			//disable editing parameters
+			setEnableParameterInput(false);
 			
 			const paramValues = getParameterValues();
 			console.log( paramValues );
@@ -914,9 +946,7 @@ var ReportFactory = {
 				timerCounter--;
 				if (timerCounter <= 0) {
 					clearInterval(window._outputTimer);
-					$("#script-run-button").disable();
-					$("#script-stop-button").disable();
-					$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok"></span>');
+					setTerminateExecutionStatus( true );
 					output("successfully terminated");
 				}
 				else
@@ -926,11 +956,8 @@ var ReportFactory = {
 		});
 
 		$("#script-stop-button").click(function() {
-			$("#script-run-button").enable();
-			$("#script-stop-button").disable();
-			$("#toolbar-run-status").html('<span aria-hidden="true" style="color:red" class="glyphicon glyphicon-remove"></span>');
-
 			clearInterval(window._outputTimer);
+			setTerminateExecutionStatus( false );
 			output("interrupted");
 		});
 	},
