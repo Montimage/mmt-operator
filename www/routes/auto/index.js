@@ -14,6 +14,7 @@ var walkSync = function(dir, fn) {
 				fn( dir, file );
 			}catch( err ){
 				console.error("Error while including router", dir, file);
+				console.error( err );
 			}
 		}
 	});
@@ -37,7 +38,7 @@ module.exports = function(app, objRef) {
 		if( prefix.startsWith('.'))
 			return;
 
-		prefix = '/api/' + prefix + '/' + path.parse(file).name;
+		prefix = '/auto/' + prefix + '/' + path.parse(file).name;
 		console.log(`use router ${prefix} processed by ${file}` );
 		const route = require( path.join( dir, file ) );
 		route._objRef = objRef;

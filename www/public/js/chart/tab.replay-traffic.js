@@ -58,7 +58,7 @@ function setToolbarButtons() {
 }
 
 function randomText() {
-	var words = ["The sky", "above", "the port", "was", "the color of television", "tuned", "to", "a dead channel", ".", "All", "this happened", "more or less", ".",  "I", "had", "the story", "bit by bit", "from various people", "and", "as generally", "happens", "in such cases", "each time", "it", "was", "a different story", ".", "It", "was", "a pleasure", "to", "burn"];
+	var words = ["The sky", "above", "the port", "was", "the color of television", "tuned", "to", "a dead channel", ".", "All", "this happened", "more or less", ".", "I", "had", "the story", "bit by bit", "from various people", "and", "as generally", "happens", "in such cases", "each time", "it", "was", "a different story", ".", "It", "was", "a pleasure", "to", "burn"];
 	var text = [];
 	//random between 10 20+10
 	var x = Math.floor(Math.random() * 20) + 10;
@@ -73,7 +73,7 @@ const _replayParameters = {
 		label: "Destination IP",
 		description: "Attack target IP",
 		default: "192.168.0.101",
-		attr:{
+		attr: {
 			//https://jqueryvalidation.org/documentation/
 			type: "IPv4"
 		}
@@ -81,13 +81,24 @@ const _replayParameters = {
 };
 
 const replayParameters = {
-//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
-
-"--timer" :{
-	label: "Timer",
-	values: ["nano", "select", "ioport", "gtod"],
-	default: "gtod",
+	//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
+"--intf1" : {
+	label: "Traffic output NIC",
+	values: ["enp0s8", "enp0s9"],
 	description: "\
+Client to server/RX/primary traffic output interface.\
+\n\
+Required network interface used to send either all traffic or traffic which is marked as `primary` via tcpprep. \
+Primary traffic is usually client-to-server or inbound (RX) on khial virtual interfaces.\
+"
+},
+
+/*
+	"--timer": {
+		label: "Timer",
+		values: ["nano", "select", "ioport", "gtod"],
+		default: "gtod",
+		description: "\
 Select packet timing mode: select, ioport, gtod, nano. \
 This option may appear up to 1 times. The default string for this option is: `gtod`\
 \n\n\
@@ -99,12 +110,13 @@ Allows you to select the packet timing method to use:\
 - `gtod` [default] - Use a `gettimeofday()` loop\n\n\
 \
 "
-},
+	},
+*/
 
-"--maxsleep": {
-	label: "Max sleep (ms)",
-	default: 0,
-	description: "\
+	"--maxsleep": {
+		label: "Max sleep (ms)",
+		default: 0,
+		description: "\
 Sleep for no more then X milliseconds between packets. \
 This option takes an integer number as its argument. \
 The default number for this option is: 0\
@@ -113,31 +125,31 @@ Set a limit for the maximum number of milliseconds that tcpreplay will sleep bet
 Effectively prevents long delays between packets without effecting the majority of packets. \
 Default is disabled.\
 	",
-	attr: {
-		type: "number"
-	}
-},
+		attr: {
+			type: "number"
+		}
+	},
 
-"--verbose": {
-	label: "Verbose",
+	"--verbose": {
+		label: "Verbose",
+
+		default: true,
+		description: "Print decoded packets via tcpdump to STDOUT."
+	},
+	/*
+	-A string, --decode=string
 	
-	default: true,
-	description: "Print decoded packets via tcpdump to STDOUT."
-},
-/*
--A string, --decode=string
-
-Arguments passed to tcpdump decoder. This option may appear up to 1 times. This option must appear in combination with the following options: verbose.
-
-When enabling verbose mode (-v) you may also specify one or more additional arguments to pass to tcpdump to modify the way packets are decoded. By default, -n and -l are used. Be sure to quote the arguments like: -A "-axxx" so that they are not interpreted by tcpreplay. Please see the tcpdump(1) man page for a complete list of options.
-*/
-
-
-"--preload-pcap": {
-	label: "Preloads packets",
+	Arguments passed to tcpdump decoder. This option may appear up to 1 times. This option must appear in combination with the following options: verbose.
 	
-	default: true,
-	description: "\
+	When enabling verbose mode (-v) you may also specify one or more additional arguments to pass to tcpdump to modify the way packets are decoded. By default, -n and -l are used. Be sure to quote the arguments like: -A "-axxx" so that they are not interpreted by tcpreplay. Please see the tcpdump(1) man page for a complete list of options.
+	*/
+
+
+	"--preload-pcap": {
+		label: "Preloads packets",
+
+		default: true,
+		description: "\
 This option loads the specified pcap(s) into RAM before starting to send \
 in order to improve replay performance while introducing a startup performance hit.\
 \n\n\
@@ -148,43 +160,39 @@ which can significantly reduce memory usage.\
 Flow statistics are predicted based on options supplied \
 and statistics collected from the first loop iteration.\
 "
-},
-/*
--c string, --cachefile=string
-
-Split traffic via a tcpprep cache file. This option may appear up to 1 times. This option must appear in combination with the following options: intf2. This option must not appear in combination with any of the following options: dualfile.
-
-If you have a pcap file you would like to use to send bi-directional traffic through a device (firewall, router, IDS, etc) then using tcpprep you can create a cachefile which tcpreplay will use to split the traffic across two network interfaces.
-
--2, --dualfile
-
-Replay two files at a time from a network tap. This option may appear up to 1 times. This option must appear in combination with the following options: intf2. This option must not appear in combination with any of the following options: cachefile.
-
-If you captured network traffic using a network tap, then you can end up with two pcap files- one for each direction. This option will replay these two files at the same time, one on each interface and inter-mix them using the timestamps in each.
-
--i string, --intf1=string
-
-Client to server/RX/primary traffic output interface. This option may appear up to 1 times.
-
-Required network interface used to send either all traffic or traffic which is marked as ’primary’ via tcpprep. Primary traffic is usually client-to-server or inbound (RX) on khial virtual interfaces.
-
--I string, --intf2=string
-
-Server to client/TX/secondary traffic output interface. This option may appear up to 1 times.
-
-Optional network interface used to send traffic which is marked as ’secondary’ via tcpprep. Secondary traffic is usually server-to-client or outbound (TX) on khial virtual interfaces. Generally, it only makes sense to use this option with --cachefile.
-
---listnics
-
-List available network interfaces and exit.
+	},
+	/*
+	-c string, --cachefile=string
+	
+	Split traffic via a tcpprep cache file. This option may appear up to 1 times. This option must appear in combination with the following options: intf2. This option must not appear in combination with any of the following options: dualfile.
+	
+	If you have a pcap file you would like to use to send bi-directional traffic through a device (firewall, router, IDS, etc) then using tcpprep you can create a cachefile which tcpreplay will use to split the traffic across two network interfaces.
+	
+	-2, --dualfile
+	
+	Replay two files at a time from a network tap. This option may appear up to 1 times. This option must appear in combination with the following options: intf2. This option must not appear in combination with any of the following options: cachefile.
+	
+	If you captured network traffic using a network tap, then you can end up with two pcap files- one for each direction. This option will replay these two files at the same time, one on each interface and inter-mix them using the timestamps in each.
 */
 
+/*
+	-I string, --intf2=string
+	
+	Server to client/TX/secondary traffic output interface. This option may appear up to 1 times.
+	
+	Optional network interface used to send traffic which is marked as ’secondary’ via tcpprep. Secondary traffic is usually server-to-client or outbound (TX) on khial virtual interfaces. Generally, it only makes sense to use this option with --cachefile.
+	
+	--listnics
+	
+	List available network interfaces and exit.
+	*/
 
-"--loop":{
-	label:"Loop",
-	default: 1,
-	type: "number",
-	description: "\
+
+	"--loop": {
+		label: "Loop",
+		default: 1,
+		type: "number",
+		description: "\
 Loop through the capture file X times. \
 This option takes an integer number as its argument. The value of number is constrained to being:\
 \
@@ -192,12 +200,12 @@ greater than or equal to 0. If the value is 0, loop foverver.\
 \n\n\
 The default number for this option is: 1\
 "
-},
-"--loopdelay-ms": {
-	label: "Delay between loops (ms)",
-	default: 0,
-	type: "number",
-	description: "\
+	},
+	"--loopdelay-ms": {
+		label: "Delay between loops (ms)",
+		default: 0,
+		type: "number",
+		description: "\
 This option must appear in combination with the following options: loop. \
 This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 0\
@@ -205,11 +213,11 @@ The value of number is constrained to being: greater than or equal to 0\
 The default number for this option is: 0\
 "},
 
-"--pktlen": {
-	label: "Packet length",
-	type: "number",
-	default: 0,
-	description: "\
+	"--pktlen": {
+		label: "Packet length",
+		type: "number",
+		default: 0,
+		description: "\
 Override the snaplen and use the actual packet len. \
 \n\n\
 By default, tcpreplay will send packets based on the size of the `snaplen` stored in the pcap file\
@@ -220,11 +228,11 @@ try to send packets based on the original packet length. \
 Bad things may happen if you specify this option.\
 "},
 
-"--limit": {
-	label: "Number of packets to send",
-	type: "number",
-	default: -1,
-	description:"\
+	"--limit": {
+		label: "Number of packets to send",
+		type: "number",
+		default: -1,
+		description: "\
 Limit the number of packets to send. This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 1 \
 \n\n\
@@ -233,11 +241,11 @@ The default number for this option is: -1\
 By default, all the packets will be sent. Alternatively, you can specify a maximum number of packets to send.\
 "},
 
-"--duration": {
-	label: "Timeout (second)",
-	type: "number",
-	default: -1,
-	description: "\
+	"--duration": {
+		label: "Timeout (second)",
+		type: "number",
+		default: -1,
+		description: "\
 Limit the number of seconds to send. This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 1\
 \n\n\
@@ -246,11 +254,11 @@ The default number for this option is: -1\
 By default, all the packets will be sent. Alternatively, you can specify a maximum number of seconds to transmit.\
 "},
 
-"--multiplier": {
-	label: "Multiplier",
-	type: "number",
-	default: 1,
-	description: "\
+	"--multiplier": {
+		label: "Multiplier",
+		type: "number",
+		default: 1,
+		description: "\
 Modify replay speed to a given multiple. \
 This option must *not* appear in combination with any of the following options: pps, mbps, oneatatime, topspeed.\
 \n\n\
@@ -261,11 +269,11 @@ Specify a value to modify the packet replay speed. Examples:\
 - 0.7 will replay traffic at 70% the speed captured\
 "},
 
-"--pps": {
-	label: "Debit (pps)",
-	type: "number",
-	default: 0,
-	description: "\
+	"--pps": {
+		label: "Debit (pps)",
+		type: "number",
+		default: 0,
+		description: "\
 Replay packets at a given packets/sec. \
 This option *must not* appear in combination with any of the following options: multiplier, mbps, oneatatime, topspeed.\
 \n\n\
@@ -276,47 +284,47 @@ Specify a value to regulate the packet replay to a specific packet-per-second ra
 - 0.25 will replay traffic at 15 packets per minute\
 "},
 
-"--mbps": {
-	label: "Bandwidth (Mbps)",
-	type: "number",
-	default: 0,
-	description: "\
+	"--mbps": {
+		label: "Bandwidth (Mbps)",
+		type: "number",
+		default: 0,
+		description: "\
 Replay packets at a given Mbps. \
 This option *must not* appear in combination with any of the following options: multiplier, pps, oneatatime, topspeed.\
 \n\n\
 Specify a floating point value for the Mbps rate that tcpreplay should send packets at.\
 "},
 
-"--topspeed": {
-	label: "Top speed",
-	default: false,
-	description: "\
+	"--topspeed": {
+		label: "Top speed",
+		default: false,
+		description: "\
 Replay packets as fast as possible. \
 This option *must not* appear in combination with any of the following options: mbps, multiplier, pps, oneatatime.\
 "},
-/*
--o, --oneatatime
+	/*
+	-o, --oneatatime
+	
+	Replay one packet at a time for each user input. This option must not appear in combination with any of the following options: mbps, pps, multiplier, topspeed.
+	
+	Allows you to step through one or more packets at a time.
+	
+	--pps-multi=number
+	
+	Number of packets to send for each time interval. This option must appear in combination with the following options: pps. This option takes an integer number as its argument. The value of number is constrained to being:
+	
+	greater than or equal to 1
+	
+	The default number for this option is:
+	1
+	
+	When trying to send packets at very high rates, the time between each packet can be so short that it is impossible to accurately sleep for the required period of time. This option allows you to send multiple packets at a time, thus allowing for longer sleep times which can be more accurately implemented.
+	*/
 
-Replay one packet at a time for each user input. This option must not appear in combination with any of the following options: mbps, pps, multiplier, topspeed.
-
-Allows you to step through one or more packets at a time.
-
---pps-multi=number
-
-Number of packets to send for each time interval. This option must appear in combination with the following options: pps. This option takes an integer number as its argument. The value of number is constrained to being:
-
-greater than or equal to 1
-
-The default number for this option is:
-1
-
-When trying to send packets at very high rates, the time between each packet can be so short that it is impossible to accurately sleep for the required period of time. This option allows you to send multiple packets at a time, thus allowing for longer sleep times which can be more accurately implemented.
-*/
-
-"--unique-ip": {
-	label: "Unique IP",
-	default: true,
-	description: "\
+	"--unique-ip": {
+		label: "Unique IP",
+		default: true,
+		description: "\
 Modify IP addresses each loop iteration to generate unique flows. \
 This option *must* appear in combination with the following options: loop.\
 \n\n\
@@ -327,11 +335,11 @@ and therefore will genrally not affect performance. \
 This option will significantly increase the flows/sec over generated over multiple loop iterations.\
 "},
 
-"--unique-ip-loops": {
-	label: "Unique IP in loops",
-	type: "number",
-	default: 1,
-	description: "\
+	"--unique-ip-loops": {
+		label: "Unique IP in loops",
+		type: "number",
+		default: 1,
+		description: "\
 Number of times to loop before assigning new unique ip. \
 This option *must* appear in combination with the following options: `unique-ip`.\
 \n\n\
@@ -341,27 +349,27 @@ Default is 1. \
 \n\n\
 Assumes both --loop and --unique-ip.\
 "},
-/*
---netmap
+	/*
+	--netmap
+	
+	Write packets directly to netmap enabled network adapter.
+	
+	This feature will detect netmap capable network drivers on Linux and BSD systems. If detected, the network driver is bypassed for the execution duration, and network buffers will be written to directly. This will allow you to achieve full line rates on commodity network adapters, similar to rates achieved by commercial network traffic generators. Note that bypassing the network driver will disrupt other applications connected through the test interface. See INSTALL for more information.
+	
+	This feature can also be enabled by specifying an interface as ’netmap:<intf>’ or ’vale:<intf>. For example ’netmap:eth0’ specifies netmap over interface eth0.
+	
+	--nm-delay=number
+	
+	Netmap startup delay. This option takes an integer number as its argument. The default number for this option is:
+	10
+	
+	Number of seconds to delay after netmap is loaded. Required to ensure interfaces are fully up before netmap transmit. Requires netmap option. Default is 10 seconds.
+	*/
 
-Write packets directly to netmap enabled network adapter.
-
-This feature will detect netmap capable network drivers on Linux and BSD systems. If detected, the network driver is bypassed for the execution duration, and network buffers will be written to directly. This will allow you to achieve full line rates on commodity network adapters, similar to rates achieved by commercial network traffic generators. Note that bypassing the network driver will disrupt other applications connected through the test interface. See INSTALL for more information.
-
-This feature can also be enabled by specifying an interface as ’netmap:<intf>’ or ’vale:<intf>. For example ’netmap:eth0’ specifies netmap over interface eth0.
-
---nm-delay=number
-
-Netmap startup delay. This option takes an integer number as its argument. The default number for this option is:
-10
-
-Number of seconds to delay after netmap is loaded. Required to ensure interfaces are fully up before netmap transmit. Requires netmap option. Default is 10 seconds.
-*/
-
-"--no-flow-stats" : {
-	label: "No statistics",
-	default: false,
-	description: "\
+	"--no-flow-stats": {
+		label: "Suppress flows statistics",
+		default: false,
+		description: "\
 Suppress printing and tracking flow count, rates and expirations.\
 \n\n\
 Suppress the collection and printing of flow statistics. \
@@ -377,11 +385,11 @@ unless the packets are altered. \
 Use --unique-ip or tcpreplay-edit to alter packets between iterations.\
 "},
 
-"--flow-expiry" : {
-	label: "Flow Expiry (second)",
-	type: "number",
-	default: 0,
-	description: "\
+	"--flow-expiry": {
+		label: "Flow expiry (second)",
+		type: "number",
+		default: 0,
+		description: "\
 Number of inactive seconds before a flow is considered expired. \
 This option must not appear in combination with any of the following options: no-flow-stats. \
 This option takes an integer number as its argument. \
@@ -406,17 +414,17 @@ Note that using this option while replaying at higher than original speeds can l
 Default is 0 (no expiry) and a typical value is 30-120 seconds.\
 "},
 
-/*
--P, --pid
+	/*
+	-P, --pid
+	
+	Print the PID of tcpreplay at startup.
+	*/
 
-Print the PID of tcpreplay at startup.
-*/
-
-"--stats": {
-	label: "Statistics",
-	type: "number",
-	default: 0,
-	description: "\
+	"--stats": {
+		label: "Statistics",
+		type: "number",
+		default: 0,
+		description: "\
 Print statistics every X seconds, or every loop if 0. \
 This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 0\
@@ -436,8 +444,9 @@ const pcapLst = [
 		description: "This pcap file contains HTTP packets that **do not** use normal HTTP ports such as, 80, 8080.",
 		parameters: {
 			"--unique-ip": true,
-			"--mbps": 1,
-			"--loop": 5
+			"--mbps": 0.1,
+			"--loop": 10,
+			"--stats": 1
 		}
 	}, {
 		file: "1.ssh_brute.pcap",
@@ -568,7 +577,10 @@ const pcapLst = [
 		label: "",
 		description: "This pcap file contain packets being captured from a machine that has been infected WannaCry virus.",
 		parameters: {
-			"--unique-ip": false
+			"--unique-ip": false,
+			"--pps" : 200,
+			"--loop": 1,
+			"--stats": 1
 		}
 	}, {
 		file: "39.tor.ip.pcap",
@@ -644,7 +656,7 @@ var ReportFactory = {
 	createFormScripts: function() {
 		setToolbarButtons();
 		const markdown2HTML = new showdown.Converter();
-		
+
 		var form_config = {
 			type: "<div>",
 			attr: {
@@ -677,19 +689,19 @@ var ReportFactory = {
 				}
 			}]
 		};
-		
-		function forEachReplayParameter( fn ){
+
+		function forEachReplayParameter(fn) {
 			for (var i in replayParameters) {
 				const e = replayParameters[i];
-				fn( e, i );
+				fn(e, i);
 			}
 		}
-		
+
 		contentEl.script().html(MMTDrop.tools.createForm(form_config));
 		//id of input element
 		const PARAM_INPUT_ID_PREFIX = "script-param-";
-			
-		$("#list-pcap-file").change( function(event) {
+
+		$("#list-pcap-file").change(function(event) {
 			//prevent appearing resetGrid button
 			event.stopImmediatePropagation();
 			const selValue = $(this).val();
@@ -710,18 +722,18 @@ var ReportFactory = {
 					attr: {
 						class: "text-justify",
 						style: "padding-left: 20px;padding-right: 20px",
-						html: markdown2HTML.makeHtml( pcapFile.description )
+						html: markdown2HTML.makeHtml(pcapFile.description)
 					}
 				})
-			
+
 			/**
 			Generate input element for a parameter.
 			It can be a textbox, or a combobox
 			*/
 			function _genParamInput(e, i) {
 				//	//boolean => checkbox
-				if ( typeof(e.default) === "boolean" && e.values == undefined){
-					e.values = [{label: "yes", value: true}, {label: "no", value: false}]
+				if (typeof (e.default) === "boolean" && e.values == undefined) {
+					e.values = [{ label: "yes", value: true }, { label: "no", value: false }]
 				}
 				let ret = null;
 				//enum => return a <select>, each element in the enum will be an <option>
@@ -761,28 +773,28 @@ var ReportFactory = {
 						attr: e.attr ? e.attr : {} //if user provides additional attr
 					}
 
-					if( e.type )
+					if (e.type)
 						ret.attr.type = e.type;
-					
+
 					ret.attr.class = "form-control";
 					ret.attr.id = PARAM_INPUT_ID_PREFIX + i;
 					//default value
 					ret.attr.value = e.default !== undefined ? e.default : "";
 				}
 				//remember default value: this helps to know whether the element's value has been changed 
-				if( e.default !== undefined )
+				if (e.default !== undefined)
 					ret.attr["data-default-value"] = e.default
 				//remember parameter name
 				ret.attr["data-param-name"] = i;
 				return ret;
 			};
-			
+
 
 			//form of elements in parameters of the selected script
 			const paramForm = [];
-			forEachReplayParameter( function(e,i){
+			forEachReplayParameter(function(e, i) {
 				//parameter must not contain some special characters
-				if( i.indexOf('=') != -1 ){
+				if (i.indexOf('=') != -1) {
 					MMTDrop.alert.warning(`Ignore parameter <code>${i}</code>.<br/>
 					Parameters must not contain <code>=</code> character.`);
 					return;
@@ -813,12 +825,12 @@ var ReportFactory = {
 								type: "<span>",
 								attr: {
 									tabindex: 9999,
-									role:"button",
+									role: "button",
 									class: "input-group-addon glyphicon glyphicon-info-sign",
 									"data-toggle": "popover",
-									"data-html"  : true,
+									"data-html": true,
 									"data-placement": "left",
-									"data-content": markdown2HTML.makeHtml( e.description ),
+									"data-content": markdown2HTML.makeHtml(e.description),
 									title: e.label
 								}
 							}
@@ -842,89 +854,120 @@ var ReportFactory = {
 					children: paramForm
 				}]
 			});
-			
+
 			//whether having any elements to render
 			$("#script-detail").html(MMTDrop.tools.createForm({
 				type: "<div>",
 				children: detailForm
 			}));
-			
+
 			//enable validator
 			$("#form-pcap-parameters").validate({
 				errorClass: "text-danger",
 				errorElement: "span"
 			});
-			
+
 			//set default values coressponding to the selected pcap file
-			if( pcapFile.parameters ){
-				for( let i in pcapFile.parameters ){
+			if (pcapFile.parameters) {
+				for (let i in pcapFile.parameters) {
 					//need to convert value to string
 					//because values of options of a selectbox are string, e.g., "true" (not true)
 					//=> el.val(true) will not select the right option
 					//but el.val("true") does its job
 					const v = pcapFile.parameters[i] + "";
-					
+
 					const el = $("#" + PARAM_INPUT_ID_PREFIX + i);
-					if( el )
-						el.val( v ) //set new value
+					if (el)
+						el.val(v) //set new value
 							.flash(1000) //animate the modifcation
-						;
+							;
 				}
 			}
-			
+
 			//enable tooltip
 			$('[data-toggle="popover"]').popover({
 				container: "body",
 				trigger: "focus"
 			})
 		})
-		//fire change for the first time
-		.trigger('change')
-		;
+			//fire change for the first time
+			.trigger('change')
+			;
 
-		function getParameterValues(){
+		function getParameterValues() {
 			const values = {};
-			forEachReplayParameter( function(e,i){
+			forEachReplayParameter(function(e, i) {
 				const defaultValue = e.default + "";
 				//get DOM element using jQuery
 				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
-				if( ! el )
+				if (!el)
 					return;
 				const v = el.val();
 				//retain only the new value
-				if( v != defaultValue )
+				if (v != defaultValue)
 					values[i] = v;
 			});
 			return values;
 		}
-		
-		function setEnableParameterInput( isEnable ){
-			$('#list-pcap-file').setEnable( isEnable );
-			forEachReplayParameter( function(e,i){
+
+		function setEnableParameterInput(isEnable) {
+			$('#list-pcap-file').setEnable(isEnable);
+			forEachReplayParameter(function(e, i) {
 				//get DOM element using jQuery
 				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
-				el.setEnable( isEnable );
+				el.setEnable(isEnable);
 			});
 		}
-		
-		function setTerminateExecutionStatus( isSuccess ){
+
+		function setTerminateExecutionStatus(isSuccess) {
 			$("#script-run-button").enable();
 			$("#script-stop-button").disable();
 			//enable editing parameters
 			setEnableParameterInput(true);
-			if( isSuccess ){
+			if (isSuccess) {
 				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok"></span>');
-			}else{
+			} else {
 				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:red" class="glyphicon glyphicon-remove"></span>');
 			}
 		}
 
-		function output(txt) {
-			contentEl.output().append($("<p>").html('<b>' + MMTDrop.tools.formatDateTime(new Date(), true) + '</b> ' + txt));
+		function output(txt, isErrorMessage ) {
+			if( Array.isArray( txt )){
+				if( txt.length == 0 )
+					return;
+				txt = txt.join(" ");
+			}
+			contentEl.output().append($("<p>", {
+				class: isErrorMessage? "text-danger": ""
+			}).html('<b>' + MMTDrop.tools.formatDateTime(new Date(), true) + '</b><pre>' + txt + '</pre>'));
 			//scroll to bottom
 			contentEl.output().animate({ scrollTop: 9999999 }, 500);
 		}
 
+		function retriveExecutionLog( filename ){
+			MMTDrop.tools.ajax("/auto/attack/pcap/status/" + filename, {}, "GET", {
+				error: function( data ){
+					setTerminateExecutionStatus(false);
+					output( "Cannot get status" );
+				},
+				success: function( data ){
+					output( data.stdout )
+					output( data.stderr, true );
+					if( data.isRunning )
+						//continue to retrive execution logs 
+						setTimeout( retriveExecutionLog, 1000, filename );
+					else {
+						setTerminateExecutionStatus( data.exitCode == 0 );
+						//error
+						if( data.exitCode != 0){
+							const msg = "Failure with code " + data.exitCode;
+							output( msg, true );
+							MMTDrop.alert.error( msg );
+						}
+					}
+				}
+			});
+		}
 		//when click on run button
 		if (window._outputTimer)
 			clearInterval(window._outputTimer);
@@ -933,50 +976,53 @@ var ReportFactory = {
 			$("#toolbar-run-status").html('<i class="fa fa-spinner fa-pulse fa-fw"></i>');
 			$("#script-run-button").disable();
 			$("#script-stop-button").enable();
-			//clear output
-			contentEl.output().text("");
 			//disable editing parameters
 			setEnableParameterInput(false);
-			
+
 			const paramValues = getParameterValues();
-			console.log( paramValues );
+			const selValue = $("#list-pcap-file").val();
+			const pcapFile = pcapLst[selValue];
+			const pcapFilename = pcapFile.file;
+			
+			//start new output section
+			output(`<u><b>Replay pcap file <code>${pcapFilename}</code></b></u>`);
+			output(`Replay parameters: ${JSON.stringify(paramValues)}`);
 
-			var timerCounter = 10;
-			window._outputTimer = setInterval(function() {
-				timerCounter--;
-				if (timerCounter <= 0) {
-					clearInterval(window._outputTimer);
-					setTerminateExecutionStatus( true );
-					output("successfully terminated");
+			MMTDrop.tools.ajax("/auto/attack/pcap/replay/" + pcapFilename, paramValues, "POST", {
+				error: function() {
+					const msg = `Cannot replay the pcap file <code>${pcapFilename}</code>`;
+					MMTDrop.alert.error(msg);
+					setTerminateExecutionStatus(false);
+					output( msg, true );
+				},
+				success: function() {
+					//MMTDrop.alert.success("Successfully add the Probe", 3 * 1000);
+					//star timer to get execution log
+					setTimeout( retriveExecutionLog, 1000, pcapFilename );
 				}
-				else
-					output(randomText());
-
-			}, 1000);
+			});
 		});
 
 		$("#script-stop-button").click(function() {
-			clearInterval(window._outputTimer);
-			setTerminateExecutionStatus( false );
-			output("interrupted");
+			setTerminateExecutionStatus(false);
+			const selValue = $("#list-pcap-file").val();
+			const pcapFile = pcapLst[selValue];
+			const pcapFilename = pcapFile.file;
+			
+			MMTDrop.tools.ajax("/auto/attack/pcap/stop/" + pcapFilename, {} , "POST", {
+				error: function() {
+					const msg = `Cannot stop the pcap file <code>${pcapFilename}</code>`;
+					MMTDrop.alert.error(msg);
+					setTerminateExecutionStatus(false);
+					output( msg, true );
+				},
+				success: function() {
+					output("Requested to stop", true);
+				}
+			});
 		});
 	},
 
 	createFormOutput: function() {
-		contentEl.output().css({
-			"background-color": "#333",
-			"color": "white",
-			"padding-top": "30px",
-			"padding-left": "20px",
-			"padding-right": "20px",
-			"padding-bottom": "10px",
-			"font-family": "Courier, Lucida Sans Typewriter, Lucida Typewriter, monospace",
-			"font-size": "13px",
-			"font-style": "normal",
-			"font-variant": "normal",
-			"font-weight": 400,
-			"line-height": "20px"
-		});
-		contentEl.output().html("");
 	},
 }

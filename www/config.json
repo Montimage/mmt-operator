@@ -75,7 +75,7 @@
 	"auto_reload_report": true,
 	"retain_detail_report_period": 3600,
 	"limit_database_size": 999999999999,
-	"port_number": 8080,
+	"port_number": 8000,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
 	"_log": [
@@ -139,7 +139,7 @@
 			"keep_alive": true
 		}
 	},
-	"_layout": "cumucore",
+	"layout": "attack",
 	"auth_token": [
 		{
 			"enable": true,
