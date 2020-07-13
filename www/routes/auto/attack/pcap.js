@@ -30,7 +30,7 @@ router.post("/replay/:filename", function( req, res, next ){
 		if( val === "true" )
 			continue;
 
-		arguments.push( params[i] );
+		arguments.push( val );
 	}
 	//the last argument is the pcap file
 	arguments.push( filename );
@@ -39,7 +39,7 @@ router.post("/replay/:filename", function( req, res, next ){
 	if( ret )
 		res.send( ret );
 	else
-		res.status(500).send("The process is running");
+		res.status(500).send("Cannot replay pcap file");
 });
 
 //stop replaying a pcap file

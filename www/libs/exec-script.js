@@ -22,7 +22,7 @@ function exec(command, args, options ){
 	}
 	//cache of log between 2 consecutive status's queries
 	db.cacheLog = {
-		stdout : [],
+		stdout : [ command, args ],
 		stderr : []
 	}
 	
