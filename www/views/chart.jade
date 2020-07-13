@@ -100,7 +100,10 @@ block content
                     each val in [1, 2, 3]
                         span.icon-bar
                 a.navbar-brand( href="http://montimage.com", title="goto Montimage's Website")
-                  img.logo( src="/img/logo.png" )
+                  span
+                     img.logo( src="/img/logo.png" )
+                     if( locals.layout == "attack")
+                        span.mmt-crack(title="CyberRange Attack Generator") CyberRange Attack Generator
             .navbar-collapse.collapse
                 ul.nav.navbar-nav.navbar-right
                     each val, index in pages
