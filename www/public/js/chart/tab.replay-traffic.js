@@ -74,7 +74,7 @@ const replayParameters = {
 	//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
 "--intf1" : {
 	label: "Traffic output NIC",
-	values: ["enp0s8", "enp0s9"],
+	values: ["eth0", "eth1"],
 	description: "\
 Client to server/RX/primary traffic output interface.\
 \n\
@@ -184,9 +184,11 @@ and statistics collected from the first loop iteration.\
 		type: "number",
 		description: "\
 Loop through the capture file X times. \
-This option takes an integer number as its argument. The value of number is constrained to being:\
+This option takes an integer number as its argument. The value of number is constrained to being: \
 \
-greater than or equal to 0. If the value is 0, loop foverver.\
+greater than or equal to 0. \
+\n\n\
+If the value is 0, loop foverver.\
 \n\n\
 The default number for this option is: 1\
 "
@@ -426,8 +428,19 @@ may cause equally long delays between printing statistics.\
 }
 
 const pcapLst = [
+	{
+		file: "proto-371.pcap",
+		label: "",
+		description: "This pcap file contains 371 different protocols and applications",
+		parameters: {
+			"--unique-ip": true,
+			"--mbps": 0.01,
+			"--loop": 10,
+			"--stats": 1
+		}
+	},
 	/* separator */
-	//{ label: "separator" },
+	{ label: "separator" },
 	{
 		file: "10.http.port.pcap",
 		label: "",

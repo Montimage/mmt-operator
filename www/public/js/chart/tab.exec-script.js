@@ -80,38 +80,6 @@ const scriptLst = [
 		}
 	},
 	{
-		label: "Send IP packet containing unauthorised port number",
-		description: "Attempted to create, then send an IP packet that has 2195 as source and destionation port numbers by default",
-		script: "14.unauthorised-port-number.py",
-		parameters: {
-			"--ipDest": {
-				label: "Target IP",
-				description: "IP of the machine to be attacked",
-				type: "IPv4",
-				default: "192.168.0.20"
-			},
-			"--ipSrc": {
-				label: "Source IP",
-				description: "IP of the sender",
-				type: "IPV4",
-				default: "192.168.0.10"
-			},
-			"--portDest": {
-				label: "Target Port",
-				description: "Target port number",
-				type: "number",
-				default: 2195
-			},
-			"--portSrc": {
-				label: "Source Port",
-				description: "Source port number",
-				type: "number",
-				default: 2139
-			}
-		}
-	},
-	{label: "separator"},
-	{
 		label: "Several attempts to connect via SSH",
 		description: "Several attempts to connect via ssh (brute force attack).\
       <u>Source address</u> is either infected machine or attacker (no spoofing is possible).<br/>\
@@ -220,8 +188,36 @@ const scriptLst = [
 	},
 	{ label: "separator" },
 	{
-		label: "Detect Tor nodes"
-	}
+		label: "Send IP packets containing unauthorised port number",
+		description: "Attempted to create, then send an IP packet that has 2195 as source and destionation port numbers by default",
+		script: "14.unauthorised-port-number.py",
+		parameters: {
+			"--ipDest": {
+				label: "Target IP",
+				description: "IP of the machine to be attacked",
+				type: "IPv4",
+				default: "10.0.3.4"
+			},
+			"--ipSrc": {
+				label: "Source IP",
+				description: "IP of the sender",
+				type: "IPV4",
+				default: "192.168.0.10"
+			},
+			"--portDest": {
+				label: "Target Port",
+				description: "Target port number",
+				type: "number",
+				default: 2195
+			},
+			"--portSrc": {
+				label: "Source Port",
+				description: "Source port number",
+				type: "number",
+				default: 2139
+			}
+		}
+	},
 ];
 
 
