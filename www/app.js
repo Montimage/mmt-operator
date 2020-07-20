@@ -98,9 +98,13 @@ switch (config.input_mode) {
 
 }
 
-//start report reader
-const reportReader = new ReportReader();
-reportReader.start();
+if (config.input_mode !== constant.NONE_STR ){
+	//start report reader
+	const reportReader = new ReportReader();
+	reportReader.start();
+} else {
+	console.info("Disable input");
+}
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

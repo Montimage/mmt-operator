@@ -54,6 +54,13 @@ Once MMT-Operator is up and running, open your favorite browser and goto
 
     localhost:8080
 
+### MMT-Attack-Generator
+
+To start GUI of MMT-Attack
+```bash
+npm run attack
+```
+
 ## Build debian deb file of MMT-Operator 
 
 ```bash

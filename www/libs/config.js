@@ -103,7 +103,8 @@ else{
    if( [ constant.REDIS_STR,
          constant.KAFKA_STR,
          constant.FILE_STR, 
-         constant.SOCKET_STR
+         constant.SOCKET_STR,
+         constant.NONE_STR
        ].indexOf( config.input_mode ) === -1 )
    {
       
@@ -111,6 +112,9 @@ else{
       process.exit();
    }
 
+   //disable input
+   if( config.input_mode === constant.NONE_STR )
+      config.probe_analysis_mode = "online";
 
    if( config.probe_analysis_mode != "online" && config.probe_analysis_mode != "offline" ){
       console.error("[ERROR]: 'probe_analysis_mode' in config file must be either 'online' or 'offline'");

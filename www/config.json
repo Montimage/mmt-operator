@@ -103,17 +103,13 @@
 		"sla",
 		"stat"
 	],
-	"__modules": [
+	"modules": [
 		"link",
 		"network",
 		"dpi",
 		"security",
 		"application",
 		"enodeb"
-	],
-	"modules": [
-		"exec-script",
-		"replay-traffic"
 	],
 	"modules_config": {
 		"enodeb": {
@@ -139,7 +135,7 @@
 			"keep_alive": true
 		}
 	},
-	"layout": "attack",
+	"_layout": "attack",
 	"auth_token": [
 		{
 			"enable": true,
