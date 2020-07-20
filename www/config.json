@@ -67,7 +67,7 @@
 		"byte": 64
 	},
 	"query_cache": {
-		"enable": true,
+		"enable": false,
 		"folder": "/tmp/cache/",
 		"bytes": 10e6,
 		"files": 99
@@ -75,7 +75,7 @@
 	"auto_reload_report": true,
 	"retain_detail_report_period": 3600,
 	"limit_database_size": 999999999999,
-	"port_number": 8080,
+	"port_number": 80,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
 	"_log": [
@@ -111,10 +111,6 @@
 		"application",
 		"enodeb"
 	],
-	"__modules": [
-		"exec-script",
-		"replay-traffic"
-	],
 	"modules_config": {
 		"enodeb": {
 			"mysql_server": {
@@ -139,7 +135,7 @@
 			"keep_alive": true
 		}
 	},
-	"_layout": "cumucore",
+	"_layout": "attack",
 	"auth_token": [
 		{
 			"enable": true,

@@ -102,7 +102,7 @@ var all_pages = {
       }
     },
     "exec-script" : {
-      title: "Exec Scripts"
+      title: "Exec Attack"
     },
     "replay-traffic" : {
       title: "Replay Traffic"
@@ -123,8 +123,9 @@ listOfPageIdToShow.forEach(
   function(key){
      if( all_pages[ key ] == undefined )
         console.error("Not found module " + key );
-     else
+     else{
         pages_to_show[ key ] = all_pages[ key ];
+     }
   });
 
 
@@ -139,7 +140,8 @@ router.get('/*', function(req, res, next) {
     var id = path;
 
     if (!id) {
-        res.redirect("/chart/link");
+        const firstPage = listOfPageIdToShow[0];
+        res.redirect("/chart/" + firstPage);
         return;
     }
 

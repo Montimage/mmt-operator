@@ -91,7 +91,7 @@ function childProcess( file, params, env, autoRestart ){
          return self;
       }
 
-      if( self.childProcess !== undefined )
+      if( self.childProcess != undefined )
          console.log("restart child process " + self.childProcess.pid );
       
       //reduce timelife
