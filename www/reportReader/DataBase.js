@@ -276,14 +276,14 @@ module.exports = function(){
       delete self.dataCache.app;
    if(  !hasModule("application") && !hasModule('enodeb'))
       delete self.dataCache.session;
-   if( !hasModule("network") && !hasModule("application"))
+   if( !hasModule("network") && !hasModule("application") && !hasModule("iot"))
       delete self.dataCache.ip;
-   if( !hasModule("network") && !hasModule("application"))
+   if( !hasModule("network") && !hasModule("application") && !hasModule("iot"))
       delete self.dataCache.reports;
    
    if( !hasModule("network") )
       delete self.dataCache.location;
-   if( !hasModule("network") && ! config.isSLA ) //sla needs link collection to check isolation access => SENDATE demo
+   if( !hasModule("network") && !hasModule("iot") && ! config.isSLA ) //sla needs link collection to check isolation access => SENDATE demo
       delete self.dataCache.link;
    
    //flush

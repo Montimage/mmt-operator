@@ -10,6 +10,7 @@ const DataBase    = require("./DataBase.js");
 const COL         = mmtAdaptor.StatsColumnId;
 const s1apTopo    = require("./EnodebTopo");
 const net         = require('net');
+const iot         = require('./iotProcessMessage');
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
 var caches = {};
@@ -301,6 +302,9 @@ function ProcessMessage( database ){
 			//availability
 		//case 50:
 		//   console.info( msg );
+		case mmtAdaptor.CsvFormat.EVENT_BASE_FORMAT:
+			if( msg[mmtAdaptor.IoTColumnId.EVENT_NAME] === "iot" )
+					msg = iot.processMessage( msg );
 		}
 
 		//TODO: to be remove, this chages probe ID, only for Thales demo

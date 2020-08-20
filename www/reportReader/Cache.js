@@ -271,7 +271,7 @@ function Cache ( option ) {
  *  key : array
  * 	init: array
  * 	inc : array
- * set : array
+ * 	set : array
  * }
  */
 

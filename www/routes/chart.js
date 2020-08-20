@@ -101,6 +101,9 @@ var all_pages = {
          }
       }
     },
+    "iot": {
+		title: "IoT"
+	},
     "exec-script" : {
       title: "Exec Attack"
     },

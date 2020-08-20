@@ -4,6 +4,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "attack": "node ./bin/www --config=config-attack.json",
+    "iot":    "node ./bin/www --config=config-iot.json",
     "build": "node ./bin/build build",
     "build-deb": "node ./bin/build deb",
     "build-rpm": "node ./bin/build rpm",

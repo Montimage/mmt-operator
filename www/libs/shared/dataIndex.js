@@ -299,7 +299,7 @@ module.exports = {
          PROBE_ID : 1,
          SOURCE_ID: 2,
          TIMESTAMP: 3,
-         EVEN_NAME: 4,
+         EVENT_NAME: 4,
       },
       LteTopoStatColumnId: {
          FORMAT_ID    : 0,
@@ -315,6 +315,17 @@ module.exports = {
          UE_IMSI      : 8, /**< incase of UE*/
          UE_M_TMSI    : 9,
       },
+      IoTColumnId: {
+         FORMAT_ID: 0,
+         PROBE_ID : 1,
+         SOURCE_ID: 2,
+         TIMESTAMP: 3,
+         EVENT_NAME: 4,
+         SEQ_NUM  : 5,
+         SRC      : 6,
+         DST      : 7,
+         DATA_VOLUME: 8,
+       },
       /**
        * A table of Category-Id: Application-Id[]
        */
@@ -408,6 +419,7 @@ module.exports = {
                   65, 66, 78, 156, 393, 630,
                   //sctp
                   645,646,647,648,649,650,651,652,653,654,655,
+                  800,801,
                   //s1ap
                   900
           ],
@@ -528,6 +540,7 @@ module.exports = {
          644: 'DTP',
          645: "SCTP_HEARTBEAT", 646: "SCTP_SHUTDOWN", 647: "SCTP_SHUTDOWN_COMPLETE", 648: "SCTP_ABORT", 649: "SCTP_ERROR", 650: "SCTP_COOKIE_ECHO",
          651: "SCTP_ECNE", 652: "SCTP_CWR", 653: "SCTP_AUTH", 654: "SCTP_ASCONF", 655: "SCTP_RE_CONFIG",
+         800: "IEEE802154", 801: "LOWPAN",
          900: "S1AP"
       },
 
