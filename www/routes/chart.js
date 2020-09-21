@@ -6,6 +6,9 @@ var url = require("url");
 const config = require("../libs/config");
 
 var all_pages = {
+    'upload-pcap': {
+		title: '<i class="fa fa-cloud-upload" aria-hidden="true" title="Upload Pcap file to analyze"></i>'
+	 },
     'link': {
         title: "Link"
     },

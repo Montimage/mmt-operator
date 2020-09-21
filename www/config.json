@@ -104,6 +104,7 @@
 		"stat"
 	],
 	"modules": [
+		"upload-pcap",
 		"link",
 		"network",
 		"dpi",

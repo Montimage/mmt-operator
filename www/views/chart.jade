@@ -75,7 +75,7 @@ block header
 
     
 mixin ahref( index, query_string, val )
-  a( href="/chart/#{ index }#{ query_string }" )= val.title
+  a( href="/chart/#{ index }#{ query_string }" )!= val.title
 
 mixin dropdown( index, query_string, val )
   a.dropdown-toggle( href= "#", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false")= val.title
