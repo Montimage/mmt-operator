@@ -74,7 +74,7 @@ const replayParameters = {
 	//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
 "--intf1" : {
 	label: "Traffic output NIC",
-	default: "enp0s3",
+	default: "",
 	description: "\
 Client to server/RX/primary traffic output interface.\
 \n\
@@ -436,7 +436,8 @@ const pcapLst = [
 			"--unique-ip": true,
 			"--mbps": 0.01,
 			"--loop": 10,
-			"--stats": 1
+			"--stats": 1,
+			"--intf1":"eth0"
 		}
 	},
 	/* separator */
@@ -449,7 +450,8 @@ const pcapLst = [
 			"--unique-ip": true,
 			"--mbps": 0.1,
 			"--loop": 10,
-			"--stats": 1
+			"--stats": 1,
+			"--intf1":"eth0"
 		}
 	}, {
 		file: "1.ssh_brute.pcap",
@@ -583,7 +585,8 @@ const pcapLst = [
 			"--unique-ip": false,
 			"--pps" : 200,
 			"--loop": 1,
-			"--stats": 1
+			"--stats": 1,
+			"--intf1":"eth0"
 		}
 	}, {
 		file: "39.tor.ip.pcap",
