@@ -161,7 +161,8 @@ function build(built_type) {
             
             return ret.code;
          } catch (err) {
-            console.error("Error when minify [" + file + "]: " + err.toString());
+            console.error("Error when minify [" + file + "], use plain text: " + err.toString());
+            return content;
          }
       }
       );
