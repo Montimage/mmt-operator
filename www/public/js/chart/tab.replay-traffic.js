@@ -74,7 +74,7 @@ const replayParameters = {
 	//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
 "--intf1" : {
 	label: "Traffic output NIC",
-	values: ["eth0", "eth1"],
+	default: "enp0s3",
 	description: "\
 Client to server/RX/primary traffic output interface.\
 \n\
