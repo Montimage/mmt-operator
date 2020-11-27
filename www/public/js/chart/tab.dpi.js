@@ -200,6 +200,8 @@ var ReportFactory = {
                 
                 if( app_path_arr.length > LIMIT_SELECT_APP ){
                     app_path_arr.length = LIMIT_SELECT_APP;
+                    //show info to user
+                    MMTDrop.alert.warning(`Support maximally ${LIMIT_SELECT_APP} items`, 5000)
                 }
                 
                 const app_id_arr = [];

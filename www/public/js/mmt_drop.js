@@ -663,6 +663,7 @@ if( typeof Highcharts !== "undefined" )
             611: 'LEVEL3', 612: 'LIMELIGHT', 613: 'MAXCDN', 614: 'NETDNA', 615: 'VOXEL', 616: 'RACKSPACE', 617: 'GAMEFORGE', 618: 'METIN2', 619: 'OGAME', 620: 'BATTLEKNIGHT', 
             621: '4STORY', 622: 'FBMSG', 
             623: 'TWITCH',
+            624: 'SLL',
             625: 'NDN',
             626: 'NDN_HTTP',
             627: 'QUIC',
