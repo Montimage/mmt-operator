@@ -37,7 +37,6 @@
 		"info"
 	],
 	"modules": [
-		"exec-script",
 		"replay-traffic"
 	],
 	"modules_config": {

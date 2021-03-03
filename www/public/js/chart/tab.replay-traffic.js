@@ -429,19 +429,19 @@ may cause equally long delays between printing statistics.\
 
 const pcapLst = [
 	{
+		category: "* No attack traffic",
 		file: "proto-371.pcap",
-		label: "",
+		label: "Clean traffic: different protocols/applications",
 		description: "This pcap file contains 371 different protocols and applications",
 		parameters: {
 			"--unique-ip": true,
-			"--mbps": 0.01,
-			"--loop": 10,
+			"--mbps": 0.1,
+			"--loop": 1,
 			"--stats": 1,
 			"--intf1":"eth0"
 		}
 	},
-	/* separator */
-	{ label: "separator" },
+	/*
 	{
 		file: "10.http.port.pcap",
 		label: "",
@@ -453,11 +453,17 @@ const pcapLst = [
 			"--stats": 1,
 			"--intf1":"eth0"
 		}
-	}, {
+	},
+	*/ 
+	{
+		category: "Identity theft",
 		file: "1.ssh_brute.pcap",
-		label: "",
-		description: "This pcap file stored packets being captured during a SSH brute-force attack."
-	}, {
+		label: "SSH brute force attack",
+		description: "Several attempts to connect via ssh (brute force attack). Source address is either infected machine or attacker (no spoofing is possible).",
+		alerts: [1], //rule ids detected
+	},
+	/* 
+	{
 		file: "2.ssh.pcap",
 		label: "",
 		description: ""
@@ -465,47 +471,70 @@ const pcapLst = [
 		file: "3.SYNwithoutACK.pcap",
 		label: "",
 		description: ""
-	}, {
+	},
+	*/ 
+	{
+		category: "Identity theft",
 		file: "4.5.arp_spoof.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "ARP spoofing",
+		description: "IPv4 address conflict detection (RFC5227). Possible ARP poisoning.",
+		alerts: [4,5]
+	},
+	{
+		category: "Network scan",
 		file: "6.SYNFUL.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "SYNFUL attack",
+		description: "SYN and ACK packets with a 0xC123D delta between TCP sequence numbers (scan done by SYNFUL attack).",
+		alerts: [6]
+	}, /*{
 		file: "7.invalid_tcp_rst.pcap",
 		label: "",
 		description: ""
-	}, {
+	}, */
+	{
+		category: "DoS/DDoS",
 		file: "8.ip.options.pcap",
-		label: "",
-		description: ""
+		label: "IP options field non-homogeneous in all IP fragments",
+		description: "IP options field non-homogeneous in all IP fragments: The IP options field must be homogeneous in all IP fragments.",
+		alerts: [8, 9, 22, 24, 60]
 	}, {
+		category: "DoS/DDoS",
 		file: "9.ip_frag_min_size.pcap",
-		label: "",
-		description: ""
+		label: "Too small IP fragment",
+		description: "Too small IP fragment: The minimum size of an IP fragment is 28 bytes and for an IP fragment with offset 0 it is 40.",
+		alerts: [9, 22, 24]
 	}, {
+		category: "DoS/DDoS",
 		file: "11.ip_size.pcap",
-		label: "",
-		description: ""
+		label: "Too small packet size ",
+		description: "Too small packet size (less than 34 bytes)",
+		note: "Some network card do padding => cannot detect those packets",
+		alerts: [11]
 	}, {
+		category: "Web attack/ Phishing mail attack",
 		file: "12.uri_invalid.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "HTTP URI with unauthorized characters/Traversal attack ",
+		description: "HTTP packet URI contains non authorized characters according to RFC2396 and RFC2234 or possibly directory traversal attack.",
+		note: "The rule to detect is expensive and generates many alerts in real-world traffic",
+		alerts: [12]
+	}, /*{
 		file: "13.data_in_SYN.pcap",
 		label: "",
 		description: ""
-	}, {
+	},*/ {
+		category: "Evasion",
 		file: "14.illegal_port.pcap",
-		label: "",
-		description: ""
+		label: "Illegal port",
+		description: "Unauthorized port number according to https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers",
+		note: "The rule to detect is potentially generating too many alerts with real-world traffic but can be kept in this demo if needed",
+		alerts: [13, 14]
 	}, {
+		category: "Network scan",
 		file: "15.nikto.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "Nikto scan",
+		description: "Nikto scan for the discovery of vulnerabilities",
+		alerts: [15, 16]
+	},/* {
 		file: "16.two_successive_SYN.pcap",
 		label: "",
 		description: ""
@@ -513,51 +542,71 @@ const pcapLst = [
 		file: "17.smtp.pcap",
 		label: "",
 		description: ""
-	}, {
+	},*/ {
+		category: "Evasion",
 		file: "18.gre.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "Invalid GRE version",
+		description: "Invalid GRE version",
+		alerts: [18]
+	}, /*{
 		file: "19.SQLI.pcap",
 		label: "",
 		description: ""
-	}, {
+	}, */{
+		category: "DoS/DDoS",
 		file: "20.icmp_redirect_flood.pcap",
-		label: "",
-		description: ""
+		label: "ICMP redirect flood",
+		description: "ICMP redirect flooding attack ",
+		alerts: [20]
 	}, {
+		category: "Evasion",
 		file: "21.ip_frag_off.pcap",
-		label: "",
-		description: ""
+		label: "IP fragments with offset always = 0 (allowed but could be an evasion)",
+		description: "IP fragmentation : fragments with offset always = 0 (allowed but could be an evasion).",
+		alerts: [21]
 	}, {
+		category: "Evasion",
 		file: "22.ip_frag_size.pcap",
-		label: "",
-		description: ""
+		label: "IP fragment with the size less than 9 bytes (allowed but could be an evasion)",
+		description: "IP fragmentation : a fragment with a size less than 9 bytes (allowed but could be an evasion).",
+		alerts: [22, 9, 24],
 	}, {
+		category: "Evasion",
 		file: "23.ip_frag_overlapping.pcap",
-		label: "",
-		description: ""
+		label: "Out of order IP fragmentation",
+		description: "IP fragmentation : Out of order fragments (allowed but could be an evasion).",
+		alerts: [23, 9, 22, 24, 25],
 	}, {
+		category: "Evasion",
 		file: "24.ip_frag_overlapping.pcap",
-		label: "",
-		description: ""
+		label: "Overlapping IP fragmentation",
+		description: "Overlapping IP fragmentation : difference in offset of concomitant fragments less than fragment length (allowed but could be an evasion).",
+		alerts: [24, 9, 22],
 	}, {
+		category: "Evasion",
 		file: "25.ip_frag_overlapping_unordered.pcap",
-		label: "",
-		description: ""
+		label: "Overlapping unordered IP fragmentation",
+		description: "Overlapping unordered IP fragmentation : difference in offset of concomitant fragments less than fragment length (allowed but could be an evasion).",
+		alerts: [25, 9, 22, 23, 24],
 	}, {
+		category: "Network scan",
 		file: "26.protocal_scan.pcap",
-		label: "",
-		description: ""
+		label: "IP scan",
+		description: "Probable IP protocol scan (4 different attempts in a row on different protocols).",
+		alerts: [26, 62],
 	}, {
+		category: "Network scan",
 		file: "27.udp_scan.pcap",
-		label: "",
-		description: ""
+		label: "UDP scan",
+		description: "Probable UDP protocol scan (4 different attempts in a row on different ports).",
+		alerts: [27],
 	}, {
+		category: "Network scan",
 		file: "28.xmas_can.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "XMAS scan",
+		description: "XMAS scan : TCP with all flags FIN, URG, PSH active.",
+		alerts: [28, 66],
+	}, /*{
 		file: "29.http_0.9.pcap",
 		label: "",
 		description: ""
@@ -565,21 +614,29 @@ const pcapLst = [
 		file: "30.31.nfs_upload.pcap",
 		label: "",
 		description: ""
-	}, {
+	}, */{
+		category: "Ransomware/ Identity theft",
 		file: "32.botcc.pcap",
-		label: "",
-		description: ""
+		label: "Botnet Command and Control detection based on blacklisted IP addresses",
+		description: "Botnet Command and Control detection based on blacklisted IP addresses.",
+		alerts: [32, 69, 70],
+		
 	}, {
+		category: "Ransomware/ Phishing mail attack",
 		file: "33.trojan.pcap",
-		label: "",
-		description: ""
+		label: "Trojan detection based on blacklisted HTTP URI",
+		description: "TROJAN detection based on the hash table of 426 blacklisted http_uri",
+		alerts: [33],
 	}, {
+		category: "DoS/DDoS/ Web attack",
 		file: "34.35.36.37.user_agent.pcap",
-		label: "",
-		description: ""
+		label: "Detection of DoS attack based on HTTP User-Agent field",
+		description: "Detection of DoS attack based on HTTP User-Agent field. Detection of robot, crawler, spider, spam and bad bot based on blacklisted User-Agent strings (hash-table)",
+		alerts: [34, 36],
 	}, {
+		category: "Ransomware",
 		file: "38.WannaCry.pcap",
-		label: "",
+		label: "WannaCry ransomware",
 		description: "This pcap file contain packets being captured from a machine that has been infected WannaCry virus.",
 		parameters: {
 			"--unique-ip": false,
@@ -587,52 +644,67 @@ const pcapLst = [
 			"--loop": 1,
 			"--stats": 1,
 			"--intf1":"eth0"
-		}
+		},
+		alerts: [38, 70],
 	}, {
+		category: "Ransomware/ Phishing mail attack",
 		file: "39.tor.ip.pcap",
-		label: "",
-		description: ""
+		label: "TOR nodes detection based on blacklisted IP addresses",
+		description: "TOR nodes detection based on blacklisted IP addresses.",
+		alerts: [39],
 	}, {
+		category: "Network scan",
 		file: "40.TCP_SYN_scan.pcap",
-		label: "",
-		description: ""
+		label: "TCP SYN scan",
+		description: "Probable TCP SYN scan (4 different attempts in a row on different ports).",
+		alerts: [40, 14],
 	}, {
+		category: "Network scan",
 		file: "41.SCTP_INIT_scan.pcap",
-		label: "",
-		description: ""
-	}, {
-		file: "41.TCP_INIT_scan.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "SCTP INIT scan",
+		description: "Probable SCTP INIT scan (4 different attempts in a row on different ports).",
+		alerts: [41],
+	}, /*{
+		category: "Network scan",
 		file: "42.TCP_NULL_scan.pcap",
 		label: "",
 		description: ""
-	}, {
+	}, */{
+		category: "Network scan",
 		file: "43.TCP_FIN_scan.pcap",
-		label: "",
-		description: ""
+		label: "TCP FIN scan",
+		description: "Probable TCP FIN scan (4 different attempts in a row on different ports).",
+		alerts: [43, 14],
 	}, {
+		category: "Network scan",
 		file: "44.TCP_ACK_scan.pcap",
-		label: "",
-		description: ""
+		label: "TCP ACK scan",
+		description: "Probable TCP ACK/Window scan (4 different attempts in a row on different ports).",
+		alerts: [44, 14],
 	}, {
+		category: "Network scan",
 		file: "45.TCP_Maimon_scan.pcap",
-		label: "",
-		description: ""
+		label: "TCP Maimon scan",
+		description: "Probable TCP Maimon scan (4 different attempts in a row on different ports).",
+		alerts: [45, 14],
 	}, {
+		category: "Network scan",
 		file: "46.SCTP_COOKIE_ECHO_scan.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "SCTP COOKIE ECHO scan",
+		description: "Probable SCTP COOKIE ECHO scan ",
+		alerts: [46],
+	}, /*{
+		category: "Network scan",
 		file: "47.TCP_idle_scan.pcap",
 		label: "",
 		description: ""
-	}, {
+	},*/ {
+		category: "Network scan",
 		file: "48.FTP_BOUNCE_SCAN.pcap",
-		label: "",
-		description: ""
-	}, {
+		label: "FTP bounce scan",
+		description: "Probable FTP bounce scan.",
+		alerts: [48],
+	},/* {
 		file: "49.unknown_proto.pcap",
 		label: "",
 		description: ""
@@ -640,18 +712,18 @@ const pcapLst = [
 		file: "50.outside_ip.pcap",
 		label: "",
 		description: ""
-	}, {
+	}, */{
+		category: "DoS/DDoS",
 		file: "51.ping_of_death.pcap",
-		label: "",
-		description: ""
+		label: "Ping of death attack",
+		description: "Ping of death attack: Too big ICMP packet",
+		alerts: [51, 24, 53]
 	}, {
+		category: "DoS/DDoS",
 		file: "52.nestea.pcap",
-		label: "",
-		description: ""
-	}, {
-		file: "56.syn_flooding.pcap",
-		label: "",
-		description: ""
+		label: "Nestea DoS attack",
+		description: "Malformed IP fragments. Possibly Nestea DoS attack.",
+		alerts: [52, 9],
 	}]
 
 
@@ -663,6 +735,39 @@ var ReportFactory = {
 		setToolbarButtons();
 		const markdown2HTML = new showdown.Converter();
 
+		const categoryPcap = {};
+		
+		
+		pcapLst.forEach( e => {
+			let cat = e.category || "";
+			cat = cat.trim();
+			
+			if( categoryPcap[cat] == undefined )
+				categoryPcap[cat] = [];
+			categoryPcap[cat].push( e );
+		})
+		
+		
+		
+		const newPcapLst = [];
+		const keysArr = Object.keys(categoryPcap);
+		keysArr.sort();
+		
+		keysArr.forEach( cat => {
+			//first item is cateogry
+			if( cat != "" )
+				newPcapLst.push({label: cat, disable: true});
+			const arr = categoryPcap[cat];
+			arr.sort( (a,b) => { 
+				return a.label - b.label; 
+			});
+			arr.forEach( e => {
+				if( e.label )
+					e.label = "&nbsp;&nbsp;&nbsp;&nbsp;" + e.label;
+				newPcapLst.push( e );
+			});
+		})
+		
 		var form_config = {
 			type: "<div>",
 			attr: {
@@ -677,14 +782,17 @@ var ReportFactory = {
 					class: "form-control",
 					style: "height: 34px"
 				},
-				children: pcapLst.map((el, i) => {
-					return {
+				children: newPcapLst.map((el, i) => {
+					let ret = {
 						type: "<option>",
 						attr: {
-							value: i,
-							text: el.label === "separator" ? "-" : (el.label === "" ? el.file : el.label),
+							value: el.file,
+							html: el.label === "separator" ? "-" : (el.label === "" ? el.file : el.label)
 						}
-					}
+					};
+					if( el.disable )
+						ret.attr.disabled = "disabled";
+					return ret;
 				})
 			}, {
 				type: "<div>",
@@ -712,23 +820,31 @@ var ReportFactory = {
 			event.stopImmediatePropagation();
 			const selValue = $(this).val();
 			const detailForm = [];
-			const pcapFile = pcapLst[selValue];
-
+			const pcapFile = pcapLst.find( (e) => e.file == selValue );
+			if( pcapFile == undefined )
+				return;
+				
 			if (pcapFile.label === "separator")
 				$("#script-run-button").disable();
 			else
 				$("#script-run-button").enable();
 			//clear the previous run's' status
 			$("#toolbar-run-status").html('');
-
-			if (pcapFile.description)
+			
+			let des = pcapFile.description;
+			if( pcapFile.alerts && pcapFile.alerts.length )
+				des += '<br/>This attack traffic can be detected by rule' + (pcapFile.alerts.length>1?'s':'')  +  ' ' + pcapFile.alerts.join(", ") + '.';
+			if( pcapFile.note )
+				des += "<br/><br/><u>Note</u>:" + pcapFile.note;
+			
+			if (des && des.length > 0 )
 				detailForm.push({
 					type: "<div>",
 					label: "Description",
 					attr: {
 						class: "text-justify",
 						style: "padding-left: 20px;padding-right: 20px",
-						html: markdown2HTML.makeHtml(pcapFile.description)
+						html: markdown2HTML.makeHtml( des )
 					}
 				})
 
@@ -834,7 +950,7 @@ var ReportFactory = {
 									"data-toggle": "popover",
 									"data-html": true,
 									"data-placement": "left",
-									"data-content": markdown2HTML.makeHtml(e.description),
+									"data-content": markdown2HTML.makeHtml( e.description ),
 									title: e.label
 								}
 							}
@@ -925,9 +1041,9 @@ var ReportFactory = {
 			//enable editing parameters
 			setEnableParameterInput(true);
 			if (isSuccess) {
-				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok"></span>');
+				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok" title="Successfully replaying"></span>');
 			} else {
-				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:red" class="glyphicon glyphicon-remove"></span>');
+				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:red" class="glyphicon glyphicon-remove" title="Error when replaying. See execution log for further information."></span>');
 			}
 		}
 
@@ -981,9 +1097,11 @@ var ReportFactory = {
 
 			const paramValues = getParameterValues();
 			const selValue = $("#list-pcap-file").val();
-			const pcapFile = pcapLst[selValue];
-			const pcapFilename = pcapFile.file;
+			const pcapFile = pcapLst.find( (e) => e.file == selValue );
 			
+			if( pcapFile == undefined )
+				return;
+			const pcapFilename = pcapFile.file;
 			//start new output section
 			output(`<u><b>Replay pcap file <code>${pcapFilename}</code></b></u>`);
 			output(`Replay parameters: ${JSON.stringify(paramValues)}`);
@@ -1006,8 +1124,11 @@ var ReportFactory = {
 		$("#script-stop-button").click(function() {
 			setTerminateExecutionStatus(false);
 			const selValue = $("#list-pcap-file").val();
-			const pcapFile = pcapLst[selValue];
+			const pcapFile = pcapLst.find( (e) => e.file == selValue );
+			if( pcapFile == undefined )
+				return;
 			const pcapFilename = pcapFile.file;
+			
 			
 			MMTDrop.tools.ajax("/auto/attack/pcap/stop/" + pcapFilename, {} , "POST", {
 				error: function() {
