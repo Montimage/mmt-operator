@@ -6,7 +6,7 @@ var exec    = require('child_process').exec;
 var path    = require('path');
 var script  = require('../../../libs/exec-script.js');
 
-const TCPREPLAY = "tcpreplay";
+const TCPREPLAY = "/usr/local/bin/tcpreplay";
 
 //start replaying a pcap file
 router.post("/replay/:filename", function( req, res, next ){

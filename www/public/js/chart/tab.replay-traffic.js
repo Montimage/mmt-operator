@@ -5,7 +5,7 @@ var arr = [
 		x: 0,
 		y: 0,
 		width: 12,
-		height: 8,
+		height: 9,
 		type: "info",
 		userData: {
 			fn: "createFormScripts"
@@ -14,7 +14,7 @@ var arr = [
 		id: "output",
 		title: "Output",
 		x: 0,
-		y: 8,
+		y: 9,
 		width: 12,
 		height: 3,
 		type: "danger",
@@ -74,7 +74,8 @@ const replayParameters = {
 	//https://tcpreplay.appneta.com/wiki/tcpreplay-man.html
 "--intf1" : {
 	label: "Traffic output NIC",
-	default: "",
+	default: "eth0",
+	values: ["eth0"],
 	description: "\
 Client to server/RX/primary traffic output interface.\
 \n\
@@ -105,7 +106,6 @@ Allows you to select the packet timing method to use:\
 
 	"--maxsleep": {
 		label: "Max sleep (ms)",
-		default: 0,
 		description: "\
 Sleep for no more then X milliseconds between packets. \
 This option takes an integer number as its argument. \
@@ -119,13 +119,14 @@ Default is disabled.\
 			type: "number"
 		}
 	},
-
+/*
 	"--verbose": {
 		label: "Verbose",
 
 		default: true,
 		description: "Print decoded packets via tcpdump to STDOUT."
 	},
+*/
 	/*
 	-A string, --decode=string
 	
@@ -208,7 +209,6 @@ The default number for this option is: 0\
 	"--pktlen": {
 		label: "Packet length",
 		type: "number",
-		default: 0,
 		description: "\
 Override the snaplen and use the actual packet len. \
 \n\n\
@@ -223,7 +223,6 @@ Bad things may happen if you specify this option.\
 	"--limit": {
 		label: "Number of packets to send",
 		type: "number",
-		default: -1,
 		description: "\
 Limit the number of packets to send. This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 1 \
@@ -236,7 +235,6 @@ By default, all the packets will be sent. Alternatively, you can specify a maxim
 	"--duration": {
 		label: "Timeout (second)",
 		type: "number",
-		default: -1,
 		description: "\
 Limit the number of seconds to send. This option takes an integer number as its argument. \
 The value of number is constrained to being: greater than or equal to 1\
@@ -249,7 +247,6 @@ By default, all the packets will be sent. Alternatively, you can specify a maxim
 	"--multiplier": {
 		label: "Multiplier",
 		type: "number",
-		default: 1,
 		description: "\
 Modify replay speed to a given multiple. \
 This option must *not* appear in combination with any of the following options: pps, mbps, oneatatime, topspeed.\
@@ -264,7 +261,7 @@ Specify a value to modify the packet replay speed. Examples:\
 	"--pps": {
 		label: "Debit (pps)",
 		type: "number",
-		default: 0,
+		default: 500,
 		description: "\
 Replay packets at a given packets/sec. \
 This option *must not* appear in combination with any of the following options: multiplier, mbps, oneatatime, topspeed.\
@@ -279,7 +276,6 @@ Specify a value to regulate the packet replay to a specific packet-per-second ra
 	"--mbps": {
 		label: "Bandwidth (Mbps)",
 		type: "number",
-		default: 0,
 		description: "\
 Replay packets at a given Mbps. \
 This option *must not* appear in combination with any of the following options: multiplier, pps, oneatatime, topspeed.\
@@ -289,7 +285,7 @@ Specify a floating point value for the Mbps rate that tcpreplay should send pack
 
 	"--topspeed": {
 		label: "Top speed",
-		default: false,
+		values: [false, true],
 		description: "\
 Replay packets as fast as possible. \
 This option *must not* appear in combination with any of the following options: mbps, multiplier, pps, oneatatime.\
@@ -330,7 +326,6 @@ This option will significantly increase the flows/sec over generated over multip
 	"--unique-ip-loops": {
 		label: "Unique IP in loops",
 		type: "number",
-		default: 1,
 		description: "\
 Number of times to loop before assigning new unique ip. \
 This option *must* appear in combination with the following options: `unique-ip`.\
@@ -429,13 +424,14 @@ may cause equally long delays between printing statistics.\
 
 const pcapLst = [
 	{
-		category: "* No attack traffic",
+		category: "* Divers",
 		file: "proto-371.pcap",
-		label: "Clean traffic: different protocols/applications",
+		label: "Several protocols/applications",
 		description: "This pcap file contains 371 different protocols and applications",
 		parameters: {
 			"--unique-ip": true,
-			"--mbps": 0.1,
+			"--mbps": "",
+			"--pps" : 1500,
 			"--loop": 1,
 			"--stats": 1,
 			"--intf1":"eth0"
@@ -503,14 +499,14 @@ const pcapLst = [
 		label: "Too small IP fragment",
 		description: "Too small IP fragment: The minimum size of an IP fragment is 28 bytes and for an IP fragment with offset 0 it is 40.",
 		alerts: [9, 22, 24]
-	}, {
+	},/* {
 		category: "DoS/DDoS",
 		file: "11.ip_size.pcap",
 		label: "Too small packet size ",
 		description: "Too small packet size (less than 34 bytes)",
 		note: "Some network card do padding => cannot detect those packets",
 		alerts: [11]
-	}, {
+	}, */{
 		category: "Web attack/ Phishing mail attack",
 		file: "12.uri_invalid.pcap",
 		label: "HTTP URI with unauthorized characters/Traversal attack ",
@@ -525,7 +521,7 @@ const pcapLst = [
 		category: "Evasion",
 		file: "14.illegal_port.pcap",
 		label: "Illegal port",
-		description: "Unauthorized port number according to https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers",
+		description: "Unauthorized port number according to [Wikipedia](https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers)",
 		note: "The rule to detect is potentially generating too many alerts with real-world traffic but can be kept in this demo if needed",
 		alerts: [13, 14]
 	}, {
@@ -640,7 +636,7 @@ const pcapLst = [
 		description: "This pcap file contain packets being captured from a machine that has been infected WannaCry virus.",
 		parameters: {
 			"--unique-ip": false,
-			"--pps" : 200,
+			"--pps" : 400,
 			"--loop": 1,
 			"--stats": 1,
 			"--intf1":"eth0"
@@ -833,7 +829,7 @@ var ReportFactory = {
 			
 			let des = pcapFile.description;
 			if( pcapFile.alerts && pcapFile.alerts.length )
-				des += '<br/>This attack traffic can be detected by rule' + (pcapFile.alerts.length>1?'s':'')  +  ' ' + pcapFile.alerts.join(", ") + '.';
+				des += '<br/>This attack traffic can be detected by rule' + (pcapFile.alerts.length>1?'s':'')  +  ' ' + pcapFile.alerts.join(", ") + ' ...';
 			if( pcapFile.note )
 				des += "<br/><br/><u>Note</u>:" + pcapFile.note;
 			
@@ -986,7 +982,7 @@ var ReportFactory = {
 				errorClass: "text-danger",
 				errorElement: "span"
 			});
-
+			
 			//set default values coressponding to the selected pcap file
 			if (pcapFile.parameters) {
 				for (let i in pcapFile.parameters) {
@@ -1017,14 +1013,13 @@ var ReportFactory = {
 		function getParameterValues() {
 			const values = {};
 			forEachReplayParameter(function(e, i) {
-				const defaultValue = e.default + "";
 				//get DOM element using jQuery
 				const el = $('#' + PARAM_INPUT_ID_PREFIX + i);
 				if (!el)
 					return;
 				const v = el.val();
 				//retain only the new value
-				if (v != defaultValue)
+				if (v && v.length > 0)
 					values[i] = v;
 			});
 			return values;
@@ -1040,6 +1035,7 @@ var ReportFactory = {
 			$("#script-stop-button").disable();
 			//enable editing parameters
 			setEnableParameterInput(true);
+			
 			if (isSuccess) {
 				$("#toolbar-run-status").html('<span aria-hidden="true" style="color:green" class="glyphicon glyphicon-ok" title="Successfully replaying"></span>');
 			} else {
@@ -1069,10 +1065,13 @@ var ReportFactory = {
 				success: function( data ){
 					output( data.stdout )
 					output( data.stderr, true );
-					if( data.isRunning )
-						//continue to retrive execution logs 
+					if( data.isRunning ){
+						setEnableParameterInput(false);
+						$("#script-run-button").disable();
+						$("#script-stop-button").enable();
+						//continue to retrive execution logs
 						setTimeout( retriveExecutionLog, 1000, filename );
-					else {
+					}else {
 						setTerminateExecutionStatus( data.exitCode == 0 );
 						//error
 						if( data.exitCode != 0){
@@ -1084,9 +1083,34 @@ var ReportFactory = {
 				}
 			});
 		}
-		//when click on run button
-		if (window._outputTimer)
-			clearInterval(window._outputTimer);
+		
+		//check for the firstime: when a pcap is playing
+		MMTDrop.tools.ajax("/auto/attack/pcap/status/_check", {}, "GET", {
+			error: function(){
+				output( "Cannot get status" );
+			},
+			success: function( data ){
+				if( data.stdout )
+					output( data.stdout )
+				if( data.stderr)
+					output( data.stderr, true );
+
+				if( data.isRunning ){
+					setEnableParameterInput(false);
+					$("#toolbar-run-status").html('<i class="fa fa-spinner fa-pulse fa-fw"></i>');
+					$("#script-run-button").disable();
+					$("#script-stop-button").enable();
+					//continue to retrive execution logs
+					setTimeout( retriveExecutionLog, 1, "_filename" );
+				}else {
+					setEnableParameterInput(true);
+					$("#script-run-button").enable();
+					$("#script-stop-button").disable();
+				}
+			}
+		});
+		
+		
 
 		$("#script-run-button").click(function() {
 			$("#toolbar-run-status").html('<i class="fa fa-spinner fa-pulse fa-fw"></i>');
