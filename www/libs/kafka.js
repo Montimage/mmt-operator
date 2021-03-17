@@ -7,8 +7,6 @@ const tools  = require("./tools");
 const kafka  = require('kafka-node');
 
 const kafkaConnectionString = config.kafka_input.host + ":" + config.kafka_input.port;
-const zkOptions = undefined;// {};
-const noAckBatchOptions =  undefined;// {};
 const sslOptions = {};
 
 if( config.kafka_input["ssl.ca.location"] ){
@@ -37,13 +35,10 @@ function createClient( type, clientName  ){
    else
       clientName = "mmt-operator-" + clientName;
    
-   var client = new kafka.Client( 
-         kafkaConnectionString, 
-         clientName,
-         zkOptions,
-         noAckBatchOptions,
-         sslOptions
-   );
+   var client = new kafka.KafkaClient({
+         kafkaHost: kafkaConnectionString, 
+         sslOptions: sslOptions.ca ? sslOptions : null
+   });
    
    const ret = { topics: [], clientName : clientName };
    

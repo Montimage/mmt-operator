@@ -11,13 +11,16 @@ const processMessage = new ProcessMessage( database );
 
 
 var pub_sub = null;
+let topic   = null;
 
 switch( config.input_mode ){
 case constant.REDIS_STR:
 	pub_sub = require("../libs/redis");
+	topic   = config.redis_input.channel;
     break;
 case constant.KAFKA_STR:
 	pub_sub = require("../libs/kafka");
+	topic   = config.kafka_input.topic;
     break;
 default:
 	console.error( "Does not support input mode = " + config.input_mode );
@@ -38,32 +41,38 @@ function receiveMessage (channel, message) {
 
 const report_client = pub_sub.createClient( "consumer", "busReader" );
 
-//*
-report_client.subscribe("license.stat");
-report_client.subscribe("security.report");
-report_client.subscribe("protocol.flow.stat");
-report_client.subscribe("session.flow.report");
-report_client.subscribe("protocol.stat");
-//report_client.subscribe("radius.report");
-//report_client.subscribe("microflows.report");
-report_client.subscribe("flow.report");
-report_client.subscribe("web.flow.report");
-report_client.subscribe("ssl.flow.report");
-report_client.subscribe("rtp.flow.report");
-
-report_client.subscribe("behaviour.report");
-
-report_client.subscribe("ndn.report");
-report_client.subscribe("OTT.flow.report");
-report_client.subscribe("cpu.report");
+//when a topic is explicite in config file
+if( topic ){
+	report_client.subscribe( topic )
+}
+else{
+	//default channels
+	report_client.subscribe("license.stat");
+	report_client.subscribe("security.report");
+	report_client.subscribe("protocol.flow.stat");
+	report_client.subscribe("session.flow.report");
+	report_client.subscribe("protocol.stat");
+	//report_client.subscribe("radius.report");
+	//report_client.subscribe("microflows.report");
+	report_client.subscribe("flow.report");
+	report_client.subscribe("web.flow.report");
+	report_client.subscribe("ssl.flow.report");
+	report_client.subscribe("rtp.flow.report");
+	
+	report_client.subscribe("behaviour.report");
+	
+	report_client.subscribe("ndn.report");
+	report_client.subscribe("OTT.flow.report");
+	report_client.subscribe("cpu.report");
+}
 
 report_client.on('message', receiveMessage);
 
-const report_client2 = pub_sub.createClient( "consumer", "busReader2" );
+//const report_client2 = pub_sub.createClient( "consumer", "busReader2" );
 //for MUSA
-report_client2.subscribe("metrics.avail");
+//report_client2.subscribe("metrics.avail");
 
-report_client2.on('message', receiveMessage);
+//report_client2.on('message', receiveMessage);
 //*/
 
 

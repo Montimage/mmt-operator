@@ -10,7 +10,8 @@
 	"kafka_input": {
 		"host": "192.168.0.195",
 		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert"
+		"ssl.ca.location": "data/kafka-ca.cert",
+		"topic": "mi-reports"
 	},
 	"file_input": {
 		"data_folder": [
