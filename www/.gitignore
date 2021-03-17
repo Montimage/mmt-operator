@@ -1,7 +1,6 @@
 /log/
 *.log
 *.gz
-*.bak
 /dump.rdb
 /dist/
 .DS_Store
