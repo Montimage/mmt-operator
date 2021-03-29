@@ -188,11 +188,14 @@ else{
    
 // ensure log directory exists
    if( !fs.existsSync( config.log_folder ) ){
-      console.error("[ERROR]: Log folder [" + config.log_folder + "] does not exists.");
-      console.info( "\nConfiguration: " );
-      console.info( config.json );
-      console.info( "node version: %s, platform: %s", process.version, process.platform );
-      process.exit();
+      console.info("[INFO]: Log folder [" + config.log_folder + "] does not exists. Creating it ..");
+      try{
+          fs.mkdirSync(config.log_folder, { recursive: true });
+      }catch( e ){
+          console.error( "Cannot create " + config.json + ":" + e );
+          console.info( "node version: %s, platform: %s", process.version, process.platform );
+          process.exit();
+      }
    }
    
    
