@@ -1,0 +1,146 @@
+{
+	"database_server": {
+		"host": "localhost",
+		"port": 27017
+	},
+	"redis_input": {
+		"host": "localhost",
+		"port": 6379
+	},
+	"kafka_input": {
+		"host": "10.0.37.5",
+		"port": 30031,
+		"topic": "mi-reports"
+	},
+	"file_input": {
+		"data_folder": [
+			"/opt/mmt/probe/result/report/online/",
+			"/tmp/"
+		],
+		"delete_data": true,
+		"nb_readers": 1
+	},
+	"socket_input": {
+		"host": "localhost",
+		"port": 5000,
+		"max_connections": 0
+	},
+	"input_mode": "kafka",
+	"probe_analysis_mode": "offline",
+	"pcap_dump": {
+		"folder": "/opt/mmt/probe/pcap/",
+		"interval": 3600
+	},
+	"local_network": [
+		{
+			"ip": "192.168.0.0",
+			"mask": "255.255.0.0"
+		},
+		{
+			"ip": "172.16.0.0",
+			"mask": "255.240.0.0"
+		},
+		{
+			"ip": "10.0.0.0",
+			"mask": "255.0.0.0"
+		},
+		{
+			"ip": "fe80::",
+			"mask": "8"
+		},
+		{
+			"ip": "127.0.0.1",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "45.45.0.1",
+			"mask": "255.255.255.0"
+		}
+	],
+	"probe_stats_period": 5,
+	"buffer": {
+		"max_length_size": 30000,
+		"max_interval": 5
+	},
+	"micro_flow": {
+		"packet": 1,
+		"byte": 64
+	},
+	"query_cache": {
+		"enable": false,
+		"folder": "/tmp/cache/",
+		"bytes": 10e6,
+		"files": 99
+	},
+	"auto_reload_report": true,
+	"retain_detail_report_period": 3600,
+	"limit_database_size": 999999999999,
+	"port_number": 8088,
+	"log_folder": "/tmp/",
+	"is_in_debug_mode": true,
+	"_log": [
+		"error",
+		"warn",
+		"log",
+		"info"
+	],
+	"log": [
+		"error",
+		"warn",
+		"log",
+		"info"
+	],
+	"_modules": [
+		"link",
+		"network",
+		"dpi",
+		"application",
+		"security",
+		"behavior",
+		"enodeb",
+		"ndn",
+		"video",
+		"sla",
+		"stat"
+	],
+	"modules": [
+		"upload-pcap",
+		"link",
+		"network",
+		"dpi",
+		"security",
+		"application",
+		"enodeb"
+	],
+	"modules_config": {
+		"enodeb": {
+			"mysql_server": {
+				"host": "localhost",
+				"port": 3306,
+				"user": "root",
+				"password": "montimage",
+				"database": "hss_lte_db"
+			}
+		},
+		"report_forward": {
+			"enable": true,
+			"report_types": [
+				10,
+				100
+			],
+			"server": {
+				"host": "localhost",
+				"port": 7000
+			},
+			"data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
+			"keep_alive": true
+		}
+	},
+	"_layout": "attack",
+	"auth_token": [
+		{
+			"enable": true,
+			"credentialText": "cumucore"
+		}
+	]
+}

@@ -90,16 +90,17 @@ function status( command ){
 	return ret;
 }
 
-function stop( command ){
+function stop( command, signal ){
 	console.log( "status " + command);
 	if( database[command] == undefined )
 		return;
 	const db = database[command];
 	if( db.process == undefined )
 		return;
-
+	if( signal == undefined )
+		signal = 'SIGTERM';
 	db.process.stdin.pause();
-	db.process.kill();
+	db.process.kill(signal);
 }
 
 module.exports = {
