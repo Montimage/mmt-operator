@@ -99,7 +99,7 @@ function createClient( type, clientName  ){
       ret.on = function( ev, cb ){
          if( ev === "message" )
             ret.consumer.on("message", function( msg ){
-               console.log( msg );
+               //console.log( msg );
                cb( msg.topic, msg.value );
             });
          else

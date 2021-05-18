@@ -75,7 +75,7 @@
 	"auto_reload_report": true,
 	"retain_detail_report_period": 3600,
 	"limit_database_size": 999999999999,
-	"port_number": 8088,
+	"port_number": 8080,
 	"log_folder": "/tmp/",
 	"is_in_debug_mode": true,
 	"_log": [
