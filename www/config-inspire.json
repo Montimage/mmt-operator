@@ -10,7 +10,7 @@
 	"kafka_input": {
 		"host": "10.0.37.5",
 		"port": 30031,
-		"topic": "mi-reports"
+		"topic": "mi-reports-k8s"
 	},
 	"file_input": {
 		"data_folder": [
@@ -104,13 +104,11 @@
 		"stat"
 	],
 	"modules": [
-		"upload-pcap",
 		"link",
 		"network",
 		"dpi",
 		"security",
-		"application",
-		"enodeb"
+		"application"
 	],
 	"modules_config": {
 		"enodeb": {
@@ -125,8 +123,7 @@
 		"report_forward": {
 			"enable": true,
 			"report_types": [
-				10,
-				100
+				10
 			],
 			"server": {
 				"host": "localhost",

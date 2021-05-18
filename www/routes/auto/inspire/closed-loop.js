@@ -39,20 +39,22 @@ router.get("/monitoring", function( req, res, next ){
 router.post("/monitoring", function( req, res, next ){
 	//stop old probe
 	script.stop( MMT_PROBE );
-	const args = [
-	 "-i", "lo", 
-	 "-Xkafka-output.enable=true",
-	 "-Xkafka-output.hostname=10.0.37.5",
-	 "-Xkafka-output.port=30031",
-	 "-Xkafka-output.topic=mi-reports-k8s",
-	 "-Xsession-report.output-channel=kafka",
-	 "-Xsession-report.output-channel=kafka",
-	];
-	const ret = script.exec( MMT_PROBE, args, {} );
-	if( ret )
-		res.send( {status: "ok", description: "Successfully started MMT-Probe"} );
-	else
-		res.status(500).send({status: "error", description: "Cannot start MMT-Probe"} );
+	setTimeout(function(){
+		const args = [
+		 "-i", "lo", 
+		 "-Xkafka-output.enable=true",
+		 "-Xkafka-output.hostname=10.0.37.5",
+		 "-Xkafka-output.port=30031",
+		 "-Xkafka-output.topic=mi-reports-k8s",
+		 "-Xsession-report.output-channel=kafka",
+		 "-Xsession-report.output-channel=kafka",
+		];
+		const ret = script.exec( MMT_PROBE, args, {} );
+		if( ret )
+			res.send( {status: "ok", description: "Successfully started MMT-Probe"} );
+		else
+			res.status(500).send({status: "error", description: "Cannot start MMT-Probe"} );
+	}, 500);
 });
 
 //STOP
@@ -94,7 +96,25 @@ router.put("/monitoring", function( req, res, next ){
 Need to call kubernetes to redirect traffic
 */
 router.post("/reaction/forwarding", function( req, res, next ){
-	res.send( {status: "ok"} );
+	//stop old probe
+	script.stop( MMT_PROBE );
+	setTimeout(function(){
+		const args = [
+		 "-i", "lo", 
+		 "-Xkafka-output.enable=true",
+		 "-Xkafka-output.hostname=10.0.37.5",
+		 "-Xkafka-output.port=30031",
+		 "-Xkafka-output.topic=mi-reports-k8s",
+		 "-Xsession-report.output-channel=kafka",
+		 "-Xsession-report.output-channel=kafka",
+		];
+		const ret = script.exec( MMT_PROBE, args, {} );
+		if( ret )
+			res.send( {status: "ok", description: "Successfully redirect Bittorent traffic"} );
+		else
+			res.status(500).send({status: "error", description: "Cannot redirect traffic"} );
+	}, 500);
+
 });
 
 
