@@ -45,7 +45,7 @@ router.post("/monitoring", function( req, res, next ){
 		 "-Xkafka-output.enable=true",
 		 "-Xkafka-output.hostname=10.0.37.5",
 		 "-Xkafka-output.port=30031",
-		 "-Xkafka-output.topic=mi-reports-k8s",
+		 "-Xkafka-output.topic=mi-reports-k8s-v2",
 		 "-Xsession-report.output-channel=kafka",
 		 "-Xsession-report.output-channel=kafka",
 		];
@@ -75,7 +75,7 @@ router.put("/monitoring", function( req, res, next ){
 		 "-Xkafka-output.enable=true",
 		 "-Xkafka-output.hostname=10.0.37.5",
 		 "-Xkafka-output.port=30031",
-		 "-Xkafka-output.topic=mi-reports-k8s",
+		 "-Xkafka-output.topic=mi-reports-k8s-v2",
 		 "-Xsession-report.output-channel=kafka",
 		 "-Xsession-report.output-channel=kafka",
 		 "-Xsecurity.enable=true",
@@ -104,7 +104,7 @@ router.post("/reaction/forwarding", function( req, res, next ){
 		 "-Xkafka-output.enable=true",
 		 "-Xkafka-output.hostname=10.0.37.5",
 		 "-Xkafka-output.port=30031",
-		 "-Xkafka-output.topic=mi-reports-k8s",
+		 "-Xkafka-output.topic=mi-reports-k8s-v2",
 		 "-Xsession-report.output-channel=kafka",
 		 "-Xsession-report.output-channel=kafka",
 		];

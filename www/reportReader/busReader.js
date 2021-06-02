@@ -10,17 +10,20 @@ const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
 
 
-var pub_sub = null;
-let topic   = null;
+var pub_sub    = null;
+let topic      = null;
+let clientName = null;
 
 switch( config.input_mode ){
 case constant.REDIS_STR:
-	pub_sub = require("../libs/redis");
-	topic   = config.redis_input.channel;
+	pub_sub    = require("../libs/redis");
+	topic      = config.redis_input.channel;
+	clientName = config.redis_input.name;
     break;
 case constant.KAFKA_STR:
-	pub_sub = require("../libs/kafka");
-	topic   = config.kafka_input.topic;
+	pub_sub    = require("../libs/kafka");
+	topic      = config.kafka_input.topic;
+	clientName = config.kafka_input.name;
     break;
 default:
 	console.error( "Does not support input mode = " + config.input_mode );
@@ -39,7 +42,7 @@ function receiveMessage (channel, message) {
 }
 
 
-const report_client = pub_sub.createClient( "consumer", "busReader" );
+const report_client = pub_sub.createClient( "consumer", clientName );
 
 //when a topic is explicite in config file
 if( topic ){

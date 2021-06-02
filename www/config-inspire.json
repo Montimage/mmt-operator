@@ -10,7 +10,7 @@
 	"kafka_input": {
 		"host": "10.0.37.5",
 		"port": 30031,
-		"topic": "mi-reports-k8s"
+		"topic": "mi-reports-k8s-v2"
 	},
 	"file_input": {
 		"data_folder": [
