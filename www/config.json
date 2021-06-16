@@ -11,7 +11,7 @@
 		"host": "192.168.0.195",
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "mi-reports"
+		"topic": "mi-reports",
 		"client_name": "mmt-operator-kafka-client"
 	},
 	"file_input": {
