@@ -126,6 +126,8 @@ class Master extends Cache{
       super();
       const self = this;
 
+      console.log("Start shared-cache master");
+
       //remove old socket path if it is existing
       try{
          fs.unlinkSync( UNIX_SOCKET );
@@ -208,6 +210,8 @@ class Worker{
       this.__msgCount = 0;
       this.__callbacks = new Cache();
 
+      console.log("Start shared-cache worker" + process.pid);
+
       //close the socket when its process exit
       process.on('exit', () => this.destroy() );
    }
@@ -239,7 +243,7 @@ class Worker{
             return;
          }
 
-         console.log('received response', msg );
+         console.log('Cache client received response', msg );
          
          handler.cb( msg.data, handler.args );
       });
@@ -261,7 +265,10 @@ class Worker{
          }
 
          //send message to server
-         socket.writeMessage( msg );
+	 if( socket.writeMessage )
+         	socket.writeMessage( msg );
+	else
+		console.error("Cannot write message" + msg);
       });
    }
 
@@ -307,7 +314,7 @@ class Worker{
 
 
 //Whether we are in the master process or a child one
-const isInMasterProcess = ( process.send == undefined )
+const isInMasterProcess = !fs.existsSync( UNIX_SOCKET );
 let cache = {};
 if( isInMasterProcess )
    cache = new Master();

@@ -5,6 +5,7 @@ var _os     = require("os");
 var exec    = require('child_process').exec;
 var path    = require('path');
 var script  = require('../../../libs/exec-script.js');
+var global  = require('../../../libs/InterProcessCache.js');
 
 const MMT_PROBE="/opt/mmt/probe/bin/probe"
 /*
@@ -50,6 +51,7 @@ router.post("/monitoring", function( req, res, next ){
 		 "-Xsession-report.output-channel=kafka",
 		];
 		const ret = script.exec( MMT_PROBE, args, {} );
+		global.set("inspire-closed-loop", false);
 		if( ret )
 			res.send( {status: "ok", description: "Successfully started MMT-Probe"} );
 		else
@@ -85,6 +87,7 @@ router.put("/monitoring", function( req, res, next ){
 		 "-Xsecurity.output-channel=kafka",
 		];
 		const ret = script.exec( MMT_PROBE, args, {} );
+		global.set("inspire-closed-loop", false);
 		if( ret )
 			res.send( {status: "ok", description: "Successfully updated MMT-Probe"} );
 		else
@@ -109,6 +112,7 @@ router.post("/reaction/forwarding", function( req, res, next ){
 		 "-Xsession-report.output-channel=kafka",
 		];
 		const ret = script.exec( MMT_PROBE, args, {} );
+		global.set("inspire-closed-loop", true);
 		if( ret )
 			res.send( {status: "ok", description: "Successfully redirect Bittorent traffic"} );
 		else

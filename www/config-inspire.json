@@ -130,7 +130,7 @@
 				"host": "decision-engine.md.k8s.gaialab",
 				"port": 80
 			},
-			"data_format": "POST /reaction HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
+			"data_format": "POST /reaction HTTP/1.1\r\nHost: decision-engine.md.k8s.gaialab\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
 			"keep_alive": true
 		}
 	},
