@@ -26,7 +26,7 @@
 		"max_connections": 0
 	},
 	"input_mode": "kafka",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600
@@ -126,10 +126,10 @@
 				10
 			],
 			"server": {
-				"host": "localhost",
-				"port": 7000
+				"host": "decision-engine.md.k8s.gaialab",
+				"port": 80
 			},
-			"data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
+			"data_format": "POST /reaction HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
 			"keep_alive": true
 		}
 	},
