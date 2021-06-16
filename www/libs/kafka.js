@@ -19,12 +19,14 @@ if( config.kafka_input["ssl.ca.location"] ){
    sslOptions.rejectUnauthorized = false;
 }
 
+let clientName = config.kafka_input["client_name"];
+
 /**
  * 
  * @param type either "producer", "consumer" or "both"
  * @returns
  */
-function createClient( type, clientName  ){
+function createClient( type  ){
 
    const isNeedConsumer = ( type != "producer" );
    const isNeedProducer = ( type != "consumer" );
@@ -32,8 +34,6 @@ function createClient( type, clientName  ){
    //name of kafka client
    if( clientName == undefined )
       clientName = "mmt-operator-" + tools.getTimestamp();
-   else
-      clientName = "mmt-operator-" + clientName;
    
    var client = new kafka.KafkaClient({
          kafkaHost: kafkaConnectionString, 
@@ -69,7 +69,7 @@ function createClient( type, clientName  ){
                fetchMaxBytes: 1024 * 1024,
                // If set true, consumer will fetch message from the given offset in the payloads 
                //fromOffset: false,
-               fromOffset: -1, // "latest",
+               fromOffset: "latest",
                // If set to 'buffer', values will be returned as raw buffer objects. 
                encoding: 'utf8',
                keyEncoding: 'utf8'

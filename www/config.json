@@ -12,6 +12,7 @@
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert",
 		"topic": "mi-reports"
+		"client_name": "mmt-operator-kafka-client"
 	},
 	"file_input": {
 		"data_folder": [
