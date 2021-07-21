@@ -91,261 +91,263 @@
 		"sla",
 		"enforcement"
 	],
-	"sla": {
-		"active_check_period": 5,
-		"violation_check_period": 60,
-		"reaction_check_period": 5,
-		"init_components": [
-		     {   
-            "id": "1",
-            "ip": "37.48.247.117",
-            "_url": "http://37.48.247.117",
-            "metrics": [], 
-            "title": "ReadModel_assessed"
-         },  
-			{
-				"id": "30",
-				"ip": "37.48.247.117",
-				"_url": "http://37.48.247.117",
-				"metrics": [],
-				"title": "TSM engin_e"
-			},
-			{
-				"id": "1",
-				"ip": "192.168.1.10",
-				"_url": "http://192.168.1.10",
-				"metrics": [],
-				"title": "Consumption Estimation Calculator (CEC)"
-			},
-			{
-				"id": "2",
-				"ip": "192.168.1.9",
-				"_url": "http://192.168.1.9",
-				"metrics": [],
-				"title": "ITS Factory"
-			},
-			{
-				"id": "13",
-				"ip": "52.208.72.84",
-				"url": "http://52.208.72.84",
-				"metrics": [],
-				"title": "Multimodal Journey Planner"
-			},
-			{
-				"id": "101",
-				"ip": "192.168.1.8",
-				"_url": "http://192.168.1.8",
-				"metrics": [],
-				"title": "TUT Component"
-			},
-			{
-				"id": "102",
-				"ip": "192.168.1.9",
-				"_url": "http://192.168.1.8",
-				"metrics": [],
-				"title": "TUT Component 2"
-			}
-		],
-		"init_metrics": [
-			{
-				"id": "1",
-				"name": "availability",
-				"alert": "<= 0.98",
-				"violation": "<= 0.95",
-				"title": "Availability",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "2",
-				"name": "security_incident",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Security Incident",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "3",
-				"name": "vul_scan_freq",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Vulnerability Scan Frequency",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "4",
-				"name": "access_control",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Access Control",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "5",
-				"name": "data_privacy",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Data Privacy",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "6",
-				"name": "access_logging",
-				"alert": "",
-				"violation": "< 0",
-				"title": "Accesses Logging",
-				"enable": true,
-				"support": true
-			},
-			{
-				"id": "7",
-				"name": "authentication",
-				"alert": "",
-				"violation": "<= 300",
-				"title": "Authentication: User Behavior Change",
-				"enable": true,
-				"support": true
-			}
-		],
-		"actions": {
-			"add_more_disk_space": {
-				"description": "More hard disk space is needed",
-				"channel_name": "more_disk_space_needed",
-				"agent_description": "This agent is installed together with openStack to be able to change driver size of VMs",
-				"candidate_metrics": {
-					"access_logging": {
-						"alert": true,
-						"violate": true
-					}
+	"modules_config": {
+		"sla": {
+			"active_check_period": 5,
+			"violation_check_period": 60,
+			"reaction_check_period": 5,
+			"init_components": [
+				  {   
+					"id": "1",
+					"ip": "37.48.247.117",
+					"_url": "http://37.48.247.117",
+					"metrics": [], 
+					"title": "ReadModel_assessed"
+				},  
+				{
+					"id": "30",
+					"ip": "37.48.247.117",
+					"_url": "http://37.48.247.117",
+					"metrics": [],
+					"title": "TSM engin_e"
+				},
+				{
+					"id": "1",
+					"ip": "192.168.1.10",
+					"_url": "http://192.168.1.10",
+					"metrics": [],
+					"title": "Consumption Estimation Calculator (CEC)"
+				},
+				{
+					"id": "2",
+					"ip": "192.168.1.9",
+					"_url": "http://192.168.1.9",
+					"metrics": [],
+					"title": "ITS Factory"
+				},
+				{
+					"id": "13",
+					"ip": "52.208.72.84",
+					"url": "http://52.208.72.84",
+					"metrics": [],
+					"title": "Multimodal Journey Planner"
+				},
+				{
+					"id": "101",
+					"ip": "192.168.1.8",
+					"_url": "http://192.168.1.8",
+					"metrics": [],
+					"title": "TUT Component"
+				},
+				{
+					"id": "102",
+					"ip": "192.168.1.9",
+					"_url": "http://192.168.1.8",
+					"metrics": [],
+					"title": "TUT Component 2"
 				}
-			},
-			"move_log": {
-				"description": "User needs to move the log to a remote server",
-				"agent_description": "This agent allows to move logs to a remote server",
-				"channel_name": "move_log",
-				"candidate_metrics": {
-					"access_logging": {
-						"alert": true,
-						"violate": true
-					}
+			],
+			"init_metrics": [
+				{
+					"id": "1",
+					"name": "availability",
+					"alert": "<= 0.98",
+					"violation": "<= 0.95",
+					"title": "Availability",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "2",
+					"name": "security_incident",
+					"alert": "",
+					"violation": "< 0",
+					"title": "Security Incident",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "3",
+					"name": "vul_scan_freq",
+					"alert": "",
+					"violation": "< 0",
+					"title": "Vulnerability Scan Frequency",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "4",
+					"name": "access_control",
+					"alert": "",
+					"violation": "< 0",
+					"title": "Access Control",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "5",
+					"name": "data_privacy",
+					"alert": "",
+					"violation": "< 0",
+					"title": "Data Privacy",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "6",
+					"name": "access_logging",
+					"alert": "",
+					"violation": "< 0",
+					"title": "Accesses Logging",
+					"enable": true,
+					"support": true
+				},
+				{
+					"id": "7",
+					"name": "authentication",
+					"alert": "",
+					"violation": "<= 300",
+					"title": "Authentication: User Behavior Change",
+					"enable": true,
+					"support": true
 				}
-			},
-			"rotate_log": {
-				"description": "Active logrotate program to delete old log entries",
-				"agent_description": "This agent allows to active logrotate program to delete old log entries",
-				"channel_name": "rotate_log",
-				"candidate_metrics": {
-					"access_logging": {
-						"alert": true,
-						"violate": true
+			],
+			"actions": {
+				"add_more_disk_space": {
+					"description": "More hard disk space is needed",
+					"channel_name": "more_disk_space_needed",
+					"agent_description": "This agent is installed together with openStack to be able to change driver size of VMs",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"update_attacks_signatures": {
-				"description": "User needs to update attacks signatures",
-				"agent_description": "This agent allows to update new attacks signatures to DB of IDS",
-				"channel_name": "update_attacks_signatures",
-				"candidate_metrics": {
-					"security_incident": {
-						"alert": true,
-						"violate": true
+				},
+				"move_log": {
+					"description": "User needs to move the log to a remote server",
+					"agent_description": "This agent allows to move logs to a remote server",
+					"channel_name": "move_log",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"add_new_rules": {
-				"description": "User needs to add one or several new rules in the IDS",
-				"agent_description": "This agent allows to add one or several rules in the IDS",
-				"channel_name": "add_new_rules",
-				"candidate_metrics": {
-					"security_incident": {
-						"alert": true,
-						"violate": true
+				},
+				"rotate_log": {
+					"description": "Active logrotate program to delete old log entries",
+					"agent_description": "This agent allows to active logrotate program to delete old log entries",
+					"channel_name": "rotate_log",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"restart_web_server": {
-				"description": "Restart Web server to bring the website up",
-				"agent_description": "This agent is implemented in NodeJS and installed together with Web server to be able to restart the server when needed",
-				"channel_name": "mmt-agent-restart-apache",
-				"candidate_metrics": {
-					"availability": {
-						"violate": true
+				},
+				"update_attacks_signatures": {
+					"description": "User needs to update attacks signatures",
+					"agent_description": "This agent allows to update new attacks signatures to DB of IDS",
+					"channel_name": "update_attacks_signatures",
+					"candidate_metrics": {
+						"security_incident": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"use_HA_framework": {
-				"description": "User needs to deploy VM or container in a HA Framework",
-				"agent_description": "This agent allows user to deploy VM or container in a HA Framework",
-				"channel_name": "use_HA_framework",
-				"candidate_metrics": {
-					"availability": {
-						"alert": true,
-						"violate": true
+				},
+				"add_new_rules": {
+					"description": "User needs to add one or several new rules in the IDS",
+					"agent_description": "This agent allows to add one or several rules in the IDS",
+					"channel_name": "add_new_rules",
+					"candidate_metrics": {
+						"security_incident": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"update_access_control": {
-				"description": "Update access control to block malicious behaviours",
-				"agent_description": "This agent allows to control user access",
-				"url": "/enforcement/admin/",
-				"channel_name": "update_access_control",
-				"candidate_metrics": {
-					"access_control": {
-						"alert": true,
-						"violate": true
-					},
-					"incident": {
-						"alert": true
+				},
+				"restart_web_server": {
+					"description": "Restart Web server to bring the website up",
+					"agent_description": "This agent is implemented in NodeJS and installed together with Web server to be able to restart the server when needed",
+					"channel_name": "mmt-agent-restart-apache",
+					"candidate_metrics": {
+						"availability": {
+							"violate": true
+						}
 					}
-				}
-			},
-			"anonymize_data": {
-				"description": "User needs to anonymize data",
-				"agent_description": "This agent allows to anonymize data",
-				"channel_name": "anonymize_data",
-				"candidate_metrics": {
-					"data_privacy": {
-						"alert": true
+				},
+				"use_HA_framework": {
+					"description": "User needs to deploy VM or container in a HA Framework",
+					"agent_description": "This agent allows user to deploy VM or container in a HA Framework",
+					"channel_name": "use_HA_framework",
+					"candidate_metrics": {
+						"availability": {
+							"alert": true,
+							"violate": true
+						}
 					}
-				}
-			},
-			"encrypt_data": {
-				"description": "User needs to encrypt data",
-				"agent_description": "This agent allows to encrypt data",
-				"channel_name": "encrypt_data",
-				"candidate_metrics": {
-					"data_privacy": {
-						"alert": true
-					},
-					"authentication": {
-						"alert": true,
-						"violation": true
+				},
+				"update_access_control": {
+					"description": "Update access control to block malicious behaviours",
+					"agent_description": "This agent allows to control user access",
+					"url": "/enforcement/admin/",
+					"channel_name": "update_access_control",
+					"candidate_metrics": {
+						"access_control": {
+							"alert": true,
+							"violate": true
+						},
+						"incident": {
+							"alert": true
+						}
 					}
-				}
-			},
-			"configure_scanner_frequency": {
-				"description": "Scanner frequency needs to be updated to meet SLA requirement",
-				"agent_description": "This agent allows to update scanner frequency paramter",
-				"channel_name": "configure_scanner_frequency",
-				"candidate_metrics": {
-					"vul_scan_freq": {
-						"alert": true,
-						"violation": true
+				},
+				"anonymize_data": {
+					"description": "User needs to anonymize data",
+					"agent_description": "This agent allows to anonymize data",
+					"channel_name": "anonymize_data",
+					"candidate_metrics": {
+						"data_privacy": {
+							"alert": true
+						}
 					}
-				}
-			},
-			"apply_two_factors_authentication": {
-				"description": "Two factors authentication needs to be activated",
-				"agent_description": "This agent allows to activate two factors authentication",
-				"channel_name": "apply_two_factors_authentication",
-				"candidate_metrics": {
-					"authentication": {
-						"alert": true,
-						"violation": true
+				},
+				"encrypt_data": {
+					"description": "User needs to encrypt data",
+					"agent_description": "This agent allows to encrypt data",
+					"channel_name": "encrypt_data",
+					"candidate_metrics": {
+						"data_privacy": {
+							"alert": true
+						},
+						"authentication": {
+							"alert": true,
+							"violation": true
+						}
+					}
+				},
+				"configure_scanner_frequency": {
+					"description": "Scanner frequency needs to be updated to meet SLA requirement",
+					"agent_description": "This agent allows to update scanner frequency paramter",
+					"channel_name": "configure_scanner_frequency",
+					"candidate_metrics": {
+						"vul_scan_freq": {
+							"alert": true,
+							"violation": true
+						}
+					}
+				},
+				"apply_two_factors_authentication": {
+					"description": "Two factors authentication needs to be activated",
+					"agent_description": "This agent allows to activate two factors authentication",
+					"channel_name": "apply_two_factors_authentication",
+					"candidate_metrics": {
+						"authentication": {
+							"alert": true,
+							"violation": true
+						}
 					}
 				}
 			}
