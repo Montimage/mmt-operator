@@ -12,3 +12,8 @@ lib-cov
 operator/node_modules
 /backup_db/
 /rsync.sh
+/.settings
+/.pydevproject
+.DS_Store
+/.project
+/.externalToolBuilders

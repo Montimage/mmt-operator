@@ -1,3 +1,0 @@
-eclipse.preferences.version=1
-included=www/*.js\:www/libs//*.js\:www/public/js//*.js\:www/reportReader//*.js\:www/routes//*.js
-projectSpecificOptions=true
