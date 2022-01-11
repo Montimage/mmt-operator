@@ -38,8 +38,7 @@ To show a report into a Web page:
 The following will show an hierarchy report into an HTML element having `id = "content"`.
 
 
-```
-#!javascript
+```javascript
 var report = MMTDrop.reportFactory.createHierarchyReport();
 report.renderTo( "content" );
 
