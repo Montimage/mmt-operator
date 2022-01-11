@@ -2,18 +2,14 @@
 
 This page briefs about how to modify the MMTDrop library in order to create a new **Filter**.
 
-On this page:
-
-[TOC]
-
 # Architecture
 
 A filter is in form of a DOM select box containing a drop-down list of options.
 Each option corresponds to a criteria of filtering.
-It is attached to a database that is an instance of [`MMTDrop.Database`](api/Database). 
+It is attached to a database that is an instance of [`MMTDrop.Database`](api/Database.md). 
 When user changes the current selected option, data in database will be filtered out based on the corresponding criteria.
 
-For example, the probe filter created by [`MMTDrop.filterFactory.createProbeFilter`](api/filterFactory#createProbeFilter) contains a list of options that are the list of probe IDs existing in database.
+For example, the probe filter created by [`MMTDrop.filterFactory.createProbeFilter`](api/filterFactory.md#createProbeFilter) contains a list of options that are the list of probe IDs existing in database.
 When use selects an option, the database retains only data containing probe ID that equals to the one of the selected option.
 
 Features:
@@ -29,16 +25,15 @@ data ======>FILTER=====>data'
 
 # API
 
-An API document of [`MMTDrop.Filter`](api/Filter) is presented [here](api/Filter).
+An API document of [`MMTDrop.Filter`](api/Filter.md) is presented [here](api/Filter.md).
 
 
 # Create a new Filter
 
-There exist some kinds of filters in [`MMTDrop.filterFactory`](api/filterFactory).
-A new filter is created by creating a new instance of [`MMTDrop.Filter`](api/Filter) class.
+There exist some kinds of filters in [`MMTDrop.filterFactory`](api/filterFactory.md).
+A new filter is created by creating a new instance of [`MMTDrop.Filter`](api/Filter.md) class.
 
-```
-#!javascript
+```javascript
 function createProbeFilter(){
     var probeID = "probe_filter_" + MMTDrop.tools.getUniqueNumber();
 
