@@ -58,8 +58,7 @@ GET /traffic/data
 
 An array of messages. Each message is also an array. For example:
 
-```
-#!JSON
+```JSON
 [
  [99, 123, "eth0", 1429713111449, 35, "99.178.354.153.35", 321, 3, 60, 6, 1],
  [99, 124, "eth0", 1429713111449, 85, "99.178.376.85", 133946, 3, 0, 0, 0],
@@ -77,8 +76,7 @@ Using a socket.io to create a socket and listen at an expected event.
 
 For example:
 
-```
-#!javascript
+```javascript
 var socket = new io.connect(MMTDrop.config.probeURL);			
 socket.on("stats_raw", function( msg ){
 	console.log(" a new message: " + msg);
