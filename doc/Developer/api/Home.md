@@ -1,19 +1,19 @@
 MMTDrop 
 
-* [`typedef`](typedef): global data type description
+* [`typedef`](typedef.md): global data type description
 * class
 
-    * [`Database`](Database) 
-    * [`Filter`](Filter) 
-    * [`Report`](Report) 
-    * [`Chart`](Chart) 
+    * [`Database`](Database.md) 
+    * [`Filter`](Filter.md) 
+    * [`Report`](Report.md) 
+    * [`Chart`](Chart.md) 
 
 * namespace
 
-    * [`config`](config) 
-    * [`constants`](constants) 
-    * [`tools`](tools) 
-    * [`databaseFactory`](databaseFactory) 
-    * [`filterFactory`](filterFactory) 
-    * [`reportFactory`](reportFactory) 
-    * [`chartFactory`](chartFactory) 
+    * [`config`](config.md) 
+    * [`constants`](constants.md) 
+    * [`tools`](tools.md) 
+    * [`databaseFactory`](databaseFactory.md) 
+    * [`filterFactory`](filterFactory.md) 
+    * [`reportFactory`](reportFactory.md) 
+    * [`chartFactory`](chartFactory.md) 
