@@ -1,5 +1,5 @@
 # Workflow to Update a New Protocol #
-When a new protocol was implemented in [mmt-sdk](https://bitbucket.org/montimage/mmt-sdk/wiki/Add%20New%20Protocol), we need to update **mmt-operator** in order to recognise this change.
+When a new protocol was implemented in [mmt-sdk](montimage/mmt-sdk/wiki/Add%20New%20Protocol), we need to update **mmt-operator** in order to recognise this change.
 
 Let say the new protocol having `number=625` and `name=LEMONDE`.
 
@@ -13,9 +13,8 @@ All the changes you need to do are in the file **public/lib/mmt/js/mmt_drop.js**
 Goto object `MMTDrop.constants.ProtocolsIDName` and add a field `625: 'LEMONDE'`
 
 For example:
-```
-#!javascript
 
+```javascript
 /**
 * A table of Protocol-Id : Name 
 */
@@ -36,8 +35,7 @@ in order to add the new protocol to category `All` and `Web`.
 
 For example:
 
-```
-#!javascript
+```javascript
 
 /**
 * A table of Category-Id: Application-Id[]
