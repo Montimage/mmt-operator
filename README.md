@@ -8,21 +8,13 @@ MMT Operator is a Web application writting in Nodejs. It receives the protocol s
 
 This chain of tools depends on the following packages:
 
-### Nodejs 
+### 1. Nodejs 
 
-Follow the instruction on nodejs.org
+Follow the instruction on nodejs.org: https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
 
- #require >= nodejs v6.0
- 
- https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
+### 2. Mongo DB >= mongo 3.4
 
-### Mongo DB
-
-Follow the procedure described on the following link to install the latest version of Mongodb
-
- #require >= mongo 3.4
- 
- http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+Follow the procedure described on the following link to install the latest version of Mongodb: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
 
 ## Usage
 
@@ -41,7 +33,6 @@ An option in the configuration file can be overriden by giving a new parameter w
 
 ```bash
  cd www
- 
  node bin/www --config=test.json -Xdatabase_server.host=10.0.0.2 -Xlocal_network.0.ip=192.168.1.0
 ```
 
@@ -50,7 +41,7 @@ An option in the configuration file can be overriden by giving a new parameter w
 - `attribute`
 - `value` is a primitive value: number, string. It must not be an Object or Array.
 
-Once MMT-Operator is up and running, open your favorite browser and goto
+Once MMT-Operator is up and running, open your favorite Web browser and goto
 
     localhost:8080
 
@@ -67,7 +58,3 @@ npm run attack
     # one will get a deb file such as www/dist/mmt-operator_1.6.2_05c27df_2017-05-05.deb
     npm run build-deb
 ```
-
-## Contributors
-
-    Huu Nghia Nguyen
