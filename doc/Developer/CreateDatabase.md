@@ -2,27 +2,22 @@
 
 This page briefs about how to modify the MMTDrop library in order to create a new **Database**.
 
-On this page:
-
-[TOC]
-
 
 # Architecture
 
-There exist some kinds of databases in MMTDrop, see [User Guide](UserGuide).
-Developers can create a new kind of filter based on [`MMTDrop.Database`](api/Database) class.
+There exist some kinds of databases in MMTDrop, see [User Guide](UserGuide.md).
+Developers can create a new kind of filter based on [`MMTDrop.Database`](api/Database.md) class.
 
 # API
 
-An API document of [`MMTDrop.Database`](api/Database) is presented [here](api/Database).
+An API document of [`MMTDrop.Database`](api/Database.md) is presented [here](api/Database.md).
 
 
 # Create a new Database
 
-A new filter is created by creating a new instance of [`MMTDrop.Database`](api/Database) class.
+A new filter is created by creating a new instance of [`MMTDrop.Database`](api/Database.md) class.
 
-```
-#!javascript
+```javascript
 function createStatDB (){
     var param = {
         format : MMTDrop.constants.CsvFormat.STATS_FORMAT,
