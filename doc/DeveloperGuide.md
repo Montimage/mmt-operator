@@ -80,8 +80,7 @@ The example below creates a report consisting of 4 filters and two charts.
 The report is rendered into an HTML element having `id='content'`.
 
  
-```
-#!javascript
+```javascript
 
 var database = MMTDrop.databaseFactory.createStatDB();
 
