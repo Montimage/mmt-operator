@@ -1,10 +1,10 @@
-name: C/C++ CI
+name: build-from-source
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
