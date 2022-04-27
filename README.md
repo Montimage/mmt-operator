@@ -24,7 +24,7 @@ Follow the procedure described on the following link to install the latest versi
  #update configuration in config.json if need
      
  #start
- npm start
+ sudo npm start
  # use another configuration file
  node bin/www --config=test.json
 ```
