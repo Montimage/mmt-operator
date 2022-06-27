@@ -63,10 +63,10 @@ else{
 
       //console.log(index + ': ' + val);
       const arr = val.split("=");
-      if( arr.length !== 2 && isMainProcess)
+      if( arr.length < 2 && isMainProcess)
          console.warn("[WARN] Ignore incorrect paramter: " + param);
       
-      const nameArr = arr[0].split('.'); //get array of the attribute hierarchy: 
+      const nameArr = arr.shift().split('.'); //get array of the attribute hierarchy: 
       let obj = config;
       let isOverriden = true;
       for( let i=0; i<nameArr.length - 1; i++){
@@ -78,7 +78,7 @@ else{
          obj = obj[key];
       }
       //assign value
-      let value = arr[1];
+      let value = arr.join("=");
       //try to parse the value if it is JSON
       try{
          value = JSON.parse( value );

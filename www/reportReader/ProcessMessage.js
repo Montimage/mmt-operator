@@ -23,6 +23,34 @@ function saveToDatabase( channel, msg ){
 	//caches[ channel ].push( msg );
 }
 
+
+function getDataProcessing( body ){
+	try{
+		if( body ){
+			let fn    = new Function("m", "cache", "require", body );
+			//let fn    = eval(`function(m, cache){ ${body} }`);
+			let cache = {};
+			console.log( "data_processing:", fn.toString() );
+			return function( msg ){
+				try{
+					return fn.call(this, msg, cache, require);
+				}catch( ex ){
+					console.error( ex );
+					return msg;
+				}
+			}
+		}
+		return null;
+	} catch( e ){
+		console.error( e );
+	}
+}
+
+const forwardDataProcessingFn = getDataProcessing( config.modules_config.report_forward.data_processing );
+const dataProcessingFn = getDataProcessing( config.modules_config.data_processing );
+
+
+
 function _saveToDB( collectionName, dataArr ){
    inserterDB.set( collectionName, 0, dataArr );
 }
@@ -145,6 +173,11 @@ function forwardReport(){
     * Convert data to the format defined by user
     */
    const buildData = function( msg ){
+      if( forwardDataProcessingFn ){
+        msg = forwardDataProcessingFn( msg );
+        if( ! msg )
+          return;
+      }
       if( typeof(msg) === 'object')
          msg = JSON.stringify( msg );
       const msgLen = msg.length;
@@ -229,6 +262,9 @@ function ProcessMessage( database ){
 		   message = '[' + message + ']';
 
       msg = mmtAdaptor.formatMessage( message );
+      if( dataProcessingFn )
+        msg = dataProcessingFn( msg );
+
 		if( msg === null )
 			return;
 		
