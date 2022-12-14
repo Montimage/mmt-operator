@@ -87,9 +87,10 @@ function createClient( type  ){
       ret.subscribe = function( channel ){
          console.log( "subscribe", channel );
          ret.consumer.addTopics([channel], function( err, added ){
-            if( err )
-               console.warn( err.message );
-            else
+            if( err ) {
+               console.warn( "Cannot subscribe to " + channel + ": " + err.message + ". Retry to subscribe in 10 seconds." );
+               setTimeout( ret.subscribe, 10*1000, channel );
+            } else
                console.log("subscribed", channel );
          });
       };

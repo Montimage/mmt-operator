@@ -79,6 +79,20 @@ report_client.on('message', receiveMessage);
 //*/
 
 
+report_client.on('error', function(){
+	if( report_client._is_restarting )
+		return;
+	report_client._is_restarting = true;
+	
+	console.error("Error when gotting messages from busReader. Restart the busReader process in 10 seconds.")
+	database.flush( function(){ 
+		//exit this process with code!=0
+		//=> its parent will recreate a new process for it
+		const EXIT_CODE=20;
+		//restart after 10 seconds to avoid overhead of several consecutive restarts
+		setTimeout( process.exit, 10*1000, EXIT_CODE );
+	});
+});
 
 
 
