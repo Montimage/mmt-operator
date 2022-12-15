@@ -35,11 +35,13 @@ function createClient( type  ){
    if( clientName == undefined )
       clientName = "mmt-operator-" + tools.getTimestamp();
    
-   var client = new kafka.KafkaClient({
+   const client = new kafka.KafkaClient({
          kafkaHost: kafkaConnectionString, 
          sslOptions: sslOptions.ca ? sslOptions : null
    });
    
+   const offset = new kafka.Offset(client);
+
    const ret = { topics: [], clientName : clientName };
    
    
@@ -69,7 +71,7 @@ function createClient( type  ){
                fetchMaxBytes: 1024 * 1024,
                // If set true, consumer will fetch message from the given offset in the payloads 
                //fromOffset: false,
-               fromOffset: "latest",
+               fromOffset: true,
                // If set to 'buffer', values will be returned as raw buffer objects. 
                encoding: 'utf8',
                keyEncoding: 'utf8'
@@ -86,12 +88,23 @@ function createClient( type  ){
        */
       ret.subscribe = function( channel ){
          console.log( "subscribe", channel );
-         ret.consumer.addTopics([channel], function( err, added ){
-            if( err ) {
-               console.warn( "Cannot subscribe to " + channel + ": " + err.message + ". Retry to subscribe in 10 seconds." );
-               setTimeout( ret.subscribe, 10*1000, channel );
-            } else
-               console.log("subscribed", channel );
+         //when subscribe to a topic, we get data from the latest offset
+         offset.fetchLatestOffsets([channel], function (error, offsets) {
+           const topic = {topic: channel}
+           if (error)
+             console.warn( "Cannot fetch latest offset of topic " + channel + ": " + error.message + ". Use default offset value." );
+           else {
+             console.log( "Got latest offset of topic " + channel + ": " + JSON.stringify(offsets) );
+             topic.offset = offsets[channel][0];
+           }
+
+           ret.consumer.addTopics([topic], function( err, added ){
+              if( err ) {
+                 console.warn( "Cannot subscribe to " + channel + ": " + err.message + ". Retry to subscribe in 10 seconds." );
+                 setTimeout( ret.subscribe, 10*1000, channel );
+              } else
+                 console.log("subscribed", channel );
+           }, true /* consume from the offset we got from fetchLatestOffsets */);
          });
       };
 
