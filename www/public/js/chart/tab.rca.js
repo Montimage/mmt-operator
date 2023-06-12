@@ -25,138 +25,79 @@ MMTDrop.callback = {
 };
 
 
-function formatTime( date ){
-   return moment( date.getTime() ).format( fPeriod.getTimeFormat() );
-}
-
 var ReportFactory = {};
 ReportFactory.createRcaReport = function(fPeriod){
    const COL = MMTDrop.constants.SecurityColumn;
    const database = new MMTDrop.Database({
-      collection: "rca",
-      action: "aggregate",
+      collection: "rca",  //name of collection which must be inside "mmt-data" database
+      action: "find",
       no_group : true, 
-      no_override_when_reload: false, 
+      query: [],
+      no_override_when_reload: true, 
       raw: true,
    }, function( data ){
-   console.log(data)
-   
-   
-      data.forEach( function(msg){
-         switch ( fPeriod.selectedOption().id ) {
-         case MMTDrop.constants.period.MINUTE:
-         case MMTDrop.constants.period.HOUR:
-            break;
-         case MMTDrop.constants.period.HALF_DAY:
-         case MMTDrop.constants.period.QUARTER_DAY:
-         case MMTDrop.constants.period.DAY:
-            //timeFn = "$minute";
-            msg[ COL.TIMESTAMP.id ] = moment(msg[ COL.TIMESTAMP.id ]).startOf( "minute").valueOf();
-            break;
-         case MMTDrop.constants.period.WEEK:
-         case MMTDrop.constants.period.MONTH:
-            msg[ COL.TIMESTAMP.id ] = moment(msg[ COL.TIMESTAMP.id ]).startOf( "hour").valueOf();
-            break;
-         case MMTDrop.constants.period.YEAR:
-            msg[ COL.TIMESTAMP.id ] = moment(msg[ COL.TIMESTAMP.id ]).startOf( "day").valueOf();
-            break;
-         default:
-         }
-      });
+      //got data from DB
+      console.log(data)
+      //do any processing here if need
       return data;
    }, false);
 
    database.updateParameter = function( _old_param ){
-      const $match = {};
-      $match[ COL.PROBE_ID.id ]  = URL_PARAM.probe_id;
-      $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
+     //we update here the query which specify how-to query data from the "rca" collection
+     // as we used 'action: "find"', we specify the "filter" https://www.mongodb.com/docs/manual/reference/command/find/
+     // if we used 'action: "aggregate"', we specify an array of "pipeline"
 
-      const $group = { _id: {}};
-      [ COL.PROPERTY.id, COL.TIMESTAMP.id ].forEach( function( el, index){
-         $group["_id"][ el ] = "$" + el;
-      } );
+     //fAutoReload, fPeriod, fProbe
+     //to hide fAutoReload
+     //fAutoReload.hide()
+     fProbe.hide()
+     console.log( fPeriod.selectedOption().id )
+     console.log( fProbe.selectedOption().id )
 
-      $group[ COL.VERDICT_COUNT.id ] = {"$sum" : {"$ifNull": [1, "$" + COL.VERDICT_COUNT.id ]}};
+     //  example: select only the documents having  1 < _id < 10
+      const $match = { _id: {$gt: 1, $lt: 10}};
 
-      [ COL.TIMESTAMP.id, COL.PROPERTY.id ].forEach( function( el, index){
-         $group[ el ] = {"$last" : "$"+ el};
-      });
-
-      return {query: [{$match: $match}, {$group : $group}, {$project: {_id: 0}}]};
+      return {query: [{$match: $match}]};
    };
 
-   var cLine = MMTDrop.chartFactory.createTimeline({
+   var cLine = MMTDrop.chartFactory.createXY({
       //columns: [MMTDrop.constants.StatsColumn.APP_PATH]
       getData: {
          getDataFn: function (db) {
-            const colsToGroup = [COL.TIMESTAMP.id, COL.PROPERTY.id];
-            const ylabel = "Number of alerts";
-            const colToSum = COL.VERDICT_COUNT.id;
             var data = db.data();
-
-            data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
-
-            const arr = [];
-            var header = [];
-
-            for (var time in data) {
-               var o = {};
-               o[COL.TIMESTAMP.id] = parseInt( time );
-
-               var msg = data[time];
-               for (var path in msg) {
-                  o[path] = msg[path][colToSum];
-                  if (header.indexOf(path) == -1)
-                     header.push(path);
-               }
-               arr.push(o);
-            }
-
-            var time_id = 3;
-            var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-
-            var columns = [COL.TIMESTAMP];
-
-            //by increasing order of property id
-            header = header.sort( function( a, b ){
-               return parseInt(a) - parseInt(b);
-            });
-            for (var i = 0; i < header.length; i++) {
-               var path = header[i];
-               columns.push({
-                  id: path,
-                  label: "Property " + path
-               });
-            }
-
+            //data is an array whose element is in form
+            //   {_id: 2, KnownIncidentID: 0, ... }
             var $widget = $("#" + cLine.elemID).getWidgetParent();
             $widget.find(".filter-bar").height(25);
             var height = $widget.find(".grid-stack-item-content").innerHeight();
             height -= $widget.find(".filter-bar").outerHeight(true) + 15;
 
             return {
-               data   : arr,
-               columns: columns,
-               ylabel : ylabel,
-               height : height,
-               addZeroPoints:{
-                  time_id       : 3,
-                  time          : status_db.time,
-                  sample_period : 1000 * fPeriod.getDistanceBetweenToSamples(),
-                  probeStatus   : status_db.probeStatus,
-               },
+               data   : data,
+               //columns[0] is Ox
+               columns: [{id: "_id", label: "id"}, {id:"KnownIncidentID", label:"Incident"}],
+               ylabel : "Incident value",
+               height : height, //fulfill the widget
+               //this "chart" option will override the "chart" option few lines below
+               chart  : { axis : {x: { tick: {count: 20}} }}
             };
          },
       },
+      //options for the chart: https://c3js.org/reference.html
+      //note: the options may be slightly different as we use the version v0.4.11 - 2016-05-01
       chart: {
          data:{
             type: "line"
          },
          axis: {
             x: {
+               type: "indexed", //see https://c3js.org/reference.html#axis-x-type
                tick: {
-                  format: formatTime
-               }
+                  format: function(val){ return val},
+                  count: 10,
+               },
+               min: 1,
+               max: 10
             },
          },
          grid: {
@@ -166,9 +107,11 @@ ReportFactory.createRcaReport = function(fPeriod){
          },
          tooltip:{
             format: {
-               title:  formatTime,
+               title:  function(val){
+                  return "Hi " + val
+               },
                value: function( value ){
-                  return value + " alerts";
+                  return value + " incidents";
                }
             }
          },
@@ -190,7 +133,7 @@ ReportFactory.createRcaReport = function(fPeriod){
          });
 
       }
-   });
+   }, false);
 
    var report = new MMTDrop.Report(
          // title

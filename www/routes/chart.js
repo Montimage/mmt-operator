@@ -105,8 +105,11 @@ var all_pages = {
       }
     },
     "iot": {
-		title: "IoT"
-	},
+      title: "IoT"
+    },
+    "rca": {
+      title: "RCA"
+    },
     "exec-script" : {
       title: "Exec Attack"
     },

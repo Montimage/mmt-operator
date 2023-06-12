@@ -110,7 +110,8 @@
 		"network",
 		"dpi",
 		"security",
-		"application"
+		"application",
+		"rca"
 	],
 	"modules_config": {
 		"enodeb": {
