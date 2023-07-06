@@ -5,7 +5,7 @@ const config         = require('../libs/config');
 const constant       = require('../libs/constant.js');
 const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
-
+const DBInserter     = require("./DBInserter.js");
 const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
 
@@ -29,9 +29,34 @@ default:
 	console.error( "Does not support input mode = " + config.input_mode );
 	process.exit();
 }
-
+//This function  extracts descriptions corresponding to CID and 
+//gives in output a new json with the correct data format
+function extractDescriptions(json1, json2) {
+	const cidArray = json1[0];
+	const attackArrays = json1[1];
+  
+	const output = [];
+  
+	for (let i = 0; i < cidArray.length; i++) {
+	  const cid = cidArray[i];
+	  const index = cidArray.indexOf(cid);
+	  const description = json2[index].description;
+	  const attack = attackArrays[i];
+  
+	  const json = {
+		"CID": cid,
+		"description": description,
+		"attack": attack
+	  };
+  
+	  output.push(json);
+	}
+  
+	return output;
+  }
+  
 function receiveMessage (channel, message) {
-   //console.log( "[" + channel + "] " + message );
+   console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){
@@ -41,9 +66,52 @@ function receiveMessage (channel, message) {
    }
 }
 
-
 const report_client = pub_sub.createClient( "consumer", clientName );
 
+const sancus_db = new DBInserter( config.databaseName );
+
+
+const report_client_miugio = pub_sub.createClient( "miugio", clientName );
+report_client_miugio.subscribe( config.kafka_input.topic_miugio );
+report_client_miugio.on('message',function  ( channel,message) {
+	//message is a string {id:0, []}
+		//Process message: it should have a particular structure
+		console.log("Received message on Miugio topic "+message+" "+config.databaseName);
+
+		//Insert to Databases
+		const json1 = JSON.parse( message);//Convert MIU?GIO json 
+
+		const json2 = require('../countermeasures.json');
+		console.log("json2")
+		const jsonOutput = extractDescriptions(json1, json2);
+		//json.description = 'ciao';
+		console.log(jsonOutput)
+		//process message: insert into "sancus_report" collection
+	
+			sancus_db.add("remediation",jsonOutput);
+		
+			
+		//sancus_db._insert( "remediation", [rem_json] ) 
+
+
+})
+
+
+const report_client_generaltopic = pub_sub.createClient( "general_topic", clientName );
+report_client_generaltopic.subscribe( config.kafka_input.general_topic );
+
+report_client_generaltopic.on('message', function  ( channel,message) {
+	//message is a string {id:0, []}
+		//Process message: it should have a particular structure
+		console.log("Received message on General topic "+message);
+
+		//Insert to Databases
+		var json = JSON.parse( message);//Convert from string to json
+		//process message: insert into "general_topic" collection
+		sancus_db.add( "general_topic", [message] ) 
+
+
+}  );
 //when a topic is explicite in config file
 if( topic ){
 	report_client.subscribe( topic )
@@ -70,7 +138,6 @@ else{
 }
 
 report_client.on('message', receiveMessage);
-
 //const report_client2 = pub_sub.createClient( "consumer", "busReader2" );
 //for MUSA
 //report_client2.subscribe("metrics.avail");

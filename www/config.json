@@ -8,10 +8,8 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host": "192.168.0.195",
-		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "mi-reports",
+		"host":"localhost",
+		"topic": "sid-report",
 		"client_name": "mmt-operator-kafka-client"
 	},
 	"file_input": {
@@ -28,7 +26,7 @@
 		"max_connections": 0
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "offline",
+	"probe_analysis_mode": "online",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600

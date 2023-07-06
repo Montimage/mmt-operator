@@ -200,6 +200,7 @@ if (config.isSLA) {
 
 
 
+
 routes.dbConnectionString = 'mongodb://' + config.database_server + ':27017/mmt-admin';
 routes.dbconnector = dbconnector;
 app.use('/', routes);
@@ -210,6 +211,14 @@ app.use('/ip', require("./routes/ip2loc.js"));
 api.dbconnector = dbconnector;
 app.use('/api', api);
 
+if(config.isRemediation){
+	console.log("Remediation part");
+	//const {consumeMessages}=require("./reportReader/kafka_sancus_consumer");
+	const remediation = require("./routes/sancus/remediation.js");
+	app.use("/sancus/remediation",remediation);
+	//consumeMessages( config.kafka_input.topic);
+
+	}
 const restful = require('./routes/restful.js');
 restful.dbconnector = dbconnector;
 app.use('/restful', restful);
@@ -233,6 +242,7 @@ route_db._objRef = _objRef;
 app.use("/info/db", route_db);
 
 app.use("/export", require("./routes/html2img.js"));
+
 
 const dummy = require("./routes/dummy_report.js");
 dummy.pub_sub = pub_sub;

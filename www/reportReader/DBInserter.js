@@ -60,7 +60,11 @@ module.exports = function( databaseName ){
 		if( typeof(self._onReady) === "function" )
 			self._onReady( db );
 	});
-	
+
+	// self._insertOne(collection, msgArray, callback) {
+	// 	self.db.collection( collection ).insertOne(msgArray);
+
+	// }
 	/**
 	 * Insert array of messages to DB
 	 */
@@ -71,10 +75,14 @@ module.exports = function( databaseName ){
 		if( self.db != undefined && msgArray.length >= BULK_INSERT_THRESHOLD )
 			return self._insert( collection, msgArray, callback );
 		*/	
-		
 		//we are wating for connection to DB
 		//=> put msg to cache
 		if( self.db == undefined ){
+
+
+
+			console.log("database undefined");
+
 			self.cache.push({
 				collection: collection,
 				msgArray  : msgArray,
@@ -87,6 +95,7 @@ module.exports = function( databaseName ){
 		if( self.cache.length > 0 ){
 			self.cache.forEach( function( el ){
 				self._insert( el.collection, el.msgArray, el.callback );
+				
 			});
 			//clear the cache
 			self.cache.length = 0;
@@ -94,6 +103,7 @@ module.exports = function( databaseName ){
 			
 		//insert directly messages to db
 		self._insert( collection, msgArray, callback );
+		console.log("Correctly inserted in database "+collection);
 	};
 	
 	/**
@@ -111,9 +121,9 @@ module.exports = function( databaseName ){
 				//insertion options
 				WRITE_CONCERN,
 				callback );
-	};
+				console.log("Insertmany Correctly inserted in database "+ collectionName);
 	
-	
+		}
 
    self.set = function( collection, id, data, callback ){
       //we are wating for connection to DB

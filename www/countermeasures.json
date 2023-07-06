@@ -1,0 +1,20 @@
+	[
+	{"CID":"C1","description":"Notify the vendor"},
+	{"CID":"C2","description":"Notify the network operator/provider"},
+	{"CID":"C3","description":"Block the attacker (or filter the traffic)"},
+	{"CID":"C4","description":"Isolate the affected devic"},
+	{"CID":"C5","description":"Relaunch the infected node"},
+	{"CID":"C6","description":"Reconfigure the VNF"},
+	{"CID":"C7","description":"Replace the infected node by another less vulnerable"},
+	{"CID":"C8","description":"Change the network topology"},
+	{"CID":"C9","description":"Notify the vendor and block the attacker"},
+	{"CID":"C10","description":"Block the attacker and isolate the device"},
+	{"CID":"C11","description":"Notify the vendor and isolate the device"},
+	{"CID":"C12","description":"Notify the vendor, block the attacker, and isolate the device"},
+	{"CID":"C13","description":"Notify the network operator/provider and block the attacker"},
+	{"CID":"C12","description":"Notify the vendor, block the attacker, and isolate the device"},
+	{"CID":"C14","description":"Notify the network operator/provider and isolate the device"},
+	{"CID":"C15","description":"Notify the network operator/provider and block the attacker and isolate the device"}]
+	
+	
+	

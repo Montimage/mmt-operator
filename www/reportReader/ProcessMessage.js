@@ -236,7 +236,10 @@ function forwardReport(){
 }
 
 /////
+function ProcessMessageSancus( database ){
 
+
+}
 function ProcessMessage( database ){
 	const self       = this;
 	const _database  = database;
@@ -253,14 +256,20 @@ function ProcessMessage( database ){
 	self.process = function( message ) {
 	   
 	   
-		//console.log( message );
+		console.log( "Process Message "+message );
 		//message = message.replace(/\(null\)/g, 'null');
+		debugger;
+		
 		var msg;
 		//report is a JSON array ???
 		if( message.charAt(0) == '[' ){
 		} else //report is a CSV line
 		   message = '[' + message + ']';
+		   if(  parseInt(message[0]) == 0 ){//checks if the first character is an integer
 
+		   }
+	//_database.add(msg, function (err, err_msg) {});
+	//console.log( "Process Message : Inserted in db" );
       msg = mmtAdaptor.formatMessage( message );
       if( dataProcessingFn )
         msg = dataProcessingFn( msg );
@@ -269,7 +278,7 @@ function ProcessMessage( database ){
 			return;
 		
 		const probeId  = msg[1];
-      const reportId = msg[0];
+     		const reportId = msg[0];
       
 		//For each kind of message
 		switch( reportId ){
@@ -366,7 +375,8 @@ function ProcessMessage( database ){
 		if( reportForwarding.isEnable( reportId ) )
 		   reportForwarding.send( msg );
 		
-		
+		   debugger;
+
 		//_TODO: re-enable this
 		_database.add(msg, function (err, err_msg) {});
 		msg = null;

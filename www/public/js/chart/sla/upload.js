@@ -12,7 +12,7 @@ var arr = [
         },
     },{
         id: "remote",
-        title: "Get SLAs from Repository", //a MUSA Dashboard 
+        title: "Get Remediation from Repository", //a MUSA Dashboard 
         x: 6,
         y: 0,
         width: 6,
@@ -80,16 +80,7 @@ var ReportFactory = {
                         text    : "Get SLAs",
                         required: true
                       }
-                    },{
-                      type: "<button>",
-                      attr: {
-                        id      : "btnCancel",
-                        class   : "btn btn-success",
-                        style   : "margin-left: 30px",
-                        type    : "button",
-                        text    : "Cancel",
-                        onclick : 'MMTDrop.tools.gotoURL("/chart/sla", {param: ["app_id", "probe_id"] } )'
-                      }
+                    }
                     }
                   ]
                 },{

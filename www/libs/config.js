@@ -131,7 +131,7 @@ else{
 
 
 // == Database name
-   config.databaseName      = "mmt-data";  //database 
+   config.  databaseName    = "mmt-data";  //database 
    config.adminDatabaseName = "mmt-admin"; //database for administrator
 
    //default values when they are ignored
@@ -289,7 +289,8 @@ else{
    for( var i=fixPages.length-1; i>=0; i--)
       if( config.modules.indexOf( fixPages[i] ) == -1 )
          config.modules.unshift( fixPages[i] );
-
+         
+   config.isRemediation = ( config.modules.indexOf("remediation") !== -1 );
 
 // is MMT-Operator running for a specific project?
 // config.project = constant.project.MUSA

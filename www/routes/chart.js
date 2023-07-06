@@ -21,6 +21,9 @@ var all_pages = {
     'dpi': {
         title: "DPI"
     },
+    'remediation':{
+  	  title:"Remediation"
+    },
     /*		'internet' : {
                 title: "Internet"
             },
@@ -55,13 +58,8 @@ var all_pages = {
         title: "Video QoS"
     },
     'sla': {
-        title: "SLA",
-        children: {
-          "../sla": {
-            title: "Metrics"
-          },
-          "separator" : "separator"
-        }
+        title: "sla",
+
     },
     "enforcement": {
        title: "Enforcement",
@@ -81,6 +79,7 @@ var all_pages = {
 */
          }
      },
+ 
     'stat':{
      title: "System"
     },

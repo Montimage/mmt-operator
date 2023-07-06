@@ -15,6 +15,7 @@ Follow the instruction on nodejs.org: https://nodejs.org/en/download/package-man
 ### 2. Mongo DB >= mongo 3.4
 
 Follow the procedure described on the following link to install the latest version of Mongodb: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+It is recommended to use version 4.0.
 
 ## Usage
 
@@ -26,7 +27,7 @@ Follow the procedure described on the following link to install the latest versi
  #start
  sudo npm start
  # use another configuration file
- node bin/www --config=test.json
+ node bin/www --config=config.json
 ```
 
 An option in the configuration file can be overriden by giving a new parameter when running operator, for example:
