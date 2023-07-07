@@ -116,7 +116,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
         console.log("Database data: " + data);
 
        
-       // for (var i = 0; i < data.length; i++){
+       for (var i = 0; i < data.length; i++){
           //data[i]["button"] ='<button type="button" onclick="f()">Click me!</button>';
           //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
           //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
@@ -124,11 +124,11 @@ ReportFactory.createRemediationReport = function (fPeriod) {
       //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
          
-          
-          //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
+      data[i]["status"]=`<button id="sancus-buttton" class="btn-primary" type="object" style="backgound-color:red"/>`;
+      //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
          // data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
           // <a>http:/ /localhost:8080/sancus/remediation</a>
-      //  }
+        }
 
         return {
           columns: [
@@ -137,7 +137,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             { id: "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
             {id : "attack", label: "attack"} ,        
-        //    {id : "button", label: "click"}
+          {id : "status", label: "status"}
       ],
 
           data: data,
@@ -171,6 +171,8 @@ ReportFactory.createRemediationReport = function (fPeriod) {
               },
               success: function(){
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
+                var button = document.getElementById("sancus-buttton");
+                button.style.backgroundColor = "green";
               }
             })
 
