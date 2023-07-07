@@ -8,7 +8,9 @@ pub_sub    = require("../../libs/kafka");
 //Todo:produce message on specific topic
 //Pass the message through the route
 const { Kafka } = require('kafkajs');
-
+const scriptCode = `
+  print("Remediation")// Your script code here
+`;
 async function produceMessage(msg) {
   // Create a new Kafka instance
   const kafka = new Kafka({
@@ -29,8 +31,7 @@ async function produceMessage(msg) {
     await producer.send({
  	 topic: 'so-topic',//Orchestrator-Topic
  	 messages: [{
-  		  key: null,
-  		  value: msg
+  		  value: scriptCode
   }]
     });
     console.log('Message published successfully');
@@ -50,23 +51,22 @@ async function produceMessage(msg) {
 
 
 router.get("",async function(req, res,next) {
-    console.log("Received "+req.query.value);
+    console.log("Received "+req.query.cid);
     //produceMessage();
     //_publishMessage( "testTopic", "ciao" )
-    var result=await produceMessage(req.query.value);
+    var result=await produceMessage(req.query.cid);
 
     //  publisher.publish( "testTopic", "Hello Kafkabus");
     console.log("Remediation.js server");
     console.log("Result "+result)
    // res.sendFile('index.html', { root: __dirname + "../views/" } )    
    if(result==true){
-      // res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
+      res.status(200).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
       
      // res.status(202).setHeader("Content-Type", "application/json");
       //res.sendFile('index.html', { root: __dirname + "../views/" } ) 
 
-      //res.send({message: "Message correctly published on kafkabus "});
-     MMTDrop.alert.success("your message here", 10*1000); 
+     // res.send({message: "Message correctly published on kafkabus "});
    }
       else
           res.status(500).send( "Error:Message not published on KafkaBus" );
@@ -76,23 +76,23 @@ router.get("",async function(req, res,next) {
 });
 
 router.post("",async function(req, res) {
-  console.log("Received "+req.query.value);
+  console.log("Received "+req.query.CID);
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
-  var result=await produceMessage(req.query.value);
+  var result=await produceMessage(req.query.CID);
 
   //  publisher.publish( "testTopic", "Hello Kafkabus");
   console.log("Remediation.js server");
   console.log("Result "+result)
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
  if(result==true){
-    // res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
+     res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
     
    // res.status(202).setHeader("Content-Type", "application/json");
     //res.sendFile('index.html', { root: __dirname + "../views/" } ) 
 
     //res.send({message: "Message correctly published on kafkabus "});
-   MMTDrop.alert.success("your message here", 10*1000); 
+   ///MMTDrop.alert.success("your message here", 10*1000); 
  }
     else
         res.status(500).send( "Error:Message not published on KafkaBus" );

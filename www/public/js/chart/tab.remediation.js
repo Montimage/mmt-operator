@@ -37,37 +37,34 @@ MMTDrop.callback = {
     afterRender: loading.onChartLoad,
   },
 };
+var detailOfPopupProperty = null;
+
 
 ReportFactory.createRemediationReport = function (fPeriod) {
   console.log("line 42");
-  // var form_config = {
-  //   type : "<div>",
-  //   attr : {
-  //     style : "margin: 40px 10px 10px 0px"
-  //   },
-  //   children: [
-     
+//   var form_config = {
+ 
+//       type  : "<div>",
+//       label : "",
+//       attr  : {
+//         class : ""
+//       },
+//       children : [{
+
+//         type: "<input>",
+//         attr: {
+//           type : "button",
+//           id   : "conf-db-btnEmpty",
+//           style: "margin-right: 10px",
+//           class: "btn btn-danger pull-right",
+//           value: 'Empty DB'
+//         }
+//       }]
+//     }//end buttons
+  
+  
+// };
     
-  //     //buttons
-  //     {
-  //       type  : "<div>",
-  //       label : "",
-  //       attr  : {
-  //         class : ""
-  //       },
-  //       children : [{
-  //         type: "<input>",
-  //         attr: {
-  //           type : "submit",
-  //           id   : "conf-db-btnSave",
-  //           class: "'sancus-button",
-  //           value: 'Save'
-  //         }
-  //       }]
-  //     }//end buttons
-  //   ]
-    
-  // };
 
 
   const database = new MMTDrop.Database({
@@ -88,6 +85,8 @@ ReportFactory.createRemediationReport = function (fPeriod) {
     //do any processing here if need
     return data;
  }, false);
+
+ 
 
 
   database.updateParameter = function (_old_param) {
@@ -117,24 +116,20 @@ ReportFactory.createRemediationReport = function (fPeriod) {
         console.log("Database data: " + data);
 
        
-        for (var i = 0; i < data.length; i++){
+       // for (var i = 0; i < data.length; i++){
           //data[i]["button"] ='<button type="button" onclick="f()">Click me!</button>';
-          //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "'>button</a>"
-
+          //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
+          //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
           //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
-          //data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?value=" + data[i]["value"] + "'>button</a>
+      //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
+         
+          
           //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
-          data[i]["description"];
-          data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
+         // data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
           // <a>http:/ /localhost:8080/sancus/remediation</a>
-        }
-     
-            $(".sancus-button").on("click", function(){
-              console.log("Button pressed!!!");
-  
-      
-    });
+      //  }
+
         return {
           columns: [
             //{id: 1, label: "App ID"},
@@ -142,8 +137,8 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             { id: "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
             {id : "attack", label: "attack"} ,        
-
-            {id : "button", label: "click"}],
+        //    {id : "button", label: "click"}
+      ],
 
           data: data,
         };
@@ -157,8 +152,66 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
       deferRender: true,
     },
+
+    afterEachRender: function( _chart ){
+      // Add event listener for opening and closing details
+      _chart.chart.on('click', 'tr[role=row]', function (){
+        console.log("Click su row");
+         var tr = $(this);
+         var row = _chart.chart.api().row(tr);
+         var row_data = row.data();
+         if( row_data == undefined )
+             return;
+             console.log(row_data[0]);//Access to first element of the row array
+             const url = "/sancus/remediation?CID="+row_data[0];
+
+             MMTDrop.tools.ajax(url, {}, "POST", {
+              error  : function(){
+                MMTDrop.alert.error("Cannot send remediation", 10*1000);
+              },
+              success: function(){
+                MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
+              }
+            })
+
+         
+      });
+
+   }
   });
 
+      
+  /*
+function sendPostRequest(data) {
+    // Create an XMLHttpRequest object
+    var xhr = new XMLHttpRequest();
+  
+    // Define the request parameters
+    var url = '/sancus/remediation';
+    var method = 'POST';
+    var data_to_server = JSON.stringify({ CID: data }); // Replace with your desired data
+    
+    // Configure the request
+    xhr.open(method, url, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    MMTDrop.alert.success("your message here", 10*1000); 
+
+
+    // Handle the response
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        console.log('POST request successful');
+        // Perform any additional actions on successful response
+      } else {
+        console.error('POST request failed');
+        // Handle the error case
+      }
+    };
+
+    // Send the request
+    xhr.send(data_to_server);
+  }
+  */
   var report = new MMTDrop.Report(
     // title
 
