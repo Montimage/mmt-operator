@@ -29,8 +29,8 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "kafka",
-	"probe_analysis_mode": "online",
+	"input_mode": "file",
+	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600

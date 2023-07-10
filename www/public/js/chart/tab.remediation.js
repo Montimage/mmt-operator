@@ -123,8 +123,13 @@ ReportFactory.createRemediationReport = function (fPeriod) {
           //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
       //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
-         
-      data[i]["status"]=`<button id="sancus-buttton" class="btn-primary" type="object" style="backgound-color:red"/>`;
+        //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
+        data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=red_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
+        data[i]["Row"]=i+1;
+     
+       // data[i]["status"]=`<button  class="btn-primary" type="object" style="backgound-color:red"/>`;
+
+
       //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
          // data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
           // <a>http:/ /localhost:8080/sancus/remediation</a>
@@ -133,7 +138,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
         return {
           columns: [
             //{id: 1, label: "App ID"},
-
+            {id:"Row",label:"Row"},
             { id: "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
             {id : "attack", label: "attack"} ,        
@@ -159,11 +164,14 @@ ReportFactory.createRemediationReport = function (fPeriod) {
         console.log("Click su row");
          var tr = $(this);
          var row = _chart.chart.api().row(tr);
+          console.log(" "+tr)
+          var index = row.data()[0] - 1;
+
          var row_data = row.data();
          if( row_data == undefined )
              return;
              console.log(row_data[0]);//Access to first element of the row array
-             const url = "/sancus/remediation?CID="+row_data[0];
+             const url = "/sancus/remediation?CID="+row_data[1];//Access to 2 column of CID
 
              MMTDrop.tools.ajax(url, {}, "POST", {
               error  : function(){
@@ -171,8 +179,14 @@ ReportFactory.createRemediationReport = function (fPeriod) {
               },
               success: function(){
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
-                var button = document.getElementById("sancus-buttton");
-                button.style.backgroundColor = "green";
+            // var button = document.getElementById("sancus-buttton");
+            console.log(row_data[4]);
+              var image = document.getElementById("red_"+index);
+              image.src = "../img/green_button.png";
+             image.style= "width: 20px; height: 20px";
+            //   button.style.backgroundColor = "green";
+          //  console.log(row_data[3])
+     
               }
             })
 

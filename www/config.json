@@ -14,7 +14,7 @@
 	},
 	"file_input": {
 		"data_folder": [
-			"/opt/mmt/probe/result/report/online/",
+			"/home/frank/Documents/reports/",
 			"/tmp/"
 		],
 		"delete_data": true,
@@ -26,7 +26,7 @@
 		"max_connections": 0
 	},
 	"input_mode": "file",
-	"probe_analysis_mode": "online",
+	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600
