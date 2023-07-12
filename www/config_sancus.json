@@ -29,13 +29,8 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-<<<<<<< HEAD
-	"input_mode": "file",
-	"probe_analysis_mode": "offline",
-=======
 	"input_mode": "kafka",
 	"probe_analysis_mode": "online",
->>>>>>> bc54f832 (Fixed output miugio)
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600

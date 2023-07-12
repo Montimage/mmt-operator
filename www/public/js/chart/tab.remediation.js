@@ -141,11 +141,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             {id:"Row",label:"Row"},
             { id: "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
-<<<<<<< HEAD
-            {id : "attack", label: "attack"} ,        
-=======
             {id : "attack", label: "Attack/Vulnerability"} ,        
->>>>>>> bc54f832 (Fixed output miugio)
           {id : "status", label: "status"}
       ],
 

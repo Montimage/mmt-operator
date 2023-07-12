@@ -32,29 +32,6 @@ default:
 //This function  extracts descriptions corresponding to CID and 
 //gives in output a new json with the correct data format
 function extractDescriptions(json1, json2) {
-<<<<<<< HEAD
-	const cidArray = json1[0];
-	const attackArrays = json1[1];
-  
-	const output = [];
-  
-	for (let i = 0; i < cidArray.length; i++) {
-	  const cid = cidArray[i];
-	  const index = cidArray.indexOf(cid);
-	  const description = json2[index].description;
-	  const attack = attackArrays[i];
-  
-	  const json = {
-		"CID": cid,
-		"description": description,
-		"attack": attack
-	  };
-  
-	  output.push(json);
-	}
-  
-	return output;
-=======
 
 	const result = [];
 	var attacks =[];
@@ -87,7 +64,6 @@ function extractDescriptions(json1, json2) {
 	
 	}
 	return result;
->>>>>>> bc54f832 (Fixed output miugio)
   }
   
 function receiveMessage (channel, message) {
