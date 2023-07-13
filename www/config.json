@@ -1,4 +1,4 @@
-{
+{	
 	"database_server": {
 		"host": "localhost",
 		"port": 27017
@@ -8,10 +8,14 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host":"localhost",
+		"host": "localhost",
+		"port": 9092,
 		"topic": "sid-report",
+		"topic_miugio": "miugio-report",
+		"general_topic":"general-topic",
 		"client_name": "mmt-operator-kafka-client"
 	},
+
 	"file_input": {
 		"data_folder": [
 			"/home/frank/Documents/reports/",
@@ -25,8 +29,8 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "file",
-	"probe_analysis_mode": "offline",
+	"input_mode": "kafka",
+	"probe_analysis_mode": "online",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
 		"interval": 3600
@@ -108,7 +112,7 @@
 		"network",
 		"dpi",
 		"security",
-		"application"
+		"remediation"
 	],
 	"modules_config": {
 		"enodeb": {
