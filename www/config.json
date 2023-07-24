@@ -10,7 +10,7 @@
 	"kafka_input": {
 		"host": "localhost",
 		"port": 9092,
-		"topic": "sid-report",
+		"topic": "sid-reports",
 		"topic_miugio": "miugio-report",
 		"general_topic":"general-topic",
 		"client_name": "mmt-operator-kafka-client"

@@ -18,7 +18,7 @@
 
 	"file_input": {
 		"data_folder": [
-			"/home/frank/Documents/reports/",
+			"/home/frank/Documents/excel/",
 			"/tmp/"
 		],
 		"delete_data": true,
