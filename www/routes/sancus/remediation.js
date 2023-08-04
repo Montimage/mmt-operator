@@ -26,19 +26,20 @@ async function produceMessage(msg) {
   let result=false;
   try {
     // Create a message object with the desired payload and topic
+    console.log("subscribed to "+config.kafka_input.orchestrator_topic);
 
     // Publish the message to the Kafka topic
     await producer.send({
- 	 topic: 'so-topic',//Orchestrator-Topic
+ 	 topic: config.kafka_input.orchestrator_topic,//Orchestrator-Topic
  	 messages: [{
   		  value: scriptCode
   }]
     });
-    console.log('Message published successfully');
+    console.log('Message published successfully to orchestrator');
     result=true;
     return result;
   } catch (error) {
-    console.error('Error publishing message:', error);
+    console.error('Error publishing message to orchestrator:', error);
     result=false;
 
   } finally {

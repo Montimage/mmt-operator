@@ -11,7 +11,7 @@
 		"host": "localhost",
 		"port": 9092,
 		"topic": "sid-reports",
-		"topic_miugio": "miugio-report",
+		"topic_miugio": "miugio-reports",
 		"general_topic":"general-topic",
 		"client_name": "mmt-operator-kafka-client"
 	},
