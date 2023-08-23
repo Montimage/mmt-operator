@@ -103,14 +103,16 @@
 		"ndn",
 		"video",
 		"sla",
-		"stat"
+		"stat",
+		"int"
 	],
 	"modules": [
 		"link",
 		"network",
 		"dpi",
 		"security",
-		"application"
+		"application",
+		"int"
 	],
 	"modules_config": {
 		"enodeb": {
