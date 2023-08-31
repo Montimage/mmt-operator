@@ -258,7 +258,7 @@ function ProcessMessage( database ){
 	   
 		//console.log( "Process Message "+message );
 		//message = message.replace(/\(null\)/g, 'null');
-		debugger;
+		//debugger;
 		
 		var msg;
 		//report is a JSON array ???
@@ -375,7 +375,7 @@ function ProcessMessage( database ){
 		if( reportForwarding.isEnable( reportId ) )
 		   reportForwarding.send( msg );
 		
-		   debugger;
+		  // debugger;
 
 		//_TODO: re-enable this
 		_database.add(msg, function (err, err_msg) {});
