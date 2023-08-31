@@ -256,7 +256,7 @@ function ProcessMessage( database ){
 	self.process = function( message ) {
 	   
 	   
-		console.log( "Process Message "+message );
+		//console.log( "Process Message "+message );
 		//message = message.replace(/\(null\)/g, 'null');
 		debugger;
 		
