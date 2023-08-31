@@ -67,7 +67,7 @@ function extractDescriptions(json1, json2) {
   }
   
 function receiveMessage (channel, message) {
-   console.log( "[" + channel + "] " + message );
+   //console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){
@@ -94,12 +94,12 @@ report_client_miugio.on('message',function  ( channel,message) {
 
 		const json2 = require('../countermeasures.json');
 		console.log("json2")
-		const jsonOutput = extractDescriptions(json1, json2);
+		const jsonRemediation = extractDescriptions(json1, json2);
 		//json.description = 'ciao';
-		console.log(jsonOutput)
+
 		//process message: insert into "sancus_report" collection
 	
-			sancus_db.add("remediation",jsonOutput);
+			sancus_db.add("remediation",jsonRemediation);
 		
 			
 		//sancus_db._insert( "remediation", [rem_json] ) 
@@ -117,9 +117,9 @@ report_client_generaltopic.on('message', function  ( channel,message) {
 		console.log("Received message on General topic "+message);
 
 		//Insert to Databases
-		var json = JSON.parse( message);//Convert from string to json
+		var jsonGeneraltopic = JSON.parse( message);//Convert from string to json
 		//process message: insert into "general_topic" collection
-		sancus_db.add( "general_topic", [message] ) 
+		sancus_db.add( "general_topic", jsonGeneraltopic ) 
 
 
 }  );
