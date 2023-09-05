@@ -77,7 +77,7 @@ router.get("",async function(req, res,next) {
 });
 
 router.post("",async function(req, res) {
-  console.log("Received "+req.query.CID);
+  console.log("Received "+req.query.CID+" "+ req.query.IP );
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
   var result=await produceMessage(req.query.CID);

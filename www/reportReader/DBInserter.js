@@ -65,6 +65,7 @@ module.exports = function( databaseName ){
 	// 	self.db.collection( collection ).insertOne(msgArray);
 
 	// }
+
 	/**
 	 * Insert array of messages to DB
 	 */

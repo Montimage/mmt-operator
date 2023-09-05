@@ -20,13 +20,11 @@ var arr = [
   },
 ];
 
-console.log("line 15");
 
 var availableReports = {
   createNodeReport: "Security",
 };
 
-console.log("line 19");
 
 var ReportFactory = {};
 
@@ -41,7 +39,6 @@ var detailOfPopupProperty = null;
 
 
 ReportFactory.createRemediationReport = function (fPeriod) {
-  console.log("line 42");
 //   var form_config = {
  
 //       type  : "<div>",
@@ -125,7 +122,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
         //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
         data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=red_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
-        data[i]["Row"]=i+1;
+        data[i]["Row"]=i+1; //initialize column of rows with correct number
      
        // data[i]["status"]=`<button  class="btn-primary" type="object" style="backgound-color:red"/>`;
 
@@ -138,11 +135,12 @@ ReportFactory.createRemediationReport = function (fPeriod) {
         return {
           columns: [
             //{id: 1, label: "App ID"},
-            {id:"Row",label:"Row"},
-            { id: "CID", label: "CID" },
+            {id : "Row",label:"Row"},
+            {id : "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
-            {id : "attack", label: "Attack/Vulnerability"} ,        
-          {id : "status", label: "status"}
+            {id : "attack", label: "Attack/Vulnerability"} ,  
+            {id : "ipAttack", label: "IP attacker"} ,
+            {id : "status", label: "status"}
       ],
 
           data: data,
@@ -161,17 +159,15 @@ ReportFactory.createRemediationReport = function (fPeriod) {
     afterEachRender: function( _chart ){
       // Add event listener for opening and closing details
       _chart.chart.on('click', 'tr[role=row]', function (){
-        console.log("Click su row");
          var tr = $(this);
          var row = _chart.chart.api().row(tr);
-          console.log(" "+tr)
           var index = row.data()[0] - 1;
 
          var row_data = row.data();
          if( row_data == undefined )
              return;
-             console.log(row_data[0]);//Access to first element of the row array
-             const url = "/sancus/remediation?CID="+row_data[1];//Access to 2 column of CID
+             //console.log(row_data[0]);//Access to first element of the row array
+             const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[4];//Access to 2 column of CID
 
              MMTDrop.tools.ajax(url, {}, "POST", {
               error  : function(){
@@ -180,7 +176,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
               success: function(){
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
             // var button = document.getElementById("sancus-buttton");
-            console.log(row_data[4]);
+            //console.log(row_data[4]);
               var image = document.getElementById("red_"+index);
               image.src = "../img/green_button.png";
              image.style= "width: 20px; height: 20px";
@@ -197,37 +193,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
   });
 
       
-  /*
-function sendPostRequest(data) {
-    // Create an XMLHttpRequest object
-    var xhr = new XMLHttpRequest();
-  
-    // Define the request parameters
-    var url = '/sancus/remediation';
-    var method = 'POST';
-    var data_to_server = JSON.stringify({ CID: data }); // Replace with your desired data
-    
-    // Configure the request
-    xhr.open(method, url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    MMTDrop.alert.success("your message here", 10*1000); 
-
-
-    // Handle the response
-    xhr.onload = function() {
-      if (xhr.status === 200) {
-        console.log('POST request successful');
-        // Perform any additional actions on successful response
-      } else {
-        console.error('POST request failed');
-        // Handle the error case
-      }
-    };
-
-    // Send the request
-    xhr.send(data_to_server);
-  }
-  */
+ 
   var report = new MMTDrop.Report(
     // title
 
