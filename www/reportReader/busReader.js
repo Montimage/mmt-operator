@@ -93,52 +93,34 @@ async function queryIpMongo( attackId ) {
 			return ipAttacker;
 		}
 }
-//This function  extracts descriptions corresponding to CID and 
-//gives in output a new json with the correct data format 
 async function  extractDescriptions(json1, json2) {
+	// Initialize an empty array to store the output JSON objects
+		const output = [];
 
-	const result = [];
-	var attacks =[];
-	var attackVulner = "";
-	var ipAttacker = '';
-	for (let i = 0; i < json1.length; i++) {
-	  const cids = json1[i][0];
-	  for (let j = 0; j < cids.length; j++) {
-		const cid = cids[j];
-		   attacks[j] = json1[i][1][j];
-			   //console.log(attacks)
-		const index = json2.findIndex(item => item.CID === cid);
-	
-		if (index !== -1) {
-		  const description = json2[index].description;
-		  attackVulner = attacks[j].toString();
-		  const commaIndex = attackVulner.indexOf(',');
-			if (commaIndex !== -1) {
-				const firstNumber = parseInt(attackVulner.substring(0, commaIndex));
-				ipAttacker = await  queryIpMongo(firstNumber) ;
-				
-				} 
-			else {
-				ipAttacker = await  queryIpMongo(parseInt(attackVulner)) ;
-			}
-			console.log( "Extract Descritpion " + ipAttacker);
-		  const newObj = {
-			CID       : 	cid,
-			attack    :		attackVulner,
-			description: 	description,
-			ipAttack : 	ipAttacker
-		  };
-		  
-		  result.push(newObj);
-		}
-	  }
-	
-	}
-	return result;
-  }
+		// Loop through the input array
+		json1.forEach(([CID, attack]) => {
+			// Find the corresponding description from json2
+			const descriptionObj = json2.find((item) => item.CID === CID);
+
+			// Create the output JSON object
+			const jsonObj = {
+				CID:CID,
+				attack: attack[0],
+				description: descriptionObj ? descriptionObj.description : "" ,//if there is no description this value will be empty string
+				ipAttack: "10.2.2.3"
+			};
+
+
+			// Push the jsonObj into the output array
+			output.push(jsonObj);
+		});
+
+		return output;
+
+}
   
  function receiveMessage (channel, message) {
-   //console.log( "[" + channel + "] " + message );
+   console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){
@@ -165,15 +147,19 @@ report_client_miugio.on('message',async function  ( channel,message) {
 		const json2 = require('../countermeasures.json');
 		//console.log("json2")
 
-		const jsonRemediation = await extractDescriptions(json1, json2);
+		const  [jsonOutput1, jsonOutput2]  = await extractDescriptions(json1, json2);
 		//json.description = 'ciao';
+		// Print the JSON objects
 
+		//console.log("jsonOutput1 =", JSON.stringify(jsonOutput1, null, 4));
+	//	console.log("jsonOutput2 =", JSON.stringify(jsonOutput2, null, 4));
 		//process message: insert into "sancus_report" collection
+		if(jsonOutput1["CID"] != null)
+			sancus_db.add("remediation",[jsonOutput1]);
+		if(jsonOutput2["CID"] != null)
+			sancus_db.add("remediation",[jsonOutput2]);
 
-			sancus_db.add("remediation",jsonRemediation);
-		
-			
-		//sancus_db._insert( "remediation", [rem_json] ) 
+
 
 
 })
