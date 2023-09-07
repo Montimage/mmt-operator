@@ -139,6 +139,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             {id : "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
             {id : "attack", label: "Attack/Vulnerability"} ,  
+            {id : "timestamp", label: "Timestamp"} ,
             {id : "ipAttack", label: "IP attacker"} ,
             {id : "status", label: "status"}
       ],

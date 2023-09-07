@@ -41,6 +41,25 @@ const WRITE_CONCERN = {
 	single: false, //delete all documents that satisfy the filter
 };
 
+function removeOldRemediation(db, collectionName, timestamp){
+   try{
+	   queryCount ++;
+	  // Construct the query to remove records older than the threshold timestamp
+     const query = { timestamp: { $lt: thresholdTimestampInSeconds } };
+
+     // Remove the matching records
+     const result =  db.collectionName.deleteMany(query);
+ 
+     console.log(collectionName +  `${result.deletedCount} records deleted`);
+ 
+	}catch( e ){
+	   queryCount --;
+	   console.error("Error while deleting old records in collection " + collectionName );
+	   console.error( e );
+	}
+
+
+}
 
 let queryCount = 0; //number of queries being executing
 /**

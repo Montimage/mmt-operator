@@ -12,11 +12,11 @@
             ],
             "command": "sudo node",
       "args": [
-        "--config=config_sancus.json"
+        "--config=config.json"
       ],
             "program": "${workspaceFolder}/bin/www",
-            "asRoot": true
-
+            "asRoot": true,
+            "sudo": true
         }
     ]
 }

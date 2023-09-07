@@ -34,45 +34,21 @@ default:
 //This function executes a query to get the ip of the attacker
 async function queryIpMongo( attackId ) {
 	const url = `mongodb://` + config.database_server.host+ `:` + config.database_server.port;
-	console.log("Url queryipMongo "+url)
 	const dbName = 'mmt-data'; // Replace with your database name
 	var ipAttacker='';
 	// MongoDB aggregation pipeline
 	const pipeline = [
-		{
-		  $match: {
-			"4": attackId
-		  }
-		},
-		{
-		  $project: {
-			"ipSrc": {
-			  $arrayElemAt: ["$8.event_1.attributes", 0]
-			}
-		  }
-		},
-		{
-		  $project: {
-			"ipSrcValue": {
-			  $cond: {
-				if: { $and: [{ $isArray: "$ipSrc" }, { $gte: [{ $size: "$ipSrc" }, 2] }] },
-				then: { $arrayElemAt: ["$ipSrc", 1] },
-				else: null // Handle the case where "ipSrc" is not an array with at least two elements
-			  }
-			},
-			"_id": 0
-		  }
-		},
-		{
-		  $limit: 1
-		}
+		{    $match: {      "4": attackId    }  }, 
+		{    $project: {      "ipSrc": {        $arrayElemAt: ["$8.event_1.attributes", 0]      }   }  },  
+		{    $project: {      "ipSrcValue": {        $arrayElemAt: ["$ipSrc", 1]      },      "_id": 0     }  },  
+		{    $limit: 1  }
 	  ];
-	  	const client = new MongoClient(url,{ useNewUrlParser: true });
 
-		try {
+	  	const client = new MongoClient(url ,{ useNewUrlParser: true, useUnifiedTopology: true });
+
+		  try {
 			// Connect to MongoDB
 			await client.connect();
-
 			const db = client.db(dbName);
 
 			// Perform the aggregation query
@@ -83,7 +59,6 @@ async function queryIpMongo( attackId ) {
 			}
 			else
 				ipAttacker="10.10.10.2";
-
 		} catch (err) {
 			console.error('Error:', err);
 		} finally {
@@ -93,28 +68,32 @@ async function queryIpMongo( attackId ) {
 			return ipAttacker;
 		}
 }
-async function  extractDescriptions(json1, json2) {
+ async function  extractDescriptions(json1, json2) {
 	// Initialize an empty array to store the output JSON objects
 		const output = [];
+		var ipAttacker = "10.2.2.3" ;
 
 		// Loop through the input array
-		json1.forEach(([CID, attack]) => {
+		for (let i = 0; i < json1.length; i++) {
 			// Find the corresponding description from json2
-			const descriptionObj = json2.find((item) => item.CID === CID);
+			const [CID, attack] = json1[i];
+			const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 
+			const descriptionObj = json2.find( (item) => item.CID === CID);
+			ipAttacker = await  queryIpMongo(  attack[0][0] );
 			// Create the output JSON object
 			const jsonObj = {
 				CID:CID,
 				attack: attack[0],
+				timestamp: currentTimestampInSeconds,
+				ipAttack : ipAttacker,
 				description: descriptionObj ? descriptionObj.description : "" ,//if there is no description this value will be empty string
-				ipAttack: "10.2.2.3"
 			};
-
-
 			// Push the jsonObj into the output array
-			output.push(jsonObj);
-		});
 
+			output.push(jsonObj);
+		}
+		
 		return output;
 
 }
@@ -137,9 +116,10 @@ const sancus_db = new DBInserter( config.databaseName );
 
 const report_client_miugio = pub_sub.createClient( "miugio", clientName );
 report_client_miugio.subscribe( config.kafka_input.topic_miugio );
-report_client_miugio.on('message',async function  ( channel,message) {
+report_client_miugio.on('message',  async function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
+		try{
 		console.log("Received message on Miugio topic "+message+" "+config.databaseName);
 		//Insert to Databases
 		const json1 = JSON.parse( message);//Convert MIU?GIO json 
@@ -152,14 +132,16 @@ report_client_miugio.on('message',async function  ( channel,message) {
 		// Print the JSON objects
 
 		//console.log("jsonOutput1 =", JSON.stringify(jsonOutput1, null, 4));
-	//	console.log("jsonOutput2 =", JSON.stringify(jsonOutput2, null, 4));
+		//console.log("jsonOutput2 =", JSON.stringify(jsonOutput2, null, 4));
 		//process message: insert into "sancus_report" collection
-		if(jsonOutput1["CID"] != null)
 			sancus_db.add("remediation",[jsonOutput1]);
-		if(jsonOutput2["CID"] != null)
 			sancus_db.add("remediation",[jsonOutput2]);
 
-
+		}
+		catch (error) {
+			// Handle the exception here
+			console.error('An error occcurred:', error);
+		  }
 
 
 })
