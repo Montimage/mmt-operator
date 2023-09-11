@@ -63,7 +63,6 @@ async function queryIpMongo( attackId ) {
 		} finally {
 			// Close the MongoDB connection
 			client.close();
-			console.log("Query ip mongo" + ipAttacker)
 			return ipAttacker;
 		}
 }
@@ -71,7 +70,7 @@ async function queryIpMongo( attackId ) {
 	// Initialize an empty array to store the output JSON objects
 	const outputJson = {};
 	var ipAttacker = "10.2.2.3" ;
-
+	try{
 	if( typeof json1[0] === 'string'){
 		ipAttacker = await  queryIpMongo(  json1[0] );
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
@@ -84,11 +83,17 @@ async function queryIpMongo( attackId ) {
 		outputJson.timestamp  =  currentTimestampInSeconds ;
 
 	 }
+	} catch( err ){
+		console.error('Error:', err);
+
+	}
+	finally{
 	 return outputJson;
+	}
 }
   
  function receiveMessage (channel, message) {
-   console.log( "[" + channel + "] " + message );
+   //console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){
@@ -122,17 +127,15 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 		//json.description = 'ciao';
 		// Print the JSON objects
 
-		console.log(jsonAttacks)	
-		console.log(jsonRemediation)	
-
 		//process message: insert into "sancus_report" collection
 		if( JSON.stringify(jsonAttacks) != '{}')
 
 			sancus_db.add("remediationAttack",[jsonAttacks]);
 
-			if( JSON.stringify(jsonRemediation) != '{}')
+		if( JSON.stringify(jsonRemediation) != '{}')
 
 			sancus_db.add("remediationVuln", [ jsonRemediation]);
+  
 
 		}
 		catch (error) {

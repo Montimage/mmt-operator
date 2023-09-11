@@ -83,6 +83,9 @@ var additionalTime = 0;
  * @param collectionPrefix
  * @param timestamp: the timestamp of the last report of a probe having the given probeID
  * @param probeID
+ * @returnsctionPrefix
+ * @param timestamp: the timestamp of the last report of a probe having the given probeID
+ * @param probeID
  * @returns
  */
 function _maintainCollection( db, collectionPrefix, timestamp, probeID ){
@@ -148,7 +151,23 @@ function _maintainDatabaseSize( database ){
       setTimeout( _maintainDatabase, 1000, database );
    });
 }
+function _maintainRemediationCollection ( database, collectionName, cb ) {
+   if( additionalTime === 0 )
+       return cb();
+   try{
+      console.log("_maintainRemediationCollection")
+      database.collection(collectionName).deleteMany({
+      timestamp: {
+      $lt: Math.floor(Date.now() / 1000) - (5 * 60) // 5 minutes in seconds
+      }
+      });
 
+      cb();
+      } catch( e ){
+         console.error( e );
+
+      }
+   }
 function _maintainSecurityCollection(  database, cb ){
    //collection security is cutoff only if Database size >= the limit
    if( additionalTime === 0 )
@@ -231,11 +250,31 @@ function _maintainDatabase( database ){
       _maintainCollection( database, "data_sctp_"        , timestamp );
       _maintainCollection( database, "data_ndn_"         , timestamp );
       _maintainCollection( database, "availability_"     , timestamp );
-      
 
       //collection security is cutoff only if Database size >= the limit
       _maintainSecurityCollection( database, function(){
          
+         //this avoids delete DB so frequently
+         //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
+         // (as DB_LIMIT_SIZE is too small)
+         //maintain by db size
+         setTimeout( _maintainDatabaseSize, 10000, database );
+      });
+      //collection security is cutoff only if Database size >= the limit
+      console.log("Execute Db  function for Remediation" ); 
+      _maintainRemediationCollection(database, "remediationAttack", function(){
+         console.log("DB remove remediationAttack");
+         //this avoids delete DB so frequently
+         //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
+         // (as DB_LIMIT_SIZE is too small)
+         //maintain by db size
+         setTimeout( _maintainDatabaseSize, 10000, database );
+      });
+      console.log("Execute Db function for Remediation"); 
+
+      _maintainRemediationCollection(database, "remediationVuln", function(){
+         console.log("DB remove remediationVuln");
+
          //this avoids delete DB so frequently
          //it helps when trying delete documents from DB but the storage size does not reduce to DB_LIMIT_SIZE
          // (as DB_LIMIT_SIZE is too small)
@@ -273,4 +312,3 @@ process.on('SIGINT',function(){
    console.log("Exit maintainer " + process.pid);
    process.exit();
 });
-
