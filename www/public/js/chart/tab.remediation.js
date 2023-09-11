@@ -2,7 +2,7 @@ var arr = [
   {
     id: "security",
 
-    title: "Remediation",
+    title: "Remediation Attacks",
 
     x: 0,
 
@@ -17,7 +17,18 @@ var arr = [
     userData: {
       fn: "createRemediationReport",
     },
-  },
+  },{
+    id: "vulnerabilities",
+    title: "Remediation to Vulnerabilities",
+    x: 0,
+    y: 0,
+    width: 12,
+    height: 5,
+    type: "info",
+    userData: {
+       fn: "createVulnerabilityReport"
+    }
+  }
 ];
 
 
@@ -65,7 +76,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
 
   const database = new MMTDrop.Database({
-    collection: "remediation",
+    collection: "remediationAttack",
 
     query: [],
 
@@ -121,7 +132,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
       //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
         //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
-        data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=red_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
+        data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=redAtt_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;"> <span id = spanAtt_`+ i +`>Apply Remediation</span>  `;
         data[i]["Row"]=i+1; //initialize column of rows with correct number
      
        // data[i]["status"]=`<button  class="btn-primary" type="object" style="backgound-color:red"/>`;
@@ -138,7 +149,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             {id : "Row",label:"Row"},
             {id : "CID", label: "CID" },
             {id : "description", label: "description"}   ,       
-            {id : "attack", label: "Attack/Vulnerability"} ,  
+            {id : "attack", label: "Attack"} ,  
             {id : "timestamp", label: "Timestamp"} ,
             {id : "ipAttack", label: "IP attacker"} ,
             {id : "status", label: "status"}
@@ -168,7 +179,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
          if( row_data == undefined )
              return;
              //console.log(row_data[0]);//Access to first element of the row array
-             const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[4];//Access to 2 column of CID
+             const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[5];//Access to 2 column of CID
 
              MMTDrop.tools.ajax(url, {}, "POST", {
               error  : function(){
@@ -178,9 +189,11 @@ ReportFactory.createRemediationReport = function (fPeriod) {
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
             // var button = document.getElementById("sancus-buttton");
             //console.log(row_data[4]);
-              var image = document.getElementById("red_"+index);
+              var image = document.getElementById("redAtt_"+index);
               image.src = "../img/green_button.png";
-             image.style= "width: 20px; height: 20px";
+             image.style = "width: 20px; height: 20px";
+             var text = document.getElementById("spanAtt_"+index);
+             text.textContent = "Remediation applied" ;
             //   button.style.backgroundColor = "green";
           //  console.log(row_data[3])
      
@@ -226,3 +239,165 @@ ReportFactory.createRemediationReport = function (fPeriod) {
   return report;
 };
 
+ReportFactory.createVulnerabilityReport = function( fperiod) {
+
+  const database = new MMTDrop.Database({
+    collection: "remediationVuln",
+
+    query: [],
+
+    action: "aggregate",//aggregate
+
+    raw: true,
+
+    no_group: true,
+
+    no_override_when_reload: true,
+  }, function( data ){
+    //got data from DB
+    console.log("Data from db"+ data)
+    //do any processing here if need
+    return data;
+ }, false);
+ database.updateParameter = function (_old_param) {
+  fProbe.hide()
+  console.log( fPeriod.selectedOption().id )
+  console.log( fProbe.selectedOption().id )
+
+  const $match = {
+     //"value" : {"$gt": 1}
+
+  };
+
+  //$match[ 1 ] = URL_PARAM.app_id(); //app id
+
+  //$match["2"] = URL_PARAM.probe_id;
+
+  //s$match["3"] = URL_PARAM.metric_id;
+
+  return { query: [{ $match: $match }] };
+};
+
+var cTable = MMTDrop.chartFactory.createTable({
+  getData: {
+    getDataFn: function (db) {
+      const data = db.data();
+
+      console.log("Database data: " + data);
+
+     
+     for (var i = 0; i < data.length; i++){
+        //data[i]["button"] ='<button type="button" onclick="f()">Click me!</button>';
+        //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
+        //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
+        //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
+    //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
+
+      //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
+      data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=red_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">  <span id= span_`+ i +`>Apply Remediation</span>  `;
+      data[i]["Row"]=i+1; //initialize column of rows with correct number
+   
+     // data[i]["status"]=`<button  class="btn-primary" type="object" style="backgound-color:red"/>`;
+
+
+    //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
+       // data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
+        // <a>http:/ /localhost:8080/sancus/remediation</a>
+      }
+
+      return {
+        columns: [
+          //{id: 1, label: "App ID"},
+          {id : "Row",label:"Row"},
+          {id : "CID", label: "CID" },
+          {id : "description", label: "description"}   ,       
+          {id : "attack", label: "Vulnerability id"} ,  
+          {id : "timestamp", label: "Timestamp"} ,
+          {id : "ipAttack", label: "IP attacker"} ,
+          {id : "status", label: "status"}
+    ],
+
+        data: data,
+      };
+    },
+  },
+
+  chart: {
+    //order: [[1, "asc"]],
+
+    dom: "<'row'<'col-sm-5'l><'col-sm-7'f>><'row-cursor-pointer't><'row'<'col-sm-3'i><'col-sm-9'p>>",
+
+    deferRender: true,
+  },
+
+  afterEachRender: function( _chart ){
+    // Add event listener for opening and closing details
+    _chart.chart.on('click', 'tr[role=row]', function (){
+       var tr = $(this);
+       var row = _chart.chart.api().row(tr);
+        var index = row.data()[0] - 1;
+
+       var row_data = row.data();
+       if( row_data == undefined )
+           return;
+           //console.log(row_data[0]);//Access to first element of the row array
+           const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[5];//Access to 2 column of CID
+
+           MMTDrop.tools.ajax(url, {}, "POST", {
+            error  : function(){
+              MMTDrop.alert.error("Cannot send remediation", 10*1000);
+            },
+            success: function(){
+              MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
+          // var button = document.getElementById("sancus-buttton");
+          //console.log(row_data[4]);
+            var image = document.getElementById("red_"+index);
+            image.src = "../img/green_button.png";
+           image.style= "width: 20px; height: 20px";
+           var text = document.getElementById("span_"+index);
+            text.textContent= "Remediation applied" ;
+          //   button.style.backgroundColor = "green";
+        //  console.log(row_data[3])
+   
+            }
+          })
+
+       
+    });
+
+ }
+});
+
+    
+
+var report = new MMTDrop.Report(
+  // title
+
+  null,
+
+  // database
+
+  database,
+
+  // filers
+
+  [],
+
+  // charts
+
+  [
+    {
+      charts: [cTable],
+
+      width: 12,
+    },
+  ],
+
+  //order of data flux
+
+  [{ object: cTable }]
+);
+
+return report;
+
+};

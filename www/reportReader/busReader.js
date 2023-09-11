@@ -35,7 +35,7 @@ default:
 async function queryIpMongo( attackId ) {
 	const url = `mongodb://` + config.database_server.host+ `:` + config.database_server.port;
 	const dbName = 'mmt-data'; // Replace with your database name
-	var ipAttacker='';
+	var ipAttacker='10.10.10.2';
 	// MongoDB aggregation pipeline
 	const pipeline = [
 		{    $match: {      "4": attackId    }  }, 
@@ -57,8 +57,7 @@ async function queryIpMongo( attackId ) {
 				ipAttacker = result[0].ipSrcValue;
 			
 			}
-			else
-				ipAttacker="10.10.10.2";
+
 		} catch (err) {
 			console.error('Error:', err);
 		} finally {
@@ -70,32 +69,22 @@ async function queryIpMongo( attackId ) {
 }
  async function  extractDescriptions(json1, json2) {
 	// Initialize an empty array to store the output JSON objects
-		const output = [];
-		var ipAttacker = "10.2.2.3" ;
+	const outputJson = {};
+	var ipAttacker = "10.2.2.3" ;
 
-		// Loop through the input array
-		for (let i = 0; i < json1.length; i++) {
-			// Find the corresponding description from json2
-			const [CID, attack] = json1[i];
-			const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
+	if( typeof json1[0] === 'string'){
+		ipAttacker = await  queryIpMongo(  json1[0] );
+		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
+		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
 
-			const descriptionObj = json2.find( (item) => item.CID === CID);
-			ipAttacker = await  queryIpMongo(  attack[0][0] );
-			// Create the output JSON object
-			const jsonObj = {
-				CID:CID,
-				attack: attack[0],
-				timestamp: currentTimestampInSeconds,
-				ipAttack : ipAttacker,
-				description: descriptionObj ? descriptionObj.description : "" ,//if there is no description this value will be empty string
-			};
-			// Push the jsonObj into the output array
+		outputJson.CID = json1[0];
+		outputJson.attack = json1[1][0]
+		outputJson.description =  descriptionObj ? descriptionObj.description : "";
+		outputJson.ipAttack  =  ipAttacker ;
+		outputJson.timestamp  =  currentTimestampInSeconds ;
 
-			output.push(jsonObj);
-		}
-		
-		return output;
-
+	 }
+	 return outputJson;
 }
   
  function receiveMessage (channel, message) {
@@ -120,22 +109,30 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
 		try{
-		console.log("Received message on Miugio topic "+message+" "+config.databaseName);
+		console.log("Received message on Miugio topic " + message + " "+config.databaseName);
 		//Insert to Databases
-		const json1 = JSON.parse( message);//Convert MIU?GIO json 
+		const json1 = JSON.parse( message );//Convert MIU?GIO json 
 
 		const json2 = require('../countermeasures.json');
 		//console.log("json2")
+		
+		const  jsonAttacks 		=	await extractDescriptions( json1 [0] , json2);
+		const  jsonRemediation  =	await extractDescriptions( json1 [1] , json2);
 
-		const  [jsonOutput1, jsonOutput2]  = await extractDescriptions(json1, json2);
 		//json.description = 'ciao';
 		// Print the JSON objects
 
-		//console.log("jsonOutput1 =", JSON.stringify(jsonOutput1, null, 4));
-		//console.log("jsonOutput2 =", JSON.stringify(jsonOutput2, null, 4));
+		console.log(jsonAttacks)	
+		console.log(jsonRemediation)	
+
 		//process message: insert into "sancus_report" collection
-			sancus_db.add("remediation",[jsonOutput1]);
-			sancus_db.add("remediation",[jsonOutput2]);
+		if( JSON.stringify(jsonAttacks) != '{}')
+
+			sancus_db.add("remediationAttack",[jsonAttacks]);
+
+			if( JSON.stringify(jsonRemediation) != '{}')
+
+			sancus_db.add("remediationVuln", [ jsonRemediation]);
 
 		}
 		catch (error) {
