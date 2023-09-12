@@ -122,7 +122,7 @@ module.exports = function( databaseName ){
 				//insertion options
 				WRITE_CONCERN,
 				callback );
-				console.log("Insertmany Correctly inserted in database "+ collectionName);
+				//console.log("Insertmany Correctly inserted in database "+ collectionName);
 	
 		}
 

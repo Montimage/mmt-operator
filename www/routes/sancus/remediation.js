@@ -10,8 +10,6 @@ pub_sub    = require("../../libs/kafka");
 const { Kafka } = require('kafkajs');
 const scriptCode = `
 kubectl exec -it amf-45-ipds-0 -n ath-cmm-45 nft insert rule ip filter INPUT ip daddr 3.201.40.3 drop
-
-// Your script code here
 `;
 async function produceMessage(msg) {
   // Create a new Kafka instance

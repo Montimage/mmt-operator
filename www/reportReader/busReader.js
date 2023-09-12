@@ -66,13 +66,14 @@ async function queryIpMongo( attackId ) {
 			return ipAttacker;
 		}
 }
+//Message input:
  async function  extractDescriptions(json1, json2) {
 	// Initialize an empty array to store the output JSON objects
 	const outputJson = {};
 	var ipAttacker = "10.2.2.3" ;
 	try{
 	if( typeof json1[0] === 'string'){
-		ipAttacker = await  queryIpMongo(  json1[0] );
+		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // 
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
 
