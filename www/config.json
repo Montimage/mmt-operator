@@ -16,7 +16,12 @@
 		"orchestrator_topic": "so-topic",
 		"client_name": "mmt-operator-kafka-client"
 	},
-
+	"master_node":{
+		"host":"lo1256calhost",
+		"port":"22",
+		"password":"12345",
+		"username":"frank"
+	},
 	"file_input": {
 		"data_folder": [
 			"/home/frank/Documents/reports/",

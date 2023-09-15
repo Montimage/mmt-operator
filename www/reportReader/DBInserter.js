@@ -104,7 +104,7 @@ module.exports = function( databaseName ){
 			
 		//insert directly messages to db
 		self._insert( collection, msgArray, callback );
-		console.log("Correctly inserted in database "+collection);
+		//console.log("Correctly inserted in database "+collection);
 	};
 	
 	/**

@@ -183,7 +183,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
              MMTDrop.tools.ajax(url, {}, "POST", {
               error  : function(){
-                MMTDrop.alert.error("Cannot send remediation", 10*1000);
+                MMTDrop.alert.error("Error executing remediation", 10*1000);
               },
               success: function(){
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
@@ -313,7 +313,7 @@ var cTable = MMTDrop.chartFactory.createTable({
           {id : "description", label: "description"}   ,       
           {id : "attack", label: "Vulnerability id"} ,  
           {id : "timestamp", label: "Timestamp"} ,
-          {id : "ipAttack", label: "IP attacker"} ,
+     //     {id : "ipAttack", label: "IP attacker"} ,
           {id : "status", label: "status"}
     ],
 
@@ -345,7 +345,7 @@ var cTable = MMTDrop.chartFactory.createTable({
 
            MMTDrop.tools.ajax(url, {}, "POST", {
             error  : function(){
-              MMTDrop.alert.error("Cannot send remediation", 10*1000);
+              MMTDrop.alert.error("Error executing remediation", 10*1000);
             },
             success: function(){
               MMTDrop.alert.success("Remediation successfully sent ", 10*1000);

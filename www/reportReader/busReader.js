@@ -14,7 +14,8 @@ const processMessage = new ProcessMessage( database );
 var pub_sub    = null;
 let topic      = null;
 let clientName = null;
-
+let attacksTargeted =[];
+let index=0 ;
 switch( config.input_mode ){
 case constant.REDIS_STR:
 	pub_sub    = require("../libs/redis");
@@ -35,7 +36,7 @@ default:
 async function queryIpMongo( attackId ) {
 	const url = `mongodb://` + config.database_server.host+ `:` + config.database_server.port;
 	const dbName = 'mmt-data'; // Replace with your database name
-	var ipAttacker='10.10.10.2';
+	var ipAttacker='';
 	// MongoDB aggregation pipeline
 	const pipeline = [
 		{    $match: {      "4": attackId    }  }, 
@@ -66,24 +67,28 @@ async function queryIpMongo( attackId ) {
 			return ipAttacker;
 		}
 }
-//Message input:
- async function  extractDescriptions(json1, json2) {
+//Message input ex: [['C4', [[9,10]]], [[], []]]
+ async function  extractDescriptions(json1, json2, index ) {
 	// Initialize an empty array to store the output JSON objects
-	const outputJson = {};
-	var ipAttacker = "10.2.2.3" ;
+	const outputJson = {} ;
+	var ipAttacker = "" ;
+	console.log(index);
 	try{
-	if( typeof json1[0] === 'string'){
-		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // 
+		
+	if( typeof json1[0] === 'string' && (JSON.stringify(attacksTargeted[index]) !== JSON.stringify(json1[1][0])) ){
+		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // first element of second array. In the example is 9
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
-
+		attacksTargeted[index] = json1[1][0];
 		outputJson.CID = json1[0];
-		outputJson.attack = json1[1][0]
+		outputJson.attack = json1[1][0];
 		outputJson.description =  descriptionObj ? descriptionObj.description : "";
 		outputJson.ipAttack  =  ipAttacker ;
 		outputJson.timestamp  =  currentTimestampInSeconds ;
 
 	 }
+	 else
+	 	console.log( "Remediation discarded");
 	} catch( err ){
 		console.error('Error:', err);
 
@@ -115,15 +120,15 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
 		try{
-		console.log("Received message on Miugio topic " + message + " "+config.databaseName);
+		//console.log("Received message on Miugio topic " + message + " "+config.databaseName);
 		//Insert to Databases
 		const json1 = JSON.parse( message );//Convert MIU?GIO json 
 
 		const json2 = require('../countermeasures.json');
 		//console.log("json2")
 		
-		const  jsonAttacks 		=	await extractDescriptions( json1 [0] , json2);
-		const  jsonRemediation  =	await extractDescriptions( json1 [1] , json2);
+		const  jsonAttacks 		=	await extractDescriptions( json1 [0] , json2, (index++)%2 );
+		const  jsonRemediation  =	await extractDescriptions( json1 [1] , json2, (index++)%2  );
 
 		//json.description = 'ciao';
 		// Print the JSON objects
