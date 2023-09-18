@@ -50,29 +50,8 @@ var detailOfPopupProperty = null;
 
 
 ReportFactory.createRemediationReport = function (fPeriod) {
-//   var form_config = {
- 
-//       type  : "<div>",
-//       label : "",
-//       attr  : {
-//         class : ""
-//       },
-//       children : [{
+  const COL = MMTDrop.constants.RemediationColumn;
 
-//         type: "<input>",
-//         attr: {
-//           type : "button",
-//           id   : "conf-db-btnEmpty",
-//           style: "margin-right: 10px",
-//           class: "btn btn-danger pull-right",
-//           value: 'Empty DB'
-//         }
-//       }]
-//     }//end buttons
-  
-  
-// };
-    
 
 
   const database = new MMTDrop.Database({
@@ -89,7 +68,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
     no_override_when_reload: true,
   }, function( data ){
     //got data from DB
-    console.log("Data from db"+ data)
+    console.log("Data from db"+ JSON.stringify( data ))
     //do any processing here if need
     return data;
  }, false);
@@ -104,17 +83,17 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
     const $match = {
      	//"value" : {"$gt": 1}
+       "count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
 
     };
+    const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $first: "$description" },"ipAttack":{$first : "$ipAttack"}, "timestamp": {$first: "$timestamp"}    }; 
+    const $project = {"_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, ipAttack:1 ,timestamp:1 ,  count: 1 } ;
+    //const $group = { _id: "$CID"};
 
-    //$match[ 1 ] = URL_PARAM.app_id(); //app id
-
-    //$match["2"] = URL_PARAM.probe_id;
-
-    //s$match["3"] = URL_PARAM.metric_id;
-
-    return { query: [{ $match: $match }] };
+    return { query: [ {$group : $group},{ $match: $match } ,{$project : $project}] };
   };
+
+  
 
   var cTable = MMTDrop.chartFactory.createTable({
     getData: {
@@ -129,7 +108,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
           //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
           //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
           //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
-      //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
+          //data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
         //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
         data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=redAtt_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;"> <span id = spanAtt_`+ i +`>Apply Remediation</span>  `;
@@ -148,11 +127,12 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             //{id: 1, label: "App ID"},
             {id : "Row",label:"Row"},
             {id : "CID", label: "CID" },
-            {id : "description", label: "description"}   ,       
+            {id : "description", label: "Description"}   ,       
             {id : "attack", label: "Attack"} ,  
             {id : "timestamp", label: "Timestamp"} ,
             {id : "ipAttack", label: "IP attacker"} ,
-            {id : "status", label: "status"}
+            {id:  "count", label: "#"},
+            {id : "status", label: "Status"}
       ],
 
           data: data,
@@ -265,17 +245,16 @@ ReportFactory.createVulnerabilityReport = function( fperiod) {
   console.log( fProbe.selectedOption().id )
 
   const $match = {
-     //"value" : {"$gt": 1}
+
+      "count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
 
   };
+  const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $first: "$description" }, "timestamp": {$first: "$timestamp"}    }; 
+  const $project = {"_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, timestamp:1 ,  count: 1 } ;
 
-  //$match[ 1 ] = URL_PARAM.app_id(); //app id
 
-  //$match["2"] = URL_PARAM.probe_id;
 
-  //s$match["3"] = URL_PARAM.metric_id;
-
-  return { query: [{ $match: $match }] };
+  return { query: [ {$group : $group},{ $match: $match } ,{$project : $project}] };
 };
 
 var cTable = MMTDrop.chartFactory.createTable({
@@ -283,7 +262,7 @@ var cTable = MMTDrop.chartFactory.createTable({
     getDataFn: function (db) {
       const data = db.data();
 
-      console.log("Database data: " + data);
+      console.log("Database data: " + JSON.stringify(data) );
 
      
      for (var i = 0; i < data.length; i++){
@@ -313,7 +292,10 @@ var cTable = MMTDrop.chartFactory.createTable({
           {id : "description", label: "description"}   ,       
           {id : "attack", label: "Vulnerability id"} ,  
           {id : "timestamp", label: "Timestamp"} ,
+          {id : "count", label: "#" },
+
      //     {id : "ipAttack", label: "IP attacker"} ,
+
           {id : "status", label: "status"}
     ],
 

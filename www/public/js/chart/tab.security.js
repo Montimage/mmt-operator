@@ -260,7 +260,7 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
 
       const $group = { _id: {}};
       [ COL.PROPERTY.id, COL.VERDICT.id, COL.PROBE_ID.id ].forEach( function( el, index){
-         $group["_id"][ el ] = "$" + el;
+         $group["_id"] [ el ] = "$" + el;
       } );
 
       $group[ COL.VERDICT_COUNT.id ] = {"$sum" : {"$ifNull": [1, "$" + COL.VERDICT_COUNT.id ]}};
