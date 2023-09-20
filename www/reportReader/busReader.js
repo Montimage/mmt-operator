@@ -78,11 +78,8 @@ async function queryIpMongo( attackId ) {
 		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // first element of second array. In the example is 9
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
-		//attacksTargeted[index] = json1[1][0];
 		outputJson.CID = json1[0];
 		outputJson.attack = json1[1][0];
-		console.log("attack "+json1[1][0])
-
 		outputJson.description =  descriptionObj ? descriptionObj.description : "";
 		outputJson.ipAttack  =  ipAttacker ;
 		outputJson.timestamp  =  currentTimestampInSeconds ;
