@@ -87,7 +87,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
     };
     const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $first: "$description" },"ipAttack":{$first : "$ipAttack"}, "timestamp": {$first: "$timestamp"}    }; 
-    const $project = {"_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, ipAttack:1 ,timestamp:1 ,  count: 1 } ;
+    const $project = {    "_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, ipAttack:1 ,timestamp:1 ,  count: 1 } ;
     //const $group = { _id: "$CID"};
 
     return { query: [ {$group : $group},{ $match: $match } ,{$project : $project}] };
@@ -128,7 +128,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
             {id : "Row",label:"Row"},
             {id : "CID", label: "CID" },
             {id : "description", label: "Description"}   ,       
-            {id : "attack", label: "Attack"} ,  
+            {id : "attack", label: "Attacks"} ,  
             {id : "timestamp", label: "Timestamp"} ,
             {id : "ipAttack", label: "IP attacker"} ,
             {id:  "count", label: "#"},
@@ -169,7 +169,7 @@ ReportFactory.createRemediationReport = function (fPeriod) {
                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
             // var button = document.getElementById("sancus-buttton");
             //console.log(row_data[4]);
-              var image = document.getElementById("redAtt_"+index);
+              var image = document.getElementById("redAtt_"+index); //change image
               image.src = "../img/green_button.png";
              image.style = "width: 20px; height: 20px";
              var text = document.getElementById("spanAtt_"+index);
@@ -289,7 +289,7 @@ var cTable = MMTDrop.chartFactory.createTable({
           //{id: 1, label: "App ID"},
           {id : "Row",label:"Row"},
           {id : "CID", label: "CID" },
-          {id : "description", label: "description"}   ,       
+          {id : "description", label: "Description"}   ,       
           {id : "attack", label: "Vulnerability id"} ,  
           {id : "timestamp", label: "Timestamp"} ,
           {id : "count", label: "#" },

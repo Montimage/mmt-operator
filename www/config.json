@@ -17,7 +17,7 @@
 		"client_name": "mmt-operator-kafka-client"
 	},
 	"master_node":{
-		"host":"lo1256calhost",
+		"host":"localhost",
 		"port":"22",
 		"password":"12345",
 		"username":"frank"

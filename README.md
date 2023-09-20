@@ -27,7 +27,7 @@ It is recommended to use version 4.0.
  #start
  sudo npm start
  # use another configuration file
- node bin/www --config=config.json
+ sudo node bin/www --config=config.json
 ```
 
 An option in the configuration file can be overriden by giving a new parameter when running operator, for example:

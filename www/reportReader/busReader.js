@@ -81,6 +81,8 @@ async function queryIpMongo( attackId ) {
 		//attacksTargeted[index] = json1[1][0];
 		outputJson.CID = json1[0];
 		outputJson.attack = json1[1][0];
+		console.log("attack "+json1[1][0])
+
 		outputJson.description =  descriptionObj ? descriptionObj.description : "";
 		outputJson.ipAttack  =  ipAttacker ;
 		outputJson.timestamp  =  currentTimestampInSeconds ;
