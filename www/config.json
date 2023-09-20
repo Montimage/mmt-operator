@@ -13,6 +13,7 @@
 		"topic": "sid-reports",
 		"topic_miugio": "miugio-reports",
 		"general_topic":"general-topic",
+		"topic_civ":"civ-engine",
 		"orchestrator_topic": "so-topic",
 		"client_name": "mmt-operator-kafka-client"
 	},
@@ -118,7 +119,8 @@
 		"network",
 		"dpi",
 		"security",
-		"remediation"
+		"remediation",
+		"vulnerabilities"
 	],
 	"modules_config": {
 		"enodeb": {

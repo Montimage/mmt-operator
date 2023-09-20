@@ -18,7 +18,7 @@ var arr = [
       fn: "createRemediationReport",
     },
   },{
-    id: "vulnerabilities",
+    id: "remediationVuln",
     title: "Remediation to Vulnerabilities",
     x: 0,
     y: 0,

@@ -147,8 +147,23 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 		  }
 
 
-})
+});
 
+const report_client_civ = pub_sub.createClient( "civ", clientName );
+report_client_civ.subscribe( config.kafka_input.topic_civ );
+
+report_client_civ.on('message', function  ( channel,message) {
+	//message is a string {id:0, []}
+		//Process message: it should have a particular structure
+		console.log("Received message on CIV topic "+message);
+
+		//Insert to Databases
+		var jsonCiv = JSON.parse( message);//Convert from string to json
+		//process message: insert into "general_topic" collection
+		sancus_db.add( "CivCollection", [ jsonCiv ] ) 
+
+
+}  );
 
 const report_client_generaltopic = pub_sub.createClient( "general_topic", clientName );
 report_client_generaltopic.subscribe( config.kafka_input.general_topic );

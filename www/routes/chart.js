@@ -24,6 +24,9 @@ var all_pages = {
     'remediation':{
   	  title:"Remediation"
     },
+    'vulnerabilities':{
+  	  title:"Vulnerabilities"
+    },
     /*		'internet' : {
                 title: "Internet"
             },
@@ -106,6 +109,7 @@ var all_pages = {
     "iot": {
 		title: "IoT"
 	},
+
     "exec-script" : {
       title: "Exec Attack"
     },
