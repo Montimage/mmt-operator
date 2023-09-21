@@ -104,22 +104,12 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
        
        for (var i = 0; i < data.length; i++){
-          //data[i]["button"] ='<button type="button" onclick="f()">Click me!</button>';
-          //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
-          //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
-          //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
-          //data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
 
         //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
-        data[i]["status"]=    `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=redAtt_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;"> <span id = spanAtt_`+ i +`>Apply Remediation</span>  `;
-        data[i]["Row"]=i+1; //initialize column of rows with correct number
+        data[i]["status"] = `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=redAtt_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;"> <span id = spanAtt_`+ i +`>Apply Remediation</span>  `;
+        data[i]["Row"] = i+1; //initialize column of rows with correct number
      
-       // data[i]["status"]=`<button  class="btn-primary" type="object" style="backgound-color:red"/>`;
-
-
-      //data[i]["button"]= "<a href='/sancus/remediation'>bottone</a>"
-         // data[i]["button"]='<button type="button"  class="sancus-button" >Send to Orchestrator</button>';
-          // <a>http:/ /localhost:8080/sancus/remediation</a>
+      
         }
 
         return {

@@ -74,9 +74,11 @@ var arr = [
      const $match = {
  
      };
-   
+     const $group   = {    _id: {      vulnerability_id: "$vulnerability_id"     },    count: { $sum: 1 } ,  "device":{ $first: "$device" },    "vulnerability_description":{ $first: "$vulnerability_description" }, "timestamp": {$first: "$timestamp"}, "vulnerability_reference":{ $first: "$vulnerability_reference" }   }; 
+     const $project = {    "_id":0 , vulnerability_id: "$_id.vulnerability_id",  device : 1,  vulnerability_description: 1 ,timestamp:1 , vulnerability_reference:1, count: 1 } ;
  
-     return { query: [ {$match : $match} ] };
+ 
+     return { query: [ {$match : $match},{$group : $group},{$project : $project} ] };
    };
  
    
@@ -99,13 +101,12 @@ var arr = [
            columns: [
              //{id: 1, label: "App ID"},
              {id : "Row",label:"Row"},
-             {id : "engine", label: "engine" },
              {id : "vulnerability_description", label: "Description"}   ,       
-             {id : "device", label: "device"} ,  
+             {id : "device", label: "Device"} ,  
              {id : "timestamp", label: "Timestamp"} ,
-             {id : "vulnerability_id", label: "vulnerability_id"} ,
-             {id:  "vulnerability_reference", label: "vulnerability_reference"},
-             {id : "initial_risk_factor", label: "initial_risk_factor"}
+             {id : "vulnerability_id", label: "Vulnerability id"} ,
+             {id:  "vulnerability_reference", label: "Reference"},
+             {id:  "count", label: "#"}
        ],
  
            data: data,
