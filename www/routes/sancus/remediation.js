@@ -24,21 +24,22 @@ router.post("",async function(req, res) {
   //var result=await produceMessage(req.query.CID);
   const ssh = new SSHClient();
   try{
-  await ssh.connect(connSettings);
-  ssh.executeCommand ( scriptCode ) .then(() => {
-    console.log('Command kubectl executed successfully');
-    res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
-    ssh.disconnect();
-
-    } )
-  .catch((err) => {
-  
-      console.error('Command execution failed');
-      res.status(500).send( "Error: Script not execute on Nokia firewall" );
+    ssh.connect(connSettings).then( () =>{
+    ssh.executeCommand ( scriptCode ) .then(() => {
+      console.log('Command kubectl executed successfully');
+      res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
       ssh.disconnect();
 
-    });
+      } )
+    .catch((err) => {
     
+        console.error('Command execution failed');
+        res.status(500).send( "Error: Script not execute on Nokia firewall" );
+        ssh.disconnect();
+
+      });
+  });
+
   }catch(err){
     console.error(err);
 

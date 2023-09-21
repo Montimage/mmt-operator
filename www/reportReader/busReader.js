@@ -49,16 +49,17 @@ async function queryIpMongo( attackId ) {
 
 		  try {
 			// Connect to MongoDB
-			await client.connect();
+			client.connect(). then( async ()=>{
 			const db = client.db(dbName);
 
 			// Perform the aggregation query
 			var result = await db.collection('security').aggregate(pipeline, {cursor : { }} ).toArray();
-			if (result.length > 0) {
-				ipAttacker = result[0].ipSrcValue;
+				if (result.length > 0) {
+					ipAttacker = result[0].ipSrcValue;
 			
+				}
 			}
-
+			)
 		} catch (err) {
 			console.error('Error:', err);
 		} finally {
@@ -116,7 +117,7 @@ report_client_miugio.subscribe( config.kafka_input.topic_miugio );
 report_client_miugio.on('message',  async function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
-		try{
+	try{
 		//console.log("Received message on Miugio topic " + message + " "+config.databaseName);
 		//Insert to Databases
 		const json1 = JSON.parse( message );//Convert MIU?GIO json 
@@ -141,7 +142,7 @@ report_client_miugio.on('message',  async function  ( channel,message) {
   
 
 		}
-		catch (error) {
+	catch (error) {
 			// Handle the exception here
 			console.error('An error occcurred:', error);
 		  }
@@ -171,13 +172,18 @@ report_client_generaltopic.subscribe( config.kafka_input.general_topic );
 report_client_generaltopic.on('message', function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
-		console.log("Received message on General topic "+message);
+		try{
+			console.log("Received message on General topic "+message);
 
-		//Insert to Databases
-		var jsonGeneraltopic = JSON.parse( message);//Convert from string to json
-		//process message: insert into "general_topic" collection
-		sancus_db.add( "general_topic", jsonGeneraltopic ) 
-
+			//Insert to Databases
+			var jsonGeneraltopic = JSON.parse( message);//Convert from string to json
+			//process message: insert into "general_topic" collection
+			sancus_db.add( "general_topic", jsonGeneraltopic ) 
+		}
+		catch (error) {
+			// Handle the exception here
+			console.error('An error occcurred:', error);
+		  }
 
 }  );
 //when a topic is explicite in config file
