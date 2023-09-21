@@ -17,20 +17,20 @@ let clientName = null;
 //let attacksTargeted =[];
 //let index=0 ;
 switch( config.input_mode ){
-case constant.REDIS_STR:
-	pub_sub    = require("../libs/redis");
-	topic      = config.redis_input.channel;
-	clientName = config.redis_input.name;
-    break;
-case constant.KAFKA_STR:
-	pub_sub    = require("../libs/kafka");
-	topic      = config.kafka_input.topic;
-	clientName = config.kafka_input.name;
-    break;
-default:
-	console.error( "Does not support input mode = " + config.input_mode );
-	process.exit();
-}
+	case constant.REDIS_STR:
+		pub_sub    = require("../libs/redis");
+		topic      = config.redis_input.channel;
+		clientName = config.redis_input.name;
+		break;
+	case constant.KAFKA_STR:
+		pub_sub    = require("../libs/kafka");
+		topic      = config.kafka_input.topic;
+		clientName = config.kafka_input.name;
+		break;
+	default:
+		console.error( "Does not support input mode = " + config.input_mode );
+		process.exit();
+	}
 
 //This function executes a query to get the ip of the attacker
 async function queryIpMongo( attackId ) {
@@ -49,16 +49,16 @@ async function queryIpMongo( attackId ) {
 
 		  try {
 			// Connect to MongoDB
-			client.connect(). then( async ()=>{
-			const db = client.db(dbName);
+			client.connect(). then( async () =>  {
+				const db = client.db(dbName);
 
-			// Perform the aggregation query
-			var result = await db.collection('security').aggregate(pipeline, {cursor : { }} ).toArray();
-				if (result.length > 0) {
-					ipAttacker = result[0].ipSrcValue;
-			
+				// Perform the aggregation query
+				var result = await db.collection('security').aggregate(pipeline, {cursor : { }} ).toArray();
+					if (result.length > 0) {
+						ipAttacker = result[0].ipSrcValue;
+				
+					}
 				}
-			}
 			)
 		} catch (err) {
 			console.error('Error:', err);
@@ -173,12 +173,12 @@ report_client_generaltopic.on('message', function  ( channel,message) {
 	//message is a string {id:0, []}
 		//Process message: it should have a particular structure
 		try{
-			console.log("Received message on General topic "+message);
+			//console.log("Received message on General topic "+message);
 
 			//Insert to Databases
 			var jsonGeneraltopic = JSON.parse( message);//Convert from string to json
 			//process message: insert into "general_topic" collection
-			sancus_db.add( "general_topic", jsonGeneraltopic ) 
+			sancus_db.add( "general_topic", [jsonGeneraltopic ]) 
 		}
 		catch (error) {
 			// Handle the exception here
