@@ -15,7 +15,7 @@ function _processLine( line ){
    try{
       processMessage.process( line );
    }catch( e ){
-      console.error( "Error when processing line :" + line, e );
+      console.error( "Error when processing line: " + line, e );
    }
 }
 

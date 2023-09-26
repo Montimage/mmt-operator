@@ -687,7 +687,7 @@ if( typeof Highcharts !== "undefined" )
             644: 'DTP',
             645: "SCTP_HEARTBEAT", 646: "SCTP_SHUTDOWN", 647: "SCTP_SHUTDOWN_COMPLETE", 648: "SCTP_ABORT", 649: "SCTP_ERROR", 650: "SCTP_COOKIE_ECHO",
             651: "SCTP_ECNE", 652: "SCTP_CWR", 653: "SCTP_AUTH", 654: "SCTP_ASCONF", 655: "SCTP_RE_CONFIG",
-            656: "8021AD", 657: "mqtt", 658: "INBAND_NETWORK_TELEMETRY", 659: "INT_REPORT", 660: "DTLS", 661: "QUIC_IETF",
+            656: "8021AD", 657: "mqtt", 658: "INT", 659: "INT_REPORT", 660: "DTLS", 661: "QUIC_IETF",
             700: "HTTP2",
             800: "IEEE802154", 801: "LOWPAN",
             900: "S1AP", 901: "DIAMETER", 902: "GTPv2", 903: "NGAP", 904: "NAS-5G"

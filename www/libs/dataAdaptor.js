@@ -1,4 +1,4 @@
-const config  = require("../config.json");
+const config  = require("./config");
 const ip2loc  = require("./ip2loc");
 const dataIndex = require("./shared/dataIndex");
   const MMTDrop = {
@@ -341,7 +341,13 @@ const dataIndex = require("./shared/dataIndex");
 
 // const _total = {};
    MMTDrop.formatMessage = function( message ){
-      var msg = JSON.parse( message );
+      var msg;
+      try {
+         msg = JSON.parse( message );
+      } catch ( e ){
+         console.error( "Cannot parse line: " + message, e )
+         return;
+      }
 
 //    var t = Math.floor( msg[3] );
 //    if( msg[0] == 100 ){

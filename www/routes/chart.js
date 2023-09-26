@@ -116,8 +116,8 @@ var all_pages = {
     'setting':{
       title: "Settings"
     },
-    'int' : {
-      title: "INT" //In-band Network Telemetry
+    'l4s' : {
+      title: "L4S" //mosaico project
     }
 };
 

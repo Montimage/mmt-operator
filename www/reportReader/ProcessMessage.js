@@ -11,6 +11,7 @@ const COL			= mmtAdaptor.StatsColumnId;
 const s1apTopo	 = require("./EnodebTopo");
 const net			= require('net');
 const iot			= require('./iotProcessMessage');
+const l4s			= require('./l4sProcessMessage');
 const global		= require('../libs/InterProcessCache');
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
@@ -262,6 +263,9 @@ function ProcessMessage( database ){
 			message = '[' + message + ']';
 
 		msg = mmtAdaptor.formatMessage( message );
+		if( ! msg )
+			return;
+			
 		if( dataProcessingFn )
 			msg = dataProcessingFn( msg );
 
@@ -348,8 +352,16 @@ function ProcessMessage( database ){
 		//case 50:
 		//	console.info( msg );
 		case mmtAdaptor.CsvFormat.EVENT_BASE_FORMAT:
-			if( msg[mmtAdaptor.IoTColumnId.EVENT_NAME] === "iot" )
+			//depending on name of event-based reports, we process differently the reports
+			switch( msg[mmtAdaptor.IoTColumnId.EVENT_NAME]){ 
+				case "iot":
 					msg = iot.processMessage( msg );
+					break;
+				case "l4s":
+					msg = l4s.processMessage( msg );
+					break;
+			}
+			break;
 		}
 
 		//TODO: to be remove, this chages probe ID, only for Thales demo

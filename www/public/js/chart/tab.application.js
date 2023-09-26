@@ -65,8 +65,8 @@ URL_PARAM.app_id = function(){
   return URL_PARAM._app_id;
 }
 
-//select only TCP-based app
-const APP_PATH_REGEX = {"$regex" : ".354.", "$options" : ""};
+//select only TCP-based app or QUIC
+const APP_PATH_REGEX = {"$regex" : ".354.|.661", "$options" : ""};
 //create reports
 var ReportFactory = {
     formatTime : function( date ){

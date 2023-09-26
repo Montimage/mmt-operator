@@ -27,7 +27,7 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "file",
+	"input_mode": "socket",
 	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
@@ -59,7 +59,7 @@
 			"mask": "255.255.255.0"
 		}
 	],
-	"probe_stats_period": 5,
+	"probe_stats_period": 1,
 	"buffer": {
 		"max_length_size": 30000,
 		"max_interval": 5
@@ -103,14 +103,16 @@
 		"ndn",
 		"video",
 		"sla",
-		"stat"
+		"stat",
+		"int"
 	],
 	"modules": [
 		"link",
 		"network",
 		"dpi",
 		"security",
-		"application"
+		"application",
+		"l4s"
 	],
 	"modules_config": {
 		"enodeb": {
