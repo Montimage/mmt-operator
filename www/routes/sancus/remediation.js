@@ -17,7 +17,7 @@ const connSettings = {
 
 router.post("",async function(req, res) {
   console.log("Received "+req.query.CID+" "+ req.query.IP );
-  var scriptCode = `kubectl exec -it amf-45-ipds-0 -n ath-cmm-45 nft insert rule ip filter INPUT ip daddr `+ req.query.IP +` drop`;
+  var scriptCode = `kubectl exec amf-45-ipds-0 -n ath-cmm-45 -- bash -c "nft insert rule ip filter INPUT ip daddr `+ req.query.IP +` drop"`;
 
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
