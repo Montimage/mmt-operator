@@ -17,15 +17,17 @@ const connSettings = {
 
 router.post("",async function(req, res) {
   console.log("Received "+req.query.CID+" "+ req.query.IP );
-  var scriptCode = `kubectl exec amf-45-ipds-0 -n ath-cmm-45 -- bash -c "nft insert rule ip filter INPUT ip daddr `+ req.query.IP +` drop"`;
-
+ // var scriptCode = `kubectl exec amf-45-ipds-0 -n ath-cmm-45 -- bash -c "nft insert rule ip filter INPUT ip daddr `+ req.query.IP +` drop"`;
+  var scriptCode = config.master_node.command;
+  const command_ip = scriptCode.replace(/IP_ATT/g, req.query.IP);
+  console.log("Command "+command_ip );
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
   //var result=await produceMessage(req.query.CID);
   const ssh = new SSHClient();
   try{
     ssh.connect(connSettings).then( () =>{
-    ssh.executeCommand ( scriptCode ) .then(() => {
+    ssh.executeCommand ( command_ip ) .then(() => {
       console.log('Command kubectl executed successfully');
       res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
       ssh.disconnect();

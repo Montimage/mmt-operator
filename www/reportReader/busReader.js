@@ -48,8 +48,8 @@ async function queryIpMongo( attackId ) {
 	  	const client = new MongoClient(url ,{ useNewUrlParser: true, useUnifiedTopology: true });
 
 		  try {
-			// Connect to MongoDB
-			client.connect(). then( async () =>  {
+				// Connect to MongoDB
+				await client.connect();
 				const db = client.db(dbName);
 
 				// Perform the aggregation query
@@ -58,8 +58,8 @@ async function queryIpMongo( attackId ) {
 						ipAttacker = result[0].ipSrcValue;
 				
 					}
-				}
-			)
+				
+			
 		} catch (err) {
 			console.error('Error:', err);
 		} finally {

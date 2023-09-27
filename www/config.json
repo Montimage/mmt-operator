@@ -21,7 +21,9 @@
 		"host":"localhost",
 		"port":"22",
 		"password":"12345",
-		"username":"frank"
+		"username":"frank",
+		"command": "kubectl exec amf-45-ipds-0 -n ath-cmm-45 -- bash -c \"nft insert rule ip filter INPUT ip daddr IP_ATT drop\""
+		
 	},
 	"file_input": {
 		"data_folder": [
