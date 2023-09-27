@@ -110,6 +110,15 @@ module.exports = {
           P_DROP          : 97, //in %
           P_DROP_NIC      : 98, //in %
           P_DROP_KERNEL   : 99, //in %
+
+          //specific metrics for L4S reports: 
+          // https://github.com/Montimage/mmt-probe/blob/871ed6c3f2cbca47abe99a8e7148174f1996a01c/mosaico.conf#L313-L334
+          L4S_QUEUE_ID    : 100,
+          L4S_HOP_LATENCY : 101,
+          L4S_QUEUE_OCCUPS: 102,
+          L4S_NB_MARK     : 103,
+          L4S_NB_DROP     : 104,
+          L4S_MARK_PROBAB : 105
       },
 
       SecurityColumnId           : {

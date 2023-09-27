@@ -25,6 +25,8 @@ function _cleanUp(){
    if( isStop )
       process.exit();
 
+   console.info("number of processed lines: " + processMessage.nb_messages );
+
    isStop = true;
    database.flush( function(){
       console.warn("Ended " + process.title );
@@ -49,8 +51,10 @@ function _cleanUp(){
  * https://gist.github.com/TooTallNate/1785026
  */
 function emitLines (stream) {
+   var totalBytes = 0;
    var backlog = '';
    stream.on('data', function (data) {
+      totalBytes += data.length;
       backlog += data;
       let n = backlog.indexOf('\n');
       // got a \n? emit one or more 'line' events
@@ -62,6 +66,7 @@ function emitLines (stream) {
    });
 
    stream.on('end', function () {
+      console.info("number processed bytes: " + totalBytes );
       if (backlog) {
          stream.emit('line', backlog);
       }

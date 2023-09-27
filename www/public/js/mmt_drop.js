@@ -217,6 +217,15 @@ if( typeof Highcharts !== "undefined" )
             P_DROP				: {id: 97, label: "Drop percentage"}, //in %
             P_DROP_NIC			: {id: 98, label: "Drop percentage NIC"}, //in %
             P_DROP_KERNEL			: {id: 99, label: "Drop percentage kernel"}, //in %
+
+            //specific metrics for L4S reports: 
+            // https://github.com/Montimage/mmt-probe/blob/871ed6c3f2cbca47abe99a8e7148174f1996a01c/mosaico.conf#L313-L334
+            L4S_QUEUE_ID    : {id: 100, label: "Queue ID"}, 
+            L4S_HOP_LATENCY : {id: 101, label: "Queue latency"}, 
+            L4S_QUEUE_OCCUPS: {id: 102, label: "Queue occups"}, 
+            L4S_NB_MARK     : {id: 103, label: "Nb Mark"}, 
+            L4S_NB_DROP     : {id: 104, label: "Nb Drop"}, 
+            L4S_MARK_PROBAB : {id: 105, label: "Mark probability"}, 
          },
 
 
