@@ -104,15 +104,20 @@
 		"video",
 		"sla",
 		"stat",
-		"int"
+		"l4s"
 	],
 	"modules": [
 		"link",
 		"network",
 		"dpi",
-		"security",
 		"application",
-		"l4s"
+		"l4s",
+		"security",
+		"behavior",
+		"enodeb",
+		"ndn",
+		"video",
+		"stat"
 	],
 	"modules_config": {
 		"enodeb": {

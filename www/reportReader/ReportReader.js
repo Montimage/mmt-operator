@@ -81,7 +81,7 @@ function Reader(){
             child.send('socket', client );
          });
          tcpServer.listen( config.socket_input.port, config.socket_input.host, function () {
-            console.info('MMT-Operator is waiting for reports on address : ' + tcpServer.address());
+            console.info('MMT-Operator is waiting for reports on address : ' , tcpServer.address());
          });
 
          

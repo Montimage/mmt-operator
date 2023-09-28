@@ -139,11 +139,11 @@ class Master extends Cache{
       const tcpServer = net.createServer();
       tcpServer.maxConnections = maxChildren;
       //when error
-      tcpServer.on('error', console.error);
+      tcpServer.on('error', (ex) => {console.error(ex)});
 
       //when server received a new client
       tcpServer.on('connection', function( client ) {
-         //console.log( 'New client connected ', client.address() );
+         console.log( 'New client connected ', client.address() );
 
          emitMessages( client );
 
@@ -210,7 +210,7 @@ class Worker{
       this.__msgCount = 0;
       this.__callbacks = new Cache();
 
-      console.log("Start shared-cache worker" + process.pid);
+      console.log("Start shared-cache worker pid=" + process.pid);
 
       //close the socket when its process exit
       process.on('exit', () => this.destroy() );
@@ -230,7 +230,7 @@ class Worker{
       
       client.setKeepAlive( true );
 
-      client.on('error', console.error );
+      client.on('error', function(e){ console.error(e) } );
       //when receiving a message from server
       client.on('message', function( msg ){
          const id = msg.__id;
@@ -253,6 +253,7 @@ class Worker{
 
    __sendMessageToMaster( msg, cb, args ){
       const self = this;
+
       this.__getSocket( function(socket){
 
          //when user wants to be called once received response
@@ -265,10 +266,10 @@ class Worker{
          }
 
          //send message to server
-	 if( socket.writeMessage )
-         	socket.writeMessage( msg );
-	else
-		console.error("Cannot write message" + msg);
+         if( socket.writeMessage )
+            socket.writeMessage( msg );
+         else
+            console.error("Cannot write message" + msg);
       });
    }
 

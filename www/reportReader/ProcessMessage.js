@@ -12,7 +12,8 @@ const s1apTopo	 = require("./EnodebTopo");
 const net			= require('net');
 const iot			= require('./iotProcessMessage');
 const l4s			= require('./l4sProcessMessage');
-const global		= require('../libs/InterProcessCache');
+//const global		= require('../libs/InterProcessCache');
+
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
 var caches = {};
@@ -290,14 +291,16 @@ function ProcessMessage( database ){
 				console.error('impossible', msg );
 				return;
 			}
-		//inspire5G-plus project: do not process BITTORRENT (id=52) when filter is activated in route/auto/inspire/closed-loop.js
+			//inspire5G-plus project: do not process BITTORRENT (id=52) when filter is activated in route/auto/inspire/closed-loop.js
+			/*
 			if( msg[COL.APP_ID] == 52 )
-		return global.get("inspire-closed-loop", function(val){
+				return global.get("inspire-closed-loop", function(val){
 			if( val )
 				return console.info("Ignore BITTORENT in Inspire5G+: " + JSON.stringify( msg));
 			else
 				_database.add(msg, function (err, err_msg) {});
-		});
+			});
+			*/
 			break;
 		/*
 			case mmtAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT:

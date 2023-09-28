@@ -286,7 +286,7 @@ function createReport(yLabel, colToCal, unit, isGetAvg) {
 var ReportFactory = {
 	createThroughputReport: createReport("Throughput (pps)", MMTDrop.constants.StatsColumn.PACKET_COUNT.id, "packets", false),
 	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond", true),
-	createOccupsReport: createReport("Queue Occups (total)", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets", true),
+	createOccupsReport: createReport("Queue Occups (avg)", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets", true),
 	createMarkReport: createReport("Nb Mark (total)", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "packets", false),
 	createDropReport: createReport("Nb Drop (total)", MMTDrop.constants.StatsColumn.L4S_NB_DROP.id, "packets", false),
 	createMarkProbabReport: createReport("Mark probability (avg)", MMTDrop.constants.StatsColumn.L4S_MARK_PROBAB.id, "%", true),
