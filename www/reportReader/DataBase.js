@@ -260,7 +260,7 @@ module.exports = function(){
             }
          ),
          l4s: new DataCache( inserter, "data_l4s",{
-            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, COL.L4S_QUEUE_ID],
+            key: [COL.PROBE_ID, COL.SOURCE_ID, /*COL.IP_SRC, COL.IP_DST,*/ COL.L4S_QUEUE_ID],
             inc: [COL.PACKET_COUNT, COL.L4S_HOP_LATENCY, COL.L4S_QUEUE_OCCUPS, COL.L4S_NB_MARK, 
                   COL.L4S_NB_DROP, COL.L4S_MARK_PROBAB]
          })

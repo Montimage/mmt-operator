@@ -17,7 +17,7 @@ var arr = [
 		x: 0,
 		y: 3,
 		width: 12,
-		height: 3,
+		height: 2,
 		type: "danger",
 		userData: {
 			fn: "createOccupsReport"
@@ -29,12 +29,13 @@ var arr = [
 		x: 0,
 		y: 6,
 		width: 12,
-		height: 3,
+		height: 2,
 		type: "warning",
 		userData: {
 			fn: "createMarkReport"
 		},
 	},
+	/*
 	{
 		id: "nb-drop",
 		title: "Number of Dropped packets",
@@ -47,18 +48,31 @@ var arr = [
 			fn: "createDropReport"
 		},
 	},
+	*/
 	{
 		id: "mark-probab",
 		title: "Mark Probability",
 		x: 0,
 		y: 12,
 		width: 12,
-		height: 3,
-		type: "success",
+		height: 2,
+		type: "info",
 		userData: {
 			fn: "createMarkProbabReport"
 		},
-	}
+	},
+	{
+		id: "throughput",
+		title: "Throughput",
+		x: 0,
+		y: 15,
+		width: 12,
+		height: 2,
+		type: "success",
+		userData: {
+			fn: "createThroughputReport"
+		},
+	},
 ];
 
 var availableReports = {
@@ -100,7 +114,7 @@ _this.hideAllTooltip = function() {
 };
 
 //create reports
-function createReport(yLabel, colToCal, unit) {
+function createReport(yLabel, colToCal, unit, isGetAvg) {
 	return function(fPeriod){
 		const COL = MMTDrop.constants.StatsColumn;
 		const database = new MMTDrop.Database({
@@ -130,6 +144,8 @@ function createReport(yLabel, colToCal, unit) {
 			return { query: [{ $match: $match }, { $group: $group }, { $project: { _id: 0 } }] };
 		};
 
+		const isFirstChart = (_this.chartGroups.length == 0)
+
 		var cLine = MMTDrop.chartFactory.createTimeline({
 			//columns: [MMTDrop.constants.StatsColumn.APP_PATH]
 			getData: {
@@ -139,7 +155,8 @@ function createReport(yLabel, colToCal, unit) {
 					const colsToSum   = [colToCal, COL.PACKET_COUNT.id];
 
 					data = MMTDrop.tools.sumByGroups(data, colsToSum, colsToGroup);
-
+					//number of seconds
+					const period_sampling = fPeriod.getDistanceBetweenToSamples();
 					const arr = [];
 					for (var time in data) {
 						var o = {};
@@ -149,18 +166,23 @@ function createReport(yLabel, colToCal, unit) {
 						for (var qId in msg) {
 							let m = msg[qId];
 							//get average per packet
-							o[qId] = Math.round( m[colToCal] / m[COL.PACKET_COUNT.id] );
+							if( isGetAvg)
+								o[qId] = m[colToCal] / m[COL.PACKET_COUNT.id] / period_sampling;
+							else
+								o[qId] = m[colToCal] / period_sampling;
+							
+							o[qId] =  Math.round( o[qId] );
 						}
 						arr.push(o);
 					}
 
-					var columns = [COL.TIMESTAMP, {id: 0, label: "Classic Queue"}, {id: 1, label: "LL Queue"}];
+					var columns = [COL.TIMESTAMP, {id: 0, label: "Classic Queue"}, {id: 1, label: "Low-latency Queue"}];
 
 					return {
 						data: arr,
 						columns: columns,
 						ylabel: yLabel,
-						height: 175,
+						height: (isFirstChart? 185 : 110),
 						addZeroPoints: {
 							time_id: 3,
 							time: status_db.time,
@@ -180,6 +202,12 @@ function createReport(yLabel, colToCal, unit) {
 							format: formatTime
 						}
 					},
+					y: {
+						tick: {
+							count: (isFirstChart? 5 : 4),
+							outer: false
+						}
+					}
 				},
 				grid: {
 					x: {
@@ -208,6 +236,13 @@ function createReport(yLabel, colToCal, unit) {
 				},
 				onmouseout: function() {
 					_this.hideAllTooltip();
+				},
+				padding: {
+					top: 10,
+					bottom: -10
+				},
+				legend: {
+					show: isFirstChart //show legend for the first chart only
 				}
 			},
 			afterEachRender: function(_chart) {
@@ -249,11 +284,12 @@ function createReport(yLabel, colToCal, unit) {
 }
 
 var ReportFactory = {
-	createLatencyReport: createReport("Queue Latency", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond"),
-	createOccupsReport: createReport("Queue Occups", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets"),
-	createMarkReport: createReport("Nb Mark", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "packets"),
-	createDropReport: createReport("Nb Drop", MMTDrop.constants.StatsColumn.L4S_NB_DROP.id, "packets"),
-	createMarkProbabReport: createReport("Mark probability", MMTDrop.constants.StatsColumn.L4S_MARK_PROBAB.id, "%"),
+	createThroughputReport: createReport("Throughput (pps)", MMTDrop.constants.StatsColumn.PACKET_COUNT.id, "packets", false),
+	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond", true),
+	createOccupsReport: createReport("Queue Occups (total)", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets", true),
+	createMarkReport: createReport("Nb Mark (total)", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "packets", false),
+	createDropReport: createReport("Nb Drop (total)", MMTDrop.constants.StatsColumn.L4S_NB_DROP.id, "packets", false),
+	createMarkProbabReport: createReport("Mark probability (avg)", MMTDrop.constants.StatsColumn.L4S_MARK_PROBAB.id, "%", true),
 }
 
 

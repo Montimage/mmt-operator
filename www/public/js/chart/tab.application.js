@@ -67,6 +67,12 @@ URL_PARAM.app_id = function(){
 
 //select only TCP-based app or QUIC
 const APP_PATH_REGEX = {"$regex" : ".354.|.661", "$options" : ""};
+
+//whether L4S module is activated
+const isL4S = function(){
+	return !!( Array.isArray(MMTDrop.config.others.modules) && (MMTDrop.config.others.modules.indexOf("l4s") > -1) )
+}
+
 //create reports
 var ReportFactory = {
     formatTime : function( date ){
@@ -358,7 +364,7 @@ var ReportFactory = {
                             y: {
                               lines : [
                                 //granularity/average
-                                {value: total, text: total + " ms/flow", position: 'start'}
+                                {value: total, text: total + (isL4S()? "ms": " ms/flow"), position: 'start'}
                               ]
                             }
                           }
@@ -467,7 +473,7 @@ var ReportFactory = {
                                 {id: COL.APP_RESPONSE_TIME.id    , label: "ART (ms/trans.)" , align: "right"},
                                 {id: COL.DATA_TRANSFER_TIME.id   , label: "DTT (ms/flow)"   , align: "right"},
                                 
-                                {id: COL.ACTIVE_FLOWS.id         , label: "#Flows"          , align: "right"},
+                                {id: COL.ACTIVE_FLOWS.id         , label: (isL4S()?"#packets": "#Flows")          , align: "right"},
                                 {id: COL.PACKET_COUNT.id         , label: "Pkt Rate (pps)"  , align: "right"},
                                 {id: "retransmission"            , label: "%Retrans."       , align: "right"},
                                 {id: COL.DATA_VOLUME.id          , label: "Data Rate (bps)" , align: "right"},
@@ -678,7 +684,7 @@ var ReportFactory = {
                       ["DTT"],
                       ];
                    if( is_trans )
-                      obj = [["#Flows"]];
+                      obj = [[ (isL4S()?"#Packets":"#Flows") ]];
 
                    var groups = [];
                    for( var i in obj )

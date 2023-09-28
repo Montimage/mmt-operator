@@ -5937,7 +5937,7 @@ if( typeof Highcharts !== "undefined" )
                   var start_time  = time.begin, end_time = time.end;
                   var time_id     = 0;
 
-                  if( (time.end - time.begin) / period > 2000 ){
+                  if( (time.end - time.begin) / period > 5000 ){
                      throw new Error("too long");
                   }
 
@@ -6160,7 +6160,7 @@ if( typeof Highcharts !== "undefined" )
                            },
                            min: 0,
                            padding: {
-                              top: 10,
+                              top: 0,
                               bottom: 2
                            },
                            tick: {
