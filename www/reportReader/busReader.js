@@ -54,7 +54,6 @@ async function queryIpMongo( attackId ) {
 
 				// Perform the aggregation query
 				var result = await db.collection('security').aggregate(pipeline, {cursor : { }} ).toArray();
-				console.log("Mongo ip result "+result ) ;
 					if ( result.length > 0 ) {
 						ipAttacker = result[0].ipSrcValue;
 				

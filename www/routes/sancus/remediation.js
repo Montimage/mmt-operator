@@ -49,40 +49,6 @@ async function produceMessage(msg) {
 }
 
 
-router.get("",async function(req, res) {
-  try{
-    console.log("Received "+req.query.cid);
-    //produceMessage();
-    //_publishMessage( "testTopic", "ciao" )
-    var scriptCode = config.master_node.command;
-    const command_ip = scriptCode.replace(/IP_ATT/g, req.query.IP);
-    console.log("Command "+command_ip);
-    var result=await produceMessage( command_ip );
-
-    //  publisher.publish( "testTopic", "Hello Kafkabus");
-    console.log("Remediation.js server");
-    console.log("Result "+result)
-   // res.sendFile('index.html', { root: __dirname + "../views/" } )    
-   if(result==true){
-      res.status(200).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
-      
-     // res.status(202).setHeader("Content-Type", "application/json");
-      //res.sendFile('index.html', { root: __dirname + "../views/" } ) 
-
-     // res.send({message: "Message correctly published on kafkabus "});
-   }
-      else
-          res.status(500).send( "Error:Message not published on KafkaBus" );
-
-    //  res.status(400).end()//204: The server has not fulfilled the request and that there is no additional content to send in the response payload body.
-  }catch(error ){
-    console.error('Error publishing message to orchestrator:', error);
-
-    res.status(500).send( "Error:Message not published on KafkaBus" );
-
-  }
-});
-
 router.post("",async function(req, res) {
   console.log("Received "+req.query.CID+" "+ req.query.IP );
   //produceMessage();
@@ -93,7 +59,7 @@ router.post("",async function(req, res) {
     var result=await produceMessage( command_ip );
   //  publisher.publish( "testTopic", "Hello Kafkabus");
   console.log("Remediation.js server");
-  console.log("Result "+result)
+
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
  if(result==true){
      res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
