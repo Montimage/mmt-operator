@@ -6,7 +6,7 @@ const constant       = require('../libs/constant.js');
 const ProcessMessage = require("./ProcessMessage");
 const DataBase       = require("./DataBase.js");
 const DBInserter     = require("./DBInserter.js");
-const { MongoClient } = require('mongodb');
+const { MongoClient }= require('mongodb');
 const database       = new DataBase();
 const processMessage = new ProcessMessage( database );
 
@@ -54,11 +54,11 @@ async function queryIpMongo( attackId ) {
 
 				// Perform the aggregation query
 				var result = await db.collection('security').aggregate(pipeline, {cursor : { }} ).toArray();
-					if (result.length > 0) {
+				console.log("Mongo ip result "+result ) ;
+					if ( result.length > 0 ) {
 						ipAttacker = result[0].ipSrcValue;
 				
 					}
-				
 			
 		} catch (err) {
 			console.error('Error:', err);
@@ -145,6 +145,7 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 	catch (error) {
 			// Handle the exception here
 			console.error('An error occcurred:', error);
+
 		  }
 
 
