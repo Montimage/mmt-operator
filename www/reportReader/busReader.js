@@ -76,6 +76,7 @@ async function queryIpMongo( attackId ) {
 		
 	if( typeof json1[0] === 'string'  ){
 		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // first element of second array. In the example is 9
+		console.log("Attack ID from Miu "+ json1[1][0][0] );
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
 		outputJson.CID = json1[0];
@@ -96,7 +97,7 @@ async function queryIpMongo( attackId ) {
 }
   
  function receiveMessage (channel, message) {
-   //console.log( "[" + channel + "] " + message );
+   console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){

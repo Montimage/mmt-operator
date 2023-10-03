@@ -63,12 +63,7 @@ router.post("",async function(req, res) {
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
  if(result==true){
      res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
-    
-   // res.status(202).setHeader("Content-Type", "application/json");
-    //res.sendFile('index.html', { root: __dirname + "../views/" } ) 
 
-    //res.send({message: "Message correctly published on kafkabus "});
-   ///MMTDrop.alert.success("your message here", 10*1000); 
  }
     else
         res.status(500).send( "Error:Message not published on KafkaBus" );

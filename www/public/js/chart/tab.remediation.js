@@ -83,10 +83,12 @@ ReportFactory.createRemediationReport = function (fPeriod) {
 
     const $match = {
      	//"value" : {"$gt": 1}
-       "count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
-
+       $and: [
+       {"count": { $gte: 1 } }, // Filter out groups with a count of 1 (unique combination of field1 and field2)
+       {"ipAttack": {"$ne": ""}}
+       ]
     };
-    const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $first: "$description" },"ipAttack":{$first : "$ipAttack"}, "timestamp": {$first: "$timestamp"}    }; 
+    const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $last: "$description" },"ipAttack":{$last : "$ipAttack"}, "timestamp": {$last: "$timestamp"}    }; 
     const $project = {    "_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, ipAttack:1 ,timestamp:1 ,  count: 1 } ;
     //const $group = { _id: "$CID"};
 
