@@ -97,7 +97,7 @@ async function queryIpMongo( attackId ) {
 }
   
  function receiveMessage (channel, message) {
-   console.log( "[" + channel + "] " + message );
+   //console.log( "[" + channel + "] " + message );
    try{
       processMessage.process( message );
    }catch( err ){
