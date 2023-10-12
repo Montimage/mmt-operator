@@ -1,13 +1,47 @@
 var express  = require('express');
 var router   = express.Router();
 const config = require("../../libs/config");
-
+const { MongoClient } = require('mongodb');
 pub_sub    = require("../../libs/kafka");
 
 
 //Todo:produce message on specific topic
 //Pass the message through the route
 const { Kafka } = require('kafkajs');
+async function deleteDocuments(cid,attackId) {
+  // Replace these with your MongoDB connection details
+  const uri = 'mongodb://localhost:27017'; // MongoDB connection URI
+  const dbName = 'mmt-data';
+  const collectionName = 'remediationAttack';
+  cid = `${cid}`;
+  attackId =  parseInt(attackId, 10)
+  console.log( 'deleteDocuments  ' +  attackId + " "+ cid )
+  // Define the two conditions for deletion
+
+  const condition1 = { CID: cid };
+  const condition2 = { attack: attackId};
+    const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+  
+    try {
+      // Connect to the MongoDB server
+      await client.connect();
+  
+      // Access the database and collection
+      const db = client.db(dbName);
+      const collection = db.collection(collectionName);
+  
+      // Delete documents that match both conditions
+      const result = await collection.deleteMany({ $and: [condition1, condition2] });
+  
+      console.log(`Deleted ${result.deletedCount} documents`);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      // Close the MongoDB connection
+      client.close();
+    }
+  }
+
 
 async function produceMessage(msg) {
   // Create a new Kafka instance
@@ -50,7 +84,7 @@ async function produceMessage(msg) {
 
 
 router.post("",async function(req, res) {
-  console.log("Received "+req.query.CID+" "+ req.query.IP );
+  console.log("Received "+req.query.CID+" "+req.query.AttackId)+" "+ req.query.IP ;
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
   var scriptCode = config.master_node.command;
@@ -59,6 +93,7 @@ router.post("",async function(req, res) {
     var result=await produceMessage( command_ip );
   //  publisher.publish( "testTopic", "Hello Kafkabus");
   console.log("Remediation.js server");
+  deleteDocuments(req.query.CID,req.query.AttackId);
 
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
  if(result==true){

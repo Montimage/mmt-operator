@@ -46,7 +46,7 @@ async function queryIpMongo( attackId ) {
 	  ];
 
 	  	const client = new MongoClient(url ,{ useNewUrlParser: true, useUnifiedTopology: true });
-
+   
 		  try {
 				// Connect to MongoDB
 				await client.connect();
@@ -68,7 +68,7 @@ async function queryIpMongo( attackId ) {
 		}
 }
 //Message input ex: [['C4', [[9,10]]], [[], []]]
- async function  extractDescriptions(json1, json2 ) {
+ async function  extractDescriptions(json1, json2, json3 ) {
 	// Initialize an empty array to store the output JSON objects
 	const outputJson = {} ;
 	var ipAttacker = "" ;
@@ -77,10 +77,16 @@ async function queryIpMongo( attackId ) {
 	if( typeof json1[0] === 'string'  ){
 		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // first element of second array. In the example is 9
 		console.log("Attack ID from Miu "+ json1[1][0][0] );
+
 		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
+		const attackName  = json3.find((item) => item.attack_id === json1[1][0][0]);
+	
+		//console.log("Attackname  "+ attackName );
+
 		outputJson.CID = json1[0];
 		outputJson.attack = json1[1][0];
+		outputJson.attackName = attackName ? attackName.attack_name : "";
 		outputJson.description =  descriptionObj ? descriptionObj.description : "";
 		outputJson.ipAttack  =  ipAttacker ;
 		outputJson.timestamp  =  currentTimestampInSeconds ;
@@ -123,10 +129,11 @@ report_client_miugio.on('message',  async function  ( channel,message) {
 		const json1 = JSON.parse( message );//Convert MIU?GIO json 
 
 		const json2 = require('../countermeasures.json');
+		const json3 = require('../attack.json');
 		//console.log("json2")
 		
-		const  jsonAttacks 		=	await extractDescriptions( json1 [0] , json2 );
-		const  jsonRemediation  =	await extractDescriptions( json1 [1] , json2 );
+		const  jsonAttacks 		=	await extractDescriptions( json1 [0] , json2 , json3 );
+		const  jsonRemediation  =	await extractDescriptions( json1 [1] , json2 , json3 );
 
 		//json.description = 'ciao';
 		// Print the JSON objects

@@ -1,0 +1,28 @@
+	[
+	{"attack_id":100,"attack_name":"NAS-5G SMC Replay attack"},
+	{"attack_id":101,"attack_name":"Packet poisoning attack - NGAP packet altering"},
+	{"attack_id":102,"attack_name":"NGAP injection in SCTP packet"},
+	{"attack_id":103,"attack_name":"Corrupted ngap attack"},
+	{"attack_id":104, "attack_name":"5G dos attack in control plane"},
+	{"attack_id":105, "attack_name":"5G dos total attack in control plane"},
+	{"attack_id":44, "attack_name":"Tcp syn attack"},
+	{"attack_id":106,"attack_name":"HTTP2 flooding of pots methods "},
+	{"attack_id":107,"attack_name":" Compression attack"},
+	{"attack_id":108,"attack_name":"HTTP2 Fuzzing  payload of Post requests"},
+	{"attack_id":109,"attack_name":"HTTP2 Flooding of get requests"},
+	{"attack_id":110,"attack_name":"HTTP2 Flooding of window update"},
+	{"attack_id":111,"attack_name":"HTTP2 Settings attack"},
+	{"attack_id":112,"attack_name":"SUCI catcher attack"},
+	{"attack_id":113,"attack_name":"GAN-based Attack"},
+	{"attack_id":114,"attack_name":"PFCP Session Deletion DoS"},
+	{"attack_id":115,"attack_name":"PFCP Session Establishment Flood"},
+	{"attack_id":116,"attack_name":"PFCP Session Modification DoS  DROP Flag"},
+	{"attack_id":117,"attack_name":"PFCP Session Modification DoS  DUPL Flag"},
+	{"attack_id":118,"attack_name":"API injection"},
+	
+	{"attack_id":119,"attack_name":"DOS attacks"},
+	{"attack_id":120,"attack_name":"SCTP DOS"},
+	{"attack_id":121,"attack_name":"PDU session creation"}
+	
+		
+	]
