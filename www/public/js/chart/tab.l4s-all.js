@@ -5,19 +5,69 @@ var arr = [
 		x: 0,
 		y: 0,
 		width: 12,
-		height: 5,
+		height: 3,
 		type: "success",
 		userData: {
 			fn: "createLatencyReport"
 		},
 	},
 	{
+		id: "occups",
+		title: "Queue Occups",
+		x: 0,
+		y: 3,
+		width: 12,
+		height: 2,
+		type: "danger",
+		userData: {
+			fn: "createOccupsReport"
+		},
+	},
+	{
+		id: "nb-mark",
+		title: "Number of Marked packets",
+		x: 0,
+		y: 6,
+		width: 12,
+		height: 2,
+		type: "warning",
+		userData: {
+			fn: "createMarkReport"
+		},
+	},
+	/*
+	{
+		id: "nb-drop",
+		title: "Number of Dropped packets",
+		x: 0,
+		y: 9,
+		width: 12,
+		height: 3,
+		type: "info",
+		userData: {
+			fn: "createDropReport"
+		},
+	},
+	*/
+	{
+		id: "mark-probab",
+		title: "Mark Probability",
+		x: 0,
+		y: 12,
+		width: 12,
+		height: 2,
+		type: "info",
+		userData: {
+			fn: "createMarkProbabReport"
+		},
+	},
+	{
 		id: "throughput",
-		title: "Bandwidth",
+		title: "Throughput",
 		x: 0,
 		y: 15,
 		width: 12,
-		height: 4,
+		height: 2,
 		type: "success",
 		userData: {
 			fn: "createThroughputReport"
@@ -242,8 +292,12 @@ function createReport(yLabel, colToCal, unit, isGetAvg) {
 }
 
 var ReportFactory = {
-	createThroughputReport: createReport("Bandwidth (bps)", MMTDrop.constants.StatsColumn.DATA_VOLUME.id, "bps", false),
+	createThroughputReport: createReport("Throughput (pps)", MMTDrop.constants.StatsColumn.PACKET_COUNT.id, "packets", false),
 	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond", true),
+	createOccupsReport: createReport("Queue Occups (avg)", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets", true),
+	createMarkReport: createReport("Nb Mark (total)", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "packets", false),
+	createDropReport: createReport("Nb Drop (total)", MMTDrop.constants.StatsColumn.L4S_NB_DROP.id, "packets", false),
+	createMarkProbabReport: createReport("Mark probability (avg)", MMTDrop.constants.StatsColumn.L4S_MARK_PROBAB.id, "%", true),
 }
 
 

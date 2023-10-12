@@ -67,13 +67,14 @@ if( typeof Highcharts !== "undefined" )
             //defined in pre-commond.js to show a loading popup
             if( loading )
                loading.onHide();
-
+            console.error( msg );
             this.alert( msg, "error",  delay);
          },
          success: function( msg, delay ){
             this.alert( msg, "success", delay );
          },
          warning: function( msg, delay ){
+            console.warn( msg );
             this.alert( msg, "error", delay ); 
          },
          hideAll: function(){
@@ -887,13 +888,15 @@ if( typeof Highcharts !== "undefined" )
           */
          period : {
             MINUTE      : "minute",
+            MINUTE_10   : "minute_10",
+            MINUTE_15   : "minute_15",
             HOUR        : "hour",
             HALF_DAY    : "12hours",
             QUARTER_DAY : "6hours",
             DAY         : "day",
             WEEK        : "week",
             MONTH       : "month",
-            YEAR         : "year"
+            YEAR        : "year"
          },
    };
 
@@ -2227,6 +2230,8 @@ if( typeof Highcharts !== "undefined" )
          if( param.no_group == undefined )
             switch ( param.period_groupby ) {
             case MMTDrop.constants.period.MINUTE:
+            case MMTDrop.constants.period.MINUTE_10:
+            case MMTDrop.constants.period.MINUTE_15:
             case MMTDrop.constants.period.HOUR:
                group_by = "_real";
                break;
@@ -3292,6 +3297,8 @@ if( typeof Highcharts !== "undefined" )
                options = MMTDrop.config.periodFilterOptions
                else{
                   options.push( { id: periods.MINUTE     , label: "Last 5 minutes", selected: true });
+                  options.push( { id: periods.MINUTE_10  , label: "Last 10 minutes" });
+                  options.push( { id: periods.MINUTE_15  , label: "Last 15 minutes" });
                   options.push( { id: periods.HOUR       , label: "Last hour"      });
                   options.push( { id: periods.QUARTER_DAY, label: "Last 6 hours"   });
                   options.push( { id: periods.HALF_DAY   , label: "Last 12 hours"  });
@@ -3372,6 +3379,12 @@ if( typeof Highcharts !== "undefined" )
                case MMTDrop.constants.period.MINUTE :
                   period = 5*60//5 min
                   break;
+               case MMTDrop.constants.period.MINUTE_10 :
+                  period = 10*60//10 min
+                  break;
+               case MMTDrop.constants.period.MINUTE_15 :
+                  period = 15*60//15 min
+                  break;
                case MMTDrop.constants.period.HOUR :
                   period = 60*60;    //1 hour
                   break;
@@ -3406,6 +3419,8 @@ if( typeof Highcharts !== "undefined" )
                var sel    = this.selectedOption().id;
                switch ( sel ){
                case MMTDrop.constants.period.MINUTE :
+               case MMTDrop.constants.period.MINUTE_10 :
+               case MMTDrop.constants.period.MINUTE_15 :
                case MMTDrop.constants.period.HOUR   :
                   period = MMTDrop.config.probe_stats_period;
                   break;
@@ -3431,6 +3446,8 @@ if( typeof Highcharts !== "undefined" )
                var sel    = this.selectedOption().id;
                switch ( sel ){
                case MMTDrop.constants.period.MINUTE :
+               case MMTDrop.constants.period.MINUTE_10 :
+               case MMTDrop.constants.period.MINUTE_15 :
                case MMTDrop.constants.period.HOUR :
                   format = "HH:mm:ss";
                   break;
