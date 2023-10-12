@@ -112,11 +112,10 @@
 		"dpi",
 		"application",
 		"l4s",
+		"l4s-all",
 		"security",
 		"behavior",
 		"enodeb",
-		"ndn",
-		"video",
 		"stat"
 	],
 	"modules_config": {

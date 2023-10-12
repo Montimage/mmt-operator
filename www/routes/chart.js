@@ -118,6 +118,9 @@ var all_pages = {
     },
     'l4s' : {
       title: "L4S" //mosaico project
+    },
+    'l4s-all' : {
+      title: "Queues" //mosaico project
     }
 };
 
