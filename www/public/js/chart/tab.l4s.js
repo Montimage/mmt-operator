@@ -64,7 +64,7 @@ _this.hideAllTooltip = function() {
 };
 
 //create reports
-function createReport(yLabel, colToCal, unit, isGetAvg) {
+function createReport(yLabel, colToCal, unit, isGetAvg, fn) {
 	return function(fPeriod){
 		const COL = MMTDrop.constants.StatsColumn;
 		const database = new MMTDrop.Database({
@@ -120,12 +120,12 @@ function createReport(yLabel, colToCal, unit, isGetAvg) {
 								o[qId] = m[colToCal] / m[COL.PACKET_COUNT.id] / period_sampling;
 							else {
 								o[qId] = m[colToCal] / period_sampling;
-								
-								if( colToCal == COL.DATA_VOLUME.id )
-									o[qId] *= 8; //to bps
 							}
 							
-							o[qId] =  Math.round( o[qId] );
+							if( fn )
+								o[qId] =  fn( o[qId] );
+							else
+								o[qId] =  Math.round( o[qId] );
 						}
 						arr.push(o);
 					}
@@ -242,8 +242,12 @@ function createReport(yLabel, colToCal, unit, isGetAvg) {
 }
 
 var ReportFactory = {
-	createThroughputReport: createReport("Bandwidth (bps)", MMTDrop.constants.StatsColumn.DATA_VOLUME.id, "bps", false),
-	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond", true),
+	createThroughputReport: createReport("Bandwidth (bps)", MMTDrop.constants.StatsColumn.DATA_VOLUME.id, "bps", false,
+		//convert from byte to bit 
+		function(v){ return Math.round(v*8) }),
+	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "millisecond", true,
+		//convert from micro to millisecond 
+		function(v){ return Math.round(v/1000) }),
 }
 
 
