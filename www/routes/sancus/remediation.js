@@ -8,11 +8,10 @@ pub_sub    = require("../../libs/kafka");
 //Todo:produce message on specific topic
 //Pass the message through the route
 const { Kafka } = require('kafkajs');
-async function deleteDocuments(cid,attackId) {
+async function deleteDocuments(cid,attackId,collectionName) {
   // Replace these with your MongoDB connection details
   const uri = 'mongodb://localhost:27017'; // MongoDB connection URI
   const dbName = 'mmt-data';
-  const collectionName = 'remediationAttack';
   cid = `${cid}`;
   attackId =  parseInt(attackId, 10)
   console.log( 'deleteDocuments  ' +  attackId + " "+ cid )
@@ -84,7 +83,7 @@ async function produceMessage(msg) {
 
 
 router.post("",async function(req, res) {
-  console.log("Received "+req.query.CID+" "+req.query.AttackId)+" "+ req.query.IP ;
+  console.log("Received "+req.query.CID+" "+req.query.AttackId+" "+ req.query.IP +" "+req.query.type);
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
   var scriptCode = config.master_node.command;
@@ -93,7 +92,10 @@ router.post("",async function(req, res) {
     var result=await produceMessage( command_ip );
   //  publisher.publish( "testTopic", "Hello Kafkabus");
   console.log("Remediation.js server");
-  deleteDocuments(req.query.CID,req.query.AttackId);
+  if(req.query.type=='A')
+      deleteDocuments(req.query.CID,req.query.AttackId,"remediationAttack");
+  else
+      deleteDocuments(req.query.CID,req.query.AttackId,"remediationVuln");
 
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
  if(result==true){

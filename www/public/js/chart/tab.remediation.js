@@ -37,7 +37,6 @@ var availableReports = {
 };
 
 var ReportFactory = {};
-
 //When does it activate with a table?
 
 MMTDrop.callback = {
@@ -78,13 +77,44 @@ ReportFactory.createRemediationReport = function (fPeriod) {
     fProbe.hide()
     console.log("FPeriod "+ fPeriod.selectedOption().id )
     console.log( "FProbe "+fProbe.selectedOption().id )
+    var pastDate ;
 
+    switch(fPeriod.selectedOption().id){
+      case 'minute':
+         pastDate = new Date(Date.now() - 5 * 60 * 1000);//subtract 5 minutes
+         console.log("Period minute")
+         break;
+  
+     case 'hour':
+          pastDate = new Date(Date.now() - 60 * 60 * 1000); // Subtracting 60 minutes in milliseconds
+         console.log("Period hour")
+         break;
+  
+      case '12hours':
+          pastDate = new Date((Date.now() - 12 * 60 * 1000)); // Subtracting 12 hours in milliseconds
+          console.log("Period 12 hour")
+          break;
+  
+      case 'day':
+  
+        pastDate = new Date((Date.now() - 24 * 60 * 60 * 1000)); // Subtracting 24 hours in milliseconds
+        console.log("Period day")
+        break;
+  
+      default:
+         pastDate = new Date((Date.now()- 10000 * 60 * 1000));
+         console.log("Period Default")
+         break;
+  
+  
+    } 
     const $match = {
      	//"value" : {"$gt": 1}
     //   $and: [
-       "count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
+       //"count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
      //  {"ipAttack": {$ne: ""}}
      //  ]
+     timestamp: { $gte: pastDate.toISOString() }
     };
     const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $last: "$description" },"attackName":{ $last: "$attackName" },"ipAttack":{$last : "$ipAttack"}, "timestamp": {$last: "$timestamp"}    }; 
     const $project = {    "_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, ipAttack:1 ,timestamp:1 , attackName:1,  count: 1 } ;
@@ -142,35 +172,39 @@ ReportFactory.createRemediationReport = function (fPeriod) {
     afterEachRender: function( _chart ){
       // Add event listener for opening and closing details
       _chart.chart.on('click', 'tr[role=row]', function (){
-        
-         var tr = $(this);
-         var row = _chart.chart.api().row(tr);
-          var index = row.data()[0] - 1;
-
-         var row_data = row.data();
-         if( row_data == undefined )
-             return;
-             //console.log(row_data[0]);//Access to first element of the row array
-             const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[6]+"&AttackId="+row_data[3];//Access to 2 column of CID
-
-             MMTDrop.tools.ajax(url, {}, "POST", {
-              error  : function(){
-                MMTDrop.alert.error("Error executing remediation", 10*1000);
-              },
-              success: function(){
-                MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
-            // var button = document.getElementById("sancus-buttton");
-            //console.log(row_data[4]);
-              var image = document.getElementById("redAtt_"+index); //change image
-              image.src = "../img/green_button.png";
-             image.style = "width: 20px; height: 20px";
-             var text = document.getElementById("spanAtt_"+index);
-             text.textContent = "Remediation applied" ;
-            //   button.style.backgroundColor = "green";
-          //  console.log(row_data[3])
+        var confirmation = window.confirm("Do you want to execute the remediation?");
+   
+        if (confirmation === true) {
+          var tr = $(this);
+          var row = _chart.chart.api().row(tr);
+           var index = row.data()[0] - 1;
+ 
+          var row_data = row.data();
+          if( row_data == undefined )
+              return;
+              //console.log(row_data[0]);//Access to first element of the row array
+              const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[6]+"&AttackId="+row_data[3]+"&type=A";//Access to 2 column of CID
+              //type A is attack
+              MMTDrop.tools.ajax(url, {}, "POST", {
+               error  : function(){
+                 MMTDrop.alert.error("Error executing remediation", 10*1000);
+               },
+               success: function(){
+                 MMTDrop.alert.success("Remediation successfully sent ", 10*1000);
+             // var button = document.getElementById("sancus-buttton");
+             //console.log(row_data[4]);
+               var image = document.getElementById("redAtt_"+index); //change image
+               image.src = "../img/green_button.png";
+              image.style = "width: 20px; height: 20px";
+              var text = document.getElementById("spanAtt_"+index);
+              text.textContent = "Remediation applied" ;
      
-              }
-            })
+      
+               }
+             })
+         } else {
+          window.close(); // Close the window if user declines
+        }
 
          
       });
@@ -233,15 +267,45 @@ ReportFactory.createVulnerabilityReport = function( fperiod) {
  }, false);
  database.updateParameter = function (_old_param) {
   fProbe.hide()
-  console.log( fPeriod.selectedOption().id )
+  console.log( "fPeriod.selectedOption().id "+fPeriod.selectedOption().id )
   console.log( fProbe.selectedOption().id )
+  var pastDate ;
+  
+  switch(fPeriod.selectedOption().id){
+    case 'minute':
+       pastDate = new Date(Date.now() - 5 * 60 * 1000);//subtract 5 minutes
+       console.log("Period minute")
+       break;
+
+   case 'hour':
+        pastDate = new Date(Date.now() - 60 * 60 * 1000); // Subtracting 60 minutes in milliseconds
+       console.log("Period hour")
+       break;
+
+    case '12hours':
+        pastDate = new Date((Date.now() - 12 * 60 * 1000)); // Subtracting 12 hours in milliseconds
+        console.log("Period 12 hour")
+        break;
+
+    case 'day':
+
+      pastDate = new Date((Date.now() - 24 * 60 * 60 * 1000)); // Subtracting 24 hours in milliseconds
+      console.log("Period day")
+      break;
+
+    default:
+       pastDate = new Date((Date.now()- 10 * 60 * 60000));
+       console.log("Period Default")
+       break;
+
+
+  } 
+  console.log("past date "+pastDate.toISOString())
 
   const $match = {
-
-      "count": { $gte: 1 }  // Filter out groups with a count of 1 (unique combination of field1 and field2)
-
-  };
-  const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $first: "$description" }, "timestamp": {$first: "$timestamp"}    }; 
+    timestamp: { $gte: pastDate.toISOString() }
+    }  ;
+  const $group   = {    _id: {      CID: "$CID",       attack: "$attack"      },    count: { $sum: 1 } ,      "description":{ $last: "$description" }, "timestamp": {$last: "$timestamp"}    }; 
   const $project = {"_id":0 , CID: "$_id.CID", attack: "$_id.attack",    description: 1, timestamp:1 ,  count: 1 } ;
 
 
@@ -262,8 +326,8 @@ var cTable = MMTDrop.chartFactory.createTable({
         //data[i]["button"] = "<a href='/sancus/remediation?cid=" + data[i]["CID"] + "'>Send orchestrator</a>"
         //data[i]["button"] = '<form action="/sancus/remediation?CID='+data[i]["CID"]+'" method="POST"> <button type="submit">Send POST Request</button>'
         //data[i]["button"] = "<a href='/sancus/remediation?value=" + data[i]["value"] + "&description="+data[i]["description"]+"'>button</a>"
-    //    data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
-    data[i]["Row"]=i+1; //initialize column of rows with correct number
+         //data[i]["button"]="<a class='sancus-button' href='/sancus/remediation?cid=" + data[i]["CID"] + "'>button</a>"
+         data[i]["Row"]=i+1; //initialize column of rows with correct number
 
       //data[i]["status"]=  `<button   id="sancus-buttton" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id="red" src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">`
           data[i]["status"] =  `<button  id="sancus-buttton`+i+`" style="background-color: #f1f1f1; border: none; padding: 0; cursor: pointer;"> <img id=red_`+i+`  src="../img/red_button.jpg" alt="Image" style="width: 20px; height: 20px;">  <span id= span_`+ i +`>Apply Remediation</span>  `;
@@ -306,6 +370,10 @@ var cTable = MMTDrop.chartFactory.createTable({
   afterEachRender: function( _chart ){
     // Add event listener for opening and closing details
     _chart.chart.on('click', 'tr[role=row]', function (){
+      //var confirmation = window.confirm("Do you want to execute the remediation?");
+      if( !confirm("Are you sure you want to empty the Database?\n\n\n") )
+      return;
+      if (confirmation === true) {
        var tr = $(this);
        var row = _chart.chart.api().row(tr);
         var index = row.data()[0] - 1;
@@ -313,8 +381,9 @@ var cTable = MMTDrop.chartFactory.createTable({
        var row_data = row.data();
        if( row_data == undefined )
            return;
-           //console.log(row_data[0]);//Access to first element of the row array
-           const url = "/sancus/remediation?CID=" + row_data[1] + "&IP=" + row_data[5];//Access to 2 column of CID
+           console.log("3 element"+row_data[3]);//Access to first element of the row array
+           const url = "/sancus/remediation?CID=" + row_data[1] +"&type=R"+"&IP=none"+"&AttackId="+row_data[3];//Access to 2 column of CID
+           //type R is remediation
 
            MMTDrop.tools.ajax(url, {}, "POST", {
             error  : function(){
@@ -331,11 +400,13 @@ var cTable = MMTDrop.chartFactory.createTable({
             text.textContent= "Remediation applied" ;
           //   button.style.backgroundColor = "green";
         //  console.log(row_data[3])
-              selected_index.push(index);
             }
           })
+        }
+        else {
+          window.close(); // Close the window if user declines
+        }
 
-       
     });
 
  }

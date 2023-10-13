@@ -67,6 +67,11 @@ async function queryIpMongo( attackId ) {
 			return ipAttacker;
 		}
 }
+function generateTimestamp() {
+	const now = new Date();
+	const isoDate = now.toISOString();
+	return isoDate;
+  }
 //Message input ex: [['C4', [[9,10]]], [[], []]]
  async function  extractDescriptions(json1, json2, json3 ) {
 	// Initialize an empty array to store the output JSON objects
@@ -78,7 +83,8 @@ async function queryIpMongo( attackId ) {
 		ipAttacker = await  queryIpMongo(  json1[1][0][0] ); // first element of second array. In the example is 9
 		console.log("Attack ID from Miu "+ json1[1][0][0] );
 
-		const currentTimestampInSeconds = Math.floor(new Date().getTime() / 1000);
+		const timestampDay = generateTimestamp();
+		console.log(timestampDay);		
 		const descriptionObj = json2.find( (item) => item.CID === json1[0]);
 		const attackName  = json3.find((item) => item.attack_id === json1[1][0][0]);
 	
@@ -89,7 +95,7 @@ async function queryIpMongo( attackId ) {
 		outputJson.attackName = attackName ? attackName.attack_name : "";
 		outputJson.description =  descriptionObj ? descriptionObj.description : "";
 		outputJson.ipAttack  =  ipAttacker ;
-		outputJson.timestamp  =  currentTimestampInSeconds ;
+		outputJson.timestamp  =  timestampDay ;
 
 	 }
 	
