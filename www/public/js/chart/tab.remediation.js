@@ -370,9 +370,8 @@ var cTable = MMTDrop.chartFactory.createTable({
   afterEachRender: function( _chart ){
     // Add event listener for opening and closing details
     _chart.chart.on('click', 'tr[role=row]', function (){
-      //var confirmation = window.confirm("Do you want to execute the remediation?");
-      if( !confirm("Are you sure you want to empty the Database?\n\n\n") )
-      return;
+      var confirmation = window.confirm("Do you want to execute the remediation?");
+
       if (confirmation === true) {
        var tr = $(this);
        var row = _chart.chart.api().row(tr);

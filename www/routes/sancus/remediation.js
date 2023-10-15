@@ -14,7 +14,7 @@ async function deleteDocuments(cid,attackId,collectionName) {
   const dbName = 'mmt-data';
   cid = `${cid}`;
   attackId =  parseInt(attackId, 10)
-  console.log( 'deleteDocuments  ' +  attackId + " "+ cid )
+  //console.log( 'deleteDocuments  ' +  attackId + " "+ cid )
   // Define the two conditions for deletion
 
   const condition1 = { CID: cid };
