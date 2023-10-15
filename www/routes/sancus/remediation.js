@@ -86,6 +86,7 @@ router.post("",async function(req, res) {
   console.log("Received "+req.query.CID+" "+req.query.AttackId+" "+ req.query.IP +" "+req.query.type);
   //produceMessage();
   //_publishMessage( "testTopic", "ciao" )
+  if(req.query.CID=="C3"){
   var scriptCode = config.master_node.command;
     const command_ip = scriptCode.replace(/IP_ATT/g, req.query.IP);
     console.log("Command "+command_ip);
@@ -98,14 +99,17 @@ router.post("",async function(req, res) {
       deleteDocuments(req.query.CID,req.query.AttackId,"remediationVuln");
 
  // res.sendFile('index.html', { root: __dirname + "../views/" } )    
- if(result==true){
-     res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
+  if(result==true){
+       res.status(204).end()//204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
 
- }
+   }
     else
         res.status(500).send( "Error:Message not published on KafkaBus" );
 
   //  res.status(400).end()//204: The server has not fulfilled the request and that there is no additional content to send in the response payload body.
+  }
+  else
+    res.status(500).send( "Cannot apply the selected remediation" );
 
 });
 
