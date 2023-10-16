@@ -35,20 +35,18 @@ var arr = [
 			fn: "createMarkReport"
 		},
 	},
-	/*
 	{
-		id: "nb-drop",
-		title: "Number of Dropped packets",
+		id: "rate-of-mark",
+		title: "Mark Rate",
 		x: 0,
 		y: 9,
 		width: 12,
-		height: 3,
+		height: 2,
 		type: "info",
 		userData: {
-			fn: "createDropReport"
+			fn: "createMarkRateReport"
 		},
 	},
-	*/
 	{
 		id: "mark-probab",
 		title: "Mark Probability",
@@ -114,7 +112,7 @@ _this.hideAllTooltip = function() {
 };
 
 //create reports
-function createReport(yLabel, colToCal, unit, isGetAvg) {
+function createReport(yLabel, colToCal, unit, isGetAvg, fn) {
 	return function(fPeriod){
 		const COL = MMTDrop.constants.StatsColumn;
 		const database = new MMTDrop.Database({
@@ -175,7 +173,10 @@ function createReport(yLabel, colToCal, unit, isGetAvg) {
 									o[qId] *= 8; //to bps
 							}
 							
-							o[qId] =  Math.round( o[qId] );
+							if( fn )
+								o[qId] =  fn( o[qId] );
+							else
+								o[qId] =  Math.round( o[qId] );
 						}
 						arr.push(o);
 					}
@@ -296,6 +297,7 @@ var ReportFactory = {
 	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "microsecond", true),
 	createOccupsReport: createReport("Queue Occups (avg)", MMTDrop.constants.StatsColumn.L4S_QUEUE_OCCUPS.id, "packets", true),
 	createMarkReport: createReport("Nb Mark (total)", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "packets", false),
+	createMarkRateReport: createReport("Mark Rate (avg)", MMTDrop.constants.StatsColumn.L4S_NB_MARK.id, "%", true, function(x){ return Math.round(x*100)}),
 	createDropReport: createReport("Nb Drop (total)", MMTDrop.constants.StatsColumn.L4S_NB_DROP.id, "packets", false),
 	createMarkProbabReport: createReport("Mark probability (avg)", MMTDrop.constants.StatsColumn.L4S_MARK_PROBAB.id, "%", true),
 }
