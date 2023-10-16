@@ -266,10 +266,22 @@ module.exports = function(){
          })
    };
    
+   //cache of hashModule function
+   const _has_module = {};
    function hasModule( module_name ){
-      return config.modules.indexOf( module_name ) != -1;
+      if( !( module_name in _hash_module ))
+         _hash_module[ module_name ] = config.modules.indexOf( module_name ) != -1;
+      return _hash_module[ module_name ]
    }
    
+   //get key of a link
+   function get_link_key( ip_src, port_src, ip_dst, port_dst ){
+     if( hasModule("l4s") )
+       return `${ip_src}:${port_src}-${ip_dst}:${port_dst}`
+     else
+       return `${ip_src}-${ip_dst}`
+   }
+
    //eliminate some caches if we do not need them
    if( !hasModule("unknown_traffic")   )
       delete self.dataCache.unknownFlows ;
@@ -516,11 +528,11 @@ module.exports = function(){
                   /////////////////////////////////////////////////////////////
                   //symetric link between 2 IPs
                   if(  msg.ip_src <  msg.ip_dst ){
-                     msg.link = msg.ip_src + "," + msg.ip_dst;
+                     msg.link = get_link_key(msg.ip_src, msg[COL.PORT_SRC], msg.ip_dst, msg[PORT_DST] );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
                   }else{
-                     msg.link = msg.ip_dst + "," + msg.ip_src;
+                     msg.link = get_link_key( msg.ip_dst, msg[PORT_DST], msg.ip_src, msg[COL.PORT_SRC] );;
                      msg = dataAdaptor.inverseStatDirection( msg );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
