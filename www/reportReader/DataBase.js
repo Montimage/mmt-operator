@@ -269,9 +269,9 @@ module.exports = function(){
    //cache of hashModule function
    const _has_module = {};
    function hasModule( module_name ){
-      if( !( module_name in _hash_module ))
-         _hash_module[ module_name ] = config.modules.indexOf( module_name ) != -1;
-      return _hash_module[ module_name ]
+      if( !( module_name in _has_module ))
+         _has_module[ module_name ] = (config.modules.indexOf( module_name ) != -1);
+      return _has_module[ module_name ]
    }
    
    //get key of a link
@@ -528,11 +528,11 @@ module.exports = function(){
                   /////////////////////////////////////////////////////////////
                   //symetric link between 2 IPs
                   if(  msg.ip_src <  msg.ip_dst ){
-                     msg.link = get_link_key(msg.ip_src, msg[COL.PORT_SRC], msg.ip_dst, msg[PORT_DST] );
+                     msg.link = get_link_key(msg.ip_src, msg[COL.PORT_SRC], msg.ip_dst, msg[COL.PORT_DST] );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
                   }else{
-                     msg.link = get_link_key( msg.ip_dst, msg[PORT_DST], msg.ip_src, msg[COL.PORT_SRC] );;
+                     msg.link = get_link_key( msg.ip_dst, msg[COL.PORT_DST], msg.ip_src, msg[COL.PORT_SRC] );;
                      msg = dataAdaptor.inverseStatDirection( msg );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
