@@ -111,9 +111,79 @@ _this.hideAllTooltip = function() {
 	}
 };
 
+function createAllIPsFilter(){
+		//step 1: create the filter
+	var filter =  new MMTDrop.Filter({
+		id      : "ip_filter" + MMTDrop.tools.getUniqueNumber(),
+		label   : "IPs",
+		options : [{ id: 0, label: "All", selected :true}], //initial list of options
+	}, function(val){
+		console.log( val );
+	})
+	filter.onFilter( function (val){
+		//how filtering data
+		MMTDrop.tools.gotoURL( MMTDrop.tools.getCurrentURL([], "ip=" + val.id) );
+	});
+
+	filter.storeState = false;
+	//step 2: render the filter
+	filter.renderTo("toolbar-box");
+	
+	//step 3: get data from mongoDB
+	var ipList_db = MMTDrop.databaseFactory.createStatDB(
+	 {collection: "data_l4s", action: "aggregate", raw: true}
+	);
+	
+	var group = { _id : {} };
+	[COL.APP_ID.id ].forEach( function( el ){
+		group["_id"][ el ] = "$" + el;
+	 });
+	 [COL.IP_SRC.id].forEach( function( el ){
+		group[ el ] = {"$first" : "$"+ el};
+	});
+
+	var $match = {};
+	//timestamp
+	var period = status_db.time; //this comes from common.js
+	$match[ COL.TIMESTAMP.id ]  = {$gte: period.begin, $lte: period.end };
+
+	ipList_db.reload( {query: [{"$match": $match}, {"$group" : group}],
+							 period_groupby: fPeriod.selectedOption().id} );
+
+	//steop 4: when we got data from database
+	ipList_db.afterReload( function( new_data ){
+		var obj = {};
+		for( var i in new_data ){
+			var id    = new_data[i][ COL.IP_SRC.id ];
+			obj[ id ] =  id;
+		}
+		
+		var has_ip = false;
+		var options = [];
+		
+		for( i in obj ){
+			if( i == URL_PARAM.ip )
+				has_ip = true;
+			options.push( {id: i, label : obj[i], selected : (i == URL_PARAM.ip)} );
+		}
+		
+		if( ! has_ip && URL_PARAM.ip && URL_PARAM.ip != "all" ){
+			options.push({ id: URL_PARAM.ip, label: URL_PARAM.ip, selected : true });
+			has_ip = true;
+		}
+			
+		options.unshift({ id: "all", label: "All", selected : !has_ip });
+		filter.option( options)
+		filter.redraw();
+	})
+
+	return filter;
+};
+
 //create reports
 function createReport(yLabel, colToCal, unit, isGetAvg, fn) {
 	return function(fPeriod){
+		
 		const COL = MMTDrop.constants.StatsColumn;
 		const database = new MMTDrop.Database({
 			collection: "data_l4s",
@@ -122,10 +192,17 @@ function createReport(yLabel, colToCal, unit, isGetAvg, fn) {
 		});
 
 		database.updateParameter = function(_old_param) {
+			
+			if( _this.__ip_filter == undefined ){
+				_this.__ip_filter = createAllIPsFilter();
+			}
+			
 			const $match = {};
 			$match[COL.PROBE_ID.id] = URL_PARAM.probe_id;
 			$match[COL.TIMESTAMP.id] = { "$gte": status_db.time.begin, "$lte": status_db.time.end };
-
+			//filtered on the selected IP
+			if( URL_PARAM.ip && URL_PARAM.ip != "all")
+				$match[COL.IP_SRC.id] = URL_PARAM.ip;
 			const $group = { _id: {} };
 			[COL.L4S_QUEUE_ID.id, COL.TIMESTAMP.id].forEach(function(el) {
 				$group["_id"][el] = "$" + el;

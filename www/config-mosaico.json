@@ -142,7 +142,10 @@
 			"data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
 			"keep_alive": true
 		},
-		"_data_processing": "m[1]='probe-A'; return m;"
+		"_data_processing": "m[1]='probe-A'; return m;",
+		"l4s" : {
+			"source_ips" : ["10.0.1.13"]
+		}
 	},
 	"_layout": "attack",
 	"auth_token": [

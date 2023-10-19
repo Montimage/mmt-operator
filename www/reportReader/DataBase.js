@@ -259,8 +259,8 @@ module.exports = function(){
          set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_ID,  GTP.ENB_NAME, GTP.MME_NAME ]
             }
          ),
-         l4s: new DataCache( inserter, "data_l4s",{
-            key: [COL.PROBE_ID, COL.SOURCE_ID, /*COL.IP_SRC, COL.IP_DST,*/ COL.L4S_QUEUE_ID],
+         l4s: new DataCache( inserter, "data_l4s", {
+            key: [COL.PROBE_ID, COL.SOURCE_ID, COL.IP_SRC, COL.IP_DST, COL.L4S_QUEUE_ID],
             inc: [COL.PACKET_COUNT, COL.DATA_VOLUME, COL.L4S_HOP_LATENCY, COL.L4S_QUEUE_OCCUPS, COL.L4S_NB_MARK, 
                   COL.L4S_NB_DROP, COL.L4S_MARK_PROBAB]
          })

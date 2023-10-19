@@ -192,7 +192,9 @@ router.get('/*', function(req, res, next) {
     other_config = JSON.parse( other_config );
     //delete some sensible informations
     ["auth_token", "database_server","redis_input","kafka_input","file_input", "socket_input", "pcap_dump", "databaseName", "adminDatabaseName", "rootDirectory"].forEach( (el) => delete(other_config[el]));
+    const modules_config = other_config.modules_config; 
     other_config.modules_config = {};  //TODO: need it for SLA
+    other_config.modules_config["l4s"] = modules_config["l4s"];
 
     other_config = JSON.stringify(other_config);
     res.render("chart", {
