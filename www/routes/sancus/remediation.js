@@ -10,7 +10,7 @@ pub_sub    = require("../../libs/kafka");
 const { Kafka } = require('kafkajs');
 async function deleteDocuments(cid,attackId,collectionName) {
   // Replace these with your MongoDB connection details
-  const uri = 'mongodb://localhost:27017'; // MongoDB connection URI
+  const uri = `mongodb://`+ config.database_server.host +`:`+config.database_server.port; // MongoDB connection URI
   const dbName = 'mmt-data';
   cid = `${cid}`;
   attackId =  parseInt(attackId, 10)
