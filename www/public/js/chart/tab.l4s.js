@@ -30,7 +30,7 @@ var arr = [
 		y: 16,
 		width: 12,
 		height: 2,
-		type: "success",
+		type: "danger",
 		userData: {
 			fn: "createSecurityReport"
 		},
@@ -306,20 +306,66 @@ function createSecurityReport(fPeriod){
 	
 	window._getButton = function(){
 		if( isBlockingIP() ){
-			return `<button type="button" class="btn btn-danger" disabled><i class="fa fa-spinner fa-spin"/> Blocking</button> <input type="button" class="btn btn-success" value="Unblock" onclick="unblockIP()">`
+			return `<button type="button" class="btn btn-danger" disabled><i class="fa fa-spinner fa-spin"/> Blocking</button> <input type="button" class="btn btn-success" value="Unblock" onclick="_execScript(false)">`
 		} else {
-			return `<input type="button" class="btn btn-danger" value="Block Attack" onclick="blockIP()">`
+			return `<input type="button" class="btn btn-danger" value="Block Attack" onclick="_execScript(true)">`
 		}
 	}
+		
+	window._execScript = function( isBlock ){
+		
+		//rember status in localStorage
+		if( isBlock )
+			MMTDrop.tools.localStorage.set( STORAGE_ID, "blocking" )
+		else
+			MMTDrop.tools.localStorage.remove( STORAGE_ID );
+			
+		//update button text
+		$('#block-ip-button').html( _getButton() );
+		const params = {};
+		params["ips"] = $("#concerned-ips").html();
+		
+		const scriptName = isBlock ? "l4s-block-traffic.sh" : "l4s-unblock-traffic.sh"
+		
+		MMTDrop.tools.ajax("/auto/attack/script/start/" + scriptName, params, "POST", {
+			error: function() {
+				const msg = `Cannot ${(isBlock? "block":"unblock")} IPs ${ params.ips }`;
+				MMTDrop.alert.error(msg);
+			},
+			success: function() {
+				//star timer to get execution log
+				setTimeout( retriveExecutionLog, 1000, scriptName );
+			}
+		});
+	}
 	
-	window.blockIP = function(){
-		MMTDrop.tools.localStorage.set( STORAGE_ID, "blocking" )
-		$('#block-ip-button').html( _getButton() );
+	function retriveExecutionLog( filename ){
+		MMTDrop.tools.ajax("/auto/attack/script/status/" + filename, {}, "GET", {
+			error: function(){
+				console.error( "Cannot get status" );
+			},
+			success: function( data ){
+				//if having error, then show it
+				if( data.stderr && data.stderr.length > 0 )
+					MMTDrop.alert.error( data.stderr, 10*1000 );
+				//show output
+				if( data.stdout && data.stdout.length > 0 )
+					MMTDrop.alert.success( data.stdout, 10*1000 );
+					
+				if( data.isRunning )
+					//continue to retrive execution logs 
+					setTimeout( retriveExecutionLog, 1000, filename );
+				else {
+					//error
+					if( data.exitCode != 0){
+						const msg = "Failure with code " + data.exitCode;
+						MMTDrop.alert.error( msg );
+					}
+				}
+			}
+		});
 	}
-	window.unblockIP = function(){
-		MMTDrop.tools.localStorage.remove( STORAGE_ID );
-		$('#block-ip-button').html( _getButton() );
-	}
+		
 	
 	var cTable = MMTDrop.chartFactory.createTable({
 		getData: {
@@ -332,7 +378,7 @@ function createSecurityReport(fPeriod){
 					
 					//reformat timestamp
 					alert[3] = MMTDrop.tools.formatDateTime(alert[3]);
-					alert._ip = `<span id='concerned-ip'>${findConcernedIPs( alert[8] ) }</span>`;
+					alert._ip = `<span id='concerned-ips'>${findConcernedIPs( alert[8] ) }</span>`;
 					
 					alert._react = `<span id='block-ip-button' style='width: 300px'> ${window._getButton()} </span>`
 				}

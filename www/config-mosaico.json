@@ -146,12 +146,8 @@
 		"l4s" : {
 			"source_ips" : ["10.0.1.13"],
 			"server": {
-				"attack_source": {"ip": "10.0.1.13", "port": 3001, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
-				"_attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
-				"script": {
-					"reaction" : "./l4s-block-traffic.sh",
-					"reset":  "./l4s-unblock-traffic.sh"
-				}
+				"hn_attack_source": {"ip": "10.0.1.13", "port": 3001, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
+				"attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."}
 			}
 		}
 	},
