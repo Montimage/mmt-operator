@@ -263,9 +263,9 @@ function createSecurityReport(fPeriod){
 	});
 	
 	database.updateParameter = function( _old_query) {
-		return {query: [] };
+		return {query: [ {$limit: 1 }]}; //limit:1 => get only the first alert
 	};
-
+	
 	function findConcernedIPs( history ){
 		let concernt = "";
 		for (var i in history) {
@@ -371,13 +371,16 @@ function createSecurityReport(fPeriod){
 		getData: {
 			getDataFn: function(db){
 				const arr = db.data();
-				let alert = ["&nbsp;"]
-				//get only the last alert
+				let alert = []
+				alert[3] = "&nbsp;" //a space
+				//get only the first alert
 				if( arr.length > 0 ){
-					alert = arr[ arr.length - 1];
+					alert = arr[0];
 					
 					//reformat timestamp
 					alert[3] = MMTDrop.tools.formatDateTime(alert[3]);
+					alert[5] = `<span class="label label-success">${ alert[5] }</span>`
+					alert[6] = `<span class="label label-danger">${ alert[6] }</span>`
 					alert._ip = `<span id='concerned-ips'>${findConcernedIPs( alert[8] ) }</span>`;
 					
 					alert._react = `<span id='block-ip-button' style='width: 300px'> ${window._getButton()} </span>`
@@ -386,7 +389,7 @@ function createSecurityReport(fPeriod){
 
 				return {
 					//https://github.com/Montimage/mmt-probe/blob/master/docs/data-format.md#security-reports
-					columns: [{id: 3, label: "Timestamp"}, {id: 4, label: "Property ID"}, {id: 5, label: "Verdict"}, {id: 6, label: "Type"}, {id: 7, label: "Description"}, {id: "_ip", label: "Concerned IPs"}, {id: "_react", label: "Reaction"}],
+					columns: [{id: 3, label: "Timestamp"}, {id: 4, label: "Property ID"}, {id: 5, label: "Verdict", align: "left"}, {id: 6, label: "Type"}, {id: 7, label: "Description"}, {id: "_ip", label: "Concerned IPs"}, {id: "_react", label: "Reaction"}],
 					data: [ alert ]
 				};
 			}
@@ -408,7 +411,7 @@ function createSecurityReport(fPeriod){
 		}
 	});
 	
-	return new MMTDrop.Report(
+	const report = new MMTDrop.Report(
 			// title
 			"",
 			// database
@@ -425,6 +428,38 @@ function createSecurityReport(fPeriod){
 			//order of data flux
 			[{ object: cTable }]
 	);
+	
+	//reload this report each 5 seconds
+	setInterval( function( report_x ){
+		report_x.database.reload({}, function (new_data, rep) {
+			const newAlert = new_data.length > 0? new_data[0] : [];
+			const lastAlert = MMTDrop.tools.localStorage.get( "last-l4s-alert" );
+			
+			//alert does not change ==> do nothing
+			if( JSON.stringify(newAlert) == JSON.stringify(lastAlert)){
+				console.log("alert does not change ==> do nothing")
+				return;
+			}
+			
+			//remember the alert
+			MMTDrop.tools.localStorage.set( "last-l4s-alert", newAlert );
+			
+			//for each element in dataFlow array
+			for (var j in rep.dataFlow) {
+				var filter = rep.dataFlow[j];
+				if (!filter) return;
+	
+				filter = filter.object;
+				if (filter instanceof MMTDrop.Filter)
+					filter.filter();
+				else if (filter) { //chart
+					filter.attachTo(rep.database);
+					filter.redraw();
+				}
+			}
+	 }, report_x)
+	}, 5*1000, report)
+	return report;
 }
 
 var ReportFactory = {

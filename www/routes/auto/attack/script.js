@@ -4,6 +4,7 @@ var fs      = require('fs');
 var _os     = require("os");
 var path    = require('path');
 var exec    = require('../../../libs/exec-script.js');
+var config  = require('../../../libs/config');
 //change the current directory to the one containing the pcap files
 const cwd = path.join(__dirname, "../../../data/attack/script/");
 	
@@ -27,6 +28,16 @@ router.post("/start/:filename", function( req, res, next ){
 		res.send( ret );
 	else
 		res.status(500).send("The process is running");
+	
+	if( config.modules.indexOf("l4s") >= 0 
+		&& config.modules_config 
+		&& config.modules_config.l4s 
+		&& config.modules_config.l4s.server
+		&& config.modules_config.l4s.server.remove_alerts_after_unblocking ){
+			console.log("need to clean 'security' collection in DB");
+		if( filename == "l4s-unblock-traffic.sh")
+			router._objRef.dbconnector._updateDB("security", "drop", null, function(){console.log(arguments)});
+	}
 });
 
 //stop replaying a pcap file
