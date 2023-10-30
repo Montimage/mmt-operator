@@ -2,7 +2,7 @@ const ip2loc      = require("../libs/ip2loc");
 const config      = require("../libs/config");
 const dataAdaptor = require('../libs/dataAdaptor');
 const COL         = dataAdaptor.StatsColumnId
-
+const SEC         = dataAdaptor.SecurityColumnId;
 const L4S_REPORT = {
 	//event-based report format: https://github.com/Montimage/mmt-probe/blob/master/docs/data-format.md#event-report
 	"int.hop_queue_ids"     : 5,
@@ -10,25 +10,29 @@ const L4S_REPORT = {
 	"meta.proto_hierarchy"  : 7,
 	"ethernet.src"          : 8,
 	"ethernet.dst"          : 9,
-	"ip.client_addr"        : 10, 
-	"ip.server_addr"        : 11, 
-	"ip.client_port"        : 12,
-	"ip.server_port"        : 13,
-	"ip.ecn"                : 14,
-	"quic_ietf.spin_bit"    : 15,
-	"quic_ietf.rtt"         : 16,
-	"int.hop_latencies"     : 17, 
-	"int.hop_queue_occups"  : 18,
-	"int.hop_ingress_times" : 19, 
-	"int.hop_egress_times"  : 20,
-	"int.hop_l4s_mark"      : 21, 
-	"int.hop_l4s_drop"      : 22,
-	"int.hop_tx_utilizes"   : 23
+	"ip.src"                : 10, 
+	"ip.dst"                : 11, 
+	"udp.src_port"          : 12,
+	"udp.dest_port"         : 13,
+	"tcp.src_port"          : 14,
+	"tcp.dest_port"         : 15,
+	"ip.ecn"                : 16,
+	"quic_ietf.spin_bit"    : 17,
+	"quic_ietf.rtt"         : 18,
+	"int.hop_latencies"     : 19, 
+	"int.hop_queue_occups"  : 20,
+	"int.hop_ingress_times" : 21, 
+	"int.hop_egress_times"  : 22,
+	"int.hop_l4s_mark"      : 23, 
+	"int.hop_l4s_drop"      : 24,
+	"int.hop_tx_utilizes"   : 25
 }
 
 const isEnable = !!( Array.isArray(config.modules) && (config.modules.indexOf("l4s") > -1) )
 
 console.info("Module L4S is " + (isEnable? "enabled": "disabled"))
+
+let last_alert_ts = 0;
 
 module.exports = {
 	isEnable: isEnable,
@@ -84,10 +88,18 @@ event-report l4s {
 		newMsg[COL.APP_ID]         = dataAdaptor.getAppIdFromPath( newMsg[COL.APP_PATH] );
 		newMsg[COL.PROFILE_ID ]    = dataAdaptor.getCategoryIdFromAppId( newMsg[COL.APP_ID] );
 		
-		newMsg[COL.IP_SRC]         = msg[ L4S_REPORT["ip.client_addr"] ];
-		newMsg[COL.IP_DST]         = msg[ L4S_REPORT["ip.server_addr"] ];
-		newMsg[COL.PORT_SRC]       = msg[ L4S_REPORT["ip.client_port"] ];
-		newMsg[COL.PORT_DST]       = msg[ L4S_REPORT["ip.server_port"] ];
+		newMsg[COL.IP_SRC]         = msg[ L4S_REPORT["ip.src"] ];
+		newMsg[COL.IP_DST]         = msg[ L4S_REPORT["ip.dst"] ];
+
+		//if protocol path contain IP.UDP
+		if( newMsg[COL.APP_PATH].indexOf(".178.376.") ){
+			newMsg[COL.PORT_SRC]    = msg[ L4S_REPORT["udp.src_port"] ];
+			newMsg[COL.PORT_DST]    = msg[ L4S_REPORT["udp.dest_port"] ];
+		} else {
+			newMsg[COL.PORT_SRC]    = msg[ L4S_REPORT["tcp.src_port"] ];
+			newMsg[COL.PORT_DST]    = msg[ L4S_REPORT["tcp.dest_port"] ];
+		}
+
 		newMsg[COL.SRC_LOCATION]   = ip2loc.country( newMsg[COL.IP_SRC] );
 		newMsg[COL.DST_LOCATION]   = ip2loc.country( newMsg[COL.IP_DST] );
 		
@@ -106,5 +118,38 @@ event-report l4s {
 		newMsg[COL.L4S_NB_DROP]      = msg[L4S_REPORT["int.hop_l4s_drop"]]
 		newMsg[COL.L4S_MARK_PROBAB]  = Math.round(msg[L4S_REPORT["int.hop_tx_utilizes"]] * 100 / 0xFFFFFFFF); //percentage
 		return newMsg;
+	},
+	
+	//simulate an attack detection
+	getDummyAlert: function( msg ){
+		const src = config.modules_config.l4s.server.attack_source;
+		//console.log( src, JSON.stringify( msg ));
+		if( msg[COL.IP_SRC] != src.ip || msg[COL.PORT_SRC] != src.port )
+			return
+		
+		const now = msg[COL.TIMESTAMP];
+		
+		//at most one alert per minute
+		if( now - last_alert_ts < 60*1000 )
+			return;
+		
+		last_alert_ts = now;
+		
+		//create a dummy alert
+		const alertMsg = [];
+		//https://github.com/Montimage/mmt-probe/blob/master/docs/data-format.md#security-reports
+		alertMsg[COL.FORMAT_ID]      = dataAdaptor.CsvFormat.SECURITY_FORMAT;
+		//keep these values
+		alertMsg[COL.PROBE_ID]       = msg[COL.PROBE_ID];
+		alertMsg[COL.SOURCE_ID]      = msg[COL.SOURCE_ID];
+		alertMsg[COL.TIMESTAMP]      = msg[COL.TIMESTAMP];
+		
+		alertMsg[SEC.PROPERTY]       = 10;
+		alertMsg[SEC.VERDICT]        = "detected",
+		alertMsg[SEC.TYPE]           = "attack",
+		alertMsg[SEC.DESCRIPTION]     = src.description,
+		alertMsg[SEC.HISTORY]        = {"event_1": {"timestamp": now/1000 /* back to format second.microsecond*/, "description": "", "attributes":[["ip.src",src.ip], ["ip.port_src", src.port]] }};
+		console.log("Generated a dummy L4S alert", JSON.stringify(alertMsg));
+		return alertMsg;
 	}
 }

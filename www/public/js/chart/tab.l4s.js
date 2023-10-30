@@ -23,6 +23,18 @@ var arr = [
 			fn: "createThroughputReport"
 		},
 	},
+	{
+		id: "security",
+		title: "Security",
+		x: 0,
+		y: 16,
+		width: 12,
+		height: 2,
+		type: "success",
+		userData: {
+			fn: "createSecurityReport"
+		},
+	},
 ];
 
 var availableReports = {
@@ -241,6 +253,134 @@ function createReport(yLabel, colToCal, unit, isGetAvg, fn) {
 	};
 }
 
+function createSecurityReport(fPeriod){
+	const database = MMTDrop.databaseFactory.createStatDB({
+		collection: "security",
+		action: "aggregate", 
+		no_group: true, //do not change to _real, _min, _hour collection when chaning period from "Last 5 minutes" to "Last 24h", ... 
+		no_override_when_reload: true,  //do not upate time
+		raw: true
+	});
+	
+	database.updateParameter = function( _old_query) {
+		return {query: [] };
+	};
+
+	function findConcernedIPs( history ){
+		let concernt = "";
+		for (var i in history) {
+			var event = history[i].attributes;
+			for (var j in event) {
+				var atts = event[j];
+				//since mmt-security v 1.2.8, atts is an array [key, value]
+				// instead of an object {key: value}
+				if (!Array.isArray(atts)) {
+					//this is for older version
+					const firstKey = Object.keys(atts)[0];
+					atts = [firstKey, atts[firstKey]];
+				}
+
+				const key = atts[0]; //since mmt-security v 1.2.8, the first element is key, the second one is value
+				const val = atts[1];
+
+				//check if key is one of the followings
+				const ipArr = ["ip.src", "ip.dst"];
+
+				if (ipArr.indexOf(key) !== -1) {
+					//if the att is not yet added
+					if (concernt.indexOf(val) === -1) {
+						//
+						if (concernt != "") concernt += ", ";
+						concernt += val;
+					}
+				}
+			}
+		}
+		return concernt;
+	}
+
+	const STORAGE_ID = "is-blocking-attack";
+	function isBlockingIP(){
+		return MMTDrop.tools.localStorage.get( STORAGE_ID );
+	}
+	
+	window._getButton = function(){
+		if( isBlockingIP() ){
+			return `<button type="button" class="btn btn-danger" disabled><i class="fa fa-spinner fa-spin"/> Blocking</button> <input type="button" class="btn btn-success" value="Unblock" onclick="unblockIP()">`
+		} else {
+			return `<input type="button" class="btn btn-danger" value="Block Attack" onclick="blockIP()">`
+		}
+	}
+	
+	window.blockIP = function(){
+		MMTDrop.tools.localStorage.set( STORAGE_ID, "blocking" )
+		$('#block-ip-button').html( _getButton() );
+	}
+	window.unblockIP = function(){
+		MMTDrop.tools.localStorage.remove( STORAGE_ID );
+		$('#block-ip-button').html( _getButton() );
+	}
+	
+	var cTable = MMTDrop.chartFactory.createTable({
+		getData: {
+			getDataFn: function(db){
+				const arr = db.data();
+				let alert = ["&nbsp;"]
+				//get only the last alert
+				if( arr.length > 0 ){
+					alert = arr[ arr.length - 1];
+					
+					//reformat timestamp
+					alert[3] = MMTDrop.tools.formatDateTime(alert[3]);
+					alert._ip = `<span id='concerned-ip'>${findConcernedIPs( alert[8] ) }</span>`;
+					
+					alert._react = `<span id='block-ip-button' style='width: 300px'> ${window._getButton()} </span>`
+				}
+					
+
+				return {
+					//https://github.com/Montimage/mmt-probe/blob/master/docs/data-format.md#security-reports
+					columns: [{id: 3, label: "Timestamp"}, {id: 4, label: "Property ID"}, {id: 5, label: "Verdict"}, {id: 6, label: "Type"}, {id: 7, label: "Description"}, {id: "_ip", label: "Concerned IPs"}, {id: "_react", label: "Reaction"}],
+					data: [ alert ]
+				};
+			}
+		},
+		chart: {
+			dom: "<'row'" //show only data, not "Search" box, neither page navigation, ...
+		},
+		afterEachRender: function(_chart){
+			var table = _chart.chart;
+			if( table == undefined )
+				return;
+			console.log("ok")
+			//resize when changing window size
+			$(window).resize(function () {
+				if (table)
+					table.api().draw(false);
+			});
+
+		}
+	});
+	
+	return new MMTDrop.Report(
+			// title
+			"",
+			// database
+			database,
+			// filers
+			[],
+			//charts
+			[
+				{
+					charts: [cTable],
+					width: 12
+				},
+			],
+			//order of data flux
+			[{ object: cTable }]
+	);
+}
+
 var ReportFactory = {
 	createThroughputReport: createReport("Bandwidth (bps)", MMTDrop.constants.StatsColumn.DATA_VOLUME.id, "bps", false,
 		//convert from byte to bit 
@@ -248,6 +388,7 @@ var ReportFactory = {
 	createLatencyReport: createReport("Queue Latency (avg)", MMTDrop.constants.StatsColumn.L4S_HOP_LATENCY.id, "millisecond", true,
 		//convert from micro to millisecond 
 		function(v){ return Math.round(v/1000) }),
+	createSecurityReport: createSecurityReport
 }
 
 

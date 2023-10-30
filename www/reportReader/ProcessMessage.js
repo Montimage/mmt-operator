@@ -17,13 +17,35 @@ const l4s			= require('./l4sProcessMessage');
 //DONOT remove this block
 //this is for sending data to web clients vi socketio
 var caches = {};
-function saveToDatabase( channel, msg ){
+function sendToClient( channel, msg ){
 	if( caches[ channel ] === undefined )
 		caches[ channel ] = [];
 	//add msg to caches
 	//caches will be verified each seconds and sent to client
-	//caches[ channel ].push( msg );
+	caches[ channel ].push( msg );
 }
+
+
+function _saveToDB( collectionName, dataArr ){
+	inserterDB.set( collectionName, 0, dataArr );
+}
+
+setInterval( function(){
+	for( const channel in caches ){
+		const cache = caches[ channel ];
+		//no data in this cache
+		if( cache.length === 0 )
+			continue;
+		
+		//router.socketio.emit( channel, cache );
+		//broadcast a message to Web browsers using socketio
+		_saveToDB( "cache_" + channel, cache );
+
+		//reset this cache to zero
+		caches[ channel ] = [];
+	}
+}, 1000);
+//end caches
 
 
 function getDataProcessing( body ){
@@ -50,40 +72,6 @@ function getDataProcessing( body ){
 
 const forwardDataProcessingFn = getDataProcessing( config.modules_config.report_forward.data_processing );
 const dataProcessingFn = getDataProcessing( config.modules_config.data_processing );
-
-
-
-function _saveToDB( collectionName, dataArr ){
-	inserterDB.set( collectionName, 0, dataArr );
-}
-
-setInterval( function(){
-	for( const channel in caches ){
-		const cache = caches[ channel ];
-		//no data in this cache
-		if( cache.length === 0 )
-			continue;
-		//avg
-		if (channel === "qos" ){
-			for( let j=1; j<cache.length; j++)
-				for( let i=4; i<13;i++ )
-					cache[0][i] += cache[j][i];
-
-			for( let i=4; i<13;i++ )
-				if( i !== 9 || i !== 10 )
-					cache[0][i] /= cache.length;
-
-			//router.socketio.emit( "qos", cache[0] );
-		}else {
-			//broadcast a message to Web browsers using socketio
-			_saveToDB( "cache_" + channel, cache );
-		}
-
-		//reset this cache to zero
-		caches[ channel ] = [];
-	}
-}, 1000);
-//end caches
 
 
 /**
@@ -367,9 +355,18 @@ function ProcessMessage( database ){
 				case "iot":
 					msg = iot.processMessage( msg );
 					break;
+				//specific event-based report for Mosaico project
 				case "l4s":
-					if( l4s.isEnable )
+					if( l4s.isEnable ){
 						msg = l4s.processMessage( msg );
+						
+						//simulate attack detection
+						const alert = l4s.getDummyAlert( msg );
+						//got an alert, then save it into DB
+						if( alert ){
+							_database.add( alert, function (err, err_msg) {});
+						}
+					}
 					break;
 			}
 			break;
