@@ -5,7 +5,8 @@
 	},
 	"redis_input": {
 		"host": "localhost",
-		"port": 6379
+		"port": 6379,
+		"channel": "report"
 	},
 	"kafka_input": {
 		"host": "192.168.0.195",
@@ -27,7 +28,7 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "socket",
+	"input_mode": "redis",
 	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
@@ -144,10 +145,10 @@
 		},
 		"_data_processing": "m[1]='probe-A'; return m;",
 		"l4s" : {
-			"source_ips" : ["10.0.1.13"],
+			"auto_perform_reaction": true,
 			"server": {
-				"_attack_source": {"ip": "10.0.1.13", "port": 3000, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
-				"attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
+				"attack_source": {"ip": "10.0.1.13", "port": 3000, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
+				"_attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
 				"remove_alerts_after_unblocking": true
 			}
 		}

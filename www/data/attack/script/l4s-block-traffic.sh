@@ -3,7 +3,8 @@
 # ./l4s-block-traffic.sh ips "10.0.0.1, 1.1.1.1,..."
 #
 # uncomment the line bellow to verify:
-# echo "$@" > /tmp/l4s-block-traffic.txt
+date      >> /tmp/l4s-block-traffic.txt
+echo "$@" >> /tmp/l4s-block-traffic.txt
 
 IPs=$2
 

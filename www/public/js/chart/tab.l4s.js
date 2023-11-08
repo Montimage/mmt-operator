@@ -301,6 +301,9 @@ function createSecurityReport(fPeriod){
 
 	const STORAGE_ID = "is-blocking-attack";
 	function isBlockingIP(){
+		//automatically performing reaction => do not need to show the reaction buttons
+		if(MMTDrop.config.others.modules_config.l4s.auto_perform_reaction)
+			return true;
 		return MMTDrop.tools.localStorage.get( STORAGE_ID );
 	}
 	

@@ -345,6 +345,8 @@ function ProcessMessage( database ){
 			//Security alerts
 		case mmtAdaptor.CsvFormat.SECURITY_FORMAT:
 			//send_to_client( "security", msg );
+			if( l4s.isEnable )
+				l4s.autoPerformReaction( msg );
 			break;
 			//availability
 		//case 50:
@@ -365,6 +367,7 @@ function ProcessMessage( database ){
 						//got an alert, then save it into DB
 						if( alert ){
 							_database.add( alert, function (err, err_msg) {});
+							l4s.autoPerformReaction( alert );
 						}
 					}
 					break;
