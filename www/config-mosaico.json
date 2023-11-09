@@ -146,6 +146,7 @@
 		"_data_processing": "m[1]='probe-A'; return m;",
 		"l4s" : {
 			"auto_perform_reaction": true,
+			"reaction_title": "<i class='fa fa-spinner fa-spin'/> Blocking attack",
 			"server": {
 				"attack_source": {"ip": "10.0.1.13", "port": 3000, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
 				"_attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},

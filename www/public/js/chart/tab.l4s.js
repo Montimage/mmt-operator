@@ -301,13 +301,18 @@ function createSecurityReport(fPeriod){
 
 	const STORAGE_ID = "is-blocking-attack";
 	function isBlockingIP(){
-		//automatically performing reaction => do not need to show the reaction buttons
-		if(MMTDrop.config.others.modules_config.l4s.auto_perform_reaction)
-			return true;
 		return MMTDrop.tools.localStorage.get( STORAGE_ID );
 	}
 	
 	window._getButton = function(){
+		//automatically performing reaction => do not need to show the reaction buttons
+		if(MMTDrop.config.others.modules_config.l4s.auto_perform_reaction){
+			if(MMTDrop.config.others.modules_config.l4s.reaction_title)
+				return MMTDrop.config.others.modules_config.l4s.reaction_title;
+			else
+				return `<i class="fa fa-spinner fa-spin"/> Blocking attack`;
+		}
+
 		if( isBlockingIP() ){
 			return `<button type="button" class="btn btn-danger" disabled><i class="fa fa-spinner fa-spin"/> Blocking</button> <input type="button" class="btn btn-success" value="Unblock" onclick="_execScript(false)">`
 		} else {
@@ -385,11 +390,10 @@ function createSecurityReport(fPeriod){
 					alert[5] = `<span class="label label-success">${ alert[5] }</span>`
 					alert[6] = `<span class="label label-danger">${ alert[6] }</span>`
 					alert._ip = `<span id='concerned-ips'>${findConcernedIPs( alert[8] ) }</span>`;
-					
+
 					alert._react = `<span id='block-ip-button' style='width: 300px'> ${window._getButton()} </span>`
 				}
-					
-
+			
 				return {
 					//https://github.com/Montimage/mmt-probe/blob/master/docs/data-format.md#security-reports
 					columns: [{id: 3, label: "Timestamp"}, {id: 4, label: "Property ID"}, {id: 5, label: "Verdict", align: "left"}, {id: 6, label: "Type"}, {id: 7, label: "Description"}, {id: "_ip", label: "Concerned IPs"}, {id: "_react", label: "Reaction"}],
