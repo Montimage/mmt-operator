@@ -3,7 +3,8 @@
 # ./l4s-unblock-traffic.sh ips "10.0.0.1,1.1.1.1,..."
 #
 # uncomment the line bellow to verify:
-# echo "$@" > /tmp/l4s-unblock-traffic.txt
+date >> /tmp/l4s-unblock-traffic.log
+echo "$@" >> /tmp/l4s-unblock-traffic.log
 
 
 IPs=$2
@@ -12,4 +13,5 @@ IPs=$2
 # echo $IPs | ssh root@tata -- python3 unblock.py
 
 # the output will be shown back to user via Web GUI
+echo "table_delete tb_blocklist 0" | simple_switch_CLI | tee -a /tmp/l4s-unblock-traffic.log
 echo "Unblocked successfully IPs: $IPs"

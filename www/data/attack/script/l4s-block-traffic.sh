@@ -3,8 +3,8 @@
 # ./l4s-block-traffic.sh ips "10.0.0.1, 1.1.1.1,..."
 #
 # uncomment the line bellow to verify:
-date      >> /tmp/l4s-block-traffic.txt
-echo "$@" >> /tmp/l4s-block-traffic.txt
+date      >> /tmp/l4s-block-traffic.log
+echo "$@" >> /tmp/l4s-block-traffic.log
 
 IPs=$2
 
@@ -16,9 +16,15 @@ IPs=$2
 # - stderr will be shown in "red" banners
 #
 # Just an example:
-sleep 1
-echo "Connected to Tofino switch"
-sleep 2
-echo "Updated table configuration"
-sleep 2
-echo "Blocked successfully IPs: $IPs"
+#sleep 1
+#echo "Connected to Tofino switch"
+#sleep 2
+#echo "Updated table configuration"
+#sleep 2
+#echo "Blocked successfully IPs: $IPs"
+
+echo $IPs
+#clear space
+#IP=$(echo "${IP//[$'\t\r\n']}")
+# syntax: table_add <table-name> <key-1> <key-2> ... => <val-1> <val-2>
+echo "table_add tb_blocklist source $IPs => 1" | tee -a /tmp/l4s-block-traffic.log | simple_switch_CLI | tee -a /tmp/l4s-block-traffic.log
