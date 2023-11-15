@@ -5,7 +5,8 @@
 	},
 	"redis_input": {
 		"host": "localhost",
-		"port": 6379
+		"port": 6379,
+		"channel": "report"
 	},
 	"kafka_input": {
 		"host": "192.168.0.195",
@@ -27,7 +28,7 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "file",
+	"input_mode": "redis",
 	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",
@@ -59,7 +60,7 @@
 			"mask": "255.255.255.0"
 		}
 	],
-	"probe_stats_period": 5,
+	"probe_stats_period": 1,
 	"buffer": {
 		"max_length_size": 30000,
 		"max_interval": 5
@@ -103,14 +104,20 @@
 		"ndn",
 		"video",
 		"sla",
-		"stat"
+		"stat",
+		"l4s"
 	],
 	"modules": [
 		"link",
 		"network",
 		"dpi",
+		"application",
+		"l4s",
+		"l4s-all",
 		"security",
-		"application"
+		"behavior",
+		"enodeb",
+		"stat"
 	],
 	"modules_config": {
 		"enodeb": {
@@ -136,7 +143,16 @@
 			"data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
 			"keep_alive": true
 		},
-		"_data_processing": "m[1]='probe-A'; return m;"
+		"_data_processing": "m[1]='probe-A'; return m;",
+		"l4s" : {
+			"auto_perform_reaction": true,
+			"reaction_title": "<i class='fa fa-spinner fa-spin'/> Blocking attack",
+			"server": {
+				"attack_source": {"ip": "10.0.1.13", "port": 3000, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
+				"_attack_source": {"ip": "192.168.1.212", "port": 9999, "description": "unrespECN traffic that does not reduce traffic to adapt congestion ECN signal."},
+				"remove_alerts_after_unblocking": true
+			}
+		}
 	},
 	"_layout": "attack",
 	"auth_token": [
