@@ -12,9 +12,9 @@ This chain of tools depends on the following packages:
 
 Follow the instruction on nodejs.org: https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
 
-### 2. Mongo DB >= mongo 3.4
+### 2. Mongo DB v4.4
 
-Follow the procedure described on the following link to install the latest version of Mongodb: http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/
+Follow the procedure described on the following link to install the latest version of Mongodb: https://www.mongodb.com/docs/v4.4/tutorial/install-mongodb-on-ubuntu/
 
 ## Usage
 
