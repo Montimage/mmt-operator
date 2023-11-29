@@ -111,15 +111,13 @@
 		"link",
 		"network",
 		"dpi",
-		"application",
-		"l4s",
-		"l4s-all",
-		"security",
-		"behavior",
-		"enodeb",
-		"stat"
+		"security"
 	],
 	"modules_config": {
+		"security": {
+			"auto_perform_reaction": false,
+			"reaction_script_path" : ""
+		},
 		"enodeb": {
 			"mysql_server": {
 				"host": "localhost",

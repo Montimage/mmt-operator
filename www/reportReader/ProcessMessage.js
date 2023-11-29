@@ -12,6 +12,7 @@ const s1apTopo	 = require("./EnodebTopo");
 const net			= require('net');
 const iot			= require('./iotProcessMessage');
 const l4s			= require('./l4sProcessMessage');
+const reaction		= require('./securityReaction');
 //const global		= require('../libs/InterProcessCache');
 
 //DONOT remove this block
@@ -347,6 +348,8 @@ function ProcessMessage( database ){
 			//send_to_client( "security", msg );
 			if( l4s.isEnable )
 				l4s.autoPerformReaction( msg );
+			else if(reaction.isEnable )
+				reaction.autoPerformReaction( msg );
 			break;
 			//availability
 		//case 50:
