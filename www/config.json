@@ -8,11 +8,13 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host": "192.168.0.195",
-		"port": 2181,
+		"host": "kafka.dynabic.dev",
+		"port": 9092,
 		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "mi-reports",
-		"client_name": "mmt-operator-kafka-client"
+		"topic": "UC1.AWARE4BC.security_alerts",
+		"client_name": "mmt-operator-kafka-client",
+		"username": "uc1",
+		"password": "q37gnHBJGfRw42E5p6zXLu"
 	},
 	"file_input": {
 		"data_folder": [
@@ -27,7 +29,7 @@
 		"port": 5000,
 		"max_connections": 0
 	},
-	"input_mode": "file",
+	"input_mode": "kafka",
 	"probe_analysis_mode": "offline",
 	"pcap_dump": {
 		"folder": "/opt/mmt/probe/pcap/",

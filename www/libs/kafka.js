@@ -21,6 +21,10 @@ if( config.kafka_input["ssl.ca.location"] ){
 
 let clientName = config.kafka_input["client_name"];
 
+// Authentication variables (username and password)
+const kafkaUsername = config.kafka_input.username;
+const kafkaPassword = config.kafka_input.password;
+
 /**
  * 
  * @param type either "producer", "consumer" or "both"
@@ -35,16 +39,34 @@ function createClient( type  ){
    if( clientName == undefined )
       clientName = "mmt-operator-" + tools.getTimestamp();
    
-   const client = new kafka.KafkaClient({
-         kafkaHost: kafkaConnectionString, 
-         sslOptions: sslOptions.ca ? sslOptions : null
-   });
+   // const client = new kafka.KafkaClient({
+   //       kafkaHost: kafkaConnectionString, 
+   //       sslOptions: sslOptions.ca ? sslOptions : null
+   // });
+
+   // Configure options for SASL authentication if username and password are provided
+   const kafkaClientOptions = {
+      kafkaHost: kafkaConnectionString,
+      sslOptions: sslOptions.ca ? sslOptions : null,
+   };
+
+   if (kafkaUsername && kafkaPassword) {
+      kafkaClientOptions.sslOptions = null;
+      kafkaClientOptions.sasl = {
+         mechanism: "plain", // Use PLAIN mechanism for authentication
+         username: kafkaUsername,
+         password: kafkaPassword
+      };
+      console.log("Kafka client configured with SASL authentication.");
+   }
+
+   const client = new kafka.KafkaClient(kafkaClientOptions);
    
    const offset = new kafka.Offset(client);
 
    const ret = { topics: [], clientName : clientName };
    
-   
+
    function onError( err ){
       console.error("Kafka Error", err.message );
    }
