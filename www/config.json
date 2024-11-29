@@ -8,13 +8,13 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host": "kafka.dynabic.dev",
+		"host": "",
 		"port": 9092,
 		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "UC1.AWARE4BC.security_alerts",
+		"topic": "",
 		"client_name": "mmt-operator-kafka-client",
-		"username": "uc1",
-		"password": "q37gnHBJGfRw42E5p6zXLu"
+		"username": "",
+		"password": ""
 	},
 	"file_input": {
 		"data_folder": [
