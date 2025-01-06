@@ -337,6 +337,7 @@ function exitChildProcess() {
 		for (var i = 0; i < process._children.length; i++)
 			process._children[i].stop();
 	}
+	process._children = false;
 }
 
 
@@ -346,12 +347,20 @@ process.stdin.resume();//so the program will not close instantly
 //clean up
 var isExiting = false;
 function exitHandler(options, exitCode) {
-	if( isExiting )
+
+	//pressing Ctr+C again when being existing
+	if( isExiting && exitCode == 2){
+		//force to exit
+		console.logStdout("Exit now. Bye");
+		process.exit( 1 );
 		return;
+	}
+	
 	isExiting = true;
 	
 	console.logStdout("\nCleaning up before exiting ... ");
-	function exit(){
+	
+	function _exit(){
 		console.logStdout("Bye");
 		if( exitCode )
 			process.exit( exitCode );
@@ -367,7 +376,7 @@ function exitHandler(options, exitCode) {
 		dbadmin.connect(function(err, db) {
 			if (err){
 				console.error(err);
-				exit();
+				_exit();
 				return;
 			}
 
@@ -380,31 +389,31 @@ function exitHandler(options, exitCode) {
 				upsert: true
 			}, function() {
 				if (dbconnector) {
-					dbconnector.close(exit);
+					dbconnector.close(_exit);
 					return;
 				}
-				exit();
+				_exit();
 			});
 		});
 
 	} catch (err) {
 		console.error("Error while quiting");
 		console.error(err);
-		exit();
+		_exit();
 	}
 }
 
 process.abort = exitHandler;
 
 //do something when app is closing
-process.on('exit', exitHandler.bind(null, { cleanup: true }));
+process.on('exit', exitHandler.bind(null, { cleanup: true }, 0));
 
 //catches ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, { cleanup: true }));
+process.on('SIGINT', exitHandler.bind(null, { cleanup: true }, 2));
 
 // catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', exitHandler.bind(null, { exit: true }));
-process.on('SIGUSR2', exitHandler.bind(null, { exit: true }));
+process.on('SIGUSR1', exitHandler.bind(null, { exit: true }, 10));
+process.on('SIGUSR2', exitHandler.bind(null, { exit: true }, 12));
 
 //catches uncaught exceptions
 process.on('uncaughtException', (err) => {
