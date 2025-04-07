@@ -1,0 +1,88 @@
+{
+  "config": [
+      {
+          "config_name": "performanceMonitoring.monitoringFrequency",
+          "config_acceptable_values": ["second", "minute", "hour", "day"],
+          "config_value": "hour"
+      },
+      {
+          "config_name": "when.activationDate",
+          "config_value": "1744018345703"
+      },
+      {
+          "config_name": "when.expirationDate",
+          "config_value": "1744018347703"
+      }
+  ],
+  "metrics": [
+      {
+          "name": "dlTput.minDlTputRequirement",
+          "title": "Minimum Downlink Throughput Requirement",
+          "acceptable_values": 1.0,
+          "value": 1.0,
+          "unit": "Mbps",
+          "enable": true
+      },
+      {
+          "name": "dlTput.maxDlTputPerSlice",
+          "title": "Maximum Downlink Throughput Per Slice",
+          "acceptable_values": 0.1,
+          "value": 0.003,
+          "unit": "Gbps",
+          "enable": true
+      },
+      {
+          "name": "ulTput.maxUlTputPerSlice",
+          "title": "Maximum Uplink Throughput Per Slice",
+          "acceptable_values": 0.1,
+          "value": 0.003,
+          "unit": "Gbps",
+          "enable": true
+      },
+      {
+          "name": "dlTput.maxTputVariation",
+          "title": "Maximum Downlink Throughput Variation",
+          "acceptable_values": [5, 10, 20, 50],
+          "value": 20,
+          "unit": "percent",
+          "enable": true
+      },
+      {
+          "name": "ulTput.maxTputVariation",
+          "title": "Maximum Uplink Throughput Variation",
+          "acceptable_values": [5, 10, 20, 50],
+          "value": 20,
+          "unit": "percent",
+          "enable": true
+      },
+      {
+          "name": "latency.maxE2ELatency",
+          "title": "Maximum End-to-End Latency",
+          "acceptable_values": [5, 10, 15, 25, 50, 100, 150, 200, 1000, 2000],
+          "value": 2000,
+          "unit": "ms",
+          "enable": false
+      },
+      {
+          "name": "latency.lowJitter",
+          "title": "Low Jitter",
+          "acceptable_values": [true, false],
+          "value": true,
+          "enable": true
+      },
+      {
+          "name": "dim.maxPDUsessions",
+          "title": "Maximum PDU Sessions",
+          "acceptable_values": [10, 100, 300, 1000, 3000, 10000, 30000, 100000],
+          "value": 10,
+          "enable": true
+      },
+      {
+          "name": "dim.numberOfTerminals",
+          "title": "Number of Terminals",
+          "acceptable_values": [10, 100, 1000, 10000, 100000],
+          "value": 10,
+          "enable": true
+      }
+  ]
+}

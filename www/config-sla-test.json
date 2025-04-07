@@ -1,0 +1,302 @@
+{
+	"database_server": {
+		"host": "localhost",
+		"port": 27017
+	},
+	"redis_input": {
+		"host": "localhost",
+		"port": 6379
+	},
+	"kafka_input": {
+		"host": "localhost",
+		"__host": "37.48.247.124",
+		"_host": "192.168.0.195",
+		"port": 2181,
+		"ssl.ca.location": "data/kafka-ca.cert"
+	},
+	"file_input": {
+		"data_folder": "/tmp/ramdisk/",
+		"_data_folder": "/opt/mmt/probe/result/report/online/",
+		"delete_data": true,
+		"nb_readers": 16
+	},
+	"input_mode": "kafka",
+	"probe_analysis_mode": "online",
+	"local_network": [
+		{
+			"ip": "192.168.0.0",
+			"mask": "255.255.0.0"
+		},
+		{
+			"ip": "172.16.0.0",
+			"mask": "255.240.0.0"
+		},
+		{
+			"ip": "10.0.0.0",
+			"mask": "255.0.0.0"
+		},
+		{
+			"ip": "fe80::",
+			"mask": "8"
+		},
+		{
+			"ip": "0.0.0.0",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "255.255.255.255",
+			"mask": "255.255.255.255"
+		},
+		{
+			"ip": "127.0.0.1",
+			"mask": "255.255.255.255"
+		}
+	],
+	"probe_stats_period": 5,
+	"buffer": {
+		"max_length_size": 50000,
+		"max_interval": 31
+	},
+	"micro_flow": {
+		"packet": 1,
+		"byte": 64
+	},
+	"retain_detail_report_period": 300,
+	"port_number": 8082,
+	"log_folder": "/tmp/",
+	"is_in_debug_mode": true,
+	"_log": [
+		"error",
+		"warn",
+		"log",
+		"info"
+	],
+	"log": [
+		"error",
+		"warn",
+		"log",
+		"info"
+	],
+	"_modules": [
+		"security",
+		"behavior",
+		"ndn",
+		"video",
+		"sla",
+		"stat"
+	],
+	"modules": [
+		"stat",
+		"security",
+		"sla",
+		"enforcement"
+	],
+	"test":123,
+	"modules_config": {
+		"sla": {
+			"active_check_period": 5,
+			"violation_check_period": 60,
+			"reaction_check_period": 5,
+			"init_components": [
+				  {
+					"id": "1",
+					"ip": "192.168.1.1",
+					"metrics": [],
+					"title": "INFLUENCE5G"
+				}
+			],
+			"init_metrics": [
+				{
+                    "id": "1",
+                    "name": "dlTput.minDlTputRequirement",
+                    "title": "Minimum Downlink Throughput Requirement",
+                    "acceptable_values": 1.0,
+                    "value": 1.0,
+                    "unit": "Mbps",
+                    "enable": true
+                },
+				{
+					"id": "2",
+					"name": "dlTput.maxDlTputPerSlice",
+                    "title": "Maximum Downlink Throughput Per Slice",
+                    "acceptable_values": 0.1,
+                    "value": 0.003,
+                    "unit": "Gbps",
+                    "enable": true
+				},
+				{
+					"id": "3",
+                    "name": "ulTput.maxUlTputPerSlice",
+                    "title": "Maximum Uplink Throughput Per Slice",
+                    "acceptable_values": 0.1,
+                    "value": 0.003,
+                    "unit": "Gbps",
+                    "enabled": true
+				},
+				{
+					"id": "4",
+					"name": "dlTput.maxTputVariation",
+                    "title": "Maximum Throughput Variation",
+                    "acceptable_values": [5, 10, 20, 50],
+                    "value": 20,
+                    "unit": "percent",
+                    "enable": true
+				}
+			],
+			"actions": {
+				"add_more_disk_space": {
+					"description": "More hard disk space is needed",
+					"channel_name": "more_disk_space_needed",
+					"agent_description": "This agent is installed together with openStack to be able to change driver size of VMs",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"move_log": {
+					"description": "User needs to move the log to a remote server",
+					"agent_description": "This agent allows to move logs to a remote server",
+					"channel_name": "move_log",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"rotate_log": {
+					"description": "Active logrotate program to delete old log entries",
+					"agent_description": "This agent allows to active logrotate program to delete old log entries",
+					"channel_name": "rotate_log",
+					"candidate_metrics": {
+						"access_logging": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"update_attacks_signatures": {
+					"description": "User needs to update attacks signatures",
+					"agent_description": "This agent allows to update new attacks signatures to DB of IDS",
+					"channel_name": "update_attacks_signatures",
+					"candidate_metrics": {
+						"security_incident": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"add_new_rules": {
+					"description": "User needs to add one or several new rules in the IDS",
+					"agent_description": "This agent allows to add one or several rules in the IDS",
+					"channel_name": "add_new_rules",
+					"candidate_metrics": {
+						"security_incident": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"restart_web_server": {
+					"description": "Restart Web server to bring the website up",
+					"agent_description": "This agent is implemented in NodeJS and installed together with Web server to be able to restart the server when needed",
+					"channel_name": "mmt-agent-restart-apache",
+					"candidate_metrics": {
+						"availability": {
+							"violate": true
+						}
+					}
+				},
+				"use_HA_framework": {
+					"description": "User needs to deploy VM or container in a HA Framework",
+					"agent_description": "This agent allows user to deploy VM or container in a HA Framework",
+					"channel_name": "use_HA_framework",
+					"candidate_metrics": {
+						"availability": {
+							"alert": true,
+							"violate": true
+						}
+					}
+				},
+				"update_access_control": {
+					"description": "Update access control to block malicious behaviours",
+					"agent_description": "This agent allows to control user access",
+					"url": "/enforcement/admin/",
+					"channel_name": "update_access_control",
+					"candidate_metrics": {
+						"access_control": {
+							"alert": true,
+							"violate": true
+						},
+						"incident": {
+							"alert": true
+						}
+					}
+				},
+				"anonymize_data": {
+					"description": "User needs to anonymize data",
+					"agent_description": "This agent allows to anonymize data",
+					"channel_name": "anonymize_data",
+					"candidate_metrics": {
+						"data_privacy": {
+							"alert": true
+						}
+					}
+				},
+				"encrypt_data": {
+					"description": "User needs to encrypt data",
+					"agent_description": "This agent allows to encrypt data",
+					"channel_name": "encrypt_data",
+					"candidate_metrics": {
+						"data_privacy": {
+							"alert": true
+						},
+						"authentication": {
+							"alert": true,
+							"violation": true
+						}
+					}
+				},
+				"configure_scanner_frequency": {
+					"description": "Scanner frequency needs to be updated to meet SLA requirement",
+					"agent_description": "This agent allows to update scanner frequency paramter",
+					"channel_name": "configure_scanner_frequency",
+					"candidate_metrics": {
+						"vul_scan_freq": {
+							"alert": true,
+							"violation": true
+						}
+					}
+				},
+				"apply_two_factors_authentication": {
+					"description": "Two factors authentication needs to be activated",
+					"agent_description": "This agent allows to activate two factors authentication",
+					"channel_name": "apply_two_factors_authentication",
+					"candidate_metrics": {
+						"authentication": {
+							"alert": true,
+							"violation": true
+						}
+					}
+				}
+			}
+		},
+		"report_forward": {
+			"enable": false,
+			"report_types": [
+				10,
+				100
+			],
+			"server": {
+				"host": "localhost",
+				"port": 8088
+			},
+			"data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
+			"data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
+			"keep_alive": true
+		},
+		"_data_processing": "m[1]='probe-A'; return m;"
+	}
+}
