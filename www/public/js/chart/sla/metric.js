@@ -35,7 +35,7 @@ var ReportFactory = {
             var init_components = obj.components,
             init_metrics    = obj.metrics;
 
-            const isInfluence = init_metrics[0].acceptable_values != undefined
+            const isInfluence = init_metrics[0].acceptableValues != undefined
 
             var table_rows = [];
 
@@ -466,7 +466,7 @@ var ReportFactory = {
             if( obj.selectedMetric == undefined )
                return;
 
-            const isInfluence = obj.metrics[0].acceptable_values != undefined
+            const isInfluence = obj.metrics[0].acceptableValues != undefined
 
             for( var i=0; i<obj.components.length; i++){
                var comp = obj.components[ i ];
@@ -637,7 +637,7 @@ function validateValue ( metric, value ) {
          window._checkSubmit = function(){
             var obj = window._mmt;
 
-            const isInfluence = obj.metrics[0].acceptable_values != undefined
+            const isInfluence = obj.metrics[0].acceptableValues != undefined
 
             var selectedMetric = {};
 

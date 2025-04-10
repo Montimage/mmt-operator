@@ -51,29 +51,36 @@ var ReportFactory = {
             if( reactionObj == undefined )
                reactionObj = {conditions: {}, actions: [], priority: "MEDIUM", enable: true, note : ""};
 
+            const isInfluence = init_metrics[0].acceptableValues != undefined
+
+            const rowHeadings = [{
+               type : "<th>",
+               attr : {
+                  style : "text-align: right",
+                  text  : "Metrics"
+               }
+            },{
+               type : "<th>",
+               attr : {
+                  style : "text-align: center",
+                  text  : "Alerts"
+               }
+            },{
+               type : "<th>",
+               attr : {
+                  style : "text-align: center",
+                  text  : "Violations"
+               }
+            }]
+
+            if( isInfluence )
+               rowHeadings.splice(1, 1);
+
             var table_rows = [{
                type    : "<thead>",
                children: [{
                   type     : "<tr>",
-                  children : [{
-                     type : "<th>",
-                     attr : {
-                        style : "text-align: right",
-                        text  : "Metrics"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        style : "text-align: center",
-                        text  : "Alerts"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        style : "text-align: center",
-                        text  : "Violations"
-                     }
-                  }]
+                  children : rowHeadings
                }]
             }];
             for( var i=0; i<init_components.length; i++){
@@ -98,9 +105,12 @@ var ReportFactory = {
                var avail_metrics = [];
                for( var j=0; j<metrics.length; j++ ){
                   var me = metrics[ j ];
+                  var sel = obj.selectedMetric[ comp.id ];
+                  if( sel != undefined )
+                     sel = sel[ me.id ];
 
                   //show only metrics being enabled
-                  if( me.enable === true )
+                  if( me.enable === true || (sel != undefined && sel.enable === true) )
                      avail_metrics.push( me );
                }
                metrics = avail_metrics;
@@ -126,51 +136,53 @@ var ReportFactory = {
                      }
                   });
 
-                  //alerts
-                  var checked = false;
-                  var x = reactionObj.conditions[me.name];
-                  if( Array.isArray( x ))
-                     checked = (x.indexOf( "violate" ) != -1);
+                  if (!isInfluence) {
+                     //alerts
+                     var checked = false;
+                     var x = reactionObj.conditions[me.name];
+                     if( Array.isArray( x ))
+                        checked = (x.indexOf( "violate" ) != -1);
 
-                  row.children.push({
-                     type     : "<td>",
-                     children : [{
-                        type : "<div>",
-                        attr : {
-                           class   : "onoffswitch",
-                           style   : "margin: 0 auto"
-                        },
+                     row.children.push({
+                        type     : "<td>",
                         children : [{
-                           type    : "<input>",
-                           attr    : {
-                              id            : "alert-" + me.name,
-                              class         : "onoffswitch-checkbox react-conditions",
-                              type          : "checkbox",
-                              "data-metric" : me.name,
-                              "data-type"   : "alert",
-                              //this checkbox is checked if it is in the list of "conditions"
-                              checked       :  checked
-                           }
-                        },{
-                           type    : "<label>",
-                           attr    : {
-                              class   : "onoffswitch-label",
-                              for     : "alert-" + me.name,
+                           type : "<div>",
+                           attr : {
+                              class   : "onoffswitch",
+                              style   : "margin: 0 auto"
                            },
-                           children  : [{
-                              type  : "<span>",
-                              attr  : {
-                                 class : "onoffswitch-inner"
+                           children : [{
+                              type    : "<input>",
+                              attr    : {
+                                 id            : "alert-" + me.name,
+                                 class         : "onoffswitch-checkbox react-conditions",
+                                 type          : "checkbox",
+                                 "data-metric" : me.name,
+                                 "data-type"   : "alert",
+                                 //this checkbox is checked if it is in the list of "conditions"
+                                 checked       :  checked
                               }
                            },{
-                              type  : "<span>",
-                              attr  : {
-                                 class : "onoffswitch-switch"
-                              }
+                              type    : "<label>",
+                              attr    : {
+                                 class   : "onoffswitch-label",
+                                 for     : "alert-" + me.name,
+                              },
+                              children  : [{
+                                 type  : "<span>",
+                                 attr  : {
+                                    class : "onoffswitch-inner"
+                                 }
+                              },{
+                                 type  : "<span>",
+                                 attr  : {
+                                    class : "onoffswitch-switch"
+                                 }
+                              }]
                            }]
                         }]
-                     }]
-                  });
+                     });
+                  }
 
                   //violate
                   var checked = false;
@@ -415,7 +427,7 @@ var ReportFactory = {
                         count = $("#alert-" + cond).prop("checked", true ).length;
                         if( count > 0 ){
                            text.push( "alert" );
-                           
+
                            $("#conditions-div").scrollToChild( "#alert-" + cond );
                         }
                      }
@@ -424,7 +436,7 @@ var ReportFactory = {
                         count = $("#violate-" + cond).prop("checked", true ).length;
                         if( count > 0 ){
                            text.push( 'violate' );
-                           
+
                            $("#conditions-div").scrollToChild( "#tr-" + cond );
                         }
                      }
@@ -510,7 +522,7 @@ var ReportFactory = {
                   setTimeout( MMTDrop.tools.gotoURL, 2000,
                       //no need "probe_id" as we want to show all of them
                         "/chart/enforcement/reaction", {param : ["app_id"], add: "probe_id=null"} );
-                        
+
                }
             });
 

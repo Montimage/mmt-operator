@@ -121,7 +121,7 @@ var all_pages = {
 //list of tabs to be shown on the tab bar
 var pages_to_show = {};
 const listOfPageIdToShow = config.modules ;
-   
+
 //for testing
 //listOfPageIdToShow.push( "sla" );
 
@@ -161,12 +161,12 @@ router.get('/*', function(req, res, next) {
 
     //maintain query string between pages
     var query_string = [];
-    var arr = ["period", "probe_id", "app_id", "period_id"];  
+    var arr = ["period", "probe_id", "app_id", "period_id"];
 
     //for musa project
     if (path == 'sla/availability')
         arr.push( "alert", "violation" );
-    
+
     for (var i in arr) {
         var el = arr[i];
         if (req.query[el] != undefined)
@@ -186,7 +186,7 @@ router.get('/*', function(req, res, next) {
     other_config = JSON.parse( other_config );
     //delete some sensible informations
     ["auth_token", "database_server","redis_input","kafka_input","file_input", "socket_input", "pcap_dump", "databaseName", "adminDatabaseName", "rootDirectory"].forEach( (el) => delete(other_config[el]));
-    other_config.modules_config = {};  //TODO: need it for SLA
+    // other_config.modules_config = {};  //TODO: need it for SLA
 
     other_config = JSON.stringify(other_config);
     res.render("chart", {

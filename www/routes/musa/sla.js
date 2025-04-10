@@ -180,7 +180,7 @@ router.post("/upload/:id", function(req, res, next) {
 
                   //extract content of sla file (that is in JSON format)
                   setTimeout( function(){
-                     extract_metrics_json( app_config, comp_index, function( err_3, count, comp_name ){
+                     extract_metrics( app_config, comp_index, function( err_3, count, comp_name ){
                         if( err_3 ){
                            console.error( err_3 );
                            return raise_error( err_3.message );
@@ -298,6 +298,7 @@ function extract_metrics_json( app_config, index, cb ){
             id                : comp.id + "." + (total+1),
             name              : metric.name,
             title             : metric.title,
+            description       : metric.description,
             acceptableValues  : metric.acceptable_values,
             value             : metric.value,
             enable            : metric.enable,
