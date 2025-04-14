@@ -100,6 +100,7 @@ var ReportFactory = {
                name = obj.metricname,
                   value = obj.value;
 
+               const isInfluence = ["dlTput.", "ulTput.", "latency.", "dim."].some(substr => name.startsWith(substr));
 
                //if no condition => no alert/violation
                if (value == "" || value == undefined)
@@ -108,7 +109,7 @@ var ReportFactory = {
                const db = new MMTDrop.Database({ collection: "data_link", action: "aggregate", raw: true });
                //_checkIsolation( new , cb );
                const sliceId = comp_id + "";
-               const threshold = _convertStringToThreshold(value);
+               const threshold = isInfluence ? undefined : _convertStringToThreshold(value);
 
                switch (name) {
                   case "limit_gtp": {

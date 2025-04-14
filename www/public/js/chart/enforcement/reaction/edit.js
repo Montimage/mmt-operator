@@ -51,38 +51,29 @@ var ReportFactory = {
             if( reactionObj == undefined )
                reactionObj = {conditions: {}, actions: [], priority: "MEDIUM", enable: true, note : ""};
 
-            const isInfluence = (init_metrics[0] && init_metrics[0].acceptableValues != undefined) ||
-                                 (init_components[0] && init_components[0].metrics[0] &&
-                                    init_components[0].metrics[0].acceptableValues != undefined)
-
-            const rowHeadings = [{
-               type : "<th>",
-               attr : {
-                  style : "text-align: right",
-                  text  : "Metrics"
-               }
-            },{
-               type : "<th>",
-               attr : {
-                  style : "text-align: center",
-                  text  : "Alerts"
-               }
-            },{
-               type : "<th>",
-               attr : {
-                  style : "text-align: center",
-                  text  : "Violations"
-               }
-            }]
-
-            if( isInfluence )
-               rowHeadings.splice(1, 1);
-
             var table_rows = [{
                type    : "<thead>",
                children: [{
                   type     : "<tr>",
-                  children : rowHeadings
+                  children : [{
+                     type : "<th>",
+                     attr : {
+                        style : "text-align: right",
+                        text  : "Metrics"
+                     }
+                  },{
+                     type : "<th>",
+                     attr : {
+                        style : "text-align: center",
+                        text  : "Alerts"
+                     }
+                  },{
+                     type : "<th>",
+                     attr : {
+                        style : "text-align: center",
+                        text  : "Violations"
+                     }
+                  }]
                }]
             }];
             for( var i=0; i<init_components.length; i++){
@@ -103,6 +94,8 @@ var ReportFactory = {
                if( comp.metrics )
                   metrics = metrics.concat( comp.metrics.slice( 0 ) );
 
+               console.log(metrics)
+
                //keep only metrics being enabled/supported
                var avail_metrics = [];
                for( var j=0; j<metrics.length; j++ ){
@@ -112,7 +105,10 @@ var ReportFactory = {
                      sel = sel[ me.id ];
 
                   //show only metrics being enabled
-                  if( me.enable === true || (sel != undefined && sel.enable === true) )
+                  if (sel != undefined) {
+                     if (sel.enable === true) avail_metrics.push(me);
+                     continue;
+                  } else if (me.enable === true)
                      avail_metrics.push( me );
                }
                metrics = avail_metrics;
@@ -138,53 +134,51 @@ var ReportFactory = {
                      }
                   });
 
-                  if (!isInfluence) {
-                     //alerts
-                     var checked = false;
-                     var x = reactionObj.conditions[me.name];
-                     if( Array.isArray( x ))
-                        checked = (x.indexOf( "violate" ) != -1);
+                  //alerts
+                  var checked = false;
+                  var x = reactionObj.conditions[me.name];
+                  if( Array.isArray( x ))
+                     checked = (x.indexOf( "violate" ) != -1);
 
-                     row.children.push({
-                        type     : "<td>",
+                  row.children.push({
+                     type     : "<td>",
+                     children : [{
+                        type : "<div>",
+                        attr : {
+                           class   : "onoffswitch",
+                           style   : "margin: 0 auto"
+                        },
                         children : [{
-                           type : "<div>",
-                           attr : {
-                              class   : "onoffswitch",
-                              style   : "margin: 0 auto"
+                           type    : "<input>",
+                           attr    : {
+                              id            : "alert-" + me.name,
+                              class         : "onoffswitch-checkbox react-conditions",
+                              type          : "checkbox",
+                              "data-metric" : me.name,
+                              "data-type"   : "alert",
+                              //this checkbox is checked if it is in the list of "conditions"
+                              checked       :  checked
+                           }
+                        },{
+                           type    : "<label>",
+                           attr    : {
+                              class   : "onoffswitch-label",
+                              for     : "alert-" + me.name,
                            },
-                           children : [{
-                              type    : "<input>",
-                              attr    : {
-                                 id            : "alert-" + me.name,
-                                 class         : "onoffswitch-checkbox react-conditions",
-                                 type          : "checkbox",
-                                 "data-metric" : me.name,
-                                 "data-type"   : "alert",
-                                 //this checkbox is checked if it is in the list of "conditions"
-                                 checked       :  checked
+                           children  : [{
+                              type  : "<span>",
+                              attr  : {
+                                 class : "onoffswitch-inner"
                               }
                            },{
-                              type    : "<label>",
-                              attr    : {
-                                 class   : "onoffswitch-label",
-                                 for     : "alert-" + me.name,
-                              },
-                              children  : [{
-                                 type  : "<span>",
-                                 attr  : {
-                                    class : "onoffswitch-inner"
-                                 }
-                              },{
-                                 type  : "<span>",
-                                 attr  : {
-                                    class : "onoffswitch-switch"
-                                 }
-                              }]
+                              type  : "<span>",
+                              attr  : {
+                                 class : "onoffswitch-switch"
+                              }
                            }]
                         }]
-                     });
-                  }
+                     }]
+                  });
 
                   //violate
                   var checked = false;

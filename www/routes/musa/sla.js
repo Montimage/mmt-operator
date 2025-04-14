@@ -295,14 +295,14 @@ function extract_metrics_json( app_config, index, cb ){
       for (var i=0; i<uploadedMetrics.length; i++) {
          const metric = uploadedMetrics[i];
          const metricData = {
-            id                : comp.id + "." + (total+1),
-            name              : metric.name,
-            title             : metric.title,
-            description       : metric.description,
-            acceptableValues  : metric.acceptable_values,
-            value             : metric.value,
-            enable            : metric.enable,
-            priority          : metric.priority,
+            id          : comp.id + "." + (total+1),
+            name        : metric.name,
+            title       : metric.title,
+            // TODO: retrieve from Nokia MongoDB
+            description : metric.description,
+            alert       : metric.alert_value,
+            violation   : metric.violation_value,
+            enable      : metric.enable,
          }
          if( metric.unit != undefined )
             metricData.unit = metric.unit;

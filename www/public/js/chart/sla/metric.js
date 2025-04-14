@@ -35,14 +35,9 @@ var ReportFactory = {
             var init_components = obj.components,
             init_metrics    = obj.metrics;
 
-            const isInfluence = (init_metrics[0] && init_metrics[0].acceptableValues != undefined) ||
-                                 (init_components[0] && init_components[0].metrics[0] &&
-                                    init_components[0].metrics[0].acceptableValues != undefined)
+            const isInfluence = init_components.some(item => item.title === "INFLUENCE5G")
 
-            var table_rows = [];
-
-            if (isInfluence) {
-               table_rows.push({
+            var table_rows = [{
                   type    : "<thead>",
                   children: [{
                      type     : "<tr>",
@@ -52,6 +47,11 @@ var ReportFactory = {
                         type : "<th>",
                         attr : {
                            text : "Metrics"
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Alert Value"
                         }
                      },{
                         type : "<th>",
@@ -61,17 +61,7 @@ var ReportFactory = {
                      },{
                         type : "<th>",
                         attr : {
-                           text : "Acceptable Values"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Unit"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Priority"
+                           text : isInfluence ? "Unit" : "Priority"
                         }
                      },{
                         type : "<th>",
@@ -85,50 +75,7 @@ var ReportFactory = {
                         }
                      }]
                   }]
-               });
-            }
-            else {
-               table_rows.push({
-                  type    : "<thead>",
-                  children: [{
-                     type     : "<tr>",
-                     children : [{
-                        type : "<th>",
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Metrics"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Alerts"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Violations"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Priority"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Enable"
-                        }
-                     },{
-                        type : "<th>",
-                        attr : {
-                           text : "Supported"
-                        }
-                     }]
-                  }]
-               });
-            }
-
+               }]
 
 
             init_components.sort( function( a, b ){
@@ -182,48 +129,54 @@ var ReportFactory = {
                         }
                      })
 
-
-                  if (isInfluence) {
-                     // title
+                     //title
                      row.children.push({
                         type  : "<td>",
                         attr  : {
-                           html : me.name+ " "
+                           html : me.title+ " "
                         },
                         children:[{
                            type : "<i>",
                            attr : {
                               class: "fa fa-info-circle",
                               "data-toggle":"tooltip",
-                              title: me.title
+                              title: me.description == undefined ? me.name : me.description
                            }
                         }]
                      });
 
-                     // violation value
-                     row.children.push({
-                        type     : "<td>",
-                        children : [{
-                           type : "<input>",
-                           attr : {
-                              id      : "value-" + comp.id + "-" + me.id,
-                              class   : "form-control",
-                              type    : "text",
-                              required: $("[id='enable-" + comp.id + "-" + me.id + "']").is(":checked"),
-                              value   : me.value,
-                              disabled: me.support === false
-                           }
-                        }]
-                     });
-
-                     // acceptable values
-                     row.children.push({
-                        type  : "<td>",
-                        attr  : {
-                           html : JSON.stringify(me.acceptableValues)+ " "
+                  //alert
+                  row.children.push({
+                     type     : "<td>",
+                     children : [{
+                        type : "<input>",
+                        attr : {
+                           id      : "alert-" + comp.id + "-" + me.id,
+                           class   : "form-control",
+                           type    : "text",
+                           //required: true,
+                           value   : me.alert,
+                           disabled: me.support === false
                         }
-                     });
+                     }]
+                  });
+                  //violation
+                  row.children.push({
+                     type     : "<td>",
+                     children : [{
+                        type : "<input>",
+                        attr : {
+                           id      : "violation-" + comp.id + "-" + me.id,
+                           class   : "form-control",
+                           type    : "text",
+                           required: true,
+                           value   : me.violation == undefined? "" : me.violation,
+                           disabled: me.support === false
+                        }
+                     }]
+                  });
 
+                  if (isInfluence) {
                      const unitChildren = getUnitOptions(me.name, me.unit);
 
                      // unit
@@ -242,89 +195,43 @@ var ReportFactory = {
                      });
                   }
                   else {
-                     //title
-                     row.children.push({
-                        type  : "<td>",
-                        attr  : {
-                           html : me.title+ " "
-                        },
-                        children:[{
-                           type : "<i>",
-                           attr : {
-                              class: "fa fa-info-circle",
-                              "data-toggle":"tooltip",
-                              title: me.description
-                           }
-                        }]
-                     });
-
-                     //alert
+                     //priority
                      row.children.push({
                         type     : "<td>",
                         children : [{
-                           type : "<input>",
+                           type : "<select>",
                            attr : {
-                              id      : "alert-" + comp.id + "-" + me.id,
+                              id      : "priority-" + comp.id + "-" + me.id,
                               class   : "form-control",
-                              type    : "text",
-                              //required: true,
-                              value   : me.alert,
-                              disabled: me.support === false
-                           }
-                        }]
-                     });
-                     //violation
-                     row.children.push({
-                        type     : "<td>",
-                        children : [{
-                           type : "<input>",
-                           attr : {
-                              id      : "violation-" + comp.id + "-" + me.id,
-                              class   : "form-control",
-                              type    : "text",
                               required: true,
-                              value   : me.violation == undefined? "" : me.violation,
                               disabled: me.support === false
-                           }
+                           },
+                           children : [{
+                              type : "<option>",
+                              attr : {
+                                 value   : "HIGH",
+                                 text    : "HIGH",
+                                 selected: (me.priority == "HIGH")
+                              }
+                           },{
+                              type : "<option>",
+                              attr : {
+                                 value   : "MEDIUM",
+                                 text    : "MEDIUM",
+                                 selected: (me.priority == "MEDIUM")
+                              }
+                           },{
+                              type : "<option>",
+                              attr : {
+                                 value   : "LOW",
+                                 text    : "LOW",
+                                 selected: (me.priority == "LOW")
+                              }
+                           }]
                         }]
                      });
                   }
 
-                  //priority
-                  row.children.push({
-                     type     : "<td>",
-                     children : [{
-                        type : "<select>",
-                        attr : {
-                           id      : "priority-" + comp.id + "-" + me.id,
-                           class   : "form-control",
-                           required: true,
-                           disabled: me.support === false
-                        },
-                        children : [{
-                           type : "<option>",
-                           attr : {
-                              value   : "HIGH",
-                              text    : "HIGH",
-                              selected: (me.priority == "HIGH")
-                           }
-                        },{
-                           type : "<option>",
-                           attr : {
-                              value   : "MEDIUM",
-                              text    : "MEDIUM",
-                              selected: (me.priority == "MEDIUM")
-                           }
-                        },{
-                           type : "<option>",
-                           attr : {
-                              value   : "LOW",
-                              text    : "LOW",
-                              selected: (me.priority == "LOW")
-                           }
-                        }]
-                     }]
-                  });
                   //enable/disable
                   row.children.push({
                      type     : "<td>",
@@ -468,12 +375,8 @@ var ReportFactory = {
             if( obj.selectedMetric == undefined )
                return;
 
-            const init_components = obj.components,
-               init_metrics    = obj.metrics;
-
-            const isInfluence = (init_metrics[0] && init_metrics[0].acceptableValues != undefined) ||
-                                 (init_components[0] && init_components[0].metrics[0] &&
-                                    init_components[0].metrics[0].acceptableValues != undefined)
+            const init_components = obj.components;
+            const isInfluence = init_components.some(item => item.title === "INFLUENCE5G")
 
             for( var i=0; i<obj.components.length; i++){
                var comp = obj.components[ i ];
@@ -495,15 +398,14 @@ var ReportFactory = {
                      var id = comp.id + "-" + me.id;
 
                      if (isInfluence) {
-                        $("[id='value-" + id + "']").val( sel.value     )
                         if(sel.unit != undefined) $("[id='unit-" + id + "']").val( sel.unit      )
 
                      } else {
-                        $("[id='alert-" + id + "']").val( sel.alert     ),
-                        $("[id='violation-" + id + "']").val( sel.violation );
+                        $("[id='priority-" + id + "']").val( sel.priority  );
                      }
 
-                     $("[id='priority-" + id + "']").val( sel.priority  ),
+                     $("[id='alert-" + id + "']").val( sel.alert     ),
+                     $("[id='violation-" + id + "']").val( sel.violation );
                      $("[id='enable-" + id + "']").prop( "checked", sel.enable );
                   }
             }
@@ -640,16 +542,61 @@ function validateValue ( metric, value ) {
    return true;
 }
 
+function validateTypes (metric, value) {
+   const name = metric.name;
+   const val = JSON.parse(value);
+
+   if (
+      name == "dlTput.minDlTputRequirement" ||
+      name == "dlTput.maxDlTputPerSlice"    ||
+      name == "ulTput.maxUlTputPerSlice"    ||
+      name == "dlTput.maxTputVariation"     ||
+      name == "ulTput.maxTputVariation"     ||
+      name == "latency.maxE2ELatency"
+   ) {
+      if (val < 0) {
+         alert ("The " + name + " value must be greater than 0.");
+         return false;
+      }
+      // must be a float
+      if (isNaN(val)) {
+         alert ("The " + name + " value must be a number.");
+         return false;
+      }
+   }
+   else if (
+      name == "dim.maxPDUsessions" ||
+      name == "dim.numberOfTerminals"
+   ) {
+      if (val < 0) {
+         alert ("The " + name + " value must be greater than 0.");
+         return false;
+      }
+      // must be an int
+      if (isNaN(val) || val % 1 != 0) {
+         alert ("The " + name + " value must be a number.");
+         return false;
+      }
+   }
+   else if (
+      name == "latency.lowJitter"
+   ) {
+      // must be a bool
+      if (val !== true && val !== false) {
+         alert ("The " + name + " value must be a boolean.");
+         return false;
+      }
+   }
+
+   return true;
+}
+
 //       SUBMIT FORM
          window._checkSubmit = function(){
             var obj = window._mmt;
 
-            const init_components = obj.components,
-               init_metrics    = obj.metrics;
-
-            const isInfluence = (init_metrics[0] && init_metrics[0].acceptableValues != undefined) ||
-                                 (init_components[0] && init_components[0].metrics[0] &&
-                                    init_components[0].metrics[0].acceptableValues != undefined)
+            const init_components = obj.components;
+            const isInfluence = init_components.some(item => item.title === "INFLUENCE5G")
 
             var selectedMetric = {};
 
@@ -668,25 +615,31 @@ function validateValue ( metric, value ) {
                   var me = metrics[ j ];
                   var id = comp.id + "-" + me.id;
 
+                  const alert = $("[id='alert-" + id + "']").val();
+                  const violation = $("[id='violation-" + id + "']").val();
+
                   if (isInfluence) {
-                     const value = $("[id='value-" + id + "']").val();
-                     if( value != "" && !validateValue(me, value) )
+                     // if( value != "" && !validateValue(me, value) )
+                        // return false;
+
+                     if ( alert != "" && validateTypes( me, alert ) == undefined )
+                        return false;
+
+                     if ( violation != "" && validateTypes( me, violation ) == undefined )
                         return false;
 
                      selectedMetric[ comp.id ][ me.id ] = {
-                           value     : JSON.parse(value),
-                           priority  : $("[id='priority-" + id + "']").val(),
+                           alert     : JSON.parse(alert),
+                           violation : JSON.parse(violation),
                            enable    : $("[id='enable-" + id + "']").is(":checked"),
                            unit      : $("[id='unit-" + id + "']").val()
                      };
                   }
                   else {
-                     const alert = $("[id='alert-" + id + "']").val();
 
                      if( alert != "" && _convertStringToThreshold( alert ) == undefined )
                         return false;
 
-                     const violation = $("[id='violation-" + id + "']").val();
                      if( violation != "" && _convertStringToThreshold( violation ) == undefined )
                         return false;
 
