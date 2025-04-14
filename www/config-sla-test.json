@@ -106,42 +106,6 @@
 				}
 			],
 			"init_metrics": [
-				{
-                    "id": "1",
-                    "name": "dlTput.minDlTputRequirement",
-                    "title": "Minimum Downlink Throughput Requirement",
-                    "acceptableValues": 1.0,
-                    "value": 1.0,
-                    "unit": "Mbps",
-                    "enable": true
-                },
-				{
-					"id": "2",
-					"name": "dlTput.maxDlTputPerSlice",
-                    "title": "Maximum Downlink Throughput Per Slice",
-                    "acceptableValues": 0.1,
-                    "value": 0.003,
-                    "unit": "Gbps",
-                    "enable": true
-				},
-				{
-					"id": "3",
-                    "name": "ulTput.maxUlTputPerSlice",
-                    "title": "Maximum Uplink Throughput Per Slice",
-                    "acceptableValues": 0.1,
-                    "value": 0.003,
-                    "unit": "Gbps",
-                    "enabled": true
-				},
-				{
-					"id": "4",
-					"name": "dlTput.maxTputVariation",
-                    "title": "Maximum Throughput Variation",
-                    "acceptableValues": [5, 10, 20, 50],
-                    "value": 20,
-                    "unit": "percent",
-                    "enable": true
-				}
 			],
 			"actions": {
 				"reroute_packets": {

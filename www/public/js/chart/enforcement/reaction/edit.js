@@ -51,7 +51,9 @@ var ReportFactory = {
             if( reactionObj == undefined )
                reactionObj = {conditions: {}, actions: [], priority: "MEDIUM", enable: true, note : ""};
 
-            const isInfluence = init_metrics[0].acceptableValues != undefined
+            const isInfluence = (init_metrics[0] && init_metrics[0].acceptableValues != undefined) ||
+                                 (init_components[0] && init_components[0].metrics[0] &&
+                                    init_components[0].metrics[0].acceptableValues != undefined)
 
             const rowHeadings = [{
                type : "<th>",
