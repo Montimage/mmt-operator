@@ -14,7 +14,24 @@ Follow the instruction on nodejs.org: https://nodejs.org/en/download/package-man
 
 ### 2. Mongo DB v4.4
 
-Follow the procedure described on the following link to install the latest version of Mongodb: https://www.mongodb.com/docs/v4.4/tutorial/install-mongodb-on-ubuntu/
+Follow the procedure described on the following link to install the version 4.4 of Mongodb: https://www.mongodb.com/docs/v4.4/tutorial/install-mongodb-on-ubuntu/
+
+For example, the following commands will install MongoDB 4.4 on Ubuntu server 22.04:
+
+```bash
+# install libssl1.1
+echo "deb http://security.ubuntu.com/ubuntu focal-security main" | sudo tee /etc/apt/sources.list.d/focal-security.list
+sudo apt-get update
+sudo apt-get install libssl1.1
+# install MongoDB 4.4
+sudo apt-get install gnupg curl
+curl -fsSL https://www.mongodb.org/static/pgp/server-4.4.asc | \
+   sudo gpg -o /usr/share/keyrings/mongodb-server-4.4.gpg \
+   --dearmor
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-4.4.gpg ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+```
 
 ## Usage
 
