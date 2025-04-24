@@ -24,7 +24,7 @@ var connect_to_db = function( cb ){
 
 
 var is_loggedin = function( req, res, redirect=null){
-    auth.checkLogin( req, res, redirect );
+    return auth.checkLogin( req, res, redirect );
 };
 
 router.all("/info/*", function( req, res, next ){
@@ -198,16 +198,16 @@ router.get("/profile", function (req, res, next) {
             msg = {};
         }
             version = "MMT-Operator: " + config.version 
-                  + "\nMMT-Probe: " + msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] 
-                  + "\nMMT-SDK: " + msg[ dataAdaptor.LicenseColumnId.VERSION_SDK]
+                  + "\nMMT-Probe: " + (msg[ dataAdaptor.LicenseColumnId.VERSION_PROBE] || "na") 
+                  + "\nMMT-SDK: " + (msg[ dataAdaptor.LicenseColumnId.VERSION_SDK] || "na")
         
         
         res.render('profile', {
             title     : 'Profile',
             version   : version,
             //version   : " MMT-Operator 1.6.5-5dc7f4f,\n MMT-Probe 1.2.1-b5876c7,\n MMT-Security 1.1.4-8c20261,\n MMT-DPI 1.6.8.1-47e533f",
-            deviceID  : msg[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ],
-            expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ])).toString(),
+            deviceID  : (msg[ dataAdaptor.LicenseColumnId.MAC_ADDRESSES ] || "na"),
+            expiredOn : (new Date(msg[ dataAdaptor.LicenseColumnId.EXPIRY_DATE ] || 0)).toString(),
         });
     } );
 
