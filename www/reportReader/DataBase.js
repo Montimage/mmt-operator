@@ -1,5 +1,5 @@
 /**
- * Insert Messages to Database 
+ * Insert Messages to Database
  */
 
 "use strict";
@@ -23,7 +23,7 @@ const COL      = dataAdaptor.StatsColumnId;
 const HTTP     = dataAdaptor.HttpStatsColumnId;
 const NDN      = dataAdaptor.NdnColumnId;
 const TLS      = dataAdaptor.TlsStatsColumnId;
-const RTP      = dataAdaptor.RtpStatsColumnId;  
+const RTP      = dataAdaptor.RtpStatsColumnId;
 const FTP      = dataAdaptor.FtpStatsColumnId;
 const GTP      = dataAdaptor.GtpStatsColumnId;
 const LICENSE  = dataAdaptor.LicenseColumnId;
@@ -48,21 +48,21 @@ const DOUBLE_STAT_PERIOD_IN_MS = config.probe_stats_period_in_ms*1000*2;
 /**
  * Flat an application path
  * @param str : application path, e.g., ETH.IP.TCP.HTTP
- * @returns an array contains all children paths, e.g., [ETH, ETH.IP, ETH.IP.TCP, ETH.IP.TCP.HTTP] 
+ * @returns an array contains all children paths, e.g., [ETH, ETH.IP, ETH.IP.TCP, ETH.IP.TCP.HTTP]
  */
 
 //array of keys
-const flat_key_array = [ "path", "app", "depth" ]; 
+const flat_key_array = [ "path", "app", "depth" ];
 function flatAppPath( str ){
    const pathArr = str.split(".");
-   
+
    const arr = [];
    while(  pathArr.length > 0 ){
       var msg = {path: pathArr.join("."), app: parseInt(pathArr[ pathArr.length - 1 ]), depth: pathArr.length};
       //__mi_keys is used by mongodb to accelate bson functions
       //this must be used together with the hack was done in node_module/bson
       //msg.__mi_keys = flat_key_array;
-      
+
       arr.push( msg );
       pathArr.length --;
    }
@@ -125,7 +125,7 @@ module.exports = function(){
             set: ["isGen", "app_paths", COL.APP_ID, COL.PROFILE_ID]
                }
          ),
-         ip: new DataCache( inserter, "data_ip", 
+         ip: new DataCache( inserter, "data_ip",
                {
             key: [ "ip", COL.PROBE_ID ],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
@@ -137,7 +137,7 @@ module.exports = function(){
             set: ["isGen", COL.MAC_SRC, COL.IP_SRC ]
                }
          ),
-         location: new DataCache( inserter, "data_location", 
+         location: new DataCache( inserter, "data_location",
                {
             key: [COL.DST_LOCATION, COL.PROBE_ID],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
@@ -149,7 +149,7 @@ module.exports = function(){
                }
          ),
          //a link between 2 IPs
-         link: new DataCache( inserter, "data_link", 
+         link: new DataCache( inserter, "data_link",
                {
             key: ["link", COL.PROBE_ID ],
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME,
@@ -163,9 +163,9 @@ module.exports = function(){
                      .concat( config.isSLA ? ["slices", GTP.TEIDs] : [] )
                }
          ),
-         
+
          reports: new DataCache( inserter, "reports",
-               {}, 
+               {},
                CONST.period.SPECIAL //keep original reports
          ),
          session: new DataCache(inserter, "data_session",
@@ -174,20 +174,20 @@ module.exports = function(){
             inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-               
+
                COL.HANDSHAKE_TIME, COL.APP_RESPONSE_TIME, COL.DATA_TRANSFER_TIME,
-               
+
                COL.RTT_MIN_CLIENT, COL.RTT_MIN_SERVER,
                COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER,
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
-               
+
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
                ],
             set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
                }
          ),
-         
+
          unknownFlows : new DataCache( inserter, "data_unknown_flows",{
             key : [COL.IP_SRC, COL.IP_DST, COL.THREAD_NUMBER],
             inc : [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
@@ -228,7 +228,7 @@ module.exports = function(){
             inc: [4, 5, 6 ]
                }
          ),
-         
+
          //for eNodeB
          gtp: new DataCache( inserter, "data_gtp",
                {
@@ -236,15 +236,15 @@ module.exports = function(){
             inc: [COL.UL_DATA_VOLUME, COL.DL_DATA_VOLUME, COL.UL_PACKET_COUNT,
                COL.DL_PACKET_COUNT, COL.UL_PAYLOAD_VOLUME, COL.DL_PAYLOAD_VOLUME,
                COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
-               
+
                COL.RTT_AVG_CLIENT, COL.RTT_AVG_SERVER,
                COL.DL_RETRANSMISSION, COL.UL_RETRANSMISSION,
-               
+
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
                GTP.EXPECTED_DELAY_UL, GTP.EXPECTED_PELR_UL,
                GTP.EXPECTED_DELAY_DL, GTP.EXPECTED_PELR_DL,
                ],
-            set:[COL.MAC_SRC, COL.MAC_DST,  
+            set:[COL.MAC_SRC, COL.MAC_DST,
                COL.IP_SRC_INIT_CONNECTION, COL.DST_LOCATION, GTP.ENB_NAME, GTP.MME_NAME,
                COL.APP_PATH ]
                }
@@ -260,11 +260,11 @@ module.exports = function(){
             }
       ),
    };
-   
+
    function hasModule( module_name ){
       return config.modules.indexOf( module_name ) != -1;
    }
-   
+
    //eliminate some caches if we do not need them
    if( !hasModule("unknown_traffic")   )
       delete self.dataCache.unknownFlows ;
@@ -280,20 +280,20 @@ module.exports = function(){
       delete self.dataCache.ip;
    if( !hasModule("network") && !hasModule("application") && !hasModule("iot"))
       delete self.dataCache.reports;
-   
+
    if( !hasModule("network") )
       delete self.dataCache.location;
    if( !hasModule("network") && !hasModule("iot") && ! config.isSLA ) //sla needs link collection to check isolation access => SENDATE demo
       delete self.dataCache.link;
-   
+
    //flush
    setInterval( function(){
       self.flush( function(){} );
    }, config.probe_stats_period_in_ms*2 );
-   
+
    //message contain only zero
    const zero_msg = [];
-   
+
    function update_zero_msg( format, probe_id, input_src, ts ){
       zero_msg[ 0 ] = format;
       zero_msg[ 1 ] = probe_id;
@@ -301,8 +301,8 @@ module.exports = function(){
       zero_msg[ 3 ] = ts;
       return zero_msg;
    }
-   
-   
+
+
    /**
     * Add a new message to DB
     */
@@ -322,7 +322,7 @@ module.exports = function(){
          //System statistic: CPU, memory
          case dataAdaptor.CsvFormat.SYS_STAT_FORMAT:
             self.dataCache.sysStat.addMessage( msg );
-            
+
             return;
 
          case dataAdaptor.CsvFormat.BA_BANDWIDTH_FORMAT:
@@ -334,7 +334,7 @@ module.exports = function(){
 
          case dataAdaptor.CsvFormat.SECURITY_FORMAT:
             inserter.add("security", [msg] );
-            
+
             //self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
 
@@ -369,7 +369,7 @@ module.exports = function(){
             //=> clean lte_topology
             inserter.clean( "lte_topology" );
             return;
-            
+
          case dataAdaptor.CsvFormat.LTE_TOPOLOGY_REPORT:
             inserter.add("lte_topology", [msg] );
             return;
@@ -383,25 +383,25 @@ module.exports = function(){
             //mark avaibility of this probe
             self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
             return;
-            
-         
+
+
 
          case dataAdaptor.CsvFormat.NO_SESSION_STATS_FORMAT://99:
          case dataAdaptor.CsvFormat.SESSION_STATS_FORMAT: //100
-            
+
             //one msg is a report of a session
             //==> total of them are number of active flows at the sample interval
             msg[ COL.ACTIVE_FLOWS ] = 1;
-            
+
             //mark avaibility of this probe
             self.dataCache.total.addMessage( msg );
-            
+
             //a dummy report when session expired
             if( msg[ COL.PACKET_COUNT ] === 0 ){
                return;
             }
-            
-            
+
+
             //original message => clone a new one
             if( self.dataCache.reports )
                self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
@@ -410,7 +410,7 @@ module.exports = function(){
             //unknown flows
             if( self.dataCache.unknownFlows && msg[ COL.APP_ID ] == 0)
                self.dataCache.unknownFlows.addMessage( msg );
-            
+
             //this is original message comming from mmt-probe
             msg.isGen = false;
 
@@ -429,9 +429,9 @@ module.exports = function(){
                //as 2 threads may produce a same session_ID for 2 different sessions
                //this ensures that session_id is uniqueelse
                msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ COL.THREAD_NUMBER ];
-            
-            
-            
+
+
+
             //session
             if( format === dataAdaptor.CsvFormat.SESSION_STATS_FORMAT ){
                //console.log( msg[ COL.UL_RETRANSMISSION ] )
@@ -445,19 +445,19 @@ module.exports = function(){
                   case MMTDrop.CsvFormat.GTP_APP_FORMAT:
                      if( ! enodeb.isEnable )
                         break;
-                     
+
                      //clone a new message to add to gtp
                      var gtp_msg =  dataAdaptor.formatReportItem( message );
                      gtp_msg[ COL.ACTIVE_FLOWS ] = 1;
-                     
+
                      //get information of UE from its IP
                      enodeb.appendSuplementDataGtp( gtp_msg, function( m ){
                         self.dataCache.gtp.addMessage( m );
                      });
 
                      break;
-                     
-                  case MMTDrop.CsvFormat.WEB_APP_FORMAT: 
+
+                  case MMTDrop.CsvFormat.WEB_APP_FORMAT:
                      //each HTTP report is a unique session (1 request - 1 resp if it has)
 
                      msg[ COL.SESSION_ID ] = msg[ COL.SESSION_ID ] + "-" + msg[ HTTP.TRANSACTIONS_COUNT ];
@@ -482,9 +482,9 @@ module.exports = function(){
                   //do not add report 99 to data_ip collection as it has no IP
                   msg.ip_src  = IP.string2NumberV4( msg[COL.IP_SRC]  );
                   msg.ip_dst  = IP.string2NumberV4( msg[COL.IP_DST]  );
-                  
+
                   msg.ip = msg.ip_src;
-                  
+
                   if( self.dataCache.ip )
                      self.dataCache.ip.addMessage( msg );
 
@@ -494,16 +494,16 @@ module.exports = function(){
                      const components = config.sla.init_components;
                      components.forEach( function( com ){
                         const ipRanges = com["ip-ranges"];
-                        //if exists an ip range that contains either IP_SRC or IP_DST 
+                        //if exists an ip range that contains either IP_SRC or IP_DST
                         // =>  add the component ID as concerning Slice
-                        if( ipRanges.some( function( val ){
+                        if( ipRanges && ipRanges.some( function( val ){
                            const subnet = ipLib.subnet( val.ip, val.mask );
                            return subnet.contains( msg[COL.IP_SRC] ) || subnet.contains( msg[COL.IP_DST] );
                         }))
                            msg.slices.push( com.id );
                      });
                   }
-                  
+
                   /////////////////////////////////////////////////////////////
                   //symetric link between 2 IPs
                   if(  msg.ip_src <  msg.ip_dst ){
@@ -515,13 +515,13 @@ module.exports = function(){
                      msg = dataAdaptor.inverseStatDirection( msg );
                      if( self.dataCache.link )
                         self.dataCache.link.addMessage( msg );
-                     
+
                      //revert to normal
                      msg = dataAdaptor.inverseStatDirection( msg );
                   }
                   /////////////////////////////////////////////////////////////
                }
-               
+
                //destination location
                if( self.dataCache.location )
                   self.dataCache.location.addMessage( msg );
@@ -531,41 +531,41 @@ module.exports = function(){
                self.dataCache.mac.addMessage( msg );
 
             ///////////////////////////////////////////////////////////////
-            //expand application path: 
+            //expand application path:
             const app_arr = flatAppPath( msg[ COL.APP_PATH ] );
 
-            
+
             if( self.dataCache.sctp ){
                //Collection contains only info about SCTP proto for eNodeB
                for( var i=0; i<app_arr.length; i++ )
                   if( app_arr[i].app == 304 ){ //SCTP
                    //clone a new message to add to gtp
                      var sctp_msg = dataAdaptor.formatReportItem( message );
-                     
+
                      //get information of UE from its IP
                      enodeb.appendSuplementDataSctp( sctp_msg, self.dataCache.sctp.addMessage );
                      break;
                   }
             }
-            
+
             //add to protocols collections
             if( self.dataCache.protocol ){
                const original_app_id = msg[ COL.APP_ID ],
                original_path   = msg[ COL.APP_PATH ];
-               
+
                for( var i=0; i<app_arr.length; i++ ){
                   var o = app_arr[i];
-                  
+
                   if( o.depth > 4 )
                      continue; //store only maximally 4 level: ETH.IP.TCP.HTTP
-                  
+
                   if( !
                         (o.depth   === 4  //store only maximally 4 level: ETH.IP.TCP.HTTP
                         || o.depth === 1 //Ethernet
                         || o.depth === app_arr.length //in case, hierarchy length < 4
                         ) )
                         continue;
-                  
+
                   //this is a protocol
                   if( PURE_PROTOCOLS[ o.app ] )
                   {
@@ -586,21 +586,21 @@ module.exports = function(){
             /////
 
             msg.app_paths = app_arr;
-            
+
             if( self.dataCache.app )
                self.dataCache.app.addMessage( msg );
             ///////////////////////////////////////////////////////////////
 
-            
+
             //self.dataCache.detail.addMessage(  msg );
             if( !is_micro_flow ){
-               
+
 
                //each session
                if( self.dataCache.session )
                   self.dataCache.session.addMessage( msg );
-               
-               
+
+
                //add traffic for the other side (src <--> dest )
                msg.isGen = true;
                msg = dataAdaptor.inverseStatDirection( msg );
@@ -622,8 +622,8 @@ module.exports = function(){
             return;
       }
    };
-   
-   
+
+
    self.flush = function( cb ){
       var cacheCount = 0;
       for( var c in self.dataCache )

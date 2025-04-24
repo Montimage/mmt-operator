@@ -15,13 +15,13 @@
 		"ssl.ca.location": "data/kafka-ca.cert"
 	},
 	"file_input": {
-		"data_folder": "/tmp/ramdisk/",
-		"_data_folder": "/opt/mmt/probe/result/report/online/",
+		"_data_folder": "/tmp/ramdisk/",
+		"data_folder": "/opt/mmt/probe/result/report/online/",
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "kafka",
-	"probe_analysis_mode": "online",
+	"input_mode": "file",
+	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
 			"ip": "192.168.0.0",
@@ -212,10 +212,7 @@
 				"host": "localhost",
 				"port": 8088
 			},
-			"data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
-			"data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
 			"keep_alive": true
-		},
-		"_data_processing": "m[1]='probe-A'; return m;"
+		}
 	}
 }

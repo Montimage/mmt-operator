@@ -1,5 +1,5 @@
 /**
- * An abstract Reader that will call either 
+ * An abstract Reader that will call either
  * - csvReader
  * - or busReader
  * @returns
@@ -55,11 +55,11 @@ function Reader(){
          //console.log("started kafka client", ret);
          process._children.push( ret );
          break;
-         
+
       case constant.SOCKET_STR:
-         //Create and return a net.Server object, 
+         //Create and return a net.Server object,
          // the function will be invoked when client connect to this server.
-         
+
          // Use pauseOnConnect to prevent
          //  the sockets from being read before they are sent to the child process.
          const tcpServer = net.createServer({ pauseOnConnect: true });
@@ -70,21 +70,21 @@ function Reader(){
          //when server received a new client
          tcpServer.on('connection', function( client ) {
             console.log( 'New client connected : ' + client.remoteAddress + ':' + client.remotePort );
-            
-            let child = child_process( __dirname + '/streamProcess.js', [], 
-                     {execArgv: execArgv}, 
-                     1 //do not auto restart after exitting 
+
+            let child = child_process( __dirname + '/streamProcess.js', [],
+                     {execArgv: execArgv},
+                     1 //do not auto restart after exitting
                      ).start();
-            
+
             process._children.push( child );
-            
+
             child.send('socket', client );
          });
          tcpServer.listen( config.socket_input.port, config.socket_input.host, function () {
             console.info('MMT-Operator is waiting for reports on address : ' + tcpServer.address());
          });
 
-         
+
          break;
       default:
          // ensure data directory exists
@@ -98,22 +98,30 @@ function Reader(){
          //create processes to parallel readering
          const total_processes = config.file_input.nb_readers;
          for( let i=0; i<total_processes; i++ ){
-            let ret = child_process( __dirname + '/csvReader.js', [i, total_processes], 
+            let ret = child_process( __dirname + '/csvReader.js', [i, total_processes],
                   {execArgv: execArgv}
             ).start();
             process._children.push( ret );
          }
       }//end of switch
 
-      
+
       //this process removes older records from Database
       let ret = child_process( __dirname + "/maintainDB.js", [],
       {execArgv: [
          //'--debug=5857'
-         ]} 
+         ]}
       ).start();
-
       process._children.push( ret );
+
+      if (config.isSLA) {
+         //this process detcts violations from Database
+         let ret = child_process( __dirname + "/violationDetector.js", [],
+         {execArgv: []}
+         ).start();
+         process._children.push( ret );
+      }
+
    }
 }
 
@@ -124,7 +132,7 @@ function _cleanUp(){
       process._children.forEach( function( child ){
          if( child == undefined )
             return;
-         
+
          child.stop();
       });
       process._children = undefined;
