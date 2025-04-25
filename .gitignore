@@ -17,3 +17,6 @@ operator/node_modules
 .DS_Store
 /.project
 /.externalToolBuilders
+.DS_Store
+.swp
+..project

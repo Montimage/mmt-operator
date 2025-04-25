@@ -100,6 +100,7 @@
 		"security",
 		"behavior",
 		"enodeb",
+		"gnodeb",
 		"ndn",
 		"video",
 		"sla",
@@ -110,7 +111,8 @@
 		"network",
 		"dpi",
 		"security",
-		"application"
+		"application",
+		"gnodeb"
 	],
 	"modules_config": {
 		"enodeb": {
