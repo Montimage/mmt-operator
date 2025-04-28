@@ -1,3 +1,5 @@
+const { min } = require('lodash');
+
 process.title = "mmt-operator-detect-violation";
 
 const
@@ -23,17 +25,100 @@ const CONVERTOR = 8 * 1.0 / PERIOD_BETWEEN_SAMPLES;
 //number of queries being executing
 let queryCount = 0;
 
-//additional interval
-var additionalTime = 0;
-
+// data from Metrics database for checking violations
+let metrics = {};
 
 //restart
 function _startOver( database ){
-   //reset to default => do not delete additional documents to reduce storage size of DB
-   additionalTime = 0;
-   setTimeout( _detectViolation, 20*1000, database );
+  setTimeout( _detectViolation, 20*1000, database );
 }
 
+function _miscLeft () {
+  // update tab.sla.js not to check for its previous reload stuff
+  // common.js to alert when database is populated
+
+}
+
+function _addAlertViolation (metric, measuredValue, type, timestamp, database) {
+  const componentID = metrics["components"].find(item => item.title === "INFLUENCE5G").id;
+  const dataEntry = {
+    0: timestamp,
+    1: "__app",
+    2: componentID,
+    3: metric.id,
+    4: type,
+    5: "", // priority
+    6: "", // threshold
+    7: measuredValue,
+  }
+  database.collection("metrics_alerts").replaceOne(dataEntry, dataEntry, { upsert: true }, function(err){
+    if (err) console.error(err);
+  });
+}
+
+function _checkViolation (metric, measuredValue, timestamp, isMax, database) {
+  if (metric.enable === false) return;
+
+  function _convertToBits(value, unit) {
+    switch (unit) {
+      case "Kbps":
+        return value * 1000;
+      case "Mbps":
+        return value * 1000000;
+      case "Gbps":
+        return value * 1000000000;
+    }
+  }
+
+  const alertValue = _convertToBits(metric.alert, metric.unit);
+  const violationValue = _convertToBits(metric.violation, metric.unit);
+
+  if (isMax) {
+    if (measuredValue > violationValue) {
+      _addAlertViolation(metric, measuredValue, "violation", timestamp, database);
+    } else if (measuredValue > alertValue) {
+      _addAlertViolation(metric, measuredValue, "alert", timestamp, database);
+    }
+  }
+  else {
+    if (measuredValue < violationValue) {
+      _addAlertViolation(metric, measuredValue, "violation", timestamp, database);
+    } else if (measuredValue < alertValue) {
+      _addAlertViolation(metric, measuredValue, "alert", timestamp, database);
+    }
+  }
+
+}
+
+
+// Getting the most recent selectedMetric value from the database
+function _getMetrics () {
+  const component = metrics["components"].find(item => item.title === "INFLUENCE5G");
+  const selectedMetric = metrics["selectedMetric"][component.id];
+
+  // common metrics
+  const commonMetrics = component.metrics.slice(0);
+
+  for (let i = 0; i < commonMetrics.length; i++) {
+    if (selectedMetric[commonMetrics[i].id] === undefined) {
+      continue;
+    }
+    commonMetrics[i].alert = selectedMetric[commonMetrics[i].id].alert;
+    commonMetrics[i].violation = selectedMetric[commonMetrics[i].id].violation;
+    commonMetrics[i].enable = selectedMetric[commonMetrics[i].id].enable;
+    commonMetrics[i].unit = selectedMetric[commonMetrics[i].id].unit;
+  }
+
+
+  // Returning the required metrics for checking
+  const minDL    = commonMetrics.find(item => item.name === "dlTput.minDlTputRequirement");
+  const maxDL    = commonMetrics.find(item => item.name === "dlTput.maxDlTputPerSlice");
+  const maxUL    = commonMetrics.find(item => item.name === "ulTput.maxUlTputPerSlice");
+  const maxDLVar = commonMetrics.find(item => item.name === "dlTput.maxTputVariation");
+  const maxULVar = commonMetrics.find(item => item.name === "ulTput.maxTputVariation");
+
+  return [minDL, maxDL, maxUL, maxDLVar, maxULVar];
+}
 
 function _analyseDatabase (database) {
   const match = {};
@@ -61,21 +146,37 @@ function _analyseDatabase (database) {
 
     // console.log( data );
 
-    // Check for minimum downlink throughput
-    const minDLTPResult = data.reduce((min, curr) => curr[COL.DL_DATA_VOLUME] < min[COL.DL_DATA_VOLUME] ? curr : min);
-    console.log("Minimum downlink throughput: " + (minDLTPResult[COL.DL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(minDLTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + minDLTPResult[COL.TIMESTAMP] + "]");
+    // // Check for minimum downlink throughput
+    // const minDLTPResult = data.reduce((min, curr) => curr[COL.DL_DATA_VOLUME] < min[COL.DL_DATA_VOLUME] ? curr : min);
+    // console.log("Minimum downlink throughput: " + (minDLTPResult[COL.DL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(minDLTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + minDLTPResult[COL.TIMESTAMP] + "]");
 
-    // Check for maximum downlink throughput
-    const maxDLTPResult = data.reduce((max, curr) => curr[COL.DL_DATA_VOLUME] > max[COL.DL_DATA_VOLUME] ? curr : max);
-    console.log("Maximum downlink throughput: " + (maxDLTPResult[COL.DL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(maxDLTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + maxDLTPResult[COL.TIMESTAMP] + "]");
+    // // Check for maximum downlink throughput
+    // const maxDLTPResult = data.reduce((max, curr) => curr[COL.DL_DATA_VOLUME] > max[COL.DL_DATA_VOLUME] ? curr : max);
+    // console.log("Maximum downlink throughput: " + (maxDLTPResult[COL.DL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(maxDLTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + maxDLTPResult[COL.TIMESTAMP] + "]");
 
-    // Check for maximum uplink throughput
-    const maxULTPResult = data.reduce((max, curr) => curr[COL.UL_DATA_VOLUME] > max[COL.UL_DATA_VOLUME] ? curr : max);
-    console.log("Maximum uplink throughput: " + (maxULTPResult[COL.UL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(maxULTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + maxULTPResult[COL.TIMESTAMP] + "]");
+    // // Check for maximum uplink throughput
+    // const maxULTPResult = data.reduce((max, curr) => curr[COL.UL_DATA_VOLUME] > max[COL.UL_DATA_VOLUME] ? curr : max);
+    // console.log("Maximum uplink throughput: " + (maxULTPResult[COL.UL_DATA_VOLUME] * CONVERTOR) + " at " + new Date(maxULTPResult[COL.TIMESTAMP]).toLocaleString() + " [" + maxULTPResult[COL.TIMESTAMP] + "]");
 
-    // Check for maximum downlink throughput variation
+    // // Check for maximum downlink throughput variation
+    // console.log("Maximum downlink throughput variation: " + (maxDLTPResult[COL.DL_DATA_VOLUME] - minDLTPResult[COL.DL_DATA_VOLUME]) * CONVERTOR);
 
-    // Check for maximum uplink throughput variation
+    // // Check for maximum uplink throughput variation
+    // const minULTPResult = data.reduce((min, curr) => curr[COL.UL_DATA_VOLUME] < min[COL.UL_DATA_VOLUME] ? curr : min);
+    // console.log("Maximum uplink throughput variation: " + (maxULTPResult[COL.UL_DATA_VOLUME] - minULTPResult[COL.UL_DATA_VOLUME]) * CONVERTOR);
+
+    // Getting metrics from database
+    const [minDL, maxDL, maxUL, maxDLVar, maxULVar] = _getMetrics();
+
+    for (let i = 0; i < data.length; i++) {
+      const data_row = data[i];
+      _checkViolation(minDL, data_row[COL.DL_DATA_VOLUME] * CONVERTOR, data_row[ COL.TIMESTAMP ], false, database);
+      _checkViolation(maxDL, data_row[COL.DL_DATA_VOLUME] * CONVERTOR, data_row[ COL.TIMESTAMP ], true, database);
+      _checkViolation(maxUL, data_row[COL.UL_DATA_VOLUME] * CONVERTOR, data_row[ COL.TIMESTAMP ], true, database);
+    }
+    // TODO: Ask about variation percentage values
+    // _checkViolation(maxDLVar, (maxDLTPResult[COL.DL_DATA_VOLUME] - minDLTPResult[COL.DL_DATA_VOLUME]) * CONVERTOR, true, database);
+    // _checkViolation(maxULVar, (maxULTPResult[COL.UL_DATA_VOLUME] - minULTPResult[COL.UL_DATA_VOLUME]) * CONVERTOR, true, database);
   });
 }
 
@@ -95,6 +196,17 @@ function checkTimestamps ( database ) {
 
 let lastDeleteTimestamp = 0;
 function _detectViolation( database ){
+
+  // Check that the SLA has been uploaded by querying the 'metrics' database first
+  database.collection("metrics").find().toArray(function(err, data) {
+    if (err || data == undefined || data.length == 0 || data[0] == undefined) {
+      if (err)
+        console.error("SLA has not been uploaded yet " + err);
+      return _startOver(database);
+    }
+    metrics = data[0];
+  });
+
    //waiting for the queries well terminated
    if( queryCount > 0 ){
       console.info("Waiting for " + queryCount + " queries");
@@ -115,7 +227,7 @@ function _detectViolation( database ){
       const timestamp = data[0].time;
 
       // nothing change in DB and it is not needed to reduce the size
-      if( lastDeleteTimestamp === timestamp && additionalTime === 0 ) {
+      if( lastDeleteTimestamp === timestamp ) {
         return setTimeout( _detectViolation, PERIOD, database );
       }
       lastDeleteTimestamp = timestamp;

@@ -74,7 +74,8 @@ var ReportFactory = {
          //get number of alerts from database
          const
             TYPE = "$4", //index of "type" in DB
-            match = { "0": { "$gte": status_db.time.begin, "$lt": status_db.time.end }, "1": getAppID() },
+            // match = { "0": { "$gte": status_db.time.begin, "$lt": status_db.time.end }, "1": getAppID() },
+            match = { "1": getAppID() },
             group = {
                "_id": { "1": "$1", "2": "$2", "3": "$3" }, //group by app_id, comp_id and metric_id
                "alert": { "$sum": { $cond: { if: { $eq: [TYPE, "alert"] }, then: 1, else: 0 } } },
@@ -197,8 +198,9 @@ var ReportFactory = {
                            cb(count);
                         });
                      return;
+                     break;
                   }
-
+                  default:
                      for (var i = 0; i < data.length; i++) {
                         var o = data[i];
                         if (o.me_id == metric_id && o.comp_id == comp_id) {

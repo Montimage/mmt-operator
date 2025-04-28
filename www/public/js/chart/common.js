@@ -172,6 +172,31 @@ $(function () {
         }
       }
     });
+
+    // INFLUENCE Alerts
+    // TODO: make this persistent and INFLUENCE filtered query
+    const isInfluence = MMTDrop.config.others.modules_config.sla.init_components.some(item => item.title === "INFLUENCE5G");
+    let alertCount = 0;
+    if (isInfluence) {
+      // Check if there is any new alert/violation since last reload and issue a warning
+      setInterval(() => {
+        MMTDrop.tools.ajax("/api/metrics_alerts/find?raw", [], "POST", {
+          error: function () { },
+          success: function (data) {
+            const obj = data.data;
+            if (obj == undefined) return;
+            const newAlertCount = obj.length;
+            if (newAlertCount > alertCount) {
+              MMTDrop.alert.warning("INFLUENCE5G has " + (newAlertCount - alertCount) + " new alerts!!", 2500);
+              alertCount = newAlertCount;
+            } else if (newAlertCount < alertCount) {
+              MMTDrop.alert.success("INFLUENCE5G has " + (alertCount - newAlertCount) + " alerts cleared!!", 2500);
+              alertCount = newAlertCount;
+            }
+          }
+        });
+      }, 5 * 1000);
+    }
   }
   //endSLA
 
@@ -201,7 +226,7 @@ $(function () {
           const selectedProbe = URL_PARAM.probe_id;
 
           //hide All: this option will lead to get data of all available probes in DB
-          //containing even probes inexisting in the current application 
+          //containing even probes inexisting in the current application
           if (components.length > 1)
             newProbeOption.push({ label: "All", id: "undefined", selected: URL_PARAM.probe_id == undefined });
 
@@ -425,7 +450,7 @@ $(function () {
       status_db.reload({}, reloadReports, fPeriod.selectedOption().id);
     }, p);
   }
-  //if fAutoReload.onchange is defined somewhere => fire it 
+  //if fAutoReload.onchange is defined somewhere => fire it
   if (fAutoReload.onchange)
     fAutoReload.onChange(fAutoReload.onchange);
   else
