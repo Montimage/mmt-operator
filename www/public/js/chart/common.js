@@ -174,9 +174,10 @@ $(function () {
     });
 
     // INFLUENCE Alerts
-    // TODO: make this persistent and INFLUENCE filtered query
     const isInfluence = MMTDrop.config.others.modules_config.sla.init_components.some(item => item.title === "INFLUENCE5G");
-    let alertCount = 0;
+    let alertCount =  MMTDrop.tools.localStorage.get("alertCount", false);
+    if (alertCount == undefined) alertCount = 0;
+
     if (isInfluence) {
       // Check if there is any new alert/violation since last reload and issue a warning
       setInterval(() => {
@@ -187,11 +188,13 @@ $(function () {
             if (obj == undefined) return;
             const newAlertCount = obj.length;
             if (newAlertCount > alertCount) {
-              MMTDrop.alert.warning("INFLUENCE5G has " + (newAlertCount - alertCount) + " new alerts!!", 2500);
+              MMTDrop.alert.warning("INFLUENCE5G has " + (newAlertCount - alertCount) + " new alerts/violations!!", 2500);
               alertCount = newAlertCount;
+              MMTDrop.tools.localStorage.set("alertCount", alertCount, false);
             } else if (newAlertCount < alertCount) {
-              MMTDrop.alert.success("INFLUENCE5G has " + (alertCount - newAlertCount) + " alerts cleared!!", 2500);
+              MMTDrop.alert.success("INFLUENCE5G has " + (alertCount - newAlertCount) + " alerts/violations cleared!!", 2500);
               alertCount = newAlertCount;
+              MMTDrop.tools.localStorage.set("alertCount", alertCount, false);
             }
           }
         });

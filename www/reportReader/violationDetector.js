@@ -33,12 +33,6 @@ function _startOver( database ){
   setTimeout( _detectViolation, 20*1000, database );
 }
 
-function _miscLeft () {
-  // update tab.sla.js not to check for its previous reload stuff
-  // common.js to alert when database is populated
-
-}
-
 function _addAlertViolation (metric, measuredValue, type, timestamp, database) {
   const componentID = metrics["components"].find(item => item.title === "INFLUENCE5G").id;
   const dataEntry = {
@@ -195,6 +189,7 @@ function checkTimestamps ( database ) {
 }
 
 let lastDeleteTimestamp = 0;
+let firstTime = true;
 function _detectViolation( database ){
 
   // Check that the SLA has been uploaded by querying the 'metrics' database first
@@ -204,7 +199,17 @@ function _detectViolation( database ){
         console.error("SLA has not been uploaded yet " + err);
       return _startOver(database);
     }
-    metrics = data[0];
+    if (firstTime) {
+      metrics = data[0];
+    } else if (metrics !== data[0]) {
+      firstTime = true;
+      metrics = data[0];
+
+      // clear the old database
+      database.collection("metrics_alerts").deleteMany({}, function(err) {
+        if (err) console.error(err);
+      });
+    }
   });
 
    //waiting for the queries well terminated
@@ -227,13 +232,14 @@ function _detectViolation( database ){
       const timestamp = data[0].time;
 
       // nothing change in DB and it is not needed to reduce the size
-      if( lastDeleteTimestamp === timestamp ) {
+      if( firstTime === false && lastDeleteTimestamp === timestamp ) {
         return setTimeout( _detectViolation, PERIOD, database );
       }
       lastDeleteTimestamp = timestamp;
 
       // checkTimestamps(database);
 
+      firstTime = false;
       // check for violations
       _analyseDatabase(database);
 
