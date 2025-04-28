@@ -37,7 +37,7 @@ if( param.profile ){
    if( param.app )
       arr[1].title += param.app;
    else
-      arr[1].title += "eNodeB/Network Topology"
+      arr[1].title += "gNodeB/Network Topology"
 }
 
 const TYPE_ENODEB   = "enodeb";
@@ -101,7 +101,7 @@ var ReportFactory = {
                   children : [
                      createInput( "Name",     "enb_name", {maxlength: 15, required: true} ),
                      createInput( "IP",       "enb_ip",   {required: true} ),
-                     createInput( "MME Name", "mme_name", {maxlength: 15, required: true} ),
+                     createInput( "UPF Name", "mme_name", {maxlength: 15, required: true} ),
                      ]
                },
                //Form: MME
@@ -126,8 +126,8 @@ var ReportFactory = {
                   children : [
                      createInput( "IMSI", "imsi", {maxlength: 15, required: true} ),
                      createInput( "IP", "ue_ip", {required: true} ),
-                     createInput( "eNodeB Name", "enb_name", {maxlength: 15, required: true} ),
-                     createInput( "MME Name",    "mme_name", {maxlength: 15, required: true} ),
+                     createInput( "gNodeB Name", "enb_name", {maxlength: 15, required: true} ),
+                     createInput( "UPF Name",    "mme_name", {maxlength: 15, required: true} ),
                      ]
                },
                //Buttons
@@ -172,7 +172,7 @@ var ReportFactory = {
                   attr : {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle UE",
+                     title : "Toggle UEs",
                      "data-type": 'ue',
                      onclick: "toggleChartElements( this)",
                      html  : '<span class="fa fa-mobile"></span>'
@@ -182,7 +182,7 @@ var ReportFactory = {
                   attr : {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle MME",
+                     title : "Toggle AMFs",
                      "data-type": 'mme',
                      onclick: "toggleChartElements( this)",
                      html  : '<span class="fa fa-server"></span>'
@@ -192,7 +192,7 @@ var ReportFactory = {
                   attr : {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle eNodeB",
+                     title : "Toggle gNodeBs",
                      "data-type": 'enodeb',
                      onclick: "toggleChartElements(this)",
                      //html  : '<span class="icon-antenna"></span>'
@@ -203,7 +203,7 @@ var ReportFactory = {
                   attr: {
                      class : "btn btn-primary",
                      type  : "button",
-                     title : "Toggle getway",
+                     title : "Toggle UPFs",
                      "data-type": TYPE_GATEWAY,
                      onclick: "toggleChartElements(this)",
                      html  : '<span class="fa fa-random"></span>'

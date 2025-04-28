@@ -107,11 +107,8 @@ var all_pages = {
     "gnodeb" : {
       title: "gNodeB",
       children : {
-         "topo-control-plane": {
-            title : "Control Plane Topology"
-         },
          "topo-user-plane": {
-            title : "User Plane Topology"
+            title : "Network Topology"
          },
          "traffic": {
             title: "Traffic Monitoring"
