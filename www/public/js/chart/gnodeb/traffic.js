@@ -10,31 +10,30 @@ const arr = [
       userData : {
          fn : "createTrafficReport"
       }
-   },
-   {
+   },{
       id : "user-plane",
       title : "UEs",
       x : 0,
       y : 4,
       width : 6,
-      height : 7,
+      height : 6,
       type : "success",
       userData : {
          fn : "createUserPlaneReport"
       }
    },{
-      id : "control-plane-enodeb",
+      id : "data-plane-enodeb",
       title : "gNodeB",
       x : 7,
       y : 4,
       width : 6,
-      height : 4,
+      height : 3,
       type : "success",
       userData : {
-         fn : "createControlPlaneReporteNodeB"
+         fn : "createDataPlaneReportgNodeB"
       }
    },{
-      id : "control-plane-mme",
+      id : "data-plane-mme",
       title : "UPF",
       x : 7,
       y : 8,
@@ -42,7 +41,7 @@ const arr = [
       height : 3,
       type : "success",
       userData : {
-         fn : "createControlPlaneReportMME"
+         fn : "createDataPlaneReportUPF"
       }
    }];
 
@@ -618,10 +617,10 @@ var ReportFactory = {
          database.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [  COL.PROBE_ID.id, GTP.IMSI.id ].forEach( function( el, index){
+            [  COL.PROBE_ID.id, COL.IP_SRC.id ].forEach( function( el, index){
                group["_id"][ el ] = "$" + el;
             });
-            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+            [ COL.DATA_VOLUME.id, COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
                group[ el ] = {"$sum" : "$" + el};
             });
             [ COL.PROBE_ID.id, GTP.IMSI.id ].forEach( function( el, index){
@@ -636,7 +635,7 @@ var ReportFactory = {
             param.period_groupby = fPeriod.selectedOption().id;
 
             const project = {};
-            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.DATA_VOLUME.id, COL.PACKET_COUNT.id, GTP.IMSI.id ].forEach( function( el, index){
+            [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.DATA_VOLUME.id,COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.PACKET_COUNT.id, GTP.IMSI.id ].forEach( function( el, index){
                project[ el ] = 1;
             });
 
@@ -710,11 +709,11 @@ var ReportFactory = {
                data: data,
                columns: [
                   { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: GTP.IMSI.id,         title: "UE IMSI"},
+                  //{ data: GTP.IMSI.id,         title: "UE IMSI"},
                   { data: COL.IP_SRC.id,       title: "UE IP"},
                   { data: GTP.IP_SRC.id,       title: "gNodeb IP" },
-                  { data: GTP.ENB_NAME.id,     title: "gNodeb Name" },
-                  { data: GTP.MME_NAME.id,     title: "AMF Name" },
+                  //{ data: GTP.ENB_NAME.id,     title: "gNodeb Name" },
+                  //{ data: GTP.MME_NAME.id,     title: "AMF Name" },
                   { data: GTP.IP_DST.id,       title: "UPF" },
                   { data: COL.IP_DST.id,       title: "IP Dest." },
                   { data: COL.DST_LOCATION.id, title: "Contry Dest." },
@@ -764,12 +763,12 @@ var ReportFactory = {
 
 
                      var fun = "createPopupReport('gtp'," //collection
-                        + GTP.IMSI.id  //key 
-                        +",'" + msg[ GTP.IMSI.id ] //id
-                     +"','IMSI: " + msg[ GTP.IMSI.id ] //title 
-                     + "' )";
+                        + COL.IP_SRC.id  //key 
+                        +",'" + msg[ COL.IP_SRC.id ] //id
+                        +"','IP: " + msg[ COL.IP_SRC.id ] //title 
+                        + "' )";
 
-                     msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
+                     msg["graph"] = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
 
                      //console.log( msg[ COL.IP_SRC.id ] );
                      var IPs = msg[ COL.IP_SRC.id ];
@@ -778,16 +777,18 @@ var ReportFactory = {
                         IPs = [ IPs ];
 
                      msg[ COL.IP_SRC.id ] =  IPs.map( function( ip ){
-                        return '<a title="Click to show detail of this IP" onclick="showDetailUE(\'IP\',\''+ ip +'\')">' + ip + '</a>';
+                        return `<a title="Click to show detail of this IP" onclick="showDetailUE('IP','${ip}')"> ${ip}</a>`;
                      }).join("; ");
 
-                     var data = msg[ GTP.IMSI.id ];
-                     msg[ GTP.IMSI.id ] = '<a title="Click to show detail of this IMSI" onclick="showDetailUE(\'IMSI\',\''+ data +'\')">' + _getName(data) + '</a>'
+
+                     //var data = msg[ GTP.IMSI.id ];
+                     //msg[ GTP.IMSI.id ] = '<a title="Click to show detail of this IMSI" onclick="showDetailUE(\'IMSI\',\''+ data +'\')">' + _getName(data) + '</a>'
                   }
                   return {
                      columns : [
-                        GTP.IMSI,
-                        {id: COL.IP_SRC.id,                       label: "IPs of UE"},
+                        {id: COL.IP_SRC.id,                       label: "IP"},
+                        {id: COL.UL_DATA_VOLUME.id,  align: "right", label: "UL Data (B)", format: MMTDrop.tools.formatLocaleNumber},
+                        {id: COL.DL_DATA_VOLUME.id,  align: "right", label: "DL Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet",  format: MMTDrop.tools.formatLocaleNumber},
                         //{id: "count",             align: "right", label:"#TEIDs"},
@@ -867,97 +868,26 @@ var ReportFactory = {
       }
       ,
 
-      createControlPlaneReportMME: function(){
+      createDataPlaneReportUPF: function(){
          //mongoDB aggregate
          const group = { _id : {} };
-         [  COL.PROBE_ID.id, GTP.MME_NAME.id ].forEach( function( el, index){
+         [  COL.PROBE_ID.id, GTP.IP_DST.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
          });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+         [ COL.DATA_VOLUME.id, COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
          });
-         [ COL.PROBE_ID.id, GTP.MME_NAME.id, COL.IP_DST.id, COL.MAC_DST.id ].forEach( function( el, index){
+         [ COL.PROBE_ID.id, GTP.IP_DST.id, COL.MAC_DST.id ].forEach( function( el, index){
             group[ el ] = {"$first" : "$"+ el};
          });
 
 
          const database = MMTDrop.databaseFactory.createStatDB( {
-            collection : "data_sctp",
+            collection : "data_gtp",
             action : "aggregate",
             query : [{$group: group}],
             raw: true
          });
-
-
-         const detailDB = MMTDrop.databaseFactory.createStatDB( {
-            collection : "data_sctp",
-            action : "aggregate",
-            query : [],
-            raw : true
-         } );
-
-         detailDB.updateParameter = function( param ){
-            param.period = status_db.time;
-            param.period_groupby = fPeriod.selectedOption().id;
-
-            //value of match will be filled by UE's IP when user click on one row
-            const match = {};
-            match[ GTP.MME_NAME.id ] = detailDB.__mme_name;
-
-
-            const group = { _id : {} };
-            [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
-               group["_id"][ el ] = "$" + el;
-            });
-            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-               group[ el ] = {"$sum" : "$" + el};
-            });
-            [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el, index){
-               group[ el ] = {"$first" : "$"+ el};
-            });
-            [ COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, , COL.APP_PATH.id, GTP.ENB_NAME.id ].forEach( function( el, index){
-               group[ el ] = {"$last" : "$"+ el};
-            });
-
-            param.query = [{$match: match}, {$group: group}];
-         }
-
-         detailDB.afterReload( function( data ){
-            const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
-            $detailDlg.$title.html("Detail of control plane traffic of AMF " + detailDB.__mme_name );
-            $detailDlg.$content.html('<table id="detail-mme" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
-            $detailDlg.modal();
-
-            $('#detail-mme').DataTable( {
-               data: data,
-               columns: [
-                  { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: COL.IP_DST.id,       title: "AMF's IP" },
-                  { data: COL.MAC_DST.id,      title: "AMF's MAC" },
-                  { data: GTP.ENB_NAME.id,     title: "gNodeB" },
-                  { data: COL.IP_SRC.id,       title: "gNodeB's IP" },
-                  { data: COL.MAC_SRC.id,      title: "gNodeB's MAC" },
-                  { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
-                     //remove unk proto
-                     if( path.endsWith(".0"))
-                        path = path.substr(0, path.length - 2 );
-                     return MMTDrop.constants.getPathFriendlyName( path );
-                  }},
-                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num",  className: "text-right" },
-                  { data: COL.PACKET_COUNT.id, title: "#Packets",  type: "num", className: "text-right" },
-                  ]
-            });
-            //console.log( data );
-         })
-
-         //when user click on an IP
-         window.showDetaileMME = function( mme_name ){
-            if( mme_name != "" ){
-               detailDB.__mme_name = mme_name;
-               detailDB.reload();
-            }
-            return false;
-         };
 
          const cTable = MMTDrop.chartFactory
          .createTable({
@@ -967,22 +897,21 @@ var ReportFactory = {
                   for( var i=0; i<arr.length; i++ ){
                      var msg = arr[i];
 
-                     var fun = "createPopupReport('sctp'," //collection
-                        + GTP.MME_NAME.id  //key 
-                        +",'" + msg[ GTP.MME_NAME.id ] //id
-                     +"','AMF: " + msg[ GTP.MME_NAME.id ] //title 
+                     var fun = "createPopupReport('gtp'," //collection
+                        + GTP.IP_DST.id  //key 
+                        +",'" + msg[ GTP.IP_DST.id ] //id
+                     +"','UPF IP: " + msg[ GTP.IP_DST.id ] //title 
                      + "' )";
 
-                     msg.graph = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
+                     msg["graph"] = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
                   }
 
                   return {
                      columns : [
-                        {id: GTP.MME_NAME.id, label: "Name", format: function( val ){
-                           return '<a title="Click to show detail of this AMF" onclick="showDetaileMME(\''+ val +'\')">' + _getName(val) + '</a>';;
-                        }},
-                        {id: COL.IP_DST.id, label: "IP"},
+                        {id: GTP.IP_DST.id, label: "IP"},
                         {id: COL.MAC_DST.id, label: "MAC"},
+                        {id: COL.UL_DATA_VOLUME.id,  align: "right", label: "UL Data (B)", format: MMTDrop.tools.formatLocaleNumber},
+                        {id: COL.DL_DATA_VOLUME.id,  align: "right", label: "DL Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber},
                         {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet", format: MMTDrop.tools.formatLocaleNumber}, 
                         {id: "graph"}
@@ -1045,113 +974,53 @@ var ReportFactory = {
       },
 
 
-      createControlPlaneReporteNodeB: function(){
+      createDataPlaneReportgNodeB: function(){
          //mongoDB aggregate
          const group = { _id : {} };
-         [  COL.PROBE_ID.id, GTP.MME_NAME.id ].forEach( function( el, index){
+         [  COL.PROBE_ID.id, GTP.IP_SRC.id ].forEach( function( el, index){
             group["_id"][ el ] = "$" + el;
          });
-         [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
+         [ COL.DATA_VOLUME.id, COL.UL_DATA_VOLUME.id, COL.DL_DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
             group[ el ] = {"$sum" : "$" + el};
          });
-         [ COL.PROBE_ID.id, COL.IP_SRC.id, COL.MAC_SRC.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+         [ COL.PROBE_ID.id, GTP.IP_SRC.id, COL.MAC_SRC.id ].forEach( function( el, index){
             group[ el ] = {"$first" : "$"+ el};
          });
 
 
          const database = MMTDrop.databaseFactory.createStatDB( {
-            collection : "data_sctp",
+            collection : "data_gtp",
             action : "aggregate",
             query : [{$group: group}],
             raw : true
          });
-
-         const detailDB = MMTDrop.databaseFactory.createStatDB( {
-            collection : "data_sctp",
-            action : "aggregate",
-            query : [],
-            raw : true
-         } );
-         detailDB.updateParameter = function( param ){
-            param.period = status_db.time;
-            param.period_groupby = fPeriod.selectedOption().id;
-
-            //value of match will be filled by UE's IP when user click on one row
-            const match = {};
-            match[ GTP.ENB_NAME.id ] = detailDB.__enb_name;
-
-            const group = { _id : {} };
-            [  COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.APP_PATH.id ].forEach( function( el, index){
-               group["_id"][ el ] = "$" + el;
-            });
-            [ COL.DATA_VOLUME.id, COL.PACKET_COUNT.id ].forEach( function( el, index){
-               group[ el ] = {"$sum" : "$" + el};
-            });
-            [ COL.PROBE_ID.id, COL.TIMESTAMP.id, COL.IP_SRC.id, COL.IP_DST.id, COL.MAC_SRC.id, COL.MAC_DST.id, COL.APP_PATH.id, GTP.MME_NAME.id ].forEach( function( el, index){
-               group[ el ] = {"$first" : "$"+ el};
-            });
-
-            param.query = [{$match: match}, {$group: group}];
-         }
-
-         detailDB.afterReload( function( data ){
-            const $detailDlg = MMTDrop.tools.getModalWindow("ue-detail");
-            $detailDlg.$title.html("Detail of control plane traffic of gNodeB: " + detailDB.__enb_name );
-            $detailDlg.$content.html('<table id="detail-enodeb" class="table table-striped table-bordered table-condensed dataTable no-footer" width="100%"></table>');
-            $detailDlg.modal();
-
-            $('#detail-enodeb').DataTable( {
-               data: data,
-               columns: [
-                  { data: COL.TIMESTAMP.id,    title: "Timestamp", render: MMTDrop.tools.formatDateTime },
-                  { data: COL.IP_SRC.id,       title: "gNodeB's IP" },
-                  { data: COL.MAC_SRC.id,      title: "gNodeB's MAC" },
-                  { data: GTP.MME_NAME.id,     title: "AMF" },
-                  { data: COL.IP_DST.id,       title: "AMF's MAC" },
-                  { data: COL.MAC_DST.id,      title: "AMF's MAC" },
-                  { data: COL.APP_PATH.id,     title: "Proto Hierarchy", render: function( path ){
-                     //remove unk proto
-                     if( path.endsWith(".0"))
-                        path = path.substr(0, path.length - 2 );
-                     return MMTDrop.constants.getPathFriendlyName( path );
-                  }},
-                  { data: COL.DATA_VOLUME.id,  title: "Data (B)", type: "num", className: "text-right" },
-                  { data: COL.PACKET_COUNT.id, title: "#Packets", type: "num", className: "text-right" },
-                  ]
-            });
-            //console.log( data );
-         })
-
-         //when user click on an IP
-         window.showDetaileNodeB = function( enb_name ){
-            detailDB.__enb_name = enb_name;
-            detailDB.reload();
-            return false;
-         };
 
          const cTable = MMTDrop.chartFactory
          .createTable({
             getData : {
                getDataFn : function ( db ) {
                   const arr = db.data();
+                  for( var i=0; i<arr.length; i++ ){
+                     var msg = arr[i];
+
+                     var fun = "createPopupReport('gtp'," //collection
+                        + GTP.IP_SRC.id  //key 
+                        +",'" + msg[ GTP.IP_SRC.id ] //id
+                     +"','gNodeB IP: " + msg[ GTP.IP_SRC.id ] //title 
+                     + "' )";
+
+                     msg["graph"] = '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';
+                  }
+
                   return {
                      columns : [
-                        {id: GTP.ENB_NAME.id, label: "Name", format: function(val){
-                           return '<a title="Click to show detail of this gNodeB" onclick="showDetaileNodeB(\''+ val +'\')">' + _getName(val) + '</a>';
-                        }},
-                        {id: COL.IP_SRC.id, label: "IP of gNodeB"},
+                        {id: GTP.IP_SRC.id, label: "IP"},
                         {id: COL.MAC_SRC.id, label: "MAC of gNodeB"},
+                        {id: COL.UL_DATA_VOLUME.id,  align: "right", label: "UL Data (B)", format: MMTDrop.tools.formatLocaleNumber },
+                        {id: COL.DL_DATA_VOLUME.id,  align: "right", label: "DL Data (B)", format: MMTDrop.tools.formatLocaleNumber },
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber },
                         {id: COL.PACKET_COUNT.id, align: "right", label: "#Packet", format: MMTDrop.tools.formatLocaleNumber}, 
-                        {id: "graph", format : function(val, msg){
-                           var fun = "createPopupReport('sctp'," //collection
-                              + GTP.ENB_NAME.id  //key 
-                              +",'" + msg[ GTP.ENB_NAME.id ] //id
-                           +"','gNodeB: " + msg[ GTP.ENB_NAME.id ] //title 
-                           + "' )";
-
-                           return '<a title="Click to show graph" onclick="'+ fun +'"><i class="fa fa-line-chart" aria-hidden="true"></i></a>';;
-                        }}
+                        {id: "graph"}
                         ],
                         data : arr
                   };
