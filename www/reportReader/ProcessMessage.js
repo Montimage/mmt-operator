@@ -276,7 +276,7 @@ function ProcessMessage( database ){
 		case mmtAdaptor.CsvFormat.SESSION_STATS_FORMAT:
 			const dataVolume = msg[ COL.DATA_VOLUME ];
 			if( dataVolume > 1e9 ){
-				console.error('impossible: Data volume ('+ dataVolume +'B) is too big', msg );
+				console.error('impossible: Data volume ('+ dataVolume +'B) is too big', JSON.stringify(msg), message );
 				return;
 			}
 		//inspire5G-plus project: do not process BITTORRENT (id=52) when filter is activated in route/auto/inspire/closed-loop.js

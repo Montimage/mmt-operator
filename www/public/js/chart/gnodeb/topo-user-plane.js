@@ -4,7 +4,7 @@
 var arr = [
    {
       id: "topo",
-      title: "User Plan Topology",
+      title: "Network Topology",
       x: 6,
       y: 0,
       width: 12,
@@ -124,7 +124,7 @@ var ReportFactory = {
                      class: "add-form-content"
                   },
                   children : [
-                     createInput( "IMSI", "imsi", {maxlength: 15, required: true} ),
+                     //createInput( "IMSI", "imsi", {maxlength: 15, required: true} ),
                      createInput( "IP", "ue_ip", {required: true} ),
                      createInput( "gNodeB Name", "enb_name", {maxlength: 15, required: true} ),
                      createInput( "UPF Name",    "mme_name", {maxlength: 15, required: true} ),
@@ -787,23 +787,25 @@ var ReportFactory = {
                
                
                var title = type.toUpperCase();
-               if( type == TYPE_ENODEB )
-                  title = "eNodeB";
-               
-               $modal.$title.html("Detail of " + title );
 
                var func = null;
                switch( type ){
                case TYPE_UE:
-                  func = "showDetailUE('IMSI','"+ data.imsi +"')";
+                  func = "showDetailUE('IP','"+ data.ue_ip +"')";
+                  title = "UE"
                   break;
                case TYPE_ENODEB:
                   func = "showDetaileNodeB('"+ data.enb_name +"')"
+                  title = "gNodeB"
                   break;
                case TYPE_MME:
                   func = "showDetaileMME('"+ data.mme_name +"')"
+                  title = "AMF"
                   break;
                }
+               
+               $modal.$title.html("Detail of " + title );
+
                //show detail button only if there exist something to show
                if( func ){
                   //show a button to goto detail of traffic monitoring of this IP
@@ -849,7 +851,7 @@ var ReportFactory = {
                const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
                   "enb_name" : enb_name,
                   "enb_ip"   : msg[ GTP.IP_SRC.id ],
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
+                  "mme_name" : msg[ COL.IP_DST.id ]
                });
                const gw     = svg.getNodeByName( TYPE_GATEWAY, gw_ip );
                //UE
@@ -858,7 +860,7 @@ var ReportFactory = {
                   "imsi"     : ue_imsi,
                   "ue_ip"    : msg[ COL.IP_SRC.id ],
                   "enb_name" : enb_name,
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
+                  "mme_name" : msg[ COL.IP_DST.id ]
                });
                //const ue_2 = svg.getNodeByIP( TYPE_UE, gtpIpSrc );
                svg.addNodes( [ enodeb, gw, ue_1 ] );
@@ -881,7 +883,7 @@ var ReportFactory = {
                const enodeb = svg.getNodeByName( TYPE_ENODEB, enb_name, {
                   "enb_name" : enb_name,
                   "enb_ip"   : msg[ COL.IP_SRC.id ],
-                  "mme_name" : msg[ GTP.MME_NAME.id ]
+                  "mme_name" : msg[ COL.IP_DST.id ]
                });
                const mme    = svg.getNodeByName( TYPE_MME, mme_name, {
                   "mme_name" : mme_name,
@@ -910,7 +912,7 @@ var ReportFactory = {
          databaseGTP.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [  GTP.IP_SRC.id, GTP.IP_DST.id, GTP.IMSI.id ].forEach( function( el, index){
+            [  COL.IP_SRC.id, GTP.IP_SRC.id, GTP.IP_DST.id, GTP.IMSI.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
             [ GTP.IMSI.id, GTP.ENB_NAME.id, GTP.IP_SRC.id, GTP.IP_DST.id, GTP.MME_NAME.id ].forEach( function( el, index){
@@ -940,7 +942,9 @@ var ReportFactory = {
          //callback is triggered each time database reloaded its data from server
          databaseGTP.afterReload( function( data ){
             data.forEach( function( msg ){
-               svg.addGtpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.IP_DST.id ], msg[ GTP.IMSI.id ], msg );
+               //svg.addGtpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.IP_DST.id ], msg[ GTP.IMSI.id ], msg );
+               //show by IP
+               svg.addGtpLink( msg[ GTP.IP_SRC.id ], msg[ GTP.IP_DST.id ], msg[ COL.IP_SRC.id ], msg );
             });
             
             //now we can redraw the svg
@@ -953,7 +957,7 @@ var ReportFactory = {
          databaseSCTP.updateParameter = function( param ){
             //mongoDB aggregate
             const group = { _id : {} };
-            [  GTP.MME_NAME.id, GTP.ENB_NAME.id ].forEach( function( el, index){
+            [  GTP.MME_NAME.id, GTP.ENB_NAME.id, COL.IP_SRC.id, COL.IP_DST.id ].forEach( function( el, index){
               group["_id"][ el ] = "$" + el;
             } );
             [ COL.IP_SRC.id, COL.IP_DST.id, GTP.MME_NAME.id, GTP.ENB_NAME.id ].forEach( function( el, index){
@@ -983,7 +987,8 @@ var ReportFactory = {
             
             //2. load sctp to get ENB and MME nodes
             data.forEach( function( msg ){
-               svg.addSctpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.MME_NAME.id ], msg );
+               //svg.addSctpLink( msg[ GTP.ENB_NAME.id ], msg[ GTP.MME_NAME.id ], msg );
+               svg.addSctpLink( msg[ COL.IP_SRC.id ], msg[ COL.IP_DST.id ], msg );
             });
             
             //3. load network traffic to get UE, ENB, MME, and GW nodes 

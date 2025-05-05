@@ -1015,7 +1015,7 @@ var ReportFactory = {
                   return {
                      columns : [
                         {id: GTP.IP_SRC.id, label: "IP"},
-                        {id: COL.MAC_SRC.id, label: "MAC of gNodeB"},
+                        {id: COL.MAC_SRC.id, label: "MAC"},
                         {id: COL.UL_DATA_VOLUME.id,  align: "right", label: "UL Data (B)", format: MMTDrop.tools.formatLocaleNumber },
                         {id: COL.DL_DATA_VOLUME.id,  align: "right", label: "DL Data (B)", format: MMTDrop.tools.formatLocaleNumber },
                         {id: COL.DATA_VOLUME.id,  align: "right", label: "Data (B)", format: MMTDrop.tools.formatLocaleNumber },
