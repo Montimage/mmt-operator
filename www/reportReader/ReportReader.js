@@ -49,6 +49,7 @@ function Reader(){
       switch( config.input_mode ){
       case constant.REDIS_STR:
       case constant.KAFKA_STR:
+      case constant.MQTT_STR:
          let ret = child_process( __dirname + "/busReader.js", [],
                {execArgv: execArgv}  ).start();
 

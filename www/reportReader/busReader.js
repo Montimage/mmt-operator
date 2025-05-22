@@ -25,6 +25,10 @@ case constant.KAFKA_STR:
 	topic      = config.kafka_input.topic;
 	clientName = config.kafka_input.name;
     break;
+case constant.MQTT_STR:
+	pub_sub    = require("../libs/mqtt");
+	topic      = config.mqtt_input.topic;
+	break;
 default:
 	console.error( "Does not support input mode = " + config.input_mode );
 	process.exit();

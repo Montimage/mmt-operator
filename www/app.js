@@ -13,6 +13,7 @@ const util = require('util');
 const moment = require('moment');
 const fs = require('fs');
 const child_process = require("child_process");
+const os = require("os");
 
 global.rootRequire = name => require(`${__dirname}/${name}`);
 global.libRequire = name => require(`${__dirname}/libs/${name}`);
@@ -35,7 +36,7 @@ process.title = "mmt-operator";
 console.log("Start MMT-Operator");
 console.info(config.json);
 
-console.log("[INFO] NodeJS version: %s, platform: %s", process.version, process.platform);
+console.log("[INFO] NodeJS version: %s, OS: %s-%s", process.version, os.type(), os.release());
 
 console.logStdout("[INFO] MMT-Operator version %s is listening on port %d ...\n", config.version, config.port_number);
 

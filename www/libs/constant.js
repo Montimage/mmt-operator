@@ -3,6 +3,7 @@ const constant = {
 	FILE_STR  : "file",
 	KAFKA_STR : "kafka",
 	SOCKET_STR: "socket",
+	MQTT_STR  : "mqtt",
 	NONE_STR  : "none",
 	
 	//musa sla

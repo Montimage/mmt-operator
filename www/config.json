@@ -5,14 +5,20 @@
 	},
 	"redis_input": {
 		"host": "localhost",
-		"port": 6379
+		"port": 6379,
+		"channel": "report"
 	},
 	"kafka_input": {
 		"host": "192.168.0.195",
 		"port": 2181,
 		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "mi-reports",
+		"topic": "report",
 		"client_name": "mmt-operator-kafka-client"
+	},
+	"mqtt_input": {
+		"broker_url": "mqtt://127.0.0.1",
+		"topic": "report",
+		"connect_options": {}
 	},
 	"file_input": {
 		"data_folder": [
