@@ -107,7 +107,7 @@ module.exports = function( databaseName ){
 	   return;
 	   //*/
 	   
-		self.db.collection( collectionName ).insertMany( msgArray, 
+		self.db.collection( collectionName ).insert( msgArray, 
 				//insertion options
 				WRITE_CONCERN,
 				callback );
@@ -145,7 +145,7 @@ module.exports = function( databaseName ){
    
    self._set = function( collection, id, data, callback ){
       data._id = id;
-      self.db.collection( collection ).updateOne(
+      self.db.collection( collection ).update(
             {_id   : id},          //filter
             {$set  : data},        //data
             {upsert: true },       //insert if does not exist
@@ -166,7 +166,7 @@ module.exports = function( databaseName ){
          return;
       }
       
-      self.db.collection( collection ).updateOne( {_id: id}, update, options, callback );
+      self.db.collection( collection ).update( {_id: id}, update, options, callback );
    };
    
    self.clean = function( collection, callback ){
