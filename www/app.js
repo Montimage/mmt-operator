@@ -13,10 +13,7 @@ const util = require('util');
 const moment = require('moment');
 const fs = require('fs');
 const child_process = require("child_process");
-
-//3rd lib
-const MongoStore = require('connect-mongo')(session);
-
+const os = require("os");
 
 global.rootRequire = name => require(`${__dirname}/${name}`);
 global.libRequire = name => require(`${__dirname}/libs/${name}`);
@@ -39,7 +36,7 @@ process.title = "mmt-operator";
 console.log("Start MMT-Operator");
 console.info(config.json);
 
-console.log("[INFO] NodeJS version: %s, platform: %s", process.version, process.platform);
+console.log("[INFO] NodeJS version: %s, OS: %s-%s", process.version, os.type(), os.release());
 
 console.logStdout("[INFO] MMT-Operator version %s is listening on port %d ...\n", config.version, config.port_number);
 
@@ -134,26 +131,14 @@ app.use(bodyParser.json({ limit: '200mb' }));
 app.use(bodyParser.urlencoded({ limit: '200mb', extended: false }));
 app.use(cookieParser());
 
+
 app.use(session({
 	cookie: { maxAge: 4 * 60 * 60 * 1000 }, //4h
 	secret: 'mmt2montimage',    //hash code to generate cookie
 	resave: true,
 	saveUninitialized: true,
-	//save cookie to mongodb
-	store: new MongoStore({
-		url: dbadmin.connectString,
-		mongoOptions: {
-			//useNewUrlParser:   true, // Determines whether or not to use the new url parser
-			autoReconnect: true, // Reconnect on error.
-			reconnectTries: 3000, // Server attempt to reconnect #times
-			reconnectInterval: 5000, // Server will wait # milliseconds between retries.
-			bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connectio
-		},
-		touchAfter: 60, //lazy session update, time period in seconds
-		collection: "_expressjs_session",
-		ttl: 12 * 60 * 60 // = 12 hours
-	})
 }));
+
 
 //active checking for MUSA
 //TODO to remove in final product

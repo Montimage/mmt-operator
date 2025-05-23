@@ -1,18 +1,25 @@
 {
 	"database_server": {
 		"host": "localhost",
-		"port": 27017
+		"port": 27017,
+		"connect_options": {}
 	},
 	"redis_input": {
 		"host": "localhost",
-		"port": 6379
+		"port": 6379,
+		"channel": "report"
 	},
 	"kafka_input": {
 		"host": "192.168.0.195",
 		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert",
-		"topic": "mi-reports",
+		"_ssl.ca.location": "data/kafka-ca.cert",
+		"topic": "report",
 		"client_name": "mmt-operator-kafka-client"
+	},
+	"mqtt_input": {
+		"broker_url": "mqtt://127.0.0.1",
+		"topic": "report",
+		"connect_options": {}
 	},
 	"file_input": {
 		"data_folder": [
@@ -100,6 +107,7 @@
 		"security",
 		"behavior",
 		"enodeb",
+		"gnodeb",
 		"ndn",
 		"video",
 		"sla",
@@ -132,8 +140,8 @@
 				"host": "localhost",
 				"port": 8088
 			},
-			"data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
-			"data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
+			"_data_format": "POST /test.php HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nConnection: Keep-Alive\r\nContent-Length: {REPORT-LEN}\r\n\r\n{REPORT}",
+			"_data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
 			"keep_alive": true
 		},
 		"_data_processing": "m[1]='probe-A'; return m;"

@@ -6,7 +6,7 @@ After       = network.target mongod.service
 [Service]
 Type             = simple
 WorkingDirectory = /opt/mmt/operator
-ExecStart        = /bin/bash -c 'sleep 10 && $$(which node) ./bin/www'
+ExecStart        = /bin/bash -c '$$(which node) ./bin/www'
 Restart          = on-failure
 StandardOutput   = syslog
 StandardError    = syslog

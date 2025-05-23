@@ -1,3 +1,9 @@
+# v1.7.7 (23 May 2025 - by HN)
+- support `mqtt` input mode
+- fixed bug when using MongoDB 5.x, 6.x, 7.x
+- fixed bug when viewing 
+- dashboard for 5G traffic at N2 interface
+
 # v1.7.6 (02 June 2023 - by HN)
 - update new set of protocol names:  656: "8021AD", 657: "mqtt", 658: "INBAND_NETWORK_TELEMETRY", 659: "INT_REPORT", 660: "DTLS", 661:
 "QUIC_IETF", 700: "HTTP2"

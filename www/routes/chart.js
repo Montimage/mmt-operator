@@ -104,6 +104,17 @@ var all_pages = {
          }
       }
     },
+    "gnodeb" : {
+      title: "gNodeB",
+      children : {
+         "topo-user-plane": {
+            title : "Network Topology"
+         },
+         "traffic": {
+            title: "Traffic Monitoring"
+         }
+      }
+    },
     "iot": {
 		title: "IoT"
 	},

@@ -22,8 +22,8 @@ if( val !== undefined ){
 }
 else{
  //ensure that mmt-operator is running on a good nodejs version
-   if( isMainProcess && (process.release.lts === undefined || process.release.lts !== 'Dubnium' ))
-      console.warn("[WARN] MMT-Operator works well on Dubnium release of NodeJS. It may not work on this version "+ process.version +".");
+   if( isMainProcess && (process.release.lts === undefined || process.release.lts !== 'Jod' ))
+      console.warn("[WARN] MMT-Operator works well on Jod release of NodeJS. It may not work on this version "+ process.version +".");
    
 // allow to change config.json
    var configPath = path.resolve( path.join( __dirname, "..", "config.json" ));
@@ -100,15 +100,19 @@ else{
    
    config.rootDirectory = path.join( __dirname, ".." );
    
-   if( [ constant.REDIS_STR,
+   const support_modes = [ constant.REDIS_STR,
          constant.KAFKA_STR,
          constant.FILE_STR, 
          constant.SOCKET_STR,
+         constant.MQTT_STR,
          constant.NONE_STR
-       ].indexOf( config.input_mode ) === -1 )
+       ];
+ 
+   if( support_modes.indexOf( config.input_mode ) === -1 )
    {
       
-      console.warn("[ERROR] Unknown input_mode=" + config.input_mode);
+      console.warn("[ERROR] Unknown input mode " + config.input_mode);
+      console.warn("[INFO]  Supported mode: " + support_modes);
       process.exit();
    }
 

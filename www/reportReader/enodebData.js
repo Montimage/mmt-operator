@@ -5,7 +5,8 @@ const tools       = require("../libs/tools");
 const mysql       = require('mysql');
 const interProcCache  = require('../libs/InterProcessCache.js');
 
-const isEnableEnodeB = Array.isArray( config.modules ) && (config.modules.indexOf("enodeb") != -1); 
+const isEnableEnodeB = Array.isArray( config.modules ) && (
+   (config.modules.indexOf("enodeb") != -1) || (config.modules.indexOf("gnodeb") != -1)); 
 
 if( isEnableEnodeB ){
    const mysqlConfig = tools.getValue( config, ["modules_config", "enodeb", "mysql_server"]);
