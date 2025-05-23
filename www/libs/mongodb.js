@@ -1,30 +1,53 @@
 const mongodb = require('mongodb');
-const config  = require('./config');
+const config = require('./config');
+const tools  = require("./tools");
 
-if( mongodb.MongoClient == undefined )
-   throw new Error("MongoDB is not correctly implemented");
+if (mongodb.MongoClient == undefined)
+	throw new Error("MongoDB is not correctly implemented");
 
-//override MongoClient.connect
-mongodb.MongoClient._connect = mongodb.MongoClient.connect;
+function setDefaultValue(variable, prop, value) {
+	if (variable[prop] === undefined)
+		variable[prop] = value;
+}
 
-mongodb.MongoClient.connect = function(dbName, callback) {
+function connect(dbName, callback) {
+
+	const connectOptions = config.database_server.connect_options || {};
+	// an operation will run until it throws a timeout error
+	setDefaultValue( connectOptions, "timeoutMS", 10*1000 );
+	//wait to establish a single TCP socket connection to the server before raising an error. 
+	setDefaultValue( connectOptions, "connectTimeoutMS", 1000 );
+	/** The time in milliseconds to attempt a send or receive on a socket before the attempt times out. */
+	setDefaultValue( connectOptions, "socketTimeoutMS", 1000 );
+	/** The name of the application that created this MongoClient instance. MongoDB 3.4 and newer will print this value in the server log upon establishing each connection. It is also recorded in the slow query log and profile collections */
+	setDefaultValue( connectOptions, "appName", "MMT-Operator-" + tools.getTimestamp() );
+	
+	//convert to query string
+	const connectOptionsArr = [];
+	for( key in connectOptions ){
+		value = connectOptions[key];
+		key = encodeURIComponent(key);
+		value = encodeURIComponent( value );
+		connectOptionsArr.push(`${key}=${value}`);
+	}
+
 	const connectString = 'mongodb://' + config.database_server.host
-		+ ":" + config.database_server.port + "/" + dbName;
+		+ ":" + config.database_server.port + "/" + dbName + '?' + connectOptionsArr.join("&");
 
-	const client = new mongodb.MongoClient(connectString, {
-		//useNewUrlParser: true, // Determines whether or not to use the new url parser
-		//autoReconnect:     true,  // Reconnect on error.
-		//reconnectTries:    3000,  // Server attempt to reconnect #times
-		//reconnectInterval: 5000,  // Server will wait # milliseconds between retries.
+	console.log("Connecting to %s", connectString );
+	const client = new mongodb.MongoClient(connectString, {});
 
-		//bufferMaxEntries: 0, //Sets a cap on how many operations the driver will buffer up before giving up on getting a working connection
-	});
+	client.connect()
+		.then(function(client) {
+			console.info("Connected to MongoDB", connectString );
 
-	client._connect()
-		.then( function(client) {
+			//attached to the selected database
 			const db = client.db(dbName);
-			db.admin().serverStatus(function(err, info) {
-				//console.info("MongoDB version " + info.version );
+			
+			//get info about the MongoDB
+			db.admin().serverStatus()
+			.then(function(info) {
+				console.info("Connected to MongoDB version " + info.version );
 				const arr = info.version.split(".");
 				const version = {
 					major: parseInt(arr[0]),
@@ -33,21 +56,36 @@ mongodb.MongoClient.connect = function(dbName, callback) {
 				};
 				const versionNo = version.major * 100 + version.minor * 10 + version.build;
 
-				if (versionNo < (3 * 100 + 6 * 10)) {
-					console.error("Current MongoDB version is " + info.version + ". MMT-Operator needs MongoDB version 3.6.x");
+				if (versionNo < (6 * 100 + 0 * 10)) {
+					console.error("Current MongoDB version is " + info.version + ". MMT-Operator needs MongoDB version >= 6.x");
 
 					process.abort();
 				}
+			})
+			.catch(function(err){
+				console.error("Cannot get MongoDB info", err)
+				process.abort();
 			});
 			//
 			patchDeprecatedMethods(db);
 			callback(null, db);
 		})
-		.catch( function(err) {
-			console.error("Error when connecting to MongoDB. Retry in 10 seconds." + err.message);
-			setTimeout(mongodb.MongoClient.connect, 10 * 1000, dbName, callback);
+		.catch(function(err) {
+			//console.error("Error when connecting to MongoDB. Retry in 10 seconds." + err.message);
+			//setTimeout(mongodb.MongoClient.connect, 10 * 1000, dbName, callback);
+
+			console.error("Error when connecting to MongoDB.", err.message);
+			callback(err, null);
 		})
 };
+
+function triggerCallback(callback, err, res) {
+	if (typeof (callback) == "function"){
+		callback(err, res);
+		return true
+	}
+	return false;
+}
 
 function patchLegacyCollectionMethods(collection) {
 	if (!collection) return;
@@ -60,11 +98,11 @@ function patchLegacyCollectionMethods(collection) {
 				const result = isArray
 					? await this.insertMany(docs, options)
 					: await this.insertOne(docs, options);
-				callback?.(null, result);
+
+				triggerCallback(callback, null, result);
 				return result;
 			} catch (err) {
-				callback?.(err);
-				//throw err;
+				triggerCallback(callback, err);
 			}
 		};
 	}
@@ -76,11 +114,10 @@ function patchLegacyCollectionMethods(collection) {
 				const result = (options?.multi || false)
 					? await this.updateMany(filter, update, options)
 					: await this.updateOne(filter, update, options);
-				callback?.(null, result);
+				triggerCallback(callback, null, result);
 				return result;
 			} catch (err) {
-				callback?.(err);
-				//throw err;
+				triggerCallback(callback, err);
 			}
 		};
 	}
@@ -89,14 +126,15 @@ function patchLegacyCollectionMethods(collection) {
 	if (!collection.remove) {
 		collection.remove = async function(filter, options, callback) {
 			try {
-				const result = (options?.justOne || false)
+				otions = options || {};
+				
+				const result = (options.justOne || false)
 					? await this.deleteOne(filter, options)
 					: await this.deleteMany(filter, options);
-				callback?.(null, result);
+				triggerCallback(callback, null, result);
 				return result;
 			} catch (err) {
-				callback?.(err);
-				//throw err;
+				triggerCallback(callback, err);
 			}
 		};
 	}
@@ -106,10 +144,10 @@ function patchLegacyCollectionMethods(collection) {
 		collection.count = async function(query, options, callback) {
 			try {
 				const result = await this.countDocuments(query, options);
-				callback?.(null, result);
+				triggerCallback(callback, null, result);
 				return result;
 			} catch (err) {
-				callback?.(err);
+				triggerCallback(callback, err);
 				//throw err;
 			}
 		};
@@ -117,26 +155,26 @@ function patchLegacyCollectionMethods(collection) {
 }
 
 function patchCursor(cursor, meth) {
-  if (!cursor || typeof cursor[meth] !== 'function') {
-    throw new Error('Invalid MongoDB cursor: no function ' + meth);
-  }
+	if (!cursor || typeof cursor[meth] !== 'function') {
+		throw new Error('Invalid MongoDB cursor: no function ' + meth);
+	}
 
-  const originalMethod = cursor[meth].bind(cursor);
+	const originalMethod = cursor[meth].bind(cursor);
 
-  cursor[meth] = function (maybeCallback) {
-    const promise = originalMethod();
+	cursor[meth] = function(maybeCallback) {
+		const promise = originalMethod();
 
-    if (typeof maybeCallback === 'function') {
-      promise
-        .then((docs) => maybeCallback(null, docs))
-        .catch((err) => maybeCallback(err));
-      return; // mimic legacy behavior
-    }
+		if (typeof maybeCallback === 'function') {
+			promise
+				.then((docs) => maybeCallback(null, docs))
+				.catch((err) => maybeCallback(err));
+			return; // mimic legacy behavior
+		}
 
-    return promise; // standard promise return
-  };
+		return promise; // standard promise return
+	};
 
-  return cursor;
+	return cursor;
 }
 
 
@@ -168,7 +206,7 @@ function patchLegacyAggregate(collection) {
 			cursor.toArray().then(res => callback(null, res)).catch(err => callback(err));
 			return; // undefined like legacy callback APIs
 		}
-		
+
 		patchCursor(cursor, "toArray");
 		return cursor; // modern promise-based behavior
 	};
@@ -193,7 +231,7 @@ function patchLegacyFindMethod(collection) {
 		}
 
 		const cursor = originalFind(query, options);
-		
+
 		if (typeof callback === 'function') {
 			cursor.toArray().then(res => callback(null, res)).catch(err => callback(err));
 			return; // mimic old behavior
@@ -207,16 +245,20 @@ function patchLegacyFindMethod(collection) {
 function patchDeprecatedMethods(db) {
 	//remember old collection function
 	db._collection = db.collection;
-	
+
 	db.collection = function(collectionName) {
 		let collection = db._collection(collectionName);
-		
-		patchLegacyCollectionMethods( collection );
-		patchLegacyAggregate( collection );
-		patchLegacyFindMethod( collection );
-		
+
+		patchLegacyCollectionMethods(collection);
+		patchLegacyAggregate(collection);
+		patchLegacyFindMethod(collection);
+
 		return collection;
 	}
 }
 
-module.exports = mongodb;
+module.exports = {
+	MongoClient : {
+		connect: connect
+	}
+};

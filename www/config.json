@@ -1,7 +1,8 @@
 {
 	"database_server": {
 		"host": "localhost",
-		"port": 27017
+		"port": 27017,
+		"connect_options": {}
 	},
 	"redis_input": {
 		"host": "localhost",
@@ -11,7 +12,7 @@
 	"kafka_input": {
 		"host": "192.168.0.195",
 		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert",
+		"_ssl.ca.location": "data/kafka-ca.cert",
 		"topic": "report",
 		"client_name": "mmt-operator-kafka-client"
 	},
@@ -117,8 +118,7 @@
 		"network",
 		"dpi",
 		"security",
-		"application",
-		"gnodeb"
+		"application"
 	],
 	"modules_config": {
 		"enodeb": {

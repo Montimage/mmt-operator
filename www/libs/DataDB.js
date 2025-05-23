@@ -31,11 +31,9 @@ var MongoConnector = function () {
 		self.onReadyCallback.push( cb );
 	}
 
-	var no_1_packet_reports = 0;
-
 	MongoClient.connect( config.databaseName, function (err, db) {
 		if (err){
-			console.error("Cannot connect to Database " + connectString );
+			console.error("Cannot connect to Database " );
 			console.logStdout("Cannot connect to Database");
 			process.exit( 1 );
 		}
