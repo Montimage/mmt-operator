@@ -111,7 +111,9 @@ function patchLegacyCollectionMethods(collection) {
 	if (!collection.update) {
 		collection.update = async function(filter, update, options, callback) {
 			try {
-				const result = (options?.multi || false)
+				otions = options || {};
+				
+				const result = (options.multi || false)
 					? await this.updateMany(filter, update, options)
 					: await this.updateOne(filter, update, options);
 				triggerCallback(callback, null, result);
