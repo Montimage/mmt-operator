@@ -116,7 +116,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 	//Set the max-age property of the Cache-Control header in milliseconds: 5minutes
 	maxAge: 5 * 60 * 1000
 }));
-//share js libraries 
+//share js libraries
 app.use('/_js', require("./routes/server2client.js"));
 
 //a proxy to access outside API to avoid CORS
@@ -167,25 +167,24 @@ if (config.isSLA) {
 	//const engine = require("./routes/musa/violation_check_engine.js");
 	//engine.start( pub_sub, dbconnector );
 	//app.use("/musa/dummy", engine.router );
-	/*  
+	/*
 	  //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );
-	  
-	  const reaction = require("./routes/musa/reaction.js");
-	  reaction.pub_sub     = pub_sub;
-	  reaction.dbconnector = dbconnector;
-	  app.use("/musa/sla", reaction);
-	  
-	  
+
 		const musaStatus = require("./routes/musa/status.js");
 		musaStatus.pub_sub     = pub_sub;
 		musaStatus.dbconnector = dbconnector;
 		app.use("/", musaStatus);
-	   
-		  
+
+
 	  //2 factors authentication for Luhstansa case study
 	  require("./routes/musa/2factors.js").start( pub_sub, dbconnector );
-	
+
 	*/
+
+	const reaction = require("./routes/musa/reaction.js");
+	reaction.pub_sub     = pub_sub;
+	reaction.dbconnector = dbconnector;
+	app.use("/musa/sla", reaction);
 
 	const sla = require("./routes/musa/sla.js");
 	sla.dbconnector = dbconnector;
@@ -355,11 +354,11 @@ function exitHandler(options, exitCode) {
 		process.exit( 1 );
 		return;
 	}
-	
+
 	isExiting = true;
-	
+
 	console.logStdout("\nCleaning up before exiting ... ");
-	
+
 	function _exit(){
 		console.logStdout("Bye");
 		if( exitCode )

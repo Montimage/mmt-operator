@@ -16,7 +16,7 @@
     "metrics": [
         {
             "name": "dlTput.minDlTputRequirement",
-            "title": "Minimum Downlink Throughput Requirement",
+            "title": "Minimum Downlink Throughput that needs to be guaranteed",
             "alert_value": 1.5,
             "violation_value": 1.0,
             "unit": "Mbps",
@@ -24,7 +24,7 @@
         },
         {
             "name": "dlTput.maxDlTputPerSlice",
-            "title": "Maximum Downlink Throughput Per Slice",
+            "title": "Maximum Downlink throughput counting all simultaneous users",
             "alert_value": 0.2,
             "violation_value": 0.5,
             "unit": "Gbps",
@@ -32,7 +32,7 @@
         },
         {
             "name": "ulTput.maxUlTputPerSlice",
-            "title": "Maximum Uplink Throughput Per Slice",
+            "title": "Maximum Uplink throughput counting all simultaneous users",
             "alert_value": 0.1,
             "violation_value": 0.3,
             "unit": "Gbps",
@@ -40,7 +40,7 @@
         },
         {
             "name": "dlTput.maxTputVariation",
-            "title": "Maximum Downlink Throughput Variation",
+            "title": "Max DL Throughput Variation",
             "alert_value": 10,
             "violation_value": 20,
             "unit": "percent",
@@ -48,7 +48,7 @@
         },
         {
             "name": "ulTput.maxTputVariation",
-            "title": "Maximum Uplink Throughput Variation",
+            "title": "Max UL Throughput Variation",
             "alert_value": 5,
             "violation_value": 10,
             "unit": "percent",
@@ -56,7 +56,7 @@
         },
         {
             "name": "latency.maxE2ELatency",
-            "title": "Maximum End-to-End Latency",
+            "title": "Max E2E latency",
             "alert_value": 200,
             "violation_value": 2000,
             "unit": "ms",
@@ -64,21 +64,21 @@
         },
         {
             "name": "latency.lowJitter",
-            "title": "Low Jitter",
+            "title": "Low jitter required",
             "alert_value": false,
             "violation_value": true,
             "enable": true
         },
         {
             "name": "dim.maxPDUsessions",
-            "title": "Maximum PDU Sessions",
+            "title": "Max number of simultaneous user sessions",
             "alert_value": 100,
             "violation_value": 1000,
             "enable": true
         },
         {
             "name": "dim.numberOfTerminals",
-            "title": "Number of Terminals",
+            "title": "Max number of devices",
             "alert_value": 10,
             "violation_value": 100,
             "enable": true

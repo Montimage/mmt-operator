@@ -1,5 +1,3 @@
-const { min } = require('lodash');
-
 process.title = "mmt-operator-detect-violation";
 
 const
@@ -158,6 +156,9 @@ function _analyseDatabase (database) {
     // // Check for maximum uplink throughput variation
     // const minULTPResult = data.reduce((min, curr) => curr[COL.UL_DATA_VOLUME] < min[COL.UL_DATA_VOLUME] ? curr : min);
     // console.log("Maximum uplink throughput variation: " + (maxULTPResult[COL.UL_DATA_VOLUME] - minULTPResult[COL.UL_DATA_VOLUME]) * CONVERTOR);
+
+    if (!metrics["components"])
+      return _startOver( database );
 
     // Getting metrics from database
     const [minDL, maxDL, maxUL, maxDLVar, maxULVar] = _getMetrics();

@@ -8,11 +8,11 @@
 		"port": 6379
 	},
 	"kafka_input": {
-		"host": "localhost",
-		"__host": "37.48.247.124",
-		"_host": "192.168.0.195",
-		"port": 2181,
-		"ssl.ca.location": "data/kafka-ca.cert"
+		"host": "127.0.0.1",
+		"port": 9092,
+		"_ssl.ca.location": "data/kafka-ca.cert",
+		"topic": "mi-reports",
+		"client_name": "mmt-operator-kafka-client"
 	},
 	"file_input": {
 		"_data_folder": "/tmp/ramdisk/",
@@ -20,7 +20,7 @@
 		"delete_data": true,
 		"nb_readers": 16
 	},
-	"input_mode": "file",
+	"input_mode": "kafka",
 	"probe_analysis_mode": "offline",
 	"local_network": [
 		{
@@ -86,6 +86,8 @@
 		"stat"
 	],
 	"modules": [
+		"link",
+		"network",
 		"stat",
 		"security",
 		"sla",

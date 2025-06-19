@@ -58,7 +58,7 @@ var ReportFactory = {
             TYPE   = "$4", //index of "type" in DB
             match   = { "0" : {"$gte": status_db.time.begin, "$lt" : status_db.time.end }, "1" : getAppID()},
             group   = { "_id": {"1": "$1", "2": "$2", "3": "$3"}, //group by app_id, comp_id and metric_id
-                  "alert"     : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "alert" ] }    , then: 1, else: 0 }}}, 
+                  "alert"     : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "alert" ] }    , then: 1, else: 0 }}},
                   "violate"   : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} },
                   "app_id"    : { "$first" : "$1"},
                   "comp_id"   : { "$first" : "$2"},
@@ -95,11 +95,11 @@ var ReportFactory = {
                $(".alerts").each( function( i, el ){
                   //$(el).html( '<i class = "fa fa-refresh fa-spin fa-fw"/>' );
                   const val = _getData( this, data );
-                  
+
                   $(el).attr( "data-count", val );
                   $(el)
                      .html( '<span class="badge">' + val + '</span>' );
-                  
+
 //                  setTimeout( function( e ){
 //                     $(e).html( '<span class="badge">' + val + '</span>' );
 //                     //ensure this element is showing
@@ -144,7 +144,7 @@ var ReportFactory = {
                   continue;
                var selMetrics = obj.selectedMetric[ comp_id ];
                var comp       = getObject("components", comp_id)
-               if( comp.metrics == undefined || comp.metrics.length == 0 ) 
+               if( comp.metrics == undefined || comp.metrics.length == 0 )
                   continue;
 
                var $row = {
@@ -381,13 +381,13 @@ var ReportFactory = {
                   name = "alerts";
                   break;
             }
-            
+
             MMTDrop.tools.gotoURL( '/chart/sla/'+ name +
                   MMTDrop.tools.getQueryString( ["app_id"], "&probe_id=" + probe_id + "&alert=" + alert_thr + "&violation=" + violation_thr + extra_url ) );
          }
       },
 
-      
+
       createReactionForm: function( fPeriod ){
 
          //RENDER TABLE
@@ -434,21 +434,21 @@ var ReportFactory = {
                   }]
                }]
             }];
-            
+
             const _span = function( txt ){
                const react = this;
                if( react.comp_id != undefined )
                   return '<span class="badge" id="'+ txt + "-"+ react.comp_id + '">' + txt + '</span>';
                return '<span class="badge">' + txt + '</span>';
             }
-            
+
             const _getActionDescription = function( name ){
                var val = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", name, "description"] );
                if ( val == undefined )
                   return "";
                return '<span title="'+ val +'">' + val + '</span>';
             }
-            
+
             for( var i=0; i<init_components.length; i++){
                var comp = init_components[ i ];
                //show only probe that is indicated in URL by probe_id
@@ -458,7 +458,7 @@ var ReportFactory = {
                //each row for a metric
                for( var react_id in reactions ){
                   var reaction = reactions[ react_id ];
-                  
+
                   //show only reactions of this component
                   if( reaction.comp_id != comp.id || reaction.enable !== true )
                      continue;
@@ -474,7 +474,7 @@ var ReportFactory = {
                         }
                      }]
                   });
-                  
+
                   //a new row for the detail
                   var row = {
                         type    : "<tr>",
@@ -528,7 +528,7 @@ var ReportFactory = {
                   });
 
                   //add  dummy buttons when the reaction is performing/ignored
-                  if( reaction.action == "ignore" 
+                  if( reaction.action == "ignore"
                      //ignored since last minute
                      && serverTime - reaction.action_time < INTERVAL_BETWEEN_2_IGNORES )
                      row.children.push({
@@ -606,18 +606,18 @@ var ReportFactory = {
             };
 
             $("#sla-reaction-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
-            
-            
+
+
             window._btnClick = function ( type, react_id, cb ){
                cb = cb || function(){};
                MMTDrop.tools.ajax("/musa/sla/reaction/"+ type +"/" + react_id, {}, "POST", {
                   error  : function(){
-                     
+
                   },
                   success: cb
                });
             }
-            
+
             //ignore a reaction
             window._ignoreReaction = function( react_id ){
                _btnClick( "ignore", react_id, function(){
@@ -626,23 +626,23 @@ var ReportFactory = {
                      .attr( "align", "right" );
                });
             };
-            
+
           //perform a reaction
             window._performReaction = function( react_id ){
                var hasError = false
                MMTDrop.tools.localStorage.set( react_id + "-time", (new Date()).getTime(), false );
                const actions = _getActions( react_id );
                var needToShowExecutingButton = true;
-               
+
                actions.forEach( function( act_name ){
-                  const action = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "sla", "actions", act_name ] );
+                  const action = MMTDrop.tools.getValue( MMTDrop, ["config", "others", "modules_config", "sla", "actions", act_name ] );
                   if( action.url ){
                      //MMTDrop.tools.openURLInNewFrame( action.url, action.description );
                      var ret = MMTDrop.tools.openURLInNewTab( action.url, action.description );
                      if( ret == undefined )
                         hasError = true;
                   }
-                  
+
                   //for 2factors authentification
                   if( act_name === "apply_two_factors_authentication" ){
                      //login
@@ -669,7 +669,7 @@ var ReportFactory = {
                                  _btnClick( "perform", react_id, function(){
                                     _finishReaction( react_id  );
                                  });
-                                 
+
                                  setTimeout( MMTDrop.tools.reloadPage, 6000 );
                               }
                            }, {
@@ -677,14 +677,14 @@ var ReportFactory = {
                            });
                         }
                      });
-                     
+
                      needToShowExecutingButton = false;
                   }//end 2factors
                });
-               
+
                if( hasError )
                   return;
-               
+
                if( needToShowExecutingButton )
                   _btnClick( "perform", react_id, function(){
                      $("#reaction-" + react_id )
@@ -751,7 +751,7 @@ function _getMetricIDFromName( name, comp_id ){
       console.error( "This must not happen" );
       return 0;
    }
-   
+
    //find in general metric
    for( var i=0; i<window.__sla.metrics.length; i++ ){
       var m = window.__sla.metrics[ i ];
@@ -795,15 +795,15 @@ function _verifyCondition( reaction, data ){
    const conditions = reaction.conditions;
    const comp_id    = reaction.comp_id;
    const arr = [];
-   
+
    for( var metric_name in conditions ){
       const metric_id = _getMetricIDFromName( metric_name, comp_id );
       var valid  = false;
       var cond = conditions[ metric_name ]; //cond is an array
-      
+
       if( cond.length == 0 )
          continue;
-      
+
       for( var i=0; i<data.length; i++ ){
          var o = data[i];
          if( o.comp_id == comp_id       //same component
@@ -820,32 +820,32 @@ function _verifyCondition( reaction, data ){
                arr.push( {"one" : o[ cond[0] ] } );
             }else
                arr.push( o );
-               
+
             //found one msg that satisfies the condition
             valid = true;
             break;
          }
       }
-         
+
       //donot find any element in data that satisfies this condition
       if( !valid )
          return false;
    }
-   
+
    const str = JSON.stringify( arr );
    //old value:
    const oldStr = MMTDrop.tools.localStorage.get( reaction.id, false );
    //no new alerts/violations being noticed
    if( oldStr == str )
       return false;
-   
+
    //save to temps
    if( reaction.action == "perform")
       MMTDrop.tools.localStorage.set( reaction.id, str, false );
    else
       MMTDrop.tools.localStorage.set( "tmp_"+ reaction.id, str, false );
-   
-   
+
+
    return true;
 }
 
@@ -857,7 +857,7 @@ function _updateReactions( data ){
       const reaction = JSON.parse( $(el).attr("data-reaction") );
       reaction.id = reactID;
       const isValid  = _verifyCondition( reaction, data );
-      
+
       //show "Perform" and "Ignore" buttons
       //$(el).html( MMTDrop.tools.createDOM( _createButtons( reactID ) ) );
       //ani
@@ -870,7 +870,7 @@ function _updateReactions( data ){
          setTimeout( function( e, text ){
             $(e).html( text );
             $("#div-reactions").scrollToChild( e, 0, 40 );
-         }, 1000*index, el, 
+         }, 1000*index, el,
             (isValid) ? MMTDrop.tools.createDOM( _createButtons( reactID ) ) : "" );
       else{
          const now_ts  = (new Date()).getTime();
@@ -890,7 +890,7 @@ function _finishReaction( react_id, el ){
    //move temps to a real
    const oldStr = MMTDrop.tools.localStorage.get( "tmp_" + react_id, false );
    MMTDrop.tools.localStorage.set( react_id, oldStr, false );
-   
+
    _btnClick( "finish", react_id, function(){
       if( el )
          el.parentNode.innerHTML = 'Executed';
