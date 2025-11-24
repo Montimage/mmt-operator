@@ -364,7 +364,7 @@ function extract_metrics_json( app_config, index, cb ){
          if( metric.unit != undefined )
             metricData.unit = metric.unit;
 
-         if ( ["attack.DDoS", "dlTput.maxDlTputPerSlice", "ulTput.maxUlTputPerSlice" ].indexOf( metric.name ) != -1)
+         if ( ["attack.DDoS", "dlTput.maxDlTputPerSlice", "ulTput.maxUlTputPerSlice", "latency.maxE2ELatency" ].indexOf( metric.name ) != -1)
             metricData.support = true;
          else {
             metricData.support = false;

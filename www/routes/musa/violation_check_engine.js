@@ -400,7 +400,7 @@ function _checkDDoS( metric, m, app, com ){
 				
 				const nb_targets = ddosConf.nb_targets || 10;
 				// 3. has it a lot of IP destination
-				if( row[COL.IP_DST] < nb_targets )
+				if( targets.length < nb_targets )
 					return;
 
 				// until here we can conclude DDoS
