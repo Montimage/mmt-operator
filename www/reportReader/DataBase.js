@@ -184,7 +184,7 @@ module.exports = function(){
 
                //HTTP.RESPONSE_TIME, HTTP.TRANSACTIONS_COUNT,
                ],
-            set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST ]
+            set : [COL.APP_ID, COL.START_TIME, "isGen", "app_paths", COL.IP_SRC, COL.IP_DST, "ip_src", "ip_dst" ]
                }
          ),
 

@@ -491,10 +491,10 @@ ReportFactory.createSecurityRealtimeReport = function (fPeriod) {
                      if (typeof val === "string")
                         return "<string>" + val + "</string>";
                      if (typeof val === "number")
-                        return "<number>" + val + "</number>";
+                        return "<number>" + val + "</number> ";
                      return val;
                   })
-                  .replace(/(\"<string>)/g, '<string>"').replace(/<\/string>\"/g, '"</string>')
+                  .replace(/(\"<string>)/g, '<string> "').replace(/<\/string>\"/g, '"</string>')
                   .replace(/\"<number/g, "<number").replace(/number>\"/g, "number>")
                   //.replace(/\"(.+)\":/g, "<label>$1</label> :")
                   ;

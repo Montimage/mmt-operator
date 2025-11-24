@@ -370,6 +370,8 @@ function _checkDDoS( metric, m, app, com ){
 	
 	// count
 	[COL.IP_DST].forEach( (e) => groupBy[e] = {"$addToSet" : '$'+e} );
+
+	const availBw    = getMinAvailableBandwidthBps( com );	
 	
 	dbconnector._queryDB( "data_link_real", "aggregate", [
 		{"$match"  : match},
@@ -380,12 +382,12 @@ function _checkDDoS( metric, m, app, com ){
 				return console.error( err );
 			if( result.length  == 0 ) 
 				return;
-			console.log(result);
+			console.log("DDoS query result: ", result);
 			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
 			result.forEach( function(row){
 				const ip         = row["_id"][COL.IP_SRC];
 				const consumedBw = getBandwidth(row[COL.DATA_VOLUME] );
-				const availBw    = getMinAvailableBandwidthBps( com );
+
 				const targets    = row[COL.IP_DST];
 				// 1. does it consume all bandwidth ?
 				const bw_threshold = ddosConf.consumed_bps || availBw * 0.9;
@@ -447,28 +449,29 @@ function _checkE2eLatency( metric, m, app, com ){
 	const now = (new Date()).getTime();
 
 	//the thresholds can be provided via SLA file
-	const min_latency_value = Math.min( metric.alert_value, metric.violation_value );
+	const min_latency_value = Math.min( metric.alert, metric.violation );
 	const unit = getUnit( com, metric.name );
-	const min_latency_second = converToSecond( min_latency_value, unit );
-	const min_latency_microsec = min_latency_second / 1000 / 1000;
+	const min_latency_second = convertToSecond( min_latency_value, unit );
+	const min_latency_microsec = min_latency_second * 1000 * 1000;
+	console.log("min latency us: ", min_latency_microsec );
+	const violation_latency_ms = convertToSecond(metric.violation, unit) / 1000;
 	
-	const violation_latency_ms = convertToSecond(metric.violation_value, unit) / 1000;
-	
-	const match = {};
+	const match = {isGen:  false, 0: 100};
 	//in checking period
 	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
 	//1. IP in the list
 	match["ip_src"] = { "$gte": cidrStart, "$lte": cidrEnd };
 	//2. latency > given latency
-	[COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER].forEach( (e) => match[e] = {"$gt" : min_latency_microsec} );
+	//[COL.HANDSHAKE_TIME].forEach( (e) => match[e] = {"$gt" : min_latency_microsec} );
+	console.log( "latency query: ", match );
 	
 	const groupBy = {"_id": {}};
 	// group by ip_src and ip_dst
 	[COL.IP_SRC, COL.IP_DST].forEach( (e) => groupBy["_id"][e] = "$"+e);
 	// sum by
-	[COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER].forEach( (e) => groupBy[e] = {"$max" : "$"+e} );
+	[COL.HANDSHAKE_TIME].forEach( (e) => groupBy[e] = {"$max" : "$"+e} );
 	
-	dbconnector._queryDB( "data_link_real", "aggregate", [
+	dbconnector._queryDB( "data_session_real", "aggregate", [
 		{"$match"  : match},
 		{"$group"  : groupBy}
 		], 
@@ -477,32 +480,37 @@ function _checkE2eLatency( metric, m, app, com ){
 				return console.error( err );
 			if( result.length  == 0 ) 
 				return;
-			console.log(result);
+			console.log("latency query result: ", result);
 			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
 			result.forEach( function(row){
 				const ip         = row["_id"][COL.IP_SRC];
 				const target     = row["_id"][COL.IP_DST];
 				// latency in micro seconds
-				const latency_us = Math.max( row[COL.RTT_MAX_CLIENT], row[COL.RTT_MAX_SERVER] );
-				const latency_ms = Math.round( latency_us / 1000 );
+				const latency_us = row[COL.HANDSHAKE_TIME];
+				
+				// ignore the latency < the min
+				if( latency_us < min_latency_microsec )
+					return;
+					
+				const latency_ms = latency_us / 1000;
 				
 				// create a security alert to show it in "security" dashboard
-				const val = [["ip.src", ip], 
+				const val = [
+						["ip.src", ip], 
 						["ip.dst", target], 
 						["latency_ms",  latency_ms], 
 				];
-				console.log("=> E2eLatency detected ", latency_ms);
+				console.log("=> E2eLatency detected: ", latency_ms);
+				const other = {"ip": ip};
+					
 				//create a security alert only when the metric is violated
-				if( latency_ms >= violation_latency_ms )
+				if( latency_ms >= violation_latency_ms ){
 					_createSecurityAlert(app.app_id, "operator", now, metric.id, "detected", "attack", metric.title, 
 						{"event_1": {"timestamp": now, "description": "detected by SLA viloation checking engine", "attributes": val}});
-
-				const other = {"ip": ip};
 				
-				let type = constant.ALERT_STR;
-				if( latency_ms >= violation_latency_ms )
-					type = constant.VIOLATION_STR;
-				return _raiseMessage( now, type, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+					return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+				} else
+					return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.name, m.alert, val, m.priority, other);
 			}); //end forEach
 		}, false);
 }

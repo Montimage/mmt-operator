@@ -595,6 +595,7 @@ a[disabled], .ahrefl[disabled]{
     text-align: left;
     display: inline-block;
     cursor: default;
+    overflow: auto;
 }
 
 .code-json number{
