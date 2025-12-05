@@ -1,5 +1,6 @@
 const _global = require("./global");
 const path = require('path');
+const os   = require('os');
 const val = _global.get("config");
 const isMainProcess = ( process.send == undefined ); 
 
@@ -171,7 +172,7 @@ else{
    
    set_default_value( config, "query_cache", {} );
    set_default_value( config.query_cache, "enable", false );
-   set_default_value( config.query_cache, "folder", "/tmp/" );
+   set_default_value( config.query_cache, "folder", path.join(os.tmpdir(), "mmt-operator") );
    set_default_value( config.query_cache, "bytes",  5*1000*1000, parseInt ); //5MB
    set_default_value( config.query_cache, "files",  999, parseInt );
 
