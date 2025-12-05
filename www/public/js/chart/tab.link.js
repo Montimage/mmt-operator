@@ -211,7 +211,8 @@ var ReportFactory = {
                     cLine.dataLegend = {
                         "dataTotal": 0,
                         "label"    : unit,
-                        "data"     : {}
+                        "data"     : {},
+                        "_dataTotal": 0,
                     };
                     //ETHERNET
                     var o = MMTDrop.tools.sumUp (obj["99"], colToSum.id);
@@ -257,13 +258,15 @@ var ReportFactory = {
                         //sumup by time
                         o = MMTDrop.tools.sumUp(o, colToSum.id);
                         total = o[ colToSum.id ]
-                        if( cls != '99')
+                        if( cls != '99'){
                           columns.push({
                               id   : cls,
                               label: name,
                               type : "area-stack",
                               value: total
                           });
+                          cLine.dataLegend._dataTotal += total;
+                        }
                         else {
                           columns.push({
                               id   : cls,
@@ -275,6 +278,8 @@ var ReportFactory = {
                     }
 
 
+                    if( cLine.dataLegend.dataTotal == 0 )
+                       cLine.dataLegend.dataTotal = cLine.dataLegend._dataTotal;
 
                     columns.sort(function (a, b) {
                         return b.value - a.value;
