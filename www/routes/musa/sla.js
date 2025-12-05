@@ -87,6 +87,21 @@ function _deepClone( x ){
 	return JSON.parse( JSON.stringify( x ));
 }
 
+function getDelayMillisecond( req ){
+	const ua = req.get('User-Agent');
+	console.log("requested by ", ua );
+	
+	//slow down the parser when requesting by a Web browser
+	if( ua.includes('Chrome') 
+		|| ua.includes('Mozilla') 
+		|| ua.includes('Safari')
+		|| ua.includes('Gecko')
+	)
+		return 2000;
+	
+	return 1;
+}
+
 //upload SLA files
 router.post("/upload/:id?", function(req, res, next) {
    //status of processing SLA files
@@ -159,6 +174,8 @@ router.post("/upload/:id?", function(req, res, next) {
          console.error( status );
       }
 
+      const TIMEOUT = getDelayMillisecond( req );
+
       //waiting for 1 second before parsing SLA file
       //this gives times to show a message above on web browser
       setTimeout( function(){
@@ -196,7 +213,7 @@ router.post("/upload/:id?", function(req, res, next) {
                      status.progress = 100;
                      status.message  = "Extracted "+ count +" metrics ";
                   });
-               }, 2000);
+               }, TIMEOUT);
 
             } catch (jsonErr) {
                // when uploading a .json file ==> stop parsing
@@ -232,14 +249,14 @@ router.post("/upload/:id?", function(req, res, next) {
 
                         });
 
-                     },2000)
+                     }, TIMEOUT)
                   });//parser.parseString
                } catch( xmlErr ){
                   return raise_error("XML file is malformed: " + xmlErr.message );
                }
             }
          });//fs.readFile
-      }, 1000);
+      }, TIMEOUT);
 
       //204: The server has successfully fulfilled the request and that there is no additional content to send in the response payload body.
       res.status(204)

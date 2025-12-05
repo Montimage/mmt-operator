@@ -70,7 +70,7 @@
             "name": "latency.maxE2ELatency",
             "title": "Max E2E latency",
             "alert_value": 200,
-            "violation_value": 500,
+            "violation_value": 1000,
             "unit": "ms",
             "enable": true
         },
@@ -99,12 +99,11 @@
     "reactions": [
         {
            "conditions": { 
-              "dlTput.minDlTputRequirement" : [ "alert" ], 
-              "dlTput.maxDlTputPerSlice" : [ "alert", "violation" ] 
+              "latency.maxE2ELatency" : [ "alert", "violation" ] 
            }, 
            "actions" : [ "reroute_packets" ],
            "enable"  : true,
-           "note"    : "Reroute packets when required throughput is not satisfied"
+           "note"    : "Reroute packets when required latency is not satisfied"
         },{
            "conditions": { 
               "attack.DDoS" : [ "alert", "violation" ]

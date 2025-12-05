@@ -8,7 +8,7 @@ const dataAdaptor = require('../../libs/dataAdaptor');
 //const METRIC_COL  = dataAdaptor.StatsColumnId;
 
 //interval allowing to select the alerts to be checked
-let CHECK_AVG_INTERVAL = 5*60*1000; //1 minute
+let CHECK_AVG_INTERVAL_MILISECOND = 60*1000; //1 minute
 
 
 //col id of element in metric_alert collection
@@ -23,6 +23,12 @@ const METRIC_COL = {
 		VALUE: 7,
 		OTHER_INFO: 8
 }
+
+const TIMESTAMP = {
+	start: 0, 
+	end  : 0
+}
+
 //global variable for this module
 var dbconnector = {};
 var publisher   = {};
@@ -105,9 +111,8 @@ function _checkReaction( reaction ){
 			}
 	*/
 	
-    const now = (new Date()).getTime();
     const $match = {};
-    $match[ METRIC_COL.TIMESTAMP ] = {"$gte": (now - CHECK_AVG_INTERVAL),"$lt":now };
+    $match[ METRIC_COL.TIMESTAMP ] = {"$gte": TIMESTAMP.start, "$lt": TIMESTAMP.end};
     if( reaction.app_id )
        $match[ METRIC_COL.APP_ID ]    = reaction.app_id;
     if( reaction.comp_id )
@@ -186,7 +191,8 @@ function perform_check(){
 				
 			}
 		}
-
+		TIMESTAMP.start = TIMESTAMP.end;
+		TIMESTAMP.end   = (new Date()).getTime();
 	}, false );
 }
 
@@ -217,9 +223,13 @@ function start( pub_sub, _dbconnector ){
 			publisher = pub_sub.createClient();
 
 		
-		CHECK_AVG_INTERVAL = config.sla.reaction_check_period * 1000; //each X seconds
+		CHECK_AVG_INTERVAL_MILISECOND = config.sla.reaction_check_period * 1000; //each X seconds
 		console.log("start SLA reaction checking each " + config.sla.reaction_check_period + " seconds");
-		setInterval(perform_check, CHECK_AVG_INTERVAL);
+      //at the begining, we check in the period [now-X, now]
+		const now = (new Date()).getTime(); //millisecond
+		TIMESTAMP.start = now - CHECK_AVG_INTERVAL_MILISECOND;
+		TIMESTAMP.end   = now;
+		setInterval(perform_check, CHECK_AVG_INTERVAL_MILISECOND);
 	});
 }
 
