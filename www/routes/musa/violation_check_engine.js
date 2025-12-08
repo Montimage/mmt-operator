@@ -482,6 +482,9 @@ function _checkE2eLatency( metric, m, app, com ){
 	// sum by
 	[COL.HANDSHAKE_TIME, COL.RTT_MAX_CLIENT, COL.RTT_MAX_SERVER].forEach( 
 		(e) => groupBy[e] = {"$max" : "$"+e} );
+
+	[COL.DATA_TRANSFER_TIME, COL.ACTIVE_FLOWS].forEach( 
+		(e) => groupBy[e] = {"$sum" : "$"+e} );
 	
 	const query = [
 		{"$match"  : match},
@@ -514,11 +517,15 @@ function _checkE2eLatency( metric, m, app, com ){
 
 				const latency_ms = latency_us / 1000;
 				
+				const latency_avg_ms = Math.round(row[COL.DATA_TRANSFER_TIME] / row[COL.ACTIVE_FLOWS]) / 1000;
+				
 				// create a security alert to show it in "security" dashboard
 				const val = [
 						["ip.src", ip], 
 						["ip.dst", target], 
-						["latency_ms",  latency_ms], 
+						["max_latency_ms",  latency_ms],
+						["avg_latency_ms", latency_avg_ms],
+						["nb_flows", row[COL.ACTIVE_FLOWS]] 
 				];
 				console.log("=> E2eLatency detected: ", latency_ms, ", violation_latency_ms:", violation_latency_ms);
 				const other = {"ip": ip};
